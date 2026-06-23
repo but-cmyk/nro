@@ -90,22 +90,21 @@ public class Pet extends Player {
             return;
         }
         goingHome = true;
-        new Thread(() -> {
+        this.status = Pet.ATTACK;
+        server.GameLoopManager.gI().schedule(() -> {
             try {
-                Pet.this.status = Pet.ATTACK;
-                Thread.sleep(2000);
-            } catch (Exception e) {
-            }
-            if (master != null) {
-                try {
+                if (master != null && !master.beforeDispose && !master.isOffline && goingHome) {
                     ChangeMapService.gI().goToMap(this, MapService.gI().getMapCanJoin(this, master.gender + 21, -1));
-                } catch (Exception e) {
+                    if (this.zone != null) {
+                        this.zone.load_Me_To_Another(this);
+                    }
+                    this.status = Pet.GOHOME;
                 }
-                this.zone.load_Me_To_Another(this);
-                Pet.this.status = Pet.GOHOME;
+            } catch (Exception e) {
+            } finally {
                 goingHome = false;
             }
-        }).start();
+        }, 2000);
     }
 
     private String getTextStatus(byte status) {

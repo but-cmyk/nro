@@ -16,14 +16,18 @@ import utils.Util;
 
 public class PlayerService {
 
-    private static PlayerService i;
+    private static volatile PlayerService i;
 
     public PlayerService() {
     }
 
     public static PlayerService gI() {
         if (i == null) {
-            i = new PlayerService();
+            synchronized (PlayerService.class) {
+                if (i == null) {
+                    i = new PlayerService();
+                }
+            }
         }
         return i;
     }

@@ -85,6 +85,43 @@ public class NpcService {
         }
     }
 
+    public void npcChat(Player player, int npcTempId, String text) {
+        if (player == null) {
+            return;
+        }
+        Message msg;
+        try {
+            msg = new Message(124);
+            msg.writer().writeShort(npcTempId);
+            msg.writer().writeUTF(text);
+            player.sendMessage(msg);
+            msg.cleanup();
+        } catch (Exception e) {
+            Logger.logException(NpcService.class, e);
+        }
+    }
+
+    public void createMenu(Player player, int indexMenu, int npcTempId, String npcSay, String... menuSelect) {
+        if (player == null || !player.isPl()) {
+            return;
+        }
+        Message msg;
+        try {
+            player.idMark.setIndexMenu(indexMenu);
+            msg = new Message(32);
+            msg.writer().writeShort(npcTempId);
+            msg.writer().writeUTF(npcSay);
+            msg.writer().writeByte(menuSelect.length);
+            for (String menu : menuSelect) {
+                msg.writer().writeUTF(menu);
+            }
+            player.sendMessage(msg);
+            msg.cleanup();
+        } catch (Exception e) {
+            Logger.logException(NpcService.class, e);
+        }
+    }
+
     public int getAvatar(int npcId) {
         for (Npc npc : Manager.NPCS) {
             if (npc.tempId == npcId) {
@@ -94,3 +131,4 @@ public class NpcService {
         return 1139;
     }
 }
+

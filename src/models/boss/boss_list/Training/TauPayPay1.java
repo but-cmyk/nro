@@ -46,7 +46,11 @@ public class TauPayPay1 extends TrainingBoss {
         this.chatE();
         this.lastTimeAFK = 0;
         Service.gI().sendPlayerVS(playerAtt, null, (byte) 0);
-        TaskService.gI().doneTask(plKill, ConstTask.TASK_10_1);
+        if (TaskService.gI().getIdTask(plKill) == ConstTask.TASK_9_1) {
+            TaskService.gI().doneTask(plKill, ConstTask.TASK_9_1);
+        } else {
+            TaskService.gI().doneTask(plKill, ConstTask.TASK_10_1);
+        }
     }
 
     @Override

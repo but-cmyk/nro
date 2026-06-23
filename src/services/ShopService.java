@@ -201,8 +201,6 @@ public class ShopService {
                         required = 30;
                         current = player.playerTask.taskdh.ChoSuong;
                     }
-                    case 1175, 1176, 1177, 1178 ->
-                        required = 1000;
                     default -> {
                         continue;
                     }

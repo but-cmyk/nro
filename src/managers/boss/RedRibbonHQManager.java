@@ -15,29 +15,19 @@ public class RedRibbonHQManager extends BossManager {
     }
 
     @Override
-    public void run() {
-        while (!Maintenance.isRunning) {
-            try {
-                long st = System.currentTimeMillis();
-                for (int i = this.bosses.size() - 1; i >= 0; i--) {
-                    if (i < this.bosses.size()) {
-                        Boss boss = this.bosses.get(i);
-                        try {
-                            boss.update();
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                            try {
-                                removeBoss(boss);
-                            } catch (Exception ex) {
-                            }
-                        }
+    public void update() {
+        for (int i = this.bosses.size() - 1; i >= 0; i--) {
+            if (i < this.bosses.size()) {
+                Boss boss = this.bosses.get(i);
+                try {
+                    boss.update();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    try {
+                        removeBoss(boss);
+                    } catch (Exception ex) {
                     }
                 }
-                if (150 - (System.currentTimeMillis() - st) > 0) {
-                    Thread.sleep(150 - (System.currentTimeMillis() - st));
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
             }
         }
     }

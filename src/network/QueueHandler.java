@@ -53,7 +53,7 @@ public class QueueHandler implements Runnable {
 
     public void addMessage(Message msg) {
         try {
-            if (session != null && session.isConnected() && messages.size() < 500) {
+            if (session != null && session.isConnected() && messages != null && messages.size() < 500) {
                 messages.add(msg);
             }
         } catch (Exception e) {

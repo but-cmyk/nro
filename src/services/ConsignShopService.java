@@ -1,7 +1,5 @@
 package services;
 
-import com.mysql.jdbc.PreparedStatement;
-import com.mysql.jdbc.Statement;
 import consts.ConstNpc;
 import managers.ConsignShopManager;
 import models.ConsignItem;
@@ -12,13 +10,11 @@ import network.io.Message;
 import services.player.InventoryService;
 import services.map.NpcService;
 import java.sql.Connection;
-
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.Statement;
 import java.util.*;
-import java.sql.Connection;
-import java.sql.ResultSet;
 import database.AlyraManager;
-import com.mysql.jdbc.Statement; // Consider using java.sql.Statement directly to avoid a specific JDBC driver dependency if possible.
 import database.daos.NDVSqlFetcher; // Unused import
 import java.io.IOException;
 import org.json.simple.JSONArray;
@@ -463,7 +459,7 @@ public int insertConsignItemAndGetId(ConsignItem item) {
         String sql = "INSERT INTO `shop_ky_gui`(`player_id`, `tab`, `item_id`, `gold`, `gem`, `quantity`, `itemOption`, `isUpTop`, `isBuy`) " +
                      "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
         
-        ps = (PreparedStatement) con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+        ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
         
         // Validate dữ liệu
         if (item.player_sell <= 0 || item.itemId <= 0 || item.quantity <= 0) {

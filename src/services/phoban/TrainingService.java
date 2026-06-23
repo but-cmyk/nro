@@ -168,24 +168,25 @@ public class TrainingService {
                 Service.gI().addSMTN(player, (byte) 2, tnsm, false);
             } else if (player.dangKyTapTuDong && time > 1800) {
                 if (player.inventory.getGemAndRuby() > 1) {
-                    new Thread(() -> {
+                    player.inventory.subGemAndRuby(1);
+                    final Player p = player;
+                    final long finalTnsm = tnsm;
+                    final int finalTime = time;
+                    server.GameLoopManager.gI().schedule(() -> {
                         try {
-                            player.inventory.subGemAndRuby(1);
-                            Thread.sleep(1000);
-                            if (player.zone == null) {
-                                return;
+                            if (p != null && !p.beforeDispose && !p.isOffline && p.zone != null) {
+                                p.lastMapOffline = p.zone.map.mapId;
+                                p.lastZoneOffline = p.zone.zoneId;
+                                p.lastXOffline = p.location.x;
+                                Service.gI().addSMTN(p, (byte) 2, finalTnsm, false);
+                                p.teleTapTuDong = true;
+                                p.thongBaoTapTuDong = "Bạn tăng được " + Util.powerToString(finalTnsm) + " sức mạnh trong thời gian " + (finalTime / 60) + " phút tập luyện Offline, -1 ngọc (phí đăng ký tập tự động)";
+                                ChangeMapService.gI().changeMapBySpaceShip(p, p.mapIdDangTapTuDong, 0, Util.nextInt(200, 400));
+                                Service.gI().sendMoney(p);
                             }
-                            player.lastMapOffline = player.zone.map.mapId;
-                            player.lastZoneOffline = player.zone.zoneId;
-                            player.lastXOffline = player.location.x;
-                            Service.gI().addSMTN(player, (byte) 2, tnsm, false);
-                            player.teleTapTuDong = true;
-                            player.thongBaoTapTuDong = "Bạn tăng được " + Util.powerToString(tnsm) + " sức mạnh trong thời gian " + (time / 60) + " phút tập luyện Offline, -1 ngọc (phí đăng ký tập tự động)";
-                            ChangeMapService.gI().changeMapBySpaceShip(player, player.mapIdDangTapTuDong, 0, Util.nextInt(200, 400));
-                            Service.gI().sendMoney(player);
-                        } catch (InterruptedException e) {
+                        } catch (Exception e) {
                         }
-                    }, "Luyện Tập").start();
+                    }, 1000);
                 } else {
                     player.dangKyTapTuDong = false;
                     Service.gI().sendThongBao(player, "Bạn không đủ ngọc, đăng ký luyện tập tự động đã bị hủy");

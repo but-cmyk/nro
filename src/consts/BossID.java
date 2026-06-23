@@ -155,7 +155,7 @@ public class BossID {
     public static final int DEATH_BEAM_4 = -612;
     public static final int DEATH_BEAM_5 = -613;
 
-    public static final int HAKAI = -613;
+    public static final int HAKAI = -614;
 
     //========================MABU 2H========================
     public static final int MABU = -214;

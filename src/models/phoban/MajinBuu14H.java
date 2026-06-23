@@ -15,7 +15,7 @@ import services.map.ChangeMapService;
 import utils.TimeUtil;
 
 @Data
-public final class MajinBuu14H implements Runnable {
+public final class MajinBuu14H {
 
     public static final int AVAILABLE = 7;
     public int id;
@@ -24,29 +24,9 @@ public final class MajinBuu14H implements Runnable {
     public MajinBuu14H(int id) {
         this.id = id;
         this.zones = new ArrayList<>();
-        this.init();
     }
 
-    public void init() {
-        new Thread(this, "MajinBuu 14H - Id : " + id).start();
-    }
 
-    @Override
-    public void run() {
-        while (!Maintenance.isRunning) {
-            try {
-                long startTime = System.currentTimeMillis();
-                update();
-                long elapsedTime = System.currentTimeMillis() - startTime;
-                long sleepTime = 150 - elapsedTime;
-                if (sleepTime > 0) {
-                    Functions.sleep(sleepTime);
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-    }
 
     public void update() {
         if (!TimeUtil.isMabu14HOpen()) {

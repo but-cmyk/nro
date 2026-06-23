@@ -56,7 +56,7 @@ public class Trade {
         TransactionService.PLAYER_TRADE.put(pl2, this);
     }
 
-    public void openTabTrade() {
+    public synchronized void openTabTrade() {
         player1.idMark.setAcpTrade(true);
         player2.idMark.setAcpTrade(true);
         this.lastTimeStart = System.currentTimeMillis();
@@ -84,7 +84,7 @@ public class Trade {
 //        itemsTrade2.add(it);
 //    }
 
-    public void addItemTrade(Player pl, byte index, int quantity) {
+    public synchronized void addItemTrade(Player pl, byte index, int quantity) {
         if (!this.player1.getSession().actived || !this.player2.getSession().actived) {
             Service.gI().sendThongBaoFromAdmin(pl,
                     "|7|Bạn chưa mở thành viên hoặc người kia chưa mở");
@@ -158,7 +158,7 @@ public class Trade {
         }
     }
 
-    private void removeItemTrade(Player pl, byte index) {
+    private synchronized void removeItemTrade(Player pl, byte index) {
         Message msg = null;
         try {
             msg = new Message(-86);
@@ -224,7 +224,7 @@ public class Trade {
         }
     }
 
-    public void cancelTrade() {
+    public synchronized void cancelTrade() {
         String notifiText = "Giao dịch bị hủy bỏ";
         Service.gI().sendThongBao(player1, notifiText);
         Service.gI().sendThongBao(player2, notifiText);
@@ -247,7 +247,7 @@ public class Trade {
         }
     }
 
-    public void dispose() {
+    public synchronized void dispose() {
         player1.idMark.setPlayerTradeId(-1);
         player2.idMark.setPlayerTradeId(-1);
         TransactionService.PLAYER_TRADE.remove(player1);
@@ -260,7 +260,7 @@ public class Trade {
         this.itemsTrade2 = null;
     }
 
-    public void lockTran(Player pl) {
+    public synchronized void lockTran(Player pl) {
         Message msg = null;
         try {
             msg = new Message(-86);
@@ -309,14 +309,14 @@ public class Trade {
         }
     }
 
-    public void acceptTrade() {
+    public synchronized void acceptTrade() {
         this.accept++;
         if (this.accept == 2) {
             this.startTrade();
         }
     }
 
-    private void startTrade() {
+    private synchronized void startTrade() {
         byte tradeStatus = SUCCESS;
         if (player1.inventory.gold + goldTrade2 > Inventory.LIMIT_GOLD) {
             tradeStatus = FAIL_MAX_GOLD_PLAYER1;
@@ -398,7 +398,7 @@ public class Trade {
         }
     }
 
-    public void update() {
+    public synchronized void update() {
         if (this.start && Util.canDoWithTime(lastTimeStart, TIME_TRADE)) {
             this.cancelTrade();
         }

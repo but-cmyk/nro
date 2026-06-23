@@ -78,40 +78,26 @@ import models.player.Player;
 import network.io.Message;
 import services.map.MapService;
 
-import java.util.ArrayList;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.function.Supplier;
 import models.boss.AnTrom;
 import models.boss.boss_list.Black.BlackGoku;
-//import models.boss.boss_list.BossRongNhi.RongNhi1Sao;
-//import models.boss.boss_list.BossRongNhi.RongNhi2Sao;
-//import models.boss.boss_list.BossRongNhi.RongNhi3Sao;
-//import models.boss.boss_list.BossRongNhi.RongNhi4Sao;
-//import models.boss.boss_list.BossRongNhi.RongNhi5Sao;
-//import models.boss.boss_list.BossRongNhi.RongNhi6Sao;
-//import models.boss.boss_list.BossRongNhi.RongNhi7Sao;
-//import models.boss.boss_list.ChristmasEvent.BrolySSJ3;
-//import models.boss.boss_list.ChristmasEvent.CoolerVang;
-//import models.boss.boss_list.ChristmasEvent.SuperXaydaGod;
 import models.boss.boss_list.ChristmasEvent.TuanLoc;
 import models.boss.boss_list.HalloweenEvent.Doi;
 import models.boss.boss_list.HalloweenEvent.MaTroi;
-//import models.boss.boss_list.Cooler.Frost;
-//import models.boss.boss_list.HungVuongEvent.SonTinh;
-//import models.boss.boss_list.HungVuongEvent.ThuyTinh;
 import models.boss.boss_list.NewBoss.*;
 import models.boss.boss_list.ThoDaiKa.ThoDaiKa;
 import models.boss.boss_list.huydiet.Cumber;
-//import models.boss.boss_list.huydiet.berus;
-//import models.boss.boss_list.huydiet.champa;
-//import models.boss.boss_list.huydiet.vados;
-//import models.boss.boss_list.huydiet.whis;
 import models.map.Zone;
 import server.Maintenance;
 import server.ServerManager;
 import utils.Logger;
 import utils.Util;
 
-public class BossManager implements Runnable {
+public class BossManager {
 
     private static BossManager instance;
     //public static byte ratioReward = 10;
@@ -124,7 +110,7 @@ public class BossManager implements Runnable {
     }
 
     public BossManager() {
-        this.bosses = new ArrayList<>();
+        this.bosses = new CopyOnWriteArrayList<>();
     }
 
     protected final List<Boss> bosses;
@@ -139,6 +125,99 @@ public class BossManager implements Runnable {
 
     public List<Boss> getBosses() {
         return this.bosses;
+    }
+
+    @FunctionalInterface
+    public interface BossSupplier {
+        Boss get() throws Exception;
+    }
+
+    private static final Map<Integer, BossSupplier> BOSS_REGISTRY = new HashMap<>();
+
+    static {
+        BOSS_REGISTRY.put(BossID.CUMBER, Cumber::new);
+        BOSS_REGISTRY.put(BossID.AN_TROM, AnTrom::new);
+        BOSS_REGISTRY.put(BossID.THO_DAI_KA, ThoDaiKa::new);
+        BOSS_REGISTRY.put(BossID.TUAN_LOC, TuanLoc::new);
+        BOSS_REGISTRY.put(BossID.BLACK_GOKU, BlackGoku::new);
+        BOSS_REGISTRY.put(BossID.TAP_SU_0, TAPSU0::new);
+        BOSS_REGISTRY.put(BossID.TAP_SU_1, TAPSU1::new);
+        BOSS_REGISTRY.put(BossID.TAP_SU_2, TAPSU2::new);
+        BOSS_REGISTRY.put(BossID.TAP_SU_3, TAPSU3::new);
+        BOSS_REGISTRY.put(BossID.TAP_SU_4, TAPSU4::new);
+        BOSS_REGISTRY.put(BossID.TAN_BINH_5, TANBINH5::new);
+        BOSS_REGISTRY.put(BossID.TAN_BINH_0, TANBINH0::new);
+        BOSS_REGISTRY.put(BossID.TAN_BINH_1, TANBINH1::new);
+        BOSS_REGISTRY.put(BossID.TAN_BINH_2, TANBINH2::new);
+        BOSS_REGISTRY.put(BossID.TAN_BINH_3, TANBINH3::new);
+        BOSS_REGISTRY.put(BossID.TAN_BINH_4, TANBINH4::new);
+        BOSS_REGISTRY.put(BossID.CHIEN_BINH_5, CHIENBINH5::new);
+        BOSS_REGISTRY.put(BossID.CHIEN_BINH_0, CHIENBINH0::new);
+        BOSS_REGISTRY.put(BossID.CHIEN_BINH_1, CHIENBINH1::new);
+        BOSS_REGISTRY.put(BossID.CHIEN_BINH_2, CHIENBINH2::new);
+        BOSS_REGISTRY.put(BossID.CHIEN_BINH_3, CHIENBINH3::new);
+        BOSS_REGISTRY.put(BossID.CHIEN_BINH_4, CHIENBINH4::new);
+        BOSS_REGISTRY.put(BossID.DOI_TRUONG_5, DOITRUONG5::new);
+        BOSS_REGISTRY.put(BossID.SO_4, SO4::new);
+        BOSS_REGISTRY.put(BossID.SO_3, SO3::new);
+        BOSS_REGISTRY.put(BossID.SO_2, SO2::new);
+        BOSS_REGISTRY.put(BossID.SO_1, SO1::new);
+        BOSS_REGISTRY.put(BossID.TIEU_DOI_TRUONG, TDT::new);
+        BOSS_REGISTRY.put(BossID.SO_4_NM, SO4_NM::new);
+        BOSS_REGISTRY.put(BossID.SO_3_NM, SO3_NM::new);
+        BOSS_REGISTRY.put(BossID.SO_2_NM, SO2_NM::new);
+        BOSS_REGISTRY.put(BossID.SO_1_NM, SO1_NM::new);
+        BOSS_REGISTRY.put(BossID.TIEU_DOI_TRUONG_NM, TDT_NM::new);
+        BOSS_REGISTRY.put(BossID.BUJIN, BUJIN::new);
+        BOSS_REGISTRY.put(BossID.KOGU, KOGU::new);
+        BOSS_REGISTRY.put(BossID.ZANGYA, ZANGYA::new);
+        BOSS_REGISTRY.put(BossID.BIDO, BIDO::new);
+        BOSS_REGISTRY.put(BossID.BOJACK, BOJACK::new);
+        BOSS_REGISTRY.put(BossID.SUPER_BOJACK, SUPER_BOJACK::new);
+        BOSS_REGISTRY.put(BossID.KUKU, Kuku::new);
+        BOSS_REGISTRY.put(BossID.MAP_DAU_DINH, MapDauDinh::new);
+        BOSS_REGISTRY.put(BossID.RAMBO, Rambo::new);
+        BOSS_REGISTRY.put(BossID.TAU_PAY_PAY_DONG_NAM_KARIN, TaoPaiPai::new);
+        BOSS_REGISTRY.put(BossID.DRABURA, Drabura::new);
+        BOSS_REGISTRY.put(BossID.BUI_BUI, BuiBui::new);
+        BOSS_REGISTRY.put(BossID.BUI_BUI_2, BuiBui2::new);
+        BOSS_REGISTRY.put(BossID.YA_CON, Yacon::new);
+        BOSS_REGISTRY.put(BossID.DRABURA_2, Drabura2::new);
+        BOSS_REGISTRY.put(BossID.GOKU, Goku::new);
+        BOSS_REGISTRY.put(BossID.CADIC, Cadic::new);
+        BOSS_REGISTRY.put(BossID.MABU_12H, Mabu::new);
+        BOSS_REGISTRY.put(BossID.DRABURA_3, Drabura3::new);
+        BOSS_REGISTRY.put(BossID.MABU, Mabu2H::new);
+        BOSS_REGISTRY.put(BossID.SUPERBU, SuperBu::new);
+        BOSS_REGISTRY.put(BossID.FIDE, Fide::new);
+        BOSS_REGISTRY.put(BossID.DR_KORE, DrKore::new);
+        BOSS_REGISTRY.put(BossID.ANDROID_19, Android19::new);
+        BOSS_REGISTRY.put(BossID.ANDROID_13, Android13::new);
+        BOSS_REGISTRY.put(BossID.ANDROID_14, Android14::new);
+        BOSS_REGISTRY.put(BossID.ANDROID_15, Android15::new);
+        BOSS_REGISTRY.put(BossID.PIC, Pic::new);
+        BOSS_REGISTRY.put(BossID.POC, Poc::new);
+        BOSS_REGISTRY.put(BossID.KING_KONG, KingKong::new);
+        BOSS_REGISTRY.put(BossID.XEN_BO_HUNG, XenBoHung::new);
+        BOSS_REGISTRY.put(BossID.SIEU_BO_HUNG, SieuBoHung::new);
+        BOSS_REGISTRY.put(BossID.XEN_CON_1, XENCON1::new);
+        BOSS_REGISTRY.put(BossID.XEN_CON_2, XENCON2::new);
+        BOSS_REGISTRY.put(BossID.XEN_CON_3, XENCON3::new);
+        BOSS_REGISTRY.put(BossID.XEN_CON_4, XENCON4::new);
+        BOSS_REGISTRY.put(BossID.XEN_CON_5, XENCON5::new);
+        BOSS_REGISTRY.put(BossID.XEN_CON_6, XENCON6::new);
+        BOSS_REGISTRY.put(BossID.XEN_CON_7, XENCON7::new);
+        BOSS_REGISTRY.put(BossID.COOLER, Cooler::new);
+        BOSS_REGISTRY.put(BossID.BROLY, Broly::new);
+        BOSS_REGISTRY.put(BossID.GOLDEN_FRIEZA, GoldenFrieza::new);
+        BOSS_REGISTRY.put(BossID.DEATH_BEAM_1, () -> new DeathBeam(BossID.DEATH_BEAM_1, 14600));
+        BOSS_REGISTRY.put(BossID.DEATH_BEAM_2, () -> new DeathBeam(BossID.DEATH_BEAM_2, 14700));
+        BOSS_REGISTRY.put(BossID.DEATH_BEAM_3, () -> new DeathBeam(BossID.DEATH_BEAM_3, 14800));
+        BOSS_REGISTRY.put(BossID.DEATH_BEAM_4, () -> new DeathBeam(BossID.DEATH_BEAM_4, 14900));
+        BOSS_REGISTRY.put(BossID.DEATH_BEAM_5, () -> new DeathBeam(BossID.DEATH_BEAM_5, 15000));
+        BOSS_REGISTRY.put(BossID.BIMA, BiMa::new);
+        BOSS_REGISTRY.put(BossID.MATROI, MaTroi::new);
+        BOSS_REGISTRY.put(BossID.DOI, Doi::new);
     }
 
     public void loadBoss() {
@@ -160,16 +239,10 @@ public class BossManager implements Runnable {
         this.createBoss(BossID.BROLY, 10);
         this.createBoss(BossID.CHILLER);
         this.createBoss(BossID.CUMBER);
-//        this.createBoss(BossID.BERUS);
-//        this.createBoss(BossID.CHAMPA);
-//        this.createBoss(BossID.VADOS);
-//        this.createBoss(BossID.WHIS_1);
 
         this.createBoss(BossID.TIEU_DOI_TRUONG_NM);
         this.createBoss(BossID.BOJACK);
         this.createBoss(BossID.SUPER_BOJACK);
-        //   this.createBoss(BossID.COLLER_GOLD);
-//        this.createBoss(BossID.BE_NA, 3);
         this.createBoss(BossID.RONG_1_SAO);
         this.createBoss(BossID.RONG_2_SAO);
         this.createBoss(BossID.RONG_3_SAO);
@@ -177,12 +250,9 @@ public class BossManager implements Runnable {
         this.createBoss(BossID.RONG_5_SAO);
         this.createBoss(BossID.RONG_6_SAO);
         this.createBoss(BossID.RONG_7_SAO);
-//        this.createBoss(BossID.SON_TINH);
-//        this.createBoss(BossID.THUY_TINH);
         this.createBoss(BossID.AN_TROM, 20);
         this.createBoss(BossID.THO_DAI_KA, 5);
 
-//         this.createBoss(BossID.FROST);
         for (int i = 20; i != -1; i--) {//20: số lượng boss
             try {
                 new ChoRach().zoneFinal = Util.randomAllMap();
@@ -202,246 +272,26 @@ public class BossManager implements Runnable {
 
     public Boss createBoss(int bossID) {
         try {
-            return switch (bossID) {
-                case BossID.CUMBER ->
-                    new Cumber();
-                case BossID.AN_TROM ->
-                    new AnTrom();
-                case BossID.THO_DAI_KA ->
-                    new ThoDaiKa();
-                case BossID.TUAN_LOC ->
-                    new TuanLoc();
-                //     case BossID.COLLER_GOLD ->
-//                    new CoolerVang();
-                // case BossID.GOKUGOD ->
-                //      new SuperXaydaGod();
-                //  case BossID.BROLYSSJ ->
-                //      new BrolySSJ3();
-//                case BossID.CHILLER ->
-//                    new Chiller();
-                //   case BossID.FROST ->
-                //      new Frost();
-                //case BossID.VADOS ->
-                //     new vados();
-                //   case BossID.CHAMPA ->
-                //       new champa();
-                //   case BossID.WHIS_1 ->
-                //      new whis();
-                //   case BossID.BERUS ->
-                //       new berus();
-                case BossID.BLACK_GOKU ->
-                    new BlackGoku();
-                case BossID.TAP_SU_0 ->
-                    new TAPSU0();
-                case BossID.TAP_SU_1 ->
-                    new TAPSU1();
-                case BossID.TAP_SU_2 ->
-                    new TAPSU2();
-                case BossID.TAP_SU_3 ->
-                    new TAPSU3();
-                case BossID.TAP_SU_4 ->
-                    new TAPSU4();
-                case BossID.TAN_BINH_5 ->
-                    new TANBINH5();
-                case BossID.TAN_BINH_0 ->
-                    new TANBINH0();
-                case BossID.TAN_BINH_1 ->
-                    new TANBINH1();
-                case BossID.TAN_BINH_2 ->
-                    new TANBINH2();
-                case BossID.TAN_BINH_3 ->
-                    new TANBINH3();
-                case BossID.TAN_BINH_4 ->
-                    new TANBINH4();
-                case BossID.CHIEN_BINH_5 ->
-                    new CHIENBINH5();
-                case BossID.CHIEN_BINH_0 ->
-                    new CHIENBINH0();
-                case BossID.CHIEN_BINH_1 ->
-                    new CHIENBINH1();
-                case BossID.CHIEN_BINH_2 ->
-                    new CHIENBINH2();
-                case BossID.CHIEN_BINH_3 ->
-                    new CHIENBINH3();
-                case BossID.CHIEN_BINH_4 ->
-                    new CHIENBINH4();
-                case BossID.DOI_TRUONG_5 ->
-                    new DOITRUONG5();
-                case BossID.SO_4 ->
-                    new SO4();
-                case BossID.SO_3 ->
-                    new SO3();
-                case BossID.SO_2 ->
-                    new SO2();
-                case BossID.SO_1 ->
-                    new SO1();
-                case BossID.TIEU_DOI_TRUONG ->
-                    new TDT();
-                case BossID.SO_4_NM ->
-                    new SO4_NM();
-                case BossID.SO_3_NM ->
-                    new SO3_NM();
-                case BossID.SO_2_NM ->
-                    new SO2_NM();
-                case BossID.SO_1_NM ->
-                    new SO1_NM();
-                case BossID.TIEU_DOI_TRUONG_NM ->
-                    new TDT_NM();
-                case BossID.BUJIN ->
-                    new BUJIN();
-                case BossID.KOGU ->
-                    new KOGU();
-                case BossID.ZANGYA ->
-                    new ZANGYA();
-                case BossID.BIDO ->
-                    new BIDO();
-                case BossID.BOJACK ->
-                    new BOJACK();
-                case BossID.SUPER_BOJACK ->
-                    new SUPER_BOJACK();
-                case BossID.KUKU ->
-                    new Kuku();
-                case BossID.MAP_DAU_DINH ->
-                    new MapDauDinh();
-                case BossID.RAMBO ->
-                    new Rambo();
-                case BossID.TAU_PAY_PAY_DONG_NAM_KARIN ->
-                    new TaoPaiPai();
-                case BossID.DRABURA ->
-                    new Drabura();
-                case BossID.BUI_BUI ->
-                    new BuiBui();
-                case BossID.BUI_BUI_2 ->
-                    new BuiBui2();
-                case BossID.YA_CON ->
-                    new Yacon();
-                case BossID.DRABURA_2 ->
-                    new Drabura2();
-                case BossID.GOKU ->
-                    new Goku();
-                case BossID.CADIC ->
-                    new Cadic();
-                case BossID.MABU_12H ->
-                    new Mabu();
-                case BossID.DRABURA_3 ->
-                    new Drabura3();
-                case BossID.MABU ->
-                    new Mabu2H();
-                case BossID.SUPERBU ->
-                    new SuperBu();
-                case BossID.FIDE ->
-                    new Fide();
-                case BossID.DR_KORE ->
-                    new DrKore();
-                case BossID.ANDROID_19 ->
-                    new Android19();
-                case BossID.ANDROID_13 ->
-                    new Android13();
-                case BossID.ANDROID_14 ->
-                    new Android14();
-                case BossID.ANDROID_15 ->
-                    new Android15();
-                case BossID.PIC ->
-                    new Pic();
-                case BossID.POC ->
-                    new Poc();
-                case BossID.KING_KONG ->
-                    new KingKong();
-                case BossID.XEN_BO_HUNG ->
-                    new XenBoHung();
-                case BossID.SIEU_BO_HUNG ->
-                    new SieuBoHung();
-                case BossID.XEN_CON_1 ->
-                    new XENCON1();
-                case BossID.XEN_CON_2 ->
-                    new XENCON2();
-                case BossID.XEN_CON_3 ->
-                    new XENCON3();
-                case BossID.XEN_CON_4 ->
-                    new XENCON4();
-                case BossID.XEN_CON_5 ->
-                    new XENCON5();
-                case BossID.XEN_CON_6 ->
-                    new XENCON6();
-                case BossID.XEN_CON_7 ->
-                    new XENCON7();
-                case BossID.COOLER ->
-                    new Cooler();
-                case BossID.BROLY ->
-                    new Broly();
-                case BossID.GOLDEN_FRIEZA ->
-                    new GoldenFrieza();
-                case BossID.DEATH_BEAM_1 ->
-                        new DeathBeam(BossID.DEATH_BEAM_1, 14600); // 14.6 giây
-
-                case BossID.DEATH_BEAM_2 ->
-                        new DeathBeam(BossID.DEATH_BEAM_2, 14700); // 14.7 giây
-
-                case BossID.DEATH_BEAM_3 ->
-                        new DeathBeam(BossID.DEATH_BEAM_3, 14800); // 14.8 giây
-
-                case BossID.DEATH_BEAM_4 ->
-                        new DeathBeam(BossID.DEATH_BEAM_4, 14900); // 14.9 giây
-
-                case BossID.DEATH_BEAM_5 ->
-                        new DeathBeam(BossID.DEATH_BEAM_5, 15000); // 15.0 giây
-                // boss sk
-//                case BossID.KHIDOT ->
-//                        new KhiDot();
-//                case BossID.NGUYETTHAN ->
-//                        new NguyetThan();
-//                case BossID.NHATTHAN ->
-//                        new NhatThan();
-                case BossID.BIMA ->
-                    new BiMa();
-                case BossID.MATROI ->
-                    new MaTroi();
-                case BossID.DOI ->
-                    new Doi();
-//                case BossID.ONG_GIA_NOEL ->
-//                    new OngGiaNoel();
-//                case BossID.SON_TINH ->
-//                    new SonTinh();
-//                case BossID.THUY_TINH ->
-//                    new ThuyTinh();
-//                case BossID.LAN_CON ->
-//                    new LanCon();
-//                case BossID.RONG_1_SAO ->
-//                    new RongNhi1Sao();
-//                case BossID.RONG_2_SAO ->
-//                    new RongNhi2Sao();
-//                case BossID.RONG_3_SAO ->
-//                    new RongNhi3Sao();
-//                case BossID.RONG_4_SAO ->
-//                    new RongNhi4Sao();
-//                case BossID.RONG_5_SAO ->
-//                    new RongNhi5Sao();
-//                case BossID.RONG_6_SAO ->
-//                    new RongNhi6Sao();
-//                case BossID.RONG_7_SAO ->
-//                    new RongNhi7Sao();
-                // case BossID.SON_TINH ->
-                //    new SonTinh();
-                // case BossID.THUY_TINH ->
-                //  new ThuyTinh();
-                default ->
-                    null;
-            };
+            BossSupplier supplier = BOSS_REGISTRY.get(bossID);
+            if (supplier != null) {
+                return supplier.get();
+            }
+            return null;
         } catch (Exception e) {
             Logger.error(e + "\n");
             return null;
         }
     }
 
-    public Boss getBoss(int id) {
-        try {
-            Boss boss = this.bosses.get(id);
-            if (boss != null) {
-                return boss;
-            }
-        } catch (Exception e) {
+    public Boss getBossByIndex(int index) {
+        if (index < 0 || index >= this.bosses.size()) {
+            return null;
         }
-        return null;
+        try {
+            return this.bosses.get(index);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     public void showListBoss(Player player) {
@@ -499,24 +349,10 @@ public class BossManager implements Runnable {
         return this.bosses.stream().filter(boss -> boss.id == bossId && boss.zone != null && boss.zone.map.mapId == mapId && boss.zone.zoneId == zoneId && !boss.isDie()).findFirst().orElse(null);
     }
 
-    @Override
-    public void run() {
-        while (!Maintenance.isRunning) {
+    public void update() {
+        for (int i = this.bosses.size() - 1; i >= 0; i--) {
             try {
-                if (ServerManager.isReloading) {
-                    continue; // Nếu server đang reload, bỏ qua lượt update này và kiểm tra lại ở vòng lặp sau.
-                }
-                long st = System.currentTimeMillis();
-                for (int i = this.bosses.size() - 1; i >= 0; i--) {
-                    try {
-                        this.bosses.get(i).update();
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
-                if (150 - (System.currentTimeMillis() - st) > 0) {
-                    Thread.sleep(150 - (System.currentTimeMillis() - st));
-                }
+                this.bosses.get(i).update();
             } catch (Exception e) {
                 e.printStackTrace();
             }

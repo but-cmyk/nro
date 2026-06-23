@@ -17,11 +17,15 @@ import java.util.List;
 
 public class MapService {
 
-    private static MapService i;
+    private static volatile MapService i;
 
     public static MapService gI() {
         if (i == null) {
-            i = new MapService();
+            synchronized (MapService.class) {
+                if (i == null) {
+                    i = new MapService();
+                }
+            }
         }
         return i;
     }

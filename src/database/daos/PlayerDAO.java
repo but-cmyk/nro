@@ -1070,22 +1070,15 @@ public class PlayerDAO {
     public static boolean checkLogout(Connection con, Player player) {
         long lastTimeLogout = 0;
         long lastTimeLogin = 0;
-        try {
-            PreparedStatement ps = con.prepareStatement("select * from account where id = ? limit 1");
+        try (PreparedStatement ps = con.prepareStatement("select last_time_logout, last_time_login from account where id = ? limit 1")) {
             ps.setInt(1, player.getSession().userId);
-            ResultSet rs = ps.executeQuery();
-            while (rs.next()) {
-                lastTimeLogout = rs.getTimestamp("last_time_logout").getTime();
-                lastTimeLogin = rs.getTimestamp("last_time_login").getTime();
-            }
-            try {
-                if (rs != null) {
-                    rs.close();
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    java.sql.Timestamp logoutTime = rs.getTimestamp("last_time_logout");
+                    java.sql.Timestamp loginTime = rs.getTimestamp("last_time_login");
+                    lastTimeLogout = logoutTime != null ? logoutTime.getTime() : 0;
+                    lastTimeLogin = loginTime != null ? loginTime.getTime() : 0;
                 }
-                if (ps != null) {
-                    ps.close();
-                }
-            } catch (SQLException ex) {
             }
         } catch (Exception e) {
             return false;
@@ -1106,24 +1099,17 @@ public class PlayerDAO {
     }
 
     public static boolean subcash(Player player, int num) {
-        PreparedStatement ps = null;
-        try (Connection con = AlyraManager.getConnection();) {
-            ps = con.prepareStatement("update account set cash = (cash - ?) where id = ?");
+        try (Connection con = AlyraManager.getConnection();
+             PreparedStatement ps = con.prepareStatement("update account set cash = (cash - ?) where id = ?")) {
             ps.setInt(1, num);
             ps.setInt(2, player.getSession().userId);
             ps.executeUpdate();
             player.getSession().cash -= num;
+            return true;
         } catch (Exception e) {
             Logger.logException(PlayerDAO.class, e, "Lỗi update cash" + player.name);
             return false;
-        } finally {
-            try {
-                ps.close();
-            } catch (SQLException ex) {
-                java.util.logging.Logger.getLogger(PlayerDAO.class.getName()).log(Level.SEVERE, null, ex);
-            }
         }
-        return true;
     }
 
     public static void LogAddPoint(String name, int id, int point, String type) {

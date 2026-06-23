@@ -22,59 +22,79 @@ public class PetService {
     }
 
     public void createNormalPet(Player player, int gender, byte... limitPower) {
-        new Thread(() -> {
-            try {
-                createNewPet(player, false, false, false, false, (byte) gender);
-                if (limitPower != null && limitPower.length == 1) {
-                    player.pet.nPoint.limitPower = limitPower[0];
-                }
-                Thread.sleep(1000);
-                Service.gI().chatJustForMe(player, player.pet, "Xin hãy thu nhận làm đệ tử");
-            } catch (Exception e) {
+        try {
+            createNewPet(player, false, false, false, false, (byte) gender);
+            if (limitPower != null && limitPower.length == 1) {
+                player.pet.nPoint.limitPower = limitPower[0];
             }
-        }).start();
+            final Player p = player;
+            server.GameLoopManager.gI().schedule(() -> {
+                try {
+                    if (p != null && !p.beforeDispose && !p.isOffline && p.pet != null) {
+                        Service.gI().chatJustForMe(p, p.pet, "Xin hãy thu nhận làm đệ tử");
+                    }
+                } catch (Exception e) {
+                }
+            }, 1000);
+        } catch (Exception e) {
+        }
     }
 
     public void createNormalPet(Player player, byte... limitPower) {
-        new Thread(() -> {
-            try {
-                createNewPet(player, false, false, false, false);
-                if (limitPower != null && limitPower.length == 1) {
-                    player.pet.nPoint.limitPower = limitPower[0];
-                }
-                Thread.sleep(1000);
-                Service.gI().chatJustForMe(player, player.pet, "Xin hãy thu nhận làm đệ tử");
-            } catch (Exception e) {
+        try {
+            createNewPet(player, false, false, false, false);
+            if (limitPower != null && limitPower.length == 1) {
+                player.pet.nPoint.limitPower = limitPower[0];
             }
-        }).start();
+            final Player p = player;
+            server.GameLoopManager.gI().schedule(() -> {
+                try {
+                    if (p != null && !p.beforeDispose && !p.isOffline && p.pet != null) {
+                        Service.gI().chatJustForMe(p, p.pet, "Xin hãy thu nhận làm đệ tử");
+                    }
+                } catch (Exception e) {
+                }
+            }, 1000);
+        } catch (Exception e) {
+        }
     }
 
     public void createMabuPet(Player player, byte... limitPower) {
-        new Thread(() -> {
-            try {
-                createNewPet(player, true, false, false, false);
-                if (limitPower != null && limitPower.length == 1) {
-                    player.pet.nPoint.limitPower = limitPower[0];
-                }
-                Thread.sleep(1000);
-                Service.gI().chatJustForMe(player, player.pet, "Oa oa oa...");
-            } catch (Exception e) {
+        try {
+            createNewPet(player, true, false, false, false);
+            if (limitPower != null && limitPower.length == 1) {
+                player.pet.nPoint.limitPower = limitPower[0];
             }
-        }).start();
+            final Player p = player;
+            server.GameLoopManager.gI().schedule(() -> {
+                try {
+                    if (p != null && !p.beforeDispose && !p.isOffline && p.pet != null) {
+                        Service.gI().chatJustForMe(p, p.pet, "Oa oa oa...");
+                    }
+                } catch (Exception e) {
+                }
+            }, 1000);
+        } catch (Exception e) {
+        }
     }
 
     public void createMabuPet(Player player, int gender, byte... limitPower) {
-        new Thread(() -> {
-            try {
-                createNewPet(player, true, false, false, false, (byte) gender);
-                if (limitPower != null && limitPower.length == 1) {
-                    player.pet.nPoint.limitPower = limitPower[0];
-                }
-                Thread.sleep(1000);
-                Service.gI().chatJustForMe(player, player.pet, "Oa oa oa...");
-            } catch (Exception e) {
+        try {
+            createNewPet(player, true, false, false, false, (byte) gender);
+            if (limitPower != null && limitPower.length == 1) {
+                player.pet.nPoint.limitPower = limitPower[0];
             }
-        }).start();
+            final Player p = player;
+            server.GameLoopManager.gI().schedule(() -> {
+                try {
+                    if (p != null && !p.beforeDispose && !p.isOffline && p.pet != null) {
+                        Service.gI().chatJustForMe(p, p.pet, "Oa oa oa...");
+                    }
+                } catch (Exception e) {
+                }
+            }, 1000);
+        } catch (Exception e) {
+        }
     }
 
     public void changeNormalPet(Player player, int gender) {
@@ -136,13 +156,15 @@ public class PetService {
             ChangeMapService.gI().exitMap(player.pet);
             player.pet.name = "$" + name.toLowerCase().trim();
             InventoryService.gI().subQuantityItemsBag(player, InventoryService.gI().findItemBag(player, 400), 1);
-            new Thread(() -> {
+            final Player p = player;
+            server.GameLoopManager.gI().schedule(() -> {
                 try {
-                    Thread.sleep(1000);
-                    Service.gI().chatJustForMe(player, player.pet, "Cảm ơn sư phụ đã đặt cho con tên " + name);
+                    if (p != null && !p.beforeDispose && !p.isOffline && p.pet != null) {
+                        Service.gI().chatJustForMe(p, p.pet, "Cảm ơn sư phụ đã đặt cho con tên " + name);
+                    }
                 } catch (Exception e) {
                 }
-            }).start();
+            }, 1000);
         } catch (Exception ex) {
 
         }

@@ -91,18 +91,6 @@ public class TaskDanhHieu {
                 required = 30;
                 current = player.playerTask.taskdh.ChoSuong;
             }
-            case 1175 -> {
-                required = 1000;
-            }
-            case 1176 -> {
-                required = 1000;
-            }
-            case 1177 -> {
-                required = 1000;
-            }
-            case 1178 -> {
-                required = 1000;
-            }
             default -> {
                 return true;
             }

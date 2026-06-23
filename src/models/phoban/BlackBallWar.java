@@ -15,7 +15,7 @@ import server.Client;
 import server.Maintenance;
 
 @Data
-public class BlackBallWar implements Runnable {
+public class BlackBallWar {
 
     public static final int TIME_CAN_PICK_BLACK_BALL_AFTER_DROP = 5000;
 
@@ -46,28 +46,6 @@ public class BlackBallWar implements Runnable {
 
     public BlackBallWar(Zone zone) {
         this.zone = zone;
-        start();
-    }
-
-    private void start() {
-        new Thread(this, "Update Black Ball War Map " + zone.map.mapName + " Zone " + zone.zoneId).start();
-    }
-
-    @Override
-    public void run() {
-        while (!Maintenance.isRunning) {
-            try {
-                long startTime = System.currentTimeMillis();
-                update();
-                long elapsedTime = System.currentTimeMillis() - startTime;
-                long sleepTime = 1000 - elapsedTime;
-                if (sleepTime > 0) {
-                    Functions.sleep(sleepTime);
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
     }
 
     public void update() {
