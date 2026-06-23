@@ -31,7 +31,7 @@ public class Client implements Runnable {
     private static final long UPDATE_INTERVAL = 1000; // 1 second
     private static final int NRNAM_OFFSET = 353;
 
-    private static Client instance;
+    private static volatile Client instance;
     private static final Object instanceLock = new Object();
 
     // Thread-safe collections
@@ -99,6 +99,7 @@ public class Client implements Runnable {
                 while (iterator.hasNext()) {
                     MySession session = (MySession) iterator.next();
                     if (session != null && session.player == null) {
+                        session.disconnect();
                         iterator.remove();
                         cleared++;
                     }
@@ -294,8 +295,7 @@ public class Client implements Runnable {
                 AlyraManager.executeUpdate(
                         "UPDATE account SET last_time_logout = ? WHERE id = ?",
                         new Timestamp(System.currentTimeMillis()),
-                        session.userId
-                );
+                        session.userId);
             } catch (SQLException e) {
                 Logger.logException(Client.class, e, "Error updating last_time_logout for user: " + session.userId);
             } catch (Exception ex) {
@@ -375,6 +375,7 @@ public class Client implements Runnable {
                 while (iterator.hasNext()) {
                     MySession session = (MySession) iterator.next();
                     if (session != null && session.player == null) {
+                        session.disconnect();
                         iterator.remove();
                     }
                 }
@@ -445,7 +446,8 @@ public class Client implements Runnable {
 
             // Warning if memory usage is high
             if (memoryUsagePercent > 80) {
-                Logger.error("WARNING: High memory usage detected (" + String.format("%.1f", memoryUsagePercent) + "%)");
+                Logger.error(
+                        "WARNING: High memory usage detected (" + String.format("%.1f", memoryUsagePercent) + "%)");
             }
 
             Logger.log("=========================================");

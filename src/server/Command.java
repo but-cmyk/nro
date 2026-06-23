@@ -1,6 +1,6 @@
 package server;
 
-//import Bot.BotManager;
+//import bot.BotManager;
 import consts.ConstNpc;
 import data.DataGame;
 import data.ItemData;
@@ -130,13 +130,13 @@ public class Command {
             try {
                 String[] point = text.split(" ");
                 int diem = Integer.parseInt(point[1]);
-                if (point.length > 1) {
+                if (point.length > 2) {
                     Player pl = Client.gI().getPlayer(point[2]);
                     if (pl != null) {
                         pl.inventory.coupon += diem;
                         Service.gI().sendThongBao(player, "Cộng thành công " + diem + " Sự kiện Quy lão cho " + pl.name);
                     } else {
-                        Service.gI().sendThongBao(pl, "Người chơi không tồn tại hoặc không trực tuyến !");
+                        Service.gI().sendThongBao(player, "Người chơi không tồn tại hoặc không trực tuyến !");
                     }
                 } else {
                     player.inventory.coupon += diem;

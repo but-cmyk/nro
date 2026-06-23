@@ -35,13 +35,13 @@ import services.phoban.SnakeWayService;
 import models.phoban.DestronGas;
 import services.phoban.DestronGasService;
 import models.phoban.MajinBuu14H;
-import nro.models.mob_bigboss.MayDoSucManh;
+import models.mob.bigboss_list.MayDoSucManh;
 import services.phoban.MajinBuu14HService;
 import services.phoban.SuperDivineWaterService;
 import services.map.MapService;
 import utils.Logger;
 
-public class Map implements Runnable {
+public class Map {
 
     public static final byte T_EMPTY = 0;
     public static final byte T_TOP = 2;
@@ -153,27 +153,7 @@ public class Map implements Runnable {
         }
     }
 
-    @Override
-    public void run() {
-        while (true) {
-            try {
-                long st = System.currentTimeMillis();
-                for (Zone zone : this.zones) {
-                    try {
-                        zone.update();
-                    } catch (Exception e) {
-                        Logger.logException(Map.class, e, "Lỗi update zone");
-                    }
-                }
-                long timeDo = System.currentTimeMillis() - st;
-                if (1000 - timeDo > 0) {
-                    Thread.sleep(1000 - timeDo);
-                }
-            } catch (Exception e) {
-                Logger.logException(Map.class, e, "Lỗi update map " + this.mapName);
-            }
-        }
-    }
+
 
     public void initMob(byte[] mobTemp, byte[] mobLevel, int[] mobHp, short[] mobX, short[] mobY) {
         for (int i = 0; i < mobTemp.length; i++) {
@@ -281,7 +261,7 @@ public class Map implements Runnable {
         for (Zone zone : zones) {
             short bossId = -1;
             switch (this.mapId) {
-                case 111 ->
+                case 47 ->
                     bossId = BossID.TAU_PAY_PAY_DONG_NAM_KARIN;
                 case 114 ->
                     bossId = BossID.DRABURA;

@@ -16,11 +16,15 @@ import models.map.Zone;
 
 public class ItemService {
 
-    private static ItemService i;
+    private static volatile ItemService i;
 
     public static ItemService gI() {
         if (i == null) {
-            i = new ItemService();
+            synchronized (ItemService.class) {
+                if (i == null) {
+                    i = new ItemService();
+                }
+            }
         }
         return i;
     }

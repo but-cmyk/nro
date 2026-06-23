@@ -31,13 +31,14 @@ public class TraThu extends PVP {
         }
         Service.gI().sendThongBao(p2, "Có người đang đến tìm bạn để trả thù");
         Service.gI().chat(p1, "Mày tới số rồi con ạ!");
-        new Thread(() -> {
+        server.GameLoopManager.gI().schedule(() -> {
             try {
-                Thread.sleep(3000);
-            } catch (InterruptedException e) {
+                if (p1 != null && !p1.beforeDispose && !p1.isOffline && p2 != null && !p2.beforeDispose && !p2.isOffline) {
+                    super.start();
+                }
+            } catch (Exception e) {
             }
-            super.start();
-        }).start();
+        }, 3000);
     }
 
     @Override

@@ -276,6 +276,34 @@ public static final String queryTopWhis = "SELECT id, CAST(JSON_UNQUOTE(JSON_EXT
         for (MapTemplate mapTemp : MAP_TEMPLATES) {
             int[][] tileMap = readTileMap(mapTemp.id);
             int[] tileTop = tileTyleTop[mapTemp.tileId - 1];
+            if (mapTemp.id == 5) {
+                if (mapTemp.effectMaps == null) {
+                    mapTemp.effectMaps = new ArrayList<>();
+                }
+                boolean hasRainBg = false;
+                boolean hasRainFg = false;
+                for (EffectMap em : mapTemp.effectMaps) {
+                    if (em.getKey().equals("beff")) {
+                        if (em.getValue().equals("0")) {
+                            hasRainBg = true;
+                        } else if (em.getValue().equals("12")) {
+                            hasRainFg = true;
+                        }
+                    }
+                }
+                if (!hasRainBg) {
+                    EffectMap em = new EffectMap();
+                    em.setKey("beff");
+                    em.setValue("0");
+                    mapTemp.effectMaps.add(em);
+                }
+                if (!hasRainFg) {
+                    EffectMap em = new EffectMap();
+                    em.setKey("beff");
+                    em.setValue("12");
+                    mapTemp.effectMaps.add(em);
+                }
+            }
             models.map.Map map = new models.map.Map(mapTemp.id,
                     mapTemp.name, mapTemp.planetId, mapTemp.tileId, mapTemp.bgId,
                     mapTemp.bgType, mapTemp.type, tileMap, tileTop,
@@ -286,26 +314,6 @@ public static final String queryTopWhis = "SELECT id, CAST(JSON_UNQUOTE(JSON_EXT
             map.initNpc(mapTemp.npcId, mapTemp.npcX, mapTemp.npcY);
         }
         new NonInteractiveNPC().initNonInteractiveNPC();
-        new Thread(() -> {
-            try {
-                while (!Maintenance.isRunning) {
-                    long st = System.currentTimeMillis();
-                    for (models.map.Map map : MAPS) {
-                        for (Zone zone : map.zones) {
-                            try {
-                                zone.update();
-                            } catch (Exception e) {
-                            }
-                        }
-                    }
-                    long timeDo = System.currentTimeMillis() - st;
-                    if (1000 - timeDo > 0) {
-                        Thread.sleep(1000 - timeDo);
-                    }
-                }
-            } catch (Exception e) {
-            }
-        }, "Update Maps").start();
         Logger.log(Logger.GREEN, "Init map successful! \n");
     }
 
@@ -422,7 +430,7 @@ public static final String queryTopWhis = "SELECT id, CAST(JSON_UNQUOTE(JSON_EXT
 
             ps = con.prepareStatement("select id from clan order by id desc limit 1");
             rs = ps.executeQuery();
-            if (rs.first()) {
+            if (rs.next()) {
                 Clan.NEXT_ID = rs.getInt("id") + 1;
             }
 
@@ -773,7 +781,7 @@ public static final String queryTopWhis = "SELECT id, CAST(JSON_UNQUOTE(JSON_EXT
             //load map template
             ps = conn.prepareStatement("select count(id) from map_template");
             rs = ps.executeQuery();
-            if (rs.first()) {
+            if (rs.next()) {
                 int countRow = rs.getShort(1);
                 MAP_TEMPLATES = new MapTemplate[countRow];
                 ps = conn.prepareStatement("select * from map_template");
@@ -1160,8 +1168,12 @@ public static final String queryTopWhis = "SELECT id, CAST(JSON_UNQUOTE(JSON_EXT
                         top.setInfo2(Util.powerToString(rs.getLong("sm")) + " sức mạnh");
                         break;
                     case queryTopNV:
-                        top.setInfo1(rs.getByte("second_value") + "");
-                        top.setInfo2(rs.getByte("second_value") + "");
+                        String nvVal = rs.getString("second_value");
+                        if (nvVal == null) {
+                            nvVal = "0";
+                        }
+                        top.setInfo1(nvVal);
+                        top.setInfo2(nvVal);
                         break;
                     case queryTopNap:
                         top.setInfo1(rs.getInt("danap") + " VND");

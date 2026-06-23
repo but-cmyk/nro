@@ -1,25 +1,22 @@
-package nro.models.mob_bigboss;
+package models.mob.bigboss_list;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import models.mob.BigBoss;
 import models.mob.Mob;
 import models.player.Player;
+import utils.Util;
 
 public class MayDoSucManh extends BigBoss {
 
     private final Map<Long, Long> damageMap = new HashMap<>();
     private final Map<Long, Integer> milestoneMap = new HashMap<>();
-    private static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+    private long lastTimeRegen = System.currentTimeMillis();
 
     public MayDoSucManh(Mob mob) {
         super(mob);
-        startHealthRegeneration();
     }
 
     @Override
@@ -82,11 +79,12 @@ public class MayDoSucManh extends BigBoss {
 //        Service.gI().updatePlayerTotalDamage(pl);
     }}
 
-    private void startHealthRegeneration() {
-        scheduler.scheduleAtFixedRate(() -> {
-            if (!isDie()) {
-                this.point.hp = this.point.maxHp;
-            }
-        }, 0, 1, TimeUnit.SECONDS);
+    @Override
+    public void update() {
+        super.update();
+        if (!isDie() && Util.canDoWithTime(lastTimeRegen, 1000)) {
+            this.point.hp = this.point.maxHp;
+            lastTimeRegen = System.currentTimeMillis();
+        }
     }
 }

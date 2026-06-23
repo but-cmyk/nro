@@ -5,6 +5,7 @@ import models.radar.Card;
 import database.AlyraManager;
 import database.AlyraResultSet;
 import consts.ConstPlayer;
+import consts.ConstTask;
 import data.DataGame;
 import models.clan.Clan;
 import models.clan.ClanMember;
@@ -58,11 +59,20 @@ public class NDVSqlFetcher {
 
         try {
             rsAccount = AlyraManager.executeQuery(
-                    "SELECT * FROM account WHERE username = ? AND password = ?",
-                    session.uu, session.pp
+                    "SELECT account.id, account.username, account.password, account.create_time, account.update_time, account.ban, account.is_admin, account.last_time_login, account.last_time_logout, account.ip_address, account.active, account.thoi_vang, account.server_login, account.bd_player, account.is_gift_box, account.gift_time, account.cash, account.danap, account.luotquay, account.vang, account.event_point, account.vip, account.vip1, account.vip2, account.sotien, account.diem_da_nhan, account.hasReceivedVIP, account.hasReceivedVIP1, account.hasReceivedVIP2, account.lastTimeReceivedVIP, account.lastTimeReceivedVIP1, account.lastTimeReceivedVIP2, account.gioithieu, account.tichdiem, account.gmail, account.server FROM account WHERE username = ?",
+                    session.uu
             );
 
             if (rsAccount.first()) {
+                // Verify BCrypt password hash
+                String storedHash = rsAccount.getString("password");
+                if (!utils.PasswordUtils.verifyPassword(session.pp, storedHash)) {
+                    Service.gI().sendThongBaoOK(session, "Thông tin tài khoản hoặc mật khẩu không chính xác");
+                    Service.gI().sendLoginFail(session, false);
+                    al.wrong();
+                    return null;
+                }
+
                 session.userId = rsAccount.getInt("account.id");
 
                 if ((plInGame = Client.gI().getPlayerByUser(session.userId)) != null) {
@@ -905,6 +915,7 @@ public class NDVSqlFetcher {
                 taskMain.lastTime = System.currentTimeMillis();
             }
             player.playerTask.taskMain = taskMain;
+            TaskService.gI().checkDoneTaskPower(player, player.nPoint.power);
             dataArray.clear();
 
             //data nhiệm vụ hàng ngày
@@ -912,13 +923,17 @@ public class NDVSqlFetcher {
             String format = "dd-MM-yyyy";
             long receivedTime = Long.parseLong(String.valueOf(dataArray.get(1)));
             Date date = new Date(receivedTime);
+            
+            player.playerTask.sideTask.template = TaskService.gI().getSideTaskTemplateById(Integer.parseInt(String.valueOf(dataArray.get(0))));
+            player.playerTask.sideTask.count = Integer.parseInt(String.valueOf(dataArray.get(2)));
+            player.playerTask.sideTask.maxCount = Integer.parseInt(String.valueOf(dataArray.get(3)));
+            player.playerTask.sideTask.level = Integer.parseInt(String.valueOf(dataArray.get(5)));
+            player.playerTask.sideTask.receivedTime = receivedTime;
+            
             if (TimeUtil.formatTime(date, format).equals(TimeUtil.formatTime(new Date(), format))) {
-                player.playerTask.sideTask.template = TaskService.gI().getSideTaskTemplateById(Integer.parseInt(String.valueOf(dataArray.get(0))));
-                player.playerTask.sideTask.count = Integer.parseInt(String.valueOf(dataArray.get(2)));
-                player.playerTask.sideTask.maxCount = Integer.parseInt(String.valueOf(dataArray.get(3)));
                 player.playerTask.sideTask.leftTask = Integer.parseInt(String.valueOf(dataArray.get(4)));
-                player.playerTask.sideTask.level = Integer.parseInt(String.valueOf(dataArray.get(5)));
-                player.playerTask.sideTask.receivedTime = receivedTime;
+            } else {
+                player.playerTask.sideTask.leftTask = ConstTask.MAX_SIDE_TASK;
             }
 
             //data trứng bư
@@ -1307,13 +1322,17 @@ public class NDVSqlFetcher {
                 format = "dd-MM-yyyy";
                 receivedTime = Long.parseLong(String.valueOf(dataArray.get(1)));
                 date = new Date(receivedTime);
+                
+                player.playerTask.clanTask.template = TaskService.gI().getClanTaskTemplateById(Integer.parseInt(String.valueOf(dataArray.get(0))));
+                player.playerTask.clanTask.count = Integer.parseInt(String.valueOf(dataArray.get(2)));
+                player.playerTask.clanTask.maxCount = Integer.parseInt(String.valueOf(dataArray.get(3)));
+                player.playerTask.clanTask.level = Integer.parseInt(String.valueOf(dataArray.get(5)));
+                player.playerTask.clanTask.receivedTime = receivedTime;
+                
                 if (TimeUtil.formatTime(date, format).equals(TimeUtil.formatTime(new Date(), format))) {
-                    player.playerTask.clanTask.template = TaskService.gI().getClanTaskTemplateById(Integer.parseInt(String.valueOf(dataArray.get(0))));
-                    player.playerTask.clanTask.count = Integer.parseInt(String.valueOf(dataArray.get(2)));
-                    player.playerTask.clanTask.maxCount = Integer.parseInt(String.valueOf(dataArray.get(3)));
                     player.playerTask.clanTask.leftTask = Integer.parseInt(String.valueOf(dataArray.get(4)));
-                    player.playerTask.clanTask.level = Integer.parseInt(String.valueOf(dataArray.get(5)));
-                    player.playerTask.clanTask.receivedTime = receivedTime;
+                } else {
+                    player.playerTask.clanTask.leftTask = ConstTask.MAX_CLAN_TASK;
                 }
             } catch (Exception e) {
             }

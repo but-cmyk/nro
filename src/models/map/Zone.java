@@ -25,6 +25,7 @@ import utils.Util;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import lombok.Getter;
 import lombok.Setter;
 import models.map.EffectMap;
@@ -36,6 +37,7 @@ public class Zone {
     public static final byte PLAYERS_TIEU_CHUAN_TRONG_MAP = 7;
 
     public int countItemAppeaerd = 0;
+    public long lastTimeUpdateEmpty = 0;
 
     public Map map;
     public int zoneId;
@@ -188,12 +190,12 @@ public class Zone {
         this.map = map;
         this.zoneId = zoneId;
         this.maxPlayer = maxPlayer;
-        this.nonInteractiveNPCs = new ArrayList<>();
-        this.humanoids = new ArrayList<>();
-        this.notBosses = new ArrayList<>();
-        this.players = new ArrayList<>();
-        this.bosses = new ArrayList<>();
-        this.pets = new ArrayList<>();
+        this.nonInteractiveNPCs = new CopyOnWriteArrayList<>();
+        this.humanoids = new CopyOnWriteArrayList<>();
+        this.notBosses = new CopyOnWriteArrayList<>();
+        this.players = new CopyOnWriteArrayList<>();
+        this.bosses = new CopyOnWriteArrayList<>();
+        this.pets = new CopyOnWriteArrayList<>();
         this.mobs = new ArrayList<>();
         this.items = new ArrayList<>();
         this.trapMaps = new ArrayList<>();

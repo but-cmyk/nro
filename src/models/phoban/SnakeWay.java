@@ -23,7 +23,7 @@ import services.map.ItemMapService;
 import utils.TimeUtil;
 
 @Data
-public class SnakeWay implements Runnable {
+public class SnakeWay {
 
 //    public static final long POWER_CAN_GO_TO_CDRD = 2000000000;
     public static final int AVAILABLE = 1;
@@ -52,22 +52,7 @@ public class SnakeWay implements Runnable {
         this.zones = new ArrayList<>();
     }
 
-    @Override
-    public void run() {
-        while (!Maintenance.isRunning && isOpened) {
-            try {
-                long startTime = System.currentTimeMillis();
-                update();
-                long elapsedTime = System.currentTimeMillis() - startTime;
-                long sleepTime = 150 - elapsedTime;
-                if (sleepTime > 0) {
-                    Functions.sleep(sleepTime);
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-    }
+
 
     public void update() {
         if (isOpened) {
@@ -203,7 +188,6 @@ public class SnakeWay implements Runnable {
 
             }
         }
-        new Thread(this, "Con Đường Rắn Độc: " + this.clan.name).start();
     }
 
     //kết thúc con đường rắn độc

@@ -1,8 +1,7 @@
 package server;
 
-import Bot.BotManager;
-import Bot.NewBot;
-import com.mysql.jdbc.PreparedStatement;
+import bot.BotManager;
+import bot.NewBot;
 import database.AlyraManager;
 import database.AlyraResultSet;
 import utils.FileRunner;
@@ -70,7 +69,7 @@ public class ServerManager {
     public static String IP = "0.0.0.0";
     public static int PORT = 14445;
 
-    private static ServerManager instance;
+    private static volatile ServerManager instance;
     public static volatile boolean isRunning;
     public static volatile boolean isReloading = false;
 
@@ -92,6 +91,10 @@ public class ServerManager {
 
         // Cleanup khi tắt server
         Runtime.getRuntime().addShutdownHook(new Thread(this::cleanupResources));
+    }
+
+    public ExecutorService getExecutorService() {
+        return this.executorService;
     }
 
     public static ServerManager gI() {
@@ -120,6 +123,9 @@ public class ServerManager {
         DataGame.init();
         ItemData.init();
 
+        // Migrate passwords to BCrypt
+        migratePasswordsToBCrypt();
+
         isRunning = true;
 
         // 2. Khởi chạy các dịch vụ nền
@@ -140,40 +146,23 @@ public class ServerManager {
         EventManager.gI().init();
         ServerManager.isReloading = false;
 
-        // 4. Chạy luồng Boss
-        executorService.submit(() -> BossManager.gI().run());
-        executorService.submit(() -> YardartManager.gI().run());
-        executorService.submit(() -> FinalBossManager.gI().run());
-        executorService.submit(() -> SkillSummonedManager.gI().run());
-        executorService.submit(() -> BrolyManager.gI().run());
-        executorService.submit(() -> OtherBossManager.gI().run());
-        executorService.submit(() -> RedRibbonHQManager.gI().run());
-        executorService.submit(() -> TreasureUnderSeaManager.gI().run());
-        executorService.submit(() -> SnakeWayManager.gI().run());
-        executorService.submit(() -> GasDestroyManager.gI().run());
-        executorService.submit(() -> TrungThuEventManager.gI().run());
-        executorService.submit(() -> HalloweenEventManager.gI().run());
-        executorService.submit(() -> ChristmasEventManager.gI().run());
-        executorService.submit(() -> HungVuongEventManager.gI().run());
-        executorService.submit(() -> LunarNewYearEventManager.gI().run());
+        // 4. Chạy luồng Boss (Hiện tại được quản lý và cập nhật tập trung thông qua GameLoopManager)
 
-        Manager.gI();
         new Thread(TopService.gI(), "Top Service Thread").start();
 
         executorService.submit(() -> CSMM.gI().run());
         // Khởi chạy luồng quản lý Bot
-        //  new Thread(BotManager.gI(), "Bot Manager").start();
+        new Thread(BotManager.gI(), "Bot Manager").start();
 
-// Tạo Bot (Ví dụ tạo 50 con Bot đi đánh quái)
-// Type 0: Mobb (Đánh quái thường)
-// Slot 50: Số lượng 50 con
-        //  NewBot.gI().runBot(0, 1000);
-        //System.out.println("Đã khởi tạo 50 Bot chạy map!");
+        // Tạo Bot (Khởi tạo 10 Bot thông minh để test tính năng)
+        NewBot.gI().runBot(0, 10);
+        System.out.println("Đã khởi tạo 10 Bot thông minh chạy map!");
         // 5. Memory optimizer
         tools.MemoryOptimizer.gI(450, true);
 
         // 6. Start Auto Save
         startAutoSaveTask();
+        GameLoopManager.gI().start();
 
         // 7. Mở Port kết nối và CMD (Mở cuối cùng để đảm bảo data đã load xong)
         Logger.log("Mở cổng kết nối máy chủ...");
@@ -303,6 +292,13 @@ public class ServerManager {
         }
 
         try {
+            Logger.log("Stopping GameLoopManager...");
+            GameLoopManager.gI().stop();
+        } catch (Exception e) {
+            Logger.error("Error stopping GameLoopManager: " + e.getMessage());
+        }
+
+        try {
             Logger.log("Closing client connections...");
             Client.gI().close();
         } catch (Exception e) {
@@ -368,50 +364,10 @@ public class ServerManager {
     }
 
     private void handleCommand(String line) {
-        if (line.equals("baotri")) {
-            Maintenance.gI().start(5);
-        } else if (line.equals("athread")) {
-            ServerNotify.gI().notify("ACTIVE THREADS: " + Thread.activeCount());
-        } else if (line.equals("nplayer")) {
-            int playerCount = Client.gI().getPlayers().size();
-            Logger.error("Players in game: " + playerCount + "\n");
-        } else if (line.equals("memory")) {
-            Runtime runtime = Runtime.getRuntime();
-            long usedMemory = runtime.totalMemory() - runtime.freeMemory();
-            long maxMemory = runtime.maxMemory();
-            Logger.error("Memory Usage: " + (usedMemory / 1024 / 1024) + "MB / " + (maxMemory / 1024 / 1024) + "MB");
-            Logger.error("CLIENTS map size: " + CLIENTS.size());
-        } else if (line.equals("gc")) {
-            System.gc(); // Chỉ GC khi Admin gõ lệnh
-            Logger.success("Garbage collection triggered manually");
-        } else if (line.equals("admin")) {
-            executorService.submit(() -> Client.gI().close());
-        } else if (line.startsWith("kick")) {
-            executorService.submit(() -> {
-                try {
-                    Client.gI().cloneMySessionNotConnect();
-                    saveAllPlayersData();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    Logger.error("Error during kick operation: " + e.getMessage());
-                }
-            });
-        } else if (line.startsWith("bang")) {
-            executorService.submit(() -> {
-                try {
-                    ClanService.gI().close();
-                    Logger.success("Saved " + Manager.CLANS.size() + " clans");
-                } catch (Exception e) {
-                    Logger.error("Error saving clan data: " + e.getMessage());
-                }
-            });
-        } else if (line.startsWith("a ")) {
-            String message = line.substring(2);
-            Service.gI().sendThongBaoAllPlayer(message);
-        }
+        server.command.CommandRegistry.dispatch(line);
     }
 
-    private void saveAllPlayersData() {
+    public void saveAllPlayersData() {
         try {
             Logger.log("Starting manual player data save...");
             List<Player> players = new ArrayList<>(Client.gI().getPlayers());
@@ -433,6 +389,35 @@ public class ServerManager {
 
         } catch (Exception ex) {
             Logger.error("Error in manual player data save");
+        }
+    }
+
+    private void migratePasswordsToBCrypt() {
+        Logger.log(Logger.YELLOW, "Đang kiểm tra và migrate mật khẩu sang BCrypt...\n");
+        AlyraResultSet rs = null;
+        int count = 0;
+        try {
+            rs = AlyraManager.executeQuery("SELECT id, password FROM account");
+            while (rs.next()) {
+                int id = rs.getInt("id");
+                String password = rs.getString("password");
+                if (password != null && !password.startsWith("$2a$") && !password.startsWith("$2b$") && !password.startsWith("$2y$")) {
+                    String hashed = utils.PasswordUtils.hashPassword(password);
+                    AlyraManager.executeUpdate("UPDATE account SET password = ? WHERE id = ?", hashed, id);
+                    count++;
+                }
+            }
+            if (count > 0) {
+                Logger.log(Logger.GREEN, "Đã migrate thành công " + count + " tài khoản sang mật khẩu BCrypt.\n");
+            } else {
+                Logger.log(Logger.GREEN, "Tất cả mật khẩu đã được mã hóa BCrypt.\n");
+            }
+        } catch (Exception e) {
+            Logger.log(Logger.RED, "Lỗi khi migrate mật khẩu sang BCrypt: " + e.getMessage() + "\n");
+        } finally {
+            if (rs != null) {
+                rs.dispose();
+            }
         }
     }
 }

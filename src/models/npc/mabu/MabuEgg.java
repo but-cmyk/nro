@@ -55,26 +55,30 @@ public class MabuEgg {
         if (this.player.pet != null) {
             try {
                 destroyEgg();
-                Thread.sleep(4000);
-                if (this.player.pet == null) {
-                    PetService.gI().createMabuPet(this.player, gender);
-                } else {
-                    PetService.gI().changeMabuPet(this.player, gender);
-                }
-                int mapId;
-                switch (gender) {
-                    case 0 ->
-                        mapId = 176;
-                    case 1 ->
-                        mapId = 7;
-                    case 2 ->
-                        mapId = 14;
-                    default -> {
-                        return;
+                final Player p = this.player;
+                server.GameLoopManager.gI().schedule(() -> {
+                    try {
+                        if (p != null && !p.beforeDispose && !p.isOffline) {
+                            if (p.pet == null) {
+                                PetService.gI().createMabuPet(p, gender);
+                            } else {
+                                PetService.gI().changeMabuPet(p, gender);
+                            }
+                            int mapId;
+                            switch (gender) {
+                                case 0 -> mapId = 176;
+                                case 1 -> mapId = 7;
+                                case 2 -> mapId = 14;
+                                default -> {
+                                    return;
+                                }
+                            }
+                            ChangeMapService.gI().changeMapInYard(p, mapId, -1, Util.nextInt(300, 500));
+                        }
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
                     }
-                }
-                ChangeMapService.gI().changeMapInYard(this.player, mapId, -1, Util.nextInt(300, 500));
-                player.mabuEgg = null;
+                }, 4000);
             } catch (Exception e) {
                 e.printStackTrace();
             }

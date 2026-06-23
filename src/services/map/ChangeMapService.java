@@ -186,7 +186,7 @@ public class ChangeMapService {
                 return;
             }
         }
-        if (pl.isAdmin() || pl.isBoss || Util.canDoWithTime(pl.idMark.getLastTimeChangeZone(), 5000)) {
+        if (true) {
             pl.idMark.setLastTimeChangeZone(System.currentTimeMillis());
             Map map = pl.zone.map;
             if (zoneId >= 0 && zoneId <= map.zones.size() - 1) {
@@ -377,7 +377,11 @@ public class ChangeMapService {
                     pl.location.x = 100;
                 }
             }
-            pl.location.y = y;
+            if (y != -1) {
+                pl.location.y = zoneJoin.map.yPhysicInTop(pl.location.x, Math.max(0, y - 24));
+            } else {
+                pl.location.y = zoneJoin.map.yPhysicInTop(pl.location.x, 100);
+            }
             this.goToMap(pl, zoneJoin);
             if (pl.pet != null) {
                 pl.pet.joinMapMaster();
@@ -454,6 +458,10 @@ public class ChangeMapService {
     }
 
     public void changeMapWaypoint(Player player) {
+        if (!Util.canDoWithTime(player.timeChangeZone, 1000)) {
+            Service.gI().resetPoint(player, player.location.x, player.location.y);
+            return;
+        }
         Zone zoneJoin = null;
         WayPoint wp = null;
         int xGo = player.location.x;
@@ -474,6 +482,20 @@ public class ChangeMapService {
                 if (zoneJoin != null) {
                     xGo = wp.goX;
                     yGo = wp.goY;
+                    // Tránh việc người chơi spawn đè lên waypoint của map mới, gây văng ngược lại
+                    if (zoneJoin.map != null && zoneJoin.map.wayPoints != null) {
+                        for (WayPoint targetWp : zoneJoin.map.wayPoints) {
+                            if (xGo >= targetWp.minX && xGo <= targetWp.maxX 
+                                    && yGo >= targetWp.minY && yGo <= targetWp.maxY) {
+                                if (xGo < zoneJoin.map.mapWidth / 2) {
+                                    xGo = (short) (targetWp.maxX + 100);
+                                } else {
+                                    xGo = (short) (targetWp.minX - 100);
+                                }
+                                break;
+                            }
+                        }
+                    }
                 }
             }
         }

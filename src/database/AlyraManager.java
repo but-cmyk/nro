@@ -140,10 +140,9 @@ public class AlyraManager {
         Connection con = null;
         PreparedStatement ps = null;
         ResultSet rs = null;
-        
         try {
             con = getConnection();
-            ps = con.prepareStatement(query);
+            ps = con.prepareStatement(query, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
             rs = ps.executeQuery();
             
             if (LOG_QUERY) {
@@ -180,10 +179,9 @@ public class AlyraManager {
         Connection con = null;
         PreparedStatement ps = null;
         ResultSet rs = null;
-        
         try {
             con = getConnection();
-            ps = con.prepareStatement(query);
+            ps = con.prepareStatement(query, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
             
             // Set parameters safely
             setParameters(ps, params);
@@ -292,6 +290,15 @@ public class AlyraManager {
 
             rsAccount.gotoFirst();
 
+            // Verify BCrypt password hash
+            String storedHash = rsAccount.getString("password");
+            if (!utils.PasswordUtils.verifyPassword(session.pp, storedHash)) {
+                Service.gI().sendThongBaoOK(session, "Thông tin tài khoản hoặc mật khẩu không chính xác");
+                Service.gI().sendLoginFail(session, false);
+                al.wrong();
+                return null;
+            }
+
             // Check if player is already online
             Player plInGame = checkPlayerInGame(session, rsAccount);
             if (plInGame != null) {
@@ -364,7 +371,7 @@ public class AlyraManager {
     }
 
     private static AlyraResultSet checkAccount(MySession session) throws Exception {
-        return executeQuery("SELECT * FROM account WHERE username = ? AND password = ?", session.uu, session.pp);
+        return executeQuery("SELECT id, username, password, create_time, update_time, ban, is_admin, last_time_login, last_time_logout, ip_address, active, thoi_vang, server_login, bd_player, is_gift_box, gift_time, cash, danap, luotquay, vang, event_point, vip, vip1, vip2, sotien, diem_da_nhan, hasReceivedVIP, hasReceivedVIP1, hasReceivedVIP2, lastTimeReceivedVIP, lastTimeReceivedVIP1, lastTimeReceivedVIP2, gioithieu, tichdiem, gmail, server FROM account WHERE username = ?", session.uu);
     }
 
     private static Player checkPlayerInGame(MySession session, AlyraResultSet rsAccount) throws Exception {

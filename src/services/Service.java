@@ -59,11 +59,8 @@ public class Service {
     }
     return instance;
 }
-public static Service getInstance() {
-        if (instance == null) {
-            instance = new Service();
-        }
-        return instance;
+    public static Service getInstance() {
+        return gI();
     }
     public void switchToRegisterScr(ISession session) {
         Message msg;
@@ -103,15 +100,15 @@ public static Service getInstance() {
             if (rs.first()) {
                 sendThongBaoOK((MySession) session, "Tài khoản đã tồn tại");
             } else {
-                // --- PHẦN ĐÃ SỬA ---
-                // Loại bỏ: token, xsrf_token, newpass khỏi câu lệnh SQL và tham số
+                // Hash password with BCrypt before inserting
+                String hashedPassword = utils.PasswordUtils.hashPassword(pass);
                 AlyraManager.executeUpdate("insert into account (username, password, is_admin, sotien, danap, gmail) values(?, ?, ?, ?, ?, ?)",
-                        user,  // username
-                        pass,  // password
-                        0,     // is_admin (int)
-                        0,     // sotien (int)
-                        0,     // danap (int)
-                        ""     // gmail (Để chuỗi rỗng thay vì "0")
+                        user,           // username
+                        hashedPassword,  // password
+                        0,              // is_admin (int)
+                        0,              // sotien (int)
+                        0,              // danap (int)
+                        ""              // gmail (Để chuỗi rỗng thay vì "0")
                 );
                 sendThongBaoOK((MySession) session, "Đăng ký tài khoản thành công!");
             }
@@ -1472,8 +1469,9 @@ public static Service getInstance() {
                 if (newPass.equals(rePass)) {
                     player.getSession().pp = newPass;
                     try {
+                        String hashedPassword = utils.PasswordUtils.hashPassword(rePass);
                         AlyraManager.executeUpdate("update account set password = ? where id = ? and username = ?",
-                                rePass, player.getSession().userId, player.getSession().uu);
+                                hashedPassword, player.getSession().userId, player.getSession().uu);
                         Service.gI().sendThongBao(player, "Đổi mật khẩu thành công!");
                     } catch (Exception ex) {
                         Service.gI().sendThongBao(player, "Đổi mật khẩu thất bại!");
@@ -2011,24 +2009,31 @@ public static Service getInstance() {
         if (plTarget.isPl() && plTarget.maBuHold == null) {
             MaBuHold mabuHold = player.zone.getMaBuHold();
             if (mabuHold != null) {
+                int zoneId = player.zone.zoneId;
+                player.zone.setMaBuHold(mabuHold.slot, zoneId, plTarget);
+                sendEffMabuEat(player, plTarget);
+
                 new Thread(() -> {
-                    int zoneId = player.zone.zoneId;
-                    player.zone.setMaBuHold(mabuHold.slot, zoneId, plTarget);
-                    sendEffMabuEat(player, plTarget);
-                    Functions.sleep(3000);
-                    if (player.zone == null || player.zone.map.mapId != 127) {
-                        return;
-                    }
-                    Zone zone = MapService.gI().getMapById(128).zones.get(zoneId);
-                    ChangeMapService.gI().changeMap(plTarget, zone, -1, 336);
-                    Functions.sleep(500);
-                    plTarget.isMabuHold = false;
-                    if (plTarget.effectSkill != null && !plTarget.effectSkill.isShielding) {
-                        EffectSkillService.gI().setMabuHold(plTarget, mabuHold);
-                        Functions.sleep(1500);
-                        if (plTarget.fusion != null && plTarget.pet != null && plTarget.fusion.typeFusion != ConstPlayer.NON_FUSION) {
-                            plTarget.pet.unFusion();
+                    try {
+                        Thread.sleep(3000);
+                        if (player.zone == null || player.zone.map.mapId != 127) {
+                            return;
                         }
+                        Zone zone = services.map.MapService.gI().getMapById(128).zones.get(zoneId);
+                        services.map.ChangeMapService.gI().changeMap(plTarget, zone, -1, 336);
+
+                        Thread.sleep(500);
+                        plTarget.isMabuHold = false;
+                        if (plTarget.effectSkill != null && !plTarget.effectSkill.isShielding) {
+                            services.EffectSkillService.gI().setMabuHold(plTarget, mabuHold);
+
+                            Thread.sleep(1500);
+                            if (plTarget.fusion != null && plTarget.pet != null && plTarget.fusion.typeFusion != consts.ConstPlayer.NON_FUSION) {
+                                plTarget.pet.unFusion();
+                            }
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
                     }
                 }).start();
             }

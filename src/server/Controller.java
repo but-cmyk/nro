@@ -440,7 +440,7 @@ public class Controller implements IMessageHandler {
                                 toY = _msg.reader().readShort();
                             } catch (IOException ex) {
                             }
-                            if (player.zone != null && MapService.gI().isMapBlackBallWar(player.zone.map.mapId)
+                            if (player.zone != null && !player.isAdmin()
                                     && Util.getDistance(player.location.x, player.location.y, toX, toY) > 500) {
                                 return;
                             }
@@ -736,7 +736,7 @@ public class Controller implements IMessageHandler {
                             }
                             default -> {
                                 if (player.isAdmin()) {
-                                    Boss boss = BossManager.gI().getBoss(_id);
+                                    Boss boss = BossManager.gI().getBossByIndex(_id);
                                     if (boss != null) {
                                         ChangeMapService.gI().changeMapYardrat(player, boss.zone, boss.location.x, boss.location.y);
                                     }
@@ -1028,19 +1028,17 @@ public class Controller implements IMessageHandler {
                 player.pet.setClothes.setup();
             }
             if (player.inventory.itemsBody.get(7).isNotNullItem()) {
-                new Thread(() -> {
+                GameLoopManager.gI().schedule(() -> {
                     try {
-                        Thread.sleep(1000);
-                        PetService.Pet2(player, player.getHeadThuCung(), player.getBodyThuCung(),
+                        services.PetService.Pet2(player, player.getHeadThuCung(), player.getBodyThuCung(),
                                 player.getLegThuCung());
-                        Service.gI().point(player);
+                        services.Service.gI().point(player);
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
-                }, "Pet update").start();
+                }, 1000);
             }
             ItemTimeService.gI().sendCanAutoPlay(player);
-            player.start();
         } catch (Exception e) {
         }
     }

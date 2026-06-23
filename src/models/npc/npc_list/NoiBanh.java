@@ -146,38 +146,10 @@ public class NoiBanh extends Npc {
                                 this.npcChat(player, "Bạn đang nấu bánh chưng rồi mà!");
                                 return;
                             }
-                            Item comNep = InventoryService.gI().findItemBag(player, 1434);
-                            Item botGao = InventoryService.gI().findItemBag(player, 1440);
-                            Item muoiTieu = InventoryService.gI().findItemBag(player, 1438);
-                            Item chaLua = InventoryService.gI().findItemBag(player, 1437);
-                            Item banhDay = ItemService.gI().createNewItem((short) 1435);
-                            int vang = 1000000;
                             player.isCookingBanhDay = true;
+                            player.cookingBanhDayTime = 60;
+                            player.lastTimeUpdateCooking = System.currentTimeMillis();
                             this.npcChat(player, "Bắt đầu nấu bánh dầy...\n|7|Vui lòng chờ trong giây lát!");
-                            new Thread(() -> {
-                                int timeWait = 60;
-                                while (timeWait > 0) {
-                                    try {
-                                        this.npcChat(player,
-                                                "Đang nấu bánh dầy\n|7|Thời gian còn lại: " + timeWait + " giây.");
-                                        Thread.sleep(1000);
-                                        timeWait--;
-                                    } catch (InterruptedException ex) {
-                                        ex.printStackTrace();
-                                    }
-                                }
-                                InventoryService.gI().subQuantityItemsBag(player, comNep, 99);
-                                InventoryService.gI().subQuantityItemsBag(player, botGao, 5);
-                                InventoryService.gI().subQuantityItemsBag(player, muoiTieu, 2);
-                                InventoryService.gI().subQuantityItemsBag(player, chaLua, 1);
-                                player.inventory.gold -= vang;
-                                Service.gI().sendMoney(player);
-                                InventoryService.gI().addItemBag(player, banhDay);
-                                InventoryService.gI().sendItemBags(player);
-                                this.createOtherMenu(player, ConstNpc.IGNORE_MENU,
-                                        "Đã nấu xong bánh dầy!\n|7|Bạn đã nhận được " + banhDay.template.name,
-                                        "Nhận Ngay");
-                            }).start();
                             break;
                         }
 
@@ -192,36 +164,10 @@ public class NoiBanh extends Npc {
                                 this.npcChat(player, "Bạn đang nấu bánh dầy rồi mà!");
                                 return;
                             }
-                            Item comNepNe = InventoryService.gI().findItemBag(player, 1434);
-                            Item dauXanh = InventoryService.gI().findItemBag(player, 1441);
-                            Item thitTuoi = InventoryService.gI().findItemBag(player, 1442);
-                            Item banhChung = ItemService.gI().createNewItem((short) 1436);
-                            int vang = 5000000;
                             player.isCookingBanhChung = true;
+                            player.cookingBanhChungTime = 60;
+                            player.lastTimeUpdateCooking = System.currentTimeMillis();
                             this.npcChat(player, "Bắt đầu nấu bánh chưng...\n|7|Vui lòng chờ trong giây lát!");
-                            new Thread(() -> {
-                                int timeWait = 60;
-                                while (timeWait > 0) {
-                                    try {
-                                        this.npcChat(player,
-                                                "Đang nấu bánh chưng\n|7|Thời gian còn lại: " + timeWait + " giây.");
-                                        Thread.sleep(1000);
-                                        timeWait--;
-                                    } catch (InterruptedException ex) {
-                                        ex.printStackTrace();
-                                    }
-                                }
-                                InventoryService.gI().subQuantityItemsBag(player, comNepNe, 99);
-                                InventoryService.gI().subQuantityItemsBag(player, dauXanh, 2);
-                                InventoryService.gI().subQuantityItemsBag(player, thitTuoi, 2);
-                                player.inventory.gold -= vang;
-                                Service.gI().sendMoney(player);
-                                InventoryService.gI().addItemBag(player, banhChung);
-                                InventoryService.gI().sendItemBags(player);
-                                this.createOtherMenu(player, ConstNpc.IGNORE_MENU,
-                                        "Đã nấu xong bánh dầy!\n|7|Bạn đã nhận được " + banhChung.template.name,
-                                        "Nhận Ngay");
-                            }).start();
                             break;
                     }
                 }

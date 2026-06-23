@@ -57,12 +57,20 @@ import models.ShenronEvent;
 import models.combine.list.Combine;
 import models.map.Boss10;
 import server.Maintenance;
+import services.map.NpcService;
+import services.ItemService;
+import models.npc.Npc;
+import services.map.NpcManager;
+import consts.ConstNpc;
 
-public class Player implements Runnable {
+public class Player extends Character {
 
     public long lastTimeSave;
     public boolean isCookingBanhDay = false;
     public boolean isCookingBanhChung = false;
+    public int cookingBanhDayTime;
+    public int cookingBanhChungTime;
+    public long lastTimeUpdateCooking;
     public long lastTimeEatPea;
     public List<Integer> idEffChar = new ArrayList<>();
 
@@ -86,11 +94,7 @@ public class Player implements Runnable {
     public long lastTimeChallengeCommeson;
 
     public PlayerEffect effect;
-    public long id;
-    public String name;
-    public byte gender;
     public boolean isNewMember;
-    public short head;
     public int deltaTime;
     public byte typePk;
     public byte cFlag;
@@ -167,15 +171,12 @@ public class Player implements Runnable {
 
     public List<Player> temporaryEnemies = new ArrayList<>();
 
-    public Zone zone;
     public Zone mapBeforeCapsule;
     public List<Zone> mapCapsule;
     public Pet pet;
     public NewPet newPet;
     public MobMe mobMe;
-    public Location location;
     public SetClothes setClothes;
-    public EffectSkill effectSkill;
     public MabuEgg mabuEgg;
     public TaskPlayer playerTask;
     public ItemTime itemTime;
@@ -188,7 +189,6 @@ public class Player implements Runnable {
     public IDMark idMark;
     public Charms charms;
     public EffectSkin effectSkin;
-    public NPoint nPoint;
     public RewardBlackBall rewardBlackBall;
     public FightMabu fightMabu;
     public NewSkill newSkill;
@@ -289,6 +289,7 @@ public class Player implements Runnable {
     public ItemMap veTinhPhongThu = null;
     public ItemMap veTinhTriTue = null;
 
+    public long lastTimeCheckVeTinh = 0;
     public long lastTimeVeTinhTriLuc = 0;
     public long lastTimeVeTinhSinhLuc = 0;
     public LocalDateTime lastCheckIn;
@@ -326,6 +327,7 @@ public class Player implements Runnable {
         dropItem = new DropItem(this);
     }
 
+    @Override
     public boolean isDie() {
         if (this.nPoint != null) {
             return this.nPoint.hp <= 0;
@@ -343,26 +345,7 @@ public class Player implements Runnable {
         return isPlayer && !isPet && !isBoss && !isBot && !isNewPet && !isNewPet1 && !(this instanceof NonInteractiveNPC);
     }
 
-    @Override
-    public void run() {
-        // Functions.sleep(500); // Không cần thiết sleep ở đây
-        while (!Maintenance.isRunning && session != null && session.isConnected() && this.name != null) {
-            long st = System.currentTimeMillis();
-            try {
-                update();
-            } catch (Exception e) {
-                Logger.logException(Player.class, e, "Lỗi tại player run: " + this.name);
-            }
-            long time = 1000 - (System.currentTimeMillis() - st);
-            if (time > 0) {
-                Functions.sleep(time);
-            }
-        }
-    }
 
-    public void start() {
-        new Thread(this, "Update player " + this.name).start();
-    }
 
     public void update() {
         if (!this.beforeDispose && !isBot) {
@@ -370,6 +353,32 @@ public class Player implements Runnable {
                 if (this.zone != null || (!this.isPl() && this.zone == null)) {
                     if (itemTime != null) itemTime.update();
                     if (magicTree != null) magicTree.update();
+
+                    if (isCookingBanhDay && cookingBanhDayTime > 0) {
+                        if (Util.canDoWithTime(lastTimeUpdateCooking, 1000)) {
+                            cookingBanhDayTime--;
+                            lastTimeUpdateCooking = System.currentTimeMillis();
+                            if (cookingBanhDayTime > 0) {
+                                NpcService.gI().npcChat(this, ConstNpc.NOI_BANH,
+                                        "Đang nấu bánh dầy\n|7|Thời gian còn lại: " + cookingBanhDayTime + " giây.");
+                            } else {
+                                finishCookingBanhDay();
+                            }
+                        }
+                    }
+
+                    if (isCookingBanhChung && cookingBanhChungTime > 0) {
+                        if (Util.canDoWithTime(lastTimeUpdateCooking, 1000)) {
+                            cookingBanhChungTime--;
+                            lastTimeUpdateCooking = System.currentTimeMillis();
+                            if (cookingBanhChungTime > 0) {
+                                NpcService.gI().npcChat(this, ConstNpc.NOI_BANH,
+                                        "Đang nấu bánh chưng\n|7|Thời gian còn lại: " + cookingBanhChungTime + " giây.");
+                            } else {
+                                finishCookingBanhChung();
+                            }
+                        }
+                    }
 
                     if (this.isPl() && this.zone != null && this.zone.map.mapId == this.gender + 21
                             && (TaskService.gI().getIdTask(this) == ConstTask.TASK_0_0 || TaskService.gI().getIdTask(this) == ConstTask.TASK_0_1)) {
@@ -422,18 +431,19 @@ public class Player implements Runnable {
 
                     // Ve tinh logic
                     // Giải pháp 1: Tạo bản copy (khuyên dùng)
-                    if (this.zone != null && !this.zone.items.isEmpty()) {
+                    if (this.zone != null && !this.zone.items.isEmpty() && Util.canDoWithTime(lastTimeCheckVeTinh, 2000)) {
                         List<ItemMap> itemsCopy = new ArrayList<>(this.zone.items);
                         for (ItemMap item : itemsCopy) {
                             if (item != null && Util.myGetDistance(this.location.x, this.location.y, item.x, item.y) <= ConstMap.RANGE_VE_TINH && item.isBelongToMe(this)) {
                                 switch (item.itemTemplate.id) {
-                                    case 345 -> veTinhSinhLuc = item;
-                                    case 344 -> veTinhPhongThu = item;
-                                    case 343 -> veTinhTriTue = item;
-                                    case 342 -> veTinhTriLuc = item;
+                                    case ConstItem.VE_TINH_SINH_LUC -> veTinhSinhLuc = item;
+                                    case ConstItem.VE_TINH_PHONG_THU -> veTinhPhongThu = item;
+                                    case ConstItem.VE_TINH_TRI_TUE -> veTinhTriTue = item;
+                                    case ConstItem.VE_TINH_TRI_LUC -> veTinhTriLuc = item;
                                 }
                             }
                         }
+                        lastTimeCheckVeTinh = System.currentTimeMillis();
                     }
 
                     if (!this.isDie() && Util.canDoWithTime(lastTimeVeTinhTriLuc, ConstMap.TIME_HOI_VE_TINH)
@@ -816,6 +826,7 @@ public class Player implements Runnable {
         return -1;
     }
 
+    @Override
     public synchronized int injured(Player plAtt, long damage, boolean piercing, boolean isMobAttack) {
         if (!this.isDie()) {
             if (plAtt != null && !plAtt.equals(this)) {
@@ -1270,5 +1281,62 @@ public class Player implements Runnable {
             return (short) (this.inventory.itemsBody.get(7).template.leg);
         }
         return -1;
+    }
+
+    public void finishCookingBanhDay() {
+        this.isCookingBanhDay = false;
+        this.cookingBanhDayTime = 0;
+        Item comNep = InventoryService.gI().findItemBag(this, 1434);
+        Item botGao = InventoryService.gI().findItemBag(this, 1440);
+        Item muoiTieu = InventoryService.gI().findItemBag(this, 1438);
+        Item chaLua = InventoryService.gI().findItemBag(this, 1437);
+        Item banhDay = ItemService.gI().createNewItem((short) 1435);
+        int vang = 1000000;
+        if ((comNep != null && comNep.quantity >= 99)
+                && (botGao != null && botGao.quantity >= 5)
+                && (muoiTieu != null && muoiTieu.quantity >= 2)
+                && (chaLua != null && chaLua.quantity >= 1)
+                && this.inventory.gold >= vang) {
+            InventoryService.gI().subQuantityItemsBag(this, comNep, 99);
+            InventoryService.gI().subQuantityItemsBag(this, botGao, 5);
+            InventoryService.gI().subQuantityItemsBag(this, muoiTieu, 2);
+            InventoryService.gI().subQuantityItemsBag(this, chaLua, 1);
+            this.inventory.gold -= vang;
+            Service.gI().sendMoney(this);
+            InventoryService.gI().addItemBag(this, banhDay);
+            InventoryService.gI().sendItemBags(this);
+            NpcService.gI().createMenu(this, ConstNpc.IGNORE_MENU, ConstNpc.NOI_BANH,
+                    "Đã nấu xong bánh dầy!\n|7|Bạn đã nhận được " + banhDay.template.name,
+                    "Nhận Ngay");
+        } else {
+            Service.gI().sendThongBao(this, "Thiếu nguyên liệu hoặc vàng để hoàn thành nấu bánh dầy!");
+        }
+    }
+
+    public void finishCookingBanhChung() {
+        this.isCookingBanhChung = false;
+        this.cookingBanhChungTime = 0;
+        Item comNepNe = InventoryService.gI().findItemBag(this, 1434);
+        Item dauXanh = InventoryService.gI().findItemBag(this, 1441);
+        Item thitTuoi = InventoryService.gI().findItemBag(this, 1442);
+        Item banhChung = ItemService.gI().createNewItem((short) 1436);
+        int vang = 5000000;
+        if ((comNepNe != null && comNepNe.quantity >= 99)
+                && (dauXanh != null && dauXanh.quantity >= 2)
+                && (thitTuoi != null && thitTuoi.quantity >= 2)
+                && this.inventory.gold >= vang) {
+            InventoryService.gI().subQuantityItemsBag(this, comNepNe, 99);
+            InventoryService.gI().subQuantityItemsBag(this, dauXanh, 2);
+            InventoryService.gI().subQuantityItemsBag(this, thitTuoi, 2);
+            this.inventory.gold -= vang;
+            Service.gI().sendMoney(this);
+            InventoryService.gI().addItemBag(this, banhChung);
+            InventoryService.gI().sendItemBags(this);
+            NpcService.gI().createMenu(this, ConstNpc.IGNORE_MENU, ConstNpc.NOI_BANH,
+                    "Đã nấu xong bánh chưng!\n|7|Bạn đã nhận được " + banhChung.template.name,
+                    "Nhận Ngay");
+        } else {
+            Service.gI().sendThongBao(this, "Thiếu nguyên liệu hoặc vàng để hoàn thành nấu bánh chưng!");
+        }
     }
 }

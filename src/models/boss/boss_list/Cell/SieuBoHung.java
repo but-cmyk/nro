@@ -35,39 +35,50 @@ public class SieuBoHung extends Boss {
     }
 
     public void callCellCon() {
-        new Thread(() -> {
-            try {
-                this.changeStatus(BossStatus.AFK);
-                this.changeToTypeNonPK();
-                this.recoverHP();
-                this.callCellCon = true;
-                this.chat("Hãy đấu với 7 đứa con của ta, chúng đều là siêu cao thủ");
-                Thread.sleep(2000);
-                this.chat("Cứ chưởng tiếp đi haha");
-                Thread.sleep(2000);
-                this.chat("Liệu mà giữ mạng đấy");
-                Thread.sleep(2000);
-                for (Boss boss : this.bossAppearTogether[this.currentLevel]) {
-                    switch ((int) boss.id) {
-                        case BossID.XEN_CON_1 ->
-                            boss.changeStatus(BossStatus.RESPAWN);
-                        case BossID.XEN_CON_2 ->
-                            boss.changeStatus(BossStatus.RESPAWN);
-                        case BossID.XEN_CON_3 ->
-                            boss.changeStatus(BossStatus.RESPAWN);
-                        case BossID.XEN_CON_4 ->
-                            boss.changeStatus(BossStatus.RESPAWN);
-                        case BossID.XEN_CON_5 ->
-                            boss.changeStatus(BossStatus.RESPAWN);
-                        case BossID.XEN_CON_6 ->
-                            boss.changeStatus(BossStatus.RESPAWN);
-                        case BossID.XEN_CON_7 ->
-                            boss.changeStatus(BossStatus.RESPAWN);
+        try {
+            this.changeStatus(BossStatus.AFK);
+            this.changeToTypeNonPK();
+            this.recoverHP();
+            this.callCellCon = true;
+            this.chat("Hãy đấu với 7 đứa con của ta, chúng đều là siêu cao thủ");
+            
+            server.GameLoopManager.gI().schedule(() -> {
+                try {
+                    if (!this.isDie()) {
+                        this.chat("Cứ chưởng tiếp đi haha");
                     }
-                }
-            } catch (Exception e) {
-            }
-        }).start();
+                } catch (Exception e) {}
+            }, 2000);
+            
+            server.GameLoopManager.gI().schedule(() -> {
+                try {
+                    if (!this.isDie()) {
+                        this.chat("Liệu mà giữ mạng đấy");
+                    }
+                } catch (Exception e) {}
+            }, 4000);
+            
+            server.GameLoopManager.gI().schedule(() -> {
+                try {
+                    if (this.zone != null && this.bossAppearTogether != null && this.bossAppearTogether[this.currentLevel] != null) {
+                        for (Boss boss : this.bossAppearTogether[this.currentLevel]) {
+                            if (boss != null) {
+                                switch ((int) boss.id) {
+                                    case BossID.XEN_CON_1 -> boss.changeStatus(BossStatus.RESPAWN);
+                                    case BossID.XEN_CON_2 -> boss.changeStatus(BossStatus.RESPAWN);
+                                    case BossID.XEN_CON_3 -> boss.changeStatus(BossStatus.RESPAWN);
+                                    case BossID.XEN_CON_4 -> boss.changeStatus(BossStatus.RESPAWN);
+                                    case BossID.XEN_CON_5 -> boss.changeStatus(BossStatus.RESPAWN);
+                                    case BossID.XEN_CON_6 -> boss.changeStatus(BossStatus.RESPAWN);
+                                    case BossID.XEN_CON_7 -> boss.changeStatus(BossStatus.RESPAWN);
+                                }
+                            }
+                        }
+                    }
+                } catch (Exception e) {}
+            }, 6000);
+        } catch (Exception e) {
+        }
     }
 
     public void recoverHP() {

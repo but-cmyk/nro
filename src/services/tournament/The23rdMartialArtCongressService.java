@@ -45,13 +45,14 @@ public class The23rdMartialArtCongressService {
     }
 
     public static void setTimeout(Runnable runnable, int delay) {
-        new Thread(() -> {
+        server.GameLoopManager.gI().schedule(() -> {
             try {
-                Thread.sleep(delay);
-                runnable.run();
+                if (runnable != null) {
+                    runnable.run();
+                }
             } catch (Exception e) {
             }
-        }).start();
+        }, delay);
     }
 
     public void sendTypePK(Player player, Player boss) {

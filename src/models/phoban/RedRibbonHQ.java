@@ -24,7 +24,7 @@ import services.Service;
 import utils.Util;
 
 @Data
-public class RedRibbonHQ implements Runnable {
+public class RedRibbonHQ {
 
     //bang hội đủ số người mới đc mở
     public static final int N_PLAYER_CLAN = 0;
@@ -63,22 +63,7 @@ public class RedRibbonHQ implements Runnable {
         return null;
     }
 
-    @Override
-    public void run() {
-        while (!Maintenance.isRunning && isOpened) {
-            try {
-                long startTime = System.currentTimeMillis();
-                update();
-                long elapsedTime = System.currentTimeMillis() - startTime;
-                long sleepTime = 150 - elapsedTime;
-                if (sleepTime > 0) {
-                    Functions.sleep(sleepTime);
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-    }
+
 
     public void openDoanhTrai(Player player) {
         try {
@@ -210,7 +195,6 @@ public class RedRibbonHQ implements Runnable {
                 }
             }
         }
-        new Thread(this, "Doanh Trại: " + this.clan.name).start();
     }
 
     public void update() {

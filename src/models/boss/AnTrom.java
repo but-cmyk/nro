@@ -197,17 +197,17 @@ public class AnTrom extends Boss {
         if (this.zone != null) {
             List<Player> players = Client.gI().getPlayers();
             int playerCount = players.size();
-            int randomMapId = Util.nextInt(0, 44);
             if (playerCount > 0) {
                 Player ramdonPlayer = players.get(Util.nextInt(playerCount));
                 if (ramdonPlayer != null && ramdonPlayer.zone != null && ramdonPlayer.zone.isKhongCoTrongTaiTrongKhu()) {
-                    if (ramdonPlayer.zone.map.mapId != 51 && ramdonPlayer.zone.map.mapId != 113 && ramdonPlayer.zone.map.mapId != 129
+                    int mapId = ramdonPlayer.zone.map.mapId;
+                    if (mapId != 51 && mapId != 113 && mapId != 129 && mapId != 21 && mapId != 22 && mapId != 23 && mapId != 39 && mapId != 40 && mapId != 41 && mapId != 42 && mapId != 43 && mapId != 44
                             && this.zone.getPlayers().size() <= 2 && System.currentTimeMillis() > this.lastTimeJoinMap) {
                         if (ramdonPlayer.id != -1000000) {
                             lastTimeJoinMap = System.currentTimeMillis() + TIME_CHANGE_MAP;
                             ChangeMapService.gI().spaceShipArrive(this, (byte) 2, ChangeMapService.DEFAULT_SPACE_SHIP);
                             ChangeMapService.gI().exitMap(this);
-                            this.zone = MapService.gI().getMapById(randomMapId).zones.get(0);
+                            this.zone = ramdonPlayer.zone;
                             this.location.x = Util.nextInt(Math.max(100, zone.map.mapWidth - 100));
                             this.location.y = zone.map.yPhysicInTop(this.location.x, 100);
                             this.joinMap();

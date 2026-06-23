@@ -565,19 +565,19 @@ public class InventoryService {
             for (int i = 0; i < player.inventory.itemsBag.size(); i++) {
                 Item item = player.inventory.itemsBag.get(i);
                 if (!item.isNotNullItem()) {
-                    continue;
-                }
-                msg.writer().writeShort(item.template.id);
-                msg.writer().writeInt(item.quantity);
-                msg.writer().writeUTF(item.getInfo());
-                msg.writer().writeUTF(item.getContent());
-                msg.writer().writeByte(item.itemOptions.size()); //options
-                for (int j = 0; j < item.itemOptions.size(); j++) {
-                    msg.writer().writeByte(item.itemOptions.get(j).optionTemplate.id);
-                    msg.writer().writeShort(item.itemOptions.get(j).param);
+                    msg.writer().writeShort(-1);
+                } else {
+                    msg.writer().writeShort(item.template.id);
+                    msg.writer().writeInt(item.quantity);
+                    msg.writer().writeUTF(item.getInfo());
+                    msg.writer().writeUTF(item.getContent());
+                    msg.writer().writeByte(item.itemOptions.size()); //options
+                    for (int j = 0; j < item.itemOptions.size(); j++) {
+                        msg.writer().writeByte(item.itemOptions.get(j).optionTemplate.id);
+                        msg.writer().writeShort(item.itemOptions.get(j).param);
+                    }
                 }
             }
-
             player.sendMessage(msg);
             msg.cleanup();
         } catch (Exception e) {

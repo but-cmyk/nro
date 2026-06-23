@@ -171,7 +171,7 @@ public class TaskService {
 
     //chuyển sang task mới
     public void sendNextTaskMain(Player player) {
-        rewardDoneTask();
+        rewardDoneTask(player);
         switch (player.playerTask.taskMain.id) {
             case 3:
                 player.playerTask.taskMain = TaskService.gI().getTaskMainById(player, player.gender + 4);
@@ -195,10 +195,44 @@ public class TaskService {
         Message msg = null;
         try {
             msg = new Message(43);
-            msg.writer().writeShort(player.playerTask.taskMain.subTasks.get(player.playerTask.taskMain.index).count);
+            SubTaskMain stm = player.playerTask.taskMain.subTasks.get(player.playerTask.taskMain.index);
+            msg.writer().writeShort(stm.count);
+            
+            short x_hint = 0;
+            short y_hint = 0;
+            if (stm.mapId == player.zone.map.mapId) {
+                if (stm.npcId != -1) {
+                    for (Npc npc : Manager.NPCS) {
+                        if (npc.mapId == stm.mapId && npc.tempId == stm.npcId) {
+                            x_hint = (short) npc.cx;
+                            y_hint = (short) npc.cy;
+                            break;
+                        }
+                    }
+                } else {
+                    for (models.mob.Mob mob : player.zone.mobs) {
+                        if (!mob.isDie()) {
+                            x_hint = (short) mob.location.x;
+                            y_hint = (short) mob.location.y;
+                            break;
+                        }
+                    }
+                }
+            } else {
+                for (models.map.WayPoint wp : player.zone.map.wayPoints) {
+                    if (wp.goMap == stm.mapId) {
+                        x_hint = (short) ((wp.minX + wp.maxX) / 2);
+                        y_hint = (short) wp.maxY;
+                        break;
+                    }
+                }
+            }
+            msg.writer().writeShort(x_hint);
+            msg.writer().writeShort(y_hint);
+            
             player.sendMessage(msg);
         } catch (IOException e) {
-            Logger.logException(TaskService.class, e); // FIX: Log exception instead of swallowing
+            Logger.logException(TaskService.class, e);
         } finally {
             if (msg != null) {
                 msg.cleanup();
@@ -694,13 +728,75 @@ public class TaskService {
     //xong nhiệm vụ nào đó
     public boolean doneTask(Player player, int idTaskCustom) {
         if (TaskService.gI().isCurrentTask(player, idTaskCustom)) {
-            this.addDoneSubTask(player);
-            // Switch case logic giữ nguyên như cũ để xử lý hội thoại/sự kiện đặc biệt khi xong task
-            switch (idTaskCustom) {
-                // ... (Giữ nguyên logic switch case dài dòng cũ vì nó chứa hội thoại cụ thể)
-                // Để tiết kiệm không gian, tôi không paste lại toàn bộ switch case cũ ở đây
-                // vì logic đó không thay đổi về mặt cấu trúc, chỉ cần đảm bảo gọi đúng hàm.
-                // Bạn hãy giữ lại phần switch case từ code gốc của bạn.
+            if (this.addDoneSubTask(player)) {
+                switch (idTaskCustom) {
+                    case ConstTask.TASK_0_2:
+                        npcSay(player, ConstTask.NPC_NHA, "Con đã tỉnh dậy rồi à? Mau mở rương đồ phía bên trái nhà để lấy quần áo đi con!");
+                        break;
+                    case ConstTask.TASK_0_3:
+                        npcSay(player, ConstTask.NPC_NHA, "Tốt lắm. Bây giờ con hãy thu hoạch 1 hạt đậu thần từ cây đậu thần sau nhà nhé!");
+                        break;
+                    case ConstTask.TASK_0_4:
+                        npcSay(player, ConstTask.NPC_NHA, "Đậu thần ăn vào sẽ giúp con phục hồi HP và KI ngay lập tức. Giờ hãy lại báo cáo với ta.");
+                        break;
+                    case ConstTask.TASK_0_5:
+                        npcSay(player, ConstTask.NPC_NHA, "Rất tốt! Ta có nhiệm vụ mới cho con đây. Hãy luyện tập bằng cách đánh ngã 5 mộc nhân trước nhà nhé!");
+                        break;
+                    case ConstTask.TASK_1_0:
+                        npcSay(player, ConstTask.NPC_NHA, "Con tập luyện rất chăm chỉ! Giờ hãy lại đây báo cáo với ta.");
+                        break;
+                    case ConstTask.TASK_1_1:
+                        npcSay(player, ConstTask.NPC_NHA, "Tốt lắm! Sức mạnh của con đã tăng lên đáng kể. Ta giao cho con nhiệm vụ tiếp theo: hãy sang bản đồ kế bên tiêu diệt quái và nhặt về 10 đùi gà để ăn lấy sức!");
+                        break;
+                    case ConstTask.TASK_2_0:
+                        npcSay(player, ConstTask.NPC_NHA, "Con nhặt được rất nhiều đùi gà rồi đấy! Mau về báo cáo với ta nào.");
+                        break;
+                    case ConstTask.TASK_2_1:
+                        npcSay(player, ConstTask.NPC_NHA, "Tuyệt vời, ta đã dạy con kỹ năng bay lượn! Vừa có một vật thể lạ rơi xuống hành tinh chúng ta, con hãy sử dụng tiềm năng nâng cao sức mạnh rồi đi khám phá vật thể lạ đó nhé!");
+                        break;
+                    case ConstTask.TASK_3_0:
+                        npcSay(player, ConstTask.NPC_NHA, "Giỏi lắm, giờ hãy đi tìm vật thể lạ ở bản đồ kế bên!");
+                        break;
+                    case ConstTask.TASK_3_1:
+                        npcSay(player, ConstTask.NPC_NHA, "Con đã thấy vật thể lạ chưa? Hãy mau chóng kiểm tra nó rồi quay về báo cáo với ta.");
+                        break;
+                    case ConstTask.TASK_3_2:
+                        npcSay(player, ConstTask.NPC_NHA, "Vật thể lạ đó chính là phi thuyền của người Saiyan! Sẽ có nhiều thử thách lớn phía trước. Bây giờ, con hãy di chuyển đến trạm tàu vũ trụ để đi sang các hành tinh khác thách đấu nhé!");
+                        break;
+                    case ConstTask.TASK_7_2:
+                        npcSay(player, ConstTask.NPC_SHOP_LANG, "Cảm ơn cậu đã cứu tớ! Hãy về báo cáo với ông của cậu nhé!");
+                        break;
+                    case ConstTask.TASK_7_3:
+                        npcSay(player, ConstTask.NPC_NHA, "Ông rất tự hào về con! Con hãy tiếp tục luyện tập đạt 40.000 sức mạnh để đi tìm viên ngọc rồng 7 sao đang bị bọn cướp lấy mất.");
+                        break;
+                    case ConstTask.TASK_8_1:
+                        npcSay(player, ConstTask.NPC_NHA, "Con đã tìm thấy ngọc rồng 7 sao! Hãy đem về báo cáo cho ta.");
+                        break;
+                    case ConstTask.TASK_8_2:
+                        npcSay(player, ConstTask.NPC_NHA, "Tốt lắm! Bây giờ con hãy đi tìm Bò Mộng ở rừng Karin để hỏi thêm tin tức về các viên ngọc rồng khác.");
+                        break;
+                    case ConstTask.TASK_9_0:
+                        npcSay(player, ConstNpc.BO_MONG, "Cẩn thận! Tàu Pảy Pảy đang ở đây và hắn rất nguy hiểm!");
+                        break;
+                    case ConstTask.TASK_9_3:
+                        npcSay(player, ConstNpc.THAN_MEO_KARIN, "Ta là Thần Mèo Karin. Nếu con muốn đánh bại Tàu Pảy Pảy, con phải vượt qua thử thách tập luyện của ta!");
+                        break;
+                    case ConstTask.TASK_10_2:
+                        npcSay(player, ConstNpc.BO_MONG, "Con quả thực rất mạnh mẽ! Hãy mau đem ngọc rồng về báo cáo với ông của con.");
+                        break;
+                    case ConstTask.TASK_10_3:
+                        npcSay(player, ConstTask.NPC_NHA, "Con đã lập được công lớn! Bây giờ con hãy đi tìm Quy Lão Kame/Trưởng lão Guru/Vua Vegeta để bái sư học võ công cao cường hơn.");
+                        break;
+                    case ConstTask.TASK_11_0:
+                        npcSay(player, ConstTask.NPC_QUY_LAO, "Con có tư chất rất tốt, ta đồng ý nhận con làm đệ tử! Hãy về báo cáo với ông của con.");
+                        break;
+                    case ConstTask.TASK_11_1:
+                        npcSay(player, ConstTask.NPC_NHA, "Con đã bái sư thành công! Giờ hãy tìm cách gia nhập một bang hội để có những người đồng đội hỗ trợ nhau nhé.");
+                        break;
+                    case ConstTask.TASK_12_0:
+                        npcSay(player, ConstTask.NPC_QUY_LAO, "Tốt lắm, giờ con đã có đồng đội! Hãy cùng bang hội đi tiêu diệt heo rừng để tăng sự gắn kết.");
+                        break;
+                }
             }
             PlayerService.gI().sendInfoHpMpMoney(player);
             return true;
@@ -715,10 +811,16 @@ public class TaskService {
         NpcService.gI().createTutorial(player, avatar, text);
     }
 
-    private void rewardDoneTask() {
+    private void rewardDoneTask(Player player) {
+        if (player != null && player.nPoint != null) {
+            long reward = Math.max(10000L, player.nPoint.power / 5);
+            player.nPoint.tiemNangUp(reward);
+            Service.gI().sendThongBao(player, "Chúc mừng bạn nhận được " + utils.Util.formatNumber(reward) + " tiềm năng!");
+            Service.gI().point(player);
+        }
     }
 
-    private void addDoneSubTask(Player player) {
+    private boolean addDoneSubTask(Player player) {
         player.playerTask.taskMain.subTasks.get(player.playerTask.taskMain.index).count += 1;
         if (player.playerTask.taskMain.subTasks.get(player.playerTask.taskMain.index).count
                 >= player.playerTask.taskMain.subTasks.get(player.playerTask.taskMain.index).maxCount) {
@@ -728,8 +830,10 @@ public class TaskService {
             } else {
                 this.sendNextSubTask(player);
             }
+            return true;
         } else {
             this.sendUpdateCountSubTask(player);
+            return false;
         }
     }
 

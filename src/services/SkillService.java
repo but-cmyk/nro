@@ -709,74 +709,84 @@ public class SkillService {
                     player.playerSkill.prepareTuSat = true;
                     player.playerSkill.lastTimePrepareTuSat = System.currentTimeMillis();
                     sendPlayerPrepareBom(player, 2000);
+                    if (player.isBoss || player.isPet) {
+                        final Player p = player;
+                        server.GameLoopManager.gI().schedule(() -> {
+                            try {
+                                if (p != null && !p.beforeDispose && !p.isOffline && p.playerSkill.prepareTuSat) {
+                                    explodeTuSat(p);
+                                }
+                            } catch (Exception ex) {
+                                ex.printStackTrace();
+                            }
+                        }, 1500);
+                    }
                 } else {
                     if (!player.isBoss && !player.isPet && !Util.canDoWithTime(player.playerSkill.lastTimePrepareTuSat, 1500)) {
                         player.playerSkill.skillSelect.lastTimeUseThisSkill = System.currentTimeMillis();
                         player.playerSkill.prepareTuSat = false;
                         return;
                     }
-                    if (player.isBoss || player.isPet) {
-                        try {
-                            Thread.sleep(1500);
-                        } catch (InterruptedException _) {
-                        }
-                    }
-                    //nổ
-                    player.playerSkill.prepareTuSat = !player.playerSkill.prepareTuSat;
-                    int rangeBom = SkillUtil.getRangeBom(player.playerSkill.skillSelect.point);
-                    int dame = player.nPoint.hpMax;
-                    if (player.setClothes.cadicM == 2) {
-                        rangeBom = SkillUtil.getRangeBom(player.playerSkill.skillSelect.point) + 200;
-                    }
-                    if (player.setClothes.cadicM == 4) {
-                        dame += player.nPoint.hpMax * 20 / 100;
-                    } else if (player.setClothes.cadicM == 5) {
-                        dame += player.nPoint.hpMax * 50 / 100;
-                    }
-//                    System.out.println(" Nổ HP Gốc: " + player.nPoint.hpMax);
-//                    System.out.println(" Nổ Damage: " + dame);
-                    Item TrangBi = player.inventory.itemsBody.get(5);
-                    if (TrangBi != null) {
-                        for (Item.ItemOption io : TrangBi.itemOptions) {
-                            if (io.optionTemplate.id == 231) {
-                                break;
-                            }
-                        }
-                    }
-                   // System.out.println(" Nổ Damage Tăng: " + dame);
-                    if (!player.isBoss) {
-                        for (Mob mob : player.zone.mobs) {
-                            if (Util.getDistance(player, mob) <= rangeBom) { //khoảng cách có tác dụng bom
-                                mob.injured(player, dame, true);
-                            }
-                        }
-                    }
-                    List<Player> playersMap;
-                    if (player.isBoss) {
-                        playersMap = player.zone.getNotBosses();
-                    } else {
-                        playersMap = player.zone.getHumanoids();
-                    }
-                    if (!MapService.gI().isMapOffline(player.zone.map.mapId)) {
-                        for (Player pl : playersMap) {
-                            if (!player.equals(pl) && canAttackPlayer(player, pl) && Util.getDistance(player, pl) <= rangeBom) {
-                                dame = pl.isBoss ? player.effectSkill.isMonkey ? dame / 3 : dame / 2 : dame;
-                                pl.injured(player, dame, MapService.gI().isMapYardart(player.zone.map.mapId), false);
-                                PlayerService.gI().sendInfoHpMpMoney(pl);
-                                Service.gI().Send_Info_NV(pl);
-                            }
-                        }
-                    }
-                    affterUseSkill(player, player.playerSkill.skillSelect.template.id);
-                    if (!player.isBoss && !player.isPet) {
-                        player.setDie();
-                    }
-                    if (player.effectSkill.tiLeHPHuytSao != 0) {
-                        player.effectSkill.tiLeHPHuytSao = 0;
-                        EffectSkillService.gI().removeHuytSao(player);
-                    }
+                    explodeTuSat(player);
                 }
                 break;
+        }
+    }
+
+    public void explodeTuSat(Player player) {
+        if (player == null || player.playerSkill == null || player.playerSkill.skillSelect == null) {
+            return;
+        }
+        player.playerSkill.prepareTuSat = false;
+        int rangeBom = SkillUtil.getRangeBom(player.playerSkill.skillSelect.point);
+        int dame = player.nPoint.hpMax;
+        if (player.setClothes.cadicM == 2) {
+            rangeBom = SkillUtil.getRangeBom(player.playerSkill.skillSelect.point) + 200;
+        }
+        if (player.setClothes.cadicM == 4) {
+            dame += player.nPoint.hpMax * 20 / 100;
+        } else if (player.setClothes.cadicM == 5) {
+            dame += player.nPoint.hpMax * 50 / 100;
+        }
+        Item TrangBi = player.inventory.itemsBody.get(5);
+        if (TrangBi != null) {
+            for (Item.ItemOption io : TrangBi.itemOptions) {
+                if (io.optionTemplate.id == 231) {
+                    break;
+                }
+            }
+        }
+        if (!player.isBoss) {
+            for (Mob mob : player.zone.mobs) {
+                if (Util.getDistance(player, mob) <= rangeBom) {
+                    mob.injured(player, dame, true);
+                }
+            }
+        }
+        List<Player> playersMap;
+        if (player.isBoss) {
+            playersMap = player.zone.getNotBosses();
+        } else {
+            playersMap = player.zone.getHumanoids();
+        }
+        if (!MapService.gI().isMapOffline(player.zone.map.mapId)) {
+            for (Player pl : playersMap) {
+                if (!player.equals(pl) && canAttackPlayer(player, pl) && Util.getDistance(player, pl) <= rangeBom) {
+                    int originalDame = dame;
+                    originalDame = pl.isBoss ? player.effectSkill.isMonkey ? originalDame / 3 : originalDame / 2 : originalDame;
+                    pl.injured(player, originalDame, MapService.gI().isMapYardart(player.zone.map.mapId), false);
+                    PlayerService.gI().sendInfoHpMpMoney(pl);
+                    Service.gI().Send_Info_NV(pl);
+                }
+            }
+        }
+        affterUseSkill(player, player.playerSkill.skillSelect.template.id);
+        if (!player.isBoss && !player.isPet) {
+            player.setDie();
+        }
+        if (player.effectSkill.tiLeHPHuytSao != 0) {
+            player.effectSkill.tiLeHPHuytSao = 0;
+            EffectSkillService.gI().removeHuytSao(player);
         }
     }
 

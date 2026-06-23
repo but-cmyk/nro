@@ -22,7 +22,7 @@ import services.map.ItemMapService;
 import utils.TimeUtil;
 
 @Data
-public class DestronGas implements Runnable {
+public class DestronGas {
 
 //    public static final long POWER_CAN_GO_TO_KHI_GAS_HUY_DIET = 2000000000;
     public static final int AVAILABLE = 1;
@@ -48,22 +48,7 @@ public class DestronGas implements Runnable {
         this.zones = new ArrayList<>();
     }
 
-    @Override
-    public void run() {
-        while (!Maintenance.isRunning && isOpened) {
-            try {
-                long startTime = System.currentTimeMillis();
-                update();
-                long elapsedTime = System.currentTimeMillis() - startTime;
-                long sleepTime = 150 - elapsedTime;
-                if (sleepTime > 0) {
-                    Functions.sleep(sleepTime);
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-    }
+
 
     public void update() {
         if (clan.timesPerDayKGHD > 0 && TimeUtil.diffDate(new Date(System.currentTimeMillis()), new Date(clan.lastTimeOpenKhiGasHuyDiet), TimeUtil.DAY) >= 3) {
@@ -170,7 +155,6 @@ public class DestronGas implements Runnable {
                 }
             }
         }
-        new Thread(this, "Khí Gas Hủy Diệt: " + this.clan.name).start();
     }
 
     //kết thúc khí gas hủy diệt

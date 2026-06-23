@@ -1,5 +1,5 @@
 package services.func;
-//import Bot.NewBot;
+import bot.NewBot;
 import database.AlyraResultSet;
 import database.daos.NDVSqlFetcher;
 import models.clan.Clan;
@@ -385,36 +385,41 @@ public class Input {
 //                        //  NewBot.gI().runBot(1 , bs , slot);
 //                    }).start();
 //                    break;
-//                case BOTQUAI_NAPPA:
-//                    slot = Integer.parseInt(text[0]);
-//                    new Thread(() -> {
-//                        NewBot.gI().runBot(1, slot);
-//                    }).start();
-//                    break;
-//                case BOTQUAI_TUONGLAI:
-//                    slot = Integer.parseInt(text[0]);
-//                    new Thread(() -> {
-//                        NewBot.gI().runBot(2, slot);
-//                    }).start();
-//                    break;
-//                case BOTQUAI_COLD:
-//                    slot = Integer.parseInt(text[0]);
-//                    new Thread(() -> {
-//                        NewBot.gI().runBot(3, slot);
-//                    }).start();
-//                    break;
-//                case BOTBOSS:
-//                    slot = Integer.parseInt(text[0]);
-//                    new Thread(() -> {
-//                        NewBot.gI().runBot(2, slot);
-//                    }).start();
-//                    break;
-//                case BOTQUAI:
-//                    slot = Integer.parseInt(text[0]);
-//                    new Thread(() -> {
-//                        NewBot.gI().runBot(0, slot);
-//                    }).start();
-//                    break;
+                case BOTQUAI_NAPPA: {
+                    int slot = Integer.parseInt(text[0]);
+                    new Thread(() -> {
+                        NewBot.gI().runBot(1, slot);
+                    }).start();
+                    break;
+                }
+                case BOTQUAI_TUONGLAI: {
+                    int slot = Integer.parseInt(text[0]);
+                    new Thread(() -> {
+                        NewBot.gI().runBot(2, slot);
+                    }).start();
+                    break;
+                }
+                case BOTQUAI_COLD: {
+                    int slot = Integer.parseInt(text[0]);
+                    new Thread(() -> {
+                        NewBot.gI().runBot(3, slot);
+                    }).start();
+                    break;
+                }
+                case BOTBOSS: {
+                    int slot = Integer.parseInt(text[0]);
+                    new Thread(() -> {
+                        NewBot.gI().runBot(2, slot);
+                    }).start();
+                    break;
+                }
+                case BOTQUAI: {
+                    int slot = Integer.parseInt(text[0]);
+                    new Thread(() -> {
+                        NewBot.gI().runBot(0, slot);
+                    }).start();
+                    break;
+                }
 
                 case GIVE_IT:
                     String name = text[0];

@@ -1,5 +1,5 @@
 package services.func;
-//import Bot.Bot;
+//import bot.Bot;
 import database.AlyraManager;
 import database.daos.PlayerDAO;
 import models.player.Player;
@@ -12,7 +12,7 @@ import utils.TimeUtil;
 import utils.Util;
 
 import java.sql.Connection;
-import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -20,7 +20,7 @@ public class TransactionService implements Runnable {
 
     private static final int TIME_DELAY_TRADE = 30000;
 
-    static final Map<Player, Trade> PLAYER_TRADE = new HashMap<>();
+    static final Map<Player, Trade> PLAYER_TRADE = new ConcurrentHashMap<>();
 
     private static final byte SEND_INVITE_TRADE = 0;
     private static final byte ACCEPT_TRADE = 1;
