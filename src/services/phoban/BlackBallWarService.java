@@ -1,4 +1,5 @@
 package services.phoban;
+
 import models.phoban.BlackBallWar;
 import models.item.Item;
 import java.util.ArrayList;
@@ -40,27 +41,28 @@ public class BlackBallWarService {
     }
 
     public void dropBlackBall(Player player) {
-        if (player.idMark.isHoldBlackBall()) {
+        if (player != null && player.idMark != null && player.idMark.isHoldBlackBall()) {
             player.idMark.setHoldBlackBall(false);
-            ItemMap itemMap = new ItemMap(player.zone,
-                    player.idMark.getTempIdBlackBallHold(), 1, player.location.x,
-                    player.zone.map.yPhysicInTop(player.location.x, player.location.y - 24),
-                    -1);
-            Service.gI().dropItemMap(itemMap.zone, itemMap);
-            player.idMark.setTempIdBlackBallHold(-1);
-            player.zone.lastTimeDropBlackBall = System.currentTimeMillis();
-            Service.gI().sendFlagBag(player);
-
-            if (player.clan != null) {
-                List<Player> players = player.zone.getPlayers();
-                for (Player pl : players) {
-                    if (pl.clan != null && player.clan.equals(pl.clan)) {
-                        Service.gI().changeFlag(pl, Util.nextInt(1, 7));
+            if (player.zone != null && player.zone.map != null && player.location != null) {
+                ItemMap itemMap = new ItemMap(player.zone,
+                        player.idMark.getTempIdBlackBallHold(), 1, player.location.x,
+                        player.zone.map.yPhysicInTop(player.location.x, player.location.y - 24),
+                        -1);
+                Service.gI().dropItemMap(itemMap.zone, itemMap);
+                player.zone.lastTimeDropBlackBall = System.currentTimeMillis();
+                if (player.clan != null) {
+                    List<Player> players = player.zone.getPlayers();
+                    for (Player pl : players) {
+                        if (pl.clan != null && player.clan.equals(pl.clan)) {
+                            Service.gI().changeFlag(pl, Util.nextInt(1, 7));
+                        }
                     }
+                } else {
+                    Service.gI().changeFlag(player, Util.nextInt(1, 7));
                 }
-            } else {
-                Service.gI().changeFlag(player, Util.nextInt(1, 7));
             }
+            player.idMark.setTempIdBlackBallHold(-1);
+            Service.gI().sendFlagBag(player);
         }
     }
 
@@ -88,10 +90,12 @@ public class BlackBallWarService {
                         + TimeUtil.getSecondsUntilCanPick() + " giây nữa");
                 return false;
             } else if (player.zone.finishBlackBallWar) {
-                Service.gI().sendThongBao(player, "Trò chơi tìm ngọc hôm nay đã kết thúc, hẹn gặp lại vào 20h ngày mai");
+                Service.gI().sendThongBao(player,
+                        "Trò chơi tìm ngọc hôm nay đã kết thúc, hẹn gặp lại vào 20h ngày mai");
                 return false;
             } else {
-                if (Util.canDoWithTime(player.zone.lastTimeDropBlackBall, BlackBallWar.TIME_CAN_PICK_BLACK_BALL_AFTER_DROP)) {
+                if (Util.canDoWithTime(player.zone.lastTimeDropBlackBall,
+                        BlackBallWar.TIME_CAN_PICK_BLACK_BALL_AFTER_DROP)) {
                     player.idMark.setHoldBlackBall(true);
                     player.idMark.setTempIdBlackBallHold(item.template.id);
                     player.idMark.setLastTimeHoldBlackBall(System.currentTimeMillis());
@@ -109,7 +113,9 @@ public class BlackBallWarService {
                     return true;
                 } else {
                     Service.gI().sendThongBao(player, "Chưa thể nhặt lúc này, hãy đợi "
-                            + TimeUtil.getTimeLeft(player.zone.lastTimeDropBlackBall, BlackBallWar.TIME_CAN_PICK_BLACK_BALL_AFTER_DROP / 1000) + " nữa");
+                            + TimeUtil.getTimeLeft(player.zone.lastTimeDropBlackBall,
+                                    BlackBallWar.TIME_CAN_PICK_BLACK_BALL_AFTER_DROP / 1000)
+                            + " nữa");
                     return false;
                 }
             }
@@ -182,7 +188,8 @@ public class BlackBallWarService {
                 ChangeMapService.gI().changeMap(player,
                         player.mapBlackBall.get(index).map.mapId, -1, 50, 50);
             } else {
-                Service.gI().sendThongBao(player, "Trò chơi tìm ngọc hôm nay đã kết thúc, hẹn gặp lại vào 20h ngày mai");
+                Service.gI().sendThongBao(player,
+                        "Trò chơi tìm ngọc hôm nay đã kết thúc, hẹn gặp lại vào 20h ngày mai");
                 Service.gI().hideWaitDialog(player);
             }
         } catch (Exception ex) {

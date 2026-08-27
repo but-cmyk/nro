@@ -167,7 +167,10 @@ namespace Game1
     
     	internal void read(ref sbyte[] byteData, int p, int size)
     	{
-    		throw new NotImplementedException();
+    		if (r != null)
+    		{
+    			r.read(ref byteData, p, size);
+    		}
     	}
     }
 }

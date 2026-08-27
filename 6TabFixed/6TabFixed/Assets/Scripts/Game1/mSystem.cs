@@ -6,7 +6,7 @@ namespace Game1
     
     public class mSystem
     {
-    	public static bool isTest = true;
+	public static bool isTest = false;
     
     	public static string strAdmob;
     

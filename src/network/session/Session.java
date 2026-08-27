@@ -7,7 +7,6 @@ import java.net.SocketException;
 import interfaces.IKeySessionHandler;
 import interfaces.IMessageHandler;
 import interfaces.IMessageSendCollect;
-
 import interfaces.ISession;
 import consts.SocketType;
 import network.Collector;
@@ -15,11 +14,10 @@ import network.QueueHandler;
 import network.Sender;
 import network.io.Message;
 
-
 public class Session implements ISession {
 
     private static ISession instance;
-    private static int ID_INIT =1;
+    private static int ID_INIT = 1;
     private SocketType socketType = SocketType.SERVER;
     private byte[] KEYS;
     private boolean sentKey;
@@ -29,9 +27,9 @@ public class Session implements ISession {
     private Sender sender;
     private Collector collector;
     private QueueHandler queueHandler;
-    private final Thread tSender;
-    private final Thread tCollector;
-    private final Thread tQueueHandler;
+    private Thread tSender;
+    private Thread tCollector;
+    private Thread tQueueHandler;
     private IKeySessionHandler keyHandler;
     private String ip;
 
@@ -42,25 +40,17 @@ public class Session implements ISession {
         return instance;
     }
 
-//    public Session(String host, int port) throws IOException {
-//    this.id = ID_INIT++; // dùng ID_INIT thay vì hardcode
-//    this.socket = new Socket(host, port);
-//    this.socket.setSendBufferSize(0x100000);
-//    this.socket.setReceiveBufferSize(0x100000);
-//    this.socketType = SocketType.CLIENT;
-//    this.connected = true;
-//    this.ip = ((InetSocketAddress) this.socket.getRemoteSocketAddress())
-//                 .getAddress().getHostAddress(); // gán IP
-//
-//    this.sender = new Sender(this, this.socket);
-//    this.collector = new Collector(this, this.socket);
-//    this.queueHandler = new QueueHandler(this);
-//
-//    this.tSender = new Thread(this.sender, "Sender - IP : " + this.ip);
-//    this.tCollector = new Thread(this.collector, "Collector - IP : " + this.ip);
-//    this.tQueueHandler = new Thread(this.queueHandler);
-//}
+    public Session() {
+        this.KEYS = "NguyenDucVuEntertainment".getBytes();
+        this.id = ID_INIT++;
+        this.socketType = SocketType.SERVER;
+        this.connected = true;
+    }
 
+    public Session(String ip) {
+        this();
+        this.ip = ip;
+    }
 
     public Session(Socket socket) {
         this.KEYS = "NguyenDucVuEntertainment".getBytes();
@@ -85,21 +75,24 @@ public class Session implements ISession {
     @Override
     public void sendMessage(Message msg) {
         if (this.isConnected() && msg != null) {
-            this.sender.sendMessage(msg);
+            if (this.sender != null) {
+                this.sender.sendMessage(msg);
+            }
         }
     }
 
     @Override
     public ISession setSendCollect(IMessageSendCollect collect) {
-        this.sender.setSend(collect);
-        this.collector.setCollect(collect);
+        if (this.sender != null) this.sender.setSend(collect);
+        if (this.collector != null) this.collector.setCollect(collect);
         return this;
     }
 
     @Override
     public ISession setMessageHandler(IMessageHandler handler) {
-//        this.collector.setMessageHandler(handler);
-        this.queueHandler.setMessageHandler(handler);
+        if (this.queueHandler != null) {
+            this.queueHandler.setMessageHandler(handler);
+        }
         return this;
     }
 
@@ -111,27 +104,27 @@ public class Session implements ISession {
 
     @Override
     public ISession startSend() {
-        this.tSender.start();
+        if (this.tSender != null) this.tSender.start();
         return this;
     }
 
     @Override
     public ISession startCollect() {
-        this.tCollector.start();
+        if (this.tCollector != null) this.tCollector.start();
         return this;
     }
 
     @Override
     public ISession startQueueHandler() {
-        this.tQueueHandler.start();
+        if (this.tQueueHandler != null) this.tQueueHandler.start();
         return this;
     }
 
     @Override
     public ISession start() {
-        this.tSender.start();
-        this.tCollector.start();
-        this.tQueueHandler.start();
+        if (this.tSender != null) this.tSender.start();
+        if (this.tCollector != null) this.tCollector.start();
+        if (this.tQueueHandler != null) this.tQueueHandler.start();
         return this;
     }
 
@@ -140,15 +133,25 @@ public class Session implements ISession {
         return this.ip;
     }
 
+    public void setIP(String ip) {
+        this.ip = ip;
+    }
+
     @Override
     public long getID() {
         return this.id;
     }
 
     @Override
-    public void disconnect() {
+    public synchronized void disconnect() {
+        if (!this.connected && this.socket == null) {
+            return;
+        }
         this.connected = false;
         this.sentKey = false;
+        if (this.tSender != null) this.tSender.interrupt();
+        if (this.tCollector != null) this.tCollector.interrupt();
+        if (this.tQueueHandler != null) this.tQueueHandler.interrupt();
         if (this.sender != null) {
             this.sender.close();
         }
@@ -168,21 +171,18 @@ public class Session implements ISession {
     }
 
     @Override
-public void dispose() {
-    if (this.sender != null) this.sender.dispose();
-    if (this.collector != null) this.collector.dispose();
-    if (this.queueHandler != null) this.queueHandler.dispose();
+    public void dispose() {
+        if (this.sender != null) this.sender.dispose();
+        if (this.collector != null) this.collector.dispose();
+        if (this.queueHandler != null) this.queueHandler.dispose();
 
-    this.socket = null;
-    this.sender = null;
-    this.collector = null;
-    this.queueHandler = null;
-    // ⚠️ Không set ip = null ở đây
-    SessionManager.gI().removeSession(this);
-
-    // Sau khi remove xong mới clear ip nếu bạn muốn
-    this.ip = null;
-}
+        this.socket = null;
+        this.sender = null;
+        this.collector = null;
+        this.queueHandler = null;
+        SessionManager.gI().removeSession(this);
+        this.ip = null;
+    }
 
     @Override
     public void sendKey() throws Exception {
@@ -217,12 +217,18 @@ public void dispose() {
 
     @Override
     public void doSendMessage(Message msg) throws Exception {
-        this.sender.doSendMessage(msg);
+        if (this.sender != null) {
+            this.sender.doSendMessage(msg);
+        }
     }
 
     @Override
     public boolean isConnected() {
         return this.connected;
+    }
+
+    public void setConnected(boolean connected) {
+        this.connected = connected;
     }
 
     @Override
@@ -239,5 +245,4 @@ public void dispose() {
     public QueueHandler getQueueHandler() {
         return this.queueHandler;
     }
-
 }

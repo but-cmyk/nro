@@ -108,15 +108,18 @@ namespace Game2
     		{
     			ServerListScreen.ipSelect = Rms.loadRMSInt("svselect");
     			Res.outz(">>>loadIP:  ipSelect == " + ServerListScreen.ipSelect);
-    			if (ServerListScreen.ipSelect > ServerListScreen.nameServer.Length - 1)
+    			if (ServerListScreen.nameServer != null && (ServerListScreen.ipSelect > ServerListScreen.nameServer.Length - 1 || ServerListScreen.ipSelect < 0))
     			{
-    				ServerListScreen.ipSelect = ServerListScreen.serverPriority;
+    				ServerListScreen.ipSelect = 0;
     				Rms.saveRMSInt("svselect", ServerListScreen.ipSelect);
     			}
-    			GameMidlet.IP = ServerListScreen.address[ServerListScreen.ipSelect];
-    			GameMidlet.PORT = ServerListScreen.port[ServerListScreen.ipSelect];
-    			mResources.loadLanguague(ServerListScreen.language[ServerListScreen.ipSelect]);
-    			LoginScr.serverName = ServerListScreen.nameServer[ServerListScreen.ipSelect];
+    			if (ServerListScreen.address != null && ServerListScreen.ipSelect >= 0 && ServerListScreen.ipSelect < ServerListScreen.address.Length)
+    			{
+    				GameMidlet.IP = ServerListScreen.address[ServerListScreen.ipSelect];
+    				GameMidlet.PORT = ServerListScreen.port[ServerListScreen.ipSelect];
+    				mResources.loadLanguague(ServerListScreen.language[ServerListScreen.ipSelect]);
+    				LoginScr.serverName = ServerListScreen.nameServer[ServerListScreen.ipSelect];
+    			}
     			GameCanvas.connect();
     		}
     	}

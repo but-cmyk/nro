@@ -323,20 +323,6 @@ public class ChangeMapService {
             Service.gI().sendThongBao(pl, "Không thể chuyển map quá nhanh khi đeo Ngọc Rồng Namếc");
             return;
         }
-        if (pl.idNRNM != -1 && zoneJoin != null) {
-            int idNRNM = pl.idNRNM;
-            NgocRongNamecService.gI().mapNrNamec[idNRNM - 353] = zoneJoin.map.mapId;
-            NgocRongNamecService.gI().nameNrNamec[idNRNM - 353] = zoneJoin.map.mapName;
-            NgocRongNamecService.gI().zoneNrNamec[idNRNM - 353] = (byte) zoneJoin.zoneId;
-            NgocRongNamecService.gI().pNrNamec[idNRNM - 353] = pl.name;
-            NgocRongNamecService.gI().idpNrNamec[idNRNM - 353] = (int) pl.id;
-            pl.lastTimePickNRNM = System.currentTimeMillis();
-        }
-
-        if (pl.idNRNM != -1 && !NgocRongNamecService.gI().isMapNRNM(zoneJoin.map.mapId)) {
-            NgocRongNamecService.gI().dropNamekBall(pl);
-        }
-
         TransactionService.gI().cancelTrade(pl);
         if (zoneJoin == null) {
             if (mapId != -1) {
@@ -346,6 +332,18 @@ public class ChangeMapService {
         if (zoneJoin == null || zoneJoin.map == null) {
             Service.gI().sendThongBao(pl, "Không thể chuyển đến khu vực này. Khu vực không tồn tại.");
             return;
+        }
+        if (pl.idNRNM != -1) {
+            int idNRNM = pl.idNRNM;
+            NgocRongNamecService.gI().mapNrNamec[idNRNM - 353] = zoneJoin.map.mapId;
+            NgocRongNamecService.gI().nameNrNamec[idNRNM - 353] = zoneJoin.map.mapName;
+            NgocRongNamecService.gI().zoneNrNamec[idNRNM - 353] = (byte) zoneJoin.zoneId;
+            NgocRongNamecService.gI().pNrNamec[idNRNM - 353] = pl.name;
+            NgocRongNamecService.gI().idpNrNamec[idNRNM - 353] = (int) pl.id;
+            pl.lastTimePickNRNM = System.currentTimeMillis();
+            if (!NgocRongNamecService.gI().isMapNRNM(zoneJoin.map.mapId)) {
+                NgocRongNamecService.gI().dropNamekBall(pl);
+            }
         }
         if (typeSpace == TELEPORT_YARDRAT) {
             zoneJoin = checkMapCanJoinByYardart(pl, zoneJoin);
@@ -377,8 +375,15 @@ public class ChangeMapService {
                     pl.location.x = 100;
                 }
             }
-            if (y != -1) {
-                pl.location.y = zoneJoin.map.yPhysicInTop(pl.location.x, Math.max(0, y - 24));
+            if (zoneJoin.map.mapWidth > 48) {
+                pl.location.x = Math.max(24, Math.min(zoneJoin.map.mapWidth - 24, pl.location.x));
+            }
+            if (typeSpace == AUTO_SPACE_SHIP) {
+                // The client uses Y <= 10 to start the spaceship landing animation.
+                // Snapping Y to the ground here prevents (or can deadlock) that animation.
+                pl.location.y = 5;
+            } else if (y != -1) {
+                pl.location.y = y;
             } else {
                 pl.location.y = zoneJoin.map.yPhysicInTop(pl.location.x, 100);
             }

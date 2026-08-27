@@ -5,7 +5,6 @@ import utils.Functions;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import lombok.NonNull;
 import models.map.Zone;
 import models.Template.WaitSuperRank;
 import models.player.Player;
@@ -94,7 +93,7 @@ public class SuperRankManager implements Runnable {
         return false;
     }
 
-    public boolean SPRCheck(@NonNull Zone zone) {
+    public boolean SPRCheck( Zone zone) {
         for (int i = list.size() - 1; i >= 0; i--) {
             SuperRank spr = list.get(i);
             if (spr.getZone() != null && spr.getZone().equals(zone)) {

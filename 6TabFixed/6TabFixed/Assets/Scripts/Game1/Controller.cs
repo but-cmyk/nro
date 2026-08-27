@@ -3552,8 +3552,8 @@ namespace Game1
                                 bgItem.tileY = new int[b31];
                                 for (int num77 = 0; num77 < b31; num77++)
                                 {
-                                    bgItem.tileX[num76] = msg.reader().readByte();
-                                    bgItem.tileY[num76] = msg.reader().readByte();
+                                    bgItem.tileX[num77] = msg.reader().readByte();
+                                    bgItem.tileY[num77] = msg.reader().readByte();
                                 }
                                 TileMap.vItemBg.addElement(bgItem);
                             }
@@ -4721,6 +4721,7 @@ namespace Game1
         public void loadCurrMap(sbyte teleport3)
         {
             Res.outz("[CONTROLER] start load map " + teleport3);
+            isStopReadMessage = false;
             GameScr.gI().auto = 0;
             GameScr.isChangeZone = false;
             CreateCharScr.instance = null;
@@ -5504,6 +5505,7 @@ namespace Game1
                 catch (Exception)
                 {
                 }
+                // Removed faulty skip of ServerListScreen (loadScreen = true) that broke data downloading
             }
             catch (Exception)
             {

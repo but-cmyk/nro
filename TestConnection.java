@@ -13,54 +13,18 @@ public class TestConnection {
             try (Connection conn = DriverManager.getConnection(url, user, pass)) {
                 System.out.println("Connected successfully!");
                 
-                // Test 1: standard TYPE_FORWARD_ONLY statement
-                try (PreparedStatement ps = conn.prepareStatement("SELECT id FROM account LIMIT 1");
+                try (PreparedStatement ps = conn.prepareStatement("SELECT ip_address FROM account LIMIT 1");
                      ResultSet rs = ps.executeQuery()) {
-                    System.out.println("Testing TYPE_FORWARD_ONLY:");
-                    try {
-                        if (rs.next()) {
-                            System.out.println("-> rs.next() worked, value: " + rs.getInt(1));
-                        }
-                    } catch (Exception e) {
-                        System.out.println("-> rs.next() failed: " + e.getMessage());
-                    }
-                    try {
-                        rs.first();
-                        System.out.println("-> rs.first() worked");
-                    } catch (Exception e) {
-                        System.out.println("-> rs.first() failed: " + e.getMessage());
-                    }
-                    try {
-                        rs.last();
-                        System.out.println("-> rs.last() worked");
-                    } catch (Exception e) {
-                        System.out.println("-> rs.last() failed: " + e.getMessage());
-                    }
+                    System.out.println("Successfully queried ip_address from account table!");
+                } catch (Exception e) {
+                    System.out.println("ip_address column MISSING or ERROR: " + e.getMessage());
                 }
                 
-                // Test 2: TYPE_SCROLL_INSENSITIVE statement
-                try (PreparedStatement ps = conn.prepareStatement("SELECT id FROM account LIMIT 1", ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+                try (PreparedStatement ps = conn.prepareStatement("SELECT is_admin FROM account LIMIT 1");
                      ResultSet rs = ps.executeQuery()) {
-                    System.out.println("Testing TYPE_SCROLL_INSENSITIVE:");
-                    try {
-                        if (rs.next()) {
-                            System.out.println("-> rs.next() worked, value: " + rs.getInt(1));
-                        }
-                    } catch (Exception e) {
-                        System.out.println("-> rs.next() failed: " + e.getMessage());
-                    }
-                    try {
-                        rs.first();
-                        System.out.println("-> rs.first() worked");
-                    } catch (Exception e) {
-                        System.out.println("-> rs.first() failed: " + e.getMessage());
-                    }
-                    try {
-                        rs.last();
-                        System.out.println("-> rs.last() worked");
-                    } catch (Exception e) {
-                        System.out.println("-> rs.last() failed: " + e.getMessage());
-                    }
+                    System.out.println("Successfully queried is_admin from account table!");
+                } catch (Exception e) {
+                    System.out.println("is_admin column MISSING or ERROR: " + e.getMessage());
                 }
             }
         } catch (Exception e) {

@@ -388,6 +388,10 @@ namespace Game1
     
     	public bool isTypeBody()
     	{
+    		if (template == null)
+    		{
+    			return false;
+    		}
     		if ((0 <= template.type && template.type < 6) || template.type == 32 || template.type == 35 || template.type == 11 || template.type == 23)
     		{
     			return true;
@@ -402,6 +406,10 @@ namespace Game1
     
     	public string getUpgradestring()
     	{
+    		if (template == null)
+    		{
+    			return null;
+    		}
     		if (template.level < 10 || template.type >= 10)
     		{
     			return mResources.NOTUPGRADE;

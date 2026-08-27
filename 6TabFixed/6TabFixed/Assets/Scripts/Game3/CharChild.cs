@@ -23,7 +23,6 @@ namespace Game3
         }
         public override void update()
         {
-            EffectManager.update();
             base.update();
         }
         public override void setSkillPaint(SkillPaint skillPaint, int sType)
@@ -63,7 +62,7 @@ namespace Game3
             {
                 return;
             }
-            if (CharInfo[cf][0][0] >= ph.pi.Length || CharInfo[cf][1][0] >= pl.pi.Length || CharInfo[cf][2][0] >= pb.pi.Length)
+            if (CharInfo[cf][0][0] < 0 || CharInfo[cf][0][0] >= ph.pi.Length || CharInfo[cf][1][0] < 0 || CharInfo[cf][1][0] >= pl.pi.Length || CharInfo[cf][2][0] < 0 || CharInfo[cf][2][0] >= pb.pi.Length)
             {
                 return;
             }
@@ -80,7 +79,8 @@ namespace Game3
             SmallImage.drawSmallImage(g, ph.pi[CharInfo[cf][0][0]].id, cx + (CharInfo[cf][0][1] + ph.pi[CharInfo[cf][0][0]].dx) * num2, cy - CharInfo[cf][0][2] + ph.pi[CharInfo[cf][0][0]].dy, num, 0);
             SmallImage.drawSmallImage(g, pl.pi[CharInfo[cf][1][0]].id, cx + (CharInfo[cf][1][1] + pl.pi[CharInfo[cf][1][0]].dx) * num2, cy - CharInfo[cf][1][2] + pl.pi[CharInfo[cf][1][0]].dy, num, 0);
             SmallImage.drawSmallImage(g, pb.pi[CharInfo[cf][2][0]].id, cx + (CharInfo[cf][2][1] + pb.pi[CharInfo[cf][2][0]].dx) * num2, cy - CharInfo[cf][2][2] + pb.pi[CharInfo[cf][2][0]].dy, num, 0);
-            ch = ((isMonkey != 1 && !isFusion) ? (CharInfo[0][0][2] + ph.pi[CharInfo[0][0][0]].dy + 10) : 60);
+            int head0Index = (CharInfo.Length > 0 && CharInfo[0] != null && CharInfo[0].Length > 0 && CharInfo[0][0] != null && CharInfo[0][0][0] >= 0 && CharInfo[0][0][0] < ph.pi.Length) ? CharInfo[0][0][0] : 0;
+            ch = ((isMonkey != 1 && !isFusion && ph.pi.Length > head0Index) ? (CharInfo[0][0][2] + ph.pi[head0Index].dy + 10) : 60);
             int num4 = ((Res.abs(ph.pi[CharInfo[cf][0][0]].dy) < 22) ? ph.pi[CharInfo[cf][0][0]].dy : ((ph.pi[CharInfo[cf][0][0]].dy >= 0) ? (ph.pi[CharInfo[cf][0][0]].dy - 5) : (ph.pi[CharInfo[cf][0][0]].dy + 5)));
             cH_new = cy - CharInfo[cf][0][2] + num4;
         }

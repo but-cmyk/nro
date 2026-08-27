@@ -6,7 +6,6 @@ import utils.Functions;
 import consts.ConstTournament;
 import java.util.ArrayList;
 import java.util.List;
-import lombok.NonNull;
 import models.map.Map;
 import models.map.Zone;
 import models.player.Player;
@@ -245,7 +244,7 @@ public class WorldMartialArtsTournamentManager implements Runnable {
         return zone;
     }
 
-    public WorldMartialArtsTournament getWMAT(@NonNull Zone zone) {
+    public WorldMartialArtsTournament getWMAT( Zone zone) {
         for (WorldMartialArtsTournament wmat : listTournaments) {
             if (wmat.zone.equals(zone)) {
                 return wmat;

@@ -8,7 +8,7 @@ namespace Game1.God
     {
         private static ClientManager instance { get; set; }
         private int xJ, yJ;
-        private int speedRun = -1;
+        private int speedRun = 4;
         public static ClientManager getInstance()
         {
             return (instance == null) ? (instance = new ClientManager()) : instance;
@@ -30,7 +30,7 @@ namespace Game1.God
         public void UpdateTouch()
         {
             ListChars.getInstance().UpdateTouch();
-            if (GameScr.isAnalog == 1)
+            if (GameScr.isAnalog == 1 && GameScr.imgNut != null && GameScr.imgAnalog1 != null)
             {
                 if (!GameCanvas.isPointerMove && GameCanvas.isPointerHoldIn(160, 2, 30, 30) && GameScr.isAnalog == 1)
                 {
@@ -42,7 +42,7 @@ namespace Game1.God
                         return;
                     }
                 }
-                if (!GameCanvas.isPointerMove && GameCanvas.isPointerHoldIn(GameScr.xHP + 20, GameScr.yHP + 20 - 6 - 60, GameScr.imgNut.getWidth(), GameScr.imgNut.getHeight()))
+                if (!GameCanvas.isPointerMove && GameCanvas.isPointerHoldIn(GameScr.xHP + 120, GameScr.yHP + 20 - 6 - 60, GameScr.imgNut.getWidth(), GameScr.imgNut.getHeight()))
                 {
                     mScreen.keyTouch = 14;
                     if (GameCanvas.isPointerJustRelease)
@@ -171,13 +171,11 @@ namespace Game1.God
                     xJ += GameScr.imgNut.getWidth() + 20;
                     g.drawImage((mScreen.keyTouch != 1004) ? GameScr.imgNut : GameScr.imgNutF, xJ, yJ, mGraphics.HCENTER | mGraphics.VCENTER);
                     g.drawImage(GameScr.arrow, xJ, yJ, mGraphics.HCENTER | mGraphics.VCENTER);
-                    g.drawImage((mScreen.keyTouch != 14) ? GameScr.imgNut : GameScr.imgNutF, GameScr.xHP + 20 + 5, GameScr.yHP + 20 - 6 - 40, mGraphics.HCENTER | mGraphics.VCENTER);
-                    SmallImage.drawSmallImage(g, 1088, GameScr.xHP + 20 - 7 + 5, GameScr.yHP - 33, 0, 0);
+                    g.drawImage((mScreen.keyTouch != 14) ? GameScr.imgNut : GameScr.imgNutF, GameScr.xHP + 120 + 5, GameScr.yHP + 20 - 6 - 40, mGraphics.HCENTER | mGraphics.VCENTER);
+                    SmallImage.drawSmallImage(g, 1088, GameScr.xHP + 120 - 7 + 5, GameScr.yHP - 33, 0, 0);
                 }
             }
-            if(LoginScr.imgTitle != null) { 
-                g.drawImage(LoginScr.imgTitle, GameCanvas.w / 2, 35, mGraphics.VCENTER | mGraphics.HCENTER);
-            }
+
             AutoControlPanel.getInstance().paint(g);
         }
         public void KeyPressed(int keyCode)
@@ -285,7 +283,7 @@ namespace Game1.God
             if(text.StartsWith("cheat "))
             {
                 int cheat = int.Parse(text.Split(' ')[1]);
-                Time.timeScale = cheat;
+                Main.gameSpeed = Mathf.Clamp(cheat, 1, 100);
                 return true;
             }
             if(text.StartsWith("k "))
@@ -377,7 +375,7 @@ namespace Game1.God
                 try
                 {
                     int speed = int.Parse(chat.tfChat.getText());
-                    Time.timeScale = speed;
+                    Main.gameSpeed = Mathf.Clamp(speed, 1, 100);
                     GameScr.info1.addInfo("Tốc độ game: " + speed, 0);
                 }
                 catch (System.Exception)

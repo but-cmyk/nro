@@ -1,6 +1,8 @@
 namespace Game1
 {
+    using System;
     using System.Linq;
+    using UnityEngine;
     using UnityEngine.SceneManagement;
 
     public class TabControll : mScreen
@@ -21,19 +23,17 @@ namespace Game1
             set => _selectTab = value;
         }
 
-        private static bool _isShow = false;
-
         public static bool isShow
         {
-            get => _isShow;
-            set => _isShow = value;
+            get => TabManagement.isTabBarVisible;
+            set => TabManagement.isTabBarVisible = value;
         }
 
         private static sbyte tabIndex = 0;
 
         private static TabCommand firstCommand = new TabCommand("Tab", () => showTabSelect());
 
-        private static TabCommand[] TransferTab = Enumerable.Range(0, 6)
+        private static TabCommand[] TransferTab = Enumerable.Range(0, 3)
               .Select(i => new TabCommand((i + 1).ToString(), () => TransferTabIndex((sbyte)(i - 1))))
               .ToArray();
 
@@ -41,16 +41,13 @@ namespace Game1
         {
             "NROL",
             "NRO2",
-            "NRO3",
-            "NRO4",
-            "NRO5",
-            "NRO6"
+            "NRO3"
         };
         private static TabType[] tabTypes = new TabType[]
         {
             TabType.Tab1,
-            TabType.Tab2, TabType.Tab3,
-            TabType.Tab4, TabType.Tab5, TabType.Tab6
+            TabType.Tab2,
+            TabType.Tab3
         };
         private static void initCommand()
         {
@@ -58,7 +55,7 @@ namespace Game1
             firstCommand.y = 0;
             for (int i = 0; i < TransferTab.Length; i++)
             {
-                TransferTab[i].x = GameCanvas.w - 210 + i * 25;
+                TransferTab[i].x = GameCanvas.w - 140 + i * 25;
                 TransferTab[i].y = 0;
             }
         }

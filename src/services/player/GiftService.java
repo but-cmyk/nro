@@ -8,7 +8,6 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import lombok.extern.java.Log;
 import models.item.Item;
 import models.item.Item.ItemOption;
 import models.player.Player;

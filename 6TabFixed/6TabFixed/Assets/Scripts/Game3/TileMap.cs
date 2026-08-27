@@ -237,6 +237,15 @@ namespace Game3
     		}
     		return false;
     	}
+
+    	public static bool isMapCold()
+    	{
+    		if (mapID >= 105 && mapID <= 110)
+    		{
+    			return true;
+    		}
+    		return false;
+    	}
     
     	public static bool mapPhuBang()
     	{

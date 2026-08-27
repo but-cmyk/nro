@@ -5,14 +5,18 @@ using System;
 public static class UnityLogger
 {
     private static readonly string LogFilePath = Path.Combine(Application.dataPath, string.Format("../unity_log_{0}.txt", System.Diagnostics.Process.GetCurrentProcess().Id));
+    private static readonly object logLock = new object();
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     private static void Initialize()
     {
         try
         {
-            // Clear previous log on startup to keep it clean and clear
-            File.WriteAllText(LogFilePath, "=== UNITY LOG STARTED AT " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + " ===\n");
+            lock (logLock)
+            {
+                // Clear previous log on startup to keep it clean and clear
+                File.WriteAllText(LogFilePath, "=== UNITY LOG STARTED AT " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + " ===\n");
+            }
             
             Application.logMessageReceivedThreaded += HandleLog;
         }
@@ -32,7 +36,10 @@ public static class UnityLogger
             {
                 formattedLog += stackTrace + "\n";
             }
-            File.AppendAllText(LogFilePath, formattedLog);
+            lock (logLock)
+            {
+                File.AppendAllText(LogFilePath, formattedLog);
+            }
         }
         catch (Exception)
         {

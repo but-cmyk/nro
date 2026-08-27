@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import models.tournament.The23rdMartialArtCongress;
 import utils.Util;
 import java.util.List;
-import lombok.NonNull;
 import models.map.Zone;
 import models.player.Player;
 import server.Maintenance;
@@ -57,7 +56,7 @@ public class The23rdMartialArtCongressManager implements Runnable {
         list.remove(mc);
     }
 
-    public The23rdMartialArtCongress getMC(@NonNull Zone zone) {
+    public The23rdMartialArtCongress getMC( Zone zone) {
         for (The23rdMartialArtCongress mc : list) {
             if (mc.getZone().equals(zone)) {
                 return mc;

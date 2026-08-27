@@ -1207,6 +1207,7 @@ namespace Game1
     	{
     		vChatVip.removeAllElements();
     		ServerListScreen.isWait = false;
+    		ServerListScreen.waitToLogin = false;
     		if (BackgroudEffect.isHaveRain())
     		{
     			SoundMn.gI().rain();

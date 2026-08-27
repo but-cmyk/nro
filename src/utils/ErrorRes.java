@@ -9,7 +9,7 @@ public class ErrorRes {
         try {
             String query = "https://chatgpt.com/?q=" + URLEncoder.encode(er, StandardCharsets.UTF_8);
             Desktop.getDesktop().browse(new URI(query));
-        } catch (Exception _) {
+        } catch (Exception ignored) {
 
         }
     }

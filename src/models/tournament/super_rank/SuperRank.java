@@ -10,7 +10,6 @@ import consts.BossStatus;
 import models.boss.boss_list.SuperRank.Rival;
 import consts.ConstPlayer;
 import consts.ConstSuperRank;
-import lombok.Data;
 import models.map.Zone;
 import models.matches.pvp.DHVT;
 import models.player.Player;
@@ -21,7 +20,6 @@ import services.Service;
 import services.map.ChangeMapService;
 import utils.Util;
 
-@Data
 public final class SuperRank implements Runnable {
 
     private Zone zone;
@@ -36,6 +34,24 @@ public final class SuperRank implements Runnable {
     public int rankLose;
     public boolean win;
     public int error;
+
+    public Zone getZone() { return zone; }
+    public void setZone(Zone zone) { this.zone = zone; }
+
+    public boolean isCompeting() { return isCompeting; }
+    public void setCompeting(boolean isCompeting) { this.isCompeting = isCompeting; }
+
+    public long getPlayerId() { return playerId; }
+    public void setPlayerId(long playerId) { this.playerId = playerId; }
+
+    public long getRivalId() { return rivalId; }
+    public void setRivalId(long rivalId) { this.rivalId = rivalId; }
+
+    public Player getPlayer() { return player; }
+    public void setPlayer(Player player) { this.player = player; }
+
+    public Boss getRival() { return rival; }
+    public void setRival(Boss rival) { this.rival = rival; }
 
     public SuperRank(Player player, long rivalId, Zone zone) {
         try {

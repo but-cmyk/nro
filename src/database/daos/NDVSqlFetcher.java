@@ -83,7 +83,8 @@ public class NDVSqlFetcher {
                 }
 
                 session.isAdmin = rsAccount.getBoolean("is_admin");
-                session.lastTimeLogout = rsAccount.getTimestamp("last_time_logout").getTime();
+                Timestamp logoutTs = rsAccount.getTimestamp("last_time_logout");
+                session.lastTimeLogout = (logoutTs != null) ? logoutTs.getTime() : System.currentTimeMillis();
                 session.actived = rsAccount.getBoolean("active");
                 session.goldBar = rsAccount.getInt("account.thoi_vang");
                 session.luotquay = rsAccount.getInt("account.luotquay");
@@ -135,8 +136,9 @@ public class NDVSqlFetcher {
                     return null;
                 }
 
-                if (secondsPassLogout < Manager.SECOND_WAIT_LOGIN) {
+                if (Manager.SECOND_WAIT_LOGIN > 0 && secondsPassLogout < Manager.SECOND_WAIT_LOGIN) {
                     Service.gI().sendWaitToLogin(session, Manager.SECOND_WAIT_LOGIN - secondsPassLogout);
+                    Service.gI().sendThongBaoOK(session, "Vui lòng chờ " + (Manager.SECOND_WAIT_LOGIN - secondsPassLogout) + "s để đăng nhập lại.");
                     return null;
                 }
 

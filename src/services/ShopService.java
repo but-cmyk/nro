@@ -843,6 +843,10 @@ public class ShopService {
 
     public void buyItem(Player player, int itemTempId) {
         Shop shop = player.idMark.getShopOpen();
+        if (shop == null) {
+            Service.gI().sendThongBao(player, "Không thể thực hiện");
+            return;
+        }
         ItemShop is = shop.getItemShop(itemTempId);
         if (is == null) {
             Service.gI().sendThongBao(player, "Không thể thực hiện");
@@ -1025,7 +1029,7 @@ public class ShopService {
                 msg.writer().writeShort(index);
                 msg.writer().writeUTF(text);
                 pl.sendMessage(msg);
-            } catch (Exception _) {
+            } catch (Exception ignored) {
             } finally {
                 if (msg != null) {
                     msg.cleanup();

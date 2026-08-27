@@ -17,9 +17,10 @@ namespace Game3.God
         }
         public static void UseItem(int id)
         {
+            if (Char.myCharz() == null || Char.myCharz().arrItemBag == null) return;
             foreach(var item in Char.myCharz().arrItemBag)
             {
-                if(item != null && item.template.id == id)
+                if(item != null && item.template != null && item.template.id == id)
                 {
                     Service.gI().useItem(0, 1, (sbyte)(item.indexUI), -1);
                     break;
@@ -28,19 +29,23 @@ namespace Game3.God
         }
         public static void addInfo1(string info, bool a)
         {
-            GameScr.info1.addInfo("|1|" +info + "\n" + (a ? "Bật" : "Tắt"), 0);
+            if (GameScr.info1 != null)
+                GameScr.info1.addInfo("|1|" +info + "\n" + (a ? "Bật" : "Tắt"), 0);
         }
         public static void Teleport(int x, int y)
         {
+            if (Char.myCharz() == null) return;
             Char.myCharz().cx = x;
             Char.myCharz().cy = y;
             Service.gI().charMove();
         }
         public static void FocusObject(int charId)
         {
+            if (Char.myCharz() == null || GameScr.vCharInMap == null) return;
             for (int i = 0; i < GameScr.vCharInMap.size(); i++)
             {
                 Char @char = (Char)GameScr.vCharInMap.elementAt(i);
+                if (@char == null) continue;
                 bool flag = !@char.isMiniPet && !@char.isPet && @char.charID == charId;
                 if (flag)
                 {
@@ -54,9 +59,10 @@ namespace Game3.God
         }
         public static bool findItemBag(int id)
         {
+            if (Char.myCharz() == null || Char.myCharz().arrItemBag == null) return false;
             foreach(var item in Char.myCharz().arrItemBag)
             {
-                if(item != null && item.template.id == id)
+                if(item != null && item.template != null && item.template.id == id)
                 {
                     return true;
                 } 
@@ -65,9 +71,10 @@ namespace Game3.God
         }
         public static bool findItemName(string name)
         {
+            if (Char.myCharz() == null || Char.myCharz().arrItemBag == null || string.IsNullOrEmpty(name)) return false;
             foreach(var item in Char.myCharz().arrItemBag)
             {
-                if(item != null && item.template.name.ToLower().StartsWith(name))
+                if(item != null && item.template != null && item.template.name != null && item.template.name.ToLower().StartsWith(name.ToLower()))
                 {
                     return true;
                 }
@@ -76,9 +83,10 @@ namespace Game3.God
         }
         public static Item getItemFromName(string name)
         {
+            if (Char.myCharz() == null || Char.myCharz().arrItemBag == null || string.IsNullOrEmpty(name)) return null;
             foreach(var item in Char.myCharz().arrItemBag)
             {
-                if(item != null && item.template.name.ToLower().StartsWith(name))
+                if(item != null && item.template != null && item.template.name != null && item.template.name.ToLower().StartsWith(name.ToLower()))
                 {
                     return item;
                 }

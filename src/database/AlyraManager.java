@@ -34,6 +34,7 @@ public class AlyraManager {
     private static String DB_NAME_DATA;
     private static String DB_USER;
     private static String DB_PASSWORD;
+    private static String DB_SSL_MODE;
     private static int MIN_CONN;
     private static int MAX_CONN;
     private static long MAX_LIFE_TIME;
@@ -92,6 +93,7 @@ public class AlyraManager {
         DB_NAME_DATA = getProperty(properties, "database.name_data");
         DB_USER = getProperty(properties, "database.user");
         DB_PASSWORD = getProperty(properties, "database.pass");
+        DB_SSL_MODE = getSslMode(properties, DB_HOST);
         
         MIN_CONN = getIntProperty(properties, "database.min", 5);
         MAX_CONN = getIntProperty(properties, "database.max", 20);
@@ -102,6 +104,18 @@ public class AlyraManager {
     private static String getProperty(Properties props, String key) {
         Object value = props.get(key);
         return value != null ? String.valueOf(value) : "";
+    }
+
+    private static String getSslMode(Properties props, String host) {
+        String configured = getProperty(props, "database.ssl.mode").trim().toUpperCase(java.util.Locale.ROOT);
+        boolean local = "localhost".equalsIgnoreCase(host) || "127.0.0.1".equals(host) || "::1".equals(host);
+        if (configured.isEmpty()) {
+            return local ? "DISABLED" : "VERIFY_IDENTITY";
+        }
+        return switch (configured) {
+            case "DISABLED", "PREFERRED", "REQUIRED", "VERIFY_CA", "VERIFY_IDENTITY" -> configured;
+            default -> throw new IllegalArgumentException("database.ssl.mode không hợp lệ: " + configured);
+        };
     }
 
     private static int getIntProperty(Properties props, String key, int defaultValue) {
@@ -131,7 +145,6 @@ public class AlyraManager {
         }
     }
 
-    // FIXED: Safer executeQuery without parameters
     public static AlyraResultSet executeQuery(final String query) throws Exception {
         if (query == null || query.trim().isEmpty()) {
             throw new IllegalArgumentException("Query cannot be null or empty");
@@ -149,18 +162,14 @@ public class AlyraManager {
                 Logger.log(Logger.GREEN, "Thực thi thành công câu lệnh: " + ps.toString() + "\n");
             }
             
-            // Create ResultSetImpl which will copy data and close original ResultSet
             AlyraResultSet resultSet = new ResultSetImpl(rs);
             
-            // Close resources immediately after copying data
             rs.close();
             ps.close();
             con.close();
             
             return resultSet;
-            
         } catch (Exception ex) {
-            // Ensure cleanup on exception
             closeQuietly(rs);
             closeQuietly(ps);
             closeQuietly(con);
@@ -170,7 +179,6 @@ public class AlyraManager {
         }
     }
     
-    // FIXED: Safer executeQuery with parameters
     public static AlyraResultSet executeQuery(final String query, final Object... params) throws Exception {
         if (query == null || query.trim().isEmpty()) {
             throw new IllegalArgumentException("Query cannot be null or empty");
@@ -183,27 +191,21 @@ public class AlyraManager {
             con = getConnection();
             ps = con.prepareStatement(query, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
             
-            // Set parameters safely
             setParameters(ps, params);
-            
             rs = ps.executeQuery();
             
             if (LOG_QUERY) {
                 Logger.log(Logger.GREEN, "Thực thi thành công câu lệnh: " + ps.toString() + "\n");
             }
             
-            // Create ResultSetImpl which will copy data and close original ResultSet
             AlyraResultSet resultSet = new ResultSetImpl(rs);
             
-            // Close resources immediately after copying data
             rs.close();
             ps.close();
             con.close();
             
             return resultSet;
-            
         } catch (final Exception ex) {
-            // Ensure cleanup on exception
             closeQuietly(rs);
             closeQuietly(ps);
             closeQuietly(con);
@@ -232,15 +234,11 @@ public class AlyraManager {
         }
     }
 
-    // FIXED: Safer executeUpdate with parameters
-    // Trong AlyraManager.java
-
     public static int executeUpdate(String query, final Object... params) throws Exception {
         if (query == null || query.trim().isEmpty()) throw new IllegalArgumentException("Query rỗng");
 
         query = processInsertQuery(query, params);
 
-        // Dùng try-with-resources để đảm bảo đóng connection kể cả khi có lỗi
         try (Connection con = getConnection();
              PreparedStatement ps = con.prepareStatement(query)) {
 
@@ -248,18 +246,16 @@ public class AlyraManager {
             return ps.executeUpdate();
         } catch (SQLException ex) {
             Logger.log(Logger.RED, "SQL Error: " + query + " | " + ex.getMessage());
-            throw ex; // Ném lại lỗi để bên ngoài biết
+            throw ex;
         }
     }
 
-    // FIXED: Enhanced login method with better validation and error handling
     public static Player login(MySession session, AntiLogin al) {
         if (session == null || al == null) {
             Logger.log(Logger.RED, "Session hoặc AntiLogin null trong login method\n");
             return null;
         }
         
-        // Check if login is allowed (anti-bruteforce)
         if (!al.canLogin()) {
             Service.gI().sendThongBaoOK(session, al.getNotifyCannotLogin());
             Service.gI().sendLoginFail(session, false);
@@ -279,7 +275,6 @@ public class AlyraManager {
         AlyraResultSet rsPlayer = null;
 
         try {
-            // Check account credentials
             rsAccount = checkAccount(session);
             if (rsAccount == null || !rsAccount.first()) {
                 Service.gI().sendThongBaoOK(session, "Thông tin tài khoản hoặc mật khẩu không chính xác");
@@ -290,7 +285,6 @@ public class AlyraManager {
 
             rsAccount.gotoFirst();
 
-            // Verify BCrypt password hash
             String storedHash = rsAccount.getString("password");
             if (!utils.PasswordUtils.verifyPassword(session.pp, storedHash)) {
                 Service.gI().sendThongBaoOK(session, "Thông tin tài khoản hoặc mật khẩu không chính xác");
@@ -299,23 +293,19 @@ public class AlyraManager {
                 return null;
             }
 
-            // Check if player is already online
             Player plInGame = checkPlayerInGame(session, rsAccount);
             if (plInGame != null) {
                 return null;
             }
 
-            // Update account information
             updateAccountInfo(session, rsAccount);
 
-            // Check login timing restrictions
             if (!isLoginAllowed(session)) {
                 return null;
             }
 
-            // Load or create player
-// Chỉ kiểm tra xem nhân vật có tồn tại hay không (chỉ lấy id) cho nhẹ
-            rsPlayer = executeQuery("SELECT id FROM player WHERE account_id = ? LIMIT 1", session.userId);            if (!rsPlayer.first()) {
+            rsPlayer = executeQuery("SELECT id FROM player WHERE account_id = ? LIMIT 1", session.userId);
+            if (!rsPlayer.first()) {
                 DataGame.sendVersionGame(session);
                 DataGame.sendDataItemBG(session);
                 Service.gI().switchToCreateChar(session);
@@ -324,7 +314,7 @@ public class AlyraManager {
                 player = loadPlayer(rsPlayer, false);
             }
 
-            al.reset(); // Login successful, reset failed attempts
+            al.reset();
 
         } catch (Exception e) {
             Logger.log(Logger.RED, "Error in login method: " + e.getMessage() + "\n");
@@ -336,7 +326,6 @@ public class AlyraManager {
         return player;
     }
 
-    // Helper methods
     private static void setParameters(PreparedStatement ps, Object... params) throws SQLException {
         if (params != null) {
             for (int i = 0; i < params.length; i++) {
@@ -385,7 +374,6 @@ public class AlyraManager {
         return null;
     }
 
-    // FIXED: Safer updateAccountInfo with better null handling
     private static void updateAccountInfo(MySession session, AlyraResultSet rsAccount) throws SQLException, Exception {
         if (session == null || rsAccount == null) {
             throw new Exception("Session hoặc rsAccount null trong updateAccountInfo");
@@ -394,7 +382,6 @@ public class AlyraManager {
         session.userId = rsAccount.getInt("account.id");
         session.isAdmin = rsAccount.getBoolean("is_admin");
         
-        // FIXED: Safe timestamp handling
         session.lastTimeLogout = getTimestampSafely(rsAccount, "last_time_logout");
         
         session.actived = rsAccount.getBoolean("active");
@@ -441,8 +428,9 @@ public class AlyraManager {
         long lastTimeLogout = session.lastTimeLogout;
         int secondsPassLogout = (int) ((System.currentTimeMillis() - lastTimeLogout) / 1000);
         
-        if (secondsPassLogout < Manager.SECOND_WAIT_LOGIN) {
+        if (Manager.SECOND_WAIT_LOGIN > 0 && secondsPassLogout < Manager.SECOND_WAIT_LOGIN) {
             Service.gI().sendWaitToLogin(session, Manager.SECOND_WAIT_LOGIN - secondsPassLogout);
+            Service.gI().sendThongBaoOK(session, "Vui lòng chờ " + (Manager.SECOND_WAIT_LOGIN - secondsPassLogout) + "s để đăng nhập lại.");
             return false;
         }
         return true;
@@ -451,8 +439,9 @@ public class AlyraManager {
     private static HikariConfig createConfig(String poolName, String databaseName) {
         HikariConfig config = new HikariConfig();
         config.setDriverClassName(DRIVER);
-        config.setJdbcUrl(String.format("jdbc:mysql://%s:%s/%s?useUnicode=true&characterEncoding=UTF-8&autoReconnect=true&useSSL=false&allowPublicKeyRetrieval=true&cachePrepStmts=true&prepStmtCacheSize=250&prepStmtCacheSqlLimit=2048",
-                DB_HOST, DB_PORT, databaseName));
+        boolean allowPublicKeyRetrieval = "DISABLED".equals(DB_SSL_MODE);
+        config.setJdbcUrl(String.format("jdbc:mysql://%s:%s/%s?useUnicode=true&characterEncoding=UTF-8&sslMode=%s&allowPublicKeyRetrieval=%s&cachePrepStmts=true&prepStmtCacheSize=250&prepStmtCacheSqlLimit=2048",
+                DB_HOST, DB_PORT, databaseName, DB_SSL_MODE, allowPublicKeyRetrieval));
         config.setUsername(DB_USER);
         config.setPassword(DB_PASSWORD);
         config.setMinimumIdle(MIN_CONN);
@@ -460,13 +449,11 @@ public class AlyraManager {
         config.setMaxLifetime(MAX_LIFE_TIME);
         config.setPoolName(poolName);
         
-        // Connection timeout settings
-        config.setConnectionTimeout(30000); // 30 seconds
-        config.setIdleTimeout(600000); // 10 minutes
-        config.setLeakDetectionThreshold(60000); // 1 minute
-        config.setValidationTimeout(5000); // 5 seconds
+        config.setConnectionTimeout(30000);
+        config.setIdleTimeout(600000);
+        config.setLeakDetectionThreshold(60000);
+        config.setValidationTimeout(5000);
         
-        // MySQL specific optimizations
         config.addDataSourceProperty("cachePrepStmts", "true");
         config.addDataSourceProperty("prepStmtCacheSize", "250");
         config.addDataSourceProperty("prepStmtCacheSqlLimit", "2048");
@@ -482,28 +469,25 @@ public class AlyraManager {
         
         return config;
     }
-    // Dán vào cuối class AlyraManager
-public static void reloadData() {
-    Logger.log(Logger.YELLOW, "Bắt đầu tải lại cấu hình database...");
-    
-    // Đóng các kết nối cũ
-    if (ds != null && !ds.isClosed()) {
-        ds.close();
+
+    public static void reloadData() {
+        Logger.log(Logger.YELLOW, "Bắt đầu tải lại cấu hình database...");
+        
+        if (ds != null && !ds.isClosed()) {
+            ds.close();
+        }
+        if (ds_data != null && !ds_data.isClosed()) {
+            ds_data.close();
+        }
+
+        loadProperties();
+
+        config = createConfig("User Management", DB_NAME);
+        config_data = createConfig("Game Assets", DB_NAME_DATA);
+
+        ds = new HikariDataSource(config);
+        ds_data = new HikariDataSource(config_data);
+        
+        Logger.log(Logger.GREEN, "Tải lại cấu hình database thành công!");
     }
-    if (ds_data != null && !ds_data.isClosed()) {
-        ds_data.close();
-    }
-
-    // Tải lại file properties
-    loadProperties();
-
-    // Tạo lại cấu hình và nguồn dữ liệu mới
-    config = createConfig("User Management", DB_NAME);
-    config_data = createConfig("Game Assets", DB_NAME_DATA);
-
-    ds = new HikariDataSource(config);
-    ds_data = new HikariDataSource(config_data);
-    
-    Logger.log(Logger.GREEN, "Tải lại cấu hình database thành công!");
-}
 }

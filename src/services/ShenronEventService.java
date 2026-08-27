@@ -53,7 +53,7 @@ public class ShenronEventService {
                     for (int i = NGOC_RONG_1_SAO; i <= NGOC_RONG_7_SAO; i++) {
                         try {
                             InventoryService.gI().subQuantityItemsBag(player, InventoryService.gI().findItemBag(player, i), 1);
-                        } catch (Exception _) {
+                        } catch (Exception ignored) {
                         }
                     }
                     InventoryService.gI().sendItemBags(player);
