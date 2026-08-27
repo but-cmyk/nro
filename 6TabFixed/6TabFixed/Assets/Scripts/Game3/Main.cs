@@ -1,7 +1,5 @@
-
 namespace Game3
 {
-    
     using System;
     using System.Net.NetworkInformation;
     using System.Threading;
@@ -89,6 +87,12 @@ namespace Game3
     
         public static string pasteText;
 
+        public static float gameSpeed = 1.2f;
+
+        private float gameSpeedAccumulator;
+
+        public static TabType mainTab;
+
         private void Awake()
         {
             if (main != null)
@@ -103,7 +107,6 @@ namespace Game3
 
         private void Start()
         {
-    
             if (started)
             {
                 return;
@@ -126,6 +129,15 @@ namespace Game3
                 isPC = true;
             }
             started = true;
+            Camera camera = GetComponent<Camera>();
+            if (camera == null)
+            {
+                camera = Camera.main;
+            }
+            if (camera != null)
+            {
+                // Removed forced SolidColor and black background to restore original sky
+            }
             if (isPC)
             {
                 level = Rms.loadRMSInt("levelScreenKN");
@@ -139,12 +151,12 @@ namespace Game3
                 }
             }
         }
-    
+
         private void SetInit()
         {
             base.enabled = true;
         }
-    
+
         private void OnHideUnity(bool isGameShown)
         {
             if (!isGameShown)
@@ -156,7 +168,7 @@ namespace Game3
                 Time.timeScale = 1f;
             }
         }
-    
+
         private void OnGUI()
         {
             if (count >= 10)
@@ -175,16 +187,17 @@ namespace Game3
                 checkInput();
                 Session_ME.update();
                 Session_ME2.update();
-                if ( TabManagement.tab == TabType.Tab3 && Event.current.type.Equals(EventType.Repaint) && paintCount <= updateCount)
+                if (TabManagement.tab == TabType.Tab3 && Event.current.type.Equals(EventType.Repaint))
                 {
+                    GUI.color = Color.white;
+                    GUI.backgroundColor = Color.white;
                     GameMidlet.gameCanvas.paint(g);
-                    //Canvas.gI().paint();
                     paintCount++;
                     g.reset();
                 }
             }
         }
-    
+
         public void setsizeChange()
         {
             if (!isRun)
@@ -247,11 +260,11 @@ namespace Game3
                 SoundMn.gI().loadSound(TileMap.mapID);
             }
         }
-    
+
         public static void setBackupIcloud(string path)
         {
         }
-    
+
         public string GetMacAddress()
         {
             string empty = string.Empty;
@@ -266,7 +279,7 @@ namespace Game3
             }
             return string.Empty;
         }
-    
+
         public void doClearRMS()
         {
             if (isPC)
@@ -280,7 +293,7 @@ namespace Game3
                 }
             }
         }
-    
+
         public static void closeKeyBoard()
         {
             if (TouchScreenKeyboard.visible)
@@ -289,9 +302,14 @@ namespace Game3
                 TField.kb = null;
             }
         }
-    
+
         private void FixedUpdate()
         {
+            AudioListener listener = GetComponent<AudioListener>();
+            if (listener != null)
+            {
+                listener.enabled = (TabManagement.tab == TabType.Tab3);
+            }
             Rms.update();
             count++;
             if (count >= 10)
@@ -309,10 +327,17 @@ namespace Game3
                 up++;
                 setsizeChange();
                 updateCount++;
+
+                gameSpeedAccumulator += Mathf.Max(0.1f, gameSpeed);
+                int simulationSteps = Mathf.Clamp((int)gameSpeedAccumulator, 0, 100);
+                gameSpeedAccumulator -= simulationSteps;
+                for (int simulationStep = 0; simulationStep < simulationSteps; simulationStep++)
+                {
                     ipKeyboard.update();
                     GameMidlet.gameCanvas.update();
                     Image.update();
                     DataInputStream.update();
+                }
                 
                 f++;
                 if (f > 8)
@@ -325,14 +350,14 @@ namespace Game3
                 }
             }
         }
-    
+
         private void Update()
         {
         }
-    
+
         internal void checkInput()
         {
-            if (TabManagement.tab != TabType.Tab3) return;
+            if (TabManagement.tab != TabType.Tab3 || GameMidlet.gameCanvas == null) return;
             if (Input.GetMouseButtonDown(0))
             {
                 Vector3 mousePosition = Input.mousePosition;

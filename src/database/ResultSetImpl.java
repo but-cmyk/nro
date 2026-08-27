@@ -2,7 +2,9 @@ package database;
 
 import java.sql.Timestamp;
 import java.sql.ResultSetMetaData;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.Map;
@@ -25,39 +27,36 @@ public class ResultSetImpl implements AlyraResultSet {
             // Store statement reference để đóng sau
             stmt = rs.getStatement();
             
-            rs.last();
-            final int nRow = rs.getRow();
-            rs.beforeFirst();
-            
             final ResultSetMetaData rsmd = rs.getMetaData();
             final int nColumn = rsmd.getColumnCount();
             
-            // Initialize arrays
-            this.data = new HashMap[nRow];
-            for (int i = 0; i < this.data.length; ++i) {
-                this.data[i] = new HashMap<>();
-            }
-            this.values = new Object[nRow][nColumn];
+            List<Map<String, Object>> listData = new ArrayList<>();
+            List<Object[]> listValues = new ArrayList<>();
             
-            int index = 0;
             while (rs.next()) {
+                Map<String, Object> rowMap = new HashMap<>();
+                Object[] rowValues = new Object[nColumn];
                 for (int j = 1; j <= nColumn; ++j) {
                     final String tableName = rsmd.getTableName(j);
                     final String columnName = rsmd.getColumnName(j);
                     final Object columnValue = rs.getObject(j);
                     
                     // Store with column name (case insensitive)
-                    this.data[index].put(columnName.toLowerCase(), columnValue);
+                    rowMap.put(columnName.toLowerCase(), columnValue);
                     
                     // Store with table.column format if table name exists
                     if (tableName != null && !tableName.isEmpty()) {
-                        this.data[index].put(tableName.toLowerCase() + "." + columnName.toLowerCase(), columnValue);
+                        rowMap.put(tableName.toLowerCase() + "." + columnName.toLowerCase(), columnValue);
                     }
                     
-                    this.values[index][j - 1] = columnValue;
+                    rowValues[j - 1] = columnValue;
                 }
-                ++index;
+                listData.add(rowMap);
+                listValues.add(rowValues);
             }
+            
+            this.data = listData.toArray(new Map[0]);
+            this.values = listValues.toArray(new Object[0][0]);
         } catch (final Exception e) {
             throw new Exception("Error processing ResultSet: " + e.getMessage(), e);
         } finally {

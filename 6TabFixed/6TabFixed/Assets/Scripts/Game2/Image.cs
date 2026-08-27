@@ -451,10 +451,19 @@ namespace Game2
     
     	public void getRGB(ref int[] data, int x1, int x2, int x, int y, int w, int h)
     	{
-    		Color[] pixels = texture.GetPixels(x, this.h - 1 - y, w, h);
-    		for (int i = 0; i < pixels.Length; i++)
+    		try
     		{
-    			data[i] = mGraphics.getIntByColor(pixels[i]);
+    			if (texture != null && texture.isReadable)
+    			{
+    				Color[] pixels = texture.GetPixels(x, this.h - 1 - y, w, h);
+    				for (int i = 0; i < pixels.Length; i++)
+    				{
+    					data[i] = mGraphics.getIntByColor(pixels[i]);
+    				}
+    			}
+    		}
+    		catch (Exception)
+    		{
     		}
     	}
     }

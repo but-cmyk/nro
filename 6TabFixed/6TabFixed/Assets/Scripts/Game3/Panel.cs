@@ -6644,45 +6644,38 @@ namespace Game3
     
         public int getCompare(Item item)
         {
-            if (item == null)
+            if (item == null || item.template == null)
             {
                 return -1;
             }
             if (item.isTypeBody())
             {
-                if (item.itemOption == null)
+                if (item.itemOption == null || item.itemOption.Length == 0 || item.itemOption[0] == null || item.itemOption[0].optionTemplate == null)
                 {
                     return -1;
                 }
                 ItemOption itemOption = item.itemOption[0];
-                if (itemOption.optionTemplate.id == 22)
+                if (itemOption.optionTemplate.id == 22 && GameScr.gI().iOptionTemplates != null && GameScr.gI().iOptionTemplates.Length > 6)
                 {
                     itemOption.optionTemplate = GameScr.gI().iOptionTemplates[6];
                     itemOption.param *= 1000;
                 }
-                if (itemOption.optionTemplate.id == 23)
+                if (itemOption.optionTemplate.id == 23 && GameScr.gI().iOptionTemplates != null && GameScr.gI().iOptionTemplates.Length > 7)
                 {
                     itemOption.optionTemplate = GameScr.gI().iOptionTemplates[7];
                     itemOption.param *= 1000;
                 }
                 Item item2 = null;
-                for (int i = 0; i < Char.myCharz().arrItemBody.Length; i++)
+                if (Char.myCharz() != null && Char.myCharz().arrItemBody != null)
                 {
-                    Item item3 = Char.myCharz().arrItemBody[i];
-                    if (itemOption.optionTemplate.id == 22)
+                    for (int i = 0; i < Char.myCharz().arrItemBody.Length; i++)
                     {
-                        itemOption.optionTemplate = GameScr.gI().iOptionTemplates[6];
-                        itemOption.param *= 1000;
-                    }
-                    if (itemOption.optionTemplate.id == 23)
-                    {
-                        itemOption.optionTemplate = GameScr.gI().iOptionTemplates[7];
-                        itemOption.param *= 1000;
-                    }
-                    if (item3 != null && item3.itemOption != null && item3.template.type == item.template.type)
-                    {
-                        item2 = item3;
-                        break;
+                        Item item3 = Char.myCharz().arrItemBody[i];
+                        if (item3 != null && item3.template != null && item3.itemOption != null && item3.template.type == item.template.type)
+                        {
+                            item2 = item3;
+                            break;
+                        }
                     }
                 }
                 if (item2 == null)
@@ -6691,7 +6684,7 @@ namespace Game3
                     return itemOption.param;
                 }
                 int num = 0;
-                num = ((item2 == null || item2.itemOption == null) ? itemOption.param : (itemOption.param - item2.itemOption[0].param));
+                num = ((item2.itemOption == null || item2.itemOption.Length == 0 || item2.itemOption[0] == null) ? itemOption.param : (itemOption.param - item2.itemOption[0].param));
                 if (num < 0)
                 {
                     isUp = false;

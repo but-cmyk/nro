@@ -57,9 +57,14 @@ public class Message implements IMessage {
         return this.dis;
     }
 
+    private byte[] cachedData;
+
     @Override
     public byte[] getData() {
-        return this.os.toByteArray();
+        if (this.cachedData == null && this.os != null) {
+            this.cachedData = this.os.toByteArray();
+        }
+        return this.cachedData;
     }
 
     @Override
@@ -77,7 +82,7 @@ public class Message implements IMessage {
             if (this.dos != null) {
                 this.dos.close();
             }
-        } catch (IOException _) {
+        } catch (IOException ignored) {
         }
     }
 
@@ -88,5 +93,6 @@ public class Message implements IMessage {
         this.is = null;
         this.dos = null;
         this.os = null;
+        this.cachedData = null;
     }
 }

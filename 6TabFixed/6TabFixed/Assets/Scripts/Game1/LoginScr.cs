@@ -182,7 +182,7 @@ namespace Game1
     			break;
     		}
     		tfUser.setText(Rms.loadRMSString("acc"));
-    		tfPass.setText(Rms.loadRMSString("pass"));
+		tfPass.setText(Rms.loadRMSPassword("pass"));
     		if (cmdCallHotline == null)
     		{
     			cmdCallHotline = new Command("Gọi hotline", this, 13, null);
@@ -304,7 +304,7 @@ namespace Game1
     		{
     			tfUser.setText(text);
     		}
-    		string text2 = Rms.loadRMSString("pass");
+		string text2 = Rms.loadRMSPassword("pass");
     		if (text2 != null && !text2.Equals(string.Empty))
     		{
     			tfPass.setText(text2);
@@ -400,7 +400,7 @@ namespace Game1
     		passRe = tfPass.getText();
     		Service.gI().requestRegister(user, tfPass.getText(), Rms.loadRMSString("userAo" + ServerListScreen.ipSelect), Rms.loadRMSString("passAo" + ServerListScreen.ipSelect), GameMidlet.VERSION);
     		Rms.saveRMSString("acc", user);
-    		Rms.saveRMSString("pass", tfPass.getText());
+		Rms.saveRMSPassword("pass", tfPass.getText());
     		t = 20;
     		isRegistering = true;
     	}
@@ -448,7 +448,7 @@ namespace Game1
     	public void doLogin()
     	{
     		string text = Rms.loadRMSString("acc");
-    		string text2 = Rms.loadRMSString("pass");
+		string text2 = Rms.loadRMSPassword("pass");
     		if (text != null && !text.Equals(string.Empty))
     		{
     			isLogin2 = false;
@@ -485,8 +485,7 @@ namespace Game1
     		{
     			GameCanvas.connect();
     		}
-    		Res.outz("ccccccc " + text + " " + text2 + " " + GameMidlet.VERSION + " " + (sbyte)(isLogin2 ? 1 : 0));
-    		Service.gI().login(text, text2, GameMidlet.VERSION, (sbyte)(isLogin2 ? 1 : 0));
+		Service.gI().login(text, text2, GameMidlet.VERSION, (sbyte)(isLogin2 ? 1 : 0));
     		if (Session_ME.connected)
     		{
     			GameCanvas.startWaitDlg();
@@ -509,13 +508,13 @@ namespace Game1
     		{
     			Rms.saveRMSInt("check", 1);
     			Rms.saveRMSString("acc", tfUser.getText().ToLower().Trim());
-    			Rms.saveRMSString("pass", tfPass.getText().ToLower().Trim());
+			Rms.saveRMSPassword("pass", tfPass.getText().ToLower().Trim());
     		}
     		else
     		{
     			Rms.saveRMSInt("check", 2);
     			Rms.saveRMSString("acc", string.Empty);
-    			Rms.saveRMSString("pass", string.Empty);
+			Rms.saveRMSPassword("pass", string.Empty);
     		}
     	}
     
@@ -982,7 +981,7 @@ namespace Game1
     			break;
     		case 2008:
     			Rms.saveRMSString("acc", tfUser.getText().Trim());
-    			Rms.saveRMSString("pass", tfPass.getText().Trim());
+			Rms.saveRMSPassword("pass", tfPass.getText().Trim());
     			if (ServerListScreen.loadScreen)
     			{
     				GameCanvas.serverScreen.switchToMe();

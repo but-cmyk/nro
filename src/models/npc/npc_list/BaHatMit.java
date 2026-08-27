@@ -2,7 +2,6 @@ package models.npc.npc_list;
 
 import consts.ConstNpc;
 import java.util.ArrayList;
-import lombok.extern.java.Log;
 import models.item.Item;
 import models.tournament.DeathOrAliveArena;
 import managers.tournament.DeathOrAliveArenaManager;

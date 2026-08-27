@@ -19,11 +19,13 @@ namespace Game3
     
     	public int nextInt(int a)
     	{
+    		if (a <= 0) return 0;
     		return r.Next(a);
     	}
     
     	public int nextInt(int a, int b)
     	{
+    		if (a >= b) return a;
     		return r.Next(a, b);
     	}
     }

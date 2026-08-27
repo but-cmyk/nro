@@ -16,4 +16,12 @@ public class FileIO {
             return null;
         }
     }
+
+    public static void writeFile(String url, byte[] data) {
+        try {
+            Files.write(Paths.get(url), data);
+        } catch (IOException e) {
+            Logger.logException(FileIO.class, e);
+        }
+    }
 }

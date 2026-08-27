@@ -134,7 +134,10 @@ namespace Game1
             GameObject gameObject = new GameObject();
             gameObject.name = "Audio Player 1";
             gameObject.transform.position = Vector3.zero;
-            gameObject.AddComponent<AudioListener>();
+            if (UnityEngine.Object.FindObjectOfType<AudioListener>() == null)
+            {
+                gameObject.AddComponent<AudioListener>();
+            }
             SoundBGLoop = gameObject.AddComponent<AudioSource>();
             MonoBehaviour.DontDestroyOnLoad(gameObject);
         }

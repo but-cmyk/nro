@@ -9,13 +9,13 @@ import services.map.ChangeMapService;
 import utils.TimeUtil;
 import utils.Util;
 
-import lombok.Data;
 import models.map.Zone;
 import server.Client;
 import server.Maintenance;
 
-@Data
 public class BlackBallWar {
+
+    public Zone getZone() { return this.zone; }
 
     public static final int TIME_CAN_PICK_BLACK_BALL_AFTER_DROP = 5000;
 

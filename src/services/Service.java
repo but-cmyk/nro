@@ -173,7 +173,7 @@ public class Service {
             }
             sendMessAllPlayerInMap(player, msg);
             msg.cleanup();
-        } catch (Exception _) {
+        } catch (Exception ignored) {
         }
     }
 
@@ -210,7 +210,7 @@ public class Service {
             msg.writer().writeShort(32);
             me.sendMessage(msg);
             msg.cleanup();
-        } catch (Exception _) {
+        } catch (Exception ignored) {
         }
     }
 
@@ -319,7 +319,7 @@ public class Service {
             msg.writer().writeInt(pl.nPoint.hpMax);
             sendMessAnotherNotMeInMap(pl, msg);
             msg.cleanup();
-        } catch (Exception _) {
+        } catch (Exception ignored) {
 
         }
     }
@@ -334,7 +334,7 @@ public class Service {
             msg.writer().writeInt(pl.nPoint.hpMax);
             sendMessAnotherNotMeInMap(pl, msg);
             msg.cleanup();
-        } catch (Exception _) {
+        } catch (Exception ignored) {
 
         }
     }
@@ -349,7 +349,7 @@ public class Service {
             msg.writer().writeInt(pl.nPoint.hpMax);
             sendMessAnotherNotMeInMap(pl, msg);
             msg.cleanup();
-        } catch (Exception _) {
+        } catch (Exception ignored) {
 
         }
     }
@@ -362,7 +362,7 @@ public class Service {
             msg.writer().writeInt(pl.nPoint.hp);
             msg.writer().writeInt(pl.nPoint.hpMax);
             sendMessAnotherNotMeInMap(pl, msg);
-        } catch (Exception _) {
+        } catch (Exception ignored) {
         } finally {
             if (msg != null) {
                 msg.cleanup();
@@ -381,7 +381,7 @@ public class Service {
             player.sendMessage(msg);
             msg.cleanup();
 
-        } catch (Exception _) {
+        } catch (Exception ignored) {
         }
     }
 
@@ -391,7 +391,7 @@ public class Service {
             msg = new Message(-22);
             player.sendMessage(msg);
             msg.cleanup();
-        } catch (Exception _) {
+        } catch (Exception ignored) {
         }
     }
 
@@ -416,7 +416,7 @@ public class Service {
             msg.writer().writeUTF(text);
             me.sendMessage(msg);
             msg.cleanup();
-        } catch (Exception _) {
+        } catch (Exception ignored) {
         }
     }
 
@@ -440,7 +440,7 @@ public class Service {
             msg.writer().writeShort(pl.maxTime);
             msg.writer().writeByte(pl.type);
             pl.sendMessage(msg);
-        } catch (Exception _) {
+        } catch (Exception ignored) {
         } finally {
             if (msg != null) {
                 msg.cleanup();
@@ -455,7 +455,7 @@ public class Service {
             msg.writer().writeShort(pl.maxTime);
             msg.writer().writeByte(type);
             pl.sendMessage(msg);
-        } catch (Exception _) {
+        } catch (Exception ignored) {
         } finally {
             if (msg != null) {
                 msg.cleanup();
@@ -509,7 +509,7 @@ public class Service {
                 } else {
                     return "[" + player.clan.name + "] " + player.name;
                 }
-            } catch (Exception _) {
+            } catch (Exception ignored) {
             }
         } else if (player.name == null) {
             return "";
@@ -624,11 +624,11 @@ public class Service {
         }
     }
 
-//    public Message messageNotLogin(byte command) throws IOException {
-//        Message ms = new Message(-29);
-//        ms.writer().writeByte(command);
-//        return ms;
-//    }
+    public Message messageNotLogin(byte command) throws IOException {
+        Message ms = new Message(-29);
+        ms.writer().writeByte(command);
+        return ms;
+    }
 
     public Message messageNotMap(byte command) throws IOException {
         Message ms = new Message(-28);
@@ -872,7 +872,7 @@ public class Service {
                 msg.writer().writeByte(player.effectSkill.isMonkey ? 1 : 0);//set khỉ
                 sendMessAllPlayerInMap(player, msg);
                 msg.cleanup();
-            } catch (Exception _) {
+            } catch (Exception ignored) {
             }
         }
     }
@@ -925,7 +925,7 @@ public class Service {
             msg.writer().writeUTF(text);
             session.sendMessage(msg);
             msg.cleanup();
-        } catch (Exception _) {
+        } catch (Exception ignored) {
         }
     }
 
@@ -936,7 +936,7 @@ public class Service {
             msg.writer().writeUTF(thongBao);
             this.sendMessAllPlayer(msg);
             msg.cleanup();
-        } catch (Exception _) {
+        } catch (Exception ignored) {
         }
     }
 
@@ -949,7 +949,7 @@ public class Service {
             msg.writer().writeByte(0);
             player.sendMessage(msg);
             msg.cleanup();
-        } catch (IOException _) {
+        } catch (IOException ignored) {
 
         }
     }
@@ -966,7 +966,7 @@ public class Service {
             pl.sendMessage(msg);
             msg.cleanup();
 
-        } catch (Exception _) {
+        } catch (Exception ignored) {
         }
     }
 
@@ -1001,7 +1001,7 @@ public class Service {
             msg.writer().writeInt(pl.inventory.ruby);
             pl.sendMessage(msg);
             msg.cleanup();
-        } catch (Exception _) {
+        } catch (Exception ignored) {
 
         }
     }
@@ -1014,7 +1014,7 @@ public class Service {
             msg.writer().writeInt((int) player.id);
             sendMessAnotherNotMeInMap(player, msg);
             msg.cleanup();
-        } catch (Exception _) {
+        } catch (Exception ignored) {
 
         }
     }
@@ -1045,7 +1045,7 @@ public class Service {
             }
             pl.sendMessage(msg);
             msg.cleanup();
-        } catch (Exception _) {
+        } catch (Exception ignored) {
         }
     }
 
@@ -1098,7 +1098,7 @@ public class Service {
             msg.writer().writeShort(flagIconId[pl.cFlag]);
             me.sendMessage(msg);
             msg.cleanup();
-        } catch (Exception _) {
+        } catch (Exception ignored) {
         }
     }
 
@@ -1150,7 +1150,7 @@ public class Service {
             PlayerService.gI().sendInfoHpMpMoney(pl);
             msg.cleanup();
 
-        } catch (Exception _) {
+        } catch (Exception ignored) {
         }
     }
 
@@ -1201,7 +1201,7 @@ public class Service {
             pl.nPoint.setMp(pl.nPoint.mpMax);
             PlayerService.gI().sendInfoHpMpMoney(pl);
             msg.cleanup();
-        } catch (Exception _) {
+        } catch (Exception ignored) {
         }
     }
 
@@ -1216,7 +1216,7 @@ public class Service {
             msg.writer().writeInt(3);//
             sendMessAllPlayerInMap(zone, msg);
             msg.cleanup();
-        } catch (Exception _) {
+        } catch (Exception ignored) {
         }
     }
 
@@ -1353,7 +1353,7 @@ public class Service {
             msg.writer().writeByte(1);
             sendMessAllPlayerInMap(player, msg);
             msg.cleanup();
-        } catch (Exception _) {
+        } catch (Exception ignored) {
         }
     }
 
@@ -1367,7 +1367,7 @@ public class Service {
             msg.writer().writeByte(1);
             sendMessAnotherNotMeInMap(player, msg);
             msg.cleanup();
-        } catch (Exception _) {
+        } catch (Exception ignored) {
         }
     }
 
@@ -1574,7 +1574,7 @@ public class Service {
         } finally {
             msg.cleanup();
         }
-      //  DataGame.sendLinkIP(session);
+        DataGame.sendLinkIP(session);
     }
 
     public void mabaove(Player player, int mbv) {

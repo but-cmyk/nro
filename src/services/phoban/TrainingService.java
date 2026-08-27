@@ -163,10 +163,10 @@ public class TrainingService {
         int time = (int) ((System.currentTimeMillis() - player.lastTimeOffline) / 1000);
         if (time > 60) {
             tnsm = ((long) getTnsmMoiPhut(player) * (long) ((time > 86400 ? 86400 : time)) / 60);
-            if (MapService.gI().isMapLuyenTap(player.zone.map.mapId)) {
+            if (player != null && player.zone != null && player.zone.map != null && MapService.gI().isMapLuyenTap(player.zone.map.mapId)) {
                 NpcService.gI().createTutorial(player, -1, "Bạn tăng được " + Util.powerToString(tnsm) + " sức mạnh trong thời gian " + (time / 60) + " phút tập luyện Offline");
                 Service.gI().addSMTN(player, (byte) 2, tnsm, false);
-            } else if (player.dangKyTapTuDong && time > 1800) {
+            } else if (player != null && player.dangKyTapTuDong && time > 1800) {
                 if (player.inventory.getGemAndRuby() > 1) {
                     player.inventory.subGemAndRuby(1);
                     final Player p = player;

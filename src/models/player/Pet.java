@@ -1,7 +1,6 @@
 package models.player;
 
 import consts.ConstPlayer;
-import lombok.Getter;
 import services.map.MapService;
 import models.mob.Mob;
 import models.skill.Skill;
@@ -34,8 +33,11 @@ public class Pet extends Player {
     public static final byte HTVV = 5;
 
     public Player master;
-    @Getter
     public byte status = 0;
+
+    public byte getStatus() {
+        return this.status;
+    }
 
     public byte typePet;
     public boolean isTransform;
@@ -217,13 +219,19 @@ public class Pet extends Player {
     }
 
     public void unFusion() {
-        master.fusion.typeFusion = 0;
+        if (master != null && master.fusion != null) {
+            master.fusion.typeFusion = 0;
+        }
         this.status = PROTECT;
-        Service.gI().point(master);
-        joinMapMaster();
-        fusionEffect(master.fusion.typeFusion);
-        Service.gI().Send_Caitrang(master);
-        Service.gI().point(master);
+        if (master != null) {
+            Service.gI().point(master);
+            joinMapMaster();
+            if (master.fusion != null) {
+                fusionEffect(master.fusion.typeFusion);
+            }
+            Service.gI().Send_Caitrang(master);
+            Service.gI().point(master);
+        }
         this.lastTimeUnfusion = System.currentTimeMillis();
     }
 

@@ -23,40 +23,44 @@ import services.EffectSkillService;
 import services.ItemTimeService;
 import services.player.PlayerService;
 import services.Service;
-import lombok.Getter;
-import lombok.Setter;
 import models.map.Zone;
 import models.matches.pvp.DHVT;
-import utils.Util;
 
 public class The23rdMartialArtCongress {
 
-    @Setter
-    @Getter
     private Player player;
-
-    @Setter
     private Boss boss;
-
-    @Setter
     private Player npc;
-
-    @Setter
     private int time;
-    @Setter
     private int round;
-    @Setter
     private int timeWait;
-
     public boolean endChallenge;
-
-    @Setter
-    @Getter
     private Zone zone;
+
+    public Player getPlayer() { return this.player; }
+    public void setPlayer(Player player) { this.player = player; }
+
+    public Boss getBoss() { return this.boss; }
+    public void setBoss(Boss boss) { this.boss = boss; }
+
+    public Player getNpc() { return this.npc; }
+    public void setNpc(Player npc) { this.npc = npc; }
+
+    public int getTime() { return this.time; }
+    public void setTime(int time) { this.time = time; }
+
+    public int getRound() { return this.round; }
+    public void setRound(int round) { this.round = round; }
+
+    public int getTimeWait() { return this.timeWait; }
+    public void setTimeWait(int timeWait) { this.timeWait = timeWait; }
+
+    public Zone getZone() { return this.zone; }
+    public void setZone(Zone zone) { this.zone = zone; }
 
     public void update() {
 
-        if (player.zone == null || !player.zone.equals(zone)) {
+        if (player == null || player.zone == null || !player.zone.equals(zone)) {
             this.endChallenge();
             return;
         }
@@ -111,7 +115,7 @@ public class The23rdMartialArtCongress {
                 die();
                 return;
             }
-            if (player.location != null && player.isPKDHVT && !player.isDie() && player != null && player.zone != null) {
+            if (player != null && player.location != null && player.isPKDHVT && !player.isDie() && player.zone != null) {
                 if (boss.isDie()) {
                     round++;
                     boss.leaveMap();

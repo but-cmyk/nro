@@ -17,12 +17,9 @@ import utils.Util;
 
 import java.util.ArrayList;
 import java.util.List;
-import lombok.Data;
-import server.Maintenance;
-import services.map.ItemMapService;
 import utils.TimeUtil;
+import services.map.ItemMapService;
 
-@Data
 public class SnakeWay {
 
 //    public static final long POWER_CAN_GO_TO_CDRD = 2000000000;
@@ -32,8 +29,13 @@ public class SnakeWay {
     public int id;
     public byte level;
     public final List<Zone> zones;
-
     public Clan clan;
+
+    public List<Zone> getZones() { return this.zones; }
+    public Clan getClan() { return this.clan; }
+    public void setClan(Clan clan) { this.clan = clan; }
+    public int getId() { return this.id; }
+    public long getLastTimeOpen() { return this.lastTimeOpen; }
     public boolean isOpened;
     private long lastTimeOpen;
     private long lastTimeUpdateMessage;

@@ -86,8 +86,7 @@ public class FriendAndEnemyService {
                     break;
                 case REMOVE_ENEMY:
                     int enemyIdToRemove = msg.reader().readInt();
-                
-                    removeEnemy(player, msg.reader().readInt());
+                    removeEnemy(player, enemyIdToRemove);
                     break;
             }
         } catch (IOException ex) {
@@ -295,10 +294,14 @@ public class FriendAndEnemyService {
     }
 
     public void addEnemy(Player player, Player enemy) {
+        if (player == null || enemy == null || player.equals(enemy)) {
+            return;
+        }
         boolean hadEnemy = false;
         for (Enemy ene : player.enemies) {
-            if (ene.id == ene.id) {
+            if (ene != null && ene.id == enemy.id) {
                 hadEnemy = true;
+                break;
             }
         }
         if (!hadEnemy) {

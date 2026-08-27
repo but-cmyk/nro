@@ -10,10 +10,10 @@ namespace Game1
     	static MyKeyMap()
     	{
     		h = new Hashtable();
-    		h.Add(KeyCode.A, 97);
+    		h.Add(KeyCode.A, -3);
     		h.Add(KeyCode.B, 98);
     		h.Add(KeyCode.C, 99);
-    		h.Add(KeyCode.D, 100);
+    		h.Add(KeyCode.D, -4);
     		h.Add(KeyCode.E, 101);
     		h.Add(KeyCode.F, 102);
     		h.Add(KeyCode.G, 103);
@@ -28,11 +28,11 @@ namespace Game1
     		h.Add(KeyCode.P, 112);
     		h.Add(KeyCode.Q, 113);
     		h.Add(KeyCode.R, 114);
-    		h.Add(KeyCode.S, 115);
+    		h.Add(KeyCode.S, -2);
     		h.Add(KeyCode.T, 116);
     		h.Add(KeyCode.U, 117);
     		h.Add(KeyCode.V, 118);
-    		h.Add(KeyCode.W, 119);
+    		h.Add(KeyCode.W, -1);
     		h.Add(KeyCode.X, 120);
     		h.Add(KeyCode.Y, 121);
     		h.Add(KeyCode.Z, 122);

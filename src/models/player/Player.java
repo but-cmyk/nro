@@ -42,8 +42,6 @@ import utils.Logger;
 import utils.Util;
 import java.util.ArrayList;
 import java.util.Date;
-import lombok.Getter;
-import lombok.Setter;
 import services.phoban.BlackBallWarService;
 import managers.tournament.The23rdMartialArtCongressManager;
 import models.map.ItemMap;
@@ -73,10 +71,15 @@ public class Player extends Character {
     public long lastTimeUpdateCooking;
     public long lastTimeEatPea;
     public List<Integer> idEffChar = new ArrayList<>();
-
-    @Setter
-    @Getter
     private MySession session;
+
+    public MySession getSession() {
+        return this.session;
+    }
+
+    public void setSession(MySession session) {
+        this.session = session;
+    }
 
     public int luotNhanBuaMienPhi = 1;
     public int diemDanhSuKien = 1;

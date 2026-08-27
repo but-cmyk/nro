@@ -80,6 +80,10 @@ public class LuckyRound {
         try {
             msg.reader().readByte(); //type
             byte count = msg.reader().readByte();
+            if (count != 1 && count != 5 && count != 10 && (count <= 0 || count > 20)) {
+                Service.gI().sendThongBao(player, "Số lượt mở không hợp lệ");
+                return;
+            }
             switch (player.idMark.getTypeLuckyRound()) {
                 case USING_GEM:
                     openBallByGem(player, count);

@@ -22,7 +22,7 @@ public class GiftCodeManager {
         return instance;
     }
 
-    public GiftCode checkUseGiftCode(Player player, String code) {
+    public synchronized GiftCode checkUseGiftCode(Player player, String code) {
         for (GiftCode giftCode : listGiftCode) {
             if (giftCode.code.equals(code)) {
                 if (giftCode.countLeft <= 0) {

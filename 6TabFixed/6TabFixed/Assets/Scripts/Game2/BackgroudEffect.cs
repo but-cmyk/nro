@@ -110,6 +110,10 @@ namespace Game2
     	public const int TYPE_FOG = 14;
     
     	public const int TYPE_LUNAR_YEAR = 15;
+
+	public const int TYPE_DOMDOM = 16;
+
+	public const int TYPE_BAOCAT = 17;
     
     	public static int PIXEL = 16;
     
@@ -221,7 +225,9 @@ namespace Game2
     			{
     				imgMua2 = GameCanvas.loadImageRMS("/bg/mua2.png");
     			}
-    			sum = Res.random(GameCanvas.w / 3, GameCanvas.h / 3);
+    			int minRain = System.Math.Max(10, GameCanvas.w / 3);
+    			int maxRain = System.Math.Max(minRain + 1, GameCanvas.h / 3);
+    			sum = Res.random(minRain, maxRain);
     			x = new int[sum];
     			y = new int[sum];
     			vx = new int[sum];
@@ -236,8 +242,8 @@ namespace Game2
     				y[k] = Res.random(-10, GameCanvas.h + 100) + GameScr.cmy;
     				x[k] = Res.random(-10, GameCanvas.w + 300) + GameScr.cmx;
     				t[k] = Res.random(0, 1);
-    				vx[k] = -12;
-    				vy[k] = 12;
+    				vx[k] = -5;
+    				vy[k] = 5;
     				type[k] = Res.random(1, 3);
     				isRainEffect[k] = false;
     				if (type[k] == 2 && k % 2 == 0)
@@ -408,6 +414,43 @@ namespace Game2
     				initCloud();
     			}
     			break;
+			case 16:
+				sum = 30;
+				x = new int[sum];
+				y = new int[sum];
+				vx = new int[sum];
+				vy = new int[sum];
+				t = new int[sum];
+				frame = new int[sum];
+				activeEff = new bool[sum];
+				for (int i = 0; i < sum; i++)
+				{
+					x[i] = Res.random(0, GameCanvas.w) + GameScr.cmx;
+					y[i] = Res.random(50, GameCanvas.h - 50) + GameScr.cmy;
+					vx[i] = Res.random(-1, 2);
+					vy[i] = Res.random(-1, 2);
+					t[i] = Res.random(0, 100);
+					frame[i] = Res.random(2, 4);
+				}
+				break;
+			case 17:
+				sum = 40;
+				x = new int[sum];
+				y = new int[sum];
+				vx = new int[sum];
+				vy = new int[sum];
+				t = new int[sum];
+				frame = new int[sum];
+				activeEff = new bool[sum];
+				for (int i = 0; i < sum; i++)
+				{
+					x[i] = Res.random(0, GameCanvas.w + 100) + GameScr.cmx;
+					y[i] = Res.random(-50, GameCanvas.h + 50) + GameScr.cmy;
+					vx[i] = -Res.random(10, 18);
+					vy[i] = Res.random(1, 3);
+					t[i] = Res.random(15, 30);
+				}
+				break;
     		}
     	}
     
@@ -829,6 +872,43 @@ namespace Game2
     			case 14:
     				updateFog();
     				break;
+				case 16:
+					for (int i = 0; i < sum; i++)
+					{
+						x[i] += vx[i];
+						y[i] += vy[i];
+						if (GameCanvas.gameTick % 15 == 0 && Res.random(0, 4) == 0)
+						{
+							vx[i] = Res.random(-1, 2);
+							vy[i] = Res.random(-1, 2);
+						}
+						t[i] += 4;
+						if (t[i] > 100)
+						{
+							t[i] = 0;
+						}
+						if (x[i] < GameScr.cmx - 20 || x[i] > GameScr.cmx + GameCanvas.w + 20 || y[i] < GameScr.cmy - 20 || y[i] > GameScr.cmy + GameCanvas.h + 20)
+						{
+							x[i] = Res.random(0, GameCanvas.w) + GameScr.cmx;
+							y[i] = Res.random(50, GameCanvas.h - 50) + GameScr.cmy;
+						}
+					}
+					break;
+				case 17:
+					for (int i = 0; i < sum; i++)
+					{
+						x[i] += vx[i];
+						y[i] += vy[i];
+						if (x[i] < GameScr.cmx - 50)
+						{
+							x[i] = GameScr.cmx + GameCanvas.w + Res.random(10, 100);
+							y[i] = GameScr.cmy + Res.random(-50, GameCanvas.h + 50);
+							vx[i] = -Res.random(10, 18);
+							vy[i] = Res.random(1, 3);
+							t[i] = Res.random(15, 30);
+						}
+					}
+					break;
     			}
     		}
     		catch (Exception)
@@ -898,6 +978,27 @@ namespace Game2
     			case 10:
     			case 14:
     				break;
+				case 16:
+					for (int i = 0; i < sum; i++)
+					{
+						if (x[i] >= GameScr.cmx && x[i] <= GameScr.cmx + GameCanvas.w && y[i] >= GameScr.cmy && y[i] <= GameScr.cmy + GameCanvas.h)
+						{
+							float alpha = (float)System.Math.Abs(System.Math.Sin((double)t[i] * System.Math.PI / 50.0)) * 0.8f;
+							g.setColor(16776960, alpha);
+							g.fillRect(x[i], y[i], frame[i], frame[i]);
+						}
+					}
+					break;
+				case 17:
+					for (int i = 0; i < sum; i++)
+					{
+						if (x[i] + t[i] >= GameScr.cmx && x[i] <= GameScr.cmx + GameCanvas.w && y[i] >= GameScr.cmy && y[i] <= GameScr.cmy + GameCanvas.h)
+						{
+							g.setColor(15125120, 0.35f);
+							g.fillRect(x[i], y[i], t[i], 1);
+						}
+					}
+					break;
     			}
     		}
     		catch (Exception)

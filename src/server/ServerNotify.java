@@ -74,12 +74,23 @@ public class ServerNotify extends Thread {
         Message msg;
         try {
             msg = new Message(50);
-            msg.writer().writeByte(Manager.NOTIFY.size());
-            for (int i = 0; i < Manager.NOTIFY.size(); i++) {
-                String[] arr = Manager.NOTIFY.get(i).split("<>");
-                msg.writer().writeShort(i);
-                msg.writer().writeUTF(arr[0]);
-                msg.writer().writeUTF(arr[1]);
+            java.util.List<String[]> validNotifies = new java.util.ArrayList<>();
+            if (Manager.NOTIFY != null) {
+                for (int i = 0; i < Manager.NOTIFY.size(); i++) {
+                    String raw = Manager.NOTIFY.get(i);
+                    if (raw != null) {
+                        String[] arr = raw.split("<>");
+                        String title = arr.length > 0 ? arr[0] : "";
+                        String content = arr.length > 1 ? arr[1] : "";
+                        validNotifies.add(new String[]{String.valueOf(i), title, content});
+                    }
+                }
+            }
+            msg.writer().writeByte(validNotifies.size());
+            for (String[] item : validNotifies) {
+                msg.writer().writeShort(Integer.parseInt(item[0]));
+                msg.writer().writeUTF(item[1]);
+                msg.writer().writeUTF(item[2]);
             }
             player.sendMessage(msg);
             msg.cleanup();

@@ -2,7 +2,8 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/NGOCRONGLINHTHUYDANHBAC_V1.0_BETA.iml" filepath="$PROJECT_DIR$/NGOCRONGLINHTHUYDANHBAC_V1.0_BETA.iml" />
+      <module fileurl="file://$PROJECT_DIR$/DEMO_NETBEAN_tsSv2_new.iml" filepath="$PROJECT_DIR$/DEMO_NETBEAN_tsSv2_new.iml" />
+      <module fileurl="file://$PROJECT_DIR$/SRC_NRO_OK.iml" filepath="$PROJECT_DIR$/SRC_NRO_OK.iml" />
     </modules>
   </component>
 </project>

@@ -5,7 +5,6 @@ package models.phoban;
 import utils.Functions;
 import java.util.ArrayList;
 import java.util.List;
-import lombok.Data;
 import models.map.Zone;
 import models.map.MaBuHold;
 import models.player.Player;
@@ -14,12 +13,19 @@ import services.map.MapService;
 import services.map.ChangeMapService;
 import utils.TimeUtil;
 
-@Data
 public final class MajinBuu14H {
 
     public static final int AVAILABLE = 7;
     public int id;
     public final List<Zone> zones;
+
+    public List<Zone> getZones() {
+        return this.zones;
+    }
+
+    public int getId() {
+        return this.id;
+    }
 
     public MajinBuu14H(int id) {
         this.id = id;

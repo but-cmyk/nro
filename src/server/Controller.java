@@ -81,6 +81,12 @@ public class Controller implements IMessageHandler {
         try {
             player = _session.player;
             byte cmd = _msg.command;
+            if (player != null && (cmd == -86 || cmd == -100)) {
+                long now = System.currentTimeMillis();
+                if (now - player.idMark.getLastTimeTrade() < 50) {
+                    return;
+                }
+            }
             switch (cmd) {
                case -100:
                     if (player == null) {
@@ -184,7 +190,8 @@ public class Controller implements IMessageHandler {
                             short idC = _msg.reader().readShort();
                             Card card = player.Cards.stream().filter(r -> r != null && r.Id == idC).findFirst().orElse(null);
                             if (card != null) {
-                                if (card.Level == 0) {
+                                if (card.Level <= 0) {
+                                    Service.gI().sendThongBao(player, "Thẻ chưa đạt cấp độ để sử dụng.");
                                     return;
                                 }
                                 if (card.Used == 0) {

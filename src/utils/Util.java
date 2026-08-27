@@ -182,19 +182,31 @@ public class Util {
     }
 
     public static int nextInt(int from, int to) {
-        return from + rand.nextInt(to - from + 1);
+        if (to < from) {
+            int tmp = from;
+            from = to;
+            to = tmp;
+        }
+        return java.util.concurrent.ThreadLocalRandom.current().nextInt(from, to + 1);
     }
 
     public static int nextInt(int max) {
-        return rand.nextInt(max);
+        if (max <= 0) return 0;
+        return java.util.concurrent.ThreadLocalRandom.current().nextInt(max);
     }
 
     public static long nextLong(long from, long to) {
-        return from + rand.nextLong(to - from + 1);
+        if (to < from) {
+            long tmp = from;
+            from = to;
+            to = tmp;
+        }
+        return java.util.concurrent.ThreadLocalRandom.current().nextLong(from, to + 1);
     }
 
     public static long nextLong(long max) {
-        return rand.nextLong(max);
+        if (max <= 0) return 0;
+        return java.util.concurrent.ThreadLocalRandom.current().nextLong(max);
     }
 
     public static int nextInt(int[] percen) {
@@ -209,7 +221,7 @@ public class Util {
     }
 
     public static int getOne(int n1, int n2) {
-        return rand.nextInt() % 2 == 0 ? n1 : n2;
+        return java.util.concurrent.ThreadLocalRandom.current().nextBoolean() ? n1 : n2;
     }
 
     public static String replace(String text, String regex, String replacement) {
@@ -295,15 +307,15 @@ public class Util {
     }
 
     public static void setTimeout(Runnable runnable, int delay) {
-        new Thread(() -> {
-            try {
-                Thread.sleep(delay);
-                runnable.run();
-            } catch (InterruptedException e) {
-                Logger.error("Error setTimeout");
-            }
-        }).start();
+        server.GameLoopManager.gI().schedule(runnable, delay);
     }
+
+    public static int getDistanceSq(int x1, int y1, int x2, int y2) {
+        int dx = x1 - x2;
+        int dy = y1 - y2;
+        return dx * dx + dy * dy;
+    }
+
     public static String getFormatTime(long millis) {
         if (millis <= 0) return "Chưa có";
         long totalSeconds = millis / 1000;

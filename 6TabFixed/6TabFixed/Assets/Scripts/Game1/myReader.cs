@@ -33,12 +33,12 @@ namespace Game1
     
     	public sbyte readSByte()
     	{
-    		if (posRead < buffer.Length)
+    		if (buffer != null && posRead < buffer.Length)
     		{
     			return buffer[posRead++];
     		}
-    		posRead = buffer.Length;
-    		throw new Exception(" loi doc sbyte eof ");
+    		if (buffer != null) posRead = buffer.Length;
+    		return 0;
     	}
     
     	public sbyte readsbyte()
@@ -68,6 +68,11 @@ namespace Game1
     
     	public short readShort()
     	{
+    		if (buffer == null || posRead + 2 > buffer.Length)
+    		{
+    			if (buffer != null) posRead = buffer.Length;
+    			return 0;
+    		}
     		short num = 0;
     		for (int i = 0; i < 2; i++)
     		{
@@ -79,6 +84,11 @@ namespace Game1
     
     	public ushort readUnsignedShort()
     	{
+    		if (buffer == null || posRead + 2 > buffer.Length)
+    		{
+    			if (buffer != null) posRead = buffer.Length;
+    			return 0;
+    		}
     		ushort num = 0;
     		for (int i = 0; i < 2; i++)
     		{
@@ -90,6 +100,11 @@ namespace Game1
     
     	public int readInt()
     	{
+    		if (buffer == null || posRead + 4 > buffer.Length)
+    		{
+    			if (buffer != null) posRead = buffer.Length;
+    			return 0;
+    		}
     		int num = 0;
     		for (int i = 0; i < 4; i++)
     		{
@@ -101,6 +116,11 @@ namespace Game1
     
     	public long readLong()
     	{
+    		if (buffer == null || posRead + 8 > buffer.Length)
+    		{
+    			if (buffer != null) posRead = buffer.Length;
+    			return 0L;
+    		}
     		long num = 0L;
     		for (int i = 0; i < 8; i++)
     		{
@@ -123,6 +143,15 @@ namespace Game1
     	public string readString()
     	{
     		short num = readShort();
+    		if (num <= 0 || buffer == null)
+    		{
+    			return string.Empty;
+    		}
+    		if (posRead + num > buffer.Length)
+    		{
+    			num = (short)(buffer.Length - posRead);
+    			if (num <= 0) return string.Empty;
+    		}
     		byte[] array = new byte[num];
     		for (int i = 0; i < num; i++)
     		{
@@ -134,24 +163,17 @@ namespace Game1
     
     	public string readStringUTF()
     	{
-    		short num = readShort();
-    		byte[] array = new byte[num];
-    		for (int i = 0; i < num; i++)
-    		{
-    			array[i] = convertSbyteToByte(readSByte());
-    		}
-    		UTF8Encoding uTF8Encoding = new UTF8Encoding();
-    		return uTF8Encoding.GetString(array);
+    		return readString();
     	}
     
     	public string readUTF()
     	{
-    		return readStringUTF();
+    		return readString();
     	}
     
     	public int read()
     	{
-    		if (posRead < buffer.Length)
+    		if (buffer != null && posRead < buffer.Length)
     		{
     			return readSByte();
     		}
@@ -190,7 +212,7 @@ namespace Game1
     
     	public int available()
     	{
-    		return buffer.Length - posRead;
+    		return (buffer != null) ? (buffer.Length - posRead) : 0;
     	}
     
     	public static byte convertSbyteToByte(sbyte var)

@@ -13,8 +13,6 @@ import java.util.List;
 import models.player.Player;
 import services.player.PlayerService;
 import services.Service;
-import lombok.Getter;
-import lombok.Setter;
 import models.map.Zone;
 import models.matches.pvp.DHVT;
 import models.npc.Npc;
@@ -23,34 +21,43 @@ import utils.Util;
 
 public class DeathOrAliveArena {
 
-    @Setter
-    @Getter
     private Player player;
-
     private Boss boss;
-
-    @Setter
     private Npc npc;
-
-    @Setter
     private long timeTotal;
-
     private int time;
-    @Setter
     private int round;
     private int timeWait;
-
-    @Setter
-    @Getter
     private int cuocBaHatMit;
-
-    @Setter
-    @Getter
     private int cuocPlayer;
-
-    @Setter
-    @Getter
     private Zone zone;
+
+    public Player getPlayer() { return this.player; }
+    public void setPlayer(Player player) { this.player = player; }
+
+    public Boss getBoss() { return this.boss; }
+
+    public Npc getNpc() { return this.npc; }
+    public void setNpc(Npc npc) { this.npc = npc; }
+
+    public long getTimeTotal() { return this.timeTotal; }
+    public void setTimeTotal(long timeTotal) { this.timeTotal = timeTotal; }
+
+    public int getTime() { return this.time; }
+
+    public int getRound() { return this.round; }
+    public void setRound(int round) { this.round = round; }
+
+    public int getTimeWait() { return this.timeWait; }
+
+    public int getCuocBaHatMit() { return this.cuocBaHatMit; }
+    public void setCuocBaHatMit(int cuocBaHatMit) { this.cuocBaHatMit = cuocBaHatMit; }
+
+    public int getCuocPlayer() { return this.cuocPlayer; }
+    public void setCuocPlayer(int cuocPlayer) { this.cuocPlayer = cuocPlayer; }
+
+    public Zone getZone() { return this.zone; }
+    public void setZone(Zone zone) { this.zone = zone; }
 
     private final List<Player> binhChon = new ArrayList<>();
 
@@ -58,7 +65,7 @@ public class DeathOrAliveArena {
 
     public void update() {
 
-        if (player.zone == null) {
+        if (player == null || player.zone == null) {
             this.endChallenge();
             return;
         }
@@ -87,7 +94,7 @@ public class DeathOrAliveArena {
                 die();
                 return;
             }
-            if (player.location != null && !player.isDie() && player != null && player.zone != null) {
+            if (player != null && player.location != null && !player.isDie() && player.zone != null) {
                 if (boss.isDie()) {
                     round++;
                     timeTotal += (180 - time);
@@ -207,8 +214,8 @@ public class DeathOrAliveArena {
 
     private void traThuongHatMit(boolean playerWin) {
         try {
-            long tongCuoc = (cuocBaHatMit + cuocPlayer) * 900_000;
-            if (cuocBaHatMit >= 0 && !playerWin || cuocPlayer > 0 && playerWin) {
+            long tongCuoc = (long) (cuocBaHatMit + cuocPlayer) * 900_000L;
+            if ((cuocBaHatMit > 0 && !playerWin) || (cuocPlayer > 0 && playerWin)) {
                 if (playerWin) {
                     tongCuoc /= cuocPlayer;
                 } else {
@@ -216,11 +223,12 @@ public class DeathOrAliveArena {
                 }
                 for (Player pl : binhChon) {
                     try {
+                        if (pl == null) continue;
                         if (playerWin) {
                             int cuoc = pl.binhChonPlayer;
-                            if (cuoc > 0 && pl.zoneBinhChon.equals(zone)) {
+                            if (cuoc > 0 && pl.zoneBinhChon != null && pl.zoneBinhChon.equals(zone)) {
                                 long vangNhan = cuoc * tongCuoc;
-                                pl.inventory.gold += vangNhan;
+                                pl.inventory.gold = Math.min(pl.inventory.gold + vangNhan, 2_000_000_000L);
                                 pl.binhChonPlayer = 0;
                                 pl.binhChonHatMit = 0;
                                 Service.gI().sendMoney(pl);
@@ -228,9 +236,9 @@ public class DeathOrAliveArena {
                             }
                         } else {
                             int cuoc = pl.binhChonHatMit;
-                            if (cuoc > 0 && pl.zoneBinhChon.equals(zone)) {
+                            if (cuoc > 0 && pl.zoneBinhChon != null && pl.zoneBinhChon.equals(zone)) {
                                 long vangNhan = cuoc * tongCuoc;
-                                pl.inventory.gold += vangNhan;
+                                pl.inventory.gold = Math.min(pl.inventory.gold + vangNhan, 2_000_000_000L);
                                 pl.binhChonPlayer = 0;
                                 pl.binhChonHatMit = 0;
                                 Service.gI().sendMoney(pl);
@@ -251,15 +259,17 @@ public class DeathOrAliveArena {
     public void endChallenge() {
         if (!endChallenge) {
             endChallenge = true;
-            Service.gI().sendPlayerVS(player, null, (byte) 0);
-            if (player.zone != null) {
-                PlayerService.gI().hoiSinh(player);
+            if (player != null) {
+                Service.gI().sendPlayerVS(player, null, (byte) 0);
+                if (player.zone != null) {
+                    PlayerService.gI().hoiSinh(player);
+                }
+                PlayerService.gI().changeAndSendTypePK(player, ConstPlayer.NON_PK);
+                if (player.zone != null && player.zone.map != null && player.zone.map.mapId == 112) {
+                    Service.gI().setPos(player, Util.nextInt(100, 200), 408);
+                }
+                player.isPKDHVT = false;
             }
-            PlayerService.gI().changeAndSendTypePK(player, ConstPlayer.NON_PK);
-            if (player != null && player.zone != null && player.zone.map.mapId == 112) {
-                Service.gI().setPos(player, Util.nextInt(100, 200), 408);
-            }
-            player.isPKDHVT = false;
             if (boss != null) {
                 boss.leaveMap();
             }

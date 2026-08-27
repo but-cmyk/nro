@@ -272,43 +272,17 @@ public static final String queryTopWhis = "SELECT id, CAST(JSON_UNQUOTE(JSON_EXT
         }
 
     private void initMap() {
+        managers.map.MapDataManager.gI().loadAllMapData();
         int[][] tileTyleTop = readTileIndexTileType(ConstMap.TILE_TOP);
         for (MapTemplate mapTemp : MAP_TEMPLATES) {
             int[][] tileMap = readTileMap(mapTemp.id);
             int[] tileTop = tileTyleTop[mapTemp.tileId - 1];
-            if (mapTemp.id == 5) {
-                if (mapTemp.effectMaps == null) {
-                    mapTemp.effectMaps = new ArrayList<>();
-                }
-                boolean hasRainBg = false;
-                boolean hasRainFg = false;
-                for (EffectMap em : mapTemp.effectMaps) {
-                    if (em.getKey().equals("beff")) {
-                        if (em.getValue().equals("0")) {
-                            hasRainBg = true;
-                        } else if (em.getValue().equals("12")) {
-                            hasRainFg = true;
-                        }
-                    }
-                }
-                if (!hasRainBg) {
-                    EffectMap em = new EffectMap();
-                    em.setKey("beff");
-                    em.setValue("0");
-                    mapTemp.effectMaps.add(em);
-                }
-                if (!hasRainFg) {
-                    EffectMap em = new EffectMap();
-                    em.setKey("beff");
-                    em.setValue("12");
-                    mapTemp.effectMaps.add(em);
-                }
-            }
             models.map.Map map = new models.map.Map(mapTemp.id,
                     mapTemp.name, mapTemp.planetId, mapTemp.tileId, mapTemp.bgId,
                     mapTemp.bgType, mapTemp.type, tileMap, tileTop,
                     mapTemp.zones,
                     mapTemp.maxPlayerPerZone, mapTemp.wayPoints, mapTemp.effectMaps);
+            services.map.WeatherService.gI().initWeatherForMap(map);
             MAPS.add(map);
             map.initMob(mapTemp.mobTemp, mapTemp.mobLevel, mapTemp.mobHp, mapTemp.mobX, mapTemp.mobY);
             map.initNpc(mapTemp.npcId, mapTemp.npcX, mapTemp.npcY);

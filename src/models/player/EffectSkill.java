@@ -1,5 +1,4 @@
 package models.player;
-import lombok.Setter;
 import models.mob.Mob;
 import services.EffectSkillService;
 import services.ItemTimeService;
@@ -7,8 +6,11 @@ import utils.Util;
 
 public class EffectSkill {
 
-    @Setter
     private Player player;
+
+    public void setPlayer(Player player) {
+        this.player = player;
+    }
 
     //thái dương hạ san
     public boolean isStun;

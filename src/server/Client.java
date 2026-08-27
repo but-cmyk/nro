@@ -2,7 +2,6 @@ package server;
 
 import database.AlyraManager;
 import database.daos.PlayerDAO;
-import lombok.Getter;
 import models.map.ItemMap;
 import models.player.Player;
 import network.session.SessionManager;
@@ -39,8 +38,11 @@ public class Client implements Runnable {
     private final ConcurrentHashMap<Integer, Player> playersByUserId = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, Player> playersByName = new ConcurrentHashMap<>();
 
-    @Getter
     private final List<Player> players = new CopyOnWriteArrayList<>();
+
+    public List<Player> getPlayers() {
+        return this.players;
+    }
 
     // Thread management
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
@@ -181,17 +183,16 @@ public class Client implements Runnable {
             Logger.error("Lỗi cleanup player " + player.name);
         }
 
-        // 3. Lưu dữ liệu bất đồng bộ (Không sleep, không delay)
-        CompletableFuture.runAsync(() -> {
+        // 3. Lưu dữ liệu bất đồng bộ qua Virtual Thread
+        Thread.ofVirtual().name("player-exit-save-" + player.name).start(() -> {
             try {
                 PlayerDAO.updatePlayer(player);
             } catch (Exception e) {
-                Logger.error("Lỗi lưu data player " + player.name);
-            }
-        }).thenRun(() -> {
-            // Dispose ngay sau khi lưu xong
-            if (player != null) {
-                player.dispose();
+                Logger.logException(Client.class, e, "Lỗi lưu data player " + player.name);
+            } finally {
+                if (player != null) {
+                    player.dispose();
+                }
             }
         });
     }
@@ -307,6 +308,9 @@ public class Client implements Runnable {
     public void kickSession(MySession session) {
         if (session != null) {
             Logger.log("Kicking session for user: " + session.userId);
+            if (session.userId == 0) {
+                new Exception("Stack trace for Kicking session user 0").printStackTrace();
+            }
             remove(session);
             session.disconnect();
         }

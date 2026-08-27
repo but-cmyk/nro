@@ -591,4 +591,21 @@ public class DataGame {
             Logger.logException(DataGame.class, e);
         }
     }
+
+    public static void sendLinkIP(MySession session) {
+        Message msg = null;
+        try {
+            msg = new Message(-29);
+            msg.writer().writeByte(2);
+            msg.writer().writeUTF("Sever Test:127.0.0.1:14445:0:0:0,0,0");
+            msg.writer().writeByte(1);
+            session.sendMessage(msg);
+        } catch (Exception e) {
+            Logger.logException(DataGame.class, e);
+        } finally {
+            if (msg != null) {
+                msg.cleanup();
+            }
+        }
+    }
 }

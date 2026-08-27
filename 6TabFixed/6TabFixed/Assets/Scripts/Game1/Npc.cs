@@ -186,7 +186,9 @@ namespace Game1
     
     	public void paintHead(mGraphics g, int xStart, int yStart)
     	{
+    		if (GameScr.parts == null || template == null || template.headId < 0 || template.headId >= GameScr.parts.Length) return;
     		Part part = GameScr.parts[template.headId];
+    		if (part == null || part.pi == null) return;
     		if (cdir == 1)
     		{
     			SmallImage.drawSmallImage(g, part.pi[Char.CharInfo[cf][0][0]].id, GameCanvas.w - 31 - g.getTranslateX(), 2 - g.getTranslateY(), 0, 0);
@@ -289,9 +291,11 @@ namespace Game1
     					int headId = template.headId;
     					int legId = template.legId;
     					int bodyId = template.bodyId;
+    					if (GameScr.parts == null || headId < 0 || headId >= GameScr.parts.Length || legId < 0 || legId >= GameScr.parts.Length || bodyId < 0 || bodyId >= GameScr.parts.Length) return;
     					Part part = GameScr.parts[headId];
     					Part part2 = GameScr.parts[legId];
     					Part part3 = GameScr.parts[bodyId];
+    					if (part == null || part2 == null || part3 == null || part.pi == null || part2.pi == null || part3.pi == null) return;
     					if (cdir == 1)
     					{
     						SmallImage.drawSmallImage(g, part.pi[Char.CharInfo[cf][0][0]].id, cx + Char.CharInfo[cf][0][1] + part.pi[Char.CharInfo[cf][0][0]].dx, cy - Char.CharInfo[cf][0][2] + part.pi[Char.CharInfo[cf][0][0]].dy, 0, 0);

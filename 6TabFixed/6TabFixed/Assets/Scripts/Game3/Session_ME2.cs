@@ -201,7 +201,7 @@ namespace Game3
     				{
     					sbyte b4 = dis.ReadSByte();
     					sbyte b5 = dis.ReadSByte();
-    					num = (b4 & 0xFF00) | (b5 & 0xFF);
+    					num = ((b4 & 0xFF) << 8) | (b5 & 0xFF);
     				}
     				sbyte[] array = new sbyte[num];
     				byte[] src = dis.ReadBytes(num);

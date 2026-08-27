@@ -24,7 +24,8 @@ public class GameLoopManager implements Runnable {
     private static final int BOSS_UPDATE_RATE = 150; // Boss tick rate: 150ms
 
     private GameLoopManager() {
-        scheduler = Executors.newScheduledThreadPool(2); 
+        int corePoolSize = Math.max(4, Runtime.getRuntime().availableProcessors());
+        scheduler = Executors.newScheduledThreadPool(corePoolSize); 
     }
 
     public static GameLoopManager gI() {
@@ -151,31 +152,38 @@ public class GameLoopManager implements Runnable {
     public void run() {
         if (ServerManager.isRunning && !ServerManager.isReloading) {
             // 1. Update Players
-            for (Player player : Client.gI().getPlayers()) {
+            var players = Client.gI().getPlayers();
+            for (int i = 0; i < players.size(); i++) {
+                Player player = players.get(i);
                 if (player != null && !player.isOffline && !player.beforeDispose) {
                     try {
                         player.update();
                     } catch (Exception e) {
-                        Logger.error("Loi update player " + player.name + ": " + e.getMessage());
-                        e.printStackTrace();
+                        Logger.logException(GameLoopManager.class, e, "Lỗi update player: " + player.name);
                     }
                 }
             }
 
             // 2. Update Maps & Zones
-            for (models.map.Map map : Manager.MAPS) {
-                for (Zone zone : map.zones) {
-                    try {
-                        if (zone.getPlayers().isEmpty()) {
-                            if (Util.canDoWithTime(zone.lastTimeUpdateEmpty, 5000)) {
-                                zone.update();
-                                zone.lastTimeUpdateEmpty = System.currentTimeMillis();
+            for (int m = 0; m < Manager.MAPS.size(); m++) {
+                var map = Manager.MAPS.get(m);
+                if (map != null && map.zones != null) {
+                    for (int z = 0; z < map.zones.size(); z++) {
+                        Zone zone = map.zones.get(z);
+                        if (zone != null) {
+                            try {
+                                if (zone.getPlayers().isEmpty()) {
+                                    if (Util.canDoWithTime(zone.lastTimeUpdateEmpty, 5000)) {
+                                        zone.update();
+                                        zone.lastTimeUpdateEmpty = System.currentTimeMillis();
+                                    }
+                                } else {
+                                    zone.update();
+                                }
+                            } catch (Exception e) {
+                                Logger.logException(GameLoopManager.class, e, "Lỗi update zone " + zone.zoneId + " map " + map.mapId);
                             }
-                        } else {
-                            zone.update();
                         }
-                    } catch (Exception e) {
-                        Logger.error("Loi update zone " + zone.zoneId + " map " + map.mapId + ": " + e.getMessage());
                     }
                 }
             }

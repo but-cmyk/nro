@@ -15,12 +15,10 @@ import utils.Util;
 
 import java.util.ArrayList;
 import java.util.List;
-import lombok.Data;
 import server.Maintenance;
 import services.map.ItemMapService;
 import utils.TimeUtil;
 
-@Data
 public class TreasureUnderSea {
 
     public static final long POWER_CAN_GO_TO_DBKB = 2000000000;
@@ -30,8 +28,12 @@ public class TreasureUnderSea {
     public int id;
     public byte level;
     public final List<Zone> zones;
-
     public Clan clan;
+
+    public List<Zone> getZones() { return this.zones; }
+    public Clan getClan() { return this.clan; }
+    public void setClan(Clan clan) { this.clan = clan; }
+    public int getId() { return this.id; }
     public boolean isOpened;
     private long lastTimeOpen;
     private boolean kickoutbdkb;

@@ -8,6 +8,7 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.atomic.AtomicInteger;
 import models.ConsignItem;
 import models.item.Item;
 import org.json.simple.JSONArray;
@@ -20,6 +21,7 @@ public class ConsignShopManager {
     private static ConsignShopManager instance;
     private final ReentrantLock saveLock = new ReentrantLock();
     private final ReentrantLock listLock = new ReentrantLock();
+    private final AtomicInteger nextItemId = new AtomicInteger(0);
 
     public static ConsignShopManager gI() {
         if (instance == null) {
@@ -173,6 +175,7 @@ public class ConsignShopManager {
             while (rs.next()) {
                 try {
                     int id = rs.getInt("id");
+                    nextItemId.accumulateAndGet(id, Math::max);
                     int idPl = rs.getInt("player_id");
                     byte tab = rs.getByte("tab");
                     short itemId = rs.getShort("item_id");
@@ -237,7 +240,9 @@ public class ConsignShopManager {
         } catch (Exception e) {
             Logger.logException(ConsignShopManager.class, e, "Error loading consignment shop data");
         } finally {
-            listLock.unlock();
+            if (listLock.isHeldByCurrentThread()) {
+                listLock.unlock();
+            }
             // Đóng resources theo thứ tự
             if (rs != null) {
                 try {
@@ -291,5 +296,26 @@ public class ConsignShopManager {
             }
         }
         return false;
+    }
+
+    public void lockItems() {
+        listLock.lock();
+    }
+
+    public void unlockItems() {
+        listLock.unlock();
+    }
+
+    public int nextItemId() {
+        return nextItemId.incrementAndGet();
+    }
+
+    public List<ConsignItem> getItemsSnapshot() {
+        listLock.lock();
+        try {
+            return new ArrayList<>(listItem);
+        } finally {
+            listLock.unlock();
+        }
     }
 }

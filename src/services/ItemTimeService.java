@@ -293,7 +293,7 @@ public class ItemTimeService {
         try {
             msg = new Message(-106);
             msg.writer().writeShort(itemId);
-            msg.writer().writeShort(time);
+            msg.writer().writeShort((short) Math.max(0, Math.min(time, Short.MAX_VALUE)));
             player.sendMessage(msg);
             msg.cleanup();
         } catch (IOException e) {

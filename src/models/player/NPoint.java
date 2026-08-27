@@ -22,7 +22,6 @@ import utils.Util;
 import java.util.ArrayList;
 import java.util.List;
 import database.daos.EventDAO;
-import lombok.Setter;
 import models.mob.Mob;
 import utils.TimeUtil;
 
@@ -30,8 +29,11 @@ public class NPoint {
 
     public static final byte MAX_LIMIT = 9;
 
-    @Setter
     private Player player;
+
+    public void setPlayer(Player player) {
+        this.player = player;
+    }
 
     public NPoint(Player player) {
         this.player = player;
@@ -1915,6 +1917,13 @@ public class NPoint {
             tiemNangUse = 50000000L;
             for (int i = 0; i < this.critg; i++) {
                 tiemNangUse *= 5L;
+                if (tiemNangUse < 0) {
+                    tiemNangUse = Long.MAX_VALUE;
+                    break;
+                }
+            }
+            if (tiemNangUse < 0) {
+                tiemNangUse = Long.MAX_VALUE;
             }
             if ((this.critg + point) <= getCritLimit()) {
                 if (doUseTiemNang(tiemNangUse)) {

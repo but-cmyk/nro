@@ -16,12 +16,10 @@ import utils.Util;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import lombok.Data;
 import server.Maintenance;
 import services.map.ItemMapService;
 import utils.TimeUtil;
 
-@Data
 public class DestronGas {
 
 //    public static final long POWER_CAN_GO_TO_KHI_GAS_HUY_DIET = 2000000000;
@@ -32,8 +30,13 @@ public class DestronGas {
     public int id;
     public byte level;
     public final List<Zone> zones;
-
     public Clan clan;
+
+    public List<Zone> getZones() { return this.zones; }
+    public Clan getClan() { return this.clan; }
+    public void setClan(Clan clan) { this.clan = clan; }
+    public int getId() { return this.id; }
+    public long getLastTimeOpen() { return this.lastTimeOpen; }
     public boolean isOpened;
     private long lastTimeOpen;
     private long lastTimeUpdateMessage;
@@ -51,7 +54,7 @@ public class DestronGas {
 
 
     public void update() {
-        if (clan.timesPerDayKGHD > 0 && TimeUtil.diffDate(new Date(System.currentTimeMillis()), new Date(clan.lastTimeOpenKhiGasHuyDiet), TimeUtil.DAY) >= 3) {
+        if (clan != null && clan.timesPerDayKGHD > 0 && TimeUtil.diffDate(new Date(System.currentTimeMillis()), new Date(clan.lastTimeOpenKhiGasHuyDiet), TimeUtil.DAY) >= 3) {
             clan.timesPerDayKGHD = 0;
         }
         if (isOpened) {

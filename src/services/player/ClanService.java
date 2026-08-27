@@ -74,30 +74,13 @@ public class ClanService {
         return instance;
     }
 
-    public Clan getClanById(int id) throws Exception {
-        return getClanById(0, Manager.getNumClan(), id);
-    }
-
-    private Clan getClanById(int l, int r, int id) throws Exception {
-        if (l <= r) {
-            int m = (l + r) / 2;
-            Clan clan = null;
-            try {
-                clan = Manager.CLANS.get(m);
-            } catch (Exception e) {
-                throw new Exception("Không tìm thấy clan id: " + id);
-            }
-            if (clan.id == id) {
+    public Clan getClanById(int id) {
+        for (Clan clan : Manager.CLANS) {
+            if (clan != null && clan.id == id) {
                 return clan;
-            } else if (clan.id > id) {
-                r = m - 1;
-            } else {
-                l = m + 1;
             }
-            return getClanById(l, r, id);
-        } else {
-            throw new Exception("Không tìm thấy clan id: " + id);
         }
+        return null;
     }
 
     public List<Clan> getClans(String name) {
@@ -203,6 +186,7 @@ public class ClanService {
                                 peaCopy.itemOptions = pea.itemOptions;
                                 InventoryService.gI().addItemBag(plReceive, peaCopy);
                                 InventoryService.gI().sendItemBags(plReceive);
+                                InventoryService.gI().sendItemBox(plGive);
                                 Service.gI().sendThongBao(plReceive, plGive.name + " đã cho bạn " + peaCopy.template.name);
                                 cmg.receiveDonate++;
                                 clan.sendMessageClan(cmg);
@@ -372,14 +356,18 @@ public class ClanService {
         Clan clan = player.clan;
         if (clan != null && clan.isLeader(player)) {
             ClanMessage cmg = clan.getClanMessage(clanMessageId);
+            if (cmg == null) {
+                Service.gI().sendThongBao(player, "Yêu cầu gia nhập không còn tồn tại.");
+                return;
+            }
             boolean existInClan = false;
             for (ClanMember cm : clan.members) {
-                if (cm.id == cmg.playerId) {
+                if (cm != null && cm.id == cmg.playerId) {
                     existInClan = true;
                     break;
                 }
             }
-            if (cmg != null && !existInClan) {
+            if (!existInClan) {
                 int plxinvao = cmg.playerId;
                 Player pl = Client.gI().getPlayer(plxinvao);
                 cmg.type = 0;

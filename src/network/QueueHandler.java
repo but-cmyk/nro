@@ -1,8 +1,4 @@
 package network;
-
-import lombok.NonNull;
-import lombok.Setter;
-
 import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.LinkedBlockingDeque;
 
@@ -14,12 +10,13 @@ public class QueueHandler implements Runnable {
     // Thêm volatile để đảm bảo tính nhất quán giữa các luồng khi biến này thay đổi
     private volatile ISession session; 
     private BlockingDeque<Message> messages;
-    @Setter
     private IMessageHandler messageHandler;
 
-    public QueueHandler(@NonNull ISession session) {
-        // Bỏ try-catch thừa thãi để code sạch hơn. 
-        // @NonNull sẽ tự ném lỗi nếu session null.
+    public void setMessageHandler(IMessageHandler messageHandler) {
+        this.messageHandler = messageHandler;
+    }
+
+    public QueueHandler(ISession session) {
         this.session = session;
         this.messages = new LinkedBlockingDeque<>();
     }

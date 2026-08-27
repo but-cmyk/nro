@@ -17,7 +17,6 @@ import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.logging.Level;
-import lombok.extern.java.Log;
 import models.Template;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONValue;
@@ -354,6 +353,16 @@ public class PlayerDAO {
         }
     }
 
+
+    public static void updatePlayerAsync(Player player) {
+        Thread.ofVirtual().name("db-player-save").start(() -> {
+            try {
+                updatePlayer(player);
+            } catch (Exception e) {
+                Logger.logException(PlayerDAO.class, e, "Lỗi updatePlayerAsync: " + (player != null ? player.name : "null"));
+            }
+        });
+    }
 
     public static void updatePlayer(Player player) {
         if (player == null || !player.idMark.isLoadedAllDataPlayer()) {
