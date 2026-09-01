@@ -287,14 +287,12 @@ namespace Game2.God
         }
         public void perform(int idAction, object p)
         {
-            switch (idAction)
+            if (idAction > 0)
             {
-                case int when idAction > 0:
-                    type = (TypePoint)p;
-                    index = idAction - 1;
-                    GameCanvas.panel.hideNow();
-                    Utils.startChat(this, strChat[0], strChat[1], TField.INPUT_TYPE_NUMERIC);
-                    break;
+                type = (TypePoint)p;
+                index = idAction - 1;
+                GameCanvas.panel.hideNow();
+                Utils.startChat(this, strChat[0], strChat[1], TField.INPUT_TYPE_NUMERIC);
             }
         }
         public void onCancelChat() => Utils.resetTF();

@@ -985,7 +985,7 @@ namespace Game2
                                 5 => e,
                                 6 => f,
                                 7 => g,
-                                >= 8 => h,
+                                _ when option.param >= 8 => h,
                                 _ => null
                             };
                             img_bg = option.param switch
@@ -997,7 +997,7 @@ namespace Game2
                                 5 => e_bg,
                                 6 => f_bg,
                                 7 => g_bg,
-                                >= 8 => h_bg,
+                                _ when option.param >= 8 => h_bg,
                                 _ => null
                             };
                         }
