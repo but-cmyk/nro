@@ -815,6 +815,9 @@ public class Controller implements IMessageHandler {
                     case 0:
                         session.login(msg.reader().readUTF(), msg.reader().readUTF());
                         break;
+                    case 1:
+                        Service.gI().regisAccount(session, msg);
+                        break;
                     case 2:
                         Service.gI().setClientType(session, msg);
                         break;

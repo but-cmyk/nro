@@ -191,8 +191,10 @@ namespace Game3
     				GameCanvas.serverScreen = new ServerListScreen();
     			}
     			cmdDeleteRMS = new Command(string.Empty, GameCanvas.serverScreen, 14, null);
-    			cmdDeleteRMS.x = GameCanvas.w - 78;
-    			cmdDeleteRMS.y = GameCanvas.h - 26;
+    			cmdDeleteRMS.w = 96;
+    			cmdDeleteRMS.h = 22;
+    			cmdDeleteRMS.x = GameCanvas.w - 98;
+    			cmdDeleteRMS.y = GameCanvas.h - 28;
     		}
     	}
     
@@ -346,73 +348,113 @@ namespace Game3
     	public override void paint(mGraphics g)
     	{
     		int num = 105;
-    		if (!loadScreen)
-    		{
-    			g.setColor(0);
-    			g.fillRect(0, 0, GameCanvas.w, GameCanvas.h);
-    			if (bigOk)
-    			{
-    			}
-    		}
-    		else
-    		{
-    			GameCanvas.paintBGGameScr(g);
-    		}
-    		int num2 = 2;
-    		mFont.tahoma_7_white.drawString(g, "v" + GameMidlet.VERSION + "(" + mGraphics.zoomLevel + ")", GameCanvas.w - 2, num2 + 15, 1, mFont.tahoma_7_grey);
-    		string empty = string.Empty;
-    		empty = ((testConnect != 0) ? (empty + nameServer[ipSelect] + " connected") : (empty + nameServer[ipSelect] + " disconnect"));
-    		if (mSystem.isTest)
-    		{
-    			mFont.tahoma_7_white.drawString(g, empty, GameCanvas.w - 2, num2 + 15 + 15, 1, mFont.tahoma_7_grey);
-    		}
-    		if (!isGetData || loadScreen)
-    		{
-    			if (mSystem.clientType == 1 && !GameCanvas.isTouch)
-    			{
-    				mFont.tahoma_7_white.drawString(g, linkweb, GameCanvas.w - 2, GameCanvas.h - 15, 1, mFont.tahoma_7_grey);
-    			}
-    			else
-    			{
-    				mFont.tahoma_7_white.drawString(g, linkweb, GameCanvas.w - 2, num2, 1, mFont.tahoma_7_grey);
-    			}
-    		}
-    		else
-    		{
-    			mFont.tahoma_7_white.drawString(g, linkweb, GameCanvas.w - 2, num2, 1, mFont.tahoma_7_grey);
-    		}
-    		int num3 = ((GameCanvas.w < 200) ? 160 : 180);
-    		if (cmdDeleteRMS != null)
-    		{
-    			mFont.tahoma_7_white.drawString(g, mResources.xoadulieu, GameCanvas.w - 2, GameCanvas.h - 15, 1, mFont.tahoma_7_grey);
-    		}
-    		if (GameCanvas.currentDialog == null)
-    		{
-    			if (!loadScreen)
-    			{
-    				if (!bigOk)
-    				{
-    					g.drawImage(LoginScr.imgTitle, GameCanvas.hw, GameCanvas.hh - 32, 3);
-    					if (!isGetData)
-    					{
-    						mFont.tahoma_7b_white.drawString(g, mResources.taidulieudechoi, GameCanvas.hw, GameCanvas.hh + 24, 2);
-    						if (cmdDownload != null)
-    						{
-    							cmdDownload.paint(g);
-    						}
-    					}
-    					else
-    					{
-    						if (cmdDownload != null)
-    						{
-    							cmdDownload.paint(g);
-    						}
-    						mFont.tahoma_7b_white.drawString(g, mResources.downloading_data + percent + "%", GameCanvas.w / 2, GameCanvas.hh + 24, 2);
-    						GameScr.paintOngMauPercent(GameScr.frBarPow20, GameScr.frBarPow21, GameScr.frBarPow22, GameCanvas.w / 2 - 50, GameCanvas.hh + 45, 100, 100f, g);
-    						GameScr.paintOngMauPercent(GameScr.frBarPow0, GameScr.frBarPow1, GameScr.frBarPow2, GameCanvas.w / 2 - 50, GameCanvas.hh + 45, 100, percent, g);
-    					}
-    				}
-    			}
+		GameCanvas.paintBGGameScr(g);
+		int num2 = 2;
+		mFont.tahoma_7_white.drawString(g, "v" + GameMidlet.VERSION + "(" + mGraphics.zoomLevel + ")", GameCanvas.w - 2, num2 + 15, 1, mFont.tahoma_7_grey);
+		string empty = string.Empty;
+		empty = ((testConnect != 0) ? (empty + nameServer[ipSelect] + " connected") : (empty + nameServer[ipSelect] + " disconnect"));
+		if (mSystem.isTest)
+		{
+			mFont.tahoma_7_white.drawString(g, empty, GameCanvas.w - 2, num2 + 15 + 15, 1, mFont.tahoma_7_grey);
+		}
+		if (!isGetData || loadScreen)
+		{
+			if (mSystem.clientType == 1 && !GameCanvas.isTouch)
+			{
+				mFont.tahoma_7_white.drawString(g, linkweb, GameCanvas.w - 2, GameCanvas.h - 15, 1, mFont.tahoma_7_grey);
+			}
+			else
+			{
+				mFont.tahoma_7_white.drawString(g, linkweb, GameCanvas.w - 2, num2, 1, mFont.tahoma_7_grey);
+			}
+		}
+		else
+		{
+			mFont.tahoma_7_white.drawString(g, linkweb, GameCanvas.w - 2, num2, 1, mFont.tahoma_7_grey);
+		}
+		int num3 = ((GameCanvas.w < 200) ? 160 : 180);
+		if (cmdDeleteRMS != null)
+		{
+			int btnW = 96;
+			int btnH = 22;
+			int btnX = GameCanvas.w - btnW - 6;
+			int btnY = GameCanvas.h - btnH - 6;
+			cmdDeleteRMS.x = btnX;
+			cmdDeleteRMS.y = btnY;
+			cmdDeleteRMS.w = btnW;
+			cmdDeleteRMS.h = btnH;
+
+			bool isHover = cmdDeleteRMS.isPointerPressInside();
+			g.setColor(isHover ? 0x242a38 : 0x141822);
+			g.fillRect(btnX, btnY, btnW, btnH, 4);
+			g.setColor(isHover ? 0x00d2d3 : 0x3d4a60);
+			g.drawRect(btnX, btnY, btnW, btnH);
+			mFont.tahoma_7_white.drawString(g, "🔄 " + mResources.xoadulieu, btnX + btnW / 2, btnY + 5, 2);
+		}
+		if (GameCanvas.currentDialog == null)
+		{
+			if (!loadScreen)
+			{
+				if (!bigOk)
+				{
+					g.drawImage(LoginScr.imgTitle, GameCanvas.hw, GameCanvas.hh - 48, 3);
+					
+					int cardW = (GameCanvas.w < 260) ? (GameCanvas.w - 20) : 240;
+					int cardH = 92;
+					int cardX = GameCanvas.hw - cardW / 2;
+					int cardY = GameCanvas.hh - 12;
+
+					g.setColor(0x0e121e);
+					g.fillRect(cardX, cardY, cardW, cardH, 6);
+					g.setColor(0x2d3748);
+					g.drawRect(cardX, cardY, cardW, cardH);
+
+					if (!isGetData)
+					{
+						mFont.tahoma_7b_yellow.drawString(g, "TÀI NGUYÊN CHƯA TẢI", cardX + cardW / 2, cardY + 12, 2);
+						mFont.tahoma_7_white.drawString(g, mResources.taidulieudechoi, cardX + cardW / 2, cardY + 30, 2);
+						if (cmdDownload != null)
+						{
+							cmdDownload.x = GameCanvas.hw - cmdDownload.w / 2;
+							cmdDownload.y = cardY + 52;
+							cmdDownload.paint(g);
+						}
+					}
+					else
+					{
+						mFont.tahoma_7b_yellow.drawString(g, "ĐANG ĐỒNG BỘ TÀI NGUYÊN...", cardX + cardW / 2, cardY + 10, 2);
+						int totalFiles = (nBig > 0) ? nBig : 100;
+						mFont.tahoma_7_white.drawString(g, "Đã tải: " + demPercent + "/" + totalFiles + " tệp (" + percent + "%)", cardX + cardW / 2, cardY + 28, 2);
+						
+						int barW = cardW - 36;
+						int barH = 10;
+						int barX = cardX + 18;
+						int barY = cardY + 46;
+
+						g.setColor(0x222736);
+						g.fillRect(barX, barY, barW, barH, 4);
+
+						int fillW = (int)((float)barW * (float)percent / 100f);
+						if (fillW > barW) fillW = barW;
+						if (fillW > 0)
+						{
+							g.setColor(0x00d2d3);
+							g.fillRect(barX, barY, fillW, barH, 4);
+							g.setColor(0xffffff);
+							g.fillRect(barX, barY + 1, fillW, 2);
+						}
+
+						mFont.tahoma_7_grey.drawString(g, "Vui lòng giữ kết nối mạng ổn định", cardX + cardW / 2, cardY + 66, 2);
+						
+						if (cmdDownload != null)
+						{
+							cmdDownload.x = GameCanvas.hw - cmdDownload.w / 2;
+							cmdDownload.y = cardY + cardH + 8;
+							cmdDownload.paint(g);
+						}
+					}
+				}
+			}
     			else
     			{
     				int num4 = GameCanvas.hh - 15 * cmd.Length - 15;
@@ -1036,21 +1078,34 @@ namespace Game3
     			}
     		}
     		if (idAction == 14)
-    		{
-    			Command cmdYes = new Command(mResources.YES, GameCanvas.serverScreen, 15, null);
-    			Command cmdNo = new Command(mResources.NO, GameCanvas.serverScreen, 16, null);
-    			GameCanvas.startYesNoDlg(mResources.deletaDataNote, cmdYes, cmdNo);
-    		}
-    		if (idAction == 15)
-    		{
-    			Rms.clearAll();
-    			GameCanvas.startOK(mResources.plsRestartGame, 8885, null);
-    		}
-    		if (idAction == 16)
-    		{
-    			InfoDlg.hide();
-    			GameCanvas.currentDialog = null;
-    		}
+		{
+			Command cmdYes = new Command(mResources.YES, this, 15, null);
+			Command cmdNo = new Command(mResources.NO, this, 16, null);
+			GameCanvas.startYesNoDlg("Bạn có muốn xóa dữ liệu cũ và tải lại phiên bản mới nhất từ máy chủ ngay bây giờ?", cmdYes, cmdNo);
+		}
+		if (idAction == 15)
+		{
+			GameCanvas.endDlg();
+			Rms.clearAll();
+			SmallImage.freeBig();
+			BgItem.clearHashTable();
+			TileMap.vItemBg.removeAllElements();
+			show2();
+			if (!isGetData)
+			{
+				isGetData = true;
+				stopDownload = false;
+				demPercent = 0;
+				percent = 0;
+				GameCanvas.connect();
+				Service.gI().getResource(1, null);
+			}
+		}
+		if (idAction == 16)
+		{
+			InfoDlg.hide();
+			GameCanvas.currentDialog = null;
+		}    		
     		if (idAction == 17)
     		{
     			if (GameCanvas.serverScr == null)
@@ -1106,22 +1161,23 @@ namespace Game3
     	}
     
     	public void show2()
-    	{
-    		GameScr.cmx = 0;
-    		GameScr.cmy = 0;
-    		initCommand();
-    		loadScreen = false;
-    		percent = 0;
-    		bigOk = false;
-    		isGetData = false;
-    		mSystem.println(">>>>>isGetData: " + isGetData);
-    		p = 0;
-    		demPercent = 0;
-    		strWait = mResources.PLEASEWAIT;
-    		Char.isLoadingMap = false;
-    		init();
-    		base.switchToMe();
-    	}
+	{
+		GameScr.cmx = 0;
+		GameScr.cmy = 0;
+		initCommand();
+		loadScreen = false;
+		percent = 0;
+		bigOk = false;
+		isGetData = false;
+		mSystem.println(">>>>>isGetData: " + isGetData);
+		p = 0;
+		demPercent = 0;
+		strWait = mResources.PLEASEWAIT;
+		Char.isLoadingMap = false;
+		GameCanvas.loadBG(0);
+		init();
+		base.switchToMe();
+	}
     
     	public void setLinkDefault(sbyte language)
     	{

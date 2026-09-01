@@ -306,9 +306,8 @@ public class Client implements Runnable {
 
     public void kickSession(MySession session) {
         if (session != null) {
-            Logger.log("Kicking session for user: " + session.userId);
-            if (session.userId == 0) {
-                new Exception("Stack trace for Kicking session user 0").printStackTrace();
+            if (session.userId != 0) {
+                Logger.log("Kicking session for user: " + session.userId);
             }
             remove(session);
             session.disconnect();

@@ -84,6 +84,7 @@
     <Compile Include="Assets\Scripts\Game2\CharChild.cs" />
     <Compile Include="Assets\Scripts\Game3\T2.cs" />
     <Compile Include="Assets\Scripts\Game1\God\Client\ClientManager.cs" />
+    <Compile Include="Assets\Scripts\Game2\Network\Handlers\TaskNpcPacketHandler.cs" />
     <Compile Include="Assets\Scripts\Game2\GamePad.cs" />
     <Compile Include="Assets\Scripts\Game2\LoginScr.cs" />
     <Compile Include="Assets\Scripts\Game1\IPaint.cs" />
@@ -104,6 +105,7 @@
     <Compile Include="Assets\Scripts\Game1\Assets\src\e\SmallSave.cs" />
     <Compile Include="Assets\Scripts\Game1\Archivement.cs" />
     <Compile Include="Assets\Scripts\Game1\mGraphics.cs" />
+    <Compile Include="Assets\Scripts\Game2\UI\Panels\InventorySubPanel.cs" />
     <Compile Include="Assets\Scripts\Game1\ItemTime.cs" />
     <Compile Include="Assets\Scripts\Game1\Paint.cs" />
     <Compile Include="Assets\Scripts\Game3\TextInfo.cs" />
@@ -130,6 +132,7 @@
     <Compile Include="Assets\Scripts\Game1\MyKeyMap.cs" />
     <Compile Include="Assets\Scripts\Game3\God\Mob\Mobs.cs" />
     <Compile Include="Assets\Scripts\Game1\Skill.cs" />
+    <Compile Include="Assets\Scripts\Game2\Network\IPacketHandler.cs" />
     <Compile Include="Assets\Scripts\Game1\MyRandom.cs" />
     <Compile Include="Assets\Scripts\Game2\Line.cs" />
     <Compile Include="Assets\Scripts\Game3\Assets\src\f\Controller2.cs" />
@@ -161,6 +164,7 @@
     <Compile Include="Assets\Scripts\Game3\Image.cs" />
     <Compile Include="Assets\Scripts\Game2\TransportScr.cs" />
     <Compile Include="Assets\Scripts\Game1\Waypoint.cs" />
+    <Compile Include="Assets\Scripts\Game1\UI\IUIWindow.cs" />
     <Compile Include="Assets\Scripts\Game2\ItemTime.cs" />
     <Compile Include="Assets\Scripts\Game2\Menu.cs" />
     <Compile Include="Assets\Scripts\Game1\GameScr.cs" />
@@ -214,6 +218,7 @@
     <Compile Include="Assets\Scripts\Game2\Assets\src\g\Mabu.cs" />
     <Compile Include="Assets\Scripts\Game2\TabClanIcon.cs" />
     <Compile Include="Assets\Scripts\Game1\MapTemplate.cs" />
+    <Compile Include="Assets\Scripts\Game1\UI\UIWindowManager.cs" />
     <Compile Include="Assets\Scripts\Game1\MagicTree.cs" />
     <Compile Include="Assets\Scripts\Game2\StaticObj.cs" />
     <Compile Include="Assets\Scripts\Game3\GameMidlet.cs" />
@@ -239,6 +244,7 @@
     <Compile Include="Assets\Scripts\Game2\NewBoss.cs" />
     <Compile Include="Assets\Scripts\Game1\PlayerData.cs" />
     <Compile Include="Assets\Scripts\Game3\Firework.cs" />
+    <Compile Include="Assets\Scripts\Game2\Network\Handlers\AuthPacketHandler.cs" />
     <Compile Include="Assets\Scripts\Game2\myWriter.cs" />
     <Compile Include="Assets\Scripts\Game2\Npc.cs" />
     <Compile Include="Assets\Scripts\Game3\T3.cs" />
@@ -316,6 +322,7 @@
     <Compile Include="Assets\Scripts\Game1\mSystem.cs" />
     <Compile Include="Assets\Scripts\Game2\EffectData.cs" />
     <Compile Include="Assets\Scripts\Game3\ChatTextField.cs" />
+    <Compile Include="Assets\Scripts\Game3\UI\Panels\InventorySubPanel.cs" />
     <Compile Include="Assets\Scripts\Game2\CrackBallScr.cs" />
     <Compile Include="Assets\Scripts\Game2\Member.cs" />
     <Compile Include="Assets\Scripts\Game2\Skills.cs" />
@@ -352,14 +359,17 @@
     <Compile Include="Assets\Scripts\Game2\ServerListScreen.cs" />
     <Compile Include="Assets\Scripts\Game2\ClanMessage.cs" />
     <Compile Include="Assets\Scripts\Game3\KeyConstant.cs" />
+    <Compile Include="Assets\Scripts\Game3\UI\Panels\ChestSubPanel.cs" />
     <Compile Include="Assets\Scripts\Game3\Assets\src\g\ImageSource.cs" />
     <Compile Include="Assets\Scripts\Game2\ItemObject.cs" />
     <Compile Include="Assets\Scripts\Game3\Skills.cs" />
     <Compile Include="Assets\Scripts\Game2\Layer.cs" />
+    <Compile Include="Assets\Scripts\Game3\UI\Panels\ISubPanel.cs" />
     <Compile Include="Assets\Scripts\Game3\ServerScr.cs" />
     <Compile Include="Assets\Scripts\Game2\FireWorkEff.cs" />
     <Compile Include="Assets\Scripts\Game3\InfoDlg.cs" />
     <Compile Include="Assets\Scripts\Game3\EffectCharPaint.cs" />
+    <Compile Include="Assets\Scripts\Game1\Network\Handlers\AuthPacketHandler.cs" />
     <Compile Include="Assets\Scripts\Game1\Panel.cs" />
     <Compile Include="Assets\Scripts\Game3\Effect_End.cs" />
     <Compile Include="Assets\Scripts\Game1\SkillOption.cs" />
@@ -373,6 +383,7 @@
     <Compile Include="Assets\Scripts\Game1\MyStream.cs" />
     <Compile Include="Assets\Scripts\Game1\Main.cs" />
     <Compile Include="Assets\Scripts\Game1\Assets\src\g\RegisterScreen.cs" />
+    <Compile Include="Assets\Scripts\Game2\UI\Panels\ChestSubPanel.cs" />
     <Compile Include="Assets\Scripts\Game3\MyKeyMap.cs" />
     <Compile Include="Assets\Scripts\Game1\EffectPanel.cs" />
     <Compile Include="Assets\Scripts\Game1\mResources.cs" />
@@ -480,6 +491,8 @@
     <Compile Include="Assets\Scripts\Game3\StaticObj.cs" />
     <Compile Include="Assets\Scripts\Game1\MovePoint.cs" />
     <Compile Include="Assets\Scripts\Game1\GamePad.cs" />
+    <Compile Include="Assets\Scripts\Game1\Network\Handlers\TaskNpcPacketHandler.cs" />
+    <Compile Include="Assets\Scripts\Game2\UI\IUIWindow.cs" />
     <Compile Include="Assets\Scripts\Game3\ScreenPointer.cs" />
     <Compile Include="Assets\Scripts\Game3\ScrollResult.cs" />
     <Compile Include="Assets\Scripts\Game3\God\Player\PlayerInfo.cs" />
@@ -494,9 +507,11 @@
     <Compile Include="Assets\Scripts\Game1\Frame.cs" />
     <Compile Include="Assets\Scripts\Game2\HTTPHandler.cs" />
     <Compile Include="Assets\Scripts\Game2\ItemOption.cs" />
+    <Compile Include="Assets\Scripts\Game3\Network\IPacketHandler.cs" />
     <Compile Include="Assets\Scripts\Game3\MyVector.cs" />
     <Compile Include="Assets\Scripts\Game1\ImgByName.cs" />
     <Compile Include="Assets\Scripts\Game1\Clan.cs" />
+    <Compile Include="Assets\Scripts\Game3\Network\Handlers\AuthPacketHandler.cs" />
     <Compile Include="Assets\Scripts\Game2\EffectCharPaint.cs" />
     <Compile Include="Assets\Scripts\Game3\God\Map\MapController.cs" />
     <Compile Include="Assets\Scripts\Game1\NpcTemplate.cs" />
@@ -507,9 +522,11 @@
     <Compile Include="Assets\Scripts\Game2\Assets\src\e\SmallSave.cs" />
     <Compile Include="Assets\Scripts\Game1\ScreenPointer.cs" />
     <Compile Include="Assets\Scripts\Game2\ScreenPointer.cs" />
+    <Compile Include="Assets\Scripts\Game2\UI\UIWindowManager.cs" />
     <Compile Include="Assets\Scripts\Game1\ServerScr.cs" />
     <Compile Include="Assets\Scripts\Game3\ipKeyboard.cs" />
     <Compile Include="Assets\Scripts\Game2\mGraphics.cs" />
+    <Compile Include="Assets\Scripts\Game3\Network\PacketDispatcher.cs" />
     <Compile Include="Assets\Scripts\Game3\Timer.cs" />
     <Compile Include="Assets\Scripts\Game1\myWriter.cs" />
     <Compile Include="Assets\Scripts\Game3\RadarScr.cs" />
@@ -522,7 +539,9 @@
     <Compile Include="Assets\Scripts\Game3\GameScr.cs" />
     <Compile Include="Assets\Scripts\Game3\SmallImage.cs" />
     <Compile Include="Assets\Scripts\Game1\ChooseCharScr.cs" />
+    <Compile Include="Assets\Scripts\Game3\UI\UIWindowManager.cs" />
     <Compile Include="Assets\Scripts\Game1\PopUp.cs" />
+    <Compile Include="Assets\Scripts\Game2\UI\Panels\ISubPanel.cs" />
     <Compile Include="Assets\Scripts\Game2\ItemTemplates.cs" />
     <Compile Include="Assets\Scripts\TabType.cs" />
     <Compile Include="Assets\Scripts\Game3\SoundMn.cs" />
@@ -530,6 +549,8 @@
     <Compile Include="Assets\Scripts\Game3\BgItem.cs" />
     <Compile Include="Assets\Scripts\Game1\EffecMn.cs" />
     <Compile Include="Assets\Scripts\Game3\EffectData.cs" />
+    <Compile Include="Assets\Scripts\Game1\Network\IPacketHandler.cs" />
+    <Compile Include="Assets\Scripts\Game3\UI\IUIWindow.cs" />
     <Compile Include="Assets\Scripts\Game3\Char.cs" />
     <Compile Include="Assets\Scripts\Game2\TaskTemplate.cs" />
     <Compile Include="Assets\Scripts\Game3\NinjaUtil.cs" />
@@ -587,6 +608,7 @@
     <Compile Include="Assets\Scripts\Game2\IKbAction.cs" />
     <Compile Include="Assets\Scripts\Game2\SmallImage.cs" />
     <Compile Include="Assets\Scripts\Game2\TabControl.cs" />
+    <Compile Include="Assets\Scripts\Game1\UI\Panels\ChestSubPanel.cs" />
     <Compile Include="Assets\Scripts\Game2\TouchScreenKeyboard.cs" />
     <Compile Include="Assets\Scripts\Game2\Assets\src\g\BigBoss.cs" />
     <Compile Include="Assets\Scripts\Game1\mFont.cs" />
@@ -611,13 +633,16 @@
     <Compile Include="Assets\Scripts\Game1\Assets\src\e\ChatVip.cs" />
     <Compile Include="Assets\Scripts\Game1\BigBoss2.cs" />
     <Compile Include="Assets\Scripts\Game1\ChatTextField.cs" />
+    <Compile Include="Assets\Scripts\Game1\Network\Handlers\PlayerStatsPacketHandler.cs" />
     <Compile Include="Assets\Scripts\Game3\Net.cs" />
     <Compile Include="Assets\Scripts\Game3\ImageInfo.cs" />
+    <Compile Include="Assets\Scripts\Game1\UI\Panels\ISubPanel.cs" />
     <Compile Include="Assets\Scripts\Game3\DataOutputStream.cs" />
     <Compile Include="Assets\Scripts\Game3\MapTemplate.cs" />
     <Compile Include="Assets\Scripts\Game2\Panel.cs" />
     <Compile Include="Assets\Scripts\Game1\TouchScreenKeyboard.cs" />
     <Compile Include="Assets\Scripts\Game3\MainImage.cs" />
+    <Compile Include="Assets\Scripts\Game1\Network\PacketDispatcher.cs" />
     <Compile Include="Assets\Scripts\Game1\Cmd.cs" />
     <Compile Include="Assets\Scripts\Game2\Cout.cs" />
     <Compile Include="Assets\Scripts\Game1\Friend.cs" />
@@ -629,6 +654,7 @@
     <Compile Include="Assets\Scripts\Game2\mSystem.cs" />
     <Compile Include="Assets\Scripts\Game1\Assets\src\e\Small.cs" />
     <Compile Include="Assets\Scripts\Game1\iPhoneGeneration.cs" />
+    <Compile Include="Assets\Scripts\Game2\Network\Handlers\PlayerStatsPacketHandler.cs" />
     <Compile Include="Assets\Scripts\Game3\iOSPlugins.cs" />
     <Compile Include="Assets\Scripts\Game3\EffectChar.cs" />
     <Compile Include="Assets\Scripts\Game3\Panel.cs" />
@@ -640,9 +666,11 @@
     <Compile Include="Assets\Scripts\Game2\BgItemMn.cs" />
     <Compile Include="Assets\Scripts\Game1\Assets\src\f\Controller2.cs" />
     <Compile Include="Assets\Scripts\Game1\Arrowpaint.cs" />
+    <Compile Include="Assets\Scripts\Game2\Network\PacketDispatcher.cs" />
     <Compile Include="Assets\Scripts\Game2\MyVector.cs" />
     <Compile Include="Assets\Scripts\Game3\ActionPaint.cs" />
     <Compile Include="Assets\Scripts\Game3\MyRandom.cs" />
+    <Compile Include="Assets\Scripts\Game3\Network\Handlers\PlayerStatsPacketHandler.cs" />
     <Compile Include="Assets\Scripts\Game1\BackgroudEffect.cs" />
     <Compile Include="Assets\Scripts\Game2\MoneyCharge.cs" />
     <Compile Include="Assets\Scripts\Game3\InfoMe.cs" />
@@ -680,6 +708,7 @@
     <Compile Include="Assets\Scripts\Game3\SkillPaint.cs" />
     <Compile Include="Assets\Scripts\Game2\PlayerDart.cs" />
     <Compile Include="Assets\Scripts\Game2\God\Utils\Utils.cs" />
+    <Compile Include="Assets\Scripts\Game3\Network\Handlers\TaskNpcPacketHandler.cs" />
     <Compile Include="Assets\Scripts\Game1\Session_ME.cs" />
     <Compile Include="Assets\Scripts\Game3\NewPanel.cs" />
     <Compile Include="Assets\Scripts\Game3\iPhoneGeneration.cs" />
@@ -701,8 +730,9 @@
     <Compile Include="Assets\Scripts\Game2\IActionListener.cs" />
     <Compile Include="Assets\Scripts\Game3\PKFlag.cs" />
     <Compile Include="Assets\Scripts\Game1\Info_RadaScr.cs" />
-    <Compile Include="Assets\Scripts\Game2\Command.cs" />
+    <Compile Include="Assets\Scripts\Game1\UI\Panels\InventorySubPanel.cs" />
     <Compile Include="Assets\Scripts\Game1\God\Player\PlayerInfo.cs" />
+    <Compile Include="Assets\Scripts\Game2\Command.cs" />
     <Compile Include="Assets\Scripts\Game3\ActionChat.cs" />
     <Compile Include="Assets\Scripts\Game2\Archivement.cs" />
     <Compile Include="Assets\Scripts\Game2\Arrow.cs" />

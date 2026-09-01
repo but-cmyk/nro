@@ -103,6 +103,14 @@ namespace Game2
     
     	public static void addNextPopUpMultiLine(string strNext, Npc next)
     	{
+    		if (GameCanvas.panel != null && GameCanvas.panel.isShow)
+    		{
+    			GameCanvas.panel.hide();
+    		}
+    		if (GameCanvas.panel2 != null && GameCanvas.panel2.isShow)
+    		{
+    			GameCanvas.panel2.hide();
+    		}
     		nextMultiChatPopUp = strNext;
     		nextChar = next;
     		if (currChatPopup == null)
@@ -115,6 +123,14 @@ namespace Game2
     
     	public static void addBigMessage(string chat, int howLong, Npc c)
     	{
+    		if (GameCanvas.panel != null && GameCanvas.panel.isShow)
+    		{
+    			GameCanvas.panel.hide();
+    		}
+    		if (GameCanvas.panel2 != null && GameCanvas.panel2.isShow)
+    		{
+    			GameCanvas.panel2.hide();
+    		}
     		string[] array = new string[1] { chat };
     		if (c.charID != 5 && GameScr.info1.isDone)
     		{
@@ -135,6 +151,14 @@ namespace Game2
     
     	public static void addChatPopupMultiLine(string chat, int howLong, Npc c)
     	{
+    		if (GameCanvas.panel != null && GameCanvas.panel.isShow)
+    		{
+    			GameCanvas.panel.hide();
+    		}
+    		if (GameCanvas.panel2 != null && GameCanvas.panel2.isShow)
+    		{
+    			GameCanvas.panel2.hide();
+    		}
     		string[] array = Res.split(chat, "\n", 0);
     		Char.isLockKey = true;
     		currChatPopup = addChatPopup(array[0], howLong, c);
@@ -693,9 +717,27 @@ namespace Game2
     				}
     			}
     		}
-    		if (GameCanvas.keyPressed[(!Main.isPC) ? 5 : 25] || mScreen.getCmdPointerLast(GameCanvas.currentScreen.center))
+    		bool isClickNext = false;
+    		if (cmdNextLine != null)
+    		{
+    			if (mScreen.getCmdPointerLast(cmdNextLine) || mScreen.getCmdPointerLast(GameCanvas.currentScreen.center))
+    			{
+    				isClickNext = true;
+    			}
+    			else if (GameCanvas.isPointerHoldIn(cmdNextLine.x, cmdNextLine.y, 70, 30) && GameCanvas.isPointerClick && GameCanvas.isPointerJustRelease)
+    			{
+    				isClickNext = true;
+    			}
+    			else if (GameCanvas.isPointerHoldIn(cx, cy, sayWidth + 2, ch) && GameCanvas.isPointerClick && GameCanvas.isPointerJustRelease)
+    			{
+    				isClickNext = true;
+    			}
+    		}
+    		if (GameCanvas.keyPressed[(!Main.isPC) ? 5 : 25] || isClickNext)
     		{
     			GameCanvas.keyPressed[(!Main.isPC) ? 5 : 25] = false;
+    			GameCanvas.isPointerClick = false;
+    			GameCanvas.isPointerJustRelease = false;
     			mScreen.keyTouch = -1;
     			if (cmdNextLine != null)
     			{
@@ -781,10 +823,11 @@ namespace Game2
     				GameScr.info1.info.info.speed = 10;
     			}
     		}
-    		if (idAction != 8000 || performDelay > 0)
+    		if (idAction != 8000)
     		{
     			return;
     		}
+    		performDelay = 0;
     		int num = currChatPopup.currentLine;
     		num++;
     		if (num >= currChatPopup.lines.Length)

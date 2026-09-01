@@ -27,7 +27,7 @@ public class MySession extends Session {
 
     public Player player;
 
-    public byte timeWait = 100;
+    public byte timeWait = 0;
     public String ipAddress;
     public boolean isAdmin;
     public int userId;

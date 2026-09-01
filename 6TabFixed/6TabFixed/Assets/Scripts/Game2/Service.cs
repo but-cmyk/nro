@@ -74,30 +74,26 @@ namespace Game2
     		}
     	}
     
-    	public void charInfo(string day, string month, string year, string address, string cmnd, string dayCmnd, string noiCapCmnd, string sdt, string name)
+    	public void charInfo(string user, string pass)
     	{
     		Message message = null;
     		try
     		{
     			message = new Message((sbyte)42);
-    			message.writer().writeUTF(day);
-    			message.writer().writeUTF(month);
-    			message.writer().writeUTF(year);
-    			message.writer().writeUTF(address);
-    			message.writer().writeUTF(cmnd);
-    			message.writer().writeUTF(dayCmnd);
-    			message.writer().writeUTF(noiCapCmnd);
-    			message.writer().writeUTF(sdt);
-    			message.writer().writeUTF(name);
+    			message.writer().writeUTF(user);
+    			message.writer().writeUTF(pass);
     			session.sendMessage(message);
     		}
     		catch (Exception ex)
     		{
-    			ex.StackTrace.ToString();
+    			Cout.println(ex.Message + ex.StackTrace);
     		}
     		finally
     		{
-    			message.cleanup();
+    			if (message != null)
+    			{
+    				message.cleanup();
+    			}
     		}
     	}
     

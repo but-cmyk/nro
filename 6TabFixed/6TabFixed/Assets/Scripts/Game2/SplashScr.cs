@@ -134,11 +134,29 @@ namespace Game2
     		}
     		if (nData != -1)
     		{
-    			g.setColor(0);
-    			g.fillRect(0, 0, GameCanvas.w, GameCanvas.h);
-    			g.drawImage(LoginScr.imgTitle, GameCanvas.w / 2, GameCanvas.h / 2 - 24, StaticObj.BOTTOM_HCENTER);
-    			GameCanvas.paintShukiren(GameCanvas.hw, GameCanvas.h / 2 + 24, g);
-    			mFont.tahoma_7b_white.drawString(g, mResources.downloading_data + nData * 100 / maxData + "%", GameCanvas.w / 2, GameCanvas.h / 2, 2);
+    			GameCanvas.paintBGGameScr(g);
+    			g.drawImage(LoginScr.imgTitle, GameCanvas.w / 2, GameCanvas.h / 2 - 36, StaticObj.BOTTOM_HCENTER);
+
+    			int percent = (maxData > 0) ? (nData * 100 / maxData) : 0;
+    			mFont.tahoma_7b_white.drawString(g, mResources.downloading_data + percent + "%", GameCanvas.w / 2, GameCanvas.h / 2 - 10, 2);
+
+    			int barW = 180;
+    			int barH = 10;
+    			int barX = GameCanvas.w / 2 - barW / 2;
+    			int barY = GameCanvas.h / 2 + 8;
+
+    			g.setColor(0x222736);
+    			g.fillRect(barX, barY, barW, barH, 4);
+
+    			int fillW = (int)((float)barW * (float)percent / 100f);
+    			if (fillW > barW) fillW = barW;
+    			if (fillW > 0)
+    			{
+    				g.setColor(0x00d2d3);
+    				g.fillRect(barX, barY, fillW, barH, 4);
+    				g.setColor(0xffffff);
+    				g.fillRect(barX, barY + 1, fillW, 2);
+    			}
     		}
     		else if (splashScrStat >= 30)
     		{
@@ -147,7 +165,21 @@ namespace Game2
     			GameCanvas.paintShukiren(GameCanvas.hw, GameCanvas.hh, g);
     			if (ServerListScreen.cmdDeleteRMS != null)
     			{
-    				mFont.tahoma_7_white.drawString(g, mResources.xoadulieu, GameCanvas.w - 2, GameCanvas.h - 15, 1, mFont.tahoma_7_grey);
+    				int btnW = 96;
+    				int btnH = 22;
+    				int btnX = GameCanvas.w - btnW - 6;
+    				int btnY = GameCanvas.h - btnH - 6;
+    				ServerListScreen.cmdDeleteRMS.x = btnX;
+    				ServerListScreen.cmdDeleteRMS.y = btnY;
+    				ServerListScreen.cmdDeleteRMS.w = btnW;
+    				ServerListScreen.cmdDeleteRMS.h = btnH;
+
+    				bool isHover = ServerListScreen.cmdDeleteRMS.isPointerPressInside();
+    				g.setColor(isHover ? 0x242a38 : 0x141822);
+    				g.fillRect(btnX, btnY, btnW, btnH, 4);
+    				g.setColor(isHover ? 0x00d2d3 : 0x3d4a60);
+    				g.drawRect(btnX, btnY, btnW, btnH);
+    				mFont.tahoma_7_white.drawString(g, "🔄 " + mResources.xoadulieu, btnX + btnW / 2, btnY + 5, 2);
     			}
     		}
     	}
