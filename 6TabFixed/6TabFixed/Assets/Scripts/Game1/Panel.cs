@@ -4591,6 +4591,7 @@ namespace Game1
     
         private void paintAuto(mGraphics g)
         {
+            mFont.tahoma_7b_dark.drawString(g, "Tính năng Auto đang cập nhật...", xScroll + wScroll / 2, yScroll + hScroll / 2 - 5, mFont.CENTER);
         }
     
         private void paintPetStatus(mGraphics g)
@@ -4622,6 +4623,11 @@ namespace Game1
             g.setColor(16711680);
             g.setClip(xScroll, yScroll, wScroll, hScroll);
             g.translate(0, -cmy);
+            if (Char.myPetz() == null || Char.myPetz().arrItemBody == null || Char.myPetz().arrPetSkill == null)
+            {
+                mFont.tahoma_7b_dark.drawString(g, "Bạn chưa có đệ tử", xScroll + wScroll / 2, yScroll + hScroll / 2 - 5, mFont.CENTER);
+                return;
+            }
             Item[] arrItemBody = Char.myPetz().arrItemBody;
             Skill[] arrPetSkill = Char.myPetz().arrPetSkill;
             for (int i = 0; i < arrItemBody.Length + arrPetSkill.Length; i++)
@@ -5003,6 +5009,11 @@ namespace Game1
             g.setColor(16711680);
             g.setClip(xScroll, yScroll, wScroll, hScroll);
             g.translate(0, -cmy);
+            if (mapNames == null || mapNames.Length == 0)
+            {
+                mFont.tahoma_7b_dark.drawString(g, "Không có bản đồ khả dụng", xScroll + wScroll / 2, yScroll + hScroll / 2 - 5, mFont.CENTER);
+                return;
+            }
             for (int i = 0; i < mapNames.Length; i++)
             {
                 int num = xScroll + 36;
@@ -5031,6 +5042,11 @@ namespace Game1
             g.translate(0, -cmy);
             int[] zones = GameScr.gI().zones;
             int[] pts = GameScr.gI().pts;
+            if (zones == null || pts == null || pts.Length == 0)
+            {
+                mFont.tahoma_7b_dark.drawString(g, "Đang tải danh sách khu vực...", xScroll + wScroll / 2, yScroll + hScroll / 2 - 5, mFont.CENTER);
+                return;
+            }
             for (int i = 0; i < pts.Length; i++)
             {
                 int num = xScroll + 36;
@@ -5369,6 +5385,11 @@ namespace Game1
             g.setClip(xScroll, yScroll, wScroll, hScroll);
             g.translate(0, -cmy);
             g.setColor(0);
+            if (currentListLength == 0 || vFlag == null || vFlag.size() == 0)
+            {
+                mFont.tahoma_7b_dark.drawString(g, "Không có cờ khả dụng", xScroll + wScroll / 2, yScroll + hScroll / 2 - 5, mFont.CENTER);
+                return;
+            }
             for (int i = 0; i < currentListLength; i++)
             {
                 int num = xScroll + 26;
@@ -5510,6 +5531,11 @@ namespace Game1
         {
             g.setClip(xScroll, yScroll, wScroll, hScroll);
             g.translate(0, -cmy);
+            if (vPlayerMenu == null || vPlayerMenu.size() == 0)
+            {
+                mFont.tahoma_7b_dark.drawString(g, "Không có tuỳ chọn", xScroll + wScroll / 2, yScroll + hScroll / 2 - 5, mFont.CENTER);
+                return;
+            }
             for (int i = 0; i < vPlayerMenu.size(); i++)
             {
                 int x = xScroll;
@@ -5705,6 +5731,7 @@ namespace Game1
             {
                 if (Char.myCharz().arrArchive == null || Char.myCharz().arrArchive.Length != currentListLength)
                 {
+                    mFont.tahoma_7b_dark.drawString(g, "Đang tải danh sách nhiệm vụ...", xScroll + wScroll / 2, yScroll + hScroll / 2 - 5, mFont.CENTER);
                     return;
                 }
                 for (int i = 0; i < currentListLength; i++)
