@@ -3016,6 +3016,10 @@ namespace Game3
     			currentDialog = null;
     			ServerListScreen.isAutoConect = false;
     			ServerListScreen.countDieConnect = 0;
+    			if (currentScreen == registerScr)
+    			{
+    				serverScreen.switchToMe();
+    			}
     			break;
     		case 8884:
     			endDlg();

@@ -75,48 +75,62 @@ public class Service {
     }
     public void regisAccount(Session session, Message _msg) {
         try {
-            // Đọc bỏ các param thừa từ client gửi lên (giữ nguyên logic đọc để không lỗi luồng)
-            _msg.reader().readUTF();
-            _msg.reader().readUTF();
-            _msg.reader().readUTF();
-            _msg.reader().readUTF();
-            _msg.reader().readUTF();
-            _msg.reader().readUTF();
-            _msg.reader().readUTF();
-
             String user = _msg.reader().readUTF();
             String pass = _msg.reader().readUTF();
 
-            if (!(!user.isEmpty() && user.length() <= 18)) {
-                sendThongBaoOK((MySession) session, "Tài khoản phải có độ dài 1-18 ký tự");
+            if (user == null || user.trim().isEmpty()) {
+                sendThongBaoOK((MySession) session, "Vui lòng nhập tên tài khoản!");
                 return;
             }
-            if (!(!pass.isEmpty() && pass.length() <= 18)) {
-                sendThongBaoOK((MySession) session, "Mật khẩu phải có độ dài 1-18 ký tự");
+            if (pass == null || pass.trim().isEmpty()) {
+                sendThongBaoOK((MySession) session, "Vui lòng nhập mật khẩu!");
                 return;
             }
 
-            AlyraResultSet rs = AlyraManager.executeQuery("select * from account where username = ?", user);
+            user = user.trim().toLowerCase(java.util.Locale.ROOT);
+            pass = pass.trim();
+
+            if (user.length() < 5 || user.length() > 18) {
+                sendThongBaoOK((MySession) session, "Tên tài khoản phải từ 5 đến 18 ký tự!");
+                return;
+            }
+
+            if (!user.matches("^[a-zA-Z0-9]+$")) {
+                sendThongBaoOK((MySession) session, "Tài khoản chỉ được gồm chữ cái và số (không dấu, không khoảng trắng)!");
+                return;
+            }
+
+            if (pass.length() < 5 || pass.length() > 18) {
+                sendThongBaoOK((MySession) session, "Mật khẩu phải từ 5 đến 18 ký tự!");
+                return;
+            }
+
+            if (!pass.matches("^[a-zA-Z0-9]+$")) {
+                sendThongBaoOK((MySession) session, "Mật khẩu chỉ được gồm chữ cái và số!");
+                return;
+            }
+
+            AlyraResultSet rs = AlyraManager.executeQuery("SELECT id FROM account WHERE username = ? LIMIT 1", user);
             if (rs.first()) {
-                sendThongBaoOK((MySession) session, "Tài khoản đã tồn tại");
+                sendThongBaoOK((MySession) session, "Tên tài khoản này đã được sử dụng. Vui lòng chọn tên khác!");
             } else {
                 // Hash password with BCrypt before inserting
                 String hashedPassword = utils.PasswordUtils.hashPassword(pass);
-                AlyraManager.executeUpdate("insert into account (username, password, is_admin, sotien, danap, gmail) values(?, ?, ?, ?, ?, ?)",
+                AlyraManager.executeUpdate("INSERT INTO account (username, password, is_admin, sotien, danap, gmail) VALUES(?, ?, ?, ?, ?, ?)",
                         user,           // username
-                        hashedPassword,  // password
+                        hashedPassword, // password
                         0,              // is_admin (int)
                         0,              // sotien (int)
                         0,              // danap (int)
-                        ""              // gmail (Để chuỗi rỗng thay vì "0")
+                        ""              // gmail
                 );
-                sendThongBaoOK((MySession) session, "Đăng ký tài khoản thành công!");
+                sendThongBaoOK((MySession) session, "Đăng ký tài khoản thành công!\nBạn có thể đăng nhập ngay.");
             }
 
             rs.dispose();
         } catch (Exception e) {
-            Logger.error("Error regisAccount");
-            e.printStackTrace(); // Nên in stacktrace để dễ debug nếu có lỗi khác
+            Logger.error("Error regisAccount: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 

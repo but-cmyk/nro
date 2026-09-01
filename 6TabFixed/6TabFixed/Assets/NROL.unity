@@ -89,7 +89,6 @@ GameObject:
   m_Component:
   - component: {fileID: 5}
   - component: {fileID: 7}
-  - component: {fileID: 9}
   - component: {fileID: 12}
   - component: {fileID: 8}
   - component: {fileID: 14}
@@ -185,13 +184,6 @@ AudioListener:
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 3}
   m_Enabled: 0
---- !u!92 &9
-GUILayer:
-  m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  m_GameObject: {fileID: 3}
-  m_Enabled: 1
 --- !u!108 &11
 Light:
   serializedVersion: 8

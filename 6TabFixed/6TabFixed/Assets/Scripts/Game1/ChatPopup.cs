@@ -101,54 +101,78 @@ namespace Game1
     	private int pyy;
     
     	public static void addNextPopUpMultiLine(string strNext, Npc next)
-    	{
-    		nextMultiChatPopUp = strNext;
-    		nextChar = next;
-    		if (currChatPopup == null)
-    		{
-    			addChatPopupMultiLine(nextMultiChatPopUp, 100000, nextChar);
-    			nextMultiChatPopUp = null;
-    			nextChar = null;
-    		}
-    	}
-    
-    	public static void addBigMessage(string chat, int howLong, Npc c)
-    	{
-    		string[] array = new string[1] { chat };
-    		if (c.charID != 5 && GameScr.info1.isDone)
-    		{
-    			GameScr.info1.isUpdate = false;
-    		}
-    		Char.isLockKey = true;
-    		serverChatPopUp = addChatPopup(array[0], howLong, c);
-    		serverChatPopUp.strY = 5;
-    		serverChatPopUp.cx = GameCanvas.w / 2 - serverChatPopUp.sayWidth / 2 - 1;
-    		serverChatPopUp.cy = GameCanvas.h - 20 - serverChatPopUp.ch;
-    		serverChatPopUp.currentLine = 0;
-    		serverChatPopUp.lines = array;
-    		scr = new Scroll();
-    		int nItem = serverChatPopUp.says.Length;
-    		scr.setStyle(nItem, 12, serverChatPopUp.cx, serverChatPopUp.cy - serverChatPopUp.strY + 12, serverChatPopUp.sayWidth + 2, serverChatPopUp.ch - 25, true, 1);
-    		SoundMn.gI().openDialog();
-    	}
-    
-    	public static void addChatPopupMultiLine(string chat, int howLong, Npc c)
-    	{
-    		string[] array = Res.split(chat, "\n", 0);
-    		Char.isLockKey = true;
-    		currChatPopup = addChatPopup(array[0], howLong, c);
-    		currChatPopup.currentLine = 0;
-    		currChatPopup.lines = array;
-    		string caption = mResources.CONTINUE;
-    		if (array.Length == 1)
-    		{
-    			caption = mResources.CLOSE;
-    		}
-    		currChatPopup.cmdNextLine = new Command(caption, currChatPopup, 8000, null);
-    		currChatPopup.cmdNextLine.x = GameCanvas.w / 2 - 35;
-    		currChatPopup.cmdNextLine.y = GameCanvas.h - 35;
-    		SoundMn.gI().openDialog();
-    	}
+	{
+		if (GameCanvas.panel != null && GameCanvas.panel.isShow)
+		{
+			GameCanvas.panel.hide();
+		}
+		if (GameCanvas.panel2 != null && GameCanvas.panel2.isShow)
+		{
+			GameCanvas.panel2.hide();
+		}
+		nextMultiChatPopUp = strNext;
+		nextChar = next;
+		if (currChatPopup == null)
+		{
+			addChatPopupMultiLine(nextMultiChatPopUp, 100000, nextChar);
+			nextMultiChatPopUp = null;
+			nextChar = null;
+		}
+	}
+
+	public static void addBigMessage(string chat, int howLong, Npc c)
+	{
+		if (GameCanvas.panel != null && GameCanvas.panel.isShow)
+		{
+			GameCanvas.panel.hide();
+		}
+		if (GameCanvas.panel2 != null && GameCanvas.panel2.isShow)
+		{
+			GameCanvas.panel2.hide();
+		}
+		string[] array = new string[1] { chat };
+		if (c.charID != 5 && GameScr.info1.isDone)
+		{
+			GameScr.info1.isUpdate = false;
+		}
+		Char.isLockKey = true;
+		serverChatPopUp = addChatPopup(array[0], howLong, c);
+		serverChatPopUp.strY = 5;
+		serverChatPopUp.cx = GameCanvas.w / 2 - serverChatPopUp.sayWidth / 2 - 1;
+		serverChatPopUp.cy = GameCanvas.h - 20 - serverChatPopUp.ch;
+		serverChatPopUp.currentLine = 0;
+		serverChatPopUp.lines = array;
+		scr = new Scroll();
+		int nItem = serverChatPopUp.says.Length;
+		scr.setStyle(nItem, 12, serverChatPopUp.cx, serverChatPopUp.cy - serverChatPopUp.strY + 12, serverChatPopUp.sayWidth + 2, serverChatPopUp.ch - 25, true, 1);
+		SoundMn.gI().openDialog();
+	}
+
+	public static void addChatPopupMultiLine(string chat, int howLong, Npc c)
+	{
+		if (GameCanvas.panel != null && GameCanvas.panel.isShow)
+		{
+			GameCanvas.panel.hide();
+		}
+		if (GameCanvas.panel2 != null && GameCanvas.panel2.isShow)
+		{
+			GameCanvas.panel2.hide();
+		}
+		string[] array = Res.split(chat, "\n", 0);
+		Char.isLockKey = true;
+		currChatPopup = addChatPopup(array[0], howLong, c);
+		currChatPopup.currentLine = 0;
+		currChatPopup.lines = array;
+		string caption = mResources.CONTINUE;
+		if (array.Length == 1)
+		{
+			caption = mResources.CLOSE;
+		}
+		currChatPopup.cmdNextLine = new Command(caption, currChatPopup, 8000, null);
+		currChatPopup.cmdNextLine.x = GameCanvas.w / 2 - 35;
+		currChatPopup.cmdNextLine.y = GameCanvas.h - 35;
+		SoundMn.gI().openDialog();
+	}
     
     	public static ChatPopup addChatPopupWithIcon(string chat, int howLong, Npc c, int idIcon)
     	{
@@ -692,9 +716,27 @@ namespace Game1
     				}
     			}
     		}
-    		if (GameCanvas.keyPressed[(!Main.isPC) ? 5 : 25] || mScreen.getCmdPointerLast(GameCanvas.currentScreen.center))
+    		bool isClickNext = false;
+    		if (cmdNextLine != null)
+    		{
+    			if (mScreen.getCmdPointerLast(cmdNextLine) || mScreen.getCmdPointerLast(GameCanvas.currentScreen.center))
+    			{
+    				isClickNext = true;
+    			}
+    			else if (GameCanvas.isPointerHoldIn(cmdNextLine.x, cmdNextLine.y, 70, 30) && GameCanvas.isPointerClick && GameCanvas.isPointerJustRelease)
+    			{
+    				isClickNext = true;
+    			}
+    			else if (GameCanvas.isPointerHoldIn(cx, cy, sayWidth + 2, ch) && GameCanvas.isPointerClick && GameCanvas.isPointerJustRelease)
+    			{
+    				isClickNext = true;
+    			}
+    		}
+    		if (GameCanvas.keyPressed[(!Main.isPC) ? 5 : 25] || isClickNext)
     		{
     			GameCanvas.keyPressed[(!Main.isPC) ? 5 : 25] = false;
+    			GameCanvas.isPointerClick = false;
+    			GameCanvas.isPointerJustRelease = false;
     			mScreen.keyTouch = -1;
     			if (cmdNextLine != null)
     			{
@@ -780,10 +822,11 @@ namespace Game1
     				GameScr.info1.info.info.speed = 10;
     			}
     		}
-    		if (idAction != 8000 || performDelay > 0)
+    		if (idAction != 8000)
     		{
     			return;
     		}
+    		performDelay = 0;
     		int num = currChatPopup.currentLine;
     		num++;
     		if (num >= currChatPopup.lines.Length)

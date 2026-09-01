@@ -125,6 +125,10 @@ namespace Game1
                 int num = 0;
                 GameCanvas.timeLoading = 15;
                 Controller2.readMessage(msg);
+                if (PacketDispatcher.gI().Dispatch(this, msg))
+                {
+                    return;
+                }
                 switch (msg.command)
                 {
                     case 0:
@@ -2742,7 +2746,7 @@ namespace Game1
                         InfoDlg.hide();
                         LoginScr.isContinueToLogin = false;
                         Char.isLoadingMap = false;
-                        if (GameCanvas.currentScreen == GameCanvas.loginScr)
+                        if (GameCanvas.currentScreen == GameCanvas.loginScr || GameCanvas.currentScreen == GameCanvas.registerScr)
                         {
                             GameCanvas.serverScreen.switchToMe();
                         }
