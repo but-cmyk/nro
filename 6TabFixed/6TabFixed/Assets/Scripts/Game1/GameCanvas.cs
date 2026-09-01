@@ -3137,11 +3137,15 @@ namespace Game1
     			break;
     		case 88829:
     		{
-    			string text4 = inputDlg.tfInput.getText();
+    			string text4 = inputDlg.tfInput.getText().Trim();
     			if (!text4.Equals(string.Empty))
     			{
     				Service.gI().changeName(text4, (int)p);
     				InfoDlg.showWait();
+    			}
+    			else
+    			{
+    				startOKDlg("Tên nhân vật không được để trống!");
     			}
     			break;
     		}

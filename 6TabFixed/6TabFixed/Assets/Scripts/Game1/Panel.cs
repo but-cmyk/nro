@@ -4075,6 +4075,7 @@ namespace Game1
             g.setColor(0);
             if (currentListLength == 0)
             {
+                mFont.tahoma_7b_dark.drawString(g, "Đang tải bảng xếp hạng...", xScroll + wScroll / 2, yScroll + hScroll / 2 - 5, mFont.CENTER);
                 return;
             }
             int num = (cmy + hScroll) / 24 + 1;
@@ -4369,6 +4370,11 @@ namespace Game1
                     }
                 }
                 int num = array.Length;
+                if (num == 0)
+                {
+                    mFont.tahoma_7_grey.drawString(g, "Hiện tại chưa có vật phẩm trong mục này", xScroll + wScroll / 2, yScroll + hScroll / 2 - 10, 2);
+                    return;
+                }
                 for (int i = 0; i < num; i++)
                 {
                     int num2 = xScroll + 26;
@@ -5071,6 +5077,7 @@ namespace Game1
             g.setColor(0);
             if (currentListLength == 0)
             {
+                mFont.tahoma_7b_dark.drawString(g, "Bạn chưa học kỹ năng đặc biệt nào", xScroll + wScroll / 2, yScroll + hScroll / 2 - 5, mFont.CENTER);
                 return;
             }
             int num = (cmy + hScroll) / 24 + 1;
@@ -7932,8 +7939,13 @@ namespace Game1
         {
             if (currentTabIndex == 0)
             {
-                if (selected == -1 || vItemCombine.size() == 0)
+                if (selected == -1)
                 {
+                    return;
+                }
+                if (vItemCombine.size() == 0)
+                {
+                    GameCanvas.startOKDlg("Vui lòng đặt trang bị và nguyên liệu cần nâng cấp vào ô trước!");
                     return;
                 }
                 if (selected == vItemCombine.size())

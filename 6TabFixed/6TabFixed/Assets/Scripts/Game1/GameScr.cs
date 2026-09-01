@@ -4184,6 +4184,10 @@ namespace Game1
     		{
     			return;
     		}
+    		if (skill != null && skill.paintCanNotUseSkill)
+    		{
+    			info1.addInfo("Chiêu thức đang hồi phục!", 0);
+    		}
     		Char.myCharz().myskill = skill;
     		if (lastSkill != skill && lastSkill != null)
     		{
