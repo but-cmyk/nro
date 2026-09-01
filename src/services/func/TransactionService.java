@@ -109,6 +109,8 @@ public class TransactionService implements Runnable {
                         } else {
                             Service.gI().sendThongBao(pl, "Không thể thực hiện");
                         }
+                    } else {
+                        Service.gI().sendThongBao(pl, "Người chơi không ở gần hoặc đã rời khu vực");
                     }
                     break;
                 case ADD_ITEM_TRADE:

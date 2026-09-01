@@ -201,6 +201,8 @@ public class FriendAndEnemyService {
                     npcSay = "Bạn có muốn kết bạn với " + pl.name + " ?";
                 }
                 NpcService.gI().createMenuConMeo(player, ConstNpc.MAKE_FRIEND, -1, npcSay, new String[]{"Đồng ý", "Từ chối"}, playerId);
+            } else {
+                Service.gI().sendThongBao(player, "Người chơi không online hoặc không tồn tại!");
             }
         }
     }
@@ -244,9 +246,13 @@ public class FriendAndEnemyService {
                 Player pl = Client.gI().getPlayer(playerId);
                 if (pl != null) {
                     Service.gI().chatPrivate(player, pl, text);
+                } else {
+                    Service.gI().sendThongBao(player, "Người chơi hiện đang offline!");
                 }
             } catch (Exception e) {
             }
+        } else {
+            Service.gI().sendThongBao(player, "Bạn đang chat quá nhanh, vui lòng thử lại sau!");
         }
     }
 
@@ -287,6 +293,8 @@ public class FriendAndEnemyService {
                 } else {
                     Service.gI().sendThongBao(player, "Yêu cầu trang bị có khả năng dịch chuyển tức thời");
                 }
+            } else {
+                Service.gI().sendThongBao(player, "Người chơi không online hoặc không tồn tại!");
             }
         } catch (IOException ex) {
 

@@ -178,6 +178,7 @@ public class MagicTree {
             byte currPeasTemp = (byte) this.currPeas;
             this.currPeas = (byte) this.addPeaHarvest(this.level, this.currPeas);
             if (this.currPeas == currPeasTemp) {
+                Service.gI().sendThongBao(player, "Hành trang đã đầy đậu thần");
                 return;
             }
             this.lastTimeHarvest = System.currentTimeMillis();
@@ -193,6 +194,8 @@ public class MagicTree {
             } catch (Exception e) {
                 Logger.logException(MagicTree.class, e);
             }
+        } else {
+            Service.gI().sendThongBao(player, "Cây chưa có hạt đậu nào để thu hoạch");
         }
     }
 

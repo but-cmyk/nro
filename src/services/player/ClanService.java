@@ -273,34 +273,44 @@ public class ClanService {
      */
     private void sendInviteClan(Player player, int playerId) {
         Player pl = Client.gI().getPlayer(playerId);
-        if (pl != null && player.clan != null && (player.clan.isLeader(player) || player.clan.isDeputy(player))) {
-            if (player.clan.getCurrMembers() < player.clan.maxMember) {
-                if (TaskService.gI().getIdTask(pl) < ConstTask.TASK_12_0) {
-                    Service.gI().sendThongBao(player, pl.name + " chưa thể vào bang lúc này");
-                    return;
-                }
-                if (pl.clan != null) {
-                    Service.gI().sendThongBao(player, pl.name + " đang ở trong bang nào đó, không thể mời");
-                    return;
-                }
-                if (pl.idMark.isHoldBlackBall()) {
-                    Service.gI().sendThongBao(player, pl.name + " đang giữ ngọc rồng sao đen, không thể mời");
-                    return;
-                }
-                Service.gI().sendThongBao(player, "Đã gửi lời mời đến " + pl.name);
-                Message msg;
-                try {
-                    msg = new Message(-57);
-                    msg.writer().writeUTF(player.name + " mời bạn vào bang " + player.clan.name);
-                    msg.writer().writeInt(player.clan.id);
-                    msg.writer().writeInt(758435); //code
-                    pl.sendMessage(msg);
-                    msg.cleanup();
-                } catch (Exception e) {
-                }
-            } else {
-                Service.gI().sendThongBao(player, "Bang đã đủ thành viên, không thể mời thêm.");
+        if (player.clan == null) {
+            Service.gI().sendThongBao(player, "Bạn chưa có bang hội!");
+            return;
+        }
+        if (!player.clan.isLeader(player) && !player.clan.isDeputy(player)) {
+            Service.gI().sendThongBao(player, "Bạn không có quyền mời thành viên vào bang!");
+            return;
+        }
+        if (pl == null) {
+            Service.gI().sendThongBao(player, "Người chơi không online hoặc không tồn tại!");
+            return;
+        }
+        if (player.clan.getCurrMembers() < player.clan.maxMember) {
+            if (TaskService.gI().getIdTask(pl) < ConstTask.TASK_12_0) {
+                Service.gI().sendThongBao(player, pl.name + " chưa thể vào bang lúc này");
+                return;
             }
+            if (pl.clan != null) {
+                Service.gI().sendThongBao(player, pl.name + " đang ở trong bang nào đó, không thể mời");
+                return;
+            }
+            if (pl.idMark.isHoldBlackBall()) {
+                Service.gI().sendThongBao(player, pl.name + " đang giữ ngọc rồng sao đen, không thể mời");
+                return;
+            }
+            Service.gI().sendThongBao(player, "Đã gửi lời mời đến " + pl.name);
+            Message msg;
+            try {
+                msg = new Message(-57);
+                msg.writer().writeUTF(player.name + " mời bạn vào bang " + player.clan.name);
+                msg.writer().writeInt(player.clan.id);
+                msg.writer().writeInt(758435); //code
+                pl.sendMessage(msg);
+                msg.cleanup();
+            } catch (Exception e) {
+            }
+        } else {
+            Service.gI().sendThongBao(player, "Bang đã đủ thành viên, không thể mời thêm.");
         }
     }
 
