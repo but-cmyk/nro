@@ -466,11 +466,19 @@ namespace Game1
     			text = Rms.loadRMSString("userAo" + ServerListScreen.ipSelect);
     			text2 = "a";
     		}
-    		if (text == null || text2 == null || GameMidlet.VERSION == null || text.Equals(string.Empty))
+    		if (text == null || text.Trim().Equals(string.Empty))
     		{
+    			focus = 0;
+    			tfUser.isFocus = true;
+    			tfPass.isFocus = false;
+    			if (!GameCanvas.isTouch)
+    			{
+    				right = tfUser.cmdClear;
+    			}
+    			GameCanvas.startOKDlg("Vui lòng nhập tên tài khoản!");
     			return;
     		}
-    		if (text2.Equals(string.Empty))
+    		if (text2 == null || text2.Trim().Equals(string.Empty))
     		{
     			focus = 1;
     			tfUser.isFocus = false;
@@ -479,6 +487,7 @@ namespace Game1
     			{
     				right = tfPass.cmdClear;
     			}
+    			GameCanvas.startOKDlg("Vui lòng nhập mật khẩu!");
     			return;
     		}
     		if (!Session_ME.gI().isConnected())
