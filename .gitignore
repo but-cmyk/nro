@@ -27,3 +27,4 @@ nbdist/
 **/*.txt
 TestConnection.class
 data/DataGame.class
+data/wal/

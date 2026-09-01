@@ -3,6 +3,17 @@
   <component name="CompilerConfiguration">
     <annotationProcessing>
       <profile default="true" name="Default" enabled="true" />
+      <profile name="Annotation profile for Ngoc Rong Online Server" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <processorPath useClasspath="false">
+          <entry name="$PROJECT_DIR$/lib/lombok.jar" />
+        </processorPath>
+        <module name="DEMO_NETBEAN_tsSv2_new" />
+        <module name="SRC_NRO_OK" />
+        <module name="nro-server" />
+      </profile>
     </annotationProcessing>
   </component>
 </project>

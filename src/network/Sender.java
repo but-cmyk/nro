@@ -6,8 +6,6 @@ import java.io.IOException;
 import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
-
-import lombok.NonNull;
 import interfaces.IMessageSendCollect;
 import interfaces.ISession;
 import network.io.Message;
@@ -20,7 +18,7 @@ public final class Sender implements Runnable {
     private DataOutputStream dos;
     private IMessageSendCollect sendCollect;
 
-    public Sender(@NonNull ISession session, @NonNull Socket socket) {
+    public Sender(ISession session, Socket socket) {
         try {
             this.session = session;
             this.messages = new LinkedBlockingDeque<>();
@@ -29,7 +27,7 @@ public final class Sender implements Runnable {
         }
     }
 
-    public Sender setSocket(@NonNull Socket socket) {
+    public Sender setSocket(Socket socket) {
         try {
             this.dos = new DataOutputStream(socket.getOutputStream());
         } catch (IOException ignored) {

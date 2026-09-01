@@ -663,7 +663,7 @@ public class Mob {
 //        }
 
         //========================BÌNH NƯỚC========================
-        if (mapid == 5 && Util.isTrue(1, 2)) {
+        if (mapid == 5 && Util.isTrue(1, 20000)) {
             ItemMap it = new ItemMap(zone, 456, 1, x, yEnd, player.id);
             it.options.add(new Item.ItemOption(93, 1));
             it.options.add(new Item.ItemOption(30, 1));
@@ -673,7 +673,7 @@ public class Mob {
         
          //========================SKH CŨ========================
         if (MapService.gI().isMapUpSKH(mapid)) {
-            if (Util.isTrue(co4LaRate, 20)) { // 1/2000 thường, 2/2000 khi có cỏ 4 lá
+            if (Util.isTrue(co4LaRate, 2000000)) { // 1/2000 thường, 2/2000 khi có cỏ 4 lá
                 short itTemp = (short) ItemService.gI().randTempItemKichHoat(player.gender);
                 ItemMap it = new ItemMap(zone, itTemp, 1, x, yEnd, player.id);
 
@@ -696,7 +696,7 @@ public class Mob {
 
           //========================ĐỒ SAO 3 MAP ĐẦU ========================
         if (player.isPl() && MapService.gI().isMapUpSKH(mapid)) {           
-            if (Util.isTrue(co4LaRate, 10)) {
+            if (Util.isTrue(co4LaRate, 10000000)) {
                 short itTemp = (short) ItemService.gI().randTempItemKichHoat(player.gender);
                 ItemMap it = new ItemMap(zone, itTemp, 1, x, yEnd, player.id);
 
@@ -718,7 +718,7 @@ public class Mob {
         
          //========================ĐỒ SAO MAP < NAPPA========================
         if (MapService.gI().isMapUpDoSao(mapid)) {          
-            if (Util.isTrue(co4LaRate, 50000)) { // 1/2000 hoặc 2/2000 khi có cỏ 4 lá
+            if (Util.isTrue(co4LaRate, 500000)) { // 1/2000 hoặc 2/2000 khi có cỏ 4 lá
                 short itTemp1 = (short) ItemService.gI().randTempItemDoSao(player.gender);
                 ItemMap it = new ItemMap(zone, itTemp1, 1, x, yEnd, player.id);
 
@@ -735,7 +735,7 @@ public class Mob {
 
 
          //========================SAO PHA LÊ========================
-        if (Util.isTrue(1, 10) || (player.nPoint.isDoSPL && Util.isTrue(5, 100))) {
+        if (Util.isTrue(1, 100000) || (player.nPoint.isDoSPL && Util.isTrue(5, 10000))) {
             int rand = Util.nextInt(0, 6);
             ItemMap it = new ItemMap(zone, 441 + rand, 1, x, yEnd, player.id);
             it.options.add(new Item.ItemOption(95 + rand, (rand == 3 || rand == 4) ? 3 : 5));
@@ -743,7 +743,7 @@ public class Mob {
         }
 
          //========================ĐÁ NÂNG CẤP========================
-        if (Util.isTrue(1, 10) || (Util.isTrue(5, 300) && MapService.gI().isMapCold(mapid))) {
+        if (Util.isTrue(1, 100000) || (Util.isTrue(5, 300000) && MapService.gI().isMapCold(mapid))) {
             int rand = Util.nextInt(0, 4);
             ItemMap it = new ItemMap(zone, 220 + rand, 1, x, yEnd, player.id);
             it.options.add(new Item.ItemOption(71 - rand, 0));
@@ -759,7 +759,7 @@ public class Mob {
             }
 
             if (player != null && !player.isPet) { // đảm bảo không bị null hoặc là pet tiếp
-                if (Util.isTrue(1 * co4LaRate, 50000)) { // 0.05% mặc định, 0.1% khi có cỏ 4 lá
+                if (Util.isTrue(1 * co4LaRate, 500000)) { // 0.05% mặc định, 0.1% khi có cỏ 4 lá
                     ItemMap it = ItemService.gI().randDoTL(this.zone, 1, x, yEnd, player.id);
                     list.add(it);
 
@@ -773,7 +773,7 @@ public class Mob {
         }
 
          //========================THỨC ĂN========================
-          if (InventoryService.gI().fullSetThan(player) && Util.isTrue(1 * co4LaRate,2)) {
+          if (InventoryService.gI().fullSetThan(player) && Util.isTrue(1 * co4LaRate,200000)) {
             int tempId = Util.nextInt(663, 667); // random 663 - 666
             ItemMap it = new ItemMap(zone, tempId, 1, x, yEnd, player.id);
             it.options.add(new Item.ItemOption(73, 0)); // option mặc định
@@ -785,7 +785,7 @@ public class Mob {
 
             
         //========================ĐỒ LƯỠNG LONG MAP COLD========================
-        if (MapService.gI().isMapCold(mapid) && Util.isTrue(1 * co4LaRate, 50000)) {
+        if (MapService.gI().isMapCold(mapid) && Util.isTrue(1 * co4LaRate, 500000)) {
             // 0.05% mặc định, 0.1% khi có cỏ 4 lá
 
             // Nhặt item Lưỡng Long ngẫu nhiên
@@ -801,13 +801,13 @@ public class Mob {
         }
         
           // ======================== ĐỒ KAIO MAP NAPPA ========================
-        if (MapService.gI().isMapNappa(mapid) && Util.isTrue(1 * co4LaRate, 50000)) {
+        if (MapService.gI().isMapNappa(mapid) && Util.isTrue(1 * co4LaRate, 500000)) {
             // 0.05% mặc định, 0.1% khi có cỏ 4 lá
             ItemMap it = ItemService.gI().randDoKaio(this.zone, 1, x, yEnd, player.id);
             list.add(it);
 
             // 5% cơ hội thêm option ngẫu nhiên
-            if (Util.isTrue(5 * co4LaRate, 100)) {
+            if (Util.isTrue(5 * co4LaRate, 1000000)) {
                 int randomOption = Util.nextInt(34, 35);
                 it.options.add(new Item.ItemOption(randomOption, 0));
             }
@@ -820,13 +820,13 @@ public class Mob {
         }
 
 // ======================== ĐỒ KAIO MAP TƯƠNG LAI ========================
-        if (MapService.gI().isMapTuongLai(mapid) && Util.isTrue(1 * co4LaRate, 50000)) {
+        if (MapService.gI().isMapTuongLai(mapid) && Util.isTrue(1 * co4LaRate, 500000)) {
             // 0.1% mặc định, 0.2% khi có cỏ 4 lá
             ItemMap it = ItemService.gI().randDoKaio(this.zone, 1, x, yEnd, player.id);
             list.add(it);
 
             // 5% cơ hội thêm option ngẫu nhiên
-            if (Util.isTrue(5 * co4LaRate, 100)) {
+            if (Util.isTrue(5 * co4LaRate, 100000)) {
                 int randomOption = Util.nextInt(34, 35);
                 it.options.add(new Item.ItemOption(randomOption, 0));
             }
@@ -841,20 +841,20 @@ public class Mob {
 
 
          //========================MẢNH ĐÁ VỤN========================
-        if (Util.isTrue(1, 10)) {
+        if (Util.isTrue(1, 100000)) {
             list.add(new ItemMap(zone, 225, 1, x, yEnd, player.id));
         }
         
          //========================NRO========================
-        if (Util.isTrue(1, 10000)) {
+        if (Util.isTrue(1, 100000)) {
             list.add(new ItemMap(zone, 19, 1, x, yEnd, player.id));
         }
-        if (Util.isTrue(1, 10000)) {
+        if (Util.isTrue(1, 100000)) {
             list.add(new ItemMap(zone, 20, 1, x, yEnd, player.id));
         }
         
         //========================NGỌC========================
-        if (Util.isTrue(1, 100000)) {
+        if (Util.isTrue(1, 1000000)) {
             list.add(new ItemMap(zone, 77, 1000, x, yEnd, player.id));
         }
        
@@ -979,7 +979,7 @@ public class Mob {
         
         //========================MẢNH THIÊN SỨ========================
         if (MapService.gI().isMapHanhTinhThucVat(mapid) && InventoryService.gI().findItemNTK(player)) {
-            if (Util.isTrue(1 * co4LaRate, 20)) { // 0.05% mặc định, 0.1% khi có cỏ 4 lá
+            if (Util.isTrue(1 * co4LaRate, 2000000)) { // 0.05% mặc định, 0.1% khi có cỏ 4 lá
                 int tempId = Util.nextInt(1066, 1070); // random item
                 ItemMap it = new ItemMap(zone, tempId, 1, x, yEnd, player.id);
                 list.add(it);

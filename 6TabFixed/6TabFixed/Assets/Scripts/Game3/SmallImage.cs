@@ -156,15 +156,15 @@ namespace Game3
     	{
     		if (imgbig == null)
     		{
-    			Small small = imgNew[id];
-    			if (small == null)
-    			{
-    				createImage(id);
-    			}
-    			else
-    			{
-    				g.drawRegion(small, 0, 0, mGraphics.getImageWidth(small.img), mGraphics.getImageHeight(small.img), transform, x, y, anchor);
-    			}
+				Small small = imgNew[id];
+				if (small == null)
+				{
+					createImage(id);
+				}
+				else
+				{
+					small.paint(g, transform, x, y, anchor);
+				}
     		}
     		else if (smallImg != null)
     		{

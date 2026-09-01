@@ -27,22 +27,25 @@ namespace Game1
     			param *= 1000;
     		}
     		this.param = param;
-    		optionTemplate = GameScr.gI().iOptionTemplates[optionTemplateId];
+    		if (GameScr.gI().iOptionTemplates != null && optionTemplateId >= 0 && optionTemplateId < GameScr.gI().iOptionTemplates.Length)
+    		{
+    			optionTemplate = GameScr.gI().iOptionTemplates[optionTemplateId];
+    		}
     	}
     
     	public string getOptionString()
     	{
-    		return NinjaUtil.replace(optionTemplate.name, "#", param + string.Empty);
+    		return optionTemplate != null ? NinjaUtil.replace(optionTemplate.name, "#", param + string.Empty) : "";
     	}
     
     	public string getOptionName()
     	{
-    		return NinjaUtil.replace(optionTemplate.name, "+#", string.Empty);
+    		return optionTemplate != null ? NinjaUtil.replace(optionTemplate.name, "+#", string.Empty) : "";
     	}
     
     	public string getOptiongColor()
     	{
-    		return NinjaUtil.replace(optionTemplate.name, "$", string.Empty);
+    		return optionTemplate != null ? NinjaUtil.replace(optionTemplate.name, "$", string.Empty) : "";
     	}
     }
 }

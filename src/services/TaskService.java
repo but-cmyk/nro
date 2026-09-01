@@ -200,30 +200,32 @@ public class TaskService {
             
             short x_hint = 0;
             short y_hint = 0;
-            if (stm.mapId == player.zone.map.mapId) {
-                if (stm.npcId != -1) {
-                    for (Npc npc : Manager.NPCS) {
-                        if (npc.mapId == stm.mapId && npc.tempId == stm.npcId) {
-                            x_hint = (short) npc.cx;
-                            y_hint = (short) npc.cy;
-                            break;
+            if (player != null && player.zone != null && player.zone.map != null) {
+                if (stm.mapId == player.zone.map.mapId) {
+                    if (stm.npcId != -1) {
+                        for (Npc npc : Manager.NPCS) {
+                            if (npc.mapId == stm.mapId && npc.tempId == stm.npcId) {
+                                x_hint = (short) npc.cx;
+                                y_hint = (short) npc.cy;
+                                break;
+                            }
+                        }
+                    } else if (player.zone.mobs != null) {
+                        for (models.mob.Mob mob : player.zone.mobs) {
+                            if (mob != null && !mob.isDie() && mob.location != null) {
+                                x_hint = (short) mob.location.x;
+                                y_hint = (short) mob.location.y;
+                                break;
+                            }
                         }
                     }
-                } else {
-                    for (models.mob.Mob mob : player.zone.mobs) {
-                        if (!mob.isDie()) {
-                            x_hint = (short) mob.location.x;
-                            y_hint = (short) mob.location.y;
+                } else if (player.zone.map.wayPoints != null) {
+                    for (models.map.WayPoint wp : player.zone.map.wayPoints) {
+                        if (wp != null && wp.goMap == stm.mapId) {
+                            x_hint = (short) ((wp.minX + wp.maxX) / 2);
+                            y_hint = (short) wp.maxY;
                             break;
                         }
-                    }
-                }
-            } else {
-                for (models.map.WayPoint wp : player.zone.map.wayPoints) {
-                    if (wp.goMap == stm.mapId) {
-                        x_hint = (short) ((wp.minX + wp.maxX) / 2);
-                        y_hint = (short) wp.maxY;
-                        break;
                     }
                 }
             }

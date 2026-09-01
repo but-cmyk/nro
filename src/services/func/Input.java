@@ -107,15 +107,25 @@ public class Input {
                             Service.gI().sendThongBao(player, "Vui lòng chỉ nhập số từ 1-1000");
                         }
                     } catch (Exception e) {
-                        Service.gI().sendThongBao(pl, "Bạn phải nhập vào 1 con số từ 1-999");
+                        Service.gI().sendThongBao(player, "Bạn phải nhập vào 1 con số từ 1-999");
                     }
                     break;
                 case TANG_NGOC_HONG:
                     pl = Client.gI().getPlayer(text[0]);
-                    int numRuby = Integer.parseInt((text[1]));
+                    int numRuby;
+                    try {
+                        numRuby = Integer.parseInt((text[1]));
+                    } catch (Exception e) {
+                        Service.gI().sendThongBao(player, "Số lượng không hợp lệ.");
+                        return;
+                    }
                     if (pl != null) {
                         if (numRuby >= 10 && numRuby <= 1000 && player.inventory.ruby >= numRuby) {
                             Item item = InventoryService.gI().findVeTangNgochong(player);
+                            if (item == null || item.itemOptions == null) {
+                                Service.gI().sendThongBao(player, "Bạn không có vé tặng Hồng ngọc.");
+                                return;
+                            }
                             ItemOption option = item.itemOptions.stream().filter(io -> io.optionTemplate.id == 31 && io.param > 0).findAny().orElse(null);
                             int maxNumOption = numRuby / 10;
                             if (option == null || option.param < maxNumOption) {
@@ -140,8 +150,21 @@ public class Input {
 
                 case TANG_THOI_VANG: { // Tận dụng case này để làm Tặng Thỏi Vàng
                     String name = text[0];
-                    int quantity = Integer.parseInt(text[1]);
-
+                    if (name.equalsIgnoreCase(player.name)) {
+                        Service.gI().sendThongBao(player, "Không thể tự tặng cho chính mình.");
+                        return;
+                    }
+                    int quantity;
+                    try {
+                        quantity = Integer.parseInt(text[1]);
+                    } catch (Exception e) {
+                        Service.gI().sendThongBao(player, "Số lượng không hợp lệ.");
+                        return;
+                    }
+                    if (quantity <= 0 || quantity > 1000) {
+                        Service.gI().sendThongBao(player, "Số lượng thỏi vàng tặng phải từ 1 đến 1000.");
+                        return;
+                    }
 
                     // 2. Kiểm tra người gửi có đủ Thỏi vàng (ID 457) không
                     Item thoiVangSender = InventoryService.gI().findItemBag(player, 457);
@@ -150,13 +173,16 @@ public class Input {
                         return;
                     }
 
-                    // 3. Kiểm tra vé tặng (ID 718) - 1 Thỏi vàng tốn 1 điểm Option
+                    // 3. Kiểm tra vé tặng (ID 1345) - 1 Thỏi vàng tốn 1 điểm Option
                     Item itemTicket = InventoryService.gI().findItemBag(player, 1345); // ID vé
                     ItemOption option = null;
-                    if (itemTicket != null) {
+                    if (itemTicket != null && itemTicket.itemOptions != null) {
                         option = itemTicket.itemOptions.stream().filter(io -> io.optionTemplate.id == 31 && io.param > 0).findAny().orElse(null);
                     }
-
+                    if (option == null || option.param < quantity) {
+                        Service.gI().sendThongBao(player, "Bạn không đủ lượt tặng thỏi vàng trên vé");
+                        return;
+                    }
 
                     // 4. Xử lý tặng
                     Player plTarget = Client.gI().getPlayer(name);
@@ -229,9 +255,8 @@ public class Input {
                     if (isSuccess) {
                         // Trừ thỏi vàng người gửi
                         InventoryService.gI().subQuantityItemsBag(player, thoiVangSender, quantity);
-
-
-
+                        // Trừ lượt vé người gửi
+                        option.param -= quantity;
                         // Cập nhật hành trang người gửi
                         InventoryService.gI().sendItemBags(player);
 

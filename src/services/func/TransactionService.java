@@ -109,6 +109,8 @@ public class TransactionService implements Runnable {
                         } else {
                             Service.gI().sendThongBao(pl, "Không thể thực hiện");
                         }
+                    } else {
+                        Service.gI().sendThongBao(pl, "Người chơi không ở gần hoặc đã rời khu vực");
                     }
                     break;
                 case ADD_ITEM_TRADE:
@@ -123,7 +125,7 @@ public class TransactionService implements Runnable {
                         if (quantity == 0) {//do
                             quantity = 1;
                         }
-                        if (index != -1 && quantity > Trade.QUANLITY_MAX) {
+                        if (quantity > Trade.QUANLITY_MAX) {
                             Service.gI().sendThongBao(pl, "Đã quá giới hạn giao dịch...");
                             trade.cancelTrade();
                             break;
@@ -151,7 +153,7 @@ public class TransactionService implements Runnable {
                         break;
                     }
                     if (trade != null) {
-                        trade.acceptTrade();
+                        trade.acceptTrade(pl);
                         if (trade.accept == 1) {
                             Service.gI().sendThongBao(pl, "Xin chờ đối phương đồng ý");
                         } else if (trade.accept == 2) {

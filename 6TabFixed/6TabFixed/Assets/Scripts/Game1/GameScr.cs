@@ -1207,6 +1207,7 @@ namespace Game1
     	{
     		vChatVip.removeAllElements();
     		ServerListScreen.isWait = false;
+    		ServerListScreen.waitToLogin = false;
     		if (BackgroudEffect.isHaveRain())
     		{
     			SoundMn.gI().rain();
@@ -4182,6 +4183,10 @@ namespace Game1
     		if (Char.myCharz().isCreateDark || isCharging() || Char.myCharz().taskMaint.taskId <= 1)
     		{
     			return;
+    		}
+    		if (skill != null && skill.paintCanNotUseSkill)
+    		{
+    			info1.addInfo("Chiêu thức đang hồi phục!", 0);
     		}
     		Char.myCharz().myskill = skill;
     		if (lastSkill != skill && lastSkill != null)

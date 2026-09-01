@@ -239,16 +239,23 @@ namespace Game1
     			a = b;
     			b = num;
     		}
-    		return a + r.nextInt(b - a);
+    		int diff = b - a;
+    		if (diff <= 0)
+    		{
+    			return a;
+    		}
+    		return a + r.nextInt(diff);
     	}
     
     	public static int random(int a)
     	{
+    		if (a <= 0) return 0;
     		return r.nextInt(a);
     	}
     
     	public static int random_Am(int a, int b)
     	{
+    		if (b <= a) return a;
     		int num = a + r.nextInt(b - a);
     		if (random(2) == 0)
     		{
@@ -259,6 +266,7 @@ namespace Game1
     
     	public static int random_Am_0(int a)
     	{
+    		if (a <= 0) return 0;
     		int num;
     		for (num = 0; num == 0; num = r.nextInt() % a)
     		{

@@ -7,6 +7,7 @@ import consts.BossID;
 import managers.boss.BossManager;
 import consts.ConstMob;
 import java.io.DataInputStream;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import services.phoban.MajinBuuService;
@@ -75,6 +76,7 @@ public class Map {
     public int[] maps;
 
     public List<EffectMap> effMap;
+    public byte[] bgItemData;
 
 
     public Map(int mapId, String mapName, byte planetId,
@@ -93,6 +95,7 @@ public class Map {
         this.zones = new ArrayList<>();
         this.wayPoints = wayPoints;
         this.effMap = effMap;
+        this.bgItemData = managers.map.MapDataManager.gI().getBgItemData(mapId);
         try {
             this.mapHeight = tileMap.length * SIZE;
             this.mapWidth = tileMap[0].length * SIZE;
@@ -323,12 +326,22 @@ public class Map {
     //--------------------------------------------------------------------------
     public int yPhysicInTop(int x, int y) {
         try {
-            int rX = (int) x / SIZE;
-            int rY = 0;
-            if (isTileTop(tileMap[y / SIZE][rX])) {
+            if (tileMap == null || tileMap.length == 0 || tileMap[0].length == 0) {
                 return y;
             }
-            for (int i = y / SIZE; i < tileMap.length; i++) {
+            int rX = (int) x / SIZE;
+            if (rX < 0) rX = 0;
+            if (rX >= tileMap[0].length) rX = tileMap[0].length - 1;
+
+            int startY = y / SIZE;
+            if (startY < 0) startY = 0;
+            if (startY >= tileMap.length) startY = tileMap.length - 1;
+
+            int rY = 0;
+            if (isTileTop(tileMap[startY][rX])) {
+                return y;
+            }
+            for (int i = startY; i < tileMap.length; i++) {
                 if (isTileTop(tileMap[i][rX])) {
                     rY = i * SIZE;
                     break;
@@ -414,17 +427,29 @@ public class Map {
 
     public final void readTileMap(int mapId) {
         try {
-            try (DataInputStream dis = new DataInputStream(new FileInputStream("data/map/tile_map_data/" + mapId))) {
-                dis.readByte();
-                tmw = dis.readByte();
-                tmh = dis.readByte();
-                pxw = tmw * SIZE;
-                pxh = tmh * SIZE;
-                maps = new int[tmw * tmh];
-                for (int j = 0; j < maps.length; j++) {
-                    maps[j] = dis.readByte();
+            byte[] cachedData = managers.map.MapDataManager.gI().getTileMapData(mapId);
+            java.io.InputStream is = null;
+            if (cachedData != null && cachedData.length > 0) {
+                is = new java.io.ByteArrayInputStream(cachedData);
+            } else {
+                File file = new File("data/map/tile_map_data/" + mapId);
+                if (file.exists()) {
+                    is = new FileInputStream(file);
                 }
-                types = new int[maps.length];
+            }
+            if (is != null) {
+                try (DataInputStream dis = new DataInputStream(is)) {
+                    dis.readByte();
+                    tmw = dis.readByte();
+                    tmh = dis.readByte();
+                    pxw = tmw * SIZE;
+                    pxh = tmh * SIZE;
+                    maps = new int[tmw * tmh];
+                    for (int j = 0; j < maps.length; j++) {
+                        maps[j] = dis.readByte();
+                    }
+                    types = new int[maps.length];
+                }
             }
         } catch (IOException e) {
         }

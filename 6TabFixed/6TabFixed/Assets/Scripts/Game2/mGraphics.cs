@@ -414,7 +414,7 @@ namespace Game2
     		b = (float)num / 256f;
     		g = (float)num2 / 256f;
     		r = (float)num3 / 256f;
-    		a = 255f;
+    		a = 1f;
     	}
     
     	public void setColor(Color color)
@@ -422,6 +422,7 @@ namespace Game2
     		b = color.b;
     		g = color.g;
     		r = color.r;
+    		a = color.a;
     	}
     
     	public void setBgColor(int rgb)
@@ -435,7 +436,16 @@ namespace Game2
     			b = (float)num / 256f;
     			g = (float)num2 / 256f;
     			r = (float)num3 / 256f;
-    			Main.main.GetComponent<Camera>().backgroundColor = new Color(r, g, b);
+    			Camera camera = (Main.main != null) ? Main.main.GetComponent<Camera>() : null;
+    			if (camera == null)
+    			{
+    				camera = Camera.main;
+    			}
+    			if (camera != null)
+    			{
+    				camera.clearFlags = CameraClearFlags.SolidColor;
+    				camera.backgroundColor = new Color(r, g, b, 1f);
+    			}
     		}
     	}
     
@@ -1025,6 +1035,8 @@ namespace Game2
     		isTranslate = false;
     		translateX = 0;
     		translateY = 0;
+    		GUI.color = Color.white;
+    		GUI.backgroundColor = Color.white;
     	}
     
     	public Rect intersectRect(Rect r1, Rect r2)
@@ -1072,7 +1084,6 @@ namespace Game2
     
     	public void drawImageScale(Image image, int x, int y, int w, int h, int tranform)
     	{
-    		GUI.color = Color.red;
     		x *= zoomLevel;
     		y *= zoomLevel;
     		w *= zoomLevel;
@@ -1307,7 +1318,10 @@ namespace Game2
     
     	internal void drawRegion(Small img, int p1, int p2, int p3, int p4, int transform, int x, int y, int anchor)
     	{
-    		throw new NotImplementedException();
+    		if (img != null && img.img != null)
+    		{
+    			drawRegion(img.img, p1, p2, p3, p4, transform, x, y, anchor);
+    		}
     	}
     }
 }

@@ -1,8 +1,7 @@
-using System;
-using UnityEngine;
-
 namespace Game2
 {
+    using System;
+    using UnityEngine;
     
     public class LoginScr : mScreen, IActionListener
     {
@@ -183,7 +182,7 @@ namespace Game2
     			break;
     		}
     		tfUser.setText(Rms.loadRMSString("acc2"));
-    		tfPass.setText(Rms.loadRMSString("pass2"));
+		tfPass.setText(Rms.loadRMSPassword("pass2"));
     		if (cmdCallHotline == null)
     		{
     			cmdCallHotline = new Command("Gọi hotline", this, 13, null);
@@ -305,7 +304,7 @@ namespace Game2
     		{
     			tfUser.setText(text);
     		}
-    		string text2 = Rms.loadRMSString("pass2");
+		string text2 = Rms.loadRMSPassword("pass2");
     		if (text2 != null && !text2.Equals(string.Empty))
     		{
     			tfPass.setText(text2);
@@ -401,7 +400,7 @@ namespace Game2
     		passRe = tfPass.getText();
     		Service.gI().requestRegister(user, tfPass.getText(), Rms.loadRMSString("userAo2" + ServerListScreen.ipSelect), Rms.loadRMSString("passAo" + ServerListScreen.ipSelect), GameMidlet.VERSION);
     		Rms.saveRMSString("acc2", user);
-    		Rms.saveRMSString("pass2", tfPass.getText());
+		Rms.saveRMSPassword("pass2", tfPass.getText());
     		t = 20;
     		isRegistering = true;
     	}
@@ -449,7 +448,7 @@ namespace Game2
     	public void doLogin()
     	{
     		string text = Rms.loadRMSString("acc2");
-    		string text2 = Rms.loadRMSString("pass2");
+		string text2 = Rms.loadRMSPassword("pass2");
     		if (text != null && !text.Equals(string.Empty))
     		{
     			isLogin2 = false;
@@ -467,11 +466,19 @@ namespace Game2
     			text = Rms.loadRMSString("userAo2" + ServerListScreen.ipSelect);
     			text2 = "a";
     		}
-    		if (text == null || text2 == null || GameMidlet.VERSION == null || text.Equals(string.Empty))
+    		if (text == null || text.Trim().Equals(string.Empty))
     		{
+    			focus = 0;
+    			tfUser.isFocus = true;
+    			tfPass.isFocus = false;
+    			if (!GameCanvas.isTouch)
+    			{
+    				right = tfUser.cmdClear;
+    			}
+    			GameCanvas.startOKDlg("Vui lòng nhập tên tài khoản!");
     			return;
     		}
-    		if (text2.Equals(string.Empty))
+    		if (text2 == null || text2.Trim().Equals(string.Empty))
     		{
     			focus = 1;
     			tfUser.isFocus = false;
@@ -480,14 +487,14 @@ namespace Game2
     			{
     				right = tfPass.cmdClear;
     			}
+    			GameCanvas.startOKDlg("Vui lòng nhập mật khẩu!");
     			return;
     		}
     		if (!Session_ME.gI().isConnected())
     		{
     			GameCanvas.connect();
     		}
-    		Res.outz("ccccccc " + text + " " + text2 + " " + GameMidlet.VERSION + " " + (sbyte)(isLogin2 ? 1 : 0));
-    		Service.gI().login(text, text2, GameMidlet.VERSION, (sbyte)(isLogin2 ? 1 : 0));
+		Service.gI().login(text, text2, GameMidlet.VERSION, (sbyte)(isLogin2 ? 1 : 0));
     		if (Session_ME.connected)
     		{
     			GameCanvas.startWaitDlg();
@@ -510,13 +517,13 @@ namespace Game2
     		{
     			Rms.saveRMSInt("check", 1);
     			Rms.saveRMSString("acc2", tfUser.getText().ToLower().Trim());
-    			Rms.saveRMSString("pass2", tfPass.getText().ToLower().Trim());
+			Rms.saveRMSPassword("pass2", tfPass.getText().ToLower().Trim());
     		}
     		else
     		{
     			Rms.saveRMSInt("check", 2);
     			Rms.saveRMSString("acc2", string.Empty);
-    			Rms.saveRMSString("pass2", string.Empty);
+			Rms.saveRMSPassword("pass2", string.Empty);
     		}
     	}
     
@@ -983,7 +990,7 @@ namespace Game2
     			break;
     		case 2008:
     			Rms.saveRMSString("acc2", tfUser.getText().Trim());
-    			Rms.saveRMSString("pass2", tfPass.getText().Trim());
+			Rms.saveRMSPassword("pass2", tfPass.getText().Trim());
     			if (ServerListScreen.loadScreen)
     			{
     				GameCanvas.serverScreen.switchToMe();

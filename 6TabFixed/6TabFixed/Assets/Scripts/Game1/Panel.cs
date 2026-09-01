@@ -4075,6 +4075,7 @@ namespace Game1
             g.setColor(0);
             if (currentListLength == 0)
             {
+                mFont.tahoma_7b_dark.drawString(g, "Đang tải bảng xếp hạng...", xScroll + wScroll / 2, yScroll + hScroll / 2 - 5, mFont.CENTER);
                 return;
             }
             int num = (cmy + hScroll) / 24 + 1;
@@ -4369,6 +4370,11 @@ namespace Game1
                     }
                 }
                 int num = array.Length;
+                if (num == 0)
+                {
+                    mFont.tahoma_7_grey.drawString(g, "Hiện tại chưa có vật phẩm trong mục này", xScroll + wScroll / 2, yScroll + hScroll / 2 - 10, 2);
+                    return;
+                }
                 for (int i = 0; i < num; i++)
                 {
                     int num2 = xScroll + 26;
@@ -4585,6 +4591,7 @@ namespace Game1
     
         private void paintAuto(mGraphics g)
         {
+            mFont.tahoma_7b_dark.drawString(g, "Tính năng Auto đang cập nhật...", xScroll + wScroll / 2, yScroll + hScroll / 2 - 5, mFont.CENTER);
         }
     
         private void paintPetStatus(mGraphics g)
@@ -4616,6 +4623,11 @@ namespace Game1
             g.setColor(16711680);
             g.setClip(xScroll, yScroll, wScroll, hScroll);
             g.translate(0, -cmy);
+            if (Char.myPetz() == null || Char.myPetz().arrItemBody == null || Char.myPetz().arrPetSkill == null)
+            {
+                mFont.tahoma_7b_dark.drawString(g, "Bạn chưa có đệ tử", xScroll + wScroll / 2, yScroll + hScroll / 2 - 5, mFont.CENTER);
+                return;
+            }
             Item[] arrItemBody = Char.myPetz().arrItemBody;
             Skill[] arrPetSkill = Char.myPetz().arrPetSkill;
             for (int i = 0; i < arrItemBody.Length + arrPetSkill.Length; i++)
@@ -4997,6 +5009,11 @@ namespace Game1
             g.setColor(16711680);
             g.setClip(xScroll, yScroll, wScroll, hScroll);
             g.translate(0, -cmy);
+            if (mapNames == null || mapNames.Length == 0)
+            {
+                mFont.tahoma_7b_dark.drawString(g, "Không có bản đồ khả dụng", xScroll + wScroll / 2, yScroll + hScroll / 2 - 5, mFont.CENTER);
+                return;
+            }
             for (int i = 0; i < mapNames.Length; i++)
             {
                 int num = xScroll + 36;
@@ -5025,6 +5042,11 @@ namespace Game1
             g.translate(0, -cmy);
             int[] zones = GameScr.gI().zones;
             int[] pts = GameScr.gI().pts;
+            if (zones == null || pts == null || pts.Length == 0)
+            {
+                mFont.tahoma_7b_dark.drawString(g, "Đang tải danh sách khu vực...", xScroll + wScroll / 2, yScroll + hScroll / 2 - 5, mFont.CENTER);
+                return;
+            }
             for (int i = 0; i < pts.Length; i++)
             {
                 int num = xScroll + 36;
@@ -5071,6 +5093,7 @@ namespace Game1
             g.setColor(0);
             if (currentListLength == 0)
             {
+                mFont.tahoma_7b_dark.drawString(g, "Bạn chưa học kỹ năng đặc biệt nào", xScroll + wScroll / 2, yScroll + hScroll / 2 - 5, mFont.CENTER);
                 return;
             }
             int num = (cmy + hScroll) / 24 + 1;
@@ -5362,6 +5385,11 @@ namespace Game1
             g.setClip(xScroll, yScroll, wScroll, hScroll);
             g.translate(0, -cmy);
             g.setColor(0);
+            if (currentListLength == 0 || vFlag == null || vFlag.size() == 0)
+            {
+                mFont.tahoma_7b_dark.drawString(g, "Không có cờ khả dụng", xScroll + wScroll / 2, yScroll + hScroll / 2 - 5, mFont.CENTER);
+                return;
+            }
             for (int i = 0; i < currentListLength; i++)
             {
                 int num = xScroll + 26;
@@ -5503,6 +5531,11 @@ namespace Game1
         {
             g.setClip(xScroll, yScroll, wScroll, hScroll);
             g.translate(0, -cmy);
+            if (vPlayerMenu == null || vPlayerMenu.size() == 0)
+            {
+                mFont.tahoma_7b_dark.drawString(g, "Không có tuỳ chọn", xScroll + wScroll / 2, yScroll + hScroll / 2 - 5, mFont.CENTER);
+                return;
+            }
             for (int i = 0; i < vPlayerMenu.size(); i++)
             {
                 int x = xScroll;
@@ -5698,6 +5731,7 @@ namespace Game1
             {
                 if (Char.myCharz().arrArchive == null || Char.myCharz().arrArchive.Length != currentListLength)
                 {
+                    mFont.tahoma_7b_dark.drawString(g, "Đang tải danh sách nhiệm vụ...", xScroll + wScroll / 2, yScroll + hScroll / 2 - 5, mFont.CENTER);
                     return;
                 }
                 for (int i = 0; i < currentListLength; i++)
@@ -6643,45 +6677,38 @@ namespace Game1
     
         public int getCompare(Item item)
         {
-            if (item == null)
+            if (item == null || item.template == null)
             {
                 return -1;
             }
             if (item.isTypeBody())
             {
-                if (item.itemOption == null)
+                if (item.itemOption == null || item.itemOption.Length == 0 || item.itemOption[0] == null || item.itemOption[0].optionTemplate == null)
                 {
                     return -1;
                 }
                 ItemOption itemOption = item.itemOption[0];
-                if (itemOption.optionTemplate.id == 22)
+                if (itemOption.optionTemplate.id == 22 && GameScr.gI().iOptionTemplates != null && GameScr.gI().iOptionTemplates.Length > 6)
                 {
                     itemOption.optionTemplate = GameScr.gI().iOptionTemplates[6];
                     itemOption.param *= 1000;
                 }
-                if (itemOption.optionTemplate.id == 23)
+                if (itemOption.optionTemplate.id == 23 && GameScr.gI().iOptionTemplates != null && GameScr.gI().iOptionTemplates.Length > 7)
                 {
                     itemOption.optionTemplate = GameScr.gI().iOptionTemplates[7];
                     itemOption.param *= 1000;
                 }
                 Item item2 = null;
-                for (int i = 0; i < Char.myCharz().arrItemBody.Length; i++)
+                if (Char.myCharz() != null && Char.myCharz().arrItemBody != null)
                 {
-                    Item item3 = Char.myCharz().arrItemBody[i];
-                    if (itemOption.optionTemplate.id == 22)
+                    for (int i = 0; i < Char.myCharz().arrItemBody.Length; i++)
                     {
-                        itemOption.optionTemplate = GameScr.gI().iOptionTemplates[6];
-                        itemOption.param *= 1000;
-                    }
-                    if (itemOption.optionTemplate.id == 23)
-                    {
-                        itemOption.optionTemplate = GameScr.gI().iOptionTemplates[7];
-                        itemOption.param *= 1000;
-                    }
-                    if (item3 != null && item3.itemOption != null && item3.template.type == item.template.type)
-                    {
-                        item2 = item3;
-                        break;
+                        Item item3 = Char.myCharz().arrItemBody[i];
+                        if (item3 != null && item3.template != null && item3.itemOption != null && item3.template.type == item.template.type)
+                        {
+                            item2 = item3;
+                            break;
+                        }
                     }
                 }
                 if (item2 == null)
@@ -6690,7 +6717,7 @@ namespace Game1
                     return itemOption.param;
                 }
                 int num = 0;
-                num = ((item2 == null || item2.itemOption == null) ? itemOption.param : (itemOption.param - item2.itemOption[0].param));
+                num = ((item2.itemOption == null || item2.itemOption.Length == 0 || item2.itemOption[0] == null) ? itemOption.param : (itemOption.param - item2.itemOption[0].param));
                 if (num < 0)
                 {
                     isUp = false;
@@ -7939,8 +7966,13 @@ namespace Game1
         {
             if (currentTabIndex == 0)
             {
-                if (selected == -1 || vItemCombine.size() == 0)
+                if (selected == -1)
                 {
+                    return;
+                }
+                if (vItemCombine.size() == 0)
+                {
+                    GameCanvas.startOKDlg("Vui lòng đặt trang bị và nguyên liệu cần nâng cấp vào ô trước!");
                     return;
                 }
                 if (selected == vItemCombine.size())

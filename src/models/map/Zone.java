@@ -26,8 +26,6 @@ import utils.Util;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
-import lombok.Getter;
-import lombok.Setter;
 import models.map.EffectMap;
 import models.map.vetinh.Satellite;
 import models.npc.NonInteractiveNPC;
@@ -44,15 +42,17 @@ public class Zone {
     public int maxPlayer;
     public int shenronType = -1;
 
-    @Getter
+    public List<Player> getNonInteractiveNPCs() { return this.nonInteractiveNPCs; }
+    public List<Player> getHumanoids() { return this.humanoids; }
+    public List<Player> getNotBosses() { return this.notBosses; }
+    public List<Player> getPlayers() { return this.players; }
+    public List<Player> getBosses() { return this.bosses; }
+    public List<Player> getPets() { return this.pets; }
+
     private final List<Player> nonInteractiveNPCs; //npc
-    @Getter
     private final List<Player> humanoids; //player, boss, pet
-    @Getter
     private final List<Player> notBosses; //player, pet
-    @Getter
     private final List<Player> players; //player
-    @Getter
     private final List<Player> bosses; //boss
     private final List<Player> pets; //pet
 
@@ -68,6 +68,8 @@ public class Zone {
     public boolean isTUTAlive = true;
     public boolean isGoldenFriezaAlive;
 
+    public boolean isKhongTacAlive = true;
+
     public boolean isCompeting;
     public String rankName1;
     public String rankName2;
@@ -78,9 +80,10 @@ public class Zone {
     public List<MaBuHold> maBuHolds;
     public boolean finishMap22h;
 
-    @Setter
-    @Getter
     public Player Npc;
+
+    public Player getNpc() { return this.Npc; }
+    public void setNpc(Player Npc) { this.Npc = Npc; }
 
     public boolean isFullPlayer() {
         return this.players.size() >= this.maxPlayer;
@@ -321,86 +324,107 @@ public ItemMap getItemMapByTempId(int tempId) {
     }
 
     public void pickItem(Player player, int itemMapId) {
-        ItemMap itemMap = getItemMapByItemMapId(itemMapId);
-        if (itemMap != null && itemMap.itemTemplate != null) {
-            if (itemMap.itemTemplate.type == 22 || itemMap.itemTemplate.id == 460 && itemMap.playerId == player.id) {
+        ItemMap itemMap = null;
+        boolean isFoodOrKid = false;
+
+        synchronized (this.items) {
+            itemMap = getItemMapByItemMapId(itemMapId);
+            if (itemMap == null || itemMap.itemTemplate == null) {
+                Service.gI().sendThongBao(player, "Không thể thực hiện");
+                return;
+            }
+            if (itemMap.itemTemplate.type == 22 || (itemMap.itemTemplate.id == 460 && itemMap.playerId == player.id)) {
                 return;
             }
             int playerId = Math.abs(itemMap.playerId > 100_000_000 ? 1_000_000_000 - (int) itemMap.playerId : (int) itemMap.playerId);
-            if (playerId == player.id || itemMap.playerId == player.id || itemMap.playerId == -1) {
-                Item item = ItemService.gI().createItemFromItemMap(itemMap);
-                if (item.template.id == 648) {
-                    if (!InventoryService.gI().findItemTatVoGiangSinh(player)) {
-                        Service.gI().sendThongBao(player, "Cần thêm Tất,vớ giáng sinh");
-                        return;
-                    }
-                }
-
-                if (InventoryService.gI().addItemBag(player, item)) {
-                    int itemType = item.template.type;
-                    Message msg;
-                    try {
-                        msg = new Message(-20);
-                        msg.writer().writeShort(itemMapId);
-                        switch (itemType) {
-                            case 9, 10, 34 -> {
-                                msg.writer().writeUTF(item.quantity > Short.MAX_VALUE ? "Bạn vừa nhận được " + Util.formatNumber(item.quantity) + " " + item.template.name : "");
-                                PlayerService.gI().sendInfoHpMpMoney(player);
-                            }
-                            default -> {
-                                switch (item.template.id) {
-                                    case 73 ->
-                                        msg.writer().writeUTF("");
-                                    case 74 ->
-                                        msg.writer().writeUTF("Bạn mới vừa ăn " + item.template.name);
-                                    case 78 ->
-                                        msg.writer().writeUTF("Wow, một cậu bé dễ thương!");
-                                    default -> {
-                                        if (item.template.type >= 0 && item.template.type < 5) {
-                                            msg.writer().writeUTF(item.template.name);
-                                        } else {
-                                            msg.writer().writeUTF("Bạn nhận được " + item.template.name);
-                                        }
-                                        if (item.template.id == 648) {
-                                            InventoryService.gI().subQuantityItemsBag(player, InventoryService.gI().findItemBag(player, 649), 1);
-                                        }
-                                        InventoryService.gI().sendItemBags(player);
-                                        player.effect.addPointOngThanVeChai();
-                                    }
-                                }
-                            }
-
-                        }
-                        msg.writer().writeShort(item.quantity > Short.MAX_VALUE ? 9999 : item.quantity);
-                        player.sendMessage(msg);
-                        msg.cleanup();
-                        Service.gI().sendToAntherMePickItem(player, itemMapId);
-                        if (!(this.map.mapId >= 21 && this.map.mapId <= 23
-                                && itemMap.itemTemplate != null && itemMap.itemTemplate.id == 74
-                                || this.map.mapId >= 42 && this.map.mapId <= 44
-                                && itemMap.itemTemplate != null && itemMap.itemTemplate.id == 78)) {
-                            removeItemMap(itemMap);
-                        }
-                    } catch (Exception e) {
-                        Logger.logException(Zone.class, e);
-                    }
-                } else {
-                    if (!ItemMapService.gI().isBlackBall(item.template.id) && !ItemMapService.gI().isNamecBall(item.template.id) && !ItemMapService.gI().isNamecBallStone(item.template.id)) {
-                        String text = "Hành trang không còn chỗ trống, không thể nhặt thêm";
-                        Service.gI().sendThongBao(player, text);
-                        return;
-                    }
-                }
-            } else {
+            if (playerId != player.id && itemMap.playerId != player.id && itemMap.playerId != -1) {
                 Service.gI().sendThongBao(player, "Không thể nhặt vật phẩm của người khác");
                 return;
             }
-            TaskService.gI().checkDoneTaskPickItem(player, itemMap);
-            TaskService.gI().checkDoneSideTaskPickItem(player, itemMap);
-            TaskService.gI().checkDoneClanTaskPickItem(player, itemMap);
-        } else {
-            Service.gI().sendThongBao(player, "Không thể thực hiện");
+
+            isFoodOrKid = (this.map.mapId >= 21 && this.map.mapId <= 23 && itemMap.itemTemplate.id == 74)
+                    || (this.map.mapId >= 42 && this.map.mapId <= 44 && itemMap.itemTemplate.id == 78);
+            if (!isFoodOrKid) {
+                this.items.remove(itemMap);
+            }
         }
+
+        Item item = ItemService.gI().createItemFromItemMap(itemMap);
+        if (item.template.id == 648) {
+            if (!InventoryService.gI().findItemTatVoGiangSinh(player)) {
+                if (!isFoodOrKid) {
+                    synchronized (this.items) {
+                        if (!this.items.contains(itemMap)) {
+                            this.items.add(0, itemMap);
+                        }
+                    }
+                }
+                Service.gI().sendThongBao(player, "Cần thêm Tất,vớ giáng sinh");
+                return;
+            }
+        }
+
+        if (InventoryService.gI().addItemBag(player, item)) {
+            int itemType = item.template.type;
+            Message msg;
+            try {
+                msg = new Message(-20);
+                msg.writer().writeShort(itemMapId);
+                switch (itemType) {
+                    case 9, 10, 34 -> {
+                        msg.writer().writeUTF(item.quantity > Short.MAX_VALUE ? "Bạn vừa nhận được " + Util.formatNumber(item.quantity) + " " + item.template.name : "");
+                        PlayerService.gI().sendInfoHpMpMoney(player);
+                    }
+                    default -> {
+                        switch (item.template.id) {
+                            case 73 ->
+                                msg.writer().writeUTF("");
+                            case 74 ->
+                                msg.writer().writeUTF("Bạn mới vừa ăn " + item.template.name);
+                            case 78 ->
+                                msg.writer().writeUTF("Wow, một cậu bé dễ thương!");
+                            default -> {
+                                if (item.template.type >= 0 && item.template.type < 5) {
+                                    msg.writer().writeUTF(item.template.name);
+                                } else {
+                                    msg.writer().writeUTF("Bạn nhận được " + item.template.name);
+                                }
+                                if (item.template.id == 648) {
+                                    InventoryService.gI().subQuantityItemsBag(player, InventoryService.gI().findItemBag(player, 649), 1);
+                                }
+                                InventoryService.gI().sendItemBags(player);
+                                player.effect.addPointOngThanVeChai();
+                            }
+                        }
+                    }
+                }
+                msg.writer().writeShort(item.quantity > Short.MAX_VALUE ? 9999 : item.quantity);
+                player.sendMessage(msg);
+                msg.cleanup();
+                Service.gI().sendToAntherMePickItem(player, itemMapId);
+                if (!isFoodOrKid) {
+                    itemMap.dispose();
+                }
+            } catch (Exception e) {
+                Logger.logException(Zone.class, e);
+            }
+        } else {
+            if (!isFoodOrKid) {
+                synchronized (this.items) {
+                    if (!this.items.contains(itemMap)) {
+                        this.items.add(0, itemMap);
+                    }
+                }
+            }
+            if (!ItemMapService.gI().isBlackBall(item.template.id) && !ItemMapService.gI().isNamecBall(item.template.id) && !ItemMapService.gI().isNamecBallStone(item.template.id)) {
+                String text = "Hành trang không còn chỗ trống, không thể nhặt thêm";
+                Service.gI().sendThongBao(player, text);
+                return;
+            }
+        }
+        TaskService.gI().checkDoneTaskPickItem(player, itemMap);
+        TaskService.gI().checkDoneSideTaskPickItem(player, itemMap);
+        TaskService.gI().checkDoneClanTaskPickItem(player, itemMap);
     }
 
     public void addItem(ItemMap itemMap) {
@@ -695,8 +719,12 @@ msg.writer().writeByte(plInfo.idMark != null ? plInfo.idMark.getIdSpaceShip() : 
 
             // bg item
             try {
-                final byte[] bgItem = FileIO.readFile("data/map/item_bg_map_data/" + this.map.mapId);
-                msg.writer().write(bgItem);
+                byte[] bgItem = this.map.bgItemData != null ? this.map.bgItemData : managers.map.MapDataManager.gI().getBgItemData(this.map.mapId);
+                if (bgItem != null && bgItem.length > 0) {
+                    msg.writer().write(bgItem);
+                } else {
+                    msg.writer().writeShort(0);
+                }
             } catch (Exception e) {
                 msg.writer().writeShort(0);
             }

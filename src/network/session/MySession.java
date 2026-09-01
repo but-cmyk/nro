@@ -1,6 +1,10 @@
 package network.session;
 
 import java.net.Socket;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.Locale;
 
 import models.player.Player;
 import server.Controller;
@@ -12,19 +16,18 @@ import server.Manager;
 import models.AntiLogin;
 import services.Service;
 import utils.Logger;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import utils.TimeUtil;
 
 public class MySession extends Session {
 
-    private static final Map<String, AntiLogin> ANTILOGIN = new HashMap<>();
+    private static final Map<String, AntiLogin> ANTILOGIN = new ConcurrentHashMap<>();
+    private static final Map<String, Object> ACCOUNT_LOCKS = new ConcurrentHashMap<>();
+    private static final AtomicInteger LOGIN_ATTEMPTS = new AtomicInteger();
+    private static final long LOGIN_GUARD_TTL = 10 * 60 * 1000L;
+
     public Player player;
 
     public byte timeWait = 100;
-
     public String ipAddress;
     public boolean isAdmin;
     public int userId;
@@ -35,7 +38,6 @@ public class MySession extends Session {
     public byte zoomLevel;
 
     public long lastTimeLogout;
-
     public boolean joinedGame;
 
     public boolean actived;
@@ -47,13 +49,9 @@ public class MySession extends Session {
     public long lastTimeReceivedVIP2;
 
     public boolean check;
-
     public int goldBar;
     public long gold;
     public int eventPoint;
-//    public List<Item> itemsReward;
-//    public String dataReward;
-//    public boolean is_gift_box;
     public double bdPlayer;
 
     public int version;
@@ -65,15 +63,22 @@ public class MySession extends Session {
     public int vip1;
     public int vip2;
     public int luotquay;
+    public boolean finishUpdate;
 
-   public boolean finishUpdate;
+    public MySession() {
+        super();
+    }
 
-// logim
-    //private static final ConcurrentHashMap<String, Object> soulmateLocks = new ConcurrentHashMap<>();
+    public MySession(String ip) {
+        super(ip);
+        this.ipAddress = ip;
+    }
 
     public MySession(Socket socket) {
         super(socket);
-        ipAddress = socket.getInetAddress().getHostAddress();
+        if (socket != null && socket.getInetAddress() != null) {
+            this.ipAddress = socket.getInetAddress().getHostAddress();
+        }
     }
 
     @Override
@@ -82,23 +87,21 @@ public class MySession extends Session {
         this.startSend();
     }
 
-//    public void sendSessionKey() {
-//        Message msg = new Message(-27);
-//        try {
-//            msg.writer().writeByte(KEYS.length);
-//            msg.writer().writeByte(KEYS[0]);
-//            for (int i = 1; i < KEYS.length; i++) {
-//                msg.writer().writeByte(KEYS[i] ^ KEYS[i - 1]);
-//            }
-//            this.sendMessage(msg);
-//            msg.cleanup();
-//            sentKey = true;
-//        } catch (IOException e) {
-//        }
-//    }
-
     public void login(String username, String password) {
-        AntiLogin al = ANTILOGIN.computeIfAbsent(this.ipAddress, _ -> new AntiLogin());
+        if (username == null || password == null) {
+            Service.gI().sendThongBaoOK(this, "Thông tin tài khoản không hợp lệ");
+            return;
+        }
+        username = username.trim().toLowerCase(Locale.ROOT);
+        if (username.isEmpty() || username.length() > 50 || password.length() > 128) {
+            Service.gI().sendThongBaoOK(this, "Thông tin tài khoản không hợp lệ");
+            return;
+        }
+        if ((LOGIN_ATTEMPTS.incrementAndGet() & 255) == 0) {
+            long now = System.currentTimeMillis();
+            ANTILOGIN.entrySet().removeIf(entry -> entry.getValue().isExpired(now, LOGIN_GUARD_TTL));
+        }
+        AntiLogin al = ANTILOGIN.computeIfAbsent(this.ipAddress, k -> new AntiLogin());
         if (!al.canLogin()) {
             Service.gI().sendThongBaoOK(this, al.getNotifyCannotLogin());
             return;
@@ -119,56 +122,53 @@ public class MySession extends Session {
             return;
         }
 
-      //  Object lock = soulmateLocks.computeIfAbsent(username, _ -> new Object());
+        Object accountLock = ACCOUNT_LOCKS.computeIfAbsent(username, k -> new Object());
+        try {
+            synchronized (accountLock) {
+                if (this.player == null) {
+                    Player pl = null;
+                    try {
+                        this.uu = username;
+                        this.pp = password;
+                        pl = NDVSqlFetcher.login(this, al);
+                        if (pl != null) {
+                            DataGame.sendSmallVersion(this);
+                            DataGame.sendBgItemVersion(this);
 
-        // Đồng bộ hóa theo tài khoản (khóa theo username)
-        synchronized (username.intern()) {
-            if (this.player == null) {
-                Player pl = null;
-                try {
-                    System.currentTimeMillis();
-                    this.uu = username;
-                    this.pp = password;
-                    pl = NDVSqlFetcher.login(this, al);
-                    if (pl != null) {
-                        // -77 max small
-                        DataGame.sendSmallVersion(this);
-                        // -93 bgitem version
-                        DataGame.sendBgItemVersion(this);
+                            this.timeWait = 0;
+                            this.joinedGame = true;
+                            pl.nPoint.calPoint();
+                            pl.nPoint.setHp(pl.nPoint.hp);
+                            pl.nPoint.setMp(pl.nPoint.mp);
+                            pl.zone.addPlayer(pl);
+                            if (pl.pet != null) {
+                                pl.pet.nPoint.calPoint();
+                                pl.pet.nPoint.setHp(pl.pet.nPoint.hp);
+                                pl.pet.nPoint.setMp(pl.pet.nPoint.mp);
+                            }
 
-                        this.timeWait = 0;
-                        this.joinedGame = true;
-                        pl.nPoint.calPoint();
-                        pl.nPoint.setHp(pl.nPoint.hp);
-                        pl.nPoint.setMp(pl.nPoint.mp);
-                        pl.zone.addPlayer(pl);
-                        if (pl.pet != null) {
-                            pl.pet.nPoint.calPoint();
-                            pl.pet.nPoint.setHp(pl.pet.nPoint.hp);
-                            pl.pet.nPoint.setMp(pl.pet.nPoint.mp);
+                            pl.setSession(this);
+                            Client.gI().put(pl);
+                            this.player = pl;
+                            DataGame.sendVersionGame(this);
+                            DataGame.sendDataItemBG(this);
+                            Controller.gI().sendInfo(this);
+                            Logger.log("[" + TimeUtil.getCurrHour() + ":" + TimeUtil.getCurrMin() + "] - Player Login: " + this.player.name + "\n");
+                            if (this.player.notify != null && !this.player.notify.equals("null") && !this.player.notify.isEmpty() && this.player.notify.length() > 0) {
+                                Service.gI().sendThongBao(this.player, this.player.notify);
+                                this.player.notify = null;
+                            }
                         }
-
-                        pl.setSession(this);
-                        Client.gI().put(pl);
-                        this.player = pl;
-                        //-28 -4 version data game
-                        DataGame.sendVersionGame(this);
-                        //-31 data item background
-                        DataGame.sendDataItemBG(this);
-                        Controller.gI().sendInfo(this);
-                        Logger.log("[" + TimeUtil.getCurrHour() + ":" + TimeUtil.getCurrMin() + "] - Player Login: " + this.player.name + "\n");
-                        if (this.player.notify != null && !this.player.notify.equals("null") && !this.player.notify.isEmpty() && this.player.notify.length() > 0) {
-                            Service.gI().sendThongBao(this.player, this.player.notify);
-                            this.player.notify = null;
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        if (pl != null) {
+                            pl.dispose();
                         }
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    if (pl != null) {
-                        pl.dispose();
                     }
                 }
             }
+        } finally {
+            ACCOUNT_LOCKS.remove(username, accountLock);
         }
     }
 }

@@ -6,8 +6,6 @@ import network.io.Message;
 import consts.ConstNpc;
 import models.item.Item;
 import models.player.Player;
-import lombok.Getter;
-import lombok.Setter;
 import models.item.Item.ItemOption;
 import models.map.Zone;
 import server.Client;
@@ -19,13 +17,14 @@ import utils.Util;
 
 public class ShenronEvent {
 
-    @Setter
-    @Getter
     private Player player;
-
-    @Setter
-    @Getter
     private Zone zone;
+
+    public Player getPlayer() { return this.player; }
+    public void setPlayer(Player player) { this.player = player; }
+
+    public Zone getZone() { return this.zone; }
+    public void setZone(Zone zone) { this.zone = zone; }
 
     public long playerId;
     public boolean isPlayerDisconnect;

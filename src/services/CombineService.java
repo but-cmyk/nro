@@ -29,6 +29,8 @@ import models.npc.Npc;
 import server.Manager;
 import services.map.NpcManager;
 import services.player.InventoryService;
+import services.func.TransactionService;
+import utils.Logger;
 import utils.Util;
 
 public class CombineService {
@@ -102,13 +104,25 @@ public class CombineService {
      * @param index
      */
     public void showInfoCombine(Player player, int[] index) {
-        if (player.combineNew == null) {
+        if (player == null || player.combineNew == null || index == null) {
+            return;
+        }
+        if (TransactionService.gI().check(player)) {
+            Service.gI().sendThongBao(player, "Không thể thực hiện khi đang giao dịch");
             return;
         }
         player.combineNew.clearItemCombine();
-        if (index.length > 0) {
-            for (int i = 0; i < index.length; i++) {
-                player.combineNew.itemsCombine.add(player.inventory.itemsBag.get(index[i]));
+        if (index.length > 0 && player.inventory != null && player.inventory.itemsBag != null) {
+            java.util.Set<Integer> addedSlots = new java.util.HashSet<>();
+            for (int slot : index) {
+                if (slot >= 0 && slot < player.inventory.itemsBag.size()) {
+                    if (addedSlots.add(slot)) {
+                        Item item = player.inventory.itemsBag.get(slot);
+                        if (item != null && item.isNotNullItem()) {
+                            player.combineNew.itemsCombine.add(item);
+                        }
+                    }
+                }
             }
         }
         switch (player.combineNew.typeCombine) {
@@ -237,6 +251,13 @@ public class CombineService {
      * @param player
      */
     public void startCombine(Player player, int... n) {
+        if (player == null || player.combineNew == null) {
+            return;
+        }
+        if (TransactionService.gI().check(player)) {
+            Service.gI().sendThongBao(player, "Không thể thực hiện khi đang giao dịch");
+            return;
+        }
         int num = 0;
         if (n.length > 0) {
             num = n[0];
@@ -313,7 +334,7 @@ public class CombineService {
         player.idMark.setIndexMenu(ConstNpc.IGNORE_MENU);
         player.combineNew.clearParamCombine();
         player.combineNew.lastTimeCombine = System.currentTimeMillis();
-
+        database.daos.PlayerDAO.updatePlayerAsync(player);
     }
 
     public void NangSaoC2(Player player) {
@@ -684,6 +705,13 @@ public class CombineService {
     }
 
     public void openTabCombine(Player player, int type) {
+        if (player == null || player.combineNew == null) {
+            return;
+        }
+        if (TransactionService.gI().check(player)) {
+            Service.gI().sendThongBao(player, "Không thể thực hiện khi đang giao dịch");
+            return;
+        }
         player.combineNew.setTypeCombine(type);
         Message msg = null;
         try {
@@ -800,14 +828,18 @@ public class CombineService {
             msg.writer().writeByte(REOPEN_TAB_COMBINE);
             msg.writer().writeByte(player.combineNew.itemsCombine.size());
             for (Item it : player.combineNew.itemsCombine) {
+                if (it == null) continue;
                 for (int i = 0; i < player.inventory.itemsBag.size(); i++) {
-                    if (it == player.inventory.itemsBag.get(i)) {
+                    Item bagItem = player.inventory.itemsBag.get(i);
+                    if (bagItem != null && (it == bagItem || (it.template != null && bagItem.template != null && it.template.id == bagItem.template.id && it.createTime == bagItem.createTime))) {
                         msg.writer().writeByte(i);
+                        break;
                     }
                 }
             }
             player.sendMessage(msg);
         } catch (Exception e) {
+            Logger.logException(CombineService.class, e, "Lỗi reOpenItemCombine");
         } finally {
             if (msg != null) {
                 msg.cleanup();
@@ -828,15 +860,11 @@ public class CombineService {
     }
 
     public boolean checkHaveOption(Item item, int viTriOption, int idOption) {
-        if (item != null && item.isNotNullItem()) {
-            if (item.itemOptions.get(viTriOption).optionTemplate.id == idOption) {
-                return true;
-            } else {
-                return false;
-            }
-        } else {
-            return false;
+        if (item != null && item.isNotNullItem() && viTriOption >= 0 && viTriOption < item.itemOptions.size()) {
+            Item.ItemOption option = item.itemOptions.get(viTriOption);
+            return option != null && option.optionTemplate != null && option.optionTemplate.id == idOption;
         }
+        return false;
     }
 
     public void sendEffectCombineDV(Player player, short icon) {

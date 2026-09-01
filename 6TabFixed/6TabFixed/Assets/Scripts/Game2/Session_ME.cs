@@ -14,6 +14,7 @@ namespace Game2
     	public class Sender
     	{
     		public List<Message> sendingMessage;
+    		private readonly object sendLock = new object();
     
     		public Sender()
     		{
@@ -22,7 +23,19 @@ namespace Game2
     
     		public void AddMessage(Message message)
     		{
-    			sendingMessage.Add(message);
+    			lock (sendLock)
+    			{
+    				sendingMessage.Add(message);
+    				Monitor.Pulse(sendLock);
+    			}
+    		}
+    
+    		public void Clear()
+    		{
+    			lock (sendLock)
+    			{
+    				sendingMessage.Clear();
+    			}
     		}
     
     		public void run()
@@ -31,31 +44,40 @@ namespace Game2
     			{
     				try
     				{
+    					Message m = null;
     					if (getKeyComplete)
     					{
-    						while (sendingMessage.Count > 0)
+    						lock (sendLock)
     						{
-    							Message m = sendingMessage[0];
+    							if (sendingMessage.Count > 0)
+    							{
+    								m = sendingMessage[0];
+    								sendingMessage.RemoveAt(0);
+    							}
+    							else
+    							{
+    								Monitor.Wait(sendLock, 50);
+    							}
+    						}
+    						if (m != null)
+    						{
     							doSendMessage(m);
-    							sendingMessage.RemoveAt(0);
+    							continue;
     						}
     					}
-    					try
+    					else
     					{
-    						Thread.Sleep(5);
-    					}
-    					catch (ThreadAbortException)
-    					{
-    						// Expected on disconnect
-    					}
-    					catch (Exception ex)
-    					{
-    						Cout.LogError(ex.ToString());
+    						Thread.Sleep(10);
     					}
     				}
-    				catch (Exception)
+    				catch (ThreadAbortException)
     				{
-    					Res.outz("error send message! ");
+    					// Expected on disconnect
+    					break;
+    				}
+    				catch (Exception ex)
+    				{
+    					Cout.LogError(ex.ToString());
     				}
     			}
     		}
@@ -200,7 +222,7 @@ namespace Game2
     				{
     					sbyte b4 = dis.ReadSByte();
     					sbyte b5 = dis.ReadSByte();
-    					num = (b4 & 0xFF00) | (b5 & 0xFF);
+    					num = ((b4 & 0xFF) << 8) | (b5 & 0xFF);
     				}
     				sbyte[] array = new sbyte[num];
     				byte[] src = dis.ReadBytes(num);
@@ -288,7 +310,7 @@ namespace Game2
     
     	public void clearSendingMessage()
     	{
-    		sender.sendingMessage.Clear();
+    		sender.Clear();
     	}
     
     	public static Session_ME gI()
@@ -475,26 +497,35 @@ namespace Game2
     		}
     		else
     		{
-    			recieveMsg.addElement(msg);
+    			lock (recieveMsg)
+    			{
+    				recieveMsg.addElement(msg);
+    			}
     		}
     	}
     
     	public static void update()
     	{
-    		while (recieveMsg.size() > 0)
+    		while (true)
     		{
-    			Message message = (Message)recieveMsg.elementAt(0);
+    			Message message = null;
+    			lock (recieveMsg)
+    			{
+    				if (recieveMsg.size() > 0)
+    				{
+    					message = (Message)recieveMsg.elementAt(0);
+    					recieveMsg.removeElementAt(0);
+    				}
+    			}
+    			if (message == null)
+    			{
+    				break;
+    			}
     			if (Controller.isStopReadMessage)
     			{
     				break;
     			}
-    			if (message == null)
-    			{
-    				recieveMsg.removeElementAt(0);
-    				break;
-    			}
     			messageHandler.onMessage(message);
-    			recieveMsg.removeElementAt(0);
     		}
     	}
     

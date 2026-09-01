@@ -1268,11 +1268,6 @@ namespace Game3
                 g.fillRect(0, 0, w, h);
                 return;
             }
-            if (!isLoadBGok)
-    		{
-    			g.setColor(0);
-    			g.fillRect(0, 0, w, h);
-    		}
     		if (Char.isLoadingMap)
     		{
     			return;
@@ -1699,6 +1694,7 @@ namespace Game3
     			case 8:
     				transY = 8;
     				nBg = 4;
+    				BackgroudEffect.addEffect(17);
     				break;
     			case 9:
     				BackgroudEffect.addEffect(9);
@@ -1711,6 +1707,7 @@ namespace Game3
     				transY = 7;
     				layerSpeed[2] = 0;
     				nBg = 3;
+    				BackgroudEffect.addEffect(16);
     				break;
     			case 12:
     				moveX = new int[5] { 1, 1, 0, 0, 0 };
@@ -1778,6 +1775,11 @@ namespace Game3
     			bgH = new int[nBg];
     			colorBotton = new int[nBg];
     			colorTop = new int[nBg];
+    			for (int n = 0; n < nBg; n++)
+    			{
+    				colorBotton[n] = -1;
+    				colorTop[n] = -1;
+    			}
     			if (TileMap.bgType == 100)
     			{
     				imgBG[0] = loadImageRMS("/bg/b100.png");
@@ -1788,20 +1790,27 @@ namespace Game3
     				{
     					if (imgBG[j] != null)
     					{
-    						int[] data2 = new int[1];
-    						imgBG[j].getRGB(ref data2, 0, 1, mGraphics.getRealImageWidth(imgBG[j]) / 2, 0, 1, 1);
-    						colorTop[j] = data2[0];
-    						data2 = new int[1];
-    						imgBG[j].getRGB(ref data2, 0, 1, mGraphics.getRealImageWidth(imgBG[j]) / 2, mGraphics.getRealImageHeight(imgBG[j]) - 1, 1, 1);
-    						colorBotton[j] = data2[0];
+    						try
+    						{
+    							int[] data2 = new int[1];
+    							imgBG[j].getRGB(ref data2, 0, 1, mGraphics.getRealImageWidth(imgBG[j]) / 2, 0, 1, 1);
+    							colorTop[j] = data2[0];
+    							data2 = new int[1];
+    							imgBG[j].getRGB(ref data2, 0, 1, mGraphics.getRealImageWidth(imgBG[j]) / 2, mGraphics.getRealImageHeight(imgBG[j]) - 1, 1, 1);
+    							colorBotton[j] = data2[0];
+    						}
+    						catch (Exception) {}
     						bgW[j] = mGraphics.getImageWidth(imgBG[j]);
     						bgH[j] = mGraphics.getImageHeight(imgBG[j]);
     					}
     					else if (nBg > 1)
     					{
     						imgBG[j] = loadImageRMS("/bg/b" + typeBg + "0.png");
-    						bgW[j] = mGraphics.getImageWidth(imgBG[j]);
-    						bgH[j] = mGraphics.getImageHeight(imgBG[j]);
+    						if (imgBG[j] != null)
+    						{
+    							bgW[j] = mGraphics.getImageWidth(imgBG[j]);
+    							bgH[j] = mGraphics.getImageHeight(imgBG[j]);
+    						}
     					}
     				}
     			}
@@ -1815,20 +1824,26 @@ namespace Game3
     						path2 = "/bg/b" + typeBg + k + "-" + TileMap.bgType + ".png";
     					}
     					imgBG[k] = loadImageRMS(path2);
-    					if (imgBG[k] != null)
+    					if (imgBG[k] == null)
     					{
-    						int[] data3 = new int[1];
-    						imgBG[k].getRGB(ref data3, 0, 1, mGraphics.getRealImageWidth(imgBG[k]) / 2, 0, 1, 1);
-    						colorTop[k] = data3[0];
-    						data3 = new int[1];
-    						imgBG[k].getRGB(ref data3, 0, 1, mGraphics.getRealImageWidth(imgBG[k]) / 2, mGraphics.getRealImageHeight(imgBG[k]) - 1, 1, 1);
-    						colorBotton[k] = data3[0];
-    						bgW[k] = mGraphics.getImageWidth(imgBG[k]);
-    						bgH[k] = mGraphics.getImageHeight(imgBG[k]);
+    						imgBG[k] = loadImageRMS("/bg/b" + typeBg + k + ".png");
     					}
-    					else if (nBg > 1)
+    					if (imgBG[k] == null && nBg > 1)
     					{
     						imgBG[k] = loadImageRMS("/bg/b" + typeBg + "0.png");
+    					}
+    					if (imgBG[k] != null)
+    					{
+    						try
+    						{
+    							int[] data3 = new int[1];
+    							imgBG[k].getRGB(ref data3, 0, 1, mGraphics.getRealImageWidth(imgBG[k]) / 2, 0, 1, 1);
+    							colorTop[k] = data3[0];
+    							data3 = new int[1];
+    							imgBG[k].getRGB(ref data3, 0, 1, mGraphics.getRealImageWidth(imgBG[k]) / 2, mGraphics.getRealImageHeight(imgBG[k]) - 1, 1, 1);
+    							colorBotton[k] = data3[0];
+    						}
+    						catch (Exception) {}
     						bgW[k] = mGraphics.getImageWidth(imgBG[k]);
     						bgH[k] = mGraphics.getImageHeight(imgBG[k]);
     					}
@@ -1974,6 +1989,18 @@ namespace Game3
     			if (!paintBG)
     			{
     				paintBG = true;
+    			}
+    			if (TileMap.isMapCold())
+    			{
+    				BackgroudEffect.addEffect(11);
+    			}
+    			if (TileMap.mapID == 0)
+    			{
+    				BackgroudEffect.addEffect(16);
+    			}
+    			else if (TileMap.mapID == 1)
+    			{
+    				BackgroudEffect.addEffect(17);
     			}
     		}
     		catch (Exception)
@@ -2445,6 +2472,9 @@ namespace Game3
     	{
     		try
     		{
+    			GUI.color = Color.white;
+    			GUI.backgroundColor = Color.white;
+    			g.reset();
     			debugPaint.removeAllElements();
     			debug("PA", 1);
     			if (currentScreen != null)
@@ -2510,7 +2540,7 @@ namespace Game3
     			{
     				currentDialog.paint(g);
     			}
-    			if (Char.isLoadingMap || LoginScr.isContinueToLogin || ServerListScreen.waitToLogin || ServerListScreen.isWait)
+    			if (Char.isLoadingMap || (currentScreen != GameScr.instance && (LoginScr.isContinueToLogin || ServerListScreen.waitToLogin || ServerListScreen.isWait)))
     			{
     				paintChangeMap(g);
     				if (timeLoading > 0 && LoginScr.timeLogin <= 0)
@@ -3112,11 +3142,15 @@ namespace Game3
     			break;
     		case 88829:
     		{
-    			string text4 = inputDlg.tfInput.getText();
+    			string text4 = inputDlg.tfInput.getText().Trim();
     			if (!text4.Equals(string.Empty))
     			{
     				Service.gI().changeName(text4, (int)p);
     				InfoDlg.showWait();
+    			}
+    			else
+    			{
+    				startOKDlg("Tên nhân vật không được để trống!");
     			}
     			break;
     		}

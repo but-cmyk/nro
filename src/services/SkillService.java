@@ -39,7 +39,6 @@ public class SkillService {
         return instance;
     }
 
-    //TODO: Bug skill 9 - Dùng skill 9 xong đổi nhanh chiêu đấm sẽ gây dame lớn.
     public boolean useSkill(Player player, Player plTarget, Mob mobTarget, int status, Message msg) {
         if (plTarget != null && player.clan != null && plTarget.clan != null && player.clan == plTarget.clan && MapService.gI().isMapBlackBallWar(plTarget.zone.map.mapId)) {
             Service.gI().chatJustForMe(player, plTarget, "Ê cùng bang mà");
@@ -67,11 +66,8 @@ public class SkillService {
                 dir = msg.reader().readByte();
                 x = msg.reader().readShort();
                 y = msg.reader().readShort();
-            } catch (IOException _) {
+            } catch (IOException ignored) {
             }
-        }
-        if (player.effectSkill != null && player.effectSkill.isHaveEffectSkill()) {
-            return false;
         }
         if (player.playerSkill == null) {
             return false;
@@ -136,8 +132,8 @@ public class SkillService {
                     AchievementService.gI().checkDoneTask(player, ConstAchievement.TUYET_KY_THANH_THAO);
                 }
             }
-            affterUseSkill(player, player.playerSkill.skillSelect.template.id);
-        } catch (Exception _) {
+            affterUseSkill(player, skillId != -1 ? skillId : player.playerSkill.skillSelect.template.id);
+        } catch (Exception ignored) {
         }
     }
 
@@ -258,7 +254,7 @@ public class SkillService {
             message.writer().writeByte(0);
             message.writer().writeShort(skill.currLevel);
             player.sendMessage(message);
-        } catch (final IOException _) {
+        } catch (final IOException ignored) {
         } finally {
             if (message != null) {
                 message.cleanup();
@@ -415,7 +411,7 @@ public class SkillService {
                 if (player.zone != null && player.zone.map.mapId != 180 && plTarget != null && Util.getDistance(player, plTarget) > Skill.RANGE_ATTACK_CHIEU_DAM) {
                     miss = true;
                 }
-                if (mobTarget != null && Util.getDistance(player, mobTarget) > Skill.RANGE_ATTACK_CHIEU_DAM) {
+                if (mobTarget != null && Util.getDistance(player, mobTarget) > 200) {
                     miss = true;
                 }
             case Skill.KAMEJOKO:
@@ -833,7 +829,7 @@ public class SkillService {
                             PlayerService.gI().sendInfoHpMp(player);
                         }
                         Service.gI().Send_Info_NV(pl);
-                    } catch (Exception _) {
+                    } catch (Exception ignored) {
                     } finally {
                         if (msg != null) {
                             msg.cleanup();
@@ -1062,7 +1058,7 @@ public class SkillService {
             msg.writer().writeShort(player.playerSkill.skillSelect.skillId);
             msg.writer().writeShort(affterMiliseconds);
             Service.gI().sendMessAllPlayerInMap(player, msg);
-        } catch (Exception _) {
+        } catch (Exception ignored) {
         } finally {
             if (msg != null) {
                 msg.cleanup();
@@ -1079,7 +1075,7 @@ public class SkillService {
             msg.writer().writeShort(player.playerSkill.skillSelect.skillId);
             msg.writer().writeShort(affterMiliseconds);
             Service.gI().sendMessAllPlayerInMap(player, msg);
-        } catch (Exception _) {
+        } catch (Exception ignored) {
         } finally {
             if (msg != null) {
                 msg.cleanup();
@@ -1353,7 +1349,7 @@ public class SkillService {
             msg.writer().writeByte(plAtt.playerSkill.skillSelect.skillId);
             msg.writer().writeByte(mob.id);
             Service.gI().sendMessAllPlayerInMap(plAtt, msg);
-        } catch (IOException _) {
+        } catch (IOException ignored) {
         } finally {
             if (msg != null) {
                 msg.cleanup();

@@ -1,6 +1,5 @@
 package models.combine.list;
 
-import lombok.Setter;
 import models.item.Item;
 import java.util.ArrayList;
 import java.util.List;
@@ -10,8 +9,10 @@ public class Combine {
     public long lastTimeCombine;
 
     public List<Item> itemsCombine;
-    @Setter
     public int typeCombine;
+
+    public int getTypeCombine() { return this.typeCombine; }
+    public void setTypeCombine(int typeCombine) { this.typeCombine = typeCombine; }
 
     public int goldCombine;
     public int gemCombine;

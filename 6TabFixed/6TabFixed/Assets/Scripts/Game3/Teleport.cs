@@ -47,7 +47,13 @@ namespace Game3
     
     	private bool tHole;
     
-    	private bool isShock;
+	private bool isShock;
+
+	private bool isGroundCalculated;
+
+	private int yTarget;
+
+	private bool hasGroundTile;
     
     	public Teleport(int x, int y, int headId, int dir, int type, bool isMe, int planet)
     	{
@@ -60,20 +66,32 @@ namespace Game3
     		this.dir = dir;
     		this.planet = planet;
     		tPrepare = 0;
-    		int num = 0;
-    		while (num < 100)
-    		{
-    			num++;
-    			y2 += 12;
-    			if (TileMap.tileTypeAt(x, y2, 2))
-    			{
-    				if (y2 % 24 != 0)
-    				{
-    					y2 -= y2 % 24;
-    				}
-    				break;
-    			}
-    		}
+		yTarget = y;
+		isGroundCalculated = false;
+		hasGroundTile = false;
+		if (!Char.isLoadingMap)
+		{
+			int num = 0;
+			while (num < 100)
+			{
+				if (TileMap.tileTypeAt(x, y2, 2))
+				{
+					if (y2 % 24 != 0)
+					{
+						y2 -= y2 % 24;
+					}
+					hasGroundTile = true;
+					break;
+				}
+				y2 += 12;
+				num++;
+			}
+			if (!hasGroundTile)
+			{
+				y2 = yTarget;
+			}
+			isGroundCalculated = true;
+		}
     		isDown = true;
     		isUp = false;
     		if (this.planet > 2)
@@ -173,8 +191,40 @@ namespace Game3
     		}
     	}
     
-    	public void update()
-    	{
+	public void update()
+	{
+		if (!isGroundCalculated)
+		{
+			if (Char.isLoadingMap)
+			{
+				return;
+			}
+			y2 = yTarget;
+			int num = 0;
+			while (num < 100)
+			{
+				if (TileMap.tileTypeAt(x, y2, 2))
+				{
+					if (y2 % 24 != 0)
+					{
+						y2 -= y2 % 24;
+					}
+					hasGroundTile = true;
+					break;
+				}
+				y2 += 12;
+				num++;
+			}
+			if (!hasGroundTile)
+			{
+				y2 = yTarget;
+			}
+			if (planet > 2)
+			{
+				y2 += 4;
+			}
+			isGroundCalculated = true;
+		}
     		if (planet > 2 && paintFire && y != -80)
     		{
     			if (isDown && tPrepare == 0)
@@ -239,7 +289,7 @@ namespace Game3
     				GameScr.findCharInMap(id).cy = y - 30;
     				GameScr.findCharInMap(id).statusMe = 4;
     			}
-    			if (Res.abs(y - y2) < 50 && TileMap.tileTypeAt(x, y, 2))
+			if (y >= y2)
     			{
     				tHole = true;
     				if (planet < 3)
@@ -259,14 +309,16 @@ namespace Game3
     					}
     					if (type == 1)
     					{
-    						if (isMe)
-    						{
-    							Char.myCharz().isTeleport = false;
-    						}
-    						else if (GameScr.findCharInMap(id) != null)
-    						{
-    							GameScr.findCharInMap(id).isTeleport = false;
-    						}
+						if (isMe)
+						{
+							Char.myCharz().isTeleport = false;
+							Char.myCharz().cy = y;
+						}
+						else if (GameScr.findCharInMap(id) != null)
+						{
+							GameScr.findCharInMap(id).isTeleport = false;
+							GameScr.findCharInMap(id).cy = y;
+						}
     						painHead = false;
     					}
     				}
@@ -289,14 +341,16 @@ namespace Game3
     					}
     					if (type == 1)
     					{
-    						if (isMe)
-    						{
-    							Char.myCharz().isTeleport = false;
-    						}
-    						else if (GameScr.findCharInMap(id) != null)
-    						{
-    							GameScr.findCharInMap(id).isTeleport = false;
-    						}
+						if (isMe)
+						{
+							Char.myCharz().isTeleport = false;
+							Char.myCharz().cy = y;
+						}
+						else if (GameScr.findCharInMap(id) != null)
+						{
+							GameScr.findCharInMap(id).isTeleport = false;
+							GameScr.findCharInMap(id).cy = y;
+						}
     						painHead = false;
     					}
     				}

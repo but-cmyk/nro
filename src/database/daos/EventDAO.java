@@ -6,56 +6,59 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import database.AlyraManager;
-import lombok.Getter;
-import lombok.Setter;
 import utils.Logger;
 
 public class EventDAO {
 
-    @Setter
-    @Getter
     private static long remainingTimeToIncreasePotentialAndPower = 0;
-    @Setter
-    @Getter
     private static long remainingTimeToIncreaseHP = 0;
-    @Setter
-    @Getter
     private static long remainingTimeToIncreaseMP = 0;
-    @Setter
-    @Getter
     private static long remainingTimeToIncreaseDame = 0;
+
+    public static long getRemainingTimeToIncreasePotentialAndPower() { return remainingTimeToIncreasePotentialAndPower; }
+    public static void setRemainingTimeToIncreasePotentialAndPower(long v) { remainingTimeToIncreasePotentialAndPower = v; }
+
+    public static long getRemainingTimeToIncreaseHP() { return remainingTimeToIncreaseHP; }
+    public static void setRemainingTimeToIncreaseHP(long v) { remainingTimeToIncreaseHP = v; }
+
+    public static long getRemainingTimeToIncreaseMP() { return remainingTimeToIncreaseMP; }
+    public static void setRemainingTimeToIncreaseMP(long v) { remainingTimeToIncreaseMP = v; }
+
+    public static long getRemainingTimeToIncreaseDame() { return remainingTimeToIncreaseDame; }
+    public static void setRemainingTimeToIncreaseDame(long v) { remainingTimeToIncreaseDame = v; }
 
     public static void loadInternationalWomensDayEvent() {
         try (Connection con = AlyraManager.getConnection();) {
             PreparedStatement ps = con.prepareStatement("SELECT `data` FROM `event` WHERE `name` = 'international_womens_day'");
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {
-                Gson gson = new Gson();
-                JsonObject jsonObject = gson.fromJson(String.valueOf(rs.getString("data")), JsonObject.class);
-                remainingTimeToIncreaseDame = jsonObject.getAsJsonPrimitive("damePrecent").getAsLong();
-                remainingTimeToIncreaseHP = jsonObject.getAsJsonPrimitive("hpPrecent").getAsLong();
-                remainingTimeToIncreaseMP = jsonObject.getAsJsonPrimitive("mpPrecent").getAsLong();
-                remainingTimeToIncreasePotentialAndPower = jsonObject.getAsJsonPrimitive("papPrecent").getAsLong();
+                JsonObject json = new Gson().fromJson(rs.getString("data"), JsonObject.class);
+                remainingTimeToIncreasePotentialAndPower = json.get("remaining_time_to_increase_potential_and_power").getAsLong();
+                remainingTimeToIncreaseHP = json.get("remaining_time_to_increase_hp").getAsLong();
+                remainingTimeToIncreaseMP = json.get("remaining_time_to_increase_mp").getAsLong();
+                remainingTimeToIncreaseDame = json.get("remaining_time_to_increase_dame").getAsLong();
             }
-        } catch (Exception ex) {
+        } catch (Exception e) {
+            Logger.logException(EventDAO.class, e, "Lỗi load event ngày quốc tế phụ nữ");
         }
     }
 
     public static void save() {
-        try {
-            JsonObject jsonObject = new JsonObject();
-            jsonObject.addProperty("damePrecent", remainingTimeToIncreaseDame);
-            jsonObject.addProperty("hpPrecent", remainingTimeToIncreaseHP);
-            jsonObject.addProperty("mpPrecent", remainingTimeToIncreaseMP);
-            jsonObject.addProperty("papPrecent", remainingTimeToIncreasePotentialAndPower);
-
-            String jsonData = jsonObject.toString();
-
-            AlyraManager.executeUpdate("UPDATE `event` SET `data` = ? WHERE `name` = 'international_womens_day'", jsonData);
-        } catch (Exception e) {
-            Logger.error("Lỗi save Event Data\n");
-        }
-
+        saveInternationalWomensDayEvent();
     }
 
+    private static void saveInternationalWomensDayEvent() {
+        try (Connection con = AlyraManager.getConnection();) {
+            PreparedStatement ps = con.prepareStatement("UPDATE `event` SET `data` = ? WHERE `name` = 'international_womens_day'");
+            JsonObject json = new JsonObject();
+            json.addProperty("remaining_time_to_increase_potential_and_power", remainingTimeToIncreasePotentialAndPower);
+            json.addProperty("remaining_time_to_increase_hp", remainingTimeToIncreaseHP);
+            json.addProperty("remaining_time_to_increase_mp", remainingTimeToIncreaseMP);
+            json.addProperty("remaining_time_to_increase_dame", remainingTimeToIncreaseDame);
+            ps.setString(1, json.toString());
+            ps.executeUpdate();
+        } catch (Exception e) {
+            Logger.logException(EventDAO.class, e, "Lỗi save event ngày quốc tế phụ nữ");
+        }
+    }
 }

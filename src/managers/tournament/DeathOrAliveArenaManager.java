@@ -2,7 +2,6 @@ package managers.tournament;
 
 import java.util.ArrayList;
 import java.util.List;
-import lombok.NonNull;
 import models.map.Zone;
 import models.tournament.DeathOrAliveArena;
 import server.Maintenance;
@@ -55,7 +54,7 @@ public class DeathOrAliveArenaManager implements Runnable {
         list.remove(vdst);
     }
 
-    public DeathOrAliveArena getVDST(@NonNull Zone zone) {
+    public DeathOrAliveArena getVDST( Zone zone) {
         for (DeathOrAliveArena vdst : list) {
             if (vdst.getZone().equals(zone)) {
                 return vdst;

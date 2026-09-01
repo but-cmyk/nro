@@ -351,10 +351,15 @@ public class BossManager {
 
     public void update() {
         for (int i = this.bosses.size() - 1; i >= 0; i--) {
-            try {
-                this.bosses.get(i).update();
-            } catch (Exception e) {
-                e.printStackTrace();
+            if (i < this.bosses.size()) {
+                Boss boss = this.bosses.get(i);
+                if (boss != null) {
+                    try {
+                        boss.update();
+                    } catch (Exception e) {
+                        Logger.logException(BossManager.class, e, "Lỗi update boss: " + boss.name);
+                    }
+                }
             }
         }
     }

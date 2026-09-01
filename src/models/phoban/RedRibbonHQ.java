@@ -14,7 +14,6 @@ import models.player.Player;
 import services.map.ChangeMapService;
 import java.util.ArrayList;
 import java.util.List;
-import lombok.Data;
 import models.map.ItemMap;
 import server.Maintenance;
 import services.map.ItemMapService;
@@ -23,7 +22,6 @@ import services.map.MapService;
 import services.Service;
 import utils.Util;
 
-@Data
 public class RedRibbonHQ {
 
     //bang hội đủ số người mới đc mở
@@ -37,6 +35,12 @@ public class RedRibbonHQ {
     public int id;
     public final List<Zone> zones;
     private Clan clan;
+
+    public List<Zone> getZones() { return this.zones; }
+    public Clan getClan() { return this.clan; }
+    public void setClan(Clan clan) { this.clan = clan; }
+    public int getId() { return this.id; }
+    public long getLastTimeOpen() { return this.lastTimeOpen; }
 
     private long lastTimeOpen;
     public boolean isOpened;
@@ -79,8 +83,10 @@ public class RedRibbonHQ {
             this.init();
         } catch (Exception e) {
             e.printStackTrace();
-            player.clan.lastTimeOpenDoanhTrai = 0;
-            player.clan.haveGoneDoanhTrai = false;
+            if (player != null && player.clan != null) {
+                player.clan.lastTimeOpenDoanhTrai = 0;
+                player.clan.haveGoneDoanhTrai = false;
+            }
             this.dispose();
             return;
         }
