@@ -29,6 +29,7 @@ import models.npc.Npc;
 import server.Manager;
 import services.map.NpcManager;
 import services.player.InventoryService;
+import services.func.TransactionService;
 import utils.Logger;
 import utils.Util;
 
@@ -104,6 +105,10 @@ public class CombineService {
      */
     public void showInfoCombine(Player player, int[] index) {
         if (player == null || player.combineNew == null || index == null) {
+            return;
+        }
+        if (TransactionService.gI().check(player)) {
+            Service.gI().sendThongBao(player, "Không thể thực hiện khi đang giao dịch");
             return;
         }
         player.combineNew.clearItemCombine();
@@ -246,6 +251,13 @@ public class CombineService {
      * @param player
      */
     public void startCombine(Player player, int... n) {
+        if (player == null || player.combineNew == null) {
+            return;
+        }
+        if (TransactionService.gI().check(player)) {
+            Service.gI().sendThongBao(player, "Không thể thực hiện khi đang giao dịch");
+            return;
+        }
         int num = 0;
         if (n.length > 0) {
             num = n[0];
@@ -693,6 +705,13 @@ public class CombineService {
     }
 
     public void openTabCombine(Player player, int type) {
+        if (player == null || player.combineNew == null) {
+            return;
+        }
+        if (TransactionService.gI().check(player)) {
+            Service.gI().sendThongBao(player, "Không thể thực hiện khi đang giao dịch");
+            return;
+        }
         player.combineNew.setTypeCombine(type);
         Message msg = null;
         try {

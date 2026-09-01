@@ -69,9 +69,6 @@ public class SkillService {
             } catch (IOException ignored) {
             }
         }
-        if (player.effectSkill != null && player.effectSkill.isHaveEffectSkill()) {
-            return false;
-        }
         if (player.playerSkill == null) {
             return false;
         }
