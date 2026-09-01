@@ -173,13 +173,16 @@ public class Input {
                         return;
                     }
 
-                    // 3. Kiểm tra vé tặng (ID 718) - 1 Thỏi vàng tốn 1 điểm Option
+                    // 3. Kiểm tra vé tặng (ID 1345) - 1 Thỏi vàng tốn 1 điểm Option
                     Item itemTicket = InventoryService.gI().findItemBag(player, 1345); // ID vé
                     ItemOption option = null;
                     if (itemTicket != null && itemTicket.itemOptions != null) {
                         option = itemTicket.itemOptions.stream().filter(io -> io.optionTemplate.id == 31 && io.param > 0).findAny().orElse(null);
                     }
-
+                    if (option == null || option.param < quantity) {
+                        Service.gI().sendThongBao(player, "Bạn không đủ lượt tặng thỏi vàng trên vé");
+                        return;
+                    }
 
                     // 4. Xử lý tặng
                     Player plTarget = Client.gI().getPlayer(name);
@@ -252,9 +255,8 @@ public class Input {
                     if (isSuccess) {
                         // Trừ thỏi vàng người gửi
                         InventoryService.gI().subQuantityItemsBag(player, thoiVangSender, quantity);
-
-
-
+                        // Trừ lượt vé người gửi
+                        option.param -= quantity;
                         // Cập nhật hành trang người gửi
                         InventoryService.gI().sendItemBags(player);
 

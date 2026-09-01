@@ -24,6 +24,7 @@ import java.util.stream.IntStream;
 
 import services.func.Input;
 import services.func.BuyBackService;
+import services.func.TransactionService;
 import services.map.NpcService;
 import utils.SkillUtil;
 import utils.TimeUtil;
@@ -49,6 +50,13 @@ public class ShopService {
     }
 
     public void opendShop(Player player, String tagName, boolean allGender) {
+        if (player == null) {
+            return;
+        }
+        if (TransactionService.gI().check(player)) {
+            Service.gI().sendThongBao(player, "Không thể thực hiện khi đang giao dịch");
+            return;
+        }
         if (tagName.equals("ITEMS_LUCKY_ROUND")) {
             openShopType4(player, tagName, player.inventory.itemsBoxCrackBall);
             return;
@@ -613,6 +621,13 @@ public class ShopService {
     }
 
     public void takeItem(Player player, byte type, int tempId) {
+        if (player == null) {
+            return;
+        }
+        if (TransactionService.gI().check(player)) {
+            Service.gI().sendThongBao(player, "Không thể thực hiện khi đang giao dịch");
+            return;
+        }
         String tagName = player.idMark.getTagNameShop();
         if (tagName == null || tagName.isEmpty()) {
             return;

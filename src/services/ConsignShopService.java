@@ -92,35 +92,14 @@ public class ConsignShopService {
         return listSort;
     }
 
-//    private boolean isKyGui(Item item) {
-//        switch (item.template.type) {
-//            case 27:
-//                switch (item.template.id) {
-//                    case 921:
-//                    case 1155:
-//                    case 1156:
-//                    case 568:
-//                        return true;
-//                }
-//                return false;
-//            case 21:
-//            case 72:
-//                return true;
-//        }
-//        for (int i = 0; i < item.itemOptions.size(); i++) {
-//            if (item.itemOptions.get(i).optionTemplate.id == 86) {
-//                return true;
-//            }
-//        }
-//        return false;
-//    }
-
     private boolean SubThoiVang(Player pl, int quatity) {
-        for (Item item : pl.inventory.itemsBag) {
-            if (item.isNotNullItem() && item.template.id == 457 && item.quantity >= quatity) {
-                services.player.InventoryService.gI().subQuantityItemsBag(pl, item, quatity);
-                return true;
-            }
+        if (pl == null || pl.inventory == null || pl.inventory.itemsBag == null) {
+            return false;
+        }
+        int totalGoldBars = InventoryService.gI().countItemBag(pl, (short) 457);
+        if (totalGoldBars >= quatity) {
+            InventoryService.gI().removeItemQuantity(pl, (short) 457, quatity);
+            return true;
         }
         return false;
     }

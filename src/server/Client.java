@@ -73,7 +73,6 @@ public class Client implements Runnable {
                 try {
                     clearCloneSessions();
                     logMemory();
-                    System.gc();
                 } catch (Exception e) {
                     Logger.logException(Client.class, e, "Error in session cleanup task");
                 }
