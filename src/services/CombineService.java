@@ -179,7 +179,7 @@ public class CombineService {
                             + "|1|Cần " + Util.powerToString(50_000_000) + " vàng";
 
                     if (player.inventory.gold < 50_000_000) {
-                        this.whis.createOtherMenu(player, ConstNpc.IGNORE_MENU, "Hết tiền rồi\nẢo ít thôi con", "Đóng");
+                        this.whis.createOtherMenu(player, ConstNpc.IGNORE_MENU, "Con chưa có đủ 50 triệu vàng để tiến hành chế tạo trang bị Thiên Sứ.", "Đóng");
                         return;
                     }
 
