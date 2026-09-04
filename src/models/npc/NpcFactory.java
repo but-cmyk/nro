@@ -37,7 +37,6 @@ import utils.Logger;
 import utils.Util;
 import services.phoban.SuperDivineWaterService;
 import services.SubMenuService;
-import services.ShenronEventService;
 import models.npc.npc_list.*;
 import models.skill.Skill;
 import network.io.Message;
@@ -158,20 +157,6 @@ public class NpcFactory {
                             SummonDragonNamek.gI().sendWhishesNamec(player);
                         }
                         break;
-                    case ConstNpc.SHOW_SHENRON_EVENT_CONFIRM:
-                        if (player.shenronEvent != null) {
-                            player.shenronEvent.showConfirmShenron((byte) select);
-                        }
-                        break;
-                    case ConstNpc.SHENRON_EVENT_CONFIRM:
-                        if (player.shenronEvent != null) {
-                            if (select == 0) {
-                                player.shenronEvent.confirmWish();
-                            } else if (select == 1) {
-                                player.shenronEvent.sendWhishesShenron();
-                            }
-                        }
-                        break;
                     case ConstNpc.SHENRON_CONFIRM:
                         if (select == 0) {
                             SummonDragon.gI().confirmWish();
@@ -207,11 +192,6 @@ public class NpcFactory {
             public void confirmMenu(Player player, int select) {
                 switch (player.idMark.getIndexMenu()) {
                     case ConstNpc.IGNORE_MENU -> {
-                    }
-                    case ConstNpc.SUMMON_SHENRON_EVENT -> {
-                        if (select == 0) {
-                            ShenronEventService.gI().summonShenron(player);
-                        }
                     }
                     case ConstNpc.CONFIRM_CHANGE_PET -> {
                     if (select == 0) {
@@ -469,34 +449,69 @@ public class NpcFactory {
                     case ConstNpc.OTT_ACCEPT -> {
                         if (select < 3) {
                             Player pl = (Player) PLAYERID_OBJECT.get(player.id);
-                            int slp1 = pl.idMark.getOtt();
-                            int slp2 = select;
-                            if (slp1 == -1 || slp2 == -1) {
+                            if (pl == null) {
+                                Service.gI().sendThongBao(player, "Đối thủ không còn online!");
+                                PLAYERID_OBJECT.remove(player.id);
                                 return;
                             }
-                            pl.idMark.setOtt(-1);
-                            String[] selects = new String[] { "Kéo", "Búa", "Bao" };
-                            Service.gI().chat(pl, selects[slp1]);
-                            Service.gI().chat(player, selects[slp2]);
-                            Service.gI().sendEffAllPlayer(pl, 1000 + slp1, 1, 2, 1);
-                            Service.gI().sendEffAllPlayer(player, 1000 + slp2, 1, 2, 1);
-                            if (slp1 == slp2) {
-                                Service.gI().sendThongBao(pl, "Hòa!");
-                                Service.gI().sendThongBao(player, "Hòa!");
-                            } else if (slp1 == 0 && slp2 == 2 || slp1 == 1 && slp2 == 0 || slp1 == 2 && slp2 == 1) {
-                                Service.gI().sendThongBao(pl, "Thắng!");
-                                Service.gI().sendThongBao(player, "Thua!");
-                                pl.inventory.gold += 4800000;
-                                player.inventory.gold -= 5000000;
-                                Service.gI().sendMoney(pl);
-                                Service.gI().sendMoney(player);
-                            } else {
-                                Service.gI().sendThongBao(pl, "Thua!");
-                                Service.gI().sendThongBao(player, "Thắng!");
-                                pl.inventory.gold -= 5000000;
-                                player.inventory.gold += 4800000;
-                                Service.gI().sendMoney(pl);
-                                Service.gI().sendMoney(player);
+                            // Ordered lock chống deadlock khi 2 player cùng thực hiện
+                            Player firstLock = player.id < pl.id ? player : pl;
+                            Player secondLock = player.id < pl.id ? pl : player;
+                            synchronized (firstLock) {
+                                synchronized (secondLock) {
+                                    int slp1 = pl.idMark.getOtt();
+                                    int slp2 = select;
+                                    if (slp1 == -1 || slp2 == -1) {
+                                        PLAYERID_OBJECT.remove(player.id);
+                                        return;
+                                    }
+                                    long betGold = 5_000_000L;
+                                    long rewardGold = 4_800_000L;
+
+                                    // BẮT BUỘC KIỂM TRA SỐ DƯ CẢ 2 BÊN TRÁNH IN TIỀN TỪ SỐ ÂM
+                                    if (pl.inventory.gold < betGold) {
+                                        Service.gI().sendThongBao(player, pl.name + " không đủ " + Util.format(betGold) + " vàng để cá cược!");
+                                        Service.gI().sendThongBao(pl, "Bạn không đủ " + Util.format(betGold) + " vàng để cá cược!");
+                                        pl.idMark.setOtt(-1);
+                                        PLAYERID_OBJECT.remove(player.id);
+                                        return;
+                                    }
+                                    if (player.inventory.gold < betGold) {
+                                        Service.gI().sendThongBao(player, "Bạn không đủ " + Util.format(betGold) + " vàng để cá cược!");
+                                        Service.gI().sendThongBao(pl, player.name + " không đủ " + Util.format(betGold) + " vàng để cá cược!");
+                                        pl.idMark.setOtt(-1);
+                                        PLAYERID_OBJECT.remove(player.id);
+                                        return;
+                                    }
+
+                                    pl.idMark.setOtt(-1);
+                                    String[] selects = new String[] { "Kéo", "Búa", "Bao" };
+                                    Service.gI().chat(pl, selects[slp1]);
+                                    Service.gI().chat(player, selects[slp2]);
+                                    Service.gI().sendEffAllPlayer(pl, 1000 + slp1, 1, 2, 1);
+                                    Service.gI().sendEffAllPlayer(player, 1000 + slp2, 1, 2, 1);
+
+                                    if (slp1 == slp2) {
+                                        Service.gI().sendThongBao(pl, "Hòa!");
+                                        Service.gI().sendThongBao(player, "Hòa!");
+                                    } else if ((slp1 == 0 && slp2 == 2) || (slp1 == 1 && slp2 == 0) || (slp1 == 2 && slp2 == 1)) {
+                                        // pl Thắng, player Thua
+                                        player.inventory.subGold(betGold);
+                                        pl.inventory.addGold(rewardGold);
+                                        Service.gI().sendThongBao(pl, "Thắng! Nhận được " + Util.format(rewardGold) + " vàng");
+                                        Service.gI().sendThongBao(player, "Thua! Bị trừ " + Util.format(betGold) + " vàng");
+                                    } else {
+                                        // player Thắng, pl Thua
+                                        pl.inventory.subGold(betGold);
+                                        player.inventory.addGold(rewardGold);
+                                        Service.gI().sendThongBao(player, "Thắng! Nhận được " + Util.format(rewardGold) + " vàng");
+                                        Service.gI().sendThongBao(pl, "Thua! Bị trừ " + Util.format(betGold) + " vàng");
+                                    }
+                                    Service.gI().sendMoney(pl);
+                                    Service.gI().sendMoney(player);
+                                    PLAYERID_OBJECT.remove(player.id);
+                                    PLAYERID_OBJECT.remove(pl.id);
+                                }
                             }
                         }
                     }
@@ -505,18 +520,6 @@ public class NpcFactory {
                         switch (select) {
                             case 0 -> SubMenuService.gI().controller(player, (int) pl.id, SubMenuService.OTT);
                             case 1 -> SubMenuService.gI().controller(player, (int) pl.id, SubMenuService.CUU_SAT);
-                            case 2 -> {
-                                // if (item != null) {
-                                // SubMenuService.gI().controller(player, (int) pl.id, SubMenuService.BUY_BACK);
-                                // } else {
-                                // Service.gI().sendThongBao(pl, pl.name + " chưa bật bluetooth!");
-                                // }
-                            }
-                            case 3 -> {
-                                // if (item != null) {
-                                // Service.gI().sendThongBao(pl, pl.name + " chưa bật bluetooth!");
-                                // }
-                            }
                         }
                     }
 
@@ -749,26 +752,29 @@ public class NpcFactory {
                     }
                       case ConstNpc.UP_TOP_ITEM -> {
                         if (select == 0) {
-                            if (player.inventory.gem >= 50 && player.idMark.getIdItemUpTop() != -1) {
-                                ConsignItem it = ConsignShopService.gI().getItemBuy(player.idMark.getIdItemUpTop());
-                                if (it == null || it.isBuy) {
-                                    Service.gI().sendThongBao(player, "Vật phẩm không tồn tại hoặc đã được bán");
-                                    return;
-                                }
-                                if (it.player_sell != player.id) {
-                                    Service.gI().sendThongBao(player, "Vật phẩm không thuộc quyền sở hữu");
+                            if (player.idMark != null && player.idMark.getIdItemUpTop() != -1) {
+                                if (player.inventory.gem >= 5) {
+                                    ConsignItem it = ConsignShopManager.gI().getItemById(player.idMark.getIdItemUpTop());
+                                    if (it == null || it.isBuy) {
+                                        Service.gI().sendThongBao(player, "Vật phẩm không tồn tại hoặc đã được bán");
+                                        return;
+                                    }
+                                    if (it.player_sell != player.id) {
+                                        Service.gI().sendThongBao(player, "Vật phẩm không thuộc quyền sở hữu");
+                                        ConsignShopService.gI().openShopKyGui(player);
+                                        return;
+                                    }
+                                    player.inventory.gem -= 5;
+                                    Service.gI().sendMoney(player);
+                                    it.isUpTop = (byte) Math.min(100, it.isUpTop + 1);
+                                    ConsignShopManager.gI().updateItemUpTopAsync(it.id, it.isUpTop);
+                                    database.daos.PlayerDAO.updatePlayerAsync(player);
+                                    Service.gI().sendThongBao(player, "Đưa vật phẩm lên trang đầu thành công!");
                                     ConsignShopService.gI().openShopKyGui(player);
-                                    return;
+                                } else {
+                                    Service.gI().sendThongBao(player, "Bạn không đủ Ngọc Xanh (yêu cầu 5 ngọc)");
+                                    player.idMark.setIdItemUpTop(-1);
                                 }
-                                player.inventory.gem -= 50;
-                                Service.gI().sendMoney(player);
-                                Service.gI().sendThongBao(player, "Thành công");
-                                it.isUpTop += 1;
-                                ConsignShopManager.gI().save();// lưu data
-                                ConsignShopService.gI().openShopKyGui(player);
-                            } else {
-                                Service.gI().sendThongBao(player, "Bạn không đủ ngọc");
-                                player.idMark.setIdItemUpTop(-1);
                             }
                         }
                     }

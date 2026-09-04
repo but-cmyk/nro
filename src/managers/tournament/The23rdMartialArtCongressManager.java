@@ -8,11 +8,13 @@ import models.map.Zone;
 import models.player.Player;
 import server.Maintenance;
 
+import java.util.concurrent.CopyOnWriteArrayList;
+
 public class The23rdMartialArtCongressManager implements Runnable {
 
     private static The23rdMartialArtCongressManager instance;
     private long lastUpdate;
-    private static final List<The23rdMartialArtCongress> list = new ArrayList<>();
+    private static final List<The23rdMartialArtCongress> list = new CopyOnWriteArrayList<>();
 
     public static The23rdMartialArtCongressManager gI() {
         if (instance == null) {
@@ -57,8 +59,9 @@ public class The23rdMartialArtCongressManager implements Runnable {
     }
 
     public The23rdMartialArtCongress getMC( Zone zone) {
+        if (zone == null) return null;
         for (The23rdMartialArtCongress mc : list) {
-            if (mc.getZone().equals(zone)) {
+            if (mc != null && mc.getZone() != null && mc.getZone().equals(zone)) {
                 return mc;
             }
         }
@@ -66,8 +69,9 @@ public class The23rdMartialArtCongressManager implements Runnable {
     }
 
     public boolean plCheck(Player player) {
+        if (player == null) return false;
         for (The23rdMartialArtCongress mc : list) {
-            if (mc.getPlayer().id == player.id) {
+            if (mc != null && mc.getPlayer() != null && mc.getPlayer().id == player.id) {
                 return true;
             }
         }

@@ -64,6 +64,7 @@ public class DeathOrAliveArenaService {
             ChangeMapService.gI().changeMap(player, zone, player.location.x, 408);
         }
 
+        final int costUsed = cost;
         setTimeout(() -> {
             try {
                 Npc baHatMit = NpcManager.getNpc(ConstNpc.BA_HAT_MIT);
@@ -74,6 +75,7 @@ public class DeathOrAliveArenaService {
                 vdst.setRound(0);
                 vdst.setZone(zone);
                 vdst.setTimeTotal(0);
+                vdst.costWaterBottle = costUsed;
                 vdst.endChallenge = false;
 
                 DeathOrAliveArenaManager.gI().add(vdst);
@@ -103,10 +105,10 @@ public class DeathOrAliveArenaService {
         DeathOrAliveArena vdst = DeathOrAliveArenaManager.gI().getVDST(player.zone);
 
         // Chỉ chủ phòng mới có thể hủy
-        if (vdst != null && vdst.getPlayer().equals(player)) {
+        if (vdst != null && vdst.getPlayer() != null && vdst.getPlayer().equals(player)) {
 
-            // Hoàn lại phí đã đăng ký
-            int cost = player.thoiVangVoDaiSinhTu;
+            // Hoàn lại phí đã đăng ký của lượt này
+            int cost = vdst.costWaterBottle;
             if (cost > 0) {
                 Item waterBottleRefund = ItemService.gI().createNewItem((short) 456, cost);
                 InventoryService.gI().addItemBag(player, waterBottleRefund);
@@ -114,8 +116,13 @@ public class DeathOrAliveArenaService {
                 Service.gI().sendThongBao(player, "Đã hoàn lại " + cost + " bình nước.");
             }
 
-            // Reset lại thông tin
-            player.thoiVangVoDaiSinhTu = 0;
+            // Dọn dẹp boss nếu đã sinh ra trên map
+            if (vdst.getBoss() != null) {
+                vdst.getBoss().leaveMap();
+            }
+
+            // Giảm lại 1 lượt vì đã hủy
+            player.thoiVangVoDaiSinhTu = Math.max(0, player.thoiVangVoDaiSinhTu - 1);
             player.isPKDHVT = false;
 
             // Xóa trận đấu khỏi manager để khu vực này trống trở lại

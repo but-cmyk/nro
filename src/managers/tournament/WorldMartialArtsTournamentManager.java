@@ -15,12 +15,13 @@ import services.map.MapService;
 import services.Service;
 import utils.TimeUtil;
 import utils.Util;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class WorldMartialArtsTournamentManager implements Runnable {
 
-    public ArrayList<Long> listReg = new ArrayList<>();
-    public ArrayList<Long> listWait = new ArrayList<>();
-    public ArrayList<String> listChamp = new ArrayList<>();
+    public List<Long> listReg = new CopyOnWriteArrayList<>();
+    public List<Long> listWait = new CopyOnWriteArrayList<>();
+    public List<String> listChamp = new CopyOnWriteArrayList<>();
 
     public String cupName;
     public String[] time;
@@ -52,8 +53,8 @@ public class WorldMartialArtsTournamentManager implements Runnable {
     }
 
     public WorldMartialArtsTournamentManager() {
-        listTournaments = new ArrayList<>();
-        chatText = new ArrayList<>();
+        listTournaments = new CopyOnWriteArrayList<>();
+        chatText = new CopyOnWriteArrayList<>();
         lastTime = System.currentTimeMillis();
     }
 
@@ -161,8 +162,10 @@ public class WorldMartialArtsTournamentManager implements Runnable {
                     Player p1 = getPlayerById(listReg.get(i));
                     Player p2 = getPlayerById(listReg.get(i + 1));
                     Zone z = getZoneTournament();
-                    WorldMartialArtsTournament wmat = new WorldMartialArtsTournament(p1, p2, z);
-                    addWMAT(wmat);
+                    if (p1 != null && p2 != null && z != null) {
+                        WorldMartialArtsTournament wmat = new WorldMartialArtsTournament(p1, p2, z);
+                        addWMAT(wmat);
+                    }
                 }
                 lastWaitTime = System.currentTimeMillis();
                 waitTime = 240000;
@@ -245,8 +248,9 @@ public class WorldMartialArtsTournamentManager implements Runnable {
     }
 
     public WorldMartialArtsTournament getWMAT( Zone zone) {
+        if (zone == null) return null;
         for (WorldMartialArtsTournament wmat : listTournaments) {
-            if (wmat.zone.equals(zone)) {
+            if (wmat != null && wmat.zone != null && wmat.zone.equals(zone)) {
                 return wmat;
             }
         }

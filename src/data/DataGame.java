@@ -26,7 +26,7 @@ import models.player.Player;
 public class DataGame {
 
     public static byte vsData = 11;
-    public static byte vsMap = 2;
+    public static byte vsMap = 3;
     public static byte vsSkill = 1;
     public static byte vsItem = 9;
     public static int vsRes = 1;
@@ -291,13 +291,49 @@ public class DataGame {
         }
     }
 
+    private static byte[] BG_ITEM_VERSIONS;
+
+    public static synchronized byte[] getBgItemVersions() {
+        if (BG_ITEM_VERSIONS == null) {
+            int maxId = 0;
+            File dir = new File("data/item_bg_temp/x2");
+            if (dir.exists() && dir.isDirectory()) {
+                File[] files = dir.listFiles((d, name) -> name.endsWith(".png"));
+                if (files != null) {
+                    for (File f : files) {
+                        try {
+                            String name = f.getName().replace(".png", "");
+                            int id = Integer.parseInt(name);
+                            if (id > maxId) {
+                                maxId = id;
+                            }
+                        } catch (Exception ignored) {
+                        }
+                    }
+                }
+            }
+            int size = Math.max(Manager.BG_ITEMS.size(), maxId + 1);
+            BG_ITEM_VERSIONS = new byte[size];
+            for (int i = 0; i < size; i++) {
+                File f = new File("data/item_bg_temp/x2/" + i + ".png");
+                if (f.exists() && f.isFile()) {
+                    BG_ITEM_VERSIONS[i] = (byte) (f.length() % 127);
+                } else {
+                    BG_ITEM_VERSIONS[i] = 0;
+                }
+            }
+        }
+        return BG_ITEM_VERSIONS;
+    }
+
     public static void sendBgItemVersion(MySession session) {
         Message msg = null;
         try {
+            byte[] versions = getBgItemVersions();
             msg = new Message(-93);
-            msg.writer().writeShort(Manager.BG_ITEMS.size());
-            for (BgItem bgItem : Manager.BG_ITEMS) {
-                msg.writer().writeByte(bgItem.id);
+            msg.writer().writeShort(versions.length);
+            for (byte b : versions) {
+                msg.writer().writeByte(b);
             }
             session.sendMessage(msg);
         } catch (Exception e) {
@@ -312,10 +348,11 @@ public class DataGame {
     public static void sendItemBGTemplate(MySession session, int id) {
         Message msg = null;
         try {
-            String key = "bg_" + id + "_x" + session.zoomLevel;
+            int zoom = (session.zoomLevel > 0 && session.zoomLevel <= 4) ? session.zoomLevel : 2;
+            String key = "bg_" + id + "_x" + zoom;
             byte[] bg_temp = BG_ITEM_CACHE.get(key);
             if (bg_temp == null) {
-                bg_temp = FileIO.readFile("data/item_bg_temp/x" + session.zoomLevel + "/" + id + ".png");
+                bg_temp = FileIO.readFile("data/item_bg_temp/x" + zoom + "/" + id + ".png");
                 if (bg_temp != null) {
                     BG_ITEM_CACHE.put(key, bg_temp);
                 }
@@ -364,10 +401,14 @@ public class DataGame {
     public static void sendIcon(MySession session, int id) {
         Message msg = null;
         try {
-            String key = "icon_" + id + "_x" + session.zoomLevel;
+            int zoom = (session.zoomLevel > 0 && session.zoomLevel <= 4) ? session.zoomLevel : 2;
+            String key = "icon_" + id + "_x" + zoom;
             byte[] icon = ICON_CACHE.get(key);
             if (icon == null) {
-                icon = FileIO.readFile("data/icon/x" + session.zoomLevel + "/" + id + ".png");
+                icon = FileIO.readFile("data/icon/x" + zoom + "/" + id + ".png");
+                if (icon == null && zoom != 2) {
+                    icon = FileIO.readFile("data/icon/x2/" + id + ".png");
+                }
                 if (icon != null) {
                     ICON_CACHE.put(key, icon);
                 }
@@ -378,6 +419,11 @@ public class DataGame {
                 msg.writer().writeInt(id);
                 msg.writer().writeInt(icon.length);
                 msg.writer().write(icon);
+                session.sendMessage(msg);
+            } else {
+                msg = new Message(-67);
+                msg.writer().writeInt(id);
+                msg.writer().writeInt(0);
                 session.sendMessage(msg);
             }
         } catch (Exception e) {
@@ -410,10 +456,11 @@ public class DataGame {
     public static void requestMobTemplate(MySession session, int id) {
         Message msg = null;
         try {
-            String key = "mob_" + id + "_x" + session.zoomLevel;
+            int zoom = (session.zoomLevel > 0 && session.zoomLevel <= 4) ? session.zoomLevel : 2;
+            String key = "mob_" + id + "_x" + zoom;
             byte[] mob = MOB_CACHE.get(key);
             if (mob == null) {
-                mob = FileIO.readFile("data/mob/x" + session.zoomLevel + "/" + id);
+                mob = FileIO.readFile("data/mob/x" + zoom + "/" + id);
                 if (mob != null) {
                     MOB_CACHE.put(key, mob);
                 }

@@ -20,7 +20,9 @@ import services.map.ItemMapService;
 import services.ItemTimeService;
 import services.map.MapService;
 import services.Service;
+import utils.Logger;
 import utils.Util;
+import services.player.PlayerService;
 
 public class RedRibbonHQ {
 
@@ -28,7 +30,7 @@ public class RedRibbonHQ {
     public static final int N_PLAYER_CLAN = 0;
     //số người đứng cùng khu
     public static final int N_PLAYER_MAP = 0;
-    public static final int AVAILABLE = 2;
+    public static final int AVAILABLE = 5;
     public static final int TIME_DOANH_TRAI = 1800000;
     public static final int TIME_PICK_DOANH_TRAI = 300000;
 
@@ -281,7 +283,13 @@ public class RedRibbonHQ {
     }
 
     private void kickOutOfDT(Player player) {
-        if (MapService.gI().isMapDoanhTrai(player.zone.map.mapId)) {
+        if (player != null && player.zone != null && MapService.gI().isMapDoanhTrai(player.zone.map.mapId)) {
+            if (player.isDie()) {
+                player.nPoint.hp = player.nPoint.hpMax;
+                player.nPoint.mp = player.nPoint.mpMax;
+                Service.gI().Send_Info_NV(player);
+                PlayerService.gI().sendInfoHpMp(player);
+            }
             Service.gI().sendThongBao(player, "Đã hết thời gian, bạn sẽ được đưa về nhà");
             ChangeMapService.gI().changeMapBySpaceShip(player, 21 + player.gender, -1, -1);
         }
@@ -403,28 +411,37 @@ public class RedRibbonHQ {
 
     }
 
-    private void dispose() {
-        this.removeTextDoanhTrai();
-        // remove bosses
-        for (Boss boss : bosses) {
-            if (!boss.isDie()) {
-                boss.leaveMap();
-            }
-        }
-        // remove itemmap
-        for (Zone zone : zones) {
-            for (int i = zone.items.size() - 1; i >= 0; i--) {
-                if (i < zone.items.size()) {
-                    ItemMapService.gI().removeItemMap(zone.items.get(i));
+    public void dispose() {
+        try {
+            this.removeTextDoanhTrai();
+            // remove bosses
+            for (Boss boss : bosses) {
+                if (boss != null && !boss.isDie()) {
+                    boss.leaveMap();
                 }
             }
+            // remove itemmap
+            for (Zone zone : zones) {
+                synchronized (zone.items) {
+                    for (int i = zone.items.size() - 1; i >= 0; i--) {
+                        if (i < zone.items.size()) {
+                            ItemMapService.gI().removeItemMap(zone.items.get(i));
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            Logger.logException(RedRibbonHQ.class, e, "Lỗi dispose Doanh Trai");
+        } finally {
+            this.bosses.clear();
+            this.winDT = false;
+            this.isOpened = false;
+            if (this.clan != null) {
+                this.clan.haveGoneDoanhTrai = true;
+                this.clan.doanhTrai = null;
+            }
+            this.clan = null;
+            this.isTimePicking = false;
         }
-        this.bosses.clear();
-        this.winDT = false;
-        this.isOpened = false;
-        this.clan.haveGoneDoanhTrai = true;
-        this.clan.doanhTrai = null;
-        this.clan = null;
-        this.isTimePicking = false;
     }
 }

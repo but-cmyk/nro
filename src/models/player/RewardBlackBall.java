@@ -26,7 +26,6 @@ public class RewardBlackBall {
 //    public static final int R7S_2 = 20;
 
     public static final int TIME_WAIT = 3600000;
-    public static long time8h;
     private Player player;
 
     public long[] timeOutOfDateReward;
@@ -38,15 +37,20 @@ public class RewardBlackBall {
         this.timeOutOfDateReward = new long[7];
         this.lastTimeGetReward = new long[7];
         this.quantilyBlackBall = new int[7];
-        time8h = TimeUtil.getStartTimeBlackBallWar();
     }
 
     public void reward(byte star) {
+        if (star < 1 || star > 7) {
+            return;
+        }
+        long time8h = TimeUtil.getStartTimeBlackBallWar();
         if (this.timeOutOfDateReward[star - 1] > time8h) {
             quantilyBlackBall[star - 1]++;
         }
         this.timeOutOfDateReward[star - 1] = System.currentTimeMillis() + TIME_REWARD;
-        Service.gI().point(player);
+        if (player != null) {
+            Service.gI().point(player);
+        }
     }
 
     public void getRewardSelect(byte select) {
@@ -63,21 +67,24 @@ public class RewardBlackBall {
     }
 
     private void getReward(int star) {
-        if (timeOutOfDateReward[star - 1] > System.currentTimeMillis()
-                && Util.canDoWithTime(lastTimeGetReward[star - 1], TIME_WAIT)) {
-            switch (star) {
-                case 1:
-                case 2:
-                case 3:
-                case 4:
-                case 5:
-                case 6:
-                case 7:
-                    Service.gI().sendThongBao(player, "Phần thưởng NRSĐ sẽ có tác dụng cả ngày sau khi win");
-                    break;
-            }
+        if (star < 1 || star > 7) {
+            return;
+        }
+        if (timeOutOfDateReward[star - 1] > System.currentTimeMillis()) {
+            String effectDesc = switch (star) {
+                case 1 -> "Bùa 1 Sao Đen: +20% Sức Đánh";
+                case 2 -> "Bùa 2 Sao Đen: +20% HP Tối Đa";
+                case 3 -> "Bùa 3 Sao Đen: +20% Hút Máu HP";
+                case 4 -> "Bùa 4 Sao Đen: +20% Phản Sát Thương";
+                case 5 -> "Bùa 5 Sao Đen: +20% Chí Mạng & Sát Thương CM";
+                case 6 -> "Bùa 6 Sao Đen: +20% KI Tối Đa";
+                case 7 -> "Bùa 7 Sao Đen: +20% Né Đòn";
+                default -> "Bùa Ngọc Rồng Sao Đen";
+            };
+            long timeLeftHours = Math.max(1, (timeOutOfDateReward[star - 1] - System.currentTimeMillis()) / 3600000L);
+            Service.gI().sendThongBao(player, effectDesc + " đang có hiệu lực (còn khoảng " + timeLeftHours + " giờ)!");
         } else {
-            Service.gI().sendThongBao(player, "Chờ đợi là hạnh phúc :)");
+            Service.gI().sendThongBao(player, "Bùa sao đen này đã hết hạn!");
         }
     }
 

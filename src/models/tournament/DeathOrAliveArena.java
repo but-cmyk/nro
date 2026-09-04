@@ -59,7 +59,9 @@ public class DeathOrAliveArena {
     public Zone getZone() { return this.zone; }
     public void setZone(Zone zone) { this.zone = zone; }
 
-    private final List<Player> binhChon = new ArrayList<>();
+    public int costWaterBottle = 1;
+
+    private final List<Player> binhChon = new java.util.concurrent.CopyOnWriteArrayList<>();
 
     public boolean endChallenge;
 

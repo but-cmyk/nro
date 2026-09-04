@@ -104,29 +104,12 @@ public abstract class SuperRank extends Boss {
 
     @Override
     public void joinMap() {
-        if (playerAtt.zone != null) {
+        if (playerAtt != null && playerAtt.zone != null) {
             this.zone = playerAtt.zone;
-            this.pet = player.pet;
-            this.itemTime = player.itemTime;
-            this.inventory = player.inventory;
-            this.idMark = player.idMark;
-            this.effectSkill = player.effectSkill;
-            this.effectSkill.setPlayer(this);
-            this.effectSkin = player.effectSkin;
-            this.effectSkin.setPlayer(this);
-            this.fusion = player.fusion;
-            this.playerIntrinsic = player.playerIntrinsic;
-            this.rewardBlackBall = player.rewardBlackBall;
-            this.setClothes = player.setClothes;
-            this.setClothes.setup();
-            if (this.pet != null) {
-                this.pet.setClothes.setup();
+            if (this.nPoint != null) {
+                this.nPoint.hp = this.nPoint.hpMax;
+                this.nPoint.mp = this.nPoint.mpMax;
             }
-            this.nPoint = player.nPoint;
-            this.nPoint.setPlayer(this);
-            this.fusion = player.fusion;
-            this.fusion.setPlayer(this);
-            this.nPoint.calPoint();
             ChangeMapService.gI().changeMap(this, this.zone, 434, 264);
         }
     }
@@ -328,15 +311,12 @@ public abstract class SuperRank extends Boss {
 
     @Override
     public void leaveMap() {
-        if (playerAtt.location != null && playerAtt != null && playerAtt.zone != null && this.zone != null && this.zone.equals(playerAtt.zone) && !playerAtt.lostByDeath) {
+        if (playerAtt != null && playerAtt.location != null && playerAtt.zone != null && this.zone != null && this.zone.equals(playerAtt.zone) && !playerAtt.lostByDeath) {
             Service.gI().chat(this, ConstSuperRank.TEXT_CLONE_THUA);
         } else {
             Service.gI().chat(this, ConstSuperRank.TEXT_CLONE_THANG);
         }
         ChangeMapService.gI().exitMap(this);
-        if (this.player != null) {
-            this.player.dispose();
-        }
         this.lastZone = null;
         this.lastTimeRest = System.currentTimeMillis();
         this.changeStatus(BossStatus.REST);

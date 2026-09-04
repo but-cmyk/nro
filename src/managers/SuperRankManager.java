@@ -11,6 +11,8 @@ import models.player.Player;
 import server.Client;
 import server.Maintenance;
 
+import java.util.concurrent.CopyOnWriteArrayList;
+
 public class SuperRankManager implements Runnable {
 
     private final List<WaitSuperRank> waitList;
@@ -27,8 +29,8 @@ public class SuperRankManager implements Runnable {
     }
 
     public SuperRankManager() {
-        waitList = new ArrayList<>();
-        list = new ArrayList<>();
+        waitList = new CopyOnWriteArrayList<>();
+        list = new CopyOnWriteArrayList<>();
     }
 
     @Override
@@ -115,9 +117,10 @@ public class SuperRankManager implements Runnable {
     public String getCompeting(long plId) {
         for (int i = list.size() - 1; i >= 0; i--) {
             SuperRank spr = list.get(i);
-            if (spr.getPlayerId() == plId) {
+            if (spr == null) continue;
+            if (spr.getPlayerId() == plId && spr.getRival() != null && spr.getZone() != null) {
                 return "VS " + spr.getRival().name + " kv: " + spr.getZone().zoneId;
-            } else if (spr.getRivalId() == plId) {
+            } else if (spr.getRivalId() == plId && spr.getPlayer() != null && spr.getZone() != null) {
                 return "VS " + spr.getPlayer().name + " kv: " + spr.getZone().zoneId;
             }
         }

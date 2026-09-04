@@ -850,6 +850,10 @@ public class Service {
 
     public void attackMob(Player pl, int mobId, boolean isMobMe, int masterId) {
         if (pl != null && pl.zone != null) {
+            if (pl.playerSkill != null && pl.playerSkill.skillSelect == null) {
+                pl.playerSkill.skillSelect = pl.playerSkill.getSkillbyId(pl.gender == consts.ConstPlayer.TRAI_DAT
+                        ? Skill.DRAGON : (pl.gender == consts.ConstPlayer.NAMEC ? Skill.DEMON : Skill.GALICK));
+            }
             if (!isMobMe) {
                 for (Mob mob : pl.zone.mobs) {
                     if (mob.id == mobId) {
@@ -1117,7 +1121,10 @@ public class Service {
     }
 
     public void chooseFlag(Player pl, int index) {
-        if (index < 0) {
+        if (pl == null || index < 0 || index >= flagIconId.length) {
+            return;
+        }
+        if (pl.zone == null || pl.zone.map == null) {
             return;
         }
         if (MapService.gI().isMapBlackBallWar(pl.zone.map.mapId) || MapService.gI().isMapMaBu(pl.zone.map.mapId)) {

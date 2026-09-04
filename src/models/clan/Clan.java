@@ -5,6 +5,7 @@ import models.phoban.RedRibbonHQ;
 import services.player.ClanService;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import models.player.Player;
 import server.Client;
 import services.Service;
@@ -78,9 +79,9 @@ public class Clan {
         this.maxMember = 10;
         this.level = 1;
         this.createTime = (int) (System.currentTimeMillis() / 1000);
-        this.members = new ArrayList<>();
-        this.membersInGame = new ArrayList<>();
-        this.clanMessages = new ArrayList<>();
+        this.members = new CopyOnWriteArrayList<>();
+        this.membersInGame = new CopyOnWriteArrayList<>();
+        this.clanMessages = new CopyOnWriteArrayList<>();
     }
 
     public boolean canUpdateClan(Player player) {
@@ -385,7 +386,7 @@ public class Clan {
             ps.setInt(6, this.level);
             ps.setString(7, member);
             ps.setString(8, this.name2);
-            ps.setString(9, "cc");
+            ps.setString(9, "[]");
 
             // THÊM SET DATA CHO 2 CỘT MỚI
             ps.setInt(10, this.bdkb_level);

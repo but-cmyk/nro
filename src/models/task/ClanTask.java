@@ -27,6 +27,7 @@ public class ClanTask {
     public boolean notify70;
     public boolean notify80;
     public boolean notify90;
+    public boolean notify100;
 
     public void reset() {
         this.template = null;
@@ -42,6 +43,7 @@ public class ClanTask {
         this.notify70 = false;
         this.notify80 = false;
         this.notify90 = false;
+        this.notify100 = false;
     }
 
     public ClanTask() {

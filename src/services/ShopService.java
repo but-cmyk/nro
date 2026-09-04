@@ -156,6 +156,9 @@ public class ShopService {
     }
 
     private Shop DanhHieu(Player player, Shop s) {
+        if (player.playerTask != null && player.playerTask.taskdh != null) {
+            player.playerTask.taskdh.renew();
+        }
         for (TabShop tabShop : s.tabShops) {
             if (tabShop.id != 28) {
                 continue;
@@ -174,15 +177,15 @@ public class ShopService {
                         current = player.playerTask.taskdh.ChoNuoc;
                     }
                     case 1290 -> {
-                        required = 50;
+                        required = 10;
                         current = player.playerTask.taskdh.Shenron;
                     }
                     case 1291 -> {
-                        required = 10;
+                        required = 30;
                         current = player.playerTask.taskdh.Hagucboss;
                     }
                     case 1292 -> {
-                        required = 30;
+                        required = 3;
                         current = player.playerTask.taskdh.DapDo;
                     }
                     case 1293 -> {
@@ -194,11 +197,11 @@ public class ShopService {
                         current = player.playerTask.taskdh.TaskBoMong;
                     }
                     case 1295 -> {
-                        required = 10;
+                        required = 500;
                         current = player.playerTask.taskdh.NhatDo;
                     }
                     case 1296 -> {
-                        required = 500;
+                        required = 30;
                         current = player.playerTask.taskdh.AnTrom;
                     }
                     case 1300 -> {
@@ -206,7 +209,7 @@ public class ShopService {
                         current = player.playerTask.taskdh.ODo;
                     }
                     case 1286 -> {
-                        required = 30;
+                        required = 20;
                         current = player.playerTask.taskdh.ChoSuong;
                     }
                     default -> {
@@ -998,7 +1001,8 @@ public class ShopService {
     }
 
     public void showConfirmSellItem(Player pl, int where, int index) {
-        if (pl.isTrade) {
+        if (pl.isTrade || services.func.TransactionService.gI().check(pl)) {
+            Service.gI().sendThongBao(pl, "Không thể thực hiện khi đang giao dịch");
             return;
         }
         Item item;
@@ -1054,6 +1058,10 @@ public class ShopService {
     }
 
     public void sellItem(Player pl, int where, int index) {
+        if (pl.isTrade || services.func.TransactionService.gI().check(pl)) {
+            Service.gI().sendThongBao(pl, "Không thể thực hiện khi đang giao dịch");
+            return;
+        }
         if (pl.idMark.getShopOpen() == null || pl.idMark.getTagNameShop() == null) {
             Service.gI().sendThongBao(pl, "Không thể thực hiện");
             return;
@@ -1089,11 +1097,11 @@ public class ShopService {
             }
             cost *= quantity;
 
-            if (pl.inventory.gold + cost > Inventory.LIMIT_GOLD) {
+            if (pl.inventory.gold + cost > pl.inventory.getGoldLimit()) {
                 Service.gI().sendThongBao(pl, "Vàng sau khi bán vượt quá giới hạn");
                 return;
             }
-            pl.inventory.gold += cost;
+            pl.inventory.addGold(cost);
             Service.gI().sendMoney(pl);
             Service.gI().sendThongBao(pl, "Đã bán " + item.template.name
                     + " thu được " + Util.powerToString(cost) + " vàng");

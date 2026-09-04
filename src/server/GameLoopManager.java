@@ -84,26 +84,29 @@ public class GameLoopManager implements Runnable {
 
     private void updateBosses() {
         if (ServerManager.isRunning && !ServerManager.isReloading) {
-            try {
-                BossManager.gI().update();
-                YardartManager.gI().update();
-                FinalBossManager.gI().update();
-                SkillSummonedManager.gI().update();
-                BrolyManager.gI().update();
-                OtherBossManager.gI().update();
-                RedRibbonHQManager.gI().update();
-                TreasureUnderSeaManager.gI().update();
-                SnakeWayManager.gI().update();
-                GasDestroyManager.gI().update();
-                TrungThuEventManager.gI().update();
-                HalloweenEventManager.gI().update();
-                ChristmasEventManager.gI().update();
-                HungVuongEventManager.gI().update();
-                LunarNewYearEventManager.gI().update();
-            } catch (Exception e) {
-                Logger.error("Loi update bosses: " + e.getMessage());
-                e.printStackTrace();
-            }
+            safeUpdateBoss(BossManager.gI()::update, "BossManager");
+            safeUpdateBoss(YardartManager.gI()::update, "YardartManager");
+            safeUpdateBoss(FinalBossManager.gI()::update, "FinalBossManager");
+            safeUpdateBoss(SkillSummonedManager.gI()::update, "SkillSummonedManager");
+            safeUpdateBoss(BrolyManager.gI()::update, "BrolyManager");
+            safeUpdateBoss(OtherBossManager.gI()::update, "OtherBossManager");
+            safeUpdateBoss(RedRibbonHQManager.gI()::update, "RedRibbonHQManager");
+            safeUpdateBoss(TreasureUnderSeaManager.gI()::update, "TreasureUnderSeaManager");
+            safeUpdateBoss(SnakeWayManager.gI()::update, "SnakeWayManager");
+            safeUpdateBoss(GasDestroyManager.gI()::update, "GasDestroyManager");
+            safeUpdateBoss(TrungThuEventManager.gI()::update, "TrungThuEventManager");
+            safeUpdateBoss(HalloweenEventManager.gI()::update, "HalloweenEventManager");
+            safeUpdateBoss(ChristmasEventManager.gI()::update, "ChristmasEventManager");
+            safeUpdateBoss(HungVuongEventManager.gI()::update, "HungVuongEventManager");
+            safeUpdateBoss(LunarNewYearEventManager.gI()::update, "LunarNewYearEventManager");
+        }
+    }
+
+    private void safeUpdateBoss(Runnable updateAction, String managerName) {
+        try {
+            updateAction.run();
+        } catch (Exception e) {
+            Logger.error("Loi update boss manager [" + managerName + "]: " + e.getMessage());
         }
     }
 

@@ -186,7 +186,7 @@ public class ChangeMapService {
                 return;
             }
         }
-        if (true) {
+        if (pl.isAdmin() || pl.isBoss || Util.canDoWithTime(pl.idMark.getLastTimeChangeZone(), 5000)) {
             pl.idMark.setLastTimeChangeZone(System.currentTimeMillis());
             Map map = pl.zone.map;
             if (zoneId >= 0 && zoneId <= map.zones.size() - 1) {

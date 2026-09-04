@@ -11,6 +11,7 @@ import models.player.Player;
 import services.SkillService;
 import services.map.ChangeMapService;
 import models.skill.Skill;
+import utils.Logger;
 import utils.Util;
 
 public class Broly extends Boss {
@@ -52,7 +53,9 @@ public class Broly extends Boss {
                         break;
                     }
                 }
-            } catch (Exception e) {}
+            } catch (Exception e) {
+                Logger.logException(Broly.class, e, "Error scanning zone for Broly");
+            }
 
             ChangeMapService.gI().changeMap(this, this.zone, -1, -1);
             this.changeStatus(BossStatus.CHAT_S);
@@ -71,7 +74,9 @@ public class Broly extends Boss {
         damage = this.nPoint.subDameInjureWithDeff(damage);
 
         long limitDame = this.nPoint.hpMax / 100;
-        if (!piercing && plAtt.playerSkill.skillSelect.template.id != Skill.TU_SAT && damage > limitDame) {
+        boolean isTuSat = (plAtt != null && plAtt.playerSkill != null && plAtt.playerSkill.skillSelect != null
+                && plAtt.playerSkill.skillSelect.template != null && plAtt.playerSkill.skillSelect.template.id == Skill.TU_SAT);
+        if (!piercing && !isTuSat && damage > limitDame) {
             damage = limitDame;
         }
 

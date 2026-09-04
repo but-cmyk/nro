@@ -85,7 +85,7 @@ public final class SuperRank implements Runnable {
         if (player.zone.zoneId != zone.zoneId) {
             ChangeMapService.gI().changeZone(player, zone.zoneId);
         }
-        new Thread(this, "Super Rank").start();
+        Thread.ofVirtual().name("SuperRank-Worker").start(this);
     }
 
     @Override
@@ -150,37 +150,45 @@ public final class SuperRank implements Runnable {
         win = true;
         try {
             finish();
-            Player plWin = SuperRankService.gI().loadPlayer(playerId);
+            int currentRivalRank = SuperRankDAO.getRank((int) rivalId);
+            if (currentRivalRank > 0 && player != null && currentRivalRank < player.superRank.rank) {
+                rankWin = currentRivalRank;
+                rankLose = player.superRank.rank;
+            }
+
             Player plLose = SuperRankService.gI().loadPlayer(rivalId);
-            plWin.superRank.win++;
-            plLose.superRank.lose++;
-            if (plWin.superRank.ticket == 0 && plWin.inventory.getGem() > 0) {
-                plWin.inventory.subGem(2);
+            if (plLose != null) {
+                plLose.superRank.lose++;
+                plLose.superRank.rank = rankLose;
+                plLose.superRank.history("Thua " + (player != null ? player.name : "Đối thủ") + "[" + rankWin + "]", System.currentTimeMillis());
+                SuperRankDAO.updatePlayer(plLose);
             }
-            plWin.superRank.rank = rankWin;
-            plWin.superRank.history("Hạ " + plLose.name + "[" + rankLose + "]", System.currentTimeMillis());
-            SuperRankDAO.updatePlayer(plWin);
-            plLose.superRank.rank = rankLose;
-            plLose.superRank.history("Thua " + plWin.name + "[" + rankWin + "]", System.currentTimeMillis());
-            SuperRankDAO.updatePlayer(plLose);
-            if (rankWin <= 10) {
-                ServerNotify.gI().notify(ConstSuperRank.TEXT_TOP_10.replaceAll("%1", plWin.name).replaceAll("%2", rankWin + ""));
-            }
-            if (player != null && player.zone != null) {
+
+            if (player != null) {
                 player.superRank.win++;
-                if (player.superRank.ticket == 0 && player.inventory.getGem() > 0) {
+                if (player.superRank.ticket > 0) {
+                    player.superRank.ticket--;
+                } else if (player.inventory.getGem() >= 2) {
                     player.inventory.subGem(2);
                     Service.gI().sendMoney(player);
                 }
                 player.superRank.rank = rankWin;
-                player.superRank.history("Hạ " + plLose.name + "[" + rankLose + "]", System.currentTimeMillis());
-                Service.gI().chat(player, ConstSuperRank.TEXT_THANG.replaceAll("%1", rankWin + ""));
+                player.superRank.history("Hạ " + (plLose != null ? plLose.name : "Đối thủ") + "[" + rankLose + "]", System.currentTimeMillis());
+                SuperRankDAO.updatePlayer(player);
+                if (player.zone != null) {
+                    Service.gI().chat(player, ConstSuperRank.TEXT_THANG.replaceAll("%1", rankWin + ""));
+                }
             }
+
+            if (rankWin <= 10 && player != null) {
+                ServerNotify.gI().notify(ConstSuperRank.TEXT_TOP_10.replaceAll("%1", player.name).replaceAll("%2", rankWin + ""));
+            }
+
             Player rv = SuperRankService.gI().getPlayer(rivalId);
-            if (rv != null && rv.zone != null) {
-                rv.superRank.lose++;
+            if (rv != null && plLose != null) {
+                rv.superRank.lose = plLose.superRank.lose;
                 rv.superRank.rank = rankLose;
-                rv.superRank.history("Thua " + plWin.name + "[" + rankWin + "]", System.currentTimeMillis());
+                rv.superRank.history("Thua " + (player != null ? player.name : "Đối thủ") + "[" + rankWin + "]", System.currentTimeMillis());
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -192,38 +200,34 @@ public final class SuperRank implements Runnable {
         try {
             finish();
             Player plWin = SuperRankService.gI().loadPlayer(rivalId);
-            Player plLose = SuperRankService.gI().loadPlayer(playerId);
-            plWin.superRank.win++;
-            plLose.superRank.lose++;
-            if (plLose.superRank.ticket > 0) {
-                plLose.superRank.ticket--;
-            } else if (plLose.inventory.getGem() > 0) {
-                plLose.inventory.subGem(3);
-                Service.gI().sendMoney(plLose);
+            if (plWin != null) {
+                plWin.superRank.win++;
+                plWin.superRank.rank = rankWin;
+                plWin.superRank.history("Hạ " + (player != null ? player.name : "Đối thủ") + "[" + rankLose + "]", System.currentTimeMillis());
+                SuperRankDAO.updatePlayer(plWin);
             }
-            plWin.superRank.rank = rankWin;
-            plWin.superRank.history("Hạ " + plLose.name + "[" + rankLose + "]", System.currentTimeMillis());
-            SuperRankDAO.updatePlayer(plWin);
-            plLose.superRank.rank = rankLose;
-            plLose.superRank.history("Thua " + plWin.name + "[" + rankWin + "]", System.currentTimeMillis());
-            SuperRankDAO.updatePlayer(plLose);
-            if (player != null && player.zone != null) {
+
+            if (player != null) {
                 player.superRank.lose++;
                 if (player.superRank.ticket > 0) {
                     player.superRank.ticket--;
-                } else if (player.inventory.getGem() > 0) {
+                } else if (player.inventory.getGem() >= 3) {
                     player.inventory.subGem(3);
                     Service.gI().sendMoney(player);
                 }
                 player.superRank.rank = rankLose;
-                player.superRank.history("Thua " + plWin.name + "[" + rankWin + "]", System.currentTimeMillis());
-                Service.gI().chat(player, ConstSuperRank.TEXT_THUA);
+                player.superRank.history("Thua " + (plWin != null ? plWin.name : "Đối thủ") + "[" + rankWin + "]", System.currentTimeMillis());
+                SuperRankDAO.updatePlayer(player);
+                if (player.zone != null) {
+                    Service.gI().chat(player, ConstSuperRank.TEXT_THUA);
+                }
             }
+
             Player rv = SuperRankService.gI().getPlayer(rivalId);
-            if (rv != null && rv.zone != null) {
-                rv.superRank.win++;
+            if (rv != null && plWin != null) {
+                rv.superRank.win = plWin.superRank.win;
                 rv.superRank.rank = rankWin;
-                rv.superRank.history("Hạ " + plLose.name + "[" + rankLose + "]", System.currentTimeMillis());
+                rv.superRank.history("Hạ " + (player != null ? player.name : "Đối thủ") + "[" + rankLose + "]", System.currentTimeMillis());
             }
         } catch (Exception e) {
             e.printStackTrace();

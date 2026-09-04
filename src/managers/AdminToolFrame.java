@@ -355,7 +355,7 @@ public class AdminToolFrame extends JFrame {
                 }
 
                 // Bước 2: Cộng tiền
-                playerToBuff.inventory.gold += gold;
+                playerToBuff.inventory.addGold(gold);
                 playerToBuff.inventory.gem += gem;
 
                 // Bước 3: Xử lý online/offline
@@ -476,7 +476,7 @@ public class AdminToolFrame extends JFrame {
             int gem = (gemInput != null && !gemInput.trim().isEmpty()) ? Integer.parseInt(gemInput.trim()) : 0;
 
             // Code logic chính không thay đổi
-            pl.inventory.gold += gold;
+            pl.inventory.addGold(gold);
             pl.inventory.gem += gem;
 
             // Chỉ gửi packet nếu người chơi đang online và có session

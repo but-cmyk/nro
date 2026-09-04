@@ -1,0 +1,15 @@
+6TabFixed
+data
+build
+out
+.git
+.agents
+.idea
+.vscode
+nbproject
+src
+target
+test
+scratch
+*.dll
+*.exe

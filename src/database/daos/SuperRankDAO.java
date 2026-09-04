@@ -19,24 +19,32 @@ import utils.Util;
 public class SuperRankDAO {
 
     public static List<SuperRankBuilder> getPlayerListInRankRange(int rank, int limit) {
-
         List<SuperRankBuilder> list = new ArrayList<>();
+        AlyraResultSet rs = null;
         try {
-            AlyraResultSet rs = AlyraManager.executeQuery("SELECT * FROM super_rank WHERE rank <= ? AND rank > 0 ORDER BY rank DESC LIMIT ?", Math.max(rank, 10), limit);
+            rs = AlyraManager.executeQuery("SELECT * FROM super_rank WHERE rank <= ? AND rank > 0 ORDER BY rank DESC LIMIT ?", Math.max(rank, 10), limit);
             while (rs.next()) {
                 list.add(readData(rs));
             }
         } catch (Exception e) {
+        } finally {
+            if (rs != null) {
+                rs.dispose();
+            }
         }
         try {
             int rand = random(rank);
             if (rand != -1) {
-                AlyraResultSet rs = AlyraManager.executeQuery("SELECT * FROM super_rank WHERE rank = ? LIMIT 1", rand);
+                rs = AlyraManager.executeQuery("SELECT * FROM super_rank WHERE rank = ? LIMIT 1", rand);
                 if (rs.first()) {
                     list.add(readData(rs));
                 }
             }
         } catch (Exception e) {
+        } finally {
+            if (rs != null) {
+                rs.dispose();
+            }
         }
         Collections.reverse(list);
         return list;
@@ -44,21 +52,30 @@ public class SuperRankDAO {
 
     public static List<SuperRankBuilder> getPlayerListInRank(int rank, int limit) {
         List<SuperRankBuilder> list = new ArrayList<>();
+        AlyraResultSet rs = null;
         try {
-            AlyraResultSet rs = AlyraManager.executeQuery("SELECT * FROM super_rank WHERE rank > 0 ORDER BY rank ASC LIMIT ?", limit);
+            rs = AlyraManager.executeQuery("SELECT * FROM super_rank WHERE rank > 0 ORDER BY rank ASC LIMIT ?", limit);
             while (rs.next()) {
                 list.add(readData(rs));
             }
         } catch (Exception e) {
+        } finally {
+            if (rs != null) {
+                rs.dispose();
+            }
         }
         try {
             if (rank > 100) {
-                AlyraResultSet rs = AlyraManager.executeQuery("SELECT * FROM super_rank WHERE rank > ? AND rank < ? ORDER BY rank ASC LIMIT 4", rank - 3, rank + 2);
+                rs = AlyraManager.executeQuery("SELECT * FROM super_rank WHERE rank > ? AND rank < ? ORDER BY rank ASC LIMIT 4", rank - 3, rank + 2);
                 while (rs.next()) {
                     list.add(readData(rs));
                 }
             }
         } catch (Exception e) {
+        } finally {
+            if (rs != null) {
+                rs.dispose();
+            }
         }
         return list;
     }
@@ -116,9 +133,16 @@ public class SuperRankDAO {
                 if (historyList != null) {
                     text.append(rs.getInt("win")).append(":").append(rs.getInt("lose"));
                     for (Object obj : historyList) {
-                        JSONObject history = (JSONObject) obj;
-                        text.append("\n").append((String) history.get("event")).append(" ")
-                                .append(TimeUtil.getTimeLeft((Long) history.get("timestamp")));
+                        JSONObject history = null;
+                        if (obj instanceof JSONObject jo) {
+                            history = jo;
+                        } else if (obj instanceof String s) {
+                            history = (JSONObject) parser.parse(s);
+                        }
+                        if (history != null) {
+                            text.append("\n").append((String) history.get("event")).append(" ")
+                                    .append(TimeUtil.getTimeLeft((Long) history.get("timestamp")));
+                        }
                     }
                 } else {
                     text.append("Thắng/Thua: ").append(rs.getInt("win")).append("/").append(rs.getInt("lose"));
@@ -153,8 +177,9 @@ public class SuperRankDAO {
     }
 
     public static void loadData(Player player) {
+        AlyraResultSet rs = null;
         try {
-            AlyraResultSet rs = AlyraManager.executeQuery("SELECT * FROM super_rank WHERE player_id = " + player.id);
+            rs = AlyraManager.executeQuery("SELECT * FROM super_rank WHERE player_id = ?", player.id);
             if (rs.first()) {
                 player.superRank.rank = rs.getInt("rank");
                 player.superRank.lastPKTime = rs.getLong("last_pk_time");
@@ -163,21 +188,46 @@ public class SuperRankDAO {
                 player.superRank.win = rs.getInt("win");
                 player.superRank.lose = rs.getInt("lose");
                 player.superRank.nhanGiai = rs.getInt("received") == 1;
-                if (TimeUtil.diffDate(new Date(System.currentTimeMillis()), new Date(player.superRank.lastRewardTime), TimeUtil.DAY) > 0) {
+                if (Util.isAfterMidnight(player.superRank.lastRewardTime)) {
                     player.superRank.nhanGiai = false;
                 }
+                player.superRank.history.clear();
+                player.superRank.lastTime.clear();
                 JSONParser parser = new JSONParser();
-                JSONArray history = (JSONArray) parser.parse(rs.getString("history"));
                 try {
-                    for (Object ob : history) {
-                        JSONObject obj = (JSONObject) ob;
-                        String event = (String) obj.get("event");
-                        Long timestamp = (Long) obj.get("timestamp");
-                        player.superRank.history.add(event);
-                        player.superRank.lastTime.add(timestamp);
+                    String hStr = rs.getString("history");
+                    if (hStr != null && !hStr.isEmpty()) {
+                        JSONArray history = (JSONArray) parser.parse(hStr);
+                        for (Object ob : history) {
+                            if (ob instanceof JSONObject obj) {
+                                String event = (String) obj.get("event");
+                                Long timestamp = (Long) obj.get("timestamp");
+                                player.superRank.history.add(event);
+                                player.superRank.lastTime.add(timestamp);
+                            } else if (ob instanceof String s) {
+                                JSONObject obj = (JSONObject) parser.parse(s);
+                                String event = (String) obj.get("event");
+                                Long timestamp = (Long) obj.get("timestamp");
+                                player.superRank.history.add(event);
+                                player.superRank.lastTime.add(timestamp);
+                            }
+                        }
                     }
                 } catch (Exception e) {
                 }
+            } else {
+                // Người chơi mới chưa có rank: Tự động khởi tạo rank cuối bảng
+                int highestRank = getCurrentHighestRank();
+                player.superRank.rank = highestRank + 1;
+                player.superRank.ticket = 3;
+                player.superRank.win = 0;
+                player.superRank.lose = 0;
+                player.superRank.nhanGiai = false;
+                player.superRank.lastPKTime = System.currentTimeMillis();
+                player.superRank.lastRewardTime = System.currentTimeMillis();
+                player.superRank.history.clear();
+                player.superRank.lastTime.clear();
+                insertData(player);
             }
 
             if (Util.isAfterMidnight(player.superRank.lastPKTime)) {
@@ -188,39 +238,54 @@ public class SuperRankDAO {
             }
         } catch (Exception e) {
             Logger.logException(SuperRankDAO.class, e);
+        } finally {
+            if (rs != null) {
+                rs.dispose();
+            }
         }
     }
 
     public static int getRank(int playerId) {
+        AlyraResultSet rs = null;
         try {
-            AlyraResultSet rs = AlyraManager.executeQuery("SELECT rank FROM super_rank WHERE player_id = " + playerId);
+            rs = AlyraManager.executeQuery("SELECT rank FROM super_rank WHERE player_id = ?", playerId);
             if (rs.first()) {
                 return rs.getInt("rank");
             }
         } catch (Exception e) {
+        } finally {
+            if (rs != null) {
+                rs.dispose();
+            }
         }
         return getCurrentHighestRank() + 1;
     }
 
     public static int getCurrentHighestRank() {
+        AlyraResultSet rs = null;
         try {
-            AlyraResultSet rs = AlyraManager.executeQuery("SELECT rank FROM super_rank ORDER BY rank DESC LIMIT 1");
+            rs = AlyraManager.executeQuery("SELECT rank FROM super_rank ORDER BY rank DESC LIMIT 1");
             if (rs.first()) {
                 return rs.getInt("rank");
             }
         } catch (Exception e) {
             Logger.logException(SuperRankDAO.class, e);
+        } finally {
+            if (rs != null) {
+                rs.dispose();
+            }
         }
         return 0;
     }
-@SuppressWarnings("unchecked")
+
+    @SuppressWarnings("unchecked")
     public static void insertData(Player player) {
         JSONArray historyList = new JSONArray();
         for (int i = 0; i < player.superRank.history.size(); i++) {
             JSONObject history = new JSONObject();
             history.put("event", player.superRank.history.get(i));
-            history.put("timestamp", player.superRank.lastPKTime);
-            historyList.add(history.toJSONString());
+            history.put("timestamp", (i < player.superRank.lastTime.size()) ? player.superRank.lastTime.get(i) : player.superRank.lastPKTime);
+            historyList.add(history);
         }
         JSONObject info = new JSONObject();
         info.put("head", player.getHead());
@@ -247,14 +312,15 @@ public class SuperRankDAO {
             Logger.logException(SuperRankDAO.class, e);
         }
     }
-@SuppressWarnings("unchecked")
+
+    @SuppressWarnings("unchecked")
     public static void updateData(Player player) {
         JSONArray historyList = new JSONArray();
         for (int i = 0; i < player.superRank.history.size(); i++) {
             JSONObject history = new JSONObject();
             history.put("event", player.superRank.history.get(i));
-            history.put("timestamp", player.superRank.lastTime.get(i));
-            historyList.add(history.toJSONString());
+            history.put("timestamp", (i < player.superRank.lastTime.size()) ? player.superRank.lastTime.get(i) : player.superRank.lastPKTime);
+            historyList.add(history);
         }
         JSONObject info = new JSONObject();
         info.put("head", player.getHead());
@@ -275,7 +341,7 @@ public class SuperRankDAO {
                     player.superRank.win,
                     player.superRank.lose,
                     historyList.toString(),
-                    player.superRank.nhanGiai == true ? 1 : 0,
+                    player.superRank.nhanGiai ? 1 : 0,
                     player.id);
             Logger.successln(player.name + ": Data update successfully....");
         } catch (Exception e) {

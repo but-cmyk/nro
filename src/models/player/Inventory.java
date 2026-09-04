@@ -26,6 +26,7 @@ public class Inventory {
     public int ruby;
     public int coupon;
     public int event;
+    public long lastTimeGetItem;
 
     public Inventory() {
         itemsBody = new ArrayList<>();
@@ -68,11 +69,28 @@ public class Inventory {
         this.gem -= num;
     }
 
+    public void addGem(int num) {
+        if (num <= 0) {
+            return;
+        }
+        this.gem = (int) Math.min((long) this.gem + num, 2_000_000_000L);
+    }
+
+    public void subGold(long num) {
+        if (num <= 0) {
+            return;
+        }
+        this.gold = Math.max(0, this.gold - num);
+    }
+
     public void subGold(int num) {
-        this.gold -= num;
+        this.subGold((long) num);
     }
 
     public boolean haveOption(List<Item> l, int index, int id) {
+        if (l == null || index < 0 || index >= l.size()) {
+            return false;
+        }
         Item it = l.get(index);
         if (it != null && it.isNotNullItem()) {
             return it.itemOptions.stream().anyMatch(op -> op != null && op.optionTemplate.id == id);
@@ -92,12 +110,20 @@ public class Inventory {
         return goldLimit + LIMIT_GOLD;
     }
 
-    public void addGold(int gold) {
-        this.gold += gold;
-        long limitGold = getGoldLimit();
-        if (this.gold > limitGold) {
-            this.gold = limitGold;
+    public void addGold(long gold) {
+        if (gold <= 0) {
+            return;
         }
+        long limit = getGoldLimit();
+        if (this.gold + gold > limit || this.gold + gold < 0) {
+            this.gold = limit;
+        } else {
+            this.gold += gold;
+        }
+    }
+
+    public void addGold(int gold) {
+        this.addGold((long) gold);
     }
 
     public void dispose() {

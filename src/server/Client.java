@@ -222,6 +222,9 @@ public class Client implements Runnable {
 
                 // Handle pets and mobs
                 handlePetAndMobCleanup(player);
+
+                // Dọn dẹp context menu tạm thời chống rò rỉ RAM (GC Memory Leak)
+                models.npc.NpcFactory.PLAYERID_OBJECT.remove(player.id);
             }
         } catch (Exception e) {
             Logger.logException(Client.class, e, "Error in player disconnect cleanup: " + player.name);
@@ -259,11 +262,6 @@ public class Client implements Runnable {
             if (SummonDragonNamek.gI().playerSummonShenron != null
                     && SummonDragonNamek.gI().playerSummonShenron.id == player.id) {
                 SummonDragonNamek.gI().isPlayerDisconnect = true;
-            }
-
-            // Handle shenron events
-            if (player.shenronEvent != null) {
-                player.shenronEvent.isPlayerDisconnect = true;
             }
         } catch (Exception e) {
             Logger.logException(Client.class, e, "Error handling dragon summon cleanup for player: " + player.name);

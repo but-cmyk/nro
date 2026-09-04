@@ -31,7 +31,6 @@ public class AlyraManager {
     private static String DB_HOST;
     private static String DB_PORT;
     private static String DB_NAME;
-    private static String DB_NAME_DATA;
     private static String DB_USER;
     private static String DB_PASSWORD;
     private static String DB_SSL_MODE;
@@ -41,17 +40,12 @@ public class AlyraManager {
     public static boolean LOG_QUERY;
     
     private static HikariConfig config;
-    private static HikariConfig config_data;
     private static HikariDataSource ds;
-    private static HikariDataSource ds_data;
 
     static {
         loadProperties();
-        config = createConfig("User Management", DB_NAME);
-        config_data = createConfig("Game Assets", DB_NAME_DATA);
-
+        config = createConfig("NRO Game Database", DB_NAME);
         ds = new HikariDataSource(config);
-        ds_data = new HikariDataSource(config_data);
     }
 
     public static Connection getConnection() throws SQLException {
@@ -59,7 +53,7 @@ public class AlyraManager {
     }
 
     public static Connection getConnection_Data() throws SQLException {
-        return ds_data.getConnection();
+        return ds.getConnection();
     }
 
     public static void close() {
@@ -69,9 +63,7 @@ public class AlyraManager {
     }
 
     public static void close_data() {
-        if (ds_data != null) {
-            ds_data.close();
-        }
+        // Compatibility alias: Single pool is closed in close()
     }
 
     private static void loadProperties() {
@@ -90,7 +82,6 @@ public class AlyraManager {
         DB_HOST = getProperty(properties, "database.host");
         DB_PORT = getProperty(properties, "database.port");
         DB_NAME = getProperty(properties, "database.name");
-        DB_NAME_DATA = getProperty(properties, "database.name_data");
         DB_USER = getProperty(properties, "database.user");
         DB_PASSWORD = getProperty(properties, "database.pass");
         DB_SSL_MODE = getSslMode(properties, DB_HOST);
@@ -102,6 +93,11 @@ public class AlyraManager {
     }
 
     private static String getProperty(Properties props, String key) {
+        String envKey = key.replace('.', '_').toUpperCase(java.util.Locale.ROOT);
+        String envVal = System.getenv(envKey);
+        if (envVal != null && !envVal.trim().isEmpty()) {
+            return envVal.trim();
+        }
         Object value = props.get(key);
         return value != null ? String.valueOf(value) : "";
     }
@@ -450,8 +446,8 @@ public class AlyraManager {
         config.setPoolName(poolName);
         
         config.setConnectionTimeout(30000);
-        config.setIdleTimeout(600000);
-        config.setLeakDetectionThreshold(60000);
+        config.setIdleTimeout(Math.min(30000, MAX_LIFE_TIME / 2));
+        config.setLeakDetectionThreshold(10000);
         config.setValidationTimeout(5000);
         
         config.addDataSourceProperty("cachePrepStmts", "true");
@@ -476,17 +472,11 @@ public class AlyraManager {
         if (ds != null && !ds.isClosed()) {
             ds.close();
         }
-        if (ds_data != null && !ds_data.isClosed()) {
-            ds_data.close();
-        }
 
         loadProperties();
 
-        config = createConfig("User Management", DB_NAME);
-        config_data = createConfig("Game Assets", DB_NAME_DATA);
-
+        config = createConfig("NRO Game Database", DB_NAME);
         ds = new HikariDataSource(config);
-        ds_data = new HikariDataSource(config_data);
         
         Logger.log(Logger.GREEN, "Tải lại cấu hình database thành công!");
     }

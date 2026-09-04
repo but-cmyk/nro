@@ -388,7 +388,12 @@ public class Boss extends Player implements IBoss {
 
     // --- LOGIC BOM MỚI (Non-blocking) ---
     private void handleBom() {
+        if (this.isDie()) {
+            this.prepareBom = false;
+            return;
+        }
         if (Util.canDoWithTime(lastTimeBom, 2500)) {
+            this.prepareBom = false; // Kết thúc bom trước khi gây nổ và die
             // Thực hiện nổ
             Player plAtt = null; // Cần xác định người giết nếu cần, hoặc để null
             setDie(this);
@@ -411,7 +416,6 @@ public class Boss extends Player implements IBoss {
                     }
                 }
             }
-            prepareBom = false; // Kết thúc bom
         }
     }
 
@@ -509,7 +513,12 @@ public class Boss extends Player implements IBoss {
                 }
                 this.wakeupAnotherBossWhenAppear();
             } else {
-                ChangeMapService.gI().changeMap(this, this.zone, this.location.x, this.location.y);
+                if (this.zone == null) {
+                    this.zone = (this.lastZone != null) ? this.lastZone : getMapJoin();
+                }
+                if (this.zone != null) {
+                    ChangeMapService.gI().changeMap(this, this.zone, this.location.x, this.location.y);
+                }
             }
 
             Service.gI().sendFlagBag(this);
@@ -634,12 +643,13 @@ public class Boss extends Player implements IBoss {
 
     protected void notifyJoinMap() {
         if (canSendNotify()) {
-            ServerNotify.gI().notify("BOSS " + this.name + " vừa xuất hiện tại " + this.zone.map.mapName);
+            ServerNotify.gI().notify("BOSS " + this.name + " vừa xuất hiện tại " + this.zone.map.mapName + " khu vực " + this.zone.zoneId);
         }
     }
 
     private boolean canSendNotify() {
-        return !(this.isNotifyDisabled || this.zone.map.mapId == 140
+        return this.zone != null && this.zone.map != null
+                && !(this.isNotifyDisabled || this.zone.map.mapId == 140
                 || MapService.gI().isMapPhoBan(this.zone.map.mapId)
                 || MapService.gI().isMapMaBu(this.zone.map.mapId)
                 || MapService.gI().isMapBlackBallWar(this.zone.map.mapId));
@@ -654,6 +664,7 @@ public class Boss extends Player implements IBoss {
             }
             String textChat = this.data[this.currentLevel].getTextS()[this.indexChatS];
             if (!processChat(textChat)) {
+                this.indexChatS++; // Bỏ qua câu thoại lỗi định dạng để tránh kẹt vĩnh viễn FSM
                 return false;
             }
 
@@ -696,6 +707,7 @@ public class Boss extends Player implements IBoss {
             }
             String textChat = this.data[this.currentLevel].getTextE()[this.indexChatE];
             if (!processChat(textChat)) {
+                this.indexChatE++; // Bỏ qua câu thoại lỗi định dạng để tránh kẹt vĩnh viễn FSM
                 return false;
             }
 
@@ -795,6 +807,7 @@ public class Boss extends Player implements IBoss {
 
     @Override
     public void die(Player plKill) {
+        this.prepareBom = false;
         if (plKill != null) {
             reward(plKill);
             ServerNotify.gI().notify(plKill.name + ": Đã tiêu diệt được " + this.name + " mọi người đều ngưỡng mộ.");
@@ -811,6 +824,7 @@ public class Boss extends Player implements IBoss {
     public void leaveMap() {
         if (this.currentLevel < this.data.length - 1) {
             this.lastZone = this.zone;
+            ChangeMapService.gI().exitMap(this); // Làm sạch thực thể cũ khỏi map trước khi biến hình
             this.changeStatus(BossStatus.RESPAWN);
         } else {
             ChangeMapService.gI().exitMap(this);
@@ -825,6 +839,10 @@ public class Boss extends Player implements IBoss {
     public synchronized int injured(Player plAtt, long damage, boolean piercing, boolean isMobAttack) {
         if (this.isDie()) {
             return 0;
+        }
+
+        if (this.prepareBom) {
+            return 0; // Đang gồng bom tự sát, miễn nhiễm sát thương
         }
 
         if (!piercing && Util.isTrue(this.nPoint.tlNeDon, 1000)) {
@@ -847,12 +865,22 @@ public class Boss extends Player implements IBoss {
 
         this.nPoint.subHP(damage);
 
+        // --- AI Phản Ứng Khi Bị Tấn Công (Threat / Aggro) ---
+        if (plAtt != null && !plAtt.isDie() && this.zone != null && this.zone.equals(plAtt.zone)) {
+            if (this.playerTarger == null || this.playerTarger.isDie() || !this.zone.equals(this.playerTarger.zone)
+                    || Util.getDistance(this, this.playerTarger) > 400 || Util.getDistance(this, plAtt) <= 250) {
+                this.playerTarger = plAtt;
+                this.lastTimeTargetPlayer = System.currentTimeMillis();
+                this.timeTargetPlayer = Util.nextInt(5000, 7000);
+            }
+        }
+
         if (isDie()) {
             this.setDie(plAtt);
             die(plAtt);
         }
 
-        return (int) damage;
+        return (int) Math.min(Integer.MAX_VALUE, damage);
     }
 
     @Override
@@ -953,7 +981,7 @@ public class Boss extends Player implements IBoss {
 
     @Override
     public void setBom(Player plAtt) {
-        if (!prepareBom) {
+        if (!prepareBom && !this.isDie()) {
             prepareBom = true;
             this.nPoint.hp = 1; // Bất tử khi gồng bom
             this.lastTimeBom = System.currentTimeMillis();

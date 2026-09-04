@@ -72,6 +72,13 @@ public class SkillService {
         if (player.playerSkill == null) {
             return false;
         }
+        if (player.playerSkill.skillSelect == null) {
+            player.playerSkill.skillSelect = player.playerSkill.getSkillbyId(player.gender == ConstPlayer.TRAI_DAT
+                    ? Skill.DRAGON : (player.gender == ConstPlayer.NAMEC ? Skill.DEMON : Skill.GALICK));
+        }
+        if (player.playerSkill.skillSelect == null) {
+            return false;
+        }
         if (player.playerSkill.skillSelect.template.type == 2 && canUseSkillWithMana(player) && canUseSkillWithCooldown(player)) {
             useSkillBuffToPlayer(player, plTarget);
             return true;
@@ -95,6 +102,13 @@ public class SkillService {
             selectSkill(player, skillId);
             return false;
         } else {
+            if (player.playerSkill.skillSelect.template.type == 1) {
+                long nowAttack = System.currentTimeMillis();
+                if (nowAttack - player.lastTimeAttack < 300) {
+                    return false;
+                }
+                player.lastTimeAttack = nowAttack;
+            }
             switch (player.playerSkill.skillSelect.template.type) {
                 case 1 ->
                     useSkillAttack(player, plTarget, mobTarget);
@@ -411,12 +425,18 @@ public class SkillService {
                 if (player.zone != null && player.zone.map.mapId != 180 && plTarget != null && Util.getDistance(player, plTarget) > Skill.RANGE_ATTACK_CHIEU_DAM) {
                     miss = true;
                 }
-                if (mobTarget != null && Util.getDistance(player, mobTarget) > 200) {
+                if (mobTarget != null && Util.getDistance(player, mobTarget) > 500) {
                     miss = true;
                 }
             case Skill.KAMEJOKO:
             case Skill.MASENKO:
             case Skill.ANTOMIC:
+                if (plTarget != null && Util.getDistance(player, plTarget) > 650) {
+                    miss = true;
+                }
+                if (mobTarget != null && Util.getDistance(player, mobTarget) > 650) {
+                    miss = true;
+                }
                 if (plTarget != null) {
                     playerAttackPlayer(player, plTarget, miss);
                 }
@@ -479,11 +499,18 @@ public class SkillService {
                 } else {
                     //bắn laze
                     player.playerSkill.prepareLaze = false;
+                    boolean lazeMiss = false;
                     if (plTarget != null) {
-                        playerAttackPlayer(player, plTarget, false);
+                        if (Util.getDistance(player, plTarget) > 800) {
+                            lazeMiss = true;
+                        }
+                        playerAttackPlayer(player, plTarget, lazeMiss);
                     }
                     if (mobTarget != null) {
-                        playerAttackMob(player, mobTarget, false, true);
+                        if (Util.getDistance(player, mobTarget) > 800) {
+                            lazeMiss = true;
+                        }
+                        playerAttackMob(player, mobTarget, lazeMiss, true);
                     }
                     affterUseSkill(player, player.playerSkill.skillSelect.template.id);
                 }

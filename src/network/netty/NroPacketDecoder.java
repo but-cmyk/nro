@@ -92,7 +92,9 @@ public class NroPacketDecoder extends ByteToMessageDecoder {
             }
         }
 
-        utils.Logger.log("[NETTY RECV] Cmd: " + cmd + ", size: " + size + ", encrypted: " + session.sentKey() + " from " + session.getIP());
+        if (server.Manager.DEBUG) {
+            utils.Logger.log("[NETTY RECV] Cmd: " + cmd + ", size: " + size + ", encrypted: " + session.sentKey() + " from " + session.getIP());
+        }
         out.add(new Message(cmd, data));
     }
 }

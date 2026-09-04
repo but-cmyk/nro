@@ -17,12 +17,14 @@ import java.util.ArrayList;
 import java.util.List;
 import server.Maintenance;
 import services.map.ItemMapService;
+import utils.Logger;
 import utils.TimeUtil;
+import services.player.PlayerService;
 
 public class TreasureUnderSea {
 
     public static final long POWER_CAN_GO_TO_DBKB = 2000000000;
-    public static final int AVAILABLE = 1;
+    public static final int AVAILABLE = 5;
     public static final int TIME_BAN_DO_KHO_BAU = 1800000;
 
     public int id;
@@ -221,7 +223,13 @@ public class TreasureUnderSea {
     }
 
     private void kickOutOfBDKB(Player player) {
-        if (MapService.gI().isMapBanDoKhoBau(player.zone.map.mapId)) {
+        if (player != null && player.zone != null && MapService.gI().isMapBanDoKhoBau(player.zone.map.mapId)) {
+            if (player.isDie()) {
+                player.nPoint.hp = player.nPoint.hpMax;
+                player.nPoint.mp = player.nPoint.mpMax;
+                Service.gI().Send_Info_NV(player);
+                PlayerService.gI().sendInfoHpMp(player);
+            }
             ChangeMapService.gI().changeMapBySpaceShip(player, 5, -1, 1038);
         }
     }
@@ -248,22 +256,31 @@ public class TreasureUnderSea {
     }
 
     public void dispose() {
-        if (boss != null) {
-            this.boss.leaveMap();
-        }
-        for (Zone zone : zones) {
-            for (int i = zone.items.size() - 1; i >= 0; i--) {
-                if (i < zone.items.size()) {
-                    ItemMapService.gI().removeItemMap(zone.items.get(i));
+        try {
+            if (boss != null) {
+                this.boss.leaveMap();
+            }
+            for (Zone zone : zones) {
+                synchronized (zone.items) {
+                    for (int i = zone.items.size() - 1; i >= 0; i--) {
+                        if (i < zone.items.size()) {
+                            ItemMapService.gI().removeItemMap(zone.items.get(i));
+                        }
+                    }
                 }
             }
+            this.removeTextBanDoKhoBau();
+        } catch (Exception e) {
+            Logger.logException(TreasureUnderSea.class, e, "Lỗi dispose BDKB");
+        } finally {
+            this.allCharactersDead = false;
+            this.boss = null;
+            this.isOpened = false;
+            if (this.clan != null) {
+                this.clan.BanDoKhoBau = null;
+            }
+            this.clan = null;
+            this.kickoutbdkb = false;
         }
-        this.removeTextBanDoKhoBau();
-        this.allCharactersDead = false;
-        this.boss = null;
-        this.isOpened = false;
-        this.clan.BanDoKhoBau = null;
-        this.clan = null;
-        this.kickoutbdkb = false;
     }
 }

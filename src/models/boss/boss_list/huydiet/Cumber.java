@@ -32,6 +32,11 @@ public class Cumber extends Boss {
     public void reward(Player plKill) {
         plKill.effect.addPointTrumSanBoss();
         TaskService.gI().checkDoneTaskKillBoss(plKill, this);
+        if (plKill != null && plKill.playerTask != null && plKill.playerTask.taskdh != null) {
+            if (plKill.playerTask.taskdh.Hagucboss < 30) {
+                plKill.playerTask.taskdh.Hagucboss++;
+            }
+        }
         byte randomDo = (byte) new Random().nextInt(Manager.itemIds_tl_GN.length - 1);
         byte randomDo1 = (byte) new Random().nextInt(Manager.itemIds_tl_AWJ.length - 1);
         if (Util.isTrue(1, 3)) {
