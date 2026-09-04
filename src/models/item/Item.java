@@ -114,15 +114,10 @@ public class Item {
         public String getOptionString() {
             return Util.replace(this.optionTemplate.name, "#", String.valueOf(this.param));
         }
-        private static Map<String, String> OPTION_STRING = new HashMap<>();
+        private static final Map<String, String> OPTION_STRING = new java.util.concurrent.ConcurrentHashMap<>();
         public String getOptionString(int param) {
             String key = this.optionTemplate.name + "#" + param + "#";
-            String value = OPTION_STRING.get(key);
-            if (value == null) {
-                value = Util.replace(this.optionTemplate.name, "#", String.valueOf(param));
-                OPTION_STRING.put(key, value);
-            }
-            return value;
+            return OPTION_STRING.computeIfAbsent(key, k -> Util.replace(this.optionTemplate.name, "#", String.valueOf(param)));
         }
 
         public void dispose() {

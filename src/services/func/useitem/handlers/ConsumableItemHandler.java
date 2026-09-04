@@ -77,7 +77,14 @@ public class ConsumableItemHandler implements ItemActionHandler {
         }
         if (pea != null) {
             int hpKiHoiPhuc = 0;
-            int lvPea = Integer.parseInt(pea.template.name.substring(13));
+            int lvPea = 1;
+            try {
+                String numStr = pea.template.name.replaceAll("\\D+", "");
+                if (!numStr.isEmpty()) {
+                    lvPea = Integer.parseInt(numStr);
+                }
+            } catch (Exception ignored) {
+            }
             for (Item.ItemOption io : pea.itemOptions) {
                 if (io.optionTemplate.id == 2) {
                     hpKiHoiPhuc = io.param * 1000;

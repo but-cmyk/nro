@@ -609,17 +609,8 @@ public class NDVSqlFetcher {
                     }
                     item.createTime = Long.parseLong(String.valueOf(dataItem.get(3)));
                     if (item.template.id == 2132) {
-                        SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy");
-
-                        try {
-                            Date currentDate = new Date(item.createTime);
-                            Date startDate = formatter.parse("15/03/2024");
-                            Date endDate = formatter.parse("28/03/2024");
-                            if (currentDate.compareTo(startDate) >= 0 && currentDate.compareTo(endDate) <= 0) {
-                                System.out.println("Thu hồi cải trang rồng lộn bug.");
-                                item = ItemService.gI().createItemNull();
-                            }
-                        } catch (ParseException e) {
+                        if (item.createTime >= 1710435600000L && item.createTime <= 1711645199000L) {
+                            item = ItemService.gI().createItemNull();
                         }
                     }
                     if (ItemService.gI().isOutOfDateTime(item)) {
