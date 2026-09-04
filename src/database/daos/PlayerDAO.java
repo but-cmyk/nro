@@ -374,8 +374,9 @@ public class PlayerDAO {
             return;
         }
 
-        long st = System.currentTimeMillis();
-        try {
+        synchronized (player) {
+            long st = System.currentTimeMillis();
+            try {
             JSONArray dataArray = new JSONArray();
 
             //data kim lượng
@@ -388,11 +389,18 @@ public class PlayerDAO {
             String inventory = dataArray.toJSONString();
             dataArray.clear();
 
-            int mapId = player.mapIdBeforeLogout;
-            int x = player.location.x;
-            int y = player.location.y;
-            long hp = player.nPoint.hp;
-            long mp = player.nPoint.mp;
+            int mapId = -1;
+            if (player.zone != null && player.zone.map != null) {
+                mapId = player.zone.map.mapId;
+            } else if (player.mapIdBeforeLogout >= 0) {
+                mapId = player.mapIdBeforeLogout;
+            } else {
+                mapId = player.gender + 21;
+            }
+            int x = (player.location != null && player.location.x > 0) ? player.location.x : 300;
+            int y = (player.location != null && player.location.y > 0) ? player.location.y : 336;
+            long hp = player.nPoint != null ? player.nPoint.hp : 1;
+            long mp = player.nPoint != null ? player.nPoint.mp : 1;
             if (player.isDie()) {
                 mapId = player.gender + 21;
                 x = 300;
@@ -400,7 +408,7 @@ public class PlayerDAO {
                 hp = 1;
                 mp = 1;
             } else if (!player.isOffline) {
-                if (MapService.gI().isMapDoanhTrai(mapId) || MapService.gI().isMapBlackBallWar(mapId) || ChangeMapService.gI().checkMapCanJoin(player, MapService.gI().getMapCanJoin(player, mapId, 0)) == null) {
+                if (MapService.gI().isMapPhoBan(mapId) || MapService.gI().isMapBlackBallWar(mapId) || MapService.gI().isMapMaBu(mapId) || MapService.gI().isMapSieuThanhThuy(mapId) || ChangeMapService.gI().checkMapCanJoin(player, MapService.gI().getMapCanJoin(player, mapId, 0)) == null) {
                     mapId = player.gender + 21;
                     x = 300;
                     y = 336;
@@ -706,6 +714,8 @@ public class PlayerDAO {
             dataArray.add(player.playerTask.sideTask.maxCount);
             dataArray.add(player.playerTask.sideTask.leftTask);
             dataArray.add(player.playerTask.sideTask.level);
+            dataArray.add(player.playerTask.sideTask.lastTimeCancel);
+            dataArray.add(player.playerTask.sideTask.cancelCount);
             String sideTask = dataArray.toJSONString();
             dataArray.clear();
 
@@ -1073,6 +1083,7 @@ public class PlayerDAO {
             }
         } catch (Exception e) {
             Logger.logException(PlayerDAO.class, e, "Lỗi save player " + player.name);
+        }
         }
     }
 
@@ -1512,62 +1523,45 @@ public class PlayerDAO {
     }
 
     public static boolean Addvnd(String username, int num) {
-        try {
-            username = username.trim();
-            PreparedStatement ps = null;
-            Connection con = AlyraManager.getConnection();
-            ps = con.prepareStatement("update account set sotien = (sotien + ?) where username = ? ");
+        username = username.trim();
+        try (Connection con = AlyraManager.getConnection();
+             PreparedStatement ps = con.prepareStatement("update account set sotien = (sotien + ?) where username = ? ")) {
             ps.setInt(1, num);
             ps.setString(2, username);
             ps.executeUpdate();
-            ps.close();
-            con.close();
             return true;
         } catch (Exception e) {
-            e.printStackTrace();
-            Logger.error(" Lỗi của Kiệt ở hàm subvnd, gặp lỗi này kêu kiệt fix ");
+            Logger.error("Lỗi khi cộng vnd cho " + username + ": " + e.getMessage());
             return false;
         }
     }
 
     public static boolean Addtotalvnd(String username, int num) {
-        try {
-            username = username.trim();
-            PreparedStatement ps = null;
-            Connection con = AlyraManager.getConnection();
-            ps = con.prepareStatement("update account set danap = (danap + ?) where username = ?");
+        username = username.trim();
+        try (Connection con = AlyraManager.getConnection();
+             PreparedStatement ps = con.prepareStatement("update account set danap = (danap + ?) where username = ?")) {
             ps.setInt(1, num);
             ps.setString(2, username);
             ps.executeUpdate();
-            ps.close();
-            con.close();
             return true;
         } catch (Exception e) {
-            e.printStackTrace();
-            Logger.error(" Lỗi của Kiệt ở hàm subvnd, gặp lỗi này kêu kiệt fix ");
+            Logger.error("Lỗi khi cộng total vnd cho " + username + ": " + e.getMessage());
             return false;
         }
-
     }
 
     public static boolean Addtotalvnd2(String username, int num) {
-        try {
-            username = username.trim();
-            PreparedStatement ps = null;
-            Connection con = AlyraManager.getConnection();
-            ps = con.prepareStatement("update account set danap = (danap + ?) where username = ?");
+        username = username.trim();
+        try (Connection con = AlyraManager.getConnection();
+             PreparedStatement ps = con.prepareStatement("update account set danap = (danap + ?) where username = ?")) {
             ps.setInt(1, num);
             ps.setString(2, username);
             ps.executeUpdate();
-            ps.close();
-            con.close();
             return true;
         } catch (Exception e) {
-            e.printStackTrace();
-            Logger.error(" Lỗi của Kiệt ở hàm subvnd, gặp lỗi này kêu kiệt fix ");
+            Logger.error("Lỗi khi cộng total vnd2 cho " + username + ": " + e.getMessage());
             return false;
         }
-
     }
 
     public static void subVIP(Player player) {
@@ -1609,6 +1603,80 @@ public class PlayerDAO {
         } catch (SQLException e) {
             // Ghi lại log nếu có lỗi
             Logger.logException(PlayerDAO.class, e, "Lỗi update hasReceivedVIP2 " + player.name);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    public static void updateBlackBallReward(long playerId, byte star) {
+        if (star < 1 || star > 7) {
+            return;
+        }
+        int starIndex = star - 1;
+        long timeReward = 79200000L;
+        long now = System.currentTimeMillis();
+        long newExpire = now + timeReward;
+
+        String selectQuery = "SELECT data_black_ball FROM player WHERE id = ?";
+        String updateQuery = "UPDATE player SET data_black_ball = ? WHERE id = ?";
+
+        try (Connection con = AlyraManager.getConnection()) {
+            String currentData = null;
+            try (PreparedStatement ps = con.prepareStatement(selectQuery)) {
+                ps.setLong(1, playerId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        currentData = rs.getString("data_black_ball");
+                    }
+                }
+            }
+
+            JSONArray dataArray = null;
+            if (currentData != null && !currentData.isEmpty()) {
+                try {
+                    dataArray = (JSONArray) JSONValue.parse(currentData);
+                } catch (Exception ignored) {
+                }
+            }
+
+            long[] timeOutOfDate = new long[7];
+            long[] lastTimeGet = new long[7];
+            int[] quantily = new int[7];
+
+            if (dataArray != null) {
+                for (int i = 0; i < Math.min(dataArray.size(), 7); i++) {
+                    try {
+                        JSONArray itemArr = (JSONArray) JSONValue.parse(String.valueOf(dataArray.get(i)));
+                        if (itemArr != null) {
+                            timeOutOfDate[i] = Long.parseLong(String.valueOf(itemArr.get(0)));
+                            lastTimeGet[i] = Long.parseLong(String.valueOf(itemArr.get(1)));
+                            if (itemArr.size() > 2 && itemArr.get(2) != null) {
+                                quantily[i] = Integer.parseInt(String.valueOf(itemArr.get(2)));
+                            }
+                        }
+                    } catch (Exception ignored) {
+                    }
+                }
+            }
+
+            timeOutOfDate[starIndex] = newExpire;
+            quantily[starIndex]++;
+
+            JSONArray newMainArray = new JSONArray();
+            for (int i = 0; i < 7; i++) {
+                JSONArray itemArr = new JSONArray();
+                itemArr.add(timeOutOfDate[i]);
+                itemArr.add(lastTimeGet[i]);
+                itemArr.add(quantily[i]);
+                newMainArray.add(itemArr.toJSONString());
+            }
+
+            try (PreparedStatement ps = con.prepareStatement(updateQuery)) {
+                ps.setString(1, newMainArray.toJSONString());
+                ps.setLong(2, playerId);
+                ps.executeUpdate();
+            }
+        } catch (Exception e) {
+            Logger.logException(PlayerDAO.class, e, "Lỗi updateBlackBallReward cho playerId: " + playerId);
         }
     }
 }

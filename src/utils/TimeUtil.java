@@ -7,7 +7,9 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Calendar;
 import java.util.Date;
@@ -190,9 +192,9 @@ public class TimeUtil {
     public static long getStartTimeBlackBallWar() {
         LocalTime startTime = LocalTime.of(BlackBallWar.HOUR_OPEN, BlackBallWar.MIN_OPEN, BlackBallWar.SECOND_OPEN);
         LocalDateTime startDateTime = LocalDateTime.of(LocalDate.now(), startTime);
-        Instant startInstant = startDateTime.toInstant(ZoneOffset.UTC);
+        ZonedDateTime zonedDateTime = ZonedDateTime.of(startDateTime, ZoneId.systemDefault());
 
-        return startInstant.toEpochMilli();
+        return zonedDateTime.toInstant().toEpochMilli();
     }
 
     public static boolean isBlackBallWarOpen() {

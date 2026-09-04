@@ -153,25 +153,26 @@ public class Zone {
             return;
         }
         try {
-            for (int i = this.items.size() - 1; i >= 0; i--) {
-                try {
-                    if (i < this.items.size()) {
-                        ItemMap item = this.items.get(i);
-                        if (item != null && item.itemTemplate != null) {
-                            item.update();
-                        } else {
-                            items.remove(i);
-                            System.err.println("Remove item " + i);
+            synchronized (this.items) {
+                for (int i = this.items.size() - 1; i >= 0; i--) {
+                    try {
+                        if (i < this.items.size()) {
+                            ItemMap item = this.items.get(i);
+                            if (item != null && item.itemTemplate != null) {
+                                item.update();
+                            } else {
+                                items.remove(i);
+                                System.err.println("Remove item " + i);
+                            }
                         }
+                    } catch (Exception e) {
+                        Logger.logException(Zone.class, e, "Lỗi item");
                     }
-                } catch (Exception e) {
-                    Logger.logException(Zone.class, e, "Lỗi item");
                 }
             }
         } catch (Exception e) {
             Logger.logException(Zone.class, e, "Lỗi update items");
         }
-
     }
 
     private void udPlayer() {
@@ -264,12 +265,14 @@ public class Zone {
     }
 
     public ItemMap getItemMapByItemMapId(int itemId) {
-        for (ItemMap item : this.items) {
-            if (item != null && item.itemMapId == itemId) {
-                return item;
+        synchronized (this.items) {
+            for (ItemMap item : this.items) {
+                if (item != null && item.itemMapId == itemId) {
+                    return item;
+                }
             }
+            return null;
         }
-        return null;
     }
 
 
@@ -286,21 +289,26 @@ public ItemMap getItemMapByTempId(int tempId) {
 
     public List<ItemMap> getItemMapsForPlayer(Player player) {
         List<ItemMap> list = new ArrayList<>();
-        for (ItemMap item : items) {
-            if (item.itemTemplate.id == 78) {
-                if (TaskService.gI().getIdTask(player) != ConstTask.TASK_3_1) {
+        synchronized (this.items) {
+            for (ItemMap item : items) {
+                if (item == null || item.itemTemplate == null) {
                     continue;
                 }
-            }
-            if (item.itemTemplate.id == 74) {
-                if (TaskService.gI().getIdTask(player) < ConstTask.TASK_3_0) {
+                if (item.itemTemplate.id == 78) {
+                    if (TaskService.gI().getIdTask(player) != ConstTask.TASK_3_1) {
+                        continue;
+                    }
+                }
+                if (item.itemTemplate.id == 74) {
+                    if (TaskService.gI().getIdTask(player) < ConstTask.TASK_3_0) {
+                        continue;
+                    }
+                }
+                if (item.itemTemplate.id == 726 && item.playerId != player.id) {
                     continue;
                 }
+                list.add(item);
             }
-            if (item.itemTemplate.id == 726 && item.playerId != player.id) {
-                continue;
-            }
-            list.add(item);
         }
         return list;
     }
@@ -324,6 +332,14 @@ public ItemMap getItemMapByTempId(int tempId) {
     }
 
     public void pickItem(Player player, int itemMapId) {
+        pickItem(player, itemMapId, false);
+    }
+
+    public void pickItem(Player player, int itemMapId, boolean isThuHut) {
+        if (player.isTrade || services.func.TransactionService.gI().check(player)) {
+            Service.gI().sendThongBao(player, "Không thể nhặt vật phẩm khi đang giao dịch!");
+            return;
+        }
         ItemMap itemMap = null;
         boolean isFoodOrKid = false;
 
@@ -331,6 +347,10 @@ public ItemMap getItemMapByTempId(int tempId) {
             itemMap = getItemMapByItemMapId(itemMapId);
             if (itemMap == null || itemMap.itemTemplate == null) {
                 Service.gI().sendThongBao(player, "Không thể thực hiện");
+                return;
+            }
+            if (!isThuHut && player.location != null && utils.Util.getDistance(player.location.x, player.location.y, itemMap.x, itemMap.y) > 120) {
+                Service.gI().sendThongBao(player, "Khoảng cách quá xa!");
                 return;
             }
             if (itemMap.itemTemplate.type == 22 || (itemMap.itemTemplate.id == 460 && itemMap.playerId == player.id)) {
@@ -428,13 +448,19 @@ public ItemMap getItemMapByTempId(int tempId) {
     }
 
     public void addItem(ItemMap itemMap) {
-        if (itemMap != null && !items.contains(itemMap)) {
-            items.add(0, itemMap);
+        if (itemMap != null) {
+            synchronized (this.items) {
+                if (!items.contains(itemMap)) {
+                    items.add(0, itemMap);
+                }
+            }
         }
     }
 
     public void removeItemMap(ItemMap itemMap) {
-        this.items.remove(itemMap);
+        synchronized (this.items) {
+            this.items.remove(itemMap);
+        }
     }
 
     public Player getRandomPlayerInMap() {
@@ -653,15 +679,8 @@ msg.writer().writeByte(plInfo.idMark != null ? plInfo.idMark.getIdSpaceShip() : 
 
             // mob
             try {
-                List<Mob> mobs = new ArrayList<>();
+                msg.writer().writeByte(this.mobs.size());
                 for (Mob mob : this.mobs) {
-                    if (mob.isBigBoss() && mob.tempId != 70 && mob.isDie()) {
-                        continue;
-                    }
-                    mobs.add(mob);
-                }
-                msg.writer().writeByte(mobs.size());
-                for (Mob mob : mobs) {
                     msg.writer().writeBoolean(false); //is disable
                     msg.writer().writeBoolean(false); //is dont move
                     msg.writer().writeBoolean(false); //is fire
@@ -702,15 +721,17 @@ msg.writer().writeByte(plInfo.idMark != null ? plInfo.idMark.getIdSpaceShip() : 
             // item
             try {
                 List<ItemMap> itemsMap = this.getItemMapsForPlayer(pl);
-                msg.writer().writeByte(itemsMap.size());
-                for (ItemMap it : itemsMap) {
+                int size = Math.min(itemsMap.size(), 100);
+                msg.writer().writeByte(size);
+                for (int i = 0; i < size; i++) {
+                    ItemMap it = itemsMap.get(i);
                     msg.writer().writeShort(it.itemMapId);
                     msg.writer().writeShort(it.itemTemplate.id);
                     msg.writer().writeShort(it.x);
                     msg.writer().writeShort(it.y);
                     msg.writer().writeInt((int) it.playerId);
-                    if (it instanceof Satellite satellite) {
-                        msg.writer().writeShort((short) satellite.range);
+                    if (it.playerId == -2) {
+                        msg.writer().writeShort((short) (it instanceof Satellite satellite ? satellite.range : 250));
                     }
                 }
             } catch (Exception e) {

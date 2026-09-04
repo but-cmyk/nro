@@ -1,0 +1,73 @@
+services:
+  # MySQL Database Service (Tự động khởi tạo nro_data)
+  mysql:
+    image: mysql:8.0
+    container_name: nro_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "3308:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./docker/initdb:/docker-entrypoint-initdb.d
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --default-authentication-plugin=mysql_native_password
+      - --performance-schema=OFF
+      - --innodb-buffer-pool-size=512M
+      - --innodb-log-buffer-size=16M
+      - --max-connections=200
+      - --wait-timeout=60
+      - --interactive-timeout=60
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -proot || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # Redis In-Memory Cache Service
+  redis:
+    image: redis:7-alpine
+    container_name: nro_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # NRO Backend Game Server
+  nro_server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: nro_backend
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      - DATABASE_HOST=mysql
+      - DATABASE_PORT=3306
+      - DATABASE_NAME=nro_data
+      - DATABASE_USER=root
+      - DATABASE_PASS=root
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    ports:
+      - "14445:14445"
+    volumes:
+      - ./data:/app/data
+
+volumes:
+  mysql_data:
+  redis_data:

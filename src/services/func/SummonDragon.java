@@ -49,7 +49,7 @@ public class SummonDragon {
             + "Điều ước rồng 1 sao: Capsule 1 sao, hoặc 200 triệu sức mạnh, hoặc 20 triệu vàng, hoặc đẹp trai, hoặc....\n"
             + "Ngọc rồng sẽ mất ngay khi gọi rồng dù bạn có ước hay không\n"
             + "Quá 5 phút nếu không ước rồng thần sẽ bay mất";
-    public static final String SHENRON_SAY = "Ta sẽ ban cho người 1 điều ước, ngươi có 5 phút, hãy suy nghĩ thật kỹ trước khi quyết định";
+    public static final String SHENRON_SAY = "Ta sẽ ban cho ngươi 1 điều ước, ngươi có 5 phút, hãy suy nghĩ thật kỹ trước khi quyết định";
 
     public static final String[] SHENRON_1_STAR_WISHES_1 = new String[] { "Giàu có\n+100 Triệu\nVàng",
             "Găng tay\nđang mang\nlên 1 cấp", "Chí mạng\nGốc +2%",
@@ -417,11 +417,7 @@ public class SummonDragon {
             case ConstNpc.SHENRON_1_1:
                 switch (this.select) {
                     case 0: // 20 tr vàng
-                        if (this.playerSummonShenron.inventory.gold > (Inventory.LIMIT_GOLD - 100_000_000)) {
-                            this.playerSummonShenron.inventory.gold = Inventory.LIMIT_GOLD;
-                        } else {
-                            this.playerSummonShenron.inventory.gold += 100_000_000;
-                        }
+                        this.playerSummonShenron.inventory.addGold(100_000_000);
                         PlayerService.gI().sendInfoHpMpMoney(this.playerSummonShenron);
                         break;
                     case 1: // găng tay đang đeo lên 1 cấp
@@ -562,11 +558,7 @@ public class SummonDragon {
                         PlayerService.gI().sendInfoHpMpMoney(this.playerSummonShenron);
                         break;
                     case 1: // 20 tr vàng
-                        if (this.playerSummonShenron.inventory.gold > (Inventory.LIMIT_GOLD - 20_000_000)) {
-                            this.playerSummonShenron.inventory.gold = Inventory.LIMIT_GOLD;
-                        } else {
-                            this.playerSummonShenron.inventory.gold += 20_000_000;
-                        }
+                        this.playerSummonShenron.inventory.addGold(20_000_000);
                         PlayerService.gI().sendInfoHpMpMoney(this.playerSummonShenron);
                         break;
                 }
@@ -578,11 +570,7 @@ public class SummonDragon {
                         PlayerService.gI().sendInfoHpMpMoney(this.playerSummonShenron);
                         break;
                     case 1: // 2tr vàng
-                        if (this.playerSummonShenron.inventory.gold > (Inventory.LIMIT_GOLD - 2_000_000)) {
-                            this.playerSummonShenron.inventory.gold = Inventory.LIMIT_GOLD;
-                        } else {
-                            this.playerSummonShenron.inventory.gold += 2_000_000;
-                        }
+                        this.playerSummonShenron.inventory.addGold(2_000_000);
                         PlayerService.gI().sendInfoHpMpMoney(this.playerSummonShenron);
                         break;
                 }
@@ -638,10 +626,10 @@ public class SummonDragon {
     public void shenronLeave(Player pl, byte type) {
         if (type == WISHED) {
             NpcService.gI().createTutorial(pl, 0,
-                    "Điều ước của ngươi đã trở thành sự thật\nHẹn gặp ngươi lần sau, ta đi ngủ đây, bái bai");
+                    "Điều ước của ngươi đã thành hiện thực.\nNgọc rồng sẽ hóa thành đá trong một thời gian. Hẹn gặp lại ngươi lần sau!");
         } else {
             NpcService.gI().createMenuRongThieng(pl, ConstNpc.IGNORE_MENU,
-                    "Ta buồn ngủ quá rồi\nHẹn gặp ngươi lần sau, ta đi đây, bái bai");
+                    "Thời gian 5 phút đã hết mà ngươi chưa đưa ra quyết định.\nTa trở về thế giới rồng thần đây. Tạm biệt!");
         }
         activeShenron(pl, false, SummonDragon.DRAGON_SHENRON);
         this.isShenronAppear = false;

@@ -13,6 +13,7 @@ import services.PetService;
 import services.SkillService;
 import services.map.ChangeMapService;
 import models.skill.Skill;
+import utils.Logger;
 import utils.Util;
 
 public class SuperBroly extends Boss {
@@ -72,7 +73,9 @@ public class SuperBroly extends Boss {
                         break;
                     }
                 }
-            } catch(Exception e){}
+            } catch (Exception e) {
+                Logger.logException(SuperBroly.class, e, "Error scanning zone for SuperBroly");
+            }
         }
 
         ChangeMapService.gI().changeMap(this, this.zone, this.location.x, this.location.y);
@@ -239,7 +242,9 @@ public class SuperBroly extends Boss {
         this.nPoint.hpMax = (int)hpMax;
         this.nPoint.dame = (int)(hpMax / 10);
 
-        if (this.nPoint.hpMax >= 16_070_777) ;
+        if (this.nPoint.hpMax >= 16_070_777) {
+            this.leaveMap();
+        }
     }
 
     @Override

@@ -13,6 +13,7 @@ import services.Service;
 import services.TaskService;
 import utils.Util;
 import services.player.PlayerService;
+import utils.Logger;
 
 public class SieuBoHung extends Boss {
 
@@ -47,7 +48,9 @@ public class SieuBoHung extends Boss {
                     if (!this.isDie()) {
                         this.chat("Cứ chưởng tiếp đi haha");
                     }
-                } catch (Exception e) {}
+                } catch (Exception e) {
+                    Logger.logException(SieuBoHung.class, e);
+                }
             }, 2000);
             
             server.GameLoopManager.gI().schedule(() -> {
@@ -55,7 +58,9 @@ public class SieuBoHung extends Boss {
                     if (!this.isDie()) {
                         this.chat("Liệu mà giữ mạng đấy");
                     }
-                } catch (Exception e) {}
+                } catch (Exception e) {
+                    Logger.logException(SieuBoHung.class, e);
+                }
             }, 4000);
             
             server.GameLoopManager.gI().schedule(() -> {
@@ -75,9 +80,12 @@ public class SieuBoHung extends Boss {
                             }
                         }
                     }
-                } catch (Exception e) {}
+                } catch (Exception e) {
+                    Logger.logException(SieuBoHung.class, e, "Error spawning Cell Con");
+                }
             }, 6000);
         } catch (Exception e) {
+            Logger.logException(SieuBoHung.class, e, "Error in callCellCon");
         }
     }
 

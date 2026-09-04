@@ -333,6 +333,7 @@ public class ConstNpc {
     //index menu bò mộng
     public static final int MENU_OPTION_LEVEL_SIDE_TASK = 500;
     public static final int MENU_OPTION_PAY_SIDE_TASK = 501;
+    public static final int MENU_QUICK_RESET_SIDE_TASK = 502;
 
     //------------------------------shop id-------------------------------------
     //npcname_shoporder

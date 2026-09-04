@@ -51,10 +51,11 @@ public class BlackBallWarService {
                 Service.gI().dropItemMap(itemMap.zone, itemMap);
                 player.zone.lastTimeDropBlackBall = System.currentTimeMillis();
                 if (player.clan != null) {
+                    int newFlag = Util.nextInt(1, 7);
                     List<Player> players = player.zone.getPlayers();
                     for (Player pl : players) {
                         if (pl.clan != null && player.clan.equals(pl.clan)) {
-                            Service.gI().changeFlag(pl, Util.nextInt(1, 7));
+                            Service.gI().changeFlag(pl, newFlag);
                         }
                     }
                 } else {
@@ -172,9 +173,6 @@ public class BlackBallWarService {
             player.effectSkin.lastTimeXDame = System.currentTimeMillis();
             player.effectSkin.xDame = x;
             player.nPoint.calPoint();
-            player.nPoint.setHp((long) player.nPoint.hp * x);
-            player.nPoint.setMp((long) player.nPoint.mp * x);
-            PlayerService.gI().sendInfoHpMp(player);
             Service.gI().point(player);
         } else {
             Service.gI().sendThongBao(player, "Không đủ ngọc để thực hiện, còn thiếu "
@@ -185,14 +183,19 @@ public class BlackBallWarService {
     public void changeMap(Player player, byte index) {
         try {
             if (TimeUtil.isBlackBallWarOpen()) {
-                ChangeMapService.gI().changeMap(player,
-                        player.mapBlackBall.get(index).map.mapId, -1, 50, 50);
+                if (player.mapBlackBall != null && index >= 0 && index < player.mapBlackBall.size()) {
+                    ChangeMapService.gI().changeMap(player,
+                            player.mapBlackBall.get(index).map.mapId, -1, 50, 50);
+                } else {
+                    Service.gI().hideWaitDialog(player);
+                }
             } else {
                 Service.gI().sendThongBao(player,
                         "Trò chơi tìm ngọc hôm nay đã kết thúc, hẹn gặp lại vào 20h ngày mai");
                 Service.gI().hideWaitDialog(player);
             }
         } catch (Exception ex) {
+            Service.gI().hideWaitDialog(player);
         }
     }
 }

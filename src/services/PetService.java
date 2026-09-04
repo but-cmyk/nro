@@ -23,7 +23,7 @@ public class PetService {
 
     public void createNormalPet(Player player, int gender, byte... limitPower) {
         try {
-            createNewPet(player, false, false, false, false, (byte) gender);
+            createNewPet(player, false, (byte) gender);
             if (limitPower != null && limitPower.length == 1) {
                 player.pet.nPoint.limitPower = limitPower[0];
             }
@@ -42,7 +42,7 @@ public class PetService {
 
     public void createNormalPet(Player player, byte... limitPower) {
         try {
-            createNewPet(player, false, false, false, false);
+            createNewPet(player, false);
             if (limitPower != null && limitPower.length == 1) {
                 player.pet.nPoint.limitPower = limitPower[0];
             }
@@ -61,7 +61,7 @@ public class PetService {
 
     public void createMabuPet(Player player, byte... limitPower) {
         try {
-            createNewPet(player, true, false, false, false);
+            createNewPet(player, true);
             if (limitPower != null && limitPower.length == 1) {
                 player.pet.nPoint.limitPower = limitPower[0];
             }
@@ -80,7 +80,7 @@ public class PetService {
 
     public void createMabuPet(Player player, int gender, byte... limitPower) {
         try {
-            createNewPet(player, true, false, false, false, (byte) gender);
+            createNewPet(player, true, (byte) gender);
             if (limitPower != null && limitPower.length == 1) {
                 player.pet.nPoint.limitPower = limitPower[0];
             }
@@ -190,24 +190,14 @@ public class PetService {
         return petData;
     }
 
-    private int[] getDataPetPic() {
-        int[] petData = new int[5];
-        petData[0] = Util.nextInt(40, 115) * 20; //hp
-        petData[1] = Util.nextInt(40, 115) * 20; //mp
-        petData[2] = Util.nextInt(70, 140); //dame
-        petData[3] = Util.nextInt(9, 50); //def
-        petData[4] = Util.nextInt(0, 2); //crit
-        return petData;
-    }
-
-    private void createNewPet(Player player, boolean isMabu, boolean isBeerus, boolean isPic, boolean isBlack, byte... gender) {
-        int[] data = isMabu ? isPic ? getDataPetMabu() : getDataPetPic() : getDataPetNormal();
+    private void createNewPet(Player player, boolean isMabu, byte... gender) {
+        int[] data = isMabu ? getDataPetMabu() : getDataPetNormal();
         Pet pet = new Pet(player);
-        pet.name = "$" + (isMabu ? "Mabư" : isBeerus ? "Beerus" : isPic ? "Pic" : isBlack ? "Black" : "Đệ tử");
+        pet.name = "$" + (isMabu ? "Mabư" : "Đệ tử");
         pet.gender = (gender != null && gender.length != 0) ? gender[0] : (byte) Util.nextInt(0, 2);
         pet.id = player.isPl() ? -player.id : -Math.abs(player.id) - 100000;
-        pet.nPoint.power = isMabu || isBeerus || isPic || isBlack ? 1500000 : 2000;
-        pet.typePet = (byte) (isMabu ? 1 : isBeerus ? 2 : isPic ? 3 : isBlack ? 4 : 0);
+        pet.nPoint.power = isMabu ? 1500000 : 2000;
+        pet.typePet = (byte) (isMabu ? 1 : 0);
         pet.nPoint.stamina = 1000;
         pet.nPoint.maxStamina = 1000;
         pet.nPoint.hpg = data[0];

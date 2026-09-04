@@ -17,6 +17,8 @@ public class SideTask {
     public int leftTask;
 
     public long receivedTime;
+    public long lastTimeCancel;
+    public int cancelCount;
 
     public boolean notify0;
     public boolean notify10;
@@ -28,6 +30,7 @@ public class SideTask {
     public boolean notify70;
     public boolean notify80;
     public boolean notify90;
+    public boolean notify100;
 
     public void reset() {
         this.template = null;
@@ -43,6 +46,7 @@ public class SideTask {
         this.notify70 = false;
         this.notify80 = false;
         this.notify90 = false;
+        this.notify100 = false;
     }
 
     public SideTask() {
@@ -52,8 +56,15 @@ public class SideTask {
     public void renew() {
         if (Util.isAfterMidnight(receivedTime)) {
             this.leftTask = ConstTask.MAX_SIDE_TASK;
+            this.cancelCount = 0;
             this.receivedTime = System.currentTimeMillis();
         }
+    }
+
+    public int getRemainingCooldownSeconds() {
+        long elapsed = System.currentTimeMillis() - this.lastTimeCancel;
+        int remain = 300 - (int) (elapsed / 1000);
+        return Math.max(0, remain);
     }
 
     public boolean isDone() {

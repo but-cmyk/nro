@@ -490,34 +490,33 @@ public class NDVSqlFetcher {
                 player.location.y = 408;
             }
             player.zone = MapService.gI().getMapCanJoin(player, mapId, -1);
+            if (player.zone == null) {
+                mapId = player.gender + 21;
+                player.location.x = 300;
+                player.location.y = 336;
+                player.zone = MapService.gI().getMapCanJoin(player, mapId, -1);
+            }
+            player.mapIdBeforeLogout = mapId;
             dataArray.clear();
 
-            //data chỉ số
-            dataArray = (JSONArray) JSONValue.parse(rs.getString("data_point"));
-            player.nPoint.limitPower = Byte.parseByte(String.valueOf(dataArray.get(0)));
-            player.nPoint.power = Long.parseLong(String.valueOf(dataArray.get(1)));
-            player.nPoint.tiemNang = Long.parseLong(String.valueOf(dataArray.get(2)));
-            player.nPoint.stamina = Short.parseShort(String.valueOf(dataArray.get(3)));
-            player.nPoint.maxStamina = Short.parseShort(String.valueOf(dataArray.get(4)));
-            player.nPoint.hpg = Integer.parseInt(String.valueOf(dataArray.get(5)));
-            player.nPoint.mpg = Integer.parseInt(String.valueOf(dataArray.get(6)));
-            player.nPoint.dameg = Integer.parseInt(String.valueOf(dataArray.get(7)));
-            player.nPoint.defg = Integer.parseInt(String.valueOf(dataArray.get(8)));
-            player.nPoint.critg = Byte.parseByte(String.valueOf(dataArray.get(9)));
-            dataArray.get(10); //** Năng động
-            plHp = Integer.parseInt(String.valueOf(dataArray.get(11)));
-            plMp = Integer.parseInt(String.valueOf(dataArray.get(12)));
-            dataArray.clear();
+            //data chỉ số (Type-Safe DTO)
+            models.player.dto.PlayerPointDTO pointDTO = models.player.dto.PlayerPointDTO.fromJson(rs.getString("data_point"));
+            player.nPoint.limitPower = pointDTO.limitPower;
+            player.nPoint.power = pointDTO.power;
+            player.nPoint.tiemNang = pointDTO.tiemNang;
+            player.nPoint.stamina = pointDTO.stamina;
+            player.nPoint.maxStamina = pointDTO.maxStamina;
+            player.nPoint.hpg = pointDTO.hpg;
+            player.nPoint.mpg = pointDTO.mpg;
+            player.nPoint.dameg = pointDTO.dameg;
+            player.nPoint.defg = pointDTO.defg;
+            player.nPoint.critg = pointDTO.critg;
+            plHp = pointDTO.hp;
+            plMp = pointDTO.mp;
 
-            //data đậu thần
-            dataArray = (JSONArray) JSONValue.parse(rs.getString("data_magic_tree"));
-            byte level = Byte.parseByte(String.valueOf(dataArray.get(0)));
-            byte currPea = Byte.parseByte(String.valueOf(dataArray.get(1)));
-            boolean isUpgrade = Byte.parseByte(String.valueOf(dataArray.get(2))) == 1;
-            long lastTimeHarvest = Long.parseLong(String.valueOf(dataArray.get(3)));
-            long lastTimeUpgrade = Long.parseLong(String.valueOf(dataArray.get(4)));
-            player.magicTree = new MagicTree(player, level, currPea, lastTimeHarvest, isUpgrade, lastTimeUpgrade);
-            dataArray.clear();
+            //data đậu thần (Type-Safe DTO)
+            models.player.dto.MagicTreeDTO treeDTO = models.player.dto.MagicTreeDTO.fromJson(rs.getString("data_magic_tree"));
+            player.magicTree = new MagicTree(player, treeDTO.level, treeDTO.currPeas, treeDTO.lastTimeHarvest, treeDTO.isUpgrade, treeDTO.lastTimeUpgrade);
 
             //data phần thưởng sao đen
             dataArray = (JSONArray) JSONValue.parse(rs.getString("data_black_ball"));
@@ -908,9 +907,19 @@ public class NDVSqlFetcher {
 
             //data nhiệm vụ
             dataArray = (JSONArray) JSONValue.parse(rs.getString("data_task"));
-            TaskMain taskMain = TaskService.gI().getTaskMainById(player, Byte.parseByte(String.valueOf(dataArray.get(0))));
-            taskMain.index = Byte.parseByte(String.valueOf(dataArray.get(1)));
-            taskMain.subTasks.get(taskMain.index).count = Short.parseShort(String.valueOf(dataArray.get(2)));
+            int taskId = Integer.parseInt(String.valueOf(dataArray.get(0)));
+            TaskMain taskMain = TaskService.gI().getTaskMainById(player, taskId);
+            int subIndex = Integer.parseInt(String.valueOf(dataArray.get(1)));
+            if (subIndex < 0) {
+                subIndex = 0;
+            }
+            if (taskMain != null && taskMain.subTasks != null && !taskMain.subTasks.isEmpty()) {
+                if (subIndex >= taskMain.subTasks.size()) {
+                    subIndex = taskMain.subTasks.size() - 1;
+                }
+                taskMain.index = subIndex;
+                taskMain.subTasks.get(subIndex).count = Short.parseShort(String.valueOf(dataArray.get(2)));
+            }
             if (dataArray.size() > 3) {
                 taskMain.lastTime = Long.parseLong(String.valueOf(dataArray.get(3)));
             } else {
@@ -932,10 +941,18 @@ public class NDVSqlFetcher {
             player.playerTask.sideTask.level = Integer.parseInt(String.valueOf(dataArray.get(5)));
             player.playerTask.sideTask.receivedTime = receivedTime;
             
+            if (dataArray.size() > 6) {
+                player.playerTask.sideTask.lastTimeCancel = Long.parseLong(String.valueOf(dataArray.get(6)));
+            }
+            if (dataArray.size() > 7) {
+                player.playerTask.sideTask.cancelCount = Integer.parseInt(String.valueOf(dataArray.get(7)));
+            }
+            
             if (TimeUtil.formatTime(date, format).equals(TimeUtil.formatTime(new Date(), format))) {
                 player.playerTask.sideTask.leftTask = Integer.parseInt(String.valueOf(dataArray.get(4)));
             } else {
                 player.playerTask.sideTask.leftTask = ConstTask.MAX_SIDE_TASK;
+                player.playerTask.sideTask.cancelCount = 0;
             }
 
             //data trứng bư
@@ -947,23 +964,57 @@ public class NDVSqlFetcher {
             dataArray.clear();
 
             dataArray = (JSONArray) JSONValue.parse(rs.getString("data_danh_hieu"));
-            String Reset = "dd-MM-yyyy";
-            long Time = Long.parseLong(String.valueOf(dataArray.get(1)));
-            Date datatime = new Date(Time);
-            if (TimeUtil.formatTime(datatime, Reset).equals(TimeUtil.formatTime(new Date(), Reset))) {
-                player.playerTask.taskdh.Nap = Integer.parseInt(String.valueOf(dataArray.get(0)));
-                player.playerTask.taskdh.Shenron = Integer.parseInt(String.valueOf(dataArray.get(2)));
-                player.playerTask.taskdh.Hagucboss = Integer.parseInt(String.valueOf(dataArray.get(3)));
-                player.playerTask.taskdh.DapDo = Integer.parseInt(String.valueOf(dataArray.get(4)));
-                player.playerTask.taskdh.SieuHang = Integer.parseInt(String.valueOf(dataArray.get(5)));
-                player.playerTask.taskdh.TaskBoMong = Integer.parseInt(String.valueOf(dataArray.get(6)));
-                player.playerTask.taskdh.ChoSuong = Integer.parseInt(String.valueOf(dataArray.get(7)));
-                player.playerTask.taskdh.ChoNuoc = Integer.parseInt(String.valueOf(dataArray.get(8)));
-                player.playerTask.taskdh.NhatDo = Integer.parseInt(String.valueOf(dataArray.get(9)));
-                player.playerTask.taskdh.AnTrom = Integer.parseInt(String.valueOf(dataArray.get(10)));
-                player.playerTask.taskdh.ODo = Integer.parseInt(String.valueOf(dataArray.get(11)));
-                player.playerTask.taskdh.DungLoa = Integer.parseInt(String.valueOf(dataArray.get(12)));
-                player.playerTask.taskdh.ResetTime = Time;
+            if (dataArray != null && !dataArray.isEmpty()) {
+                String Reset = "dd-MM-yyyy";
+                long Time = Long.parseLong(String.valueOf(dataArray.get(1)));
+                Date datatime = new Date(Time);
+
+                // Các tiến độ tích lũy trọn đời LUÔN LUÔN được bảo toàn, không bao giờ bị xóa qua ngày:
+                if (dataArray.size() > 2) {
+                    player.playerTask.taskdh.Shenron = Integer.parseInt(String.valueOf(dataArray.get(2)));
+                }
+                if (dataArray.size() > 3) {
+                    player.playerTask.taskdh.Hagucboss = Integer.parseInt(String.valueOf(dataArray.get(3)));
+                }
+                if (dataArray.size() > 5) {
+                    player.playerTask.taskdh.SieuHang = Integer.parseInt(String.valueOf(dataArray.get(5)));
+                }
+                if (dataArray.size() > 6) {
+                    player.playerTask.taskdh.TaskBoMong = Integer.parseInt(String.valueOf(dataArray.get(6)));
+                }
+                if (dataArray.size() > 7) {
+                    player.playerTask.taskdh.ChoSuong = Integer.parseInt(String.valueOf(dataArray.get(7)));
+                }
+                if (dataArray.size() > 8) {
+                    player.playerTask.taskdh.ChoNuoc = Integer.parseInt(String.valueOf(dataArray.get(8)));
+                }
+                if (dataArray.size() > 10) {
+                    player.playerTask.taskdh.AnTrom = Integer.parseInt(String.valueOf(dataArray.get(10)));
+                }
+                if (dataArray.size() > 11) {
+                    player.playerTask.taskdh.ODo = Integer.parseInt(String.valueOf(dataArray.get(11)));
+                }
+
+                // Các bộ đếm nhiệm vụ "Trong Ngày":
+                if (TimeUtil.formatTime(datatime, Reset).equals(TimeUtil.formatTime(new Date(), Reset))) {
+                    player.playerTask.taskdh.Nap = Integer.parseInt(String.valueOf(dataArray.get(0)));
+                    if (dataArray.size() > 4) {
+                        player.playerTask.taskdh.DapDo = Integer.parseInt(String.valueOf(dataArray.get(4)));
+                    }
+                    if (dataArray.size() > 9) {
+                        player.playerTask.taskdh.NhatDo = Integer.parseInt(String.valueOf(dataArray.get(9)));
+                    }
+                    if (dataArray.size() > 12) {
+                        player.playerTask.taskdh.DungLoa = Integer.parseInt(String.valueOf(dataArray.get(12)));
+                    }
+                    player.playerTask.taskdh.ResetTime = Time;
+                } else {
+                    player.playerTask.taskdh.Nap = 0;
+                    player.playerTask.taskdh.DapDo = 0;
+                    player.playerTask.taskdh.NhatDo = 0;
+                    player.playerTask.taskdh.DungLoa = 0;
+                    player.playerTask.taskdh.ResetTime = System.currentTimeMillis();
+                }
             }
             dataArray.clear();
 
@@ -1029,6 +1080,9 @@ public class NDVSqlFetcher {
                 Pet pet = new Pet(player);
                 pet.id = -player.id;
                 pet.typePet = Byte.parseByte(String.valueOf(dataArray.get(0)));
+                if (pet.typePet > 1) {
+                    pet.typePet = 1;
+                }
                 pet.gender = Byte.parseByte(String.valueOf(dataArray.get(1)));
                 pet.name = String.valueOf(dataArray.get(2));
                 player.fusion.typeFusion = Byte.parseByte(String.valueOf(dataArray.get(3)));
@@ -1337,6 +1391,7 @@ public class NDVSqlFetcher {
                     player.playerTask.clanTask.leftTask = ConstTask.MAX_CLAN_TASK;
                 }
             } catch (Exception e) {
+                player.playerTask.clanTask.leftTask = ConstTask.MAX_CLAN_TASK;
             }
 
             //data vip

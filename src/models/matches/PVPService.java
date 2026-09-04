@@ -260,7 +260,7 @@ public class PVPService {
 
     public void acceptRevenge(Player pl) {
         if (Util.canDoWithTime(pl.idMark.getLastTimeRevenge(), 300000)) {
-            if (pl.inventory.getGemAndRuby() < 0) {
+            if (pl.inventory.getGemAndRuby() < 1) {
                 Service.gI().sendThongBao(pl, "Bạn không đủ ngọc, còn thiếu 1 ngọc nữa");
                 return;
             }

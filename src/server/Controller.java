@@ -81,9 +81,9 @@ public class Controller implements IMessageHandler {
         try {
             player = _session.player;
             byte cmd = _msg.command;
-            if (player != null && (cmd == -86 || cmd == -100)) {
+            if (player != null && cmd == -86) {
                 long now = System.currentTimeMillis();
-                if (now - player.idMark.getLastTimeTrade() < 50) {
+                if (now - player.idMark.getLastTimeTrade() < 300) {
                     return;
                 }
             }
@@ -91,6 +91,13 @@ public class Controller implements IMessageHandler {
                case -100:
                     if (player == null) {
                         return;
+                    }
+                    if (player.idMark != null) {
+                        long now = System.currentTimeMillis();
+                        if (now - player.idMark.getLastTimeConsign() < 500) {
+                            return;
+                        }
+                        player.idMark.setLastTimeConsign(now);
                     }
                     if (TransactionService.gI().check(player)) {
                         Service.gI().sendThongBao(player, "Không thể thực hiện");
@@ -432,8 +439,9 @@ public class Controller implements IMessageHandler {
                             return;
                         }
                         long now = System.currentTimeMillis();
-                        if (now - player.location.lastTimeplayerMove < 200) { // Giới hạn 200ms mỗi lần gửi move
-                            return; // Bỏ qua nếu gửi quá nhanh
+                        long elapsed = now - player.location.lastTimeplayerMove;
+                        if (elapsed < 120) { // Giới hạn tần suất nhận gói move (tối đa ~8 gói/s)
+                            return;
                         }
                         if (player.effectSkill.isHaveEffectSkill()) {
                             return;
@@ -447,15 +455,27 @@ public class Controller implements IMessageHandler {
                                 toY = _msg.reader().readShort();
                             } catch (IOException ex) {
                             }
-                            if (player.zone != null && !player.isAdmin()
-                                    && Util.getDistance(player.location.x, player.location.y, toX, toY) > 500) {
-                                return;
+                            if (player.zone != null && !player.isAdmin()) {
+                                int distance = Util.getDistance(player.location.x, player.location.y, toX, toY);
+                                // Tốc độ di chuyển cơ bản của người chơi (mặc định tối thiểu 4)
+                                int baseSpeed = (player.nPoint != null && player.nPoint.speed > 0) ? player.nPoint.speed : 7;
+                                if (baseSpeed < 4) {
+                                    baseSpeed = 4;
+                                }
+                                // Khoảng cách tối đa cho phép: (speed * 40 * elapsed / 1000) + 180px dung sai trễ mạng
+                                int maxAllowedDist = (int) ((baseSpeed * 40L * elapsed) / 1000L) + 180;
+                                if (distance > maxAllowedDist || distance > 300) {
+                                    // Phát hiện dịch chuyển tức thời hoặc hack tốc độ -> Rollback vị trí
+                                    Service.gI().resetPoint(player, player.location.x, player.location.y);
+                                    return;
+                                }
                             }
                             if (b == 1) {
                                 AchievementService.gI().checkDoneTaskFly(player, player.location.x - toX);
                             }
                         } catch (IOException e) {
                         }
+                        player.location.lastTimeplayerMove = now;
                         PlayerService.gI().playerMove(player, toX, toY);
                     }
                     break;
@@ -678,6 +698,11 @@ public class Controller implements IMessageHandler {
                     break;
                 case 54:
                     if (player != null) {
+                        long nowAttack = System.currentTimeMillis();
+                        if (nowAttack - player.lastTimeAttack < 300) {
+                            // Chặn spam gói tin tấn công quái từ tool mod (GACD < 300ms)
+                            break;
+                        }
                         int mobId = _msg.reader().readByte();
                         int masterId = -1;
                         boolean isMobMe = mobId == -1;
@@ -690,6 +715,11 @@ public class Controller implements IMessageHandler {
                     break;
                 case -60:
                     if (player != null) {
+                        long nowAttack = System.currentTimeMillis();
+                        if (nowAttack - player.lastTimeAttack < 300) {
+                            // Chặn spam gói tin tấn công người chơi từ tool mod (GACD < 300ms)
+                            break;
+                        }
                         int playerId = _msg.reader().readInt();
 //                        _msg.reader().readByte();
                         Service.gI().attackPlayer(player, playerId);
@@ -855,68 +885,7 @@ public class Controller implements IMessageHandler {
                         break;
                     case 13:
                         // client ok
-                        if (player != null && player.isPl()) {
-                            Service.gI().player(player);
-                            Service.gI().Send_Caitrang(player);
-
-                            // -64 my flag bag
-                            Service.gI().sendFlagBag(player);
-
-                            // -113 skill shortcut
-                            player.playerSkill.sendSkillShortCut();
-                            // item time
-                            ItemTimeService.gI().sendAllItemTime(player);
-
-                            // send current task
-                            TaskService.gI().sendInfoCurrentTask(player);
-
-                            if (TaskService.gI().getIdTask(player) == ConstTask.TASK_0_0) {
-                                NpcService.gI().createTutorial(player, -1,
-                                        "Chào mừng " + player.name + " đến với Ngọc Rồng Online\n"
-                                        + "Nhiệm vụ đầu tiên của bạn là di chuyển\n"
-                                        + "Bạn hãy di chuyển nhân vật theo mũi tên chỉ hướng");
-                            } else {
-                                // -70 thông báo bigmessage
-                                sendThongBaoServer(player);
-                            }
-
-                            if (player.inventory.itemsBody.get(11).isNotNullItem()) {
-                                Service.gI().sendChibi(player);
-                            }
-
-                            // Kiểm tra zone có null không trước khi gọi mapInfo
-                            if (player.zone != null) {
-                                player.zone.mapInfo(player);
-                            } else {
-                                // Xử lý trường hợp player.zone là null (nếu cần thiết)
-                                //    System.out.println("Player zone is null for player: " + player.name);
-                            }
-
-                            if (player.getSession().version >= 231) {
-                                for (Skill skill : player.playerSkill.skills) {
-                                    if (skill.currLevel <= 0 || skill.template.type != 4) {
-                                        continue;
-                                    }
-                                    SkillService.gI().sendCurrLevelSpecial(player, skill);
-                                }
-                            }
-                            Service.gI().sendTimeSkill(player);
-                            TrainingService.gI().tnsmLuyenTapUp(player);
-                            player.sendNewPet();
-                            if (TaskService.gI().getIdTask(player) >= ConstTask.TASK_32_0 && !player.isAdmin() && player.getSession().eventPoint >= 0) {
-                                ChatGlobalService.gI().chatVip(player, "Trùm server " + player.name + " vừa mới nhậm chức, chúng mày nằm xuống!");
-                                if (player.getSession().version < 237) {
-                                    Service.gI().sendThongBaoAllPlayer("Trùm server " + player.name + " vừa mới nhậm chức, chúng mày nằm xuống!");
-                                }
-                                ServerNotify.gI().notify("Trùm server " + player.name + " vừa mới nhậm chức, chúng mày nằm xuống!");
-                            }
-                           // if (player.isAdmin()) {
-                           //     Service.gI().sendMessageServer("Admin đã xuất hiện, quỳ mẹ mày xuống!");
-                          //  }
-                            if (player.getSession() != null && player.getSession().danap > 0) {
-                                AchievementService.gI().checkDoneTask(player, ConstAchievement.LAN_DAU_NAP_NGOC);
-                            }
-                        }
+                        handleClientJoinMap(player);
                         break;
 
                     default:
@@ -1056,6 +1025,79 @@ public class Controller implements IMessageHandler {
     public void finishUpdate(Player player) {
         if (player.getSession() != null) {
             player.getSession().finishUpdate = true;
+        }
+        handleClientJoinMap(player);
+    }
+
+    public synchronized void handleClientJoinMap(Player player) {
+        if (player == null || !player.isPl()) {
+            return;
+        }
+        if (player.isJoinMap) {
+            return;
+        }
+        player.isJoinMap = true;
+
+        try {
+            Service.gI().player(player);
+            Service.gI().Send_Caitrang(player);
+
+            // -64 my flag bag
+            Service.gI().sendFlagBag(player);
+
+            // -113 skill shortcut
+            player.playerSkill.sendSkillShortCut();
+            // item time
+            ItemTimeService.gI().sendAllItemTime(player);
+
+            // send current task
+            TaskService.gI().sendInfoCurrentTask(player);
+
+            if (TaskService.gI().getIdTask(player) == ConstTask.TASK_0_0) {
+                NpcService.gI().createTutorial(player, -1,
+                        "Chào mừng " + player.name + " đến với Ngọc Rồng Online\n"
+                        + "Nhiệm vụ đầu tiên của bạn là di chuyển\n"
+                        + "Bạn hãy di chuyển nhân vật theo mũi tên chỉ hướng");
+            } else {
+                // -70 thông báo bigmessage
+                sendThongBaoServer(player);
+            }
+
+            if (player.inventory != null && player.inventory.itemsBody != null
+                    && player.inventory.itemsBody.size() > 11 && player.inventory.itemsBody.get(11).isNotNullItem()) {
+                Service.gI().sendChibi(player);
+            }
+
+            // Kiểm tra zone có null không trước khi gọi mapInfo
+            if (player.zone != null) {
+                player.zone.mapInfo(player);
+            } else {
+                ChangeMapService.gI().changeMapBySpaceShip(player, player.gender + 21, 0, -1);
+            }
+
+            if (player.getSession() != null && player.getSession().version >= 231) {
+                for (Skill skill : player.playerSkill.skills) {
+                    if (skill.currLevel <= 0 || skill.template.type != 4) {
+                        continue;
+                    }
+                    SkillService.gI().sendCurrLevelSpecial(player, skill);
+                }
+            }
+            Service.gI().sendTimeSkill(player);
+            TrainingService.gI().tnsmLuyenTapUp(player);
+            player.sendNewPet();
+            if (TaskService.gI().getIdTask(player) >= ConstTask.TASK_32_0 && !player.isAdmin() && player.getSession() != null && player.getSession().eventPoint >= 0) {
+                ChatGlobalService.gI().chatVip(player, "Trùm server " + player.name + " vừa mới nhậm chức, chúng mày nằm xuống!");
+                if (player.getSession().version < 237) {
+                    Service.gI().sendThongBaoAllPlayer("Trùm server " + player.name + " vừa mới nhậm chức, chúng mày nằm xuống!");
+                }
+                ServerNotify.gI().notify("Trùm server " + player.name + " vừa mới nhậm chức, chúng mày nằm xuống!");
+            }
+            if (player.getSession() != null && player.getSession().danap > 0) {
+                AchievementService.gI().checkDoneTask(player, ConstAchievement.LAN_DAU_NAP_NGOC);
+            }
+        } catch (Exception e) {
+            utils.Logger.logException(Controller.class, e, "Lỗi khi đưa player " + player.name + " vào map");
         }
     }
 

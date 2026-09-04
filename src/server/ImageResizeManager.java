@@ -27,14 +27,11 @@ public class ImageResizeManager {
      * Khởi động tự động resize khi server start
      */
     public void initAutoResize() {
-        Logger.log(Logger.YELLOW, "Khởi động ImageResizeManager...");
         createScaleFolders();
-
-        // Chỉ resize các icon mới để tiết kiệm thời gian
         resizeNewIconsOnly();
-
-        // In thống kê
-        printIconStatistics();
+        if (server.Manager.DEBUG) {
+            printIconStatistics();
+        }
     }
 
     /**
@@ -275,7 +272,7 @@ public class ImageResizeManager {
                         "Đã resize %d icon mới từ tổng %d icons (Lỗi: %d)",
                         newIconCount, totalFiles, errorIconCount
                 ));
-            } else {
+            } else if (server.Manager.DEBUG) {
                 Logger.log(Logger.GREEN, String.format(
                         "Tất cả %d icons đã được resize (Bỏ qua %d file lỗi)",
                         totalFiles, errorIconCount

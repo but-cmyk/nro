@@ -135,14 +135,30 @@ public class InventoryService {
     }
 
     public void throwItem(Player player, int where, int index) {
+        if (player == null || player.inventory == null) {
+            return;
+        }
+        if (player.isTrade || services.func.TransactionService.gI().check(player)) {
+            Service.gI().sendThongBao(player, "Không thể vứt vật phẩm khi đang giao dịch!");
+            return;
+        }
         Item itemThrow = null;
         if (where == 0) {
+            if (index < 0 || index >= player.inventory.itemsBody.size()) {
+                return;
+            }
             itemThrow = player.inventory.itemsBody.get(index);
             removeItemBody(player, index);
             sendItemBody(player);
             Service.gI().Send_Caitrang(player);
         } else if (where == 1) {
+            if (index < 0 || index >= player.inventory.itemsBag.size()) {
+                return;
+            }
             itemThrow = player.inventory.itemsBag.get(index);
+            if (itemThrow == null || !itemThrow.isNotNullItem()) {
+                return;
+            }
             if (itemThrow.template != null && itemThrow.template.id == 673) {
                 Service.gI().sendThongBao(player, "Không thể bỏ vật phẩm này.");
                 return;
@@ -165,6 +181,9 @@ public class InventoryService {
     }
 
     public void removeItem(List<Item> items, int index) {
+        if (items == null || index < 0 || index >= items.size()) {
+            return;
+        }
         Item item = ItemService.gI().createItemNull();
         items.set(index, item);
     }
@@ -234,28 +253,25 @@ public class InventoryService {
     }
 
     public void sortItems(List<Item> list) {
-        int first = -1;
-        int last = -1;
-        Item tempFirst = null;
-        Item tempLast = null;
-        for (int i = 0; i < list.size(); i++) {
-            if (!list.get(i).isNotNullItem()) {
-                first = i;
-                tempFirst = list.get(i);
-                break;
-            }
+        if (list == null || list.isEmpty()) {
+            return;
         }
-        for (int i = list.size() - 1; i >= 0; i--) {
-            if (list.get(i).isNotNullItem()) {
-                last = i;
-                tempLast = list.get(i);
-                break;
+        int first = 0;
+        int last = list.size() - 1;
+        while (first < last) {
+            while (first < last && list.get(first).isNotNullItem()) {
+                first++;
             }
-        }
-        if (first != -1 && last != -1 && first < last) {
-            list.set(first, tempLast);
-            list.set(last, tempFirst);
-            sortItems(list);
+            while (first < last && !list.get(last).isNotNullItem()) {
+                last--;
+            }
+            if (first < last) {
+                Item tempFirst = list.get(first);
+                list.set(first, list.get(last));
+                list.set(last, tempFirst);
+                first++;
+                last--;
+            }
         }
     }
 
@@ -383,6 +399,9 @@ public class InventoryService {
 //                index = 11;
 //                break;
         }
+        if (index < 0 || index >= player.inventory.itemsBody.size()) {
+            return sItem;
+        }
         sItem = player.inventory.itemsBody.get(index);
         if (index == 8 || index == 10) {
             if (sItem.isNotNullItem()) {
@@ -394,7 +413,7 @@ public class InventoryService {
     }
 
     public void itemBagToBody(Player player, int index) {
-        if (index < 0) {
+        if (player == null || player.inventory == null || index < 0 || index >= player.inventory.itemsBag.size()) {
             Service.gI().sendThongBao(player, "Không thể thực hiện");
             return;
         }
@@ -409,6 +428,9 @@ public class InventoryService {
     }
 
     public void itemBodyToBag(Player player, int index) {
+        if (player == null || player.inventory == null || index < 0 || index >= player.inventory.itemsBody.size()) {
+            return;
+        }
         Item item = player.inventory.itemsBody.get(index);
         if (item.isNotNullItem()) {
             if (index == 10) {
@@ -435,6 +457,10 @@ public class InventoryService {
     }
 
     public void itemBagToPetBody(Player player, int index) {
+        if (player == null || player.inventory == null || index < 0 || index >= player.inventory.itemsBag.size()) {
+            Service.gI().sendThongBao(player, "Không thể thực hiện");
+            return;
+        }
         try {
             if (player.pet != null && player.pet.nPoint.power >= 1500000) {
                 Item item = player.inventory.itemsBag.get(index);
@@ -459,6 +485,9 @@ public class InventoryService {
     }
 
     public void itemPetBodyToBag(Player player, int index) {
+        if (player == null || player.pet == null || player.pet.inventory == null || index < 0 || index >= player.pet.inventory.itemsBody.size()) {
+            return;
+        }
         Item item = player.pet.inventory.itemsBody.get(index);
         if (item.isNotNullItem()) {
             player.pet.inventory.itemsBody.set(index, putItemBag(player, item));
@@ -472,7 +501,7 @@ public class InventoryService {
     }
 
     public void itemBoxToBodyOrBag(Player player, int index) {
-        if (index < 0) {
+        if (player == null || player.inventory == null || index < 0 || index >= player.inventory.itemsBox.size()) {
             Service.gI().sendThongBao(player, "Không thể thực hiện");
             return;
         }
@@ -517,7 +546,11 @@ public class InventoryService {
     }
 
     public void itemBagToBox(Player player, int index) {
-        if (index < 0) {
+        if (player.isTrade || services.func.TransactionService.gI().check(player)) {
+            Service.gI().sendThongBao(player, "Không thể thao tác rương khi đang giao dịch!");
+            return;
+        }
+        if (player == null || player.inventory == null || index < 0 || index >= player.inventory.itemsBag.size()) {
             Service.gI().sendThongBao(player, "Không thể thực hiện");
             return;
         }
@@ -540,6 +573,9 @@ public class InventoryService {
     }
 
     public void itemBodyToBox(Player player, int index) {
+        if (player == null || player.inventory == null || index < 0 || index >= player.inventory.itemsBody.size()) {
+            return;
+        }
         Item item = player.inventory.itemsBody.get(index);
         if (item.isNotNullItem()) {
             player.inventory.itemsBody.set(index, putItemBox(player, item));
@@ -709,11 +745,11 @@ public class InventoryService {
         //gold, gem, ruby
         switch (item.template.type) {
             case 9:
-                if (player.inventory.gold + item.quantity <= Inventory.LIMIT_GOLD) {
+                if (player.inventory.gold + item.quantity <= player.inventory.getGoldLimit()) {
                     if (player.effectSkill.isChibi && player.typeChibi == 0) {
-                        player.inventory.gold += item.quantity;
+                        player.inventory.addGold(item.quantity);
                     }
-                    player.inventory.gold += item.quantity;
+                    player.inventory.addGold(item.quantity);
                     Service.gI().sendMoney(player);
                     return true;
                 } else {
@@ -800,9 +836,15 @@ public class InventoryService {
                 //========================ITEM TĂNG SỐ LƯỢNG========================
                 if ((itemAdd.template.id >= 1066 && itemAdd.template.id <= 1070) || itemAdd.template.id == 457
                         || itemAdd.template.id == 610 || itemAdd.template.type == 14 || itemAdd.template.id == 821) {
-                    it.quantity += itemAdd.quantity;
-                    itemAdd.quantity = 0;
-                    return true;
+                    long total = (long) it.quantity + itemAdd.quantity;
+                    if (total > 2_000_000_000L) {
+                        it.quantity = 2_000_000_000;
+                        itemAdd.quantity = (int) (total - 2_000_000_000L);
+                    } else {
+                        it.quantity = (int) total;
+                        itemAdd.quantity = 0;
+                        return true;
+                    }
                 }
 
                 if (it.quantity < 99999) {

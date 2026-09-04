@@ -50,14 +50,15 @@ public abstract class PVP implements IPVP {
 
     @Override
     public boolean isInPVP(Player pl) {
-        return this.p1.equals(pl) || this.p2.equals(pl);
+        return pl != null && ((this.p1 != null && this.p1.equals(pl)) || (this.p2 != null && this.p2.equals(pl)));
     }
 
     @Override
-    public void lose(Player plLose, TYPE_LOSE_PVP typeLose) {
+    public synchronized void lose(Player plLose, TYPE_LOSE_PVP typeLose) {
         if (started) {
+            this.started = false;
             this.finish();
-            if (plLose.equals(p1)) {
+            if (plLose != null && plLose.equals(p1)) {
                 this.reward(p2);
             } else {
                 this.reward(p1);

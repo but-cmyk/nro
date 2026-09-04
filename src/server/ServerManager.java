@@ -10,7 +10,6 @@ import database.daos.PlayerDAO;
 import event.EventManager;
 import managers.AdminToolFrame;
 import managers.ConsignShopManager;
-import managers.ShenronEventManager;
 import managers.SuperRankManager;
 import managers.boss.BossManager;
 import managers.tournament.DeathOrAliveArenaManager;
@@ -114,7 +113,6 @@ public class ServerManager {
         executorService.submit(() -> DeathOrAliveArenaManager.gI().run());
         executorService.submit(() -> WorldMartialArtsTournamentManager.gI().run());
         executorService.submit(() -> AutoBtri.gI().run());
-        executorService.submit(() -> ShenronEventManager.gI().run());
 
         // 3. Load Boss và Map
         Logger.log("Đang tải dữ liệu Boss và Map...");
@@ -287,6 +285,27 @@ public class ServerManager {
     private void cleanupResources() {
         Logger.log("Cleaning up server resources...");
         try {
+            if (isRunning) {
+                isRunning = false;
+                Logger.log("Saving all online players before shutdown...");
+                List<Player> players = new ArrayList<>(Client.gI().getPlayers());
+                for (Player pl : players) {
+                    if (pl != null && pl.isPl()) {
+                        try {
+                            if (pl.zone != null && pl.zone.map != null) {
+                                pl.mapIdBeforeLogout = pl.zone.map.mapId;
+                            }
+                            PlayerDAO.updatePlayer(pl);
+                        } catch (Exception ignored) {
+                        }
+                    }
+                }
+                try {
+                    ConsignShopManager.gI().save();
+                    ClanService.gI().close();
+                } catch (Exception ignored) {
+                }
+            }
             if (executorService != null && !executorService.isShutdown()) {
                 executorService.shutdown();
             }

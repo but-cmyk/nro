@@ -38,7 +38,18 @@ public class TaskDanhHieu {
         this.DungLoa = 0;         // Sử Dụng Loa Liên Vũ Trụ 10 Lần Trong Ngày
     }
 
+    public void renew() {
+        if (utils.Util.isAfterMidnight(ResetTime)) {
+            this.Nap = 0;
+            this.DapDo = 0;
+            this.NhatDo = 0;
+            this.DungLoa = 0;
+            this.ResetTime = System.currentTimeMillis();
+        }
+    }
+
     public boolean CheckItem(Player player, ItemShop itemShop, int itemId) {
+        renew();
         Item existingItem = InventoryService.gI().findItemInAllInventories(player, itemId);
         if (existingItem != null) {
             Service.gI().sendThongBao(player, "Bạn đã sở hữu danh hiệu này rồi.");
@@ -56,15 +67,15 @@ public class TaskDanhHieu {
                 current = player.playerTask.taskdh.ChoNuoc;
             }
             case 1290 -> {
-                required = 50;
+                required = 10; // Đã sửa từ 50 xuống 10 (khớp với SummonDragon caps 10)
                 current = player.playerTask.taskdh.Shenron;
             }
             case 1291 -> {
-                required = 10;
+                required = 30; // Khớp với trần 30 lần hạ boss
                 current = player.playerTask.taskdh.Hagucboss;
             }
             case 1292 -> {
-                required = 30;
+                required = 3; // Đã sửa từ 30 xuống 3 (khớp với NangCapVatPham caps 3)
                 current = player.playerTask.taskdh.DapDo;
             }
             case 1293 -> {
@@ -76,11 +87,11 @@ public class TaskDanhHieu {
                 current = player.playerTask.taskdh.TaskBoMong;
             }
             case 1295 -> {
-                required = 10;
+                required = 500; // Khớp với Mob.java caps 500 lần nhặt đồ trong ngày
                 current = player.playerTask.taskdh.NhatDo;
             }
             case 1296 -> {
-                required = 500;
+                required = 30; // Đã sửa từ 500 xuống 30 (khớp với AnTrom caps 30)
                 current = player.playerTask.taskdh.AnTrom;
             }
             case 1300 -> {
@@ -88,7 +99,7 @@ public class TaskDanhHieu {
                 current = player.playerTask.taskdh.ODo;
             }
             case 1286 -> {
-                required = 30;
+                required = 20; // Đã sửa từ 30 xuống 20 (khớp với ChoRach caps 20)
                 current = player.playerTask.taskdh.ChoSuong;
             }
             default -> {

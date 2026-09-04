@@ -17,6 +17,9 @@ public class KeyHandler implements IKeySessionHandler {
             for (int i = 1; i < KEYS.length; i++) {
                 msg.writer().writeByte(KEYS[i] ^ KEYS[i - 1]);
             }
+            msg.writer().writeUTF("");
+            msg.writer().writeInt(0);
+            msg.writer().writeByte(0);
             session.doSendMessage(msg);
             msg.cleanup();
             session.setSentKey(true);

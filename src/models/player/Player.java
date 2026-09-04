@@ -51,7 +51,6 @@ import services.phoban.SuperDivineWaterService;
 import models.tournament.The23rdMartialArtCongress;
 import services.player.InventoryService;
 import services.phoban.NgocRongNamecService;
-import models.ShenronEvent;
 import models.combine.list.Combine;
 import models.map.Boss10;
 import server.Maintenance;
@@ -64,6 +63,7 @@ import consts.ConstNpc;
 public class Player extends Character {
 
     public long lastTimeSave;
+    public boolean isJoinMap = false;
     public boolean isCookingBanhDay = false;
     public boolean isCookingBanhChung = false;
     public int cookingBanhDayTime;
@@ -168,7 +168,7 @@ public class Player extends Character {
 
     public String notify = null;
 
-    public int mapIdBeforeLogout;
+    public int mapIdBeforeLogout = -1;
     public List<Zone> mapBlackBall;
     public List<Zone> mapMaBu;
 
@@ -208,6 +208,7 @@ public class Player extends Character {
 
     public boolean justRevived;
     public long lastTimeRevived;
+    public long lastTimeAttack;
 
     public long timeChangeZone;
     public long lastUseOptionTime;
@@ -232,10 +233,8 @@ public class Player extends Character {
     public int ySend;
     public boolean isFly;
 
-    // shenron event
+    public long lastTimeSelectMenu = 0L;
     public long lastTimeShenronAppeared;
-    public boolean isShenronAppear;
-    public ShenronEvent shenronEvent;
 
     // vo dai sinh tu
     public long lastTimePKVoDaiSinhTu;
@@ -1093,6 +1092,7 @@ public class Player extends Character {
 
     // FIX: Thêm kiểm tra null trước khi clear để tránh crash
     public void dispose() {
+        this.isJoinMap = false;
         if (itemsTradeWVP != null) {
             if (!itemsTradeWVP.isEmpty()) {
                 for (Item item : itemsTradeWVP) {

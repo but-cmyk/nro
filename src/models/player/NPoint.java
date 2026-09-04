@@ -222,17 +222,17 @@ public class NPoint {
         if (this.intrinsic != null && this.intrinsic.id == ID_NOI_TAI_TANG_VANG) {
             this.tlGold += this.intrinsic.param1;
         }
-        if (this.player.rewardBlackBall.timeOutOfDateReward[2] > System.currentTimeMillis()) {
+        if (this.player.rewardBlackBall != null && this.player.rewardBlackBall.timeOutOfDateReward[2] > System.currentTimeMillis()) {
             tlHutHp += RewardBlackBall.R3S_1;
         }
-        if (this.player.rewardBlackBall.timeOutOfDateReward[3] > System.currentTimeMillis()) {
+        if (this.player.rewardBlackBall != null && this.player.rewardBlackBall.timeOutOfDateReward[3] > System.currentTimeMillis()) {
             tlPST += RewardBlackBall.R4S_2;
         }
-        if (this.player.rewardBlackBall.timeOutOfDateReward[4] > System.currentTimeMillis()) {
+        if (this.player.rewardBlackBall != null && this.player.rewardBlackBall.timeOutOfDateReward[4] > System.currentTimeMillis()) {
             tlDameCrit.add(RewardBlackBall.R5S_1);
             tlSDCM += RewardBlackBall.R5S_1;
         }
-        if (this.player.rewardBlackBall.timeOutOfDateReward[6] > System.currentTimeMillis()) {
+        if (this.player.rewardBlackBall != null && this.player.rewardBlackBall.timeOutOfDateReward[6] > System.currentTimeMillis()) {
             tlNeDon += RewardBlackBall.R7S_1;
         }
 
@@ -787,7 +787,7 @@ public class NPoint {
         }
 
         // Xử lý ngọc rồng đen 2 sao
-        if (this.player.rewardBlackBall.timeOutOfDateReward[1] > System.currentTimeMillis()) {
+        if (this.player.rewardBlackBall != null && this.player.rewardBlackBall.timeOutOfDateReward[1] > System.currentTimeMillis()) {
             hpMax += (hpMax * RewardBlackBall.R2S_1 / 100L);
         }
 
@@ -805,24 +805,9 @@ public class NPoint {
                 && ((Pet) this.player).master.fusion.typeFusion != ConstPlayer.NON_FUSION
                 && ((Pet) this.player).master.fusion.typeFusion != ConstPlayer.LUONG_LONG_NHAT_THE;
 
-        // Xử lý pet pic
-        if (this.player.isPet && ((Pet) this.player).typePet == 3 && masterFused) {
-            hpMax += (hpMax * 20 / 100L);
-        }
-
         // Xử lý pet mabư
         if (this.player.isPet && ((Pet) this.player).typePet == 1 && masterFused) {
             hpMax += (hpMax * 25 / 100L);
-        }
-
-        // Xử lý pet berus
-        if (this.player.isPet && ((Pet) this.player).typePet == 2 && masterFused) {
-            hpMax += (hpMax * 30 / 100L);
-        }
-
-        // Xử lý pet black
-        if (this.player.isPet && ((Pet) this.player).typePet == 4 && masterFused) {
-            hpMax += (hpMax * 40 / 100L);
         }
         // ------------------------------------------------
 
@@ -891,8 +876,11 @@ public class NPoint {
             hpMax += hpMax / 10;
         }
 
-        if (hpMax > 2_000_000_000) {
+        if (hpMax > 2_000_000_000 || hpMax < 0) {
             hpMax = 2_000_000_000;
+        }
+        if (hpMax <= 0) {
+            hpMax = 1;
         }
 
         this.hpMax = (int) hpMax;
@@ -922,13 +910,13 @@ public class NPoint {
         }
 
         // Xử lý ngọc rồng đen 6 sao
-        if (this.player.rewardBlackBall.timeOutOfDateReward[5] > System.currentTimeMillis()) {
+        if (this.player.rewardBlackBall != null && this.player.rewardBlackBall.timeOutOfDateReward[5] > System.currentTimeMillis()) {
             mpMax += (mpMax * RewardBlackBall.R6S_1 / 100L);
         }
 
         // Xử lý set worldcup
         if (this.player.setClothes.worldcup == 2) {
-            mpMax += (this.mpMax * 10 / 100L);
+            mpMax += (mpMax * 10 / 100L);
         }
 
         // --- Xử lý cho Đệ tử khi sư phụ hợp thể các cấp ---
@@ -936,24 +924,9 @@ public class NPoint {
                 && ((Pet) this.player).master.fusion.typeFusion != ConstPlayer.NON_FUSION
                 && ((Pet) this.player).master.fusion.typeFusion != ConstPlayer.LUONG_LONG_NHAT_THE;
 
-        // Xử lý pet pic
-        if (this.player.isPet && ((Pet) this.player).typePet == 3 && masterFused) {
-            mpMax += (this.mpMax * 20 / 100L);
-        }
-
         // Xử lý pet mabư
         if (this.player.isPet && ((Pet) this.player).typePet == 1 && masterFused) {
-            mpMax += (this.mpMax * 25 / 100L);
-        }
-
-        // Xử lý pet br
-        if (this.player.isPet && ((Pet) this.player).typePet == 2 && masterFused) {
-            mpMax += (this.mpMax * 30 / 100L);// MP berus
-        }
-
-        // Xử lý pet black
-        if (this.player.isPet && ((Pet) this.player).typePet == 4 && masterFused) {
-            mpMax += (this.mpMax * 40 / 100L);// MP black
+            mpMax += (mpMax * 25 / 100L);
         }
         // ------------------------------------------------
 
@@ -1005,8 +978,11 @@ public class NPoint {
         }
         // ----------------------------------------------------
 
-        if (mpMax > 2_000_000_000) {
+        if (mpMax > 2_000_000_000 || mpMax < 0) {
             mpMax = 2_000_000_000;
+        }
+        if (mpMax <= 0) {
+            mpMax = 1;
         }
 
         this.mpMax = (int) mpMax;
@@ -1066,24 +1042,9 @@ public class NPoint {
                 && ((Pet) this.player).master.fusion.typeFusion != ConstPlayer.NON_FUSION
                 && ((Pet) this.player).master.fusion.typeFusion != ConstPlayer.LUONG_LONG_NHAT_THE;
 
-        // Xử lý pet pic
-        if (this.player.isPet && ((Pet) this.player).typePet == 3 && masterFused) {
-            dame += (dame * 20 / 100L);
-        }
-
         // Xử lý pet mabư
         if (this.player.isPet && ((Pet) this.player).typePet == 1 && masterFused) {
             dame += (dame * 25 / 100L);
-        }
-
-        // Xử lý pet br
-        if (this.player.isPet && ((Pet) this.player).typePet == 2 && masterFused) {
-            dame += (dame * 30 / 100L);
-        }
-
-        // Xử lý pet black
-        if (this.player.isPet && ((Pet) this.player).typePet == 4 && masterFused) {
-            dame += (dame * 40 / 100L);
         }
         // ------------------------------------------------
 
@@ -1135,7 +1096,7 @@ public class NPoint {
         }
 
         // Xử lý ngọc rồng đen 1 sao
-        if (this.player.rewardBlackBall.timeOutOfDateReward[0] > System.currentTimeMillis()) {
+        if (this.player.rewardBlackBall != null && this.player.rewardBlackBall.timeOutOfDateReward[0] > System.currentTimeMillis()) {
             dame += (dame * RewardBlackBall.R1S_2 / 100L);
         }
 
@@ -1192,8 +1153,11 @@ public class NPoint {
             dame += dame / 10;
         }
 
-        if (dame > 2_000_000_000) {
+        if (dame > 2_000_000_000 || dame < 0) {
             dame = 2_000_000_000;
+        }
+        if (dame <= 0) {
+            dame = 1;
         }
 
         this.dame = (int) dame;
@@ -1438,8 +1402,8 @@ public class NPoint {
                 //System.out.println("Damage MaKanKo Tăng: " + dameSkill);
                 return dameSkill;
             case Skill.QUA_CAU_KENH_KHI:
-                int hpmob = 0;
-                int hppl = 0;
+                long hpmob = 0;
+                long hppl = 0;
 
                 for (Mob mob : this.player.zone.mobs) {
                     if (!mob.isDie() && Util.getDistance(this.player, mob) <= SkillUtil.getRangeQCKK(this.player.playerSkill.skillSelect.point)) {
@@ -1453,17 +1417,20 @@ public class NPoint {
                     }
                 }
 
-                int dameqckk = (hpmob * 10 / 100) + (hppl * 10 / 100) + this.dame * 10;
+                long dameqckk = (hpmob * 10L / 100L) + (hppl * 10L / 100L) + (long) this.dame * 10L;
 
                 if (this.player.setClothes.kirin == 5) {
-                    dameqckk *= 2;
+                    dameqckk *= 2L;
                 }
 
-                dameqckk = dameqckk + (Util.nextInt(-5, 5) * dameqckk / 100);
-                if (dameqckk > 2_000_000_000) {
-                    dameqckk = 2_000_000_000;
+                dameqckk = dameqckk + (Util.nextInt(-5, 5) * dameqckk / 100L);
+                if (dameqckk > 2_000_000_000L || dameqckk < 0) {
+                    dameqckk = 2_000_000_000L;
                 }
-                return dameqckk;
+                if (dameqckk <= 0) {
+                    dameqckk = 1L;
+                }
+                return (int) dameqckk;
             case Skill.DE_TRUNG:
                 if (player.setClothes.pikkoroDaimao == 5) {
                     dameAttack *= 4;
@@ -1513,8 +1480,11 @@ public class NPoint {
             tempDameAttack = 1;
         }
         dameAttack += (long) (Util.getOne(-1, 1) * Util.nextInt((int) tempDameAttack) + 1);
-        if (dameAttack > 2_000_000_000) {
+        if (dameAttack > 2_000_000_000 || dameAttack < 0) {
             dameAttack = 2_000_000_000;
+        }
+        if (dameAttack <= 0) {
+            dameAttack = 1;
         }
 
         return (int) dameAttack;
@@ -1540,7 +1510,6 @@ public class NPoint {
         this.hp -= sub;
         if (this.hp <= 0) {
             this.hp = 0;
-            this.setHp(0);
         }
     }
 

@@ -1,0 +1,25 @@
+# Quy Chuẩn & Kỹ Năng Dự Án Ngọc Rồng Online (NRO)
+
+Workspace này đã được trang bị bộ kỹ năng và quy tắc chuyên sâu:
+
+- **Quy Chuẩn Lập Trình Thường Trực**: Xem [.agents/rules/nro-coding-standards.md](file:///d:/SRC_NRO_219/SRC_NRO_219/SRC_NRO_189/SRC_NRO_OK/SRC_NRO_OK/DEMO_NETBEAN_tsSv2_new/.agents/rules/nro-coding-standards.md)
+  - Khớp 1:1 giao thức nhị phân packet giữa Server Java và Client Unity C#.
+  - Kiểm soát đa luồng, chống race condition và triệt tiêu lỗ hổng dupe đồ qua Trade/Rương/Ký gửi.
+  - Đảm bảo tính toán chỉ số nhân vật qua `NPoint.calPoint()` và đồng bộ thanh máu về Client.
+  - Sử dụng `try-with-resources` cho toàn bộ kết nối cơ sở dữ liệu HikariCP.
+
+- **Kỹ Năng Chuyên Gia NRO Expert Suite**: Xem [.agents/skills/nro-expert/SKILL.md](file:///d:/SRC_NRO_219/SRC_NRO_219/SRC_NRO_189/SRC_NRO_OK/SRC_NRO_OK/DEMO_NETBEAN_tsSv2_new/.agents/skills/nro-expert/SKILL.md)
+  - [01. Protocol Cheatsheet](file:///d:/SRC_NRO_219/SRC_NRO_219/SRC_NRO_189/SRC_NRO_OK/SRC_NRO_OK/DEMO_NETBEAN_tsSv2_new/.agents/skills/nro-expert/references/01_protocol_cheatsheet.md): Bảng tra cứu opcode, luồng nhị phân Big-endian.
+  - [02. Server Architecture Guide](file:///d:/SRC_NRO_219/SRC_NRO_219/SRC_NRO_189/SRC_NRO_OK/SRC_NRO_OK/DEMO_NETBEAN_tsSv2_new/.agents/skills/nro-expert/references/02_server_architecture.md): Vòng đời ServerManager, Netty, Services, DAOs JSON.
+  - [03. Client Unity Architecture Guide](file:///d:/SRC_NRO_219/SRC_NRO_219/SRC_NRO_189/SRC_NRO_OK/SRC_NRO_OK/DEMO_NETBEAN_tsSv2_new/.agents/skills/nro-expert/references/03_client_unity_architecture.md): 6TabFixed, UIWindowManager, PacketDispatcher, God Mod.
+  - [04. NPoint & Gameplay Systems Reference](file:///d:/SRC_NRO_219/SRC_NRO_219/SRC_NRO_189/SRC_NRO_OK/SRC_NRO_OK/DEMO_NETBEAN_tsSv2_new/.agents/skills/nro-expert/references/04_npoint_and_gameplay_systems.md): Công thức chỉ số, Option item, Đệ tử, Chiêu thức.
+  - [05. Recipes & Runbooks](file:///d:/SRC_NRO_219/SRC_NRO_219/SRC_NRO_189/SRC_NRO_OK/SRC_NRO_OK/DEMO_NETBEAN_tsSv2_new/.agents/skills/nro-expert/references/05_recipes_and_runbooks.md): Hướng dẫn từng bước thêm Item, Skill, NPC Menu, Boss AI, Packet.
+  - [06. Antipatterns & Anti-Dupe Checklist](file:///d:/SRC_NRO_219/SRC_NRO_219/SRC_NRO_189/SRC_NRO_OK/SRC_NRO_OK/DEMO_NETBEAN_tsSv2_new/.agents/skills/nro-expert/references/06_antipatterns_and_antidupe.md): Chống lỗi desync, chống dupe đồ và rò rỉ bộ nhớ.
+  - [07. Server Design Patterns & Refactoring](file:///d:/SRC_NRO_219/SRC_NRO_219/SRC_NRO_189/SRC_NRO_OK/SRC_NRO_OK/DEMO_NETBEAN_tsSv2_new/.agents/skills/nro-expert/references/07_design_patterns_and_refactoring.md): Chuẩn hóa Strategy/Command cho UseItem, FSM cho Boss AI, Event Bus và xóa bỏ God Classes.
+  - [08. Client Design Patterns & UI Refactoring](file:///d:/SRC_NRO_219/SRC_NRO_219/SRC_NRO_189/SRC_NRO_OK/SRC_NRO_OK/DEMO_NETBEAN_tsSv2_new/.agents/skills/nro-expert/references/08_client_design_patterns_and_ui_refactoring.md): Phân rã Panel.cs 11.500 dòng, Char.cs 8.500 dòng theo Component Pattern, UIWindowManager, PacketDispatcher và Object Pooling chống giật lag GC.
+  - [09. Senior Backend Review Playbook](file:///d:/SRC_NRO_219/SRC_NRO_219/SRC_NRO_189/SRC_NRO_OK/SRC_NRO_OK/DEMO_NETBEAN_tsSv2_new/.agents/skills/nro-expert/references/09_senior_backend_review_playbook.md): Quy chuẩn 7 trụ cột đánh giá Backend chuẩn Senior Architect (Concurrency, Connection Pool leak, Overflow/Anti-dupe, Netty ByteBuf, Low-Latency GC) kèm công cụ kiểm định tự động `senior_backend_audit.py`.
+- **Kỹ Năng Đánh Giá Hệ Thống Chuyên Sâu (Deep System Audit Suite)**: Xem [.agents/skills/deep-system-audit/SKILL.md](file:///d:/SRC_NRO_219/SRC_NRO_219/SRC_NRO_189/SRC_NRO_OK/SRC_NRO_OK/DEMO_NETBEAN_tsSv2_new/.agents/skills/deep-system-audit/SKILL.md)
+  - [01. Recursive Decomposition Playbook](file:///d:/SRC_NRO_219/SRC_NRO_219/SRC_NRO_189/SRC_NRO_OK/SRC_NRO_OK/DEMO_NETBEAN_tsSv2_new/.agents/skills/deep-system-audit/references/01_recursive_decomposition_playbook.md): Quy chuẩn phân rã đệ quy 3 tầng cho 6 hệ thống lớn trong game.
+  - [02. Gameplay & Player Journey Lens](file:///d:/SRC_NRO_219/SRC_NRO_219/SRC_NRO_189/SRC_NRO_OK/SRC_NRO_OK/DEMO_NETBEAN_tsSv2_new/.agents/skills/deep-system-audit/references/02_gameplay_and_player_journey_lens.md): Lăng kính 4 nhóm người chơi, độ dốc sức mạnh, chặn map và phòng tránh ngõ cụt.
+  - [03. Exploit, Abuse & Economy Audit](file:///d:/SRC_NRO_219/SRC_NRO_219/SRC_NRO_189/SRC_NRO_OK/SRC_NRO_OK/DEMO_NETBEAN_tsSv2_new/.agents/skills/deep-system-audit/references/03_exploit_abuse_and_economy_audit.md): Ma trận 10 vector gian lận, lách luật reroll, flood packet và kiểm toán Faucet-Sink kinh tế.
+  - [04. Deep Review Report Template](file:///d:/SRC_NRO_219/SRC_NRO_219/SRC_NRO_189/SRC_NRO_OK/SRC_NRO_OK/DEMO_NETBEAN_tsSv2_new/.agents/skills/deep-system-audit/references/04_deep_review_report_template.md): Khung mẫu báo cáo phân tích kiến trúc chuyên sâu cấp Senior Game Architect.

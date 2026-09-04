@@ -18,12 +18,14 @@ import java.util.Date;
 import java.util.List;
 import server.Maintenance;
 import services.map.ItemMapService;
+import utils.Logger;
 import utils.TimeUtil;
+import services.player.PlayerService;
 
 public class DestronGas {
 
 //    public static final long POWER_CAN_GO_TO_KHI_GAS_HUY_DIET = 2000000000;
-    public static final int AVAILABLE = 1;
+    public static final int AVAILABLE = 5;
     public static final int TIME_KHI_GAS_HUY_DIET = 1800000;
     public static final int N_PLAYER_CLAN = 0;
 
@@ -54,7 +56,7 @@ public class DestronGas {
 
 
     public void update() {
-        if (clan != null && clan.timesPerDayKGHD > 0 && TimeUtil.diffDate(new Date(System.currentTimeMillis()), new Date(clan.lastTimeOpenKhiGasHuyDiet), TimeUtil.DAY) >= 3) {
+        if (clan != null && clan.timesPerDayKGHD > 0 && (System.currentTimeMillis() - clan.lastTimeOpenKhiGasHuyDiet >= 3L * 86400000L)) {
             clan.timesPerDayKGHD = 0;
         }
         if (isOpened) {
@@ -174,7 +176,13 @@ public class DestronGas {
     }
 
     private void kickOutOfKGHD(Player player) {
-        if (MapService.gI().isMapKhiGasHuyDiet(player.zone.map.mapId)) {
+        if (player != null && player.zone != null && MapService.gI().isMapKhiGasHuyDiet(player.zone.map.mapId)) {
+            if (player.isDie()) {
+                player.nPoint.hp = player.nPoint.hpMax;
+                player.nPoint.mp = player.nPoint.mpMax;
+                Service.gI().Send_Info_NV(player);
+                PlayerService.gI().sendInfoHpMp(player);
+            }
             ChangeMapService.gI().changeMapBySpaceShip(player, 0, -1, -1);
         }
     }
@@ -201,24 +209,33 @@ public class DestronGas {
     }
 
     public void dispose() {
-        for (Zone zone : zones) {
-            for (int i = zone.items.size() - 1; i >= 0; i--) {
-                if (i < zone.items.size()) {
-                    ItemMapService.gI().removeItemMap(zone.items.get(i));
+        try {
+            for (Zone zone : zones) {
+                synchronized (zone.items) {
+                    for (int i = zone.items.size() - 1; i >= 0; i--) {
+                        if (i < zone.items.size()) {
+                            ItemMapService.gI().removeItemMap(zone.items.get(i));
+                        }
+                    }
                 }
             }
-        }
-        for (Boss boss : bosses) {
-            if (!boss.isDie()) {
-                boss.leaveMap();
+            for (Boss boss : bosses) {
+                if (boss != null && !boss.isDie()) {
+                    boss.leaveMap();
+                }
             }
+            this.removeTextKhiGasHuyDiet();
+        } catch (Exception e) {
+            Logger.logException(DestronGas.class, e, "Lỗi dispose Khi Gas");
+        } finally {
+            this.bosses.clear();
+            this.isOpened = false;
+            if (this.clan != null) {
+                this.clan.KhiGasHuyDiet = null;
+            }
+            this.clan = null;
+            this.kickoutkghd = false;
+            this.hatchiyatchDead = false;
         }
-        this.removeTextKhiGasHuyDiet();
-        this.bosses.clear();
-        this.isOpened = false;
-        this.clan.KhiGasHuyDiet = null;
-        this.clan = null;
-        this.kickoutkghd = false;
-        this.hatchiyatchDead = false;
     }
 }

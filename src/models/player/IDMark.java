@@ -37,6 +37,7 @@ public class IDMark {
     private int playerTradeId = -1;
     private Player playerTrade;
     private long lastTimeTrade;
+    private long lastTimeConsign;
 
     private long lastTimeNotifyTimeHoldBlackBall;
     private long lastTimeHoldBlackBall;
@@ -166,6 +167,9 @@ public class IDMark {
 
     public long getLastTimeTrade() { return lastTimeTrade; }
     public void setLastTimeTrade(long lastTimeTrade) { this.lastTimeTrade = lastTimeTrade; }
+
+    public long getLastTimeConsign() { return lastTimeConsign; }
+    public void setLastTimeConsign(long lastTimeConsign) { this.lastTimeConsign = lastTimeConsign; }
 
     public long getLastTimeNotifyTimeHoldBlackBall() { return lastTimeNotifyTimeHoldBlackBall; }
     public void setLastTimeNotifyTimeHoldBlackBall(long lastTimeNotifyTimeHoldBlackBall) { this.lastTimeNotifyTimeHoldBlackBall = lastTimeNotifyTimeHoldBlackBall; }

@@ -37,8 +37,11 @@ public class Trade {
     private int goldTrade2;
 
     public byte accept;
+    public boolean player1Locked;
+    public boolean player2Locked;
     private boolean player1Accepted;
     private boolean player2Accepted;
+    private volatile boolean isDisposed;
 
     private long lastTimeStart;
     private boolean start;
@@ -59,8 +62,13 @@ public class Trade {
     }
 
     public synchronized void openTabTrade() {
+        if (this.isDisposed || player1 == null || player2 == null) {
+            return;
+        }
         player1.idMark.setAcpTrade(true);
         player2.idMark.setAcpTrade(true);
+        player1.isTrade = true;
+        player2.isTrade = true;
         this.lastTimeStart = System.currentTimeMillis();
         this.start = true;
         Message msg = null;
@@ -82,16 +90,16 @@ public class Trade {
         }
     }
 
-//    public void addItemBot(Item it) {
-//        itemsTrade2.add(it);
-//    }
-
     public synchronized void addItemTrade(Player pl, byte index, int quantity) {
-        if (player1Accepted || player2Accepted) {
-            Service.gI().sendThongBaoFromAdmin(pl, "|7|Không thể thay đổi nội dung sau khi đã xác nhận giao dịch!");
+        if (this.isDisposed || pl == null) {
             return;
         }
-        if (!this.player1.getSession().actived || !this.player2.getSession().actived) {
+        if (player1Locked || player2Locked || player1Accepted || player2Accepted) {
+            Service.gI().sendThongBaoFromAdmin(pl, "|7|Không thể thay đổi nội dung sau khi đã khóa hoặc xác nhận giao dịch!");
+            return;
+        }
+        if (this.player1.getSession() == null || !this.player1.getSession().actived
+                || this.player2.getSession() == null || !this.player2.getSession().actived) {
             Service.gI().sendThongBaoFromAdmin(pl,
                     "|7|Bạn chưa mở thành viên hoặc người kia chưa mở");
             removeItemTrade(pl, index);
@@ -169,6 +177,9 @@ public class Trade {
     }
 
     private synchronized void removeItemTrade(Player pl, byte index) {
+        if (pl == null) {
+            return;
+        }
         Message msg = null;
         try {
             msg = new Message(-86);
@@ -176,7 +187,7 @@ public class Trade {
             msg.writer().write(index);
             pl.sendMessage(msg);
             Service.gI().sendThongBao(pl, "Không thể giao dịch vật phẩm này");
-        } catch (Exception e) {
+        } catch (Exception ignored) {
         } finally {
             if (msg != null) {
                 msg.cleanup();
@@ -184,22 +195,10 @@ public class Trade {
         }
     }
 
-//    private void removeItemTrade2(Player pl, byte index) {
-//        Message msg = null;
-//        try {
-//            msg = new Message(-86);
-//            msg.writer().writeByte(2);
-//            msg.writer().write(index);
-//            pl.sendMessage(msg);
-//        } catch (Exception e) {
-//        } finally {
-//            if (msg != null) {
-//                msg.cleanup();
-//            }
-//        }
-//    }
-
     private boolean isItemCannotTran(Item item) {
+        if (item == null) {
+            return true;
+        }
         for (Item.ItemOption io : item.itemOptions) {
             if (io.optionTemplate.id == 30) {
                 return true;
@@ -235,9 +234,16 @@ public class Trade {
     }
 
     public synchronized void cancelTrade() {
+        if (this.isDisposed) {
+            return;
+        }
         String notifiText = "Giao dịch bị hủy bỏ";
-        Service.gI().sendThongBao(player1, notifiText);
-        Service.gI().sendThongBao(player2, notifiText);
+        if (player1 != null) {
+            Service.gI().sendThongBao(player1, notifiText);
+        }
+        if (player2 != null) {
+            Service.gI().sendThongBao(player2, notifiText);
+        }
         closeTab();
         dispose();
     }
@@ -247,9 +253,13 @@ public class Trade {
         try {
             msg = new Message(-86);
             msg.writer().writeByte(7);
-            player1.sendMessage(msg);
-            player2.sendMessage(msg);
-        } catch (Exception e) {
+            if (player1 != null) {
+                player1.sendMessage(msg);
+            }
+            if (player2 != null) {
+                player2.sendMessage(msg);
+            }
+        } catch (Exception ignored) {
         } finally {
             if (msg != null) {
                 msg.cleanup();
@@ -258,10 +268,27 @@ public class Trade {
     }
 
     public synchronized void dispose() {
-        player1.idMark.setPlayerTradeId(-1);
-        player2.idMark.setPlayerTradeId(-1);
-        TransactionService.PLAYER_TRADE.remove(player1);
-        TransactionService.PLAYER_TRADE.remove(player2);
+        if (this.isDisposed) {
+            return;
+        }
+        this.isDisposed = true;
+        this.start = false;
+        if (player1 != null) {
+            player1.isTrade = false;
+            if (player1.idMark != null) {
+                player1.idMark.setPlayerTradeId(-1);
+                player1.idMark.setAcpTrade(false);
+            }
+            TransactionService.PLAYER_TRADE.remove(player1);
+        }
+        if (player2 != null) {
+            player2.isTrade = false;
+            if (player2.idMark != null) {
+                player2.idMark.setPlayerTradeId(-1);
+                player2.idMark.setAcpTrade(false);
+            }
+            TransactionService.PLAYER_TRADE.remove(player2);
+        }
         this.player1 = null;
         this.player2 = null;
         this.itemsBag1 = null;
@@ -271,6 +298,23 @@ public class Trade {
     }
 
     public synchronized void lockTran(Player pl) {
+        if (this.isDisposed || pl == null) {
+            return;
+        }
+        if (pl.equals(player1)) {
+            if (player1Locked) {
+                return;
+            }
+            player1Locked = true;
+        } else if (pl.equals(player2)) {
+            if (player2Locked) {
+                return;
+            }
+            player2Locked = true;
+        } else {
+            return;
+        }
+
         Message msg = null;
         try {
             msg = new Message(-86);
@@ -280,7 +324,7 @@ public class Trade {
                 msg.writer().writeByte(itemsTrade1.size());
                 for (Item item : itemsTrade1) {
                     msg.writer().writeShort(item.template.id);
-                    if (player1.getSession().version < 222) {
+                    if (player1.getSession() != null && player1.getSession().version < 222) {
                         msg.writer().writeByte(item.quantity > Byte.MAX_VALUE ? Byte.MAX_VALUE : item.quantity);
                     } else {
                         msg.writer().writeInt(item.quantity);
@@ -291,13 +335,15 @@ public class Trade {
                         msg.writer().writeShort(io.param);
                     }
                 }
-                player2.sendMessage(msg);
+                if (player2 != null) {
+                    player2.sendMessage(msg);
+                }
             } else {
                 msg.writer().writeInt(goldTrade2);
                 msg.writer().writeByte(itemsTrade2.size());
                 for (Item item : itemsTrade2) {
                     msg.writer().writeShort(item.template.id);
-                    if (player2.getSession().version < 222) {
+                    if (player2.getSession() != null && player2.getSession().version < 222) {
                         msg.writer().writeByte(item.quantity > Byte.MAX_VALUE ? Byte.MAX_VALUE : item.quantity);
                     } else {
                         msg.writer().writeInt(item.quantity);
@@ -308,7 +354,9 @@ public class Trade {
                         msg.writer().writeShort(io.param);
                     }
                 }
-                player1.sendMessage(msg);
+                if (player1 != null) {
+                    player1.sendMessage(msg);
+                }
             }
         } catch (Exception e) {
             Logger.logException(Trade.class, e);
@@ -320,10 +368,14 @@ public class Trade {
     }
 
     public synchronized void acceptTrade(Player pl) {
-        if (pl == null || (pl != player1 && pl != player2)) {
+        if (this.isDisposed || pl == null || (pl != player1 && pl != player2)) {
             return;
         }
-        if (pl == player1) {
+        if (!player1Locked || !player2Locked) {
+            Service.gI().sendThongBao(pl, "Cả hai bên phải khóa giao dịch trước khi xác nhận!");
+            return;
+        }
+        if (pl.equals(player1)) {
             if (player1Accepted) {
                 return;
             }
@@ -341,7 +393,7 @@ public class Trade {
     }
 
     private void startTrade() {
-        if (player1 == null || player2 == null) {
+        if (this.isDisposed || player1 == null || player2 == null) {
             return;
         }
         Player firstLock = player1.id < player2.id ? player1 : player2;
@@ -350,65 +402,75 @@ public class Trade {
         synchronized (firstLock) {
             synchronized (secondLock) {
                 byte tradeStatus = SUCCESS;
-                if (goldTrade1 < 0 || player1.inventory.gold < goldTrade1) {
-                    tradeStatus = FAIL_NOT_ENOUGH_GOLD_PLAYER1;
-                } else if (goldTrade2 < 0 || player2.inventory.gold < goldTrade2) {
-                    tradeStatus = FAIL_NOT_ENOUGH_GOLD_PLAYER2;
-                } else if (player1.inventory.gold > Inventory.LIMIT_GOLD - goldTrade2) {
-                    tradeStatus = FAIL_MAX_GOLD_PLAYER1;
-                } else if (player2.inventory.gold > Inventory.LIMIT_GOLD - goldTrade1) {
-                    tradeStatus = FAIL_MAX_GOLD_PLAYER2;
+                try {
+                    if (player1.isDie() || player2.isDie() || player1.getSession() == null || player2.getSession() == null) {
+                        tradeStatus = FAIL_ERROR;
+                    } else if (goldTrade1 < 0 || player1.inventory.gold < goldTrade1) {
+                        tradeStatus = FAIL_NOT_ENOUGH_GOLD_PLAYER1;
+                    } else if (goldTrade2 < 0 || player2.inventory.gold < goldTrade2) {
+                        tradeStatus = FAIL_NOT_ENOUGH_GOLD_PLAYER2;
+                    } else if (player1.inventory.gold > player1.inventory.getGoldLimit() - goldTrade2) {
+                        tradeStatus = FAIL_MAX_GOLD_PLAYER1;
+                    } else if (player2.inventory.gold > player2.inventory.getGoldLimit() - goldTrade1) {
+                        tradeStatus = FAIL_MAX_GOLD_PLAYER2;
+                    }
+
+                    if (tradeStatus != SUCCESS) {
+                        sendNotifyTrade(tradeStatus);
+                        return;
+                    }
+
+                    for (Item item : itemsTrade1) {
+                        if (!InventoryService.gI().addItemList(itemsBag2, item)) {
+                            tradeStatus = FAIL_NOT_ENOUGH_BAG_P1;
+                            break;
+                        }
+                    }
+
+                    if (tradeStatus != SUCCESS) {
+                        sendNotifyTrade(tradeStatus);
+                        return;
+                    }
+
+                    for (Item item : itemsTrade2) {
+                        if (!InventoryService.gI().addItemList(itemsBag1, item)) {
+                            tradeStatus = FAIL_NOT_ENOUGH_BAG_P2;
+                            break;
+                        }
+                    }
+
+                    if (tradeStatus != SUCCESS) {
+                        sendNotifyTrade(tradeStatus);
+                        return;
+                    }
+
+                    player1.inventory.subGold(goldTrade1);
+                    player1.inventory.addGold(goldTrade2);
+                    player2.inventory.subGold(goldTrade2);
+                    player2.inventory.addGold(goldTrade1);
+                    player1.inventory.itemsBag = itemsBag1;
+                    player2.inventory.itemsBag = itemsBag2;
+
+                    InventoryService.gI().sendItemBags(player1);
+                    InventoryService.gI().sendItemBags(player2);
+                    PlayerService.gI().sendInfoHpMpMoney(player1);
+                    PlayerService.gI().sendInfoHpMpMoney(player2);
+
+                    HistoryTransactionDAO.insert(player1, player2, goldTrade1, goldTrade2, itemsTrade1, itemsTrade2,
+                            bag1Before, bag2Before, this.player1.inventory.itemsBag, this.player2.inventory.itemsBag,
+                            gold1Before, gold2Before, this.player1.inventory.gold, this.player2.inventory.gold);
+
+                    database.daos.PlayerDAO.updatePlayerAsync(player1);
+                    database.daos.PlayerDAO.updatePlayerAsync(player2);
+
+                    sendNotifyTrade(SUCCESS);
+                } catch (Exception e) {
+                    Logger.logException(Trade.class, e);
+                    sendNotifyTrade(FAIL_ERROR);
+                } finally {
+                    closeTab();
+                    dispose();
                 }
-
-                if (tradeStatus != SUCCESS) {
-                    sendNotifyTrade(tradeStatus);
-                    return;
-                }
-
-        for (Item item : itemsTrade1) {
-            if (!InventoryService.gI().addItemList(itemsBag2, item)) {
-                tradeStatus = FAIL_NOT_ENOUGH_BAG_P1;
-                break;
-            }
-        }
-
-        if (tradeStatus != SUCCESS) {
-            sendNotifyTrade(tradeStatus);
-            return;
-        }
-
-        for (Item item : itemsTrade2) {
-            if (!InventoryService.gI().addItemList(itemsBag1, item)) {
-                tradeStatus = FAIL_NOT_ENOUGH_BAG_P2;
-                break;
-            }
-        }
-
-        if (tradeStatus != SUCCESS) {
-            sendNotifyTrade(tradeStatus);
-            return;
-        }
-
-        player1.inventory.gold += goldTrade2;
-        player2.inventory.gold += goldTrade1;
-        player1.inventory.gold -= goldTrade1;
-        player2.inventory.gold -= goldTrade2;
-        player1.inventory.itemsBag = itemsBag1;
-        player2.inventory.itemsBag = itemsBag2;
-
-        InventoryService.gI().sendItemBags(player1);
-        InventoryService.gI().sendItemBags(player2);
-        PlayerService.gI().sendInfoHpMpMoney(player1);
-        PlayerService.gI().sendInfoHpMpMoney(player2);
-
-        HistoryTransactionDAO.insert(player1, player2, goldTrade1, goldTrade2, itemsTrade1, itemsTrade2,
-                bag1Before, bag2Before, this.player1.inventory.itemsBag, this.player2.inventory.itemsBag,
-                gold1Before, gold2Before, this.player1.inventory.gold, this.player2.inventory.gold);
-
-        database.daos.PlayerDAO.updatePlayerAsync(player1);
-        database.daos.PlayerDAO.updatePlayerAsync(player2);
-
-        sendNotifyTrade(SUCCESS);
             }
         }
     }
@@ -420,44 +482,53 @@ public class Trade {
     private static final byte FAIL_NOT_ENOUGH_BAG_P2 = 4;
     private static final byte FAIL_NOT_ENOUGH_GOLD_PLAYER1 = 5;
     private static final byte FAIL_NOT_ENOUGH_GOLD_PLAYER2 = 6;
+    private static final byte FAIL_ERROR = 7;
 
     private void sendNotifyTrade(byte status) {
-        player1.idMark.setLastTimeTrade(System.currentTimeMillis());
-        player2.idMark.setLastTimeTrade(System.currentTimeMillis());
+        if (player1 != null && player1.idMark != null) {
+            player1.idMark.setLastTimeTrade(System.currentTimeMillis());
+        }
+        if (player2 != null && player2.idMark != null) {
+            player2.idMark.setLastTimeTrade(System.currentTimeMillis());
+        }
         switch (status) {
             case SUCCESS:
-                Service.gI().sendThongBao(player1, "Giao dịch thành công");
-                Service.gI().sendThongBao(player2, "Giao dịch thành công");
+                if (player1 != null) Service.gI().sendThongBao(player1, "Giao dịch thành công");
+                if (player2 != null) Service.gI().sendThongBao(player2, "Giao dịch thành công");
                 break;
             case FAIL_MAX_GOLD_PLAYER1:
-                Service.gI().sendThongBao(player1, "Giao dịch thất bại do số lượng vàng sau giao dịch vượt tối đa");
-                Service.gI().sendThongBao(player2, "Giao dịch thất bại do số lượng vàng " + player1.name + " sau giao dịch vượt tối đa");
+                if (player1 != null) Service.gI().sendThongBao(player1, "Giao dịch thất bại do số lượng vàng sau giao dịch vượt tối đa");
+                if (player2 != null) Service.gI().sendThongBao(player2, "Giao dịch thất bại do số lượng vàng " + (player1 != null ? player1.name : "") + " sau giao dịch vượt tối đa");
                 break;
             case FAIL_MAX_GOLD_PLAYER2:
-                Service.gI().sendThongBao(player2, "Giao dịch thất bại do số lượng vàng sau giao dịch vượt tối đa");
-                Service.gI().sendThongBao(player1, "Giao dịch thất bại do số lượng vàng " + player2.name + " sau giao dịch vượt tối đa");
+                if (player2 != null) Service.gI().sendThongBao(player2, "Giao dịch thất bại do số lượng vàng sau giao dịch vượt tối đa");
+                if (player1 != null) Service.gI().sendThongBao(player1, "Giao dịch thất bại do số lượng vàng " + (player2 != null ? player2.name : "") + " sau giao dịch vượt tối đa");
                 break;
             case FAIL_NOT_ENOUGH_BAG_P1:
-                Service.gI().sendThongBao(player1, "Giao dịch thất bại vì " + player1.name + " không đủ chỗ chứa");
-                Service.gI().sendThongBao(player2, "Giao dịch thất bại vì " + player1.name + " không đủ chỗ chứa");
+                if (player1 != null) Service.gI().sendThongBao(player1, "Giao dịch thất bại vì không đủ chỗ chứa hành trang");
+                if (player2 != null) Service.gI().sendThongBao(player2, "Giao dịch thất bại vì đối phương không đủ chỗ chứa hành trang");
                 break;
             case FAIL_NOT_ENOUGH_BAG_P2:
-                Service.gI().sendThongBao(player1, "Giao dịch thất bại vì " + player2.name + " không đủ chỗ chứa");
-                Service.gI().sendThongBao(player2, "Giao dịch thất bại vì " + player2.name + " không đủ chỗ chứa");
+                if (player1 != null) Service.gI().sendThongBao(player1, "Giao dịch thất bại vì đối phương không đủ chỗ chứa hành trang");
+                if (player2 != null) Service.gI().sendThongBao(player2, "Giao dịch thất bại vì không đủ chỗ chứa hành trang");
                 break;
             case FAIL_NOT_ENOUGH_GOLD_PLAYER1:
-                Service.gI().sendThongBao(player1, "Giao dịch thất bại vì bạn không đủ vàng");
-                Service.gI().sendThongBao(player2, "Giao dịch thất bại vì " + player1.name + " không đủ vàng");
+                if (player1 != null) Service.gI().sendThongBao(player1, "Giao dịch thất bại vì bạn không đủ vàng");
+                if (player2 != null) Service.gI().sendThongBao(player2, "Giao dịch thất bại vì đối phương không đủ vàng");
                 break;
             case FAIL_NOT_ENOUGH_GOLD_PLAYER2:
-                Service.gI().sendThongBao(player2, "Giao dịch thất bại vì bạn không đủ vàng");
-                Service.gI().sendThongBao(player1, "Giao dịch thất bại vì " + player2.name + " không đủ vàng");
+                if (player2 != null) Service.gI().sendThongBao(player2, "Giao dịch thất bại vì bạn không đủ vàng");
+                if (player1 != null) Service.gI().sendThongBao(player1, "Giao dịch thất bại vì đối phương không đủ vàng");
+                break;
+            case FAIL_ERROR:
+                if (player1 != null) Service.gI().sendThongBao(player1, "Giao dịch thất bại do xảy ra lỗi hệ thống");
+                if (player2 != null) Service.gI().sendThongBao(player2, "Giao dịch thất bại do xảy ra lỗi hệ thống");
                 break;
         }
     }
 
     public synchronized void update() {
-        if (this.start && Util.canDoWithTime(lastTimeStart, TIME_TRADE)) {
+        if (this.start && !this.isDisposed && Util.canDoWithTime(lastTimeStart, TIME_TRADE)) {
             this.cancelTrade();
         }
     }

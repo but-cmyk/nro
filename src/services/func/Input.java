@@ -627,8 +627,8 @@ public class Input {
                         if (ThoiVang.quantity < sltv) {
                             Service.gI().sendThongBao(player, "Bạn chỉ có " + ThoiVang.quantity + " Thỏi vàng");
                         } else {
-                            if (player.inventory.gold + cost > Inventory.LIMIT_GOLD) {
-                                int slban = (int) ((Inventory.LIMIT_GOLD - player.inventory.gold) / 37000000);
+                            if (player.inventory.gold + cost > player.inventory.getGoldLimit()) {
+                                int slban = (int) ((player.inventory.getGoldLimit() - player.inventory.gold) / 37000000);
                                 if (slban < 1) {
                                     Service.gI().sendThongBao(player, "Vàng sau khi bán vượt quá giới hạn");
                                 } else if (slban < 2) {
@@ -639,7 +639,7 @@ public class Input {
                             } else {
                                 InventoryService.gI().subQuantityItemsBag(player, ThoiVang, sltv);
                                 InventoryService.gI().sendItemBags(player);
-                                player.inventory.gold += cost;
+                                player.inventory.addGold(cost);
                                 Service.gI().sendMoney(player);
                                 Service.gI().sendThongBao(player, "Đã bán " + sltv + " Thỏi vàng thu được " + Util.powerToString(cost) + " vàng");
                             }

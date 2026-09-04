@@ -37,8 +37,8 @@ public class MemoryOptimizer implements Runnable {
     }
 
     private void start() {
-        // chạy mỗi 5 phút
-        scheduler.scheduleAtFixedRate(this, 0, 5, TimeUnit.MINUTES);
+        // chạy mỗi 5 phút (delay 5 phút đầu tiên)
+        scheduler.scheduleAtFixedRate(this, 5, 5, TimeUnit.MINUTES);
     }
 
     @Override
@@ -49,18 +49,20 @@ public class MemoryOptimizer implements Runnable {
 
         try {
             Runtime runtime = Runtime.getRuntime();
-            long usedMemory = (runtime.totalMemory() - runtime.freeMemory()) / (1024 * 1024);
+            long totalMemory = runtime.totalMemory();
+            long freeMemory = runtime.freeMemory();
+            long maxMemory = runtime.maxMemory();
+            long usedMemoryMb = (totalMemory - freeMemory) / (1024 * 1024);
+            long maxMemoryMb = maxMemory / (1024 * 1024);
 
-            if (usedMemory > maxRamMb) {
-                Logger.log("[MemoryOptimizer] RAM vượt ngưỡng " + maxRamMb + " MB. Đang gọi GC...");
-                System.gc();
+            if (usedMemoryMb > maxRamMb) {
+                if (server.Manager.DEBUG) {
+                    Logger.warning("[MemoryOptimizer] High Memory Alert: " + usedMemoryMb + " MB / " + maxMemoryMb + " MB");
+                }
 
-                Thread.sleep(2000); // cho GC chạy xong
-                usedMemory = (runtime.totalMemory() - runtime.freeMemory()) / (1024 * 1024);
-                Logger.log("[MemoryOptimizer] RAM sau khi GC: " + usedMemory + " MB");
-
-                if (autoRestart && usedMemory > maxRamMb) {
-                    Logger.log("[MemoryOptimizer] RAM vẫn vượt ngưỡng sau GC. Restart server...");
+                // Chi thuc hien restart neu bo nho can kiet sat nguong toi da (>95% max heap) de bao ve server khoi OutOfMemory
+                if (autoRestart && freeMemory < 20 * 1024 * 1024 && usedMemoryMb >= (maxMemoryMb * 95 / 100)) {
+                    Logger.warning("[MemoryOptimizer] Critical memory exhaustion! Initiating safe restart...");
                     restartServer();
                 }
             }
@@ -71,9 +73,11 @@ public class MemoryOptimizer implements Runnable {
 
     private void restartServer() {
         try {
+            Logger.log("[MemoryOptimizer] Luu toan bo du lieu nguoi choi truoc khi restart...");
+            ServerManager.gI().saveAllPlayersData();
             FileRunner.runBatchFile("run.bat");
-            Logger.log("[MemoryOptimizer] Server sẽ tắt để restart...");
-            scheduler.shutdownNow(); // dừng scheduler trước khi thoát
+            Logger.log("[MemoryOptimizer] Server se tat de restart an toan...");
+            scheduler.shutdownNow(); // dung scheduler truoc khi thoat
             System.exit(0);
         } catch (Exception e) {
             Logger.logException(MemoryOptimizer.class, e, "Error during restart");

@@ -166,12 +166,8 @@ public class DrDrief extends Npc {
                                     clan.level++;
                                     clan.maxMember++;
                                     Service.gI().sendThongBao(player, "Chúc mừng bang hội của bạn đã lên cấp " + (clan.level));
-                                    for (ClanMember cm : player.clan.getMembers()) {
-                                        Player pl = Client.gI().getPlayer(cm.id);
-                                        if (pl != null) {
-                                            ClanService.gI().sendMyClan(player);
-                                        }
-                                    }
+                                    clan.sendMyClanForAllMember();
+                                    clan.update();
                                 } else {
                                     Service.gI().sendThongBao(player, "Không đủ capsule bang, cần " + Util.formatNumber(capsuleCan - capsuleBang) + " capsule bang nữa.");
                                 }

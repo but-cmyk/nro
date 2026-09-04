@@ -55,8 +55,10 @@ public class TopService implements Runnable {
         } catch (Exception e) {
             Logger.logException(TopService.class, e, "Error updating TopService");
         } finally {
-            long duration = System.currentTimeMillis() - startTime;
-            Logger.log(Logger.GREEN, String.format("[TopService] Update took %d ms.", duration));
+            if (Manager.DEBUG) {
+                long duration = System.currentTimeMillis() - startTime;
+                Logger.log(Logger.GREEN, String.format("[TopService] Update took %d ms.", duration));
+            }
         }
     }
 }

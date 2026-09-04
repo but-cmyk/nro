@@ -202,6 +202,18 @@ public class WorldMartialArtsTournamentService extends ConstTournament {
             WorldMartialArtsTournamentManager.gI().listReg.add(player.id);
             NpcService.gI().createTutorial(player, npc.tempId, npc.avartar, ConstTournament.TEXT_DANG_KY_THANH_CONG.replaceAll("%1", TimeUtil.getCurrHour() + "").replaceAll("%2", TimeUtil.getCurrHour() + "h" + TimeUtil.getCurrMin()));
         } else {
+            int tour = getTournament();
+            if (tour != -1) {
+                int gold = tournamentGolds[tour];
+                int gem = tournamentGems[tour];
+                if (gold > 0) {
+                    player.inventory.addGold(gold);
+                }
+                if (gem > 0) {
+                    player.inventory.addGem(gem);
+                }
+                Service.gI().sendMoney(player);
+            }
             WorldMartialArtsTournamentManager.gI().listReg.remove(player.id);
             NpcService.gI().createTutorial(player, npc.tempId, npc.avartar, ConstTournament.TEXT_HUY_DANG_KY);
         }

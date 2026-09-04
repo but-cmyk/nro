@@ -105,6 +105,13 @@ public class ConsignShopService {
     }
 
     public void buyItem(Player pl, int id) {
+        if (pl == null) {
+            return;
+        }
+        if (pl.isTrade || services.func.TransactionService.gI().check(pl)) {
+            Service.gI().sendThongBao(pl, "Không thể thực hiện khi đang giao dịch");
+            return;
+        }
         if (pl.nPoint.power < 17_000_000_000L) {
             Service.gI().sendThongBao(pl, "Yêu cầu sức mạnh lớn hơn 17 tỷ");
             openShopKyGui(pl);
@@ -113,7 +120,7 @@ public class ConsignShopService {
         ConsignShopManager manager = ConsignShopManager.gI();
         manager.lockItems();
         try {
-            ConsignItem it = getItemBuy(id);
+            ConsignItem it = manager.getItemById(id);
             if (it == null || it.isBuy) {
                 Service.gI().sendThongBao(pl, "Vật phẩm không tồn tại hoặc đã được bán");
                 return;
@@ -169,7 +176,7 @@ public class ConsignShopService {
             }
 
             it.isBuy = true;
-            manager.save();
+            manager.updateItemBoughtAsync(it.id);
             database.daos.PlayerDAO.updatePlayerAsync(pl);
             Player seller = server.Client.gI().getPlayer(it.player_sell);
             if (seller != null) {
@@ -185,12 +192,7 @@ public class ConsignShopService {
     }
 
     public ConsignItem getItemBuy(int id) {
-        for (ConsignItem it : getItemKyGui()) {
-            if (it != null && it.id == id) {
-                return it;
-            }
-        }
-        return null;
+        return ConsignShopManager.gI().getItemById(id);
     }
 
     public ConsignItem getItemBuy(Player pl, int id) {
@@ -288,6 +290,13 @@ public class ConsignShopService {
 //    }
 
     public void claimOrDel(Player pl, byte action, int id) {
+        if (pl == null) {
+            return;
+        }
+        if (pl.isTrade || services.func.TransactionService.gI().check(pl)) {
+            Service.gI().sendThongBao(pl, "Không thể thực hiện khi đang giao dịch");
+            return;
+        }
         ConsignShopManager manager = ConsignShopManager.gI();
         manager.lockItems();
         try {
@@ -319,7 +328,8 @@ public class ConsignShopService {
                     }
                     InventoryService.gI().sendItemBags(pl);
                     Service.gI().sendMoney(pl);
-                    manager.save();
+                    manager.deleteItemAsync(it.id);
+                    database.daos.PlayerDAO.updatePlayerAsync(pl);
                     Service.gI().sendThongBao(pl, "Hủy bán vật phẩm thành công");
                     openShopKyGui(pl);
                 }
@@ -374,7 +384,8 @@ public class ConsignShopService {
                     }
                     Service.gI().sendMoney(pl);
                     InventoryService.gI().sendItemBags(pl); // Send updated inventory to player
-                    manager.save();
+                    manager.deleteItemAsync(it.id);
+                    database.daos.PlayerDAO.updatePlayerAsync(pl);
                     Service.gI().sendThongBao(pl, String.format("Bạn đã nhận được %d (đã trừ %d phí)", receivedAmount, fee));
                     openShopKyGui(pl);
                 }
@@ -412,93 +423,31 @@ public class ConsignShopService {
         return false;
     }
 
-//    // Sửa phương thức getMaxId()
-//    public int getMaxId() {
-//        try (Connection con = AlyraManager.getConnection();
-//             // Use java.sql.Statement directly, not com.mysql.jdbc.Statement, for better portability
-//             java.sql.Statement s = con.createStatement();
-//             ResultSet rs = s.executeQuery("SELECT MAX(id) FROM shop_ky_gui")) {
-//
-//            if (rs.next()) {
-//                return rs.getInt(1);
-//            }
-//            return 0;
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//            Logger.logException(ConsignShopService.class, e, "Error getting max ID from shop_ky_gui");
-//            return 0;
-//        }
-//    }
-public int getMaxId() {
-    Connection con = null;
-    java.sql.PreparedStatement ps = null;  // Changed to java.sql interface
-    ResultSet rs = null;
-    
-    try {
-        con = AlyraManager.getConnection();
-        if (con == null) {
-            Logger.logException(ConsignShopService.class, 
-                new Exception("Database connection is null"), 
-                "Failed to get database connection for getMaxId");
+    public int getMaxId() {
+        try (Connection con = AlyraManager.getConnection();
+             PreparedStatement ps = con.prepareStatement("SELECT COALESCE(MAX(id), 0) as max_id FROM shop_ky_gui");
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                return rs.getInt("max_id");
+            }
+            return 0;
+        } catch (Exception e) {
+            Logger.logException(ConsignShopService.class, e, "Error getting max ID from shop_ky_gui");
             return 0;
         }
-        
-        // Using standard JDBC PreparedStatement interface
-        ps = con.prepareStatement("SELECT COALESCE(MAX(id), 0) as max_id FROM shop_ky_gui FOR UPDATE");
-        rs = ps.executeQuery();
-        
-        if (rs.next()) {
-            return rs.getInt("max_id");
-        }
-        return 0;
-        
-    } catch (Exception e) {
-        Logger.logException(ConsignShopService.class, e, "Error getting max ID from shop_ky_gui");
-        return 0;
-    } finally {
-        if (rs != null) {
-            try { rs.close(); } catch (Exception e) {
-                Logger.logException(ConsignShopService.class, e, "Error closing ResultSet in getMaxId");
-            }
-        }
-        if (ps != null) {
-            try { ps.close(); } catch (Exception e) {
-                Logger.logException(ConsignShopService.class, e, "Error closing PreparedStatement in getMaxId");
-            }
-        }
-        if (con != null) {
-            try { con.close(); } catch (Exception e) {
-                Logger.logException(ConsignShopService.class, e, "Error closing Connection in getMaxId");
-            }
-        }
     }
-}
-@SuppressWarnings("unchecked")
-public int insertConsignItemAndGetId(ConsignItem item) {
-    Connection con = null;
-    PreparedStatement ps = null;
-    ResultSet generatedKeys = null;
-    
-    try {
-        con = AlyraManager.getConnection();
-        if (con == null) {
-            Logger.logException(ConsignShopService.class, new Exception("Database connection is null"), "Failed to get database connection for insertConsignItem");
-            return -1;
-        }
-        
-        con.setAutoCommit(false);
-        
-        String sql = "INSERT INTO `shop_ky_gui`(`player_id`, `tab`, `item_id`, `gold`, `gem`, `quantity`, `itemOption`, `isUpTop`, `isBuy`) " +
-                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        
-        ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
-        
+
+    @SuppressWarnings("unchecked")
+    public int insertConsignItemAndGetId(ConsignItem item) {
         // Validate dữ liệu
-        if (item.player_sell <= 0 || item.itemId <= 0 || item.quantity <= 0) {
+        if (item == null || item.player_sell <= 0 || item.itemId <= 0 || item.quantity <= 0) {
             Logger.log("ConsignShopService", "Invalid item data for insertion");
             return -1;
         }
-        
+
+        String sql = "INSERT INTO `shop_ky_gui`(`player_id`, `tab`, `item_id`, `gold`, `gem`, `quantity`, `itemOption`, `isUpTop`, `isBuy`) " +
+                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
         // Xử lý JSON options an toàn
         String optionsJson = "[]";
         if (item.options != null && !item.options.isEmpty()) {
@@ -518,69 +467,51 @@ public int insertConsignItemAndGetId(ConsignItem item) {
                 optionsJson = "[]";
             }
         }
-        
-        ps.setInt(1, item.player_sell);
-        ps.setByte(2, item.tab);
-        ps.setInt(3, item.itemId);
-        ps.setInt(4, item.goldSell);
-        ps.setInt(5, item.gemSell);
-        ps.setInt(6, item.quantity);
-        ps.setString(7, optionsJson);
-        ps.setByte(8, item.isUpTop);
-        ps.setBoolean(9, item.isBuy);
-        
-        int affectedRows = ps.executeUpdate();
-        
-        if (affectedRows == 0) {
-            con.rollback();
-            return -1;
-        }
-        
-        generatedKeys = ps.getGeneratedKeys();
-        if (generatedKeys.next()) {
-            int newId = generatedKeys.getInt(1);
-            con.commit();
-            return newId;
-        } else {
-            con.rollback();
-            return -1;
-        }
-        
-    } catch (Exception e) {
-        Logger.logException(ConsignShopService.class, e, "Error inserting consign item");
-        if (con != null) {
-            try {
-                con.rollback();
+
+        try (Connection con = AlyraManager.getConnection()) {
+            if (con == null) {
+                Logger.logException(ConsignShopService.class, new Exception("Database connection is null"), "Failed to get database connection for insertConsignItem");
+                return -1;
+            }
+            con.setAutoCommit(false);
+            try (PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+                ps.setInt(1, item.player_sell);
+                ps.setByte(2, item.tab);
+                ps.setInt(3, item.itemId);
+                ps.setInt(4, item.goldSell);
+                ps.setInt(5, item.gemSell);
+                ps.setInt(6, item.quantity);
+                ps.setString(7, optionsJson);
+                ps.setByte(8, item.isUpTop);
+                ps.setBoolean(9, item.isBuy);
+
+                int affectedRows = ps.executeUpdate();
+                if (affectedRows == 0) {
+                    con.rollback();
+                    return -1;
+                }
+
+                try (ResultSet generatedKeys = ps.getGeneratedKeys()) {
+                    if (generatedKeys.next()) {
+                        int newId = generatedKeys.getInt(1);
+                        con.commit();
+                        return newId;
+                    } else {
+                        con.rollback();
+                        return -1;
+                    }
+                }
             } catch (Exception ex) {
-                Logger.logException(ConsignShopService.class, ex, "Error rolling back transaction in insertConsignItem");
-            }
-        }
-        return -1;
-    } finally {
-        if (generatedKeys != null) {
-            try { 
-                generatedKeys.close(); 
-            } catch (Exception e) {
-                Logger.logException(ConsignShopService.class, e, "Error closing generated keys ResultSet");
-            }
-        }
-        if (ps != null) {
-            try { 
-                ps.close(); 
-            } catch (Exception e) {
-                Logger.logException(ConsignShopService.class, e, "Error closing PreparedStatement in insertConsignItem");
-            }
-        }
-        if (con != null) {
-            try { 
+                con.rollback();
+                throw ex;
+            } finally {
                 con.setAutoCommit(true);
-                con.close(); 
-            } catch (Exception e) {
-                Logger.logException(ConsignShopService.class, e, "Error closing Connection in insertConsignItem");
             }
+        } catch (Exception e) {
+            Logger.logException(ConsignShopService.class, e, "Error inserting consign item");
+            return -1;
         }
     }
-}
     public byte getTabKiGui(Item it) {
         if (it.template.type >= 0 && it.template.type <= 2) {
             return 0;
@@ -594,6 +525,13 @@ public int insertConsignItemAndGetId(ConsignItem item) {
     }
 
     public void KiGui(Player pl, int id, int money, byte moneyType, int quantity) {
+        if (pl == null) {
+            return;
+        }
+        if (pl.isTrade || services.func.TransactionService.gI().check(pl)) {
+            Service.gI().sendThongBao(pl, "Không thể thực hiện khi đang giao dịch");
+            return;
+        }
         ConsignShopManager manager = ConsignShopManager.gI();
         boolean feeCharged = false;
         try {
@@ -659,11 +597,9 @@ public int insertConsignItemAndGetId(ConsignItem item) {
             }
             feeCharged = true;
 
-            int newId = manager.nextItemId();
-
             // Tạo consign item
             ConsignItem newConsignItem = new ConsignItem(
-                    newId,
+                    0,
                     it.template.id,
                     (int) pl.id,
                     getTabKiGui(it),
@@ -675,13 +611,21 @@ public int insertConsignItemAndGetId(ConsignItem item) {
                     false
             );
 
-            // Add the item to the consignment list
-            manager.listItem.add(newConsignItem);
+            int insertedId = manager.insertItem(newConsignItem);
+            if (insertedId <= 0) {
+                if (feeCharged) {
+                    Item refund = ItemService.gI().createNewItem((short) 457);
+                    refund.quantity = 1;
+                    InventoryService.gI().addItemBag(pl, refund);
+                }
+                Service.gI().sendThongBao(pl, "Ký gửi vật phẩm thất bại, vui lòng thử lại sau!");
+                return;
+            }
 
             // Subtract item from player's inventory
             InventoryService.gI().subQuantityItemsBag(pl, it, quantity);
             InventoryService.gI().sendItemBags(pl);
-            manager.save(); // Save the updated consignment list
+            database.daos.PlayerDAO.updatePlayerAsync(pl);
             Service.gI().sendThongBao(pl, "Ký gửi vật phẩm thành công!");
             openShopKyGui(pl);
             } finally {

@@ -18,8 +18,8 @@ public class ItemMapService {
     }
 
    public void pickItem(Player player, int itemMapId, boolean isThuHut) {
-        if (player.idMark != null && isThuHut || Util.canDoWithTime(player.idMark.getLastTimePickItem(), 1000)) {
-            player.zone.pickItem(player, itemMapId);
+        if (player.idMark != null && (isThuHut || Util.canDoWithTime(player.idMark.getLastTimePickItem(), 1000))) {
+            player.zone.pickItem(player, itemMapId, isThuHut);
             if (player.idMark != null) {
                 player.idMark.setLastTimePickItem(System.currentTimeMillis());
             }
