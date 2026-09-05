@@ -107,6 +107,10 @@ public class SieuBoHung extends Boss {
                     this.location.y - 24), plKill.id);
             Service.gI().dropItemMap(this.zone, it);
         }
+        if (Util.isTrue(5, 100)) {
+            ItemMap itTL = services.ItemService.gI().randDoTL(this.zone, 1, this.location.x + Util.nextInt(-20, 20), this.zone.map.yPhysicInTop(this.location.x, this.location.y - 24), plKill.id);
+            Service.gI().dropItemMap(this.zone, itTL);
+        }
         if (plKill.playerTask.taskdh.Hagucboss < 30) {
             int required = 30;
             int percentDone = (int) ((double) plKill.playerTask.taskdh.Hagucboss / required * 100);

@@ -56,9 +56,16 @@ public class Babiday extends Npc {
                         NpcService.gI().createTutorial(player, tempId, 4388, ConstNpc.HUONG_DAN_MAP_MA_BU);
                     case 1 -> {
                         if (!player.itemTime.isUseGTPT) {
+                            if (player.inventory.gem < 1) {
+                                Service.gI().sendThongBao(player, "Bạn không đủ ngọc để giải trừ phép thuật!");
+                                return;
+                            }
+                            player.inventory.gem -= 1;
+                            Service.gI().sendMoney(player);
                             player.itemTime.lastTimeUseGTPT = System.currentTimeMillis();
                             player.itemTime.isUseGTPT = true;
                             ItemTimeService.gI().sendAllItemTime(player);
+                            Service.gI().point(player);
                             Service.gI().sendThongBao(player, "Phép thuật đã được giải trừ, sức đánh của bạn đã tăng theo điểm tích lũy");
                         } else if (player.fightMabu.pointMabu >= player.fightMabu.POINT_MAX && this.mapId != 120) {
                             ChangeMapService.gI().changeMap(player, this.map.mapIdNextMabu((short) this.mapId), -1, this.cx, this.cy);

@@ -47,17 +47,18 @@ public class TreasureUnderSeaService {
                     }
                     if (banDoKhoBau != null) {
                         if (Util.isAfterMidnight(player.lastTimeJoinBDKB)) {
-                            player.timesPerDayBDKB = 1;
-                        } else if (player.lastTimeJoinBDKB != player.clan.lastTimeOpenBanDoKhoBau) {
-                            if (player.timesPerDayBDKB >= 3) {
-                                Service.gI().sendThongBao(player, "Bạn đã vào hang kho báu 3 lần trong hôm nay, hẹn gặp lại ngày mai");
-                                return;
-                            }
+                            player.timesPerDayBDKB = 0;
+                        }
+                        if (player.timesPerDayBDKB >= 3) {
+                            Service.gI().sendThongBao(player, "Bạn đã vào hang kho báu 3 lần trong hôm nay, hẹn gặp lại ngày mai");
+                            return;
                         }
 
                         InventoryService.gI().subQuantityItemsBag(player, item, 1);
                         InventoryService.gI().sendItemBags(player);
                         banDoKhoBau.openBanDoKhoBau(player, player.clan, level);
+                        player.lastTimeJoinBDKB = player.clan.lastTimeOpenBanDoKhoBau;
+                        player.timesPerDayBDKB++;
                     } else {
                         Service.gI().sendThongBao(player, "Hang kho báu đã đầy, hãy quay lại sau 30 phút");
                     }

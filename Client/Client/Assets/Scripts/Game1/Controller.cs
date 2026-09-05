@@ -124,7 +124,10 @@ namespace Game1
                 MyVector myVector = new MyVector();
                 int num = 0;
                 GameCanvas.timeLoading = 15;
-                Controller2.readMessage(msg);
+                if (Controller2.readMessage(msg))
+                {
+                    return;
+                }
                 if (PacketDispatcher.gI().Dispatch(this, msg))
                 {
                     return;
@@ -4106,25 +4109,18 @@ namespace Game1
                         {
                             GameCanvas.debug("SA80", 2);
                             int num179 = msg.reader().readInt();
+                            short toX = msg.reader().readShort();
+                            short toY = msg.reader().readShort();
                             for (int num182 = 0; num182 < GameScr.vCharInMap.size(); num182++)
                             {
-                                Char char15 = null;
-                                try
+                                Char char15 = (Char)GameScr.vCharInMap.elementAt(num182);
+                                if (char15 != null && char15.charID == num179)
                                 {
-                                    char15 = (Char)GameScr.vCharInMap.elementAt(num182);
+                                    GameCanvas.debug("SA8x2y" + num182, 2);
+                                    char15.moveTo(toX, toY, 0);
+                                    char15.lastUpdateTime = mSystem.currentTimeMillis();
+                                    break;
                                 }
-                                catch (Exception)
-                                {
-                                    continue;
-                                }
-                                if (char15 == null || char15.charID != num179)
-                                {
-                                    continue;
-                                }
-                                GameCanvas.debug("SA8x2y" + num182, 2);
-                                char15.moveTo(msg.reader().readShort(), msg.reader().readShort(), 0);
-                                char15.lastUpdateTime = mSystem.currentTimeMillis();
-                                break;
                             }
                             GameCanvas.debug("SA80x3", 2);
                             break;

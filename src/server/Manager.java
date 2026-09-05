@@ -426,7 +426,7 @@ public static final String queryTopWhis = "SELECT id, CAST(JSON_UNQUOTE(JSON_EXT
                         break;                       
                      case queryTopLuckySpins:
                         top.setInfo1("Đã quay: " + rs.getInt("lucky_spins") + " lần");
-                        top.setInfo2("Số lần quay Vòng Quay Đặc Biệt");
+                        top.setInfo2("Số lần quay Vòng Quay May Mắn");
                         break;
                     case queryTopWhis:
                         top.setInfo1("Cấp độ: " + rs.getInt("level"));

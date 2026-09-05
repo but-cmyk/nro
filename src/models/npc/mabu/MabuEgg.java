@@ -1,7 +1,9 @@
 package models.npc.mabu;
 
+import models.item.Item;
 import services.map.ChangeMapService;
 import services.PetService;
+import services.player.InventoryService;
 import models.player.Player;
 import utils.Util;
 import network.io.Message;
@@ -51,51 +53,84 @@ public class MabuEgg {
         return seconds > 0 ? seconds : 0;
     }
 
+    public boolean isOpening = false;
+
     public void openEgg(int gender) {
-        if (this.player.pet != null) {
-            try {
-                destroyEgg();
-                final Player p = this.player;
-                server.GameLoopManager.gI().schedule(() -> {
-                    try {
-                        if (p != null && !p.beforeDispose && !p.isOffline) {
-                            if (p.pet == null) {
-                                PetService.gI().createMabuPet(p, gender);
-                            } else {
-                                PetService.gI().changeMabuPet(p, gender);
-                            }
-                            int mapId;
-                            switch (gender) {
-                                case 0 -> mapId = 176;
-                                case 1 -> mapId = 7;
-                                case 2 -> mapId = 14;
-                                default -> {
-                                    return;
-                                }
-                            }
-                            ChangeMapService.gI().changeMapInYard(p, mapId, -1, Util.nextInt(300, 500));
-                        }
-                    } catch (Exception ex) {
-                        ex.printStackTrace();
-                    }
-                }, 4000);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        } else {
+        if (gender < 0 || gender > 2) {
+            return;
+        }
+        if (this.player == null) {
+            return;
+        }
+        if (this.isOpening) {
+            Service.gI().sendThongBao(player, "Trứng đang nở, vui lòng chờ trong giây lát!");
+            return;
+        }
+        if (this.player.pet == null) {
             Service.gI().sendThongBao(player, "Yêu cầu phải có đệ tử");
+            return;
+        }
+
+        // Pre-check: Kiểm tra chỗ trống hành trang + rương đồ để bảo vệ trang bị đệ cũ
+        int countEquipped = 0;
+        if (this.player.pet.inventory != null && this.player.pet.inventory.itemsBody != null) {
+            for (Item it : this.player.pet.inventory.itemsBody) {
+                if (it != null && it.isNotNullItem()) {
+                    countEquipped++;
+                }
+            }
+        }
+        int totalEmptySlots = InventoryService.gI().getCountEmptyBag(this.player) + InventoryService.gI().getCountEmptyBox(this.player);
+        if (totalEmptySlots < countEquipped) {
+            Service.gI().sendThongBao(this.player, "Hành trang và rương phải còn ít nhất " + countEquipped + " ô trống để cất trang bị đệ tử cũ!");
+            return;
+        }
+
+        this.isOpening = true;
+        try {
+            // Gửi hiệu ứng vỡ trứng về client (-117 sub 101) mà chưa xóa dữ liệu quả trứng
+            sendEffectDestroyEgg();
+
+            final Player p = this.player;
+            server.GameLoopManager.gI().schedule(() -> {
+                try {
+                    if (p != null && !p.beforeDispose && !p.isOffline) {
+                        if (p.pet == null) {
+                            PetService.gI().createMabuPet(p, gender);
+                        } else {
+                            PetService.gI().changeMabuPet(p, gender);
+                        }
+                        // Chỉ hủy trứng sau khi đệ tử Mabu đã khởi tạo và liên kết thành công
+                        p.mabuEgg = null;
+
+                        int mapId = 21 + gender;
+                        ChangeMapService.gI().changeMapInYard(p, mapId, -1, Util.nextInt(300, 500));
+                    }
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }, 4000);
+        } catch (Exception e) {
+            this.isOpening = false;
+            e.printStackTrace();
         }
     }
 
-    public void destroyEgg() {
+    public void sendEffectDestroyEgg() {
         try {
             Message msg = new Message(-117);
             msg.writer().writeByte(101);
             player.sendMessage(msg);
             msg.cleanup();
-        } catch (Exception e) {
+        } catch (Exception ignored) {
         }
-        this.player.mabuEgg = null;
+    }
+
+    public void destroyEgg() {
+        sendEffectDestroyEgg();
+        if (this.player != null) {
+            this.player.mabuEgg = null;
+        }
     }
 
 //    public void subTimeDone(int d, int h, int m, int s) {

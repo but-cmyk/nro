@@ -21,6 +21,7 @@ import server.Maintenance;
 import server.Manager;
 import utils.Util;
 import java.util.ArrayList;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.Random;
 import services.AchievementService;
 import services.phoban.TrainingService;
@@ -41,7 +42,7 @@ public class Mob {
     private int hp;
     private int maxHp;
 
-    public List<Player> temporaryEnemies = new ArrayList<>();
+    public List<Player> temporaryEnemies = new CopyOnWriteArrayList<>();
 
     public MobPoint point;
     public MobEffectSkill effectSkill;
@@ -95,6 +96,7 @@ public class Mob {
     public void setDie() {
         this.lastTimePhucHoi = System.currentTimeMillis();
         this.lastTimeDie = System.currentTimeMillis();
+        this.lvMob = 0;
     }
 
     public void addTemporaryEnemies(Player pl) {
@@ -106,7 +108,7 @@ public class Mob {
 //    public int getMaxHp() { return maxHp; }
     
 
-    public void injured(Player plAtt, long damage, boolean dieWhenHpFull) {
+    public synchronized void injured(Player plAtt, long damage, boolean dieWhenHpFull) {
         if (!this.isDie()) {
             if (damage >= this.point.hp) {
                 damage = this.point.hp;
@@ -173,8 +175,9 @@ public class Mob {
                 if (plAtt.isPl() && plAtt.satellite != null && plAtt.satellite.isDefend) {
                     plAtt.satellite.isDefend = false;
                 }
-                Service.gI().addSMTN(plAtt, (byte) 2, getTiemNangForPlayer(plAtt, damage), true);
-                TrainingService.gI().tangTnsmLuyenTap(plAtt, getTiemNangForPlayer(plAtt, damage));
+                long tnsm = getTiemNangForPlayer(plAtt, damage);
+                Service.gI().addSMTN(plAtt, (byte) 2, tnsm, true);
+                TrainingService.gI().tangTnsmLuyenTap(plAtt, tnsm);
             }
         }
     }
@@ -211,6 +214,7 @@ public class Mob {
         }
         
         if (pl.nPoint != null) {
+            tiemNang = Math.min(tiemNang, 2_000_000_000L);
             tiemNang = (int) pl.nPoint.calSucManhTiemNang(tiemNang);
         } else {
             return 0;
@@ -221,16 +225,16 @@ public class Mob {
         if (pl.zone.map.mapId == 153) {
             tiemNang /= 2;
         }
-        if (pl.zone.map.mapId == 156 || pl.zone.map.mapId == 157 || pl.zone.map.mapId == 158 || pl.zone.map.mapId == 159) {
+        if (pl.zone.map.mapId >= 156 && pl.zone.map.mapId <= 159) {
             tiemNang /= 2;
         }
         if (pl.zone.map.mapId >= 53 && pl.zone.map.mapId <= 63) {
             tiemNang *= 3;
         }
-        if (pl.zone.map.mapId >= 135 && pl.zone.map.mapId <= 138) {
-            tiemNang *= 2;
+        if (tiemNang <= 0) {
+            tiemNang = 1;
         }
-        return tiemNang;
+        return Math.min(tiemNang, 2_000_000_000L);
     }
 
     public void update() {
@@ -275,15 +279,15 @@ public class Mob {
                         this.hoiSinh();
                         this.sendMobHoiSinh();
                     }
-                    if (Util.canDoWithTime(lastTimePhucHoi, 30000) && !isDie()) {
-                        lastTimePhucHoi = System.currentTimeMillis();
-                        int hpMax = this.point.maxHp;
-                        if (this.point.hp < hpMax) {
-                            hoi_hp(hpMax / 10);
-                        } else {
-                            this.sendMobHoiSinh();
-                        }
-                    }
+                    break;
+            }
+        } else if (!this.isDie()) {
+            if (Util.canDoWithTime(lastTimePhucHoi, 30000)) {
+                lastTimePhucHoi = System.currentTimeMillis();
+                int hpMax = this.point.maxHp;
+                if (this.point.hp < hpMax) {
+                    hoi_hp(hpMax / 10);
+                }
             }
         }
         effectSkill.update();
@@ -413,6 +417,9 @@ public class Mob {
         this.status = 5;
         this.point.hp = this.point.maxHp;
         this.setTiemNang();
+        if (this.zone != null && this.zone.map != null && !MapService.gI().isMapPhoBan(this.zone.map.mapId)) {
+            this.lvMob();
+        }
     }
 
     public int lvMob() {
@@ -421,7 +428,7 @@ public class Mob {
                 return 0;
             }
         }
-        this.lvMob = this.tempId > 18 && !isBigBoss() ? Util.isTrue(10, 100) ? 1 : 0 : 0;
+        this.lvMob = (byte) (this.tempId > 18 && !isBigBoss() ? Util.isTrue(10, 100) ? 1 : 0 : 0);
         this.point.hp = this.lvMob > 0 ? this.point.maxHp <= 20000000 ? this.point.maxHp * 10 : 2000000000 : this.point.maxHp;
         return this.lvMob;
     }
@@ -432,7 +439,7 @@ public class Mob {
             msg = new Message(-13);
             msg.writer().writeByte(this.id);
             msg.writer().writeByte(this.tempId);
-            msg.writer().writeByte(0);
+            msg.writer().writeByte(this.lvMob);
             msg.writer().writeInt(this.point.hp);
             Service.gI().sendMessAllPlayerInMap(this.zone, msg);
             this.sendMobMaxHp(this.point.hp);
@@ -673,7 +680,7 @@ public class Mob {
         
          //========================SKH CŨ========================
         if (MapService.gI().isMapUpSKH(mapid)) {
-            if (Util.isTrue(co4LaRate, 2000000)) { // 1/2000 thường, 2/2000 khi có cỏ 4 lá
+            if (Util.isTrue(co4LaRate, 2000)) { // 1/2000 thường, 2/2000 khi có cỏ 4 lá (0.05% - 0.1%)
                 short itTemp = (short) ItemService.gI().randTempItemKichHoat(player.gender);
                 ItemMap it = new ItemMap(zone, itTemp, 1, x, yEnd, player.id);
 
@@ -696,7 +703,7 @@ public class Mob {
 
           //========================ĐỒ SAO 3 MAP ĐẦU ========================
         if (player.isPl() && MapService.gI().isMapUpSKH(mapid)) {           
-            if (Util.isTrue(co4LaRate, 10000000)) {
+            if (Util.isTrue(co4LaRate, 2500)) {
                 short itTemp = (short) ItemService.gI().randTempItemKichHoat(player.gender);
                 ItemMap it = new ItemMap(zone, itTemp, 1, x, yEnd, player.id);
 
@@ -718,7 +725,7 @@ public class Mob {
         
          //========================ĐỒ SAO MAP < NAPPA========================
         if (MapService.gI().isMapUpDoSao(mapid)) {          
-            if (Util.isTrue(co4LaRate, 500000)) { // 1/2000 hoặc 2/2000 khi có cỏ 4 lá
+            if (Util.isTrue(co4LaRate, 2000)) { // 1/2000 hoặc 2/2000 khi có cỏ 4 lá
                 short itTemp1 = (short) ItemService.gI().randTempItemDoSao(player.gender);
                 ItemMap it = new ItemMap(zone, itTemp1, 1, x, yEnd, player.id);
 
@@ -735,7 +742,7 @@ public class Mob {
 
 
          //========================SAO PHA LÊ========================
-        if (Util.isTrue(1, 100000) || (player.nPoint.isDoSPL && Util.isTrue(5, 10000))) {
+        if (Util.isTrue(1, 2000) || (player.nPoint.isDoSPL && Util.isTrue(5, 1000))) {
             int rand = Util.nextInt(0, 6);
             ItemMap it = new ItemMap(zone, 441 + rand, 1, x, yEnd, player.id);
             it.options.add(new Item.ItemOption(95 + rand, (rand == 3 || rand == 4) ? 3 : 5));
@@ -743,7 +750,7 @@ public class Mob {
         }
 
          //========================ĐÁ NÂNG CẤP========================
-        if (Util.isTrue(1, 100000) || (Util.isTrue(5, 300000) && MapService.gI().isMapCold(mapid))) {
+        if (Util.isTrue(1, 2000) || (Util.isTrue(5, 2000) && MapService.gI().isMapCold(mapid))) {
             int rand = Util.nextInt(0, 4);
             ItemMap it = new ItemMap(zone, 220 + rand, 1, x, yEnd, player.id);
             it.options.add(new Item.ItemOption(71 - rand, 0));
@@ -759,7 +766,7 @@ public class Mob {
             }
 
             if (player != null && !player.isPet) { // đảm bảo không bị null hoặc là pet tiếp
-                if (Util.isTrue(1 * co4LaRate, 500000)) { // 0.05% mặc định, 0.1% khi có cỏ 4 lá
+                if (Util.isTrue(1 * co4LaRate, 2000)) { // 0.05% mặc định, 0.1% khi có cỏ 4 lá
                     ItemMap it = ItemService.gI().randDoTL(this.zone, 1, x, yEnd, player.id);
                     list.add(it);
 
@@ -773,7 +780,7 @@ public class Mob {
         }
 
          //========================THỨC ĂN========================
-          if (InventoryService.gI().fullSetThan(player) && Util.isTrue(1 * co4LaRate,200000)) {
+          if (InventoryService.gI().fullSetThan(player) && Util.isTrue(1 * co4LaRate, 2000)) {
             int tempId = Util.nextInt(663, 667); // random 663 - 666
             ItemMap it = new ItemMap(zone, tempId, 1, x, yEnd, player.id);
             it.options.add(new Item.ItemOption(73, 0)); // option mặc định
@@ -785,7 +792,7 @@ public class Mob {
 
             
         //========================ĐỒ LƯỠNG LONG MAP COLD========================
-        if (MapService.gI().isMapCold(mapid) && Util.isTrue(1 * co4LaRate, 500000)) {
+        if (MapService.gI().isMapCold(mapid) && Util.isTrue(1 * co4LaRate, 2000)) {
             // 0.05% mặc định, 0.1% khi có cỏ 4 lá
 
             // Nhặt item Lưỡng Long ngẫu nhiên
@@ -801,13 +808,13 @@ public class Mob {
         }
         
           // ======================== ĐỒ KAIO MAP NAPPA ========================
-        if (MapService.gI().isMapNappa(mapid) && Util.isTrue(1 * co4LaRate, 500000)) {
+        if (MapService.gI().isMapNappa(mapid) && Util.isTrue(1 * co4LaRate, 2000)) {
             // 0.05% mặc định, 0.1% khi có cỏ 4 lá
             ItemMap it = ItemService.gI().randDoKaio(this.zone, 1, x, yEnd, player.id);
             list.add(it);
 
             // 5% cơ hội thêm option ngẫu nhiên
-            if (Util.isTrue(5 * co4LaRate, 1000000)) {
+            if (Util.isTrue(5 * co4LaRate, 1000)) {
                 int randomOption = Util.nextInt(34, 35);
                 it.options.add(new Item.ItemOption(randomOption, 0));
             }
@@ -820,13 +827,13 @@ public class Mob {
         }
 
 // ======================== ĐỒ KAIO MAP TƯƠNG LAI ========================
-        if (MapService.gI().isMapTuongLai(mapid) && Util.isTrue(1 * co4LaRate, 500000)) {
-            // 0.1% mặc định, 0.2% khi có cỏ 4 lá
+        if (MapService.gI().isMapTuongLai(mapid) && Util.isTrue(1 * co4LaRate, 2000)) {
+            // 0.05% mặc định, 0.1% khi có cỏ 4 lá
             ItemMap it = ItemService.gI().randDoKaio(this.zone, 1, x, yEnd, player.id);
             list.add(it);
 
             // 5% cơ hội thêm option ngẫu nhiên
-            if (Util.isTrue(5 * co4LaRate, 100000)) {
+            if (Util.isTrue(5 * co4LaRate, 1000)) {
                 int randomOption = Util.nextInt(34, 35);
                 it.options.add(new Item.ItemOption(randomOption, 0));
             }
@@ -841,20 +848,20 @@ public class Mob {
 
 
          //========================MẢNH ĐÁ VỤN========================
-        if (Util.isTrue(1, 100000)) {
+        if (Util.isTrue(1, 1000)) {
             list.add(new ItemMap(zone, 225, 1, x, yEnd, player.id));
         }
         
          //========================NRO========================
-        if (Util.isTrue(1, 100000)) {
+        if (Util.isTrue(1, 2000)) {
             list.add(new ItemMap(zone, 19, 1, x, yEnd, player.id));
         }
-        if (Util.isTrue(1, 100000)) {
+        if (Util.isTrue(1, 2000)) {
             list.add(new ItemMap(zone, 20, 1, x, yEnd, player.id));
         }
         
         //========================NGỌC========================
-        if (Util.isTrue(1, 1000000)) {
+        if (Util.isTrue(1, 500000)) {
             list.add(new ItemMap(zone, 77, 1000, x, yEnd, player.id));
         }
        
@@ -864,122 +871,42 @@ public class Mob {
         }
          
         //========================VÀNG BDKB========================
-        if ((zone.map.mapId >= 135 && zone.map.mapId <= 138) && Util.isTrue(100, 100)) {
-            if (player.clan.BanDoKhoBau.level <= 10) {
-                int min = 1000;
-                int max = 1700;
-                Random random = new Random();
-                int randomvang = random.nextInt(max - min + 1) + min;
-                int randomvang2 = random.nextInt(max - min + 1) + min;
+        if ((zone.map.mapId >= 135 && zone.map.mapId <= 138) && player.clan != null && player.clan.BanDoKhoBau != null && Util.isTrue(100, 100)) {
+            int bdkbLevel = player.clan.BanDoKhoBau.level;
+            int numPiles;
+            int minGold;
+            int maxGold;
 
-                for (int i = 0; i < player.clan.BanDoKhoBau.level / 2; i++) {
-                    ItemMap it = new ItemMap(this.zone, 76, randomvang, this.location.x + i * 20, this.location.y, player.id);
-                    //   ItemMap it2 = new ItemMap(this.zone, 861, 1,this.location.x + i * 20, this.location.y, player.id);
-                    Service.gI().dropItemMap(this.zone, it);
-                    //   Service.gI().dropItemMap(this.zone, it2);
-                }
-                for (int i = 0; i < player.clan.BanDoKhoBau.level / 3; i++) {
-                    ItemMap it = new ItemMap(this.zone, 190, randomvang2, this.location.x - i * 20, this.location.y, player.id);
-                    Service.gI().dropItemMap(this.zone, it);
-                }
-                for (int i = 0; i < player.clan.BanDoKhoBau.level / 4; i++) {
-                    ItemMap it = new ItemMap(this.zone, 76, randomvang2, this.location.x + i * 20, this.location.y, player.id);
-                    //    ItemMap it2 = new ItemMap(this.zone, 861, 1,this.location.x + i * 17, this.location.y, player.id);
-                    //    Service.gI().dropItemMap(this.zone, it2);
-                }
-                for (int i = 0; i < player.clan.BanDoKhoBau.level / 4; i++) {
-                    ItemMap it = new ItemMap(this.zone, 76, randomvang2, this.location.x + i * 20, this.location.y, player.id);
-                    //    ItemMap it2 = new ItemMap(this.zone, 861, 1,this.location.x - i * 17, this.location.y, player.id);
-                    //    Service.gI().dropItemMap(this.zone, it2);
-                }
-            }
-            if (player.clan.BanDoKhoBau.level > 10 && player.clan.BanDoKhoBau.level <= 50) {
-                int min = 1200;
-                int max = 2000;
-                Random random = new Random();
-                int randomvang = random.nextInt(max - min + 1) + min;
-                int randomvang2 = random.nextInt(max - min + 1) + min;
-
-                for (int i = 0; i < player.clan.BanDoKhoBau.level * (3 / 5); i++) {
-                    ItemMap it = new ItemMap(this.zone, 76, randomvang, this.location.x + i * 20, this.location.y, player.id);
-                    //   ItemMap it2 = new ItemMap(this.zone, 861, 1,this.location.x + i * 20, this.location.y, player.id);
-                    Service.gI().dropItemMap(this.zone, it);
-                    //   Service.gI().dropItemMap(this.zone, it2);
-                }
-                for (int i = 0; i < player.clan.BanDoKhoBau.level / 2; i++) {
-                    ItemMap it = new ItemMap(this.zone, 190, randomvang2, this.location.x - i * 20, this.location.y, player.id);
-                    Service.gI().dropItemMap(this.zone, it);
-                }
-                for (int i = 0; i < player.clan.BanDoKhoBau.level / 3; i++) {
-                    ItemMap it = new ItemMap(this.zone, 76, randomvang2, this.location.x + i * 20, this.location.y, player.id);
-                    //    ItemMap it2 = new ItemMap(this.zone, 861, 1,this.location.x + i * 17, this.location.y, player.id);
-                    //    Service.gI().dropItemMap(this.zone, it2);
-                }
-                for (int i = 0; i < player.clan.BanDoKhoBau.level / 3; i++) {
-                    ItemMap it = new ItemMap(this.zone, 76, randomvang2, this.location.x + i * 20, this.location.y, player.id);
-                    //    ItemMap it2 = new ItemMap(this.zone, 861, 1,this.location.x - i * 17, this.location.y, player.id);
-                    //    Service.gI().dropItemMap(this.zone, it2);
-                }
-            } else if (player.clan.BanDoKhoBau.level > 50 && player.clan.BanDoKhoBau.level <= 80) {
-                int min = 3000;
-                int max = 3500;
-                int minx = 42;
-                int maxx = 1165;
-                Random random = new Random();
-                int randomvang2 = random.nextInt(max - min + 1) + min;
-//                int randomtoado = ;
-                for (int i = 0; i < player.clan.BanDoKhoBau.level / 4; i++) {
-                    ItemMap it = new ItemMap(this.zone, 190, randomvang2, this.location.x + i * 20, this.location.y, player.id);
-                    Service.gI().dropItemMap(this.zone, it);
-
-                }
-                for (int i = 0; i < player.clan.BanDoKhoBau.level / 4; i++) {
-                    ItemMap it = new ItemMap(this.zone, 190, randomvang2, this.location.x - i * 20, this.location.y, player.id);
-                    Service.gI().dropItemMap(this.zone, it);
-                }
-                for (int i = 0; i < player.clan.BanDoKhoBau.level / 6; i++) {
-                    ItemMap it = new ItemMap(this.zone, 76, randomvang2, this.location.x + i * 20, this.location.y, player.id);
-                    //    ItemMap it2 = new ItemMap(this.zone, 861, 1,this.location.x + i * 17, this.location.y, player.id);
-                    //    Service.gI().dropItemMap(this.zone, it2);
-                }
-                for (int i = 0; i < player.clan.BanDoKhoBau.level / 6; i++) {
-                    ItemMap it = new ItemMap(this.zone, 76, randomvang2, this.location.x + i * 20, this.location.y, player.id);
-                    //    ItemMap it2 = new ItemMap(this.zone, 861, 1,this.location.x - i * 17, this.location.y, player.id);
-                    //    Service.gI().dropItemMap(this.zone, it2);
-                }
+            if (bdkbLevel <= 10) {
+                numPiles = 3;
+                minGold = 2000;
+                maxGold = 4000;
+            } else if (bdkbLevel <= 50) {
+                numPiles = 4;
+                minGold = 5000 + bdkbLevel * 300;
+                maxGold = 8000 + bdkbLevel * 500;
+            } else if (bdkbLevel <= 80) {
+                numPiles = 4;
+                minGold = 20000 + bdkbLevel * 500;
+                maxGold = 35000 + bdkbLevel * 800;
             } else {
-                int min = 3500;
-                int max = 5500;
-                int minx = 42;
-                int maxx = 1165;
-                Random random = new Random();
-                int randomvang2 = random.nextInt(max - min + 1) + min;
-//                int randomtoado = ;
-                for (int i = 0; i < player.clan.BanDoKhoBau.level / 3; i++) {
-                    ItemMap it = new ItemMap(this.zone, 190, randomvang2, this.location.x + i * 20, this.location.y, player.id);
-                    Service.gI().dropItemMap(this.zone, it);
+                numPiles = 5;
+                minGold = 50000 + bdkbLevel * 600;
+                maxGold = 80000 + bdkbLevel * 1000;
+            }
 
-                }
-                for (int i = 0; i < player.clan.BanDoKhoBau.level / 3; i++) {
-                    ItemMap it = new ItemMap(this.zone, 190, randomvang2, this.location.x - i * 20, this.location.y, player.id);
-                    Service.gI().dropItemMap(this.zone, it);
-                }
-                for (int i = 0; i < player.clan.BanDoKhoBau.level / 6; i++) {
-                    ItemMap it = new ItemMap(this.zone, 76, randomvang2, this.location.x + i * 20, this.location.y, player.id);
-                    //    ItemMap it2 = new ItemMap(this.zone, 861, 1,this.location.x + i * 17, this.location.y, player.id);
-                    //    Service.gI().dropItemMap(this.zone, it2);
-                }
-                for (int i = 0; i < player.clan.BanDoKhoBau.level / 6; i++) {
-                    ItemMap it = new ItemMap(this.zone, 76, randomvang2, this.location.x + i * 20, this.location.y, player.id);
-                    //    ItemMap it2 = new ItemMap(this.zone, 861, 1,this.location.x - i * 17, this.location.y, player.id);
-                    //    Service.gI().dropItemMap(this.zone, it2);
-                }
+            for (int i = 0; i < numPiles; i++) {
+                int goldAmount = Util.nextInt(minGold, maxGold);
+                int itemId = (i % 2 == 0) ? 190 : 76;
+                int offsetX = (i % 2 == 0) ? (i * 20) : (-i * 20);
+                ItemMap it = new ItemMap(this.zone, itemId, goldAmount, this.location.x + offsetX, this.location.y, player.id);
+                Service.gI().dropItemMap(this.zone, it);
             }
         }
         
         //========================MẢNH THIÊN SỨ========================
         if (MapService.gI().isMapHanhTinhThucVat(mapid) && InventoryService.gI().findItemNTK(player)) {
-            if (Util.isTrue(1 * co4LaRate, 2000000)) { // 0.05% mặc định, 0.1% khi có cỏ 4 lá
+            if (Util.isTrue(1 * co4LaRate, 2500)) { // 0.04% - 0.08% khi có cỏ 4 lá
                 int tempId = Util.nextInt(1066, 1070); // random item
                 ItemMap it = new ItemMap(zone, tempId, 1, x, yEnd, player.id);
                 list.add(it);
@@ -1015,15 +942,6 @@ public class Mob {
                     itemMap = new ItemMap(zone, 73, 1, location.x, location.y, player.id);
                 }
                 break;
-            case ConstMob.THAN_LAN_ME:
-                if (TaskService.gI().getIdTask(player) == ConstTask.TASK_8_1) {
-                    if (Util.isTrue(1, 10)) {
-                        itemMap = new ItemMap(zone, 20, 1, location.x, location.y, player.id);
-                    } else {
-                        Service.gI().sendThongBao(player,
-                                "Con thằn lằn mẹ này không giữ ngọc, hãy tìm con thằn lằn mẹ khác");
-                    }
-                }
             case ConstMob.OC_MUON_HON:
                 if (TaskService.gI().getIdTask(player) == ConstTask.TASK_14_1) {
                     if (Util.isTrue(1, 20)) {
@@ -1033,6 +951,7 @@ public class Mob {
                                 "Con ốc mượn hồn này không giữ truyện tranh, hãy thử tìm con ốc mượn hồn khác");
                     }
                 }
+                break;
             case ConstMob.HEO_XAYDA_ME:
                 if (TaskService.gI().getIdTask(player) == ConstTask.TASK_14_1) {
                     if (Util.isTrue(1, 20)) {
@@ -1042,15 +961,17 @@ public class Mob {
                                 "Con heo xayda mẹ này không giữ truyện tranh, hãy thử tìm con heo xayda mẹ khác");
                     }
                 }
+                break;
             case ConstMob.OC_SEN:
                 if (TaskService.gI().getIdTask(player) == ConstTask.TASK_14_1) {
                     if (Util.isTrue(1, 20)) {
                         itemMap = new ItemMap(zone, 85, 1, location.x, location.y, player.id);
                     } else {
                         Service.gI().sendThongBao(player,
-                                "Con ốc xên này không giữ truyện tranh, hãy thử tìm con ốc xên khác");
+                                "Con ốc sên này không giữ truyện tranh, hãy thử tìm con ốc sên khác");
                     }
                 }
+                break;
         }
         if (itemMap != null) {
             return itemMap;
@@ -1194,25 +1115,15 @@ public class Mob {
             return;
         }
         int percentPST = plTarget.nPoint.tlPST;
-        if (percentPST != 0) {
+        if (percentPST > 0) {
             int damePST = (int) (long) (dame * percentPST / 100L);
-            Message msg;
-            try {
-                msg = new Message(-9);
-                msg.writer().writeByte(this.id);
+            if (damePST > 0) {
                 if (damePST >= this.point.hp) {
                     damePST = this.point.hp - 1;
                 }
-                int hpMob = this.point.hp;
-                injured(null, damePST, true);
-                damePST = hpMob - this.point.hp;
-                msg.writer().writeInt(this.point.hp);
-                msg.writer().writeInt(damePST);
-                msg.writer().writeBoolean(false);
-                msg.writer().writeByte(36);
-                Service.gI().sendMessAllPlayerInMap(this.zone, msg);
-                msg.cleanup();
-            } catch (IOException e) {
+                if (damePST > 0) {
+                    injured(null, damePST, true);
+                }
             }
         }
     }

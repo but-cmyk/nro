@@ -115,7 +115,11 @@ public class Drabura3 extends Boss {
                 damage = 1;
             }
 
-             int skillID = plAtt.playerSkill.skillSelect.template.id;
+            int skillID = -1;
+            if (plAtt != null && plAtt.playerSkill != null && plAtt.playerSkill.skillSelect != null
+                    && plAtt.playerSkill.skillSelect.template != null) {
+                skillID = plAtt.playerSkill.skillSelect.template.id;
+            }
 
         // Danh sách các skill được phép phá giới hạn damage
         boolean isSpecialSkill = (skillID == Skill.TU_SAT ||

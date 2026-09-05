@@ -639,10 +639,9 @@ public class NpcFactory {
 
                     case ConstNpc.CONFIRM_REMOVE_ALL_ITEM_LUCKY_ROUND -> {
                         if (select == 0) {
-                            for (int i = 0; i < player.inventory.itemsBoxCrackBall.size(); i++) {
-                                player.inventory.itemsBoxCrackBall.set(i, ItemService.gI().createItemNull());
+                            synchronized (player.inventory.itemsBoxCrackBall) {
+                                player.inventory.itemsBoxCrackBall.clear();
                             }
-                            player.inventory.itemsBoxCrackBall.clear();
                             Service.gI().sendThongBao(player, "Đã xóa hết vật phẩm trong rương");
                         }
                     }

@@ -51,6 +51,127 @@ import services.player.PlayerService;
 
 public class NDVSqlFetcher {
 
+    public static int getIntSafe(JSONArray array, int index, int defaultValue) {
+        if (array == null || index < 0 || index >= array.size()) {
+            return defaultValue;
+        }
+        Object obj = array.get(index);
+        if (obj == null) {
+            return defaultValue;
+        }
+        try {
+            return Integer.parseInt(String.valueOf(obj).trim());
+        } catch (Exception e) {
+            return defaultValue;
+        }
+    }
+
+    public static long getLongSafe(JSONArray array, int index, long defaultValue) {
+        if (array == null || index < 0 || index >= array.size()) {
+            return defaultValue;
+        }
+        Object obj = array.get(index);
+        if (obj == null) {
+            return defaultValue;
+        }
+        try {
+            return Long.parseLong(String.valueOf(obj).trim());
+        } catch (Exception e) {
+            return defaultValue;
+        }
+    }
+
+    public static short getShortSafe(JSONArray array, int index, short defaultValue) {
+        if (array == null || index < 0 || index >= array.size()) {
+            return defaultValue;
+        }
+        Object obj = array.get(index);
+        if (obj == null) {
+            return defaultValue;
+        }
+        try {
+            return Short.parseShort(String.valueOf(obj).trim());
+        } catch (Exception e) {
+            return defaultValue;
+        }
+    }
+
+    public static byte getByteSafe(JSONArray array, int index, byte defaultValue) {
+        if (array == null || index < 0 || index >= array.size()) {
+            return defaultValue;
+        }
+        Object obj = array.get(index);
+        if (obj == null) {
+            return defaultValue;
+        }
+        try {
+            return Byte.parseByte(String.valueOf(obj).trim());
+        } catch (Exception e) {
+            return defaultValue;
+        }
+    }
+
+    public static String getStringSafe(JSONArray array, int index, String defaultValue) {
+        if (array == null || index < 0 || index >= array.size()) {
+            return defaultValue;
+        }
+        Object obj = array.get(index);
+        return obj != null ? String.valueOf(obj) : defaultValue;
+    }
+
+    public static JSONArray parseJSONArraySafe(String jsonStr) {
+        if (jsonStr == null || jsonStr.trim().isEmpty()) {
+            return new JSONArray();
+        }
+        try {
+            Object obj = JSONValue.parse(jsonStr);
+            if (obj instanceof JSONArray) {
+                return (JSONArray) obj;
+            }
+        } catch (Exception ignored) {
+        }
+        return new JSONArray();
+    }
+
+    public static Item parseItemSafe(Object itemObj) {
+        if (itemObj == null) {
+            return ItemService.gI().createItemNull();
+        }
+        try {
+            JSONArray dataItem = parseJSONArraySafe(itemObj.toString());
+            short tempId = getShortSafe(dataItem, 0, (short) -1);
+            if (tempId != -1) {
+                int quantity = getIntSafe(dataItem, 1, 1);
+                Item item = ItemService.gI().createNewItem(tempId, quantity);
+                if (dataItem.size() > 2 && dataItem.get(2) != null) {
+                    try {
+                        JSONArray options = parseJSONArraySafe(String.valueOf(dataItem.get(2)).replaceAll("\"", ""));
+                        for (int j = 0; j < options.size(); j++) {
+                            JSONArray opt = parseJSONArraySafe(String.valueOf(options.get(j)));
+                            int optId = getIntSafe(opt, 0, -1);
+                            int optParam = getIntSafe(opt, 1, 0);
+                            if (optId != -1) {
+                                item.itemOptions.add(new Item.ItemOption(optId, optParam));
+                            }
+                        }
+                    } catch (Exception ignored) {}
+                }
+                item.createTime = getLongSafe(dataItem, 3, System.currentTimeMillis());
+                if (item.template != null && item.template.id == 2132) {
+                    if (item.createTime >= 1710435600000L && item.createTime <= 1711645199000L) {
+                        return ItemService.gI().createItemNull();
+                    }
+                }
+                if (ItemService.gI().isOutOfDateTime(item)) {
+                    return ItemService.gI().createItemNull();
+                }
+                return item;
+            }
+        } catch (Exception ignored) {
+        }
+        return ItemService.gI().createItemNull();
+    }
+
     public static Player login(MySession session, AntiLogin al) {
         Player player = null;
         AlyraResultSet rsAccount = null;
@@ -316,24 +437,24 @@ public class NDVSqlFetcher {
                     player.clan = null;
                 }
             }
-            dataArray = (JSONArray) JSONValue.parse(rs.getString("dien_sukien"));
-            player.diemsukien = Integer.parseInt(dataArray.get(0).toString());
-            player.phaobong = Integer.parseInt(dataArray.get(1).toString());
-            player.lixi = Integer.parseInt(dataArray.get(2).toString());
+            dataArray = parseJSONArraySafe(rs.getString("dien_sukien"));
+            player.diemsukien = getIntSafe(dataArray, 0, 0);
+            player.phaobong = getIntSafe(dataArray, 1, 0);
+            player.lixi = getIntSafe(dataArray, 2, 0);
             dataArray.clear();
 
             player.banhtet = rs.getLong("banhtet");
             player.banhtrung = rs.getLong("banhchung");
             //data danh hiệu shop
-            dataArray = (JSONArray) JSONValue.parse(rs.getString("danh_hieu_shop"));
-            int dh1 = Integer.parseInt(String.valueOf(dataArray.get(0)));
-            int dh2 = Integer.parseInt(String.valueOf(dataArray.get(1)));
-            int dh3 = Integer.parseInt(String.valueOf(dataArray.get(2)));
-            int dh4 = Integer.parseInt(String.valueOf(dataArray.get(3)));
-            int dh5 = Integer.parseInt(String.valueOf(dataArray.get(4)));
-            int dh6 = Integer.parseInt(String.valueOf(dataArray.get(5)));
-            int dh7 = Integer.parseInt(String.valueOf(dataArray.get(6)));
-            int dh8 = Integer.parseInt(String.valueOf(dataArray.get(7)));
+            dataArray = parseJSONArraySafe(rs.getString("danh_hieu_shop"));
+            int dh1 = getIntSafe(dataArray, 0, 0);
+            int dh2 = getIntSafe(dataArray, 1, 0);
+            int dh3 = getIntSafe(dataArray, 2, 0);
+            int dh4 = getIntSafe(dataArray, 3, 0);
+            int dh5 = getIntSafe(dataArray, 4, 0);
+            int dh6 = getIntSafe(dataArray, 5, 0);
+            int dh7 = getIntSafe(dataArray, 6, 0);
+            int dh8 = getIntSafe(dataArray, 7, 0);
 
             player.effect.setPointDaiGiaMoiNhu(dh1);
             player.effect.setPointTrumUocRong(dh2);
@@ -345,29 +466,20 @@ public class NDVSqlFetcher {
             player.effect.setPointPhanCung(dh8);
             dataArray.clear();
             //Nhận bùa ngẫu nhiên
-            dataArray = (JSONArray) JSONValue.parse(rs.getString("buarandom"));
-            int b1 = Integer.parseInt(String.valueOf(dataArray.get(0)));
-            int b2 = Integer.parseInt(String.valueOf(dataArray.get(1)));
+            dataArray = parseJSONArraySafe(rs.getString("buarandom"));
+            int b1 = getIntSafe(dataArray, 0, 0);
+            int b2 = getIntSafe(dataArray, 1, 0);
             player.luotNhanBuaMienPhi = b1;
             player.diemDanhSuKien = b2;
             dataArray.clear();
             //data kim lượng
             try {
-                dataArray = (JSONArray) JSONValue.parse(rs.getString("data_inventory"));
-                player.inventory.gold = Long.parseLong(String.valueOf(dataArray.get(0)));
-                player.inventory.gem = Integer.parseInt(String.valueOf(dataArray.get(1)));
-                player.inventory.ruby = Integer.parseInt(String.valueOf(dataArray.get(2)));
-                player.inventory.coupon = Integer.parseInt(String.valueOf(dataArray.get(3)));
-                if (dataArray.size() >= 4) {
-                    player.inventory.coupon = Integer.parseInt(String.valueOf(dataArray.get(3)));
-                } else {
-                    player.inventory.coupon = 0;
-                }
-                if (dataArray.size() >= 5 && false) {
-                    player.inventory.event = Integer.parseInt(String.valueOf(dataArray.get(4)));
-                } else {
-                    player.inventory.event = 0;
-                }
+                dataArray = parseJSONArraySafe(rs.getString("data_inventory"));
+                player.inventory.gold = getLongSafe(dataArray, 0, 0L);
+                player.inventory.gem = getIntSafe(dataArray, 1, 0);
+                player.inventory.ruby = getIntSafe(dataArray, 2, 0);
+                player.inventory.coupon = getIntSafe(dataArray, 3, 0);
+                player.inventory.event = 0;
                 dataArray.clear();
             } catch (Exception e) {
                 JSONObject ob = (JSONObject) JSONValue.parse(rs.getString("data_inventory"));
@@ -462,10 +574,10 @@ public class NDVSqlFetcher {
             }
 
             //data tọa độ
-            dataArray = (JSONArray) JSONValue.parse(rs.getString("data_location"));
-            int mapId = Integer.parseInt(String.valueOf(dataArray.get(0)));
-            player.location.x = Integer.parseInt(String.valueOf(dataArray.get(1)));
-            player.location.y = Integer.parseInt(String.valueOf(dataArray.get(2)));
+            dataArray = parseJSONArraySafe(rs.getString("data_location"));
+            int mapId = getIntSafe(dataArray, 0, player.gender + 21);
+            player.location.x = getIntSafe(dataArray, 1, 300);
+            player.location.y = getIntSafe(dataArray, 2, 336);
             player.location.lastTimeplayerMove = System.currentTimeMillis();
             if (mapId == 51 || MapService.gI().isMapDoanhTrai(mapId) || MapService.gI().isMapBlackBallWar(mapId) || MapService.gI().isMapSieuThanhThuy(mapId) || MapService.gI().isMapMabu2H(mapId)) {
                 mapId = player.gender + 21;
@@ -519,14 +631,16 @@ public class NDVSqlFetcher {
             player.magicTree = new MagicTree(player, treeDTO.level, treeDTO.currPeas, treeDTO.lastTimeHarvest, treeDTO.isUpgrade, treeDTO.lastTimeUpgrade);
 
             //data phần thưởng sao đen
-            dataArray = (JSONArray) JSONValue.parse(rs.getString("data_black_ball"));
+            dataArray = parseJSONArraySafe(rs.getString("data_black_ball"));
             JSONArray dataBlackBall;
-            for (int i = 0; i < dataArray.size(); i++) {
-                dataBlackBall = (JSONArray) JSONValue.parse(String.valueOf(dataArray.get(i)));
-                player.rewardBlackBall.timeOutOfDateReward[i] = Long.parseLong(String.valueOf(dataBlackBall.get(0)));
-                player.rewardBlackBall.lastTimeGetReward[i] = Long.parseLong(String.valueOf(dataBlackBall.get(1)));
+            for (int i = 0; i < dataArray.size() && i < player.rewardBlackBall.timeOutOfDateReward.length; i++) {
+                dataBlackBall = parseJSONArraySafe(String.valueOf(dataArray.get(i)));
+                player.rewardBlackBall.timeOutOfDateReward[i] = getLongSafe(dataBlackBall, 0, 0L);
+                player.rewardBlackBall.lastTimeGetReward[i] = getLongSafe(dataBlackBall, 1, 0L);
                 try {
-                    player.rewardBlackBall.quantilyBlackBall[i] = dataBlackBall.get(2) != null ? Integer.parseInt(String.valueOf(dataBlackBall.get(2))) : 0;
+                    player.rewardBlackBall.quantilyBlackBall[i] = dataBlackBall.size() > 2 && dataBlackBall.get(2) != null 
+                            ? Integer.parseInt(String.valueOf(dataBlackBall.get(2))) 
+                            : (player.rewardBlackBall.timeOutOfDateReward[i] != 0 ? 1 : 0);
                 } catch (NumberFormatException e) {
                     player.rewardBlackBall.quantilyBlackBall[i] = player.rewardBlackBall.timeOutOfDateReward[i] != 0 ? 1 : 0;
                 }
@@ -535,27 +649,9 @@ public class NDVSqlFetcher {
             dataArray.clear();
 
             //data body
-            dataArray = (JSONArray) JSONValue.parse(rs.getString("items_body"));
+            dataArray = parseJSONArraySafe(rs.getString("items_body"));
             for (int i = 0; i < dataArray.size(); i++) {
-                Item item;
-                JSONArray dataItem = (JSONArray) JSONValue.parse(dataArray.get(i).toString());
-                short tempId = Short.parseShort(String.valueOf(dataItem.get(0)));
-                if (tempId != -1) {
-                    item = ItemService.gI().createNewItem(tempId, Integer.parseInt(String.valueOf(dataItem.get(1))));
-                    JSONArray options = (JSONArray) JSONValue.parse(String.valueOf(dataItem.get(2)).replaceAll("\"", ""));
-                    for (int j = 0; j < options.size(); j++) {
-                        JSONArray opt = (JSONArray) JSONValue.parse(String.valueOf(options.get(j)));
-                        item.itemOptions.add(new Item.ItemOption(Integer.parseInt(String.valueOf(opt.get(0))),
-                                Integer.parseInt(String.valueOf(opt.get(1)))));
-                    }
-                    item.createTime = Long.parseLong(String.valueOf(dataItem.get(3)));
-                    if (ItemService.gI().isOutOfDateTime(item)) {
-                        item = ItemService.gI().createItemNull();
-                    }
-                } else {
-                    item = ItemService.gI().createItemNull();
-                }
-                player.inventory.itemsBody.add(item);
+                player.inventory.itemsBody.add(parseItemSafe(dataArray.get(i)));
             }
             if (player.inventory.itemsBody.size() == 10) {
                 player.inventory.itemsBody.add(ItemService.gI().createItemNull());
@@ -563,80 +659,27 @@ public class NDVSqlFetcher {
             if (player.inventory.itemsBody.size() == 11) {
                 player.inventory.itemsBody.add(ItemService.gI().createItemNull());
             }
-//            if (player.inventory.itemsBody.size() == 12) {
-//                player.inventory.itemsBody.add(ItemService.gI().createItemNull());
-//            }
             dataArray.clear();
 
             //data bag
-            dataArray = (JSONArray) JSONValue.parse(rs.getString("items_bag"));
+            dataArray = parseJSONArraySafe(rs.getString("items_bag"));
             for (int i = 0; i < dataArray.size(); i++) {
-                Item item;
-                JSONArray dataItem = (JSONArray) JSONValue.parse(dataArray.get(i).toString());
-                short tempId = Short.parseShort(String.valueOf(dataItem.get(0)));
-                if (tempId != -1) {
-                    item = ItemService.gI().createNewItem(tempId, Integer.parseInt(String.valueOf(dataItem.get(1))));
-                    JSONArray options = (JSONArray) JSONValue.parse(String.valueOf(dataItem.get(2)).replaceAll("\"", ""));
-                    for (int j = 0; j < options.size(); j++) {
-                        JSONArray opt = (JSONArray) JSONValue.parse(String.valueOf(options.get(j)));
-                        item.itemOptions.add(new Item.ItemOption(Integer.parseInt(String.valueOf(opt.get(0))),
-                                Integer.parseInt(String.valueOf(opt.get(1)))));
-                    }
-                    item.createTime = Long.parseLong(String.valueOf(dataItem.get(3)));
-                    if (ItemService.gI().isOutOfDateTime(item)) {
-                        item = ItemService.gI().createItemNull();
-                    }
-                } else {
-                    item = ItemService.gI().createItemNull();
-                }
-                player.inventory.itemsBag.add(item);
+                player.inventory.itemsBag.add(parseItemSafe(dataArray.get(i)));
             }
             dataArray.clear();
 
             //data box
-            dataArray = (JSONArray) JSONValue.parse(rs.getString("items_box"));
+            dataArray = parseJSONArraySafe(rs.getString("items_box"));
             for (int i = 0; i < dataArray.size(); i++) {
-                Item item;
-                JSONArray dataItem = (JSONArray) JSONValue.parse(dataArray.get(i).toString());
-                short tempId = Short.parseShort(String.valueOf(dataItem.get(0)));
-                if (tempId != -1) {
-                    item = ItemService.gI().createNewItem(tempId, Integer.parseInt(String.valueOf(dataItem.get(1))));
-                    JSONArray options = (JSONArray) JSONValue.parse(String.valueOf(dataItem.get(2)).replaceAll("\"", ""));
-                    for (int j = 0; j < options.size(); j++) {
-                        JSONArray opt = (JSONArray) JSONValue.parse(String.valueOf(options.get(j)));
-                        item.itemOptions.add(new Item.ItemOption(Integer.parseInt(String.valueOf(opt.get(0))),
-                                Integer.parseInt(String.valueOf(opt.get(1)))));
-                    }
-                    item.createTime = Long.parseLong(String.valueOf(dataItem.get(3)));
-                    if (item.template.id == 2132) {
-                        if (item.createTime >= 1710435600000L && item.createTime <= 1711645199000L) {
-                            item = ItemService.gI().createItemNull();
-                        }
-                    }
-                    if (ItemService.gI().isOutOfDateTime(item)) {
-                        item = ItemService.gI().createItemNull();
-                    }
-                } else {
-                    item = ItemService.gI().createItemNull();
-                }
-                player.inventory.itemsBox.add(item);
+                player.inventory.itemsBox.add(parseItemSafe(dataArray.get(i)));
             }
             dataArray.clear();
 
             //data box lucky round
-            dataArray = (JSONArray) JSONValue.parse(rs.getString("items_box_lucky_round"));
+            dataArray = parseJSONArraySafe(rs.getString("items_box_lucky_round"));
             for (int i = 0; i < dataArray.size(); i++) {
-                Item item;
-                JSONArray dataItem = (JSONArray) JSONValue.parse(dataArray.get(i).toString());
-                short tempId = Short.parseShort(String.valueOf(dataItem.get(0)));
-                if (tempId != -1) {
-                    item = ItemService.gI().createNewItem(tempId, Integer.parseInt(String.valueOf(dataItem.get(1))));
-                    JSONArray options = (JSONArray) JSONValue.parse(String.valueOf(dataItem.get(2)).replaceAll("\"", ""));
-                    for (int j = 0; j < options.size(); j++) {
-                        JSONArray opt = (JSONArray) JSONValue.parse(String.valueOf(options.get(j)));
-                        item.itemOptions.add(new Item.ItemOption(Integer.parseInt(String.valueOf(opt.get(0))),
-                                Integer.parseInt(String.valueOf(opt.get(1)))));
-                    }
+                Item item = parseItemSafe(dataArray.get(i));
+                if (item.template != null && item.template.id != -1) {
                     player.inventory.itemsBoxCrackBall.add(item);
                 }
             }
@@ -719,20 +762,22 @@ public class NDVSqlFetcher {
             }
 
             //data nội tại
-            dataArray = (JSONArray) JSONValue.parse(rs.getString("data_intrinsic"));
-            byte intrinsicId = Byte.parseByte(dataArray.get(0).toString());
+            dataArray = parseJSONArraySafe(rs.getString("data_intrinsic"));
+            byte intrinsicId = getByteSafe(dataArray, 0, (byte) 0);
             player.playerIntrinsic.intrinsic = IntrinsicService.gI().getIntrinsicById(intrinsicId);
-            player.playerIntrinsic.intrinsic.param1 = Short.parseShort(dataArray.get(1).toString());
-            player.playerIntrinsic.countOpen = Byte.parseByte(dataArray.get(2).toString());
-            player.playerIntrinsic.intrinsic.param2 = Short.parseShort(dataArray.get(3).toString());
+            if (player.playerIntrinsic.intrinsic != null) {
+                player.playerIntrinsic.intrinsic.param1 = getShortSafe(dataArray, 1, (short) 0);
+                player.playerIntrinsic.countOpen = getByteSafe(dataArray, 2, (byte) 0);
+                player.playerIntrinsic.intrinsic.param2 = getShortSafe(dataArray, 3, (short) 0);
+            }
             dataArray.clear();
 
             // data item time Dev Minh Dũng
-            dataArray = (JSONArray) JSONValue.parse(rs.getString("devndung_time"));
-            int timeco4la = Integer.parseInt(String.valueOf(dataArray.get(0)));
-            int timechung = Integer.parseInt(String.valueOf(dataArray.get(1)));
-            int timetet = Integer.parseInt(String.valueOf(dataArray.get(2)));
-            int nguqua = Integer.parseInt(String.valueOf(dataArray.get(3)));
+            dataArray = parseJSONArraySafe(rs.getString("devndung_time"));
+            int timeco4la = getIntSafe(dataArray, 0, 0);
+            int timechung = getIntSafe(dataArray, 1, 0);
+            int timetet = getIntSafe(dataArray, 2, 0);
+            int nguqua = getIntSafe(dataArray, 3, 0);
             player.itemTime.lastTimeUseCo4La = System.currentTimeMillis() - (ItemTime.TIME_CO - timeco4la);
             player.itemTime.banhchunglastTime = System.currentTimeMillis() - (ItemTime.DEVNDUNG - timechung);
             player.itemTime.banhtetlastTime = System.currentTimeMillis() - (ItemTime.DEVNDUNG - timetet);
@@ -741,11 +786,10 @@ public class NDVSqlFetcher {
             player.itemTime.banhchung = timechung != 0;
             player.itemTime.banhtet = timetet != 0;
             player.itemTime.nguqua = nguqua != 0;
-
             dataArray.clear();
 
             //data item time
-            dataArray = (JSONArray) JSONValue.parse(rs.getString("data_item_time"));
+            dataArray = parseJSONArraySafe(rs.getString("data_item_time"));
             int timeUseTDLT = 0;
             int timeOpenPower = 0;
             int timeMayDo = 0;
@@ -764,16 +808,16 @@ public class NDVSqlFetcher {
             int timehoadao = 0;
             int timehoamai = 0;
             int timeBuaTnSm = 0;
-            int timeBoHuyet = Integer.parseInt(String.valueOf(dataArray.get(0)));
-            int timeBoHuyet2 = Integer.parseInt(String.valueOf(dataArray.get(1)));
-            int timeBoKhi = Integer.parseInt(String.valueOf(dataArray.get(2)));
-            int timeBoKhi2 = Integer.parseInt(String.valueOf(dataArray.get(3)));
-            int timeGiapXen = Integer.parseInt(String.valueOf(dataArray.get(4)));
-            int timeGiapXen2 = Integer.parseInt(String.valueOf(dataArray.get(5)));
-            int timeCuongNo = Integer.parseInt(String.valueOf(dataArray.get(6)));
-            int timeCuongNo2 = Integer.parseInt(String.valueOf(dataArray.get(7)));
-            int timeAnDanh = Integer.parseInt(String.valueOf(dataArray.get(8)));
-            int timeAnDanh2 = Integer.parseInt(String.valueOf(dataArray.get(9)));
+            int timeBoHuyet = getIntSafe(dataArray, 0, 0);
+            int timeBoHuyet2 = getIntSafe(dataArray, 1, 0);
+            int timeBoKhi = getIntSafe(dataArray, 2, 0);
+            int timeBoKhi2 = getIntSafe(dataArray, 3, 0);
+            int timeGiapXen = getIntSafe(dataArray, 4, 0);
+            int timeGiapXen2 = getIntSafe(dataArray, 5, 0);
+            int timeCuongNo = getIntSafe(dataArray, 6, 0);
+            int timeCuongNo2 = getIntSafe(dataArray, 7, 0);
+            int timeAnDanh = getIntSafe(dataArray, 8, 0);
+            int timeAnDanh2 = getIntSafe(dataArray, 9, 0);
             if (dataArray.size() > 10) {
                 timeOpenPower = Integer.parseInt(String.valueOf(dataArray.get(10)));
             }
@@ -1010,17 +1054,17 @@ public class NDVSqlFetcher {
             dataArray.clear();
 
             //data bùa
-            dataArray = (JSONArray) JSONValue.parse(rs.getString("data_charm"));
-            player.charms.tdTriTue = Long.parseLong(String.valueOf(dataArray.get(0)));
-            player.charms.tdManhMe = Long.parseLong(String.valueOf(dataArray.get(1)));
-            player.charms.tdDaTrau = Long.parseLong(String.valueOf(dataArray.get(2)));
-            player.charms.tdOaiHung = Long.parseLong(String.valueOf(dataArray.get(3)));
-            player.charms.tdBatTu = Long.parseLong(String.valueOf(dataArray.get(4)));
-            player.charms.tdDeoDai = Long.parseLong(String.valueOf(dataArray.get(5)));
-            player.charms.tdThuHut = Long.parseLong(String.valueOf(dataArray.get(6)));
-            player.charms.tdDeTu = Long.parseLong(String.valueOf(dataArray.get(7)));
-            player.charms.tdTriTue3 = Long.parseLong(String.valueOf(dataArray.get(8)));
-            player.charms.tdTriTue4 = Long.parseLong(String.valueOf(dataArray.get(9)));
+            dataArray = parseJSONArraySafe(rs.getString("data_charm"));
+            player.charms.tdTriTue = getLongSafe(dataArray, 0, 0L);
+            player.charms.tdManhMe = getLongSafe(dataArray, 1, 0L);
+            player.charms.tdDaTrau = getLongSafe(dataArray, 2, 0L);
+            player.charms.tdOaiHung = getLongSafe(dataArray, 3, 0L);
+            player.charms.tdBatTu = getLongSafe(dataArray, 4, 0L);
+            player.charms.tdDeoDai = getLongSafe(dataArray, 5, 0L);
+            player.charms.tdThuHut = getLongSafe(dataArray, 6, 0L);
+            player.charms.tdDeTu = getLongSafe(dataArray, 7, 0L);
+            player.charms.tdTriTue3 = getLongSafe(dataArray, 8, 0L);
+            player.charms.tdTriTue4 = getLongSafe(dataArray, 9, 0L);
             dataArray.clear();
 
             //data skill
@@ -1065,111 +1109,83 @@ public class NDVSqlFetcher {
             player.notify = rs.getString("notify");
 
             //data pet
-            JSONArray petData = (JSONArray) JSONValue.parse(rs.getString("pet"));
-            if (petData != null && !petData.isEmpty()) {
-                dataArray = (JSONArray) JSONValue.parse(String.valueOf(petData.get(0)));
-                Pet pet = new Pet(player);
-                pet.id = -player.id;
-                pet.typePet = Byte.parseByte(String.valueOf(dataArray.get(0)));
-                if (pet.typePet > 1) {
-                    pet.typePet = 1;
-                }
-                pet.gender = Byte.parseByte(String.valueOf(dataArray.get(1)));
-                pet.name = String.valueOf(dataArray.get(2));
-                player.fusion.typeFusion = Byte.parseByte(String.valueOf(dataArray.get(3)));
-                player.fusion.lastTimeFusion = System.currentTimeMillis()
-                        - (Fusion.TIME_FUSION - Integer.parseInt(String.valueOf(dataArray.get(4))));
-                pet.status = Byte.parseByte(String.valueOf(dataArray.get(5)));
+            try {
+                JSONArray petData = parseJSONArraySafe(rs.getString("pet"));
+                if (petData != null && petData.size() >= 4) {
+                    dataArray = parseJSONArraySafe(String.valueOf(petData.get(0)));
+                    Pet pet = new Pet(player);
+                    pet.id = -player.id;
+                    pet.typePet = getByteSafe(dataArray, 0, (byte) 0);
+                    if (pet.typePet > 1) {
+                        pet.typePet = 1;
+                    }
+                    pet.gender = getByteSafe(dataArray, 1, (byte) 0);
+                    pet.name = getStringSafe(dataArray, 2, "Đệ tử");
+                    player.fusion.typeFusion = getByteSafe(dataArray, 3, (byte) 0);
+                    player.fusion.lastTimeFusion = System.currentTimeMillis()
+                            - (Fusion.TIME_FUSION - getIntSafe(dataArray, 4, 0));
+                    pet.status = getByteSafe(dataArray, 5, (byte) 0);
 
-                //data chỉ số
-                dataArray = (JSONArray) JSONValue.parse(String.valueOf(petData.get(1)));
-                pet.nPoint.limitPower = Byte.parseByte(String.valueOf(dataArray.get(0)));
-                pet.nPoint.power = Long.parseLong(String.valueOf(dataArray.get(1)));
-                pet.nPoint.tiemNang = Long.parseLong(String.valueOf(dataArray.get(2)));
-                pet.nPoint.stamina = Short.parseShort(String.valueOf(dataArray.get(3)));
-                pet.nPoint.maxStamina = Short.parseShort(String.valueOf(dataArray.get(4)));
-                pet.nPoint.hpg = Integer.parseInt(String.valueOf(dataArray.get(5)));
-                pet.nPoint.mpg = Integer.parseInt(String.valueOf(dataArray.get(6)));
-                pet.nPoint.dameg = Integer.parseInt(String.valueOf(dataArray.get(7)));
-                pet.nPoint.defg = Integer.parseInt(String.valueOf(dataArray.get(8)));
-                pet.nPoint.critg = Integer.parseInt(String.valueOf(dataArray.get(9)));
-                int hp = Integer.parseInt(String.valueOf(dataArray.get(10)));
-                int mp = Integer.parseInt(String.valueOf(dataArray.get(11)));
+                    //data chỉ số
+                    dataArray = parseJSONArraySafe(String.valueOf(petData.get(1)));
+                    pet.nPoint.limitPower = getByteSafe(dataArray, 0, (byte) 0);
+                    pet.nPoint.power = getLongSafe(dataArray, 1, 1500L);
+                    pet.nPoint.tiemNang = getLongSafe(dataArray, 2, 1500L);
+                    pet.nPoint.stamina = getShortSafe(dataArray, 3, (short) 1000);
+                    pet.nPoint.maxStamina = getShortSafe(dataArray, 4, (short) 1000);
+                    pet.nPoint.hpg = getIntSafe(dataArray, 5, 2000);
+                    pet.nPoint.mpg = getIntSafe(dataArray, 6, 2000);
+                    pet.nPoint.dameg = getIntSafe(dataArray, 7, 100);
+                    pet.nPoint.defg = getIntSafe(dataArray, 8, 10);
+                    pet.nPoint.critg = getIntSafe(dataArray, 9, 0);
+                    int hp = getIntSafe(dataArray, 10, pet.nPoint.hpg);
+                    int mp = getIntSafe(dataArray, 11, pet.nPoint.mpg);
 
-                //data body
-                dataArray = (JSONArray) JSONValue.parse(String.valueOf(petData.get(2)));
-                for (int i = 0; i < dataArray.size(); i++) {
-                    Item item;
-                    JSONArray dataItem = (JSONArray) JSONValue.parse(String.valueOf(dataArray.get(i)));
-                    short tempId = Short.parseShort(String.valueOf(dataItem.get(0)));
-                    if (tempId != -1) {
-                        item = ItemService.gI().createNewItem(tempId, Integer.parseInt(String.valueOf(dataItem.get(1))));
-                        JSONArray options = (JSONArray) JSONValue.parse(String.valueOf(dataItem.get(2)).replaceAll("\"", ""));
-                        for (int j = 0; j < options.size(); j++) {
-                            JSONArray opt = (JSONArray) JSONValue.parse(String.valueOf(options.get(j)));
-                            item.itemOptions.add(new Item.ItemOption(Integer.parseInt(String.valueOf(opt.get(0))),
-                                    Integer.parseInt(String.valueOf(opt.get(1)))));
+                    //data body
+                    dataArray = parseJSONArraySafe(String.valueOf(petData.get(2)));
+                    for (int i = 0; i < dataArray.size(); i++) {
+                        pet.inventory.itemsBody.add(parseItemSafe(dataArray.get(i)));
+                    }
+
+                    //data skills
+                    dataArray = parseJSONArraySafe(String.valueOf(petData.get(3)));
+                    for (int i = 0; i < dataArray.size(); i++) {
+                        JSONArray skillTemp = parseJSONArraySafe(String.valueOf(dataArray.get(i)));
+                        int tempId = getIntSafe(skillTemp, 0, -1);
+                        byte point = getByteSafe(skillTemp, 1, (byte) 0);
+                        Skill skill;
+                        if (point != 0) {
+                            skill = SkillUtil.createSkill(tempId, point);
+                        } else {
+                            skill = SkillUtil.createSkillLevel0(tempId);
                         }
-                        item.createTime = Long.parseLong(String.valueOf(dataItem.get(3)));
-                        if (item.template.id == 2132) {
-                            SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy");
-
-                            try {
-                                Date currentDate = new Date(item.createTime);
-                                Date startDate = formatter.parse("15/03/2024");
-                                Date endDate = formatter.parse("28/03/2024");
-                                if (currentDate.compareTo(startDate) >= 0 && currentDate.compareTo(endDate) <= 0) {
-                                    System.out.println("Thu hồi cải trang rồng lộn bug.");
-                                    item = ItemService.gI().createItemNull();
-                                }
-                            } catch (ParseException e) {
-                            }
+                        if (skillTemp.size() > 2) {
+                            skill.lastTimeUseThisSkill = getLongSafe(skillTemp, 2, 0L);
                         }
-                        if (ItemService.gI().isOutOfDateTime(item)) {
-                            item = ItemService.gI().createItemNull();
+                        if (skillTemp.size() > 3) {
+                            skill.currLevel = getShortSafe(skillTemp, 3, (short) 0);
                         }
-                    } else {
-                        item = ItemService.gI().createItemNull();
+                        switch (skill.template.id) {
+                            case Skill.KAMEJOKO, Skill.MASENKO, Skill.ANTOMIC ->
+                                skill.coolDown = 1000;
+                        }
+                        pet.playerSkill.skills.add(skill);
                     }
-                    pet.inventory.itemsBody.add(item);
-                }
-
-                //data skills
-                dataArray = (JSONArray) JSONValue.parse(String.valueOf(petData.get(3)));
-                for (int i = 0; i < dataArray.size(); i++) {
-                    JSONArray skillTemp = (JSONArray) JSONValue.parse(String.valueOf(dataArray.get(i)));
-                    int tempId = Integer.parseInt(String.valueOf(skillTemp.get(0)));
-                    byte point = Byte.parseByte(String.valueOf(skillTemp.get(1)));
-                    Skill skill;
-                    if (point != 0) {
-                        skill = SkillUtil.createSkill(tempId, point);
-                    } else {
-                        skill = SkillUtil.createSkillLevel0(tempId);
+                    if (pet.playerSkill.skills.size() < 5) {
+                        pet.playerSkill.skills.add(4, SkillUtil.createSkillLevel0(-1));
                     }
-                    if (skillTemp.size() > 3) {
-                        skill.lastTimeUseThisSkill = Long.parseLong(String.valueOf(skillTemp.get(2)));
+                    if (pet.playerSkill.skills.size() < 6) {
+                        pet.playerSkill.skills.add(5, SkillUtil.createSkillLevel0(-1));
                     }
-                    if (skillTemp.size() > 3) {
-                        skill.currLevel = Short.parseShort(String.valueOf(skillTemp.get(3)));
+                    if (pet.playerSkill.skills.size() < 7) {
+                        pet.playerSkill.skills.add(6, SkillUtil.createSkillLevel0(-1));
                     }
-                    switch (skill.template.id) {
-                        case Skill.KAMEJOKO, Skill.MASENKO, Skill.ANTOMIC ->
-                            skill.coolDown = 1000;
-                    }
-                    pet.playerSkill.skills.add(skill);
+                    pet.nPoint.hp = hp;
+                    pet.nPoint.mp = mp;
+                    player.pet = pet;
                 }
-                if (pet.playerSkill.skills.size() < 5) {
-                    pet.playerSkill.skills.add(4, SkillUtil.createSkillLevel0(-1));
-                }
-                if (pet.playerSkill.skills.size() < 6) {
-                    pet.playerSkill.skills.add(5, SkillUtil.createSkillLevel0(-1));
-                }
-                if (pet.playerSkill.skills.size() < 7) {
-                    pet.playerSkill.skills.add(6, SkillUtil.createSkillLevel0(-1));
-                }
-                pet.nPoint.hp = hp;
-                pet.nPoint.mp = mp;
-                player.pet = pet;
+            } catch (Exception e) {
+                Logger.logException(NDVSqlFetcher.class, e, "Lỗi load pet cho player " + player.name);
             }
 
             //Data bảo vệ tài khoản

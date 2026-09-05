@@ -460,8 +460,7 @@ public class Trade {
                             bag1Before, bag2Before, this.player1.inventory.itemsBag, this.player2.inventory.itemsBag,
                             gold1Before, gold2Before, this.player1.inventory.gold, this.player2.inventory.gold);
 
-                    database.daos.PlayerDAO.updatePlayerAsync(player1);
-                    database.daos.PlayerDAO.updatePlayerAsync(player2);
+                    database.daos.PlayerDAO.updatePlayersInTransactionAsync(player1, player2);
 
                     sendNotifyTrade(SUCCESS);
                 } catch (Exception e) {

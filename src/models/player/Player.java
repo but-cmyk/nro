@@ -528,7 +528,9 @@ public class Player extends Character {
 
                     if (dropItem != null) dropItem.update();
 
-                    Boss10.gI().update(this);
+                    if (this.zone != null && MapService.gI().isMap22h(this.zone.map.mapId)) {
+                        Boss10.gI().update(this);
+                    }
                     MajinBuuService.gI().update(this);
                     SuperDivineWaterService.gI().update(this);
 
@@ -833,6 +835,14 @@ public class Player extends Character {
         if (!this.isDie()) {
             if (plAtt != null && !plAtt.equals(this)) {
                 setTemporaryEnemies(plAtt);
+            }
+            if (this.isPl() && this.effectSkill != null && this.effectSkill.isMabuHold && this.zone != null && this.zone.map.mapId == 128) {
+                this.precentMabuHold++;
+                if (this.precentMabuHold > 15) {
+                    services.EffectSkillService.gI().removeMabuHold(this);
+                    Service.gI().sendThongBao(this, "Bạn đã được đồng đội giải cứu khỏi Mabư!");
+                }
+                return 1;
             }
             // ... (Logic cũ giữ nguyên) ...
             if (plAtt != null && plAtt.playerSkill.skillSelect != null && !plAtt.isBoss && MapService.gI().isMapMaBu(this.zone.map.mapId)) {

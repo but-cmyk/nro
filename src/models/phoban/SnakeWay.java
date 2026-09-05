@@ -188,8 +188,6 @@ public class SnakeWay {
                 } catch (Exception exception) {
                     exception.printStackTrace();
                 }
-
-
             }
         }
     }
@@ -200,10 +198,19 @@ public class SnakeWay {
             for (int i = zone.getPlayers().size() - 1; i >= 0; i--) {
                 if (i < zone.getPlayers().size()) {
                     Player pl = zone.getPlayers().get(i);
-                    kickOutOfCDRD(pl);
+                    if (pl != null) {
+                        pl.joinCDRD = false;
+                        kickOutOfCDRD(pl);
+                    }
                 }
             }
-
+        }
+        if (this.clan != null) {
+            for (Player pl : this.clan.membersInGame) {
+                if (pl != null) {
+                    pl.joinCDRD = false;
+                }
+            }
         }
     }
 
@@ -270,6 +277,11 @@ public class SnakeWay {
             this.endCDRD = false;
             this.isOpened = false;
             if (this.clan != null) {
+                for (Player pl : this.clan.membersInGame) {
+                    if (pl != null) {
+                        pl.joinCDRD = false;
+                    }
+                }
                 this.clan.ConDuongRanDoc = null;
             }
             this.clan = null;

@@ -81,6 +81,6 @@ public class NroPacketEncoder extends MessageToByteEncoder<Message> {
         if (server.Manager.DEBUG) {
             utils.Logger.log("[NETTY SEND] Cmd: " + msg.command + ", size: " + (data != null ? data.length : 0) + ", encrypted: " + shouldEncrypt + " to " + session.getIP());
         }
-        msg.cleanup();
+        // msg.cleanup() không được gọi ở đây để tránh race condition khi broadcast cùng 1 Message tới nhiều kênh
     }
 }

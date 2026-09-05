@@ -500,7 +500,7 @@ public class Service {
                 msg.writer().writeByte(1);
                 msg.writer().writeInt(player.nPoint.dame);
                 msg.writer().writeInt(player.nPoint.def);
-                msg.writer().writeByte(player.nPoint.crit);
+                msg.writer().writeByte((byte) Math.min(100, Math.max(0, player.nPoint.crit)));
                 msg.writer().writeLong(player.nPoint.tiemNang);
                 msg.writer().writeShort(100);
                 msg.writer().writeShort(player.nPoint.defg);
@@ -661,11 +661,10 @@ public class Service {
             player.nPoint.powerUp(param);
             player.nPoint.tiemNangUp(param);
             Player master = ((Pet) player).master;
-
-            param = master.nPoint.calSubTNSM(param);
-            master.nPoint.powerUp(param);
-            master.nPoint.tiemNangUp(param);
-            addSMTN(master, type, param, true);
+            if (master != null && master.nPoint != null) {
+                param = master.nPoint.calSubTNSM(param);
+                addSMTN(master, type, param, true);
+            }
         } else if (player.isBot) {
             assert player.nPoint != null;
             player.nPoint.power += param;
@@ -2034,29 +2033,50 @@ public class Service {
                 player.zone.setMaBuHold(mabuHold.slot, zoneId, plTarget);
                 sendEffMabuEat(player, plTarget);
 
-                new Thread(() -> {
+                server.GameLoopManager.gI().schedule(() -> {
                     try {
-                        Thread.sleep(3000);
-                        if (player.zone == null || player.zone.map.mapId != 127) {
+                        if (player == null || player.zone == null || player.zone.map.mapId != 127) {
                             return;
                         }
-                        Zone zone = services.map.MapService.gI().getMapById(128).zones.get(zoneId);
+                        if (plTarget == null || plTarget.isOffline || plTarget.isDie() || plTarget.zone == null) {
+                            return;
+                        }
+                        var map128 = services.map.MapService.gI().getMapById(128);
+                        if (map128 == null || zoneId >= map128.zones.size()) {
+                            return;
+                        }
+                        Zone zone = map128.zones.get(zoneId);
+                        if (zone == null) {
+                            return;
+                        }
                         services.map.ChangeMapService.gI().changeMap(plTarget, zone, -1, 336);
 
-                        Thread.sleep(500);
-                        plTarget.isMabuHold = false;
-                        if (plTarget.effectSkill != null && !plTarget.effectSkill.isShielding) {
-                            services.EffectSkillService.gI().setMabuHold(plTarget, mabuHold);
+                        server.GameLoopManager.gI().schedule(() -> {
+                            try {
+                                if (plTarget == null || plTarget.isOffline || plTarget.isDie() || plTarget.zone == null || plTarget.zone.map.mapId != 128) {
+                                    return;
+                                }
+                                plTarget.isMabuHold = false;
+                                if (plTarget.effectSkill != null && !plTarget.effectSkill.isShielding) {
+                                    services.EffectSkillService.gI().setMabuHold(plTarget, mabuHold);
 
-                            Thread.sleep(1500);
-                            if (plTarget.fusion != null && plTarget.pet != null && plTarget.fusion.typeFusion != consts.ConstPlayer.NON_FUSION) {
-                                plTarget.pet.unFusion();
+                                    server.GameLoopManager.gI().schedule(() -> {
+                                        try {
+                                            if (plTarget != null && !plTarget.isOffline && plTarget.fusion != null && plTarget.pet != null && plTarget.fusion.typeFusion != consts.ConstPlayer.NON_FUSION) {
+                                                plTarget.pet.unFusion();
+                                            }
+                                        } catch (Exception ignored) {
+                                        }
+                                    }, 1500);
+                                }
+                            } catch (Exception ex) {
+                                ex.printStackTrace();
                             }
-                        }
+                        }, 500);
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
-                }).start();
+                }, 3000);
             }
         }
     }

@@ -915,11 +915,25 @@ namespace Game1
             return null;
         }
 
+        private static Item lastItemInvenNew;
+        private static string cachedOptionText = string.Empty;
+        private static mFont cachedOptionFont = mFont.tahoma_7_blue;
+
+        public static Panel EnsurePanel2()
+        {
+            if (GameCanvas.panel2 == null)
+            {
+                GameCanvas.panel2 = new Panel();
+            }
+            return GameCanvas.panel2;
+        }
+
         private void InitSubPanels()
         {
             RegisterSubPanel(TYPE_BODY, new InventorySubPanel());
             RegisterSubPanel(TYPE_BOX, new ChestSubPanel());
             RegisterSubPanel(TYPE_COMBINE, new CombineSubPanel());
+            RegisterSubPanel(TYPE_SHOP, new ShopSubPanel());
         }
 
         public Panel()
@@ -1537,10 +1551,10 @@ namespace Game1
             }
             if (GameCanvas.w > 2 * WIDTH_PANEL)
             {
-                GameCanvas.panel2 = new Panel();
-                GameCanvas.panel2.tabName[7] = new string[1][] { new string[1] { string.Empty } };
-                GameCanvas.panel2.setTypeBodyOnly();
-                GameCanvas.panel2.show();
+                Panel panel2 = EnsurePanel2();
+                panel2.tabName[7] = new string[1][] { new string[1] { string.Empty } };
+                panel2.setTypeBodyOnly();
+                panel2.show();
             }
         }
     
@@ -1571,10 +1585,10 @@ namespace Game1
             }
             if (GameCanvas.w > 2 * WIDTH_PANEL)
             {
-                GameCanvas.panel2 = new Panel();
-                GameCanvas.panel2.tabName[7] = new string[1][] { new string[1] { string.Empty } };
-                GameCanvas.panel2.setTypeBodyOnly();
-                GameCanvas.panel2.show();
+                Panel panel2 = EnsurePanel2();
+                panel2.tabName[7] = new string[1][] { new string[1] { string.Empty } };
+                panel2.setTypeBodyOnly();
+                panel2.show();
             }
             combineSuccess = -1;
             isDoneCombine = true;
@@ -2415,18 +2429,18 @@ namespace Game1
             friendMoneyGD = 0;
             if (GameCanvas.w > 2 * WIDTH_PANEL)
             {
-                GameCanvas.panel2 = new Panel();
-                GameCanvas.panel2.type = 13;
-                GameCanvas.panel2.tabName[type] = new string[1][] { mResources.item_receive };
-                GameCanvas.panel2.setType(1);
-                GameCanvas.panel2.setTabGiaoDich(false);
+                Panel panel2 = EnsurePanel2();
+                panel2.type = 13;
+                panel2.tabName[type] = new string[1][] { mResources.item_receive };
+                panel2.setType(1);
+                panel2.setTabGiaoDich(false);
                 GameCanvas.panel.tabName[type] = new string[2][]
                 {
                     mResources.inventory,
                     mResources.item_give
                 };
-                GameCanvas.panel2.show();
-                GameCanvas.panel2.charMenu = cGD;
+                panel2.show();
+                panel2.charMenu = cGD;
             }
             if (Equals(GameCanvas.panel))
             {
@@ -4102,12 +4116,12 @@ namespace Game1
                 if (currItem.compare > 0)
                 {
                     g.drawImage(imgUp, num - 7, num2 + 13, 3);
-                    mFont.tahoma_7b_green.drawString(g, Res.abs(currItem.compare) + string.Empty, num + 1, num2 + 8, 0);
+                    mFont.tahoma_7b_green.drawString(g, Res.abs(currItem.compare).ToString(), num + 1, num2 + 8, 0);
                 }
                 else if (currItem.compare < 0 && currItem.compare != -1)
                 {
                     g.drawImage(imgDown, num - 7, num2 + 13, 3);
-                    mFont.tahoma_7b_red.drawString(g, Res.abs(currItem.compare) + string.Empty, num + 1, num2 + 8, 0);
+                    mFont.tahoma_7b_red.drawString(g, Res.abs(currItem.compare).ToString(), num + 1, num2 + 8, 0);
                 }
             }
         }
@@ -6240,17 +6254,18 @@ namespace Game1
                         }
                     }
                     mFont2.drawString(g, itemInvenNew.template.name + text, xScroll + 5, num14 + 1, 0);
-                    string text2 = string.Empty;
-                    if (itemInvenNew.itemOption != null)
+                    if (itemInvenNew != lastItemInvenNew)
                     {
+                        lastItemInvenNew = itemInvenNew;
+                        string text2 = string.Empty;
                         if (itemInvenNew.itemOption.Length > 0 && itemInvenNew.itemOption[0] != null && itemInvenNew.itemOption[0].optionTemplate.id != 102 && itemInvenNew.itemOption[0].optionTemplate.id != 107)
                         {
                             text2 += itemInvenNew.itemOption[0].getOptionString();
                         }
-                        mFont mFont3 = mFont.tahoma_7_blue;
+                        cachedOptionFont = mFont.tahoma_7_blue;
                         if (itemInvenNew.compare < 0 && itemInvenNew.template.type != 5)
                         {
-                            mFont3 = mFont.tahoma_7_red;
+                            cachedOptionFont = mFont.tahoma_7_red;
                         }
                         if (itemInvenNew.itemOption.Length > 1)
                         {
@@ -6264,16 +6279,18 @@ namespace Game1
                         }
                         try
                         {
-                            if (mFont3.getWidth(text2) > wScroll)
+                            if (cachedOptionFont.getWidth(text2) > wScroll)
                             {
-                                text2 = mFont3.splitFontArray(text2, wScroll)[0];
+                                text2 = cachedOptionFont.splitFontArray(text2, wScroll)[0];
                             }
                         }
                         catch (Exception)
                         {
                         }
-                        mFont3.drawString(g, text2, xScroll + 5, num14 + 11, mFont.LEFT);
+                        cachedOptionText = text2;
                     }
+                    cachedOptionFont.drawString(g, cachedOptionText, xScroll + 5, num14 + 11, mFont.LEFT);
+                }
                 }
             }
             if (flag && isnewInventory)
@@ -6635,10 +6652,10 @@ namespace Game1
                 g.fillRect(X + 1, H - 15, W - 2, 1);
                 g.drawImage(imgXu, X + 11, H - 7, 3);
                 g.drawImage(imgLuong, X + 75, H - 8, 3);
-                mFont.tahoma_7_yellow.drawString(g, Char.myCharz().xuStr + string.Empty, X + 24, H - 13, mFont.LEFT, mFont.tahoma_7_grey);
-                mFont.tahoma_7_yellow.drawString(g, Char.myCharz().luongStr + string.Empty, X + 85, H - 13, mFont.LEFT, mFont.tahoma_7_grey);
+                mFont.tahoma_7_yellow.drawString(g, Char.myCharz().xuStr, X + 24, H - 13, mFont.LEFT, mFont.tahoma_7_grey);
+                mFont.tahoma_7_yellow.drawString(g, Char.myCharz().luongStr, X + 85, H - 13, mFont.LEFT, mFont.tahoma_7_grey);
                 g.drawImage(imgLuongKhoa, X + 130, H - 8, 3);
-                mFont.tahoma_7_yellow.drawString(g, Char.myCharz().luongKhoaStr + string.Empty, X + 140, H - 13, mFont.LEFT, mFont.tahoma_7_grey);
+                mFont.tahoma_7_yellow.drawString(g, Char.myCharz().luongKhoaStr, X + 140, H - 13, mFont.LEFT, mFont.tahoma_7_grey);
             }
         }
     
@@ -8634,10 +8651,10 @@ namespace Game1
             Service.gI().petInfo();
             if (GameCanvas.w > 2 * Panel.WIDTH_PANEL)
             {
-                GameCanvas.panel2 = new Panel();
-                GameCanvas.panel2.tabName[7] = new string[1][] { new string[1] { string.Empty } };
-                GameCanvas.panel2.setTypeBodyOnly();
-                GameCanvas.panel2.show();
+                Panel panel2 = EnsurePanel2();
+                panel2.tabName[7] = new string[1][] { new string[1] { string.Empty } };
+                panel2.setTypeBodyOnly();
+                panel2.show();
                 GameCanvas.panel.setTypePetMain();
                 GameCanvas.panel.show();
             }
@@ -9635,7 +9652,7 @@ namespace Game1
                 isAccept = true;
                 GameCanvas.endDlg();
                 Service.gI().giaodich(7, -1, -1, -1);
-                hide();
+                InfoDlg.showWait();
             }
             if (idAction == 8003)
             {
@@ -10567,10 +10584,10 @@ namespace Game1
                     {
                         if (GameCanvas.w > 2 * WIDTH_PANEL)
                         {
-                            GameCanvas.panel2 = new Panel();
-                            GameCanvas.panel2.tabName[7] = new string[1][] { new string[1] { string.Empty } };
-                            GameCanvas.panel2.setTypeBodyOnly();
-                            GameCanvas.panel2.show();
+                            Panel panel2 = EnsurePanel2();
+                            panel2.tabName[7] = new string[1][] { new string[1] { string.Empty } };
+                            panel2.setTypeBodyOnly();
+                            panel2.show();
                         }
                         combineSuccess = -1;
                         isDoneCombine = true;
@@ -10612,10 +10629,10 @@ namespace Game1
                         countWait = -50;
                         if (typeCombine < 3 && GameCanvas.w > 2 * WIDTH_PANEL)
                         {
-                            GameCanvas.panel2 = new Panel();
-                            GameCanvas.panel2.tabName[7] = new string[1][] { new string[1] { string.Empty } };
-                            GameCanvas.panel2.setTypeBodyOnly();
-                            GameCanvas.panel2.show();
+                            Panel panel2 = EnsurePanel2();
+                            panel2.tabName[7] = new string[1][] { new string[1] { string.Empty } };
+                            panel2.setTypeBodyOnly();
+                            panel2.show();
                         }
                         combineSuccess = -1;
                         isDoneCombine = true;

@@ -1,5 +1,7 @@
 package models.mob.bigboss_list;
 
+import java.util.ArrayList;
+import java.util.List;
 import models.item.Item;
 import models.map.ItemMap;
 import models.mob.BigBoss;
@@ -72,16 +74,21 @@ public class Hirudegarn extends BigBoss {
 
     @Override
     public void injured(Player plAtt, long damage, boolean dieWhenHpFull) {
-        // Boss chỉ nhận tối đa 1% HP mỗi đòn đánh
-        damage = this.point.hp / 100 > 0 ? this.point.hp / 100 : 1;
+        // Boss chỉ nhận tối đa 1% MÁU TỐI ĐA mỗi đòn đánh (sửa lỗi tiệm cận Zeno 1% máu hiện tại)
+        long maxDmgPerHit = Math.max(1, this.point.getHpFull() / 100);
+        if (damage > maxDmgPerHit) {
+            damage = maxDmgPerHit;
+        }
+        if (damage <= 0) {
+            damage = 1;
+        }
         super.injured(plAtt, damage, false);
 
-        // [CẬP NHẬT LOGIC] Kiểm tra mốc 20 triệu HP
-        if (!this.isDie() && !hasDroppedAt20M) {
-            // Nếu HP <= 20 triệu và chưa rơi đồ lần nào
+        // [CẬP NHẬT LOGIC] Kiểm tra mốc 20 triệu HP chỉ ở FORM_FINAL để không rơi lặp lại qua các form
+        if (!this.isDie() && !hasDroppedAt20M && lvMob == FORM_FINAL) {
             if (this.point.hp <= HP_DROP_THRESHOLD) {
-                dropItems(); // Rơi đồ Lần 1 (tại mốc 20 triệu)
-                hasDroppedAt20M = true; // Đánh dấu đã rơi để không lặp lại
+                dropMinorItems(); // Rơi một lượng vàng nhỏ ở mốc 20 triệu Form cuối
+                hasDroppedAt20M = true;
             }
         }
     }
@@ -101,7 +108,11 @@ public class Hirudegarn extends BigBoss {
         lvMob = FORM_INITIAL;
         action = ACTION_SHOOT;
         this.location.x = Util.nextInt(100, 900);
-        this.location.y = 360;
+        if (this.zone != null && this.zone.map != null) {
+            this.location.y = (short) this.zone.map.yPhysicInTop(this.location.x, 360);
+        } else {
+            this.location.y = 360;
+        }
         this.point.hp = this.point.getHpFull();
 
         // [RESET] Đặt lại flag khi boss hồi sinh
@@ -131,8 +142,14 @@ public class Hirudegarn extends BigBoss {
             }
         }
 
-        // [QUAN TRỌNG] Rơi đồ Lần 2 (Khi boss chết/biến hình)
-        dropItems();
+        // [CÂN BẰNG KINH TẾ]
+        // Dạng 1, 2, 3 biến hình: chỉ rơi một lượng vàng nhỏ tạo không khí
+        // Dạng cuối cùng bị tiêu diệt hoàn toàn: mới rơi quà lớn (Vàng, Ngọc, CSKB, Đồ Thần Linh, Đồ Hiếm)
+        if (lvMob <= FORM_THIRD) {
+            dropMinorItems();
+        } else {
+            dropFinalItems();
+        }
 
         // [RESET] Đặt lại flag cho form mới
         this.hasDroppedAt20M = false;
@@ -147,9 +164,13 @@ public class Hirudegarn extends BigBoss {
         }
     }
 
-    private void dropItems() {
+    private void dropMinorItems() {
+        dropGoldItems(5);
+    }
+
+    private void dropFinalItems() {
         // Drop gold items
-        dropGoldItems();
+        dropGoldItems(GOLD_DROP_LIMIT);
 
         // Drop Gem and CSKB
         dropGemItems();
@@ -166,12 +187,12 @@ public class Hirudegarn extends BigBoss {
         }
     }
 
-    private void dropGoldItems() {
+    private void dropGoldItems(int limit) {
         int leftCounter = 0;
         int rightCounter = 1;
         int direction = 0;
 
-        for (int i = 0; i < GOLD_DROP_LIMIT; i++) {
+        for (int i = 0; i < limit; i++) {
             int offsetX = direction == 0 ? -5 * leftCounter : 5 * rightCounter;
             if (direction == 0) leftCounter++; else rightCounter++;
             direction = direction == 0 ? 1 : 0;
@@ -265,10 +286,19 @@ public class Hirudegarn extends BigBoss {
 
     private Player getRandomPlayer() {
         try {
-            int playerCount = this.zone.getPlayers().size();
-            if (playerCount == 0) return null;
-            int index = Util.nextInt(0, playerCount - 1);
-            return this.zone.getPlayers().get(index);
+            if (this.zone == null) return null;
+            List<Player> players = this.zone.getPlayers();
+            if (players == null || players.isEmpty()) return null;
+            List<Player> validPlayers = new ArrayList<>();
+            for (int i = 0; i < players.size(); i++) {
+                Player pl = players.get(i);
+                if (pl != null && !pl.isDie() && !pl.isBoss && !pl.isNewPet) {
+                    validPlayers.add(pl);
+                }
+            }
+            if (validPlayers.isEmpty()) return null;
+            int index = Util.nextInt(0, validPlayers.size() - 1);
+            return validPlayers.get(index);
         } catch (Exception e) {
             logError(e);
             return null;
@@ -327,16 +357,23 @@ public class Hirudegarn extends BigBoss {
     }
 
     private void handleAOEAttack(Message msg) throws Exception {
-        int playerCount = this.zone.getPlayers().size();
-        msg.writer().writeByte(playerCount);
-
-        for (int i = 0; i < playerCount; i++) {
-            Player player = this.zone.getPlayers().get(i);
-            if (player != null && !player.isDie()) {
-                int damage = player.injured(null, this.point.getDameAttack(), false, true);
-                msg.writer().writeInt((int) player.id);
-                msg.writer().writeInt(damage);
+        if (this.zone == null) return;
+        List<Player> players = this.zone.getPlayers();
+        List<Player> validTargets = new ArrayList<>();
+        if (players != null) {
+            for (int i = 0; i < players.size(); i++) {
+                Player player = players.get(i);
+                if (player != null && !player.isDie() && !player.isBoss && !player.isNewPet) {
+                    validTargets.add(player);
+                }
             }
+        }
+        msg.writer().writeByte(validTargets.size());
+
+        for (Player player : validTargets) {
+            int damage = player.injured(null, this.point.getDameAttack(), false, true);
+            msg.writer().writeInt((int) player.id);
+            msg.writer().writeInt(damage);
         }
     }
 

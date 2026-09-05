@@ -50,7 +50,7 @@ public abstract class DeathOrAliveArena extends Boss {
 
     @Override
     public void afk() {
-        if (!(playerAtt.location != null && playerAtt != null && playerAtt.zone != null && this.zone != null && this.zone.equals(playerAtt.zone))) {
+        if (!(playerAtt != null && playerAtt.location != null && playerAtt.zone != null && this.zone != null && this.zone.equals(playerAtt.zone))) {
             this.leaveMap();
         }
     }
@@ -68,7 +68,7 @@ public abstract class DeathOrAliveArena extends Boss {
     @Override
     public void attack() {
         try {
-            if (playerAtt.location != null && playerAtt != null && playerAtt.zone != null && this.zone != null && this.zone.equals(playerAtt.zone)) {
+            if (playerAtt != null && playerAtt.location != null && playerAtt.zone != null && this.zone != null && this.zone.equals(playerAtt.zone)) {
                 if (this.isDie()) {
                     return;
                 }

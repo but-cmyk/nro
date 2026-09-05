@@ -56,9 +56,6 @@ public class DestronGas {
 
 
     public void update() {
-        if (clan != null && clan.timesPerDayKGHD > 0 && (System.currentTimeMillis() - clan.lastTimeOpenKhiGasHuyDiet >= 3L * 86400000L)) {
-            clan.timesPerDayKGHD = 0;
-        }
         if (isOpened) {
             if (Util.canDoWithTime(lastTimeOpen, TIME_KHI_GAS_HUY_DIET) || (kickoutkghd && Util.canDoWithTime(timeKickOutKGHD, 60000))) {
                 finish();

@@ -32,6 +32,7 @@ public class BlackGoku extends Boss {
         // 2. Rớt vật phẩm nhiệm vụ (Task 31)
         if (TaskService.gI().getIdTask(plKill) == ConstTask.TASK_31_0) {
             Service.gI().dropItemMap(this.zone, new ItemMap(zone, 992, 1, this.location.x, this.location.y, plKill.id));
+            TaskService.gI().doneTask(plKill, ConstTask.TASK_31_0);
         }
 
         // 3. Rớt đồ thần linh (Fix lỗi mảng item cũ)

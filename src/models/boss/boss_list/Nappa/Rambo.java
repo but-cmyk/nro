@@ -34,6 +34,25 @@ public class Rambo extends Boss {
                 plKill.id);
 
         Service.gI().dropItemMap(this.zone, it);
+
+        // 20% rơi Đồ Sao hoặc Đá Nâng Cấp
+        if (Util.isTrue(20, 100)) {
+            if (Util.isTrue(50, 100)) {
+                short itTemp = (short) services.ItemService.gI().randTempItemDoSao(plKill.gender);
+                ItemMap itDoSao = new ItemMap(this.zone, itTemp, 1, this.location.x + Util.nextInt(-20, 20), this.zone.map.yPhysicInTop(this.location.x, this.location.y - 24), plKill.id);
+                var ops = services.ItemService.gI().getListOptionItemShop(itTemp);
+                if (!ops.isEmpty()) {
+                    itDoSao.options = ops;
+                }
+                itDoSao.options.add(new models.item.Item.ItemOption(107, Util.nextInt(1, 3)));
+                Service.gI().dropItemMap(this.zone, itDoSao);
+            } else {
+                int randDNC = Util.nextInt(0, 4);
+                ItemMap itDNC = new ItemMap(this.zone, 220 + randDNC, 1, this.location.x + Util.nextInt(-20, 20), this.zone.map.yPhysicInTop(this.location.x, this.location.y - 24), plKill.id);
+                itDNC.options.add(new models.item.Item.ItemOption(71 - randDNC, 0));
+                Service.gI().dropItemMap(this.zone, itDNC);
+            }
+        }
     }
 
     @Override

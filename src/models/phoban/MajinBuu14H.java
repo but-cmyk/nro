@@ -41,9 +41,13 @@ public final class MajinBuu14H {
         }
         for (int j = zones.size() - 1; j >= 0; j--) {
             Zone zone = zones.get(j);
-            for (MaBuHold hold : zone.maBuHolds) {
-                if (hold.player != null && hold.player.maBuHold == null && hold.player.zone != null) {
-                    hold.player = null;
+            if (zone != null && zone.maBuHolds != null) {
+                synchronized (zone.maBuHolds) {
+                    for (MaBuHold hold : zone.maBuHolds) {
+                        if (hold != null && hold.player != null && hold.player.maBuHold == null && hold.player.zone != null) {
+                            hold.player = null;
+                        }
+                    }
                 }
             }
         }

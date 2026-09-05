@@ -4255,7 +4255,7 @@ namespace Game1
     				cyStartFall = 0;
     				cvx = (cvy = 0);
     				cp1 = (cp2 = 0);
-    				cy = TileMap.tileXofPixel(cy + 3);
+    				cy = TileMap.tileYofPixel(cy + 3);
     				statusMe = 1;
     				if (me)
     				{
@@ -4280,7 +4280,7 @@ namespace Game1
     			else
     			{
     				stop();
-    				cy = TileMap.tileXofPixel(cy + 3);
+    				cy = TileMap.tileYofPixel(cy + 3);
     				cf = 0;
     				GameCanvas.gI().startDust(-1, cx - -8, cy);
     				GameCanvas.gI().startDust(1, cx - 8, cy);
@@ -4304,7 +4304,7 @@ namespace Game1
     		if (currentMovePoint != null && cy > currentMovePoint.yEnd)
     		{
     			stop();
-    			cy = TileMap.tileXofPixel(cy + 3);
+    			cy = TileMap.tileYofPixel(cy + 3);
     			currentMovePoint = null;
     		}
     	}
@@ -6096,12 +6096,12 @@ namespace Game1
 			bool flag = myChar.clan != null && clanID == myChar.clan.ID;
 			bool flag2 = cTypePk == 3 || cTypePk == 5;
 			bool flag3 = cTypePk == 4;
-			if (cName.StartsWith("$"))
+			if (!isPet && cName != null && cName.Length > 1 && cName.StartsWith("$"))
 			{
 				cName = cName.Substring(1);
 				isPet = true;
 			}
-			if (cName.StartsWith("#"))
+			if (!isMiniPet && cName != null && cName.Length > 1 && cName.StartsWith("#"))
 			{
 				cName = cName.Substring(1);
 				isMiniPet = true;
@@ -6786,22 +6786,33 @@ namespace Game1
     
     	public static void getcharInjure(int cID, int dx, int dy, int HP)
     	{
-    		Char @char = (Char)GameScr.vCharInMap.elementAt(cID);
-    		if (@char.vMovePoints.size() != 0)
+    		Char target = null;
+    		for (int i = 0; i < GameScr.vCharInMap.size(); i++)
     		{
-    			MovePoint movePoint = (MovePoint)@char.vMovePoints.lastElement();
-    			int xEnd = movePoint.xEnd + dx;
-    			int yEnd = movePoint.yEnd + dy;
-    			Char char2 = (Char)GameScr.vCharInMap.elementAt(cID);
-    			char2.cHP -= HP;
-    			if (char2.cHP < 0)
+    			Char c = (Char)GameScr.vCharInMap.elementAt(i);
+    			if (c != null && (c.charID == cID || i == cID))
     			{
-    				char2.cHP = 0;
+    				target = c;
+    				break;
     			}
-    			char2.cHPShow = ((Char)GameScr.vCharInMap.elementAt(cID)).cHP - HP;
-    			char2.statusMe = 6;
-    			char2.cp3 = 0;
-    			char2.vMovePoints.addElement(new MovePoint(xEnd, yEnd, 8, char2.cdir));
+    		}
+    		if (target != null && target.vMovePoints != null && target.vMovePoints.size() != 0)
+    		{
+    			MovePoint movePoint = (MovePoint)target.vMovePoints.lastElement();
+    			if (movePoint != null)
+    			{
+    				int xEnd = movePoint.xEnd + dx;
+    				int yEnd = movePoint.yEnd + dy;
+    				target.cHP -= HP;
+    				if (target.cHP < 0)
+    				{
+    					target.cHP = 0;
+    				}
+    				target.cHPShow = target.cHP - HP;
+    				target.statusMe = 6;
+    				target.cp3 = 0;
+    				target.vMovePoints.addElement(new MovePoint(xEnd, yEnd, 8, target.cdir));
+    			}
     		}
     	}
     
@@ -8474,21 +8485,9 @@ namespace Game1
     		@char.cx = cx;
     		@char.cy = cy;
     		@char.cdir = cdir;
-    		if (arrItemBody != null)
-    		{
-    			@char.arrItemBody = new Item[arrItemBody.Length];
-    			for (int i = 0; i < arrItemBody.Length; i++)
-    			{
-    				if (arrItemBody[i] == null)
-    				{
-    					@char.arrItemBody[i] = null;
-    				}
-    				else
-    				{
-    					@char.arrItemBody[i] = arrItemBody[i].clone();
-    				}
-    			}
-    		}
+    		@char.chw = chw;
+    		@char.chh = chh;
+    		@char.arrItemBody = arrItemBody;
     		return @char;
     	}
     

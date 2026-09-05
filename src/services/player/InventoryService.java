@@ -959,9 +959,12 @@ public class InventoryService {
     }
 
     
-//=============CHECK FULL HÀNH TRANG================================
     public byte getCountEmptyBag(Player player) {
         return getCountEmptyListItem(player.inventory.itemsBag);
+    }
+
+    public byte getCountEmptyBox(Player player) {
+        return getCountEmptyListItem(player.inventory.itemsBox);
     }
 
     public byte getCountEmptyListItem(List<Item> list) {

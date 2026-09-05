@@ -439,9 +439,8 @@ public class Map {
             }
             if (is != null) {
                 try (DataInputStream dis = new DataInputStream(is)) {
-                    dis.readByte();
-                    tmw = dis.readByte();
-                    tmh = dis.readByte();
+                    tmw = dis.readByte() & 0xFF;
+                    tmh = dis.readByte() & 0xFF;
                     pxw = tmw * SIZE;
                     pxh = tmh * SIZE;
                     maps = new int[tmw * tmh];
@@ -449,9 +448,17 @@ public class Map {
                         maps[j] = dis.readByte();
                     }
                     types = new int[maps.length];
+                    if (tileTop != null && tileTop.length > 0) {
+                        for (int j = 0; j < maps.length; j++) {
+                            if (isTileTop(maps[j])) {
+                                types[j] |= ConstMap.TILE_TOP;
+                            }
+                        }
+                    }
                 }
             }
         } catch (IOException e) {
+            Logger.logException(Map.class, e, "Lỗi đọc tile map id: " + mapId);
         }
     }
 }

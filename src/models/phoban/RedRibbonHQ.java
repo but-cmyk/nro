@@ -126,9 +126,8 @@ public class RedRibbonHQ {
         // Hồi sinh quái
         for (Zone zone : this.zones) {
             for (Mob mob : zone.mobs) {
-                long mobTempId = mob.tempId;
-                mob.point.dame = (int) ((mobTempId != 0) ? Math.min(totalHp / mobTempId, 2_000_000_000L) : 0);
-                mob.point.maxHp = (int) ((mobTempId != 0) ? Math.min(totalDamage * mobTempId, 2_000_000_000L) : 0);
+                mob.point.dame = (int) Math.max(100, Math.min(totalHp / 30, 2_000_000_000L));
+                mob.point.maxHp = (int) Math.max(1000, Math.min(totalDamage * 25, 2_000_000_000L));
                 mob.lvMob = 0;
                 mob.hoiSinh();
                 mob.hoiSinhMobPhoBan();
@@ -329,9 +328,15 @@ public class RedRibbonHQ {
                 if (mob.isDie()) {
                     continue;
                 }
-                mob.point.dame = (int) (totalHp / mob.tempId < 2_000_000_000 ? totalHp / mob.tempId : 2_000_000_000);
-                mob.point.maxHp = (int) (totalDame * mob.tempId < 2_000_000_000 ? totalDame * mob.tempId : 2_000_000_000);
-                mob.point.hp = mob.point.maxHp;
+                int newDame = (int) Math.max(100, Math.min(totalHp / 30, 2_000_000_000L));
+                int newMaxHp = (int) Math.max(1000, Math.min(totalDame * 25, 2_000_000_000L));
+                mob.point.dame = newDame;
+                if (mob.point.hp >= mob.point.maxHp) {
+                    mob.point.hp = newMaxHp;
+                } else if (mob.point.maxHp > 0) {
+                    mob.point.hp = (int) Math.max(1, (long) mob.point.hp * newMaxHp / mob.point.maxHp);
+                }
+                mob.point.maxHp = newMaxHp;
                 mob.setTiemNang();
             }
         }
@@ -339,76 +344,46 @@ public class RedRibbonHQ {
         long dame = totalHp / 20;
         long hp = totalDame * 50;
         for (Boss boss : bosses) {
-            if (boss.isDie()) {
+            if (boss.isDie() || boss.zone == null) {
                 continue;
             }
+            long bossDamage = dame;
+            long bossMaxHealth = hp;
+
             if (boss.zone.map.mapId == 59) {
-                try {
-                    long bossDamage = (dame);
-                    long bossMaxHealth = (hp);
-                    bossDamage = Math.min(bossDamage, 200000000L);
-                    bossMaxHealth = Math.min(bossMaxHealth, 2000000000L);
-                    boss.nPoint.hpMax = (int) bossMaxHealth;
-                    boss.nPoint.dame = (int) bossDamage;
-                    boss.nPoint.hp = boss.nPoint.hpMax;
-                } catch (Exception exception) {
+                bossDamage = dame;
+                bossMaxHealth = hp;
+            } else if (boss.zone.map.mapId == 62) {
+                bossDamage = (long) (dame * 1.1);
+                bossMaxHealth = (long) (hp * 1.1);
+            } else if (boss.zone.map.mapId == 55) {
+                bossDamage = (long) (dame * 1.15);
+                bossMaxHealth = (long) (hp * 1.15);
+            } else if (boss.zone.map.mapId == 54) {
+                bossDamage = (long) (dame * 1.2);
+                bossMaxHealth = (long) (hp * 1.2);
+                if (boss.id >= -14 && boss.id <= -9) {
+                    bossDamage /= 10;
+                    bossMaxHealth /= 10;
                 }
-            }
-            if (boss.zone.map.mapId == 62) {
-                try {
-                    long bossDamage = (long) (dame * 1.1);
-                    long bossMaxHealth = (long) (hp * 1.1);
-                    bossDamage = Math.min(bossDamage, 200000000L);
-                    bossMaxHealth = Math.min(bossMaxHealth, 2000000000L);
-                    boss.nPoint.hpMax = (int) bossMaxHealth;
-                    boss.nPoint.dame = (int) bossDamage;
-                    boss.nPoint.hp = boss.nPoint.hpMax;
-                } catch (Exception exception) {
-                }
-            }
-            if (boss.zone.map.mapId == 55) {
-                try {
-                    long bossDamage = (long) (dame * 1.15);
-                    long bossMaxHealth = (long) (hp * 1.15);
-                    bossDamage = Math.min(bossDamage, 200000000L);
-                    bossMaxHealth = Math.min(bossMaxHealth, 2000000000L);
-                    boss.nPoint.hpMax = (int) bossMaxHealth;
-                    boss.nPoint.dame = (int) bossDamage;
-                    boss.nPoint.hp = boss.nPoint.hpMax;
-                } catch (Exception exception) {
-                }
-            }
-            if (boss.zone.map.mapId == 54) {
-                try {
-                    long bossDamage = (long) (dame * 1.2);
-                    long bossMaxHealth = (long) (hp * 1.2);
-                    bossDamage = Math.min(bossDamage, 200000000L);
-                    bossMaxHealth = Math.min(bossMaxHealth, 2000000000L);
-                    if (boss.id >= -14 && boss.id <= -9) {
-                        bossDamage /= 10;
-                        bossMaxHealth /= 10;
-                    }
-                    boss.nPoint.hpMax = (int) bossMaxHealth;
-                    boss.nPoint.dame = (int) bossDamage;
-                    boss.nPoint.hp = boss.nPoint.hpMax;
-                } catch (Exception exception) {
-                }
+            } else if (boss.zone.map.mapId == 57) {
+                bossDamage = (long) (dame * 1.3);
+                bossMaxHealth = (long) (hp * 1.3);
             }
 
-            if (boss.zone.map.mapId == 57) {
-                try {
-                    long bossDamage = (long) (dame * 1.3);
-                    long bossMaxHealth = (long) (hp * 1.3);
-                    bossDamage = Math.min(bossDamage, 200000000L);
-                    bossMaxHealth = Math.min(bossMaxHealth, 2000000000L);
-                    boss.nPoint.hpMax = (int) bossMaxHealth;
-                    boss.nPoint.dame = (int) bossDamage;
-                    boss.nPoint.hp = boss.nPoint.hpMax;
-                } catch (Exception exception) {
+            try {
+                bossDamage = Math.min(bossDamage, 200_000_000L);
+                bossMaxHealth = Math.min(bossMaxHealth, 2_000_000_000L);
+                if (boss.nPoint.hp >= boss.nPoint.hpMax) {
+                    boss.nPoint.hp = (int) bossMaxHealth;
+                } else if (boss.nPoint.hpMax > 0) {
+                    boss.nPoint.hp = (int) Math.max(1, (long) boss.nPoint.hp * bossMaxHealth / boss.nPoint.hpMax);
                 }
+                boss.nPoint.hpMax = (int) bossMaxHealth;
+                boss.nPoint.dame = (int) bossDamage;
+            } catch (Exception exception) {
             }
         }
-
     }
 
     public void dispose() {
