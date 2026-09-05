@@ -287,17 +287,44 @@ public class ServerManager {
         try {
             if (isRunning) {
                 isRunning = false;
-                Logger.log("Saving all online players before shutdown...");
+                Logger.log("Saving all online players before shutdown (Parallel Flush)...");
                 List<Player> players = new ArrayList<>(Client.gI().getPlayers());
+                List<Player> validPlayers = new ArrayList<>();
                 for (Player pl : players) {
                     if (pl != null && pl.isPl()) {
                         try {
                             if (pl.zone != null && pl.zone.map != null) {
                                 pl.mapIdBeforeLogout = pl.zone.map.mapId;
                             }
-                            PlayerDAO.updatePlayer(pl);
+                            validPlayers.add(pl);
                         } catch (Exception ignored) {
                         }
+                    }
+                }
+
+                if (!validPlayers.isEmpty()) {
+                    CountDownLatch latch = new CountDownLatch(validPlayers.size());
+                    AtomicInteger savedCount = new AtomicInteger(0);
+                    for (Player pl : validPlayers) {
+                        Thread.ofVirtual().name("shutdown-save-" + pl.id).start(() -> {
+                            try {
+                                PlayerDAO.updatePlayer(pl);
+                                savedCount.incrementAndGet();
+                            } catch (Exception ex) {
+                                Logger.error("Error saving player on shutdown: " + (pl != null ? pl.name : "unknown"));
+                            } finally {
+                                latch.countDown();
+                            }
+                        });
+                    }
+                    try {
+                        if (!latch.await(30, TimeUnit.SECONDS)) {
+                            Logger.warning("Shutdown save timeout: " + (validPlayers.size() - savedCount.get()) + " players could not finish saving in 30s!");
+                        } else {
+                            Logger.success("Shutdown save completed: " + savedCount.get() + "/" + validPlayers.size() + " players saved successfully.");
+                        }
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
                     }
                 }
                 try {
@@ -342,25 +369,44 @@ public class ServerManager {
 
     public void saveAllPlayersData() {
         try {
-            Logger.log("Starting manual player data save...");
+            Logger.log("Starting player data auto-save (Parallel Flush)...");
             List<Player> players = new ArrayList<>(Client.gI().getPlayers());
-            AtomicInteger savedCount = new AtomicInteger(0);
-
+            List<Player> validPlayers = new ArrayList<>();
             for (Player pl : players) {
-                try {
-                    if (pl != null && pl.isPl()) {
-                        PlayerDAO.updatePlayer(pl);
-                        savedCount.incrementAndGet();
-                        Thread.sleep(10);
-                    }
-                } catch (Exception exx) {
-                    Logger.error("Error saving player: " + (pl != null ? pl.name : "unknown"));
+                if (pl != null && pl.isPl()) {
+                    validPlayers.add(pl);
                 }
             }
-            Logger.success("Manual save completed: " + savedCount.get() + " players saved");
 
+            if (!validPlayers.isEmpty()) {
+                CountDownLatch latch = new CountDownLatch(validPlayers.size());
+                AtomicInteger savedCount = new AtomicInteger(0);
+                for (Player pl : validPlayers) {
+                    Thread.ofVirtual().name("autosave-" + pl.id).start(() -> {
+                        try {
+                            PlayerDAO.updatePlayer(pl);
+                            savedCount.incrementAndGet();
+                        } catch (Exception exx) {
+                            Logger.error("Error saving player: " + (pl != null ? pl.name : "unknown"));
+                        } finally {
+                            latch.countDown();
+                        }
+                    });
+                }
+                try {
+                    if (!latch.await(30, TimeUnit.SECONDS)) {
+                        Logger.warning("Auto-save timeout: " + (validPlayers.size() - savedCount.get()) + " players did not complete in 30s!");
+                    } else {
+                        Logger.success("Auto-save completed: " + savedCount.get() + "/" + validPlayers.size() + " players saved.");
+                    }
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            } else {
+                Logger.log("No players online to save.");
+            }
         } catch (Exception ex) {
-            Logger.error("Error in manual player data save");
+            Logger.error("Error in player data save: " + ex.getMessage());
         }
     }
 

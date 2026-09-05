@@ -19,12 +19,25 @@ public class Fide extends Boss {
 
     @Override
     public void reward(Player plKill) {
-        TaskService.gI().checkDoneTaskKillBoss(plKill, this);
-        plKill.effect.addPointTrumSanBoss();
-        if (Util.isTrue(15, 100)) {
+        if (plKill == null) {
+            return;
+        }
+        if (this.currentLevel == this.data.length - 1) {
+            TaskService.gI().checkDoneTaskKillBoss(plKill, this);
+        }
+        if (plKill.effect != null) {
+            plKill.effect.addPointTrumSanBoss();
+        }
+        int rateNR = (this.currentLevel == this.data.length - 1) ? 30 : 15;
+        if (Util.isTrue(rateNR, 100) && this.zone != null && this.location != null) {
             ItemMap it = new ItemMap(this.zone, 19, 1, this.location.x, this.zone.map.yPhysicInTop(this.location.x,
                     this.location.y - 24), plKill.id);
             Service.gI().dropItemMap(this.zone, it);
+        }
+        if (this.currentLevel == this.data.length - 1 && this.zone != null && this.location != null) {
+            int gold = Util.nextInt(100_000, 200_000);
+            ItemMap itGold = new ItemMap(this.zone, 190, gold, this.location.x + Util.nextInt(-15, 15), this.zone.map.yPhysicInTop(this.location.x, this.location.y - 24), plKill.id);
+            Service.gI().dropItemMap(this.zone, itGold);
         }
     }
 

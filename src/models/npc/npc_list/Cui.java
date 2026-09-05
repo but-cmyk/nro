@@ -134,7 +134,7 @@ public class Cui extends Npc {
                                     }
                                 } else {
                                     Service.gI().sendThongBao(player, "Không đủ ngọc, còn thiếu "
-                                            + Util.powerToString(COST_FIND_BOSS - player.inventory.gold) + " ngọc");
+                                            + Util.powerToString(COST_FIND_BOSS - player.inventory.gem) + " ngọc");
                                 }
                                 break;
                             }

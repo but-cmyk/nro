@@ -946,7 +946,9 @@ namespace Game1
     		{
     		}
     	}
-    
+
+    	public static long lastTimeSendMove;
+
     	public void charMove()
     	{
     		int num = Char.myCharz().cx - Char.myCharz().cxSend;
@@ -955,8 +957,15 @@ namespace Game1
     		{
     			return;
     		}
+    		long now = mSystem.currentTimeMillis();
+    		bool isUrgent = (Char.myCharz().statusMe == 1 || Char.myCharz().statusMe == 5 || Char.myCharz().statusMe == 14 || Res.abs(num) >= 80 || Res.abs(num2) >= 80);
+    		if (!isUrgent && now - lastTimeSendMove < 120)
+    		{
+    			return;
+    		}
     		try
     		{
+    			lastTimeSendMove = now;
     			Message message = new Message((sbyte)(-7));
     			Char.myCharz().cxSend = Char.myCharz().cx;
     			Char.myCharz().cySend = Char.myCharz().cy;

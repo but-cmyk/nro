@@ -180,7 +180,8 @@ public class BuiBui2 extends Boss {
                 return 0;
             }
 
-            if (plAtt != null) {
+            if (plAtt != null && plAtt.playerSkill != null && plAtt.playerSkill.skillSelect != null
+                    && plAtt.playerSkill.skillSelect.template != null) {
                 switch (plAtt.playerSkill.skillSelect.template.id) {
                     case Skill.KAMEJOKO:
                     case Skill.MASENKO:
@@ -190,7 +191,7 @@ public class BuiBui2 extends Boss {
                 }
             }
 
-            if (plAtt.isPl() && Util.isTrue(1, 5)) {
+            if (plAtt != null && plAtt.isPl() && Util.isTrue(1, 5)) {
                 plAtt.fightMabu.changePercentPoint((byte) 1);
             }
 

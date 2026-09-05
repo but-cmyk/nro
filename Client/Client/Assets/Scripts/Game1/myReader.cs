@@ -157,8 +157,7 @@ namespace Game1
     		{
     			array[i] = convertSbyteToByte(readSByte());
     		}
-    		UTF8Encoding uTF8Encoding = new UTF8Encoding();
-    		return uTF8Encoding.GetString(array);
+    		return Encoding.UTF8.GetString(array);
     	}
     
     	public string readStringUTF()

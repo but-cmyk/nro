@@ -5,7 +5,7 @@ namespace Game1.Assets.src.f
 {
 	internal class Controller2
 	{
-		public static void readMessage(Message msg)
+		public static bool readMessage(Message msg)
 		{
 			try
 			{
@@ -1209,11 +1209,16 @@ namespace Game1.Assets.src.f
 						@char.idAuraEff = idAuraEff;
 						@char.idEff_Set_Item = msg.reader().readByte();
 					}
+					break;
+				default:
+					return false;
 				}
+				return true;
 			}
 			catch (Exception)
 			{
 			}
+			return false;
 		}
 
 		private static void readInfoEffChar(Message msg)

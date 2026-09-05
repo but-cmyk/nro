@@ -19,8 +19,8 @@ public class Session implements ISession {
     private static ISession instance;
     private static int ID_INIT = 1;
     private SocketType socketType = SocketType.SERVER;
-    private byte[] KEYS;
-    private boolean sentKey;
+    private volatile byte[] KEYS;
+    private volatile boolean sentKey;
     public int id;
     private Socket socket;
     private boolean connected;

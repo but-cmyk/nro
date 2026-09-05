@@ -56,6 +56,7 @@ public class NettyServer {
                     .childOption(ChannelOption.SO_KEEPALIVE, true)
                     .childOption(ChannelOption.TCP_NODELAY, true)
                     .childOption(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
+                    .childOption(ChannelOption.WRITE_BUFFER_WATER_MARK, new WriteBufferWaterMark(32 * 1024, 64 * 1024))
                     .childHandler(new ChannelInitializer<SocketChannel>() {
                         @Override
                         protected void initChannel(SocketChannel ch) {
@@ -65,11 +66,11 @@ public class NettyServer {
                             ChannelPipeline pipeline = ch.pipeline();
                             // 1. Kiểm tra Zombie Connection (ngắt nếu không có data sau 180s)
                             pipeline.addLast("idleStateHandler", new IdleStateHandler(180, 0, 0, TimeUnit.SECONDS));
-                            // 2. Bộ lọc chống Spam/Flood packet (>100 pkts/s)
-                            pipeline.addLast("rateLimiter", new RateLimiterHandler(100));
-                            // 3. Decoder & Encoder theo từng Session riêng biệt (Thread-safe XOR keys)
+                            // 2. Decoder & Encoder theo từng Session riêng biệt (Thread-safe XOR keys)
                             pipeline.addLast("decoder", new NroPacketDecoder(session));
                             pipeline.addLast("encoder", new NroPacketEncoder(session));
+                            // 3. Bộ lọc chống Spam/Flood packet áp dụng trên Game Message (>120 pkts/s)
+                            pipeline.addLast("rateLimiter", new RateLimiterHandler(120));
                             // 4. Handler nhận message và chuyển tiếp tới Controller
                             pipeline.addLast("handler", new NroChannelHandler());
                         }

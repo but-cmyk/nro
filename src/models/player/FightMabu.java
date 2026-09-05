@@ -11,6 +11,7 @@ public class FightMabu {
 
     public int pointMabu = 0;
     public int pointPercent = 0;
+    public long lastTimeChangeFlag = System.currentTimeMillis();
     private Player player;
 
     public FightMabu(Player player) {

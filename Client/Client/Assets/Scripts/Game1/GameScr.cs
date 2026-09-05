@@ -4836,30 +4836,49 @@ namespace Game1
     			GameCanvas.debug("E3", 0);
     			for (int i = 0; i < vCharInMap.size(); i++)
     			{
-    				((Char)vCharInMap.elementAt(i)).update();
+    				Char c = (Char)vCharInMap.elementAt(i);
+    				if (c != null)
+    				{
+    					try { c.update(); } catch (Exception) { }
+    				}
     			}
     			for (int i = 0; i < Teleport.vTeleport.size(); i++)
     			{
-    				((Teleport)Teleport.vTeleport.elementAt(i)).update();
+    				Teleport tp = (Teleport)Teleport.vTeleport.elementAt(i);
+    				if (tp != null)
+    				{
+    					try { tp.update(); } catch (Exception) { }
+    				}
     			}
-    			Char.myCharz().update();
-    			if (Char.myCharz().statusMe == 1)
+    			try
+    			{
+    				Char.myCharz().update();
+    			}
+    			catch (Exception)
     			{
     			}
     			if (popUpYesNo != null)
     			{
-    				popUpYesNo.update();
+    				try { popUpYesNo.update(); } catch (Exception) { }
     			}
     			EffecMn.update();
     			GameCanvas.debug("E5x", 0);
     			for (int i = 0; i < vMob.size(); i++)
     			{
-    				((Mob)vMob.elementAt(i)).update();
+    				Mob mob = (Mob)vMob.elementAt(i);
+    				if (mob != null)
+    				{
+    					try { mob.update(); } catch (Exception) { }
+    				}
     			}
     			GameCanvas.debug("E6", 0);
     			for (int i = 0; i < vNpc.size(); i++)
     			{
-    				((Npc)vNpc.elementAt(i)).update();
+    				Npc npc = (Npc)vNpc.elementAt(i);
+    				if (npc != null)
+    				{
+    					try { npc.update(); } catch (Exception) { }
+    				}
     			}
     			nSkill = onScreenSkill.Length;
     			for (int i = onScreenSkill.Length - 1; i >= 0; i--)
@@ -4886,7 +4905,11 @@ namespace Game1
     			GameCanvas.debug("E10", 0);
     			for (int i = 0; i < vItemMap.size(); i++)
     			{
-    				((ItemMap)vItemMap.elementAt(i)).update();
+    				ItemMap item = (ItemMap)vItemMap.elementAt(i);
+    				if (item != null)
+    				{
+    					try { item.update(); } catch (Exception) { }
+    				}
     			}
     			GameCanvas.debug("E11", 0);
     			GameCanvas.debug("E13", 0);
@@ -4999,8 +5022,9 @@ namespace Game1
     			}
     			updateChatVip();
     		}
-    		catch (Exception)
+    		catch (Exception ex)
     		{
+    			Cout.LogError("Loi GameScr.update: " + ex.Message);
     		}
     		int num4 = GameCanvas.gameTick % 4000;
     		if (num4 == 1000)
@@ -6152,13 +6176,13 @@ namespace Game1
     				}
     				if (Char.myCharz().mobFocus.templateId != 0)
     				{
-    					mFont.tahoma_7b_green2.drawString(g, NinjaUtil.getMoneys(Char.myCharz().mobFocus.hp) + string.Empty, imgScrW / 2, 22 + mGraphics.addYWhenOpenKeyBoard, mFont.CENTER);
+    					mFont.tahoma_7b_green2.drawString(g, NinjaUtil.getMoneys(Char.myCharz().mobFocus.hp), imgScrW / 2, 22 + mGraphics.addYWhenOpenKeyBoard, mFont.CENTER);
     				}
     			}
     			else if (Char.myCharz().npcFocus != null)
     			{
     				mFont.tahoma_7b_green2.drawString(g, Char.myCharz().npcFocus.template.name, imgScrW / 2, 9 + mGraphics.addYWhenOpenKeyBoard, mFont.CENTER);
-    				if (Char.myCharz().npcFocus.template.npcTemplateId == 4)
+    				if (Char.myCharz().npcFocus.template.npcTemplateId == 4 && gI().magicTree != null)
     				{
     					mFont.tahoma_7b_green2.drawString(g, gI().magicTree.currPeas + "/" + gI().magicTree.maxPeas, imgScrW / 2, 22 + mGraphics.addYWhenOpenKeyBoard, mFont.CENTER);
     				}
@@ -6166,12 +6190,12 @@ namespace Game1
     			else if (Char.myCharz().charFocus != null)
     			{
     				mFont.tahoma_7b_green2.drawString(g, Char.myCharz().charFocus.cName, imgScrW / 2, 9 + mGraphics.addYWhenOpenKeyBoard, mFont.CENTER);
-    				mFont.tahoma_7b_green2.drawString(g, NinjaUtil.getMoneys(Char.myCharz().charFocus.cHP) + string.Empty, imgScrW / 2, 22 + mGraphics.addYWhenOpenKeyBoard, mFont.CENTER);
+    				mFont.tahoma_7b_green2.drawString(g, NinjaUtil.getMoneys(Char.myCharz().charFocus.cHP), imgScrW / 2, 22 + mGraphics.addYWhenOpenKeyBoard, mFont.CENTER);
     			}
     			else
     			{
     				mFont.tahoma_7b_green2.drawString(g, Char.myCharz().cName, imgScrW / 2, 9 + mGraphics.addYWhenOpenKeyBoard, mFont.CENTER);
-    				mFont.tahoma_7b_green2.drawString(g, NinjaUtil.getMoneys(Char.myCharz().cPower) + string.Empty, imgScrW / 2, 22 + mGraphics.addYWhenOpenKeyBoard, mFont.CENTER);
+    				mFont.tahoma_7b_green2.drawString(g, NinjaUtil.getMoneys(Char.myCharz().cPower), imgScrW / 2, 22 + mGraphics.addYWhenOpenKeyBoard, mFont.CENTER);
     			}
     		}
     		g.translate(-g.getTranslateX(), -g.getTranslateY());
@@ -6183,7 +6207,7 @@ namespace Game1
     				last = mSystem.currentTimeMillis();
     				secondVS--;
     			}
-    			mFont.tahoma_7b_white.drawString(g, secondVS + string.Empty, GameCanvas.w / 2, 13, 2, mFont.tahoma_7b_dark);
+    			mFont.tahoma_7b_white.drawString(g, secondVS.ToString(), GameCanvas.w / 2, 13, 2, mFont.tahoma_7b_dark);
     		}
     		if (flareFindFocus)
     		{

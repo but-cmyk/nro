@@ -158,7 +158,7 @@ public class CADICH extends Boss {
         this.lastTimeRest = System.currentTimeMillis();
         this.changeStatus(BossStatus.REST);
         SnakeWayManager.gI().removeBoss(this);
-        if (this.clan.ConDuongRanDoc != null) {
+        if (this.clan != null && this.clan.ConDuongRanDoc != null) {
             this.clan.ConDuongRanDoc.endCDRD = true;
         }
         this.dispose();

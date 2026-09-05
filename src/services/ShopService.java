@@ -1132,46 +1132,64 @@ public class ShopService {
         if (items == null) {
             return;
         }
-        if (index < 0 || index >= items.size()) {
-            Service.gI().sendThongBao(player, "Không thể thực hiện");
-            return;
-        }
-        Item item = items.get(index);
-        switch (type) {
-            case 0: //nhận
-                if (item.isNotNullItem()) {
-                    if (InventoryService.gI().getCountEmptyBag(player) != 0) {
-                        InventoryService.gI().addItemBag(player, item);
+        synchronized (items) {
+            switch (type) {
+                case 0: // nhận
+                    if (index < 0 || index >= items.size()) {
+                        Service.gI().sendThongBao(player, "Không thể thực hiện");
+                        return;
+                    }
+                    Item item = items.get(index);
+                    if (item == null || !item.isNotNullItem()) {
+                        Service.gI().sendThongBao(player, "Không thể thực hiện");
+                        return;
+                    }
+                    boolean isCurrency = (item.template.id == 189 || item.template.type == 9 || item.template.type == 10 || item.template.type == 34);
+                    if (!isCurrency && InventoryService.gI().getCountEmptyBag(player) == 0) {
+                        Service.gI().sendThongBao(player, "Hành trang đã đầy");
+                        return;
+                    }
+                    if (InventoryService.gI().addItemBag(player, item)) {
                         Service.gI().sendThongBao(player,
                                 "Bạn nhận được " + (item.template.id == 189
                                         ? Util.powerToString(item.quantity) + " vàng" : item.template.name));
                         InventoryService.gI().sendItemBags(player);
                         items.remove(index);
+                    }
+                    break;
+                case 1: // xóa
+                    if (index < 0 || index >= items.size()) {
+                        Service.gI().sendThongBao(player, "Không thể thực hiện");
+                        return;
+                    }
+                    items.remove(index);
+                    Service.gI().sendThongBao(player, "Xóa vật phẩm thành công");
+                    break;
+                case 2: // nhận hết
+                    int countSuccess = 0;
+                    for (int i = items.size() - 1; i >= 0; i--) {
+                        Item it = items.get(i);
+                        if (it != null && it.isNotNullItem()) {
+                            boolean isCurr = (it.template.id == 189 || it.template.type == 9 || it.template.type == 10 || it.template.type == 34);
+                            if (!isCurr && InventoryService.gI().getCountEmptyBag(player) == 0) {
+                                continue;
+                            }
+                            if (InventoryService.gI().addItemBag(player, it)) {
+                                items.remove(i);
+                                countSuccess++;
+                            }
+                        }
+                    }
+                    if (countSuccess > 0) {
+                        InventoryService.gI().sendItemBags(player);
+                        Service.gI().sendThongBao(player, "Đã nhận " + countSuccess + " vật phẩm thành công");
                     } else {
-                        Service.gI().sendThongBao(player, "Hành trang đã đầy");
+                        Service.gI().sendThongBao(player, "Hành trang đã đầy hoặc không thể nhận thêm vật phẩm");
                     }
-                } else {
-                    Service.gI().sendThongBao(player, "Không thể thực hiện");
-                }
-                break;
-            case 1: //xóa
-                items.remove(index);
-                Service.gI().sendThongBao(player, "Xóa vật phẩm thành công");
-                break;
-            case 2: //nhận hết
-                for (int i = items.size() - 1; i >= 0; i--) {
-                    item = items.get(i);
-                    if (InventoryService.gI().addItemBag(player, item)) {
-                        Service.gI().sendThongBao(player,
-                                "Bạn nhận được " + (item.template.id == 189
-                                        ? Util.powerToString(item.quantity) + " vàng" : item.template.name));
-                        items.remove(i);
-                    }
-                }
-                InventoryService.gI().sendItemBags(player);
-                break;
+                    break;
+            }
+            openShopType4(player, player.idMark.getTagNameShop(), items);
         }
-        openShopType4(player, player.idMark.getTagNameShop(), items);
     }
 
     private void buyItemDaBan(Player player, List<Item> items, int index) {

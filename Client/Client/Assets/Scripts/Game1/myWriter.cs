@@ -139,10 +139,12 @@ namespace Game1
     
     	public void writeUTF(string value)
     	{
-    		Encoding unicode = Encoding.Unicode;
-    		Encoding encoding = Encoding.GetEncoding(65001);
-    		byte[] bytes = unicode.GetBytes(value);
-    		byte[] array = Encoding.Convert(unicode, encoding, bytes);
+    		if (string.IsNullOrEmpty(value))
+    		{
+    			writeShort(0);
+    			return;
+    		}
+    		byte[] array = Encoding.UTF8.GetBytes(value);
     		writeShort((short)array.Length);
     		checkLenght(array.Length);
     		for (int i = 0; i < array.Length; i++)

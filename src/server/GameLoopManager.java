@@ -53,8 +53,8 @@ public class GameLoopManager implements Runnable {
             Logger.log("BossUpdateTask started with rate: " + BOSS_UPDATE_RATE + "ms");
         }
         if (phoBanUpdateTask == null || phoBanUpdateTask.isCancelled()) {
-            phoBanUpdateTask = scheduler.scheduleAtFixedRate(this::updatePhoBans, 0, 150, TimeUnit.MILLISECONDS);
-            Logger.log("PhoBanUpdateTask started with rate: 150ms");
+            phoBanUpdateTask = scheduler.scheduleAtFixedRate(this::updatePhoBans, 0, 1000, TimeUnit.MILLISECONDS);
+            Logger.log("PhoBanUpdateTask started with rate: 1000ms");
         }
     }
 

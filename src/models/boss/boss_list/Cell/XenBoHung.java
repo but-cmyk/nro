@@ -26,7 +26,10 @@ public class XenBoHung extends Boss {
     @Override
     public void reward(Player plKill) {
         plKill.effect.addPointTrumSanBoss();
-        TaskService.gI().checkDoneTaskKillBoss(plKill, this);
+        // Chỉ hoàn thành nhiệm vụ khi hạ gục ở form cuối cùng
+        if (this.currentLevel == this.data.length - 1) {
+            TaskService.gI().checkDoneTaskKillBoss(plKill, this);
+        }
         if (Util.isTrue(5, 100)) {
             ItemMap it = new ItemMap(this.zone, 17, 1, this.location.x, this.zone.map.yPhysicInTop(this.location.x,
                     this.location.y - 24), plKill.id);
@@ -65,9 +68,25 @@ public class XenBoHung extends Boss {
             return;
         }
         ChangeMapService.gI().changeMapYardrat(this, this.zone, pl.location.x, pl.location.y);
-        this.nPoint.dameg += (pl.nPoint.dame * 2 / 100);
-        this.nPoint.hpg += (pl.nPoint.hp * 1 / 100);
-        this.nPoint.critg++;
+        long baseDame = this.data[this.currentLevel].getDame();
+        long maxDameAllowed = baseDame * 2;
+        if (this.nPoint.dameg < maxDameAllowed) {
+            this.nPoint.dameg += (pl.nPoint.dame * 2 / 100);
+            if (this.nPoint.dameg > maxDameAllowed) {
+                this.nPoint.dameg = (int) maxDameAllowed;
+            }
+        }
+        long baseHp = this.data[this.currentLevel].getHp()[0];
+        long maxHpAllowed = baseHp * 2;
+        if (this.nPoint.hpg < maxHpAllowed) {
+            this.nPoint.hpg += (pl.nPoint.hp * 1 / 100);
+            if (this.nPoint.hpg > maxHpAllowed) {
+                this.nPoint.hpg = (int) maxHpAllowed;
+            }
+        }
+        if (this.nPoint.critg < 20) {
+            this.nPoint.critg++;
+        }
         this.nPoint.calPoint();
         PlayerService.gI().hoiPhuc(this, pl.nPoint.hp, 0);
         pl.injured(null, pl.nPoint.hpMax, true, false);
@@ -86,7 +105,7 @@ public class XenBoHung extends Boss {
                 if (damage > nPoint.hpMax) {
                     EffectSkillService.gI().breakShield(this);
                 }
-                damage = damage;
+                damage = 1;
             }
             this.nPoint.subHP(damage);
             if (isDie()) {

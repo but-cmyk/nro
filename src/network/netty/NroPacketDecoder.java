@@ -22,16 +22,11 @@ public class NroPacketDecoder extends ByteToMessageDecoder {
         this.session = session;
     }
 
-    public byte readKey(byte b) {
-        byte[] key = session.getKey();
+    private static byte peekKey(byte[] key, int cursor, byte b) {
         if (key == null || key.length == 0) {
             return b;
         }
-        byte result = (byte) ((key[this.curR++] & 0xFF) ^ (b & 0xFF));
-        if (this.curR >= key.length) {
-            this.curR %= key.length;
-        }
-        return result;
+        return (byte) ((key[cursor] & 0xFF) ^ (b & 0xFF));
     }
 
     @Override
@@ -41,28 +36,35 @@ public class NroPacketDecoder extends ByteToMessageDecoder {
             return;
         }
 
+        byte[] key = session.getKey();
+        boolean isEncrypted = session.sentKey() && key != null && key.length > 0;
+        int keyLen = isEncrypted ? key.length : 1;
+
         in.markReaderIndex();
 
-        // 1. Đọc Command
-        byte rawCmd = in.readByte();
-        byte cmd = session.sentKey() ? this.readKey(rawCmd) : rawCmd;
+        // 1. Peek Command và Size bằng con trỏ tạm mà KHÔNG thay đổi this.curR
+        int tempR = this.curR;
 
-        // 2. Đọc Kích thước gói tin
+        byte rawCmd = in.readByte();
+        byte cmd;
+        if (isEncrypted) {
+            cmd = peekKey(key, tempR, rawCmd);
+            tempR = (tempR + 1) % keyLen;
+        } else {
+            cmd = rawCmd;
+        }
+
+        // 2. Peek Kích thước gói tin (2 bytes)
         int size;
-        if (session.sentKey()) {
-            if (in.readableBytes() < 2) {
-                in.resetReaderIndex();
-                this.curR = (this.curR - 1 + session.getKey().length) % session.getKey().length;
-                return;
-            }
+        if (isEncrypted) {
             byte b1 = in.readByte();
             byte b2 = in.readByte();
-            size = ((this.readKey(b1) & 0xFF) << 8) | (this.readKey(b2) & 0xFF);
+            byte db1 = peekKey(key, tempR, b1);
+            tempR = (tempR + 1) % keyLen;
+            byte db2 = peekKey(key, tempR, b2);
+            tempR = (tempR + 1) % keyLen;
+            size = ((db1 & 0xFF) << 8) | (db2 & 0xFF);
         } else {
-            if (in.readableBytes() < 2) {
-                in.resetReaderIndex();
-                return;
-            }
             size = in.readUnsignedShort();
         }
 
@@ -71,29 +73,29 @@ public class NroPacketDecoder extends ByteToMessageDecoder {
             throw new IOException("Goi tin khong hop le hoac vuot qua kich thuoc cho phep: " + size);
         }
 
-        // 3. Đọc dữ liệu Payload
+        // 3. Kiểm tra xem toàn bộ Payload đã tới đủ trong buffer chưa
         if (in.readableBytes() < size) {
+            // Chưa đủ dữ liệu TCP, reset về vị trí đánh dấu và chờ chunk tiếp theo
+            // Vì this.curR chưa từng bị thay đổi nên KHÔNG CẦN ROLLBACK!
             in.resetReaderIndex();
-            // Rollback cursor read key
-            if (session.sentKey()) {
-                int rollbackSteps = 3; // 1 byte cmd + 2 bytes size
-                this.curR = (this.curR - rollbackSteps + (session.getKey().length * 10)) % session.getKey().length;
-            }
             return;
         }
 
+        // 4. Toàn bộ gói tin đã có đủ trong buffer -> Đọc Payload và giải mã
         byte[] data = new byte[size];
         in.readBytes(data);
 
-        // 4. Giải mã dữ liệu Payload nếu đã kích hoạt Key
-        if (session.sentKey()) {
-            for (int i = 0; i < data.length; i++) {
-                data[i] = this.readKey(data[i]);
+        if (isEncrypted) {
+            for (int i = 0; i < size; i++) {
+                data[i] = peekKey(key, tempR, data[i]);
+                tempR = (tempR + 1) % keyLen;
             }
+            // Cập nhật trạng thái con trỏ mã hóa chính thức sau khi giải mã trọn vẹn gói tin
+            this.curR = tempR;
         }
 
         if (server.Manager.DEBUG) {
-            utils.Logger.log("[NETTY RECV] Cmd: " + cmd + ", size: " + size + ", encrypted: " + session.sentKey() + " from " + session.getIP());
+            utils.Logger.log("[NETTY RECV] Cmd: " + cmd + ", size: " + size + ", encrypted: " + isEncrypted + " from " + session.getIP());
         }
         out.add(new Message(cmd, data));
     }

@@ -15,7 +15,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.logging.Level;
 import models.Template;
 import org.json.simple.JSONArray;
@@ -364,434 +366,146 @@ public class PlayerDAO {
         });
     }
 
-    public static void updatePlayer(Player player) {
-        if (player == null || !player.idMark.isLoadedAllDataPlayer()) {
-            return;
+    public static void updatePlayersInTransactionAsync(Player... players) {
+        Thread.ofVirtual().name("db-trade-save").start(() -> {
+            try {
+                updatePlayersInTransaction(players);
+            } catch (Exception e) {
+                Logger.logException(PlayerDAO.class, e, "Lỗi updatePlayersInTransactionAsync");
+            }
+        });
+    }
+
+    public static final String QUERY_UPDATE_PLAYER = "update player set head = ?, have_tennis_space_ship = ?, "
+            + "clan_id = ?, data_inventory = ?, data_location = ?, data_point = ?, data_magic_tree = ?, "
+            + "items_body = ?, items_bag = ?, items_box = ?, items_box_lucky_round = ?, items_daban = ?, friends = ?, "
+            + "enemies = ?, data_intrinsic = ?, data_item_time = ?, devndung_time = ?, data_task = ?, data_mabu_egg = ?, pet = ?, "
+            + "data_black_ball = ?, data_side_task = ?, data_danh_hieu = ?, data_charm = ?, skills = ?, skills_shortcut = ?, notify = ?, "
+            + "baovetaikhoan = ?, data_card = ?, lasttimepkcommeson = ?, bandokhobau = ?, doanhtrai = ?, conduongrandoc = ?, masterDoesNotAttack = ?, "
+            + "nhanthoivang = ?, ruonggo = ?, sieuthanthuy = ?, vodaisinhtu = ?, rongxuong = ?, data_item_event = ?, data_luyentap = ?, data_training = ?, data_clan_task = ?, data_vip = ?, "
+            + "rank = ?, data_achievement = ?, giftcode = ?, danh_hieu_shop = ?, data_clan = ?, firstTimeLogin = ?, buarandom = ?, dien_sukien = ?, banhtet = ?, "
+            + "banhchung = ?, hoc_ky_nang = ?, boughtSkills = ?, arena_wins = ?, lucky_spins = ?"
+            + " where id = ?";
+
+    public static class PlayerSaveSnapshot {
+        public final Player player;
+        public final long playerId;
+        public final String playerName;
+        public final boolean isOffline;
+        public final Object[] params;
+
+        public PlayerSaveSnapshot(Player player, long playerId, String playerName, boolean isOffline, Object[] params) {
+            this.player = player;
+            this.playerId = playerId;
+            this.playerName = playerName;
+            this.isOffline = isOffline;
+            this.params = params;
+        }
+    }
+
+    public static PlayerSaveSnapshot extractSnapshot(Player player) {
+        if (player == null || player.idMark == null || !player.idMark.isLoadedAllDataPlayer()) {
+            return null;
         }
 
         if (player.inventory == null) {
             Logger.error("Lỗi nghiêm trọng: Cố gắng lưu người chơi " + player.name + " với inventory bị null.");
-            return;
+            return null;
         }
 
         synchronized (player) {
-            long st = System.currentTimeMillis();
             try {
-            JSONArray dataArray = new JSONArray();
+                JSONArray dataArray = new JSONArray();
 
-            //data kim lượng
-            dataArray.add(player.inventory.gold > Inventory.LIMIT_GOLD
-                    ? Inventory.LIMIT_GOLD : player.inventory.gold);
-            dataArray.add(player.inventory.gem);
-            dataArray.add(player.inventory.ruby);
-            dataArray.add(player.inventory.coupon);
-            dataArray.add(player.inventory.event);
-            String inventory = dataArray.toJSONString();
-            dataArray.clear();
+                //data kim lượng
+                dataArray.add(player.inventory.gold > Inventory.LIMIT_GOLD
+                        ? Inventory.LIMIT_GOLD : player.inventory.gold);
+                dataArray.add(player.inventory.gem);
+                dataArray.add(player.inventory.ruby);
+                dataArray.add(player.inventory.coupon);
+                dataArray.add(player.inventory.event);
+                String inventory = dataArray.toJSONString();
+                dataArray.clear();
 
-            int mapId = -1;
-            if (player.zone != null && player.zone.map != null) {
-                mapId = player.zone.map.mapId;
-            } else if (player.mapIdBeforeLogout >= 0) {
-                mapId = player.mapIdBeforeLogout;
-            } else {
-                mapId = player.gender + 21;
-            }
-            int x = (player.location != null && player.location.x > 0) ? player.location.x : 300;
-            int y = (player.location != null && player.location.y > 0) ? player.location.y : 336;
-            long hp = player.nPoint != null ? player.nPoint.hp : 1;
-            long mp = player.nPoint != null ? player.nPoint.mp : 1;
-            if (player.isDie()) {
-                mapId = player.gender + 21;
-                x = 300;
-                y = 336;
-                hp = 1;
-                mp = 1;
-            } else if (!player.isOffline) {
-                if (MapService.gI().isMapPhoBan(mapId) || MapService.gI().isMapBlackBallWar(mapId) || MapService.gI().isMapMaBu(mapId) || MapService.gI().isMapSieuThanhThuy(mapId) || ChangeMapService.gI().checkMapCanJoin(player, MapService.gI().getMapCanJoin(player, mapId, 0)) == null) {
+                int mapId = -1;
+                if (player.zone != null && player.zone.map != null) {
+                    mapId = player.zone.map.mapId;
+                } else if (player.mapIdBeforeLogout >= 0) {
+                    mapId = player.mapIdBeforeLogout;
+                } else {
+                    mapId = player.gender + 21;
+                }
+                int x = (player.location != null && player.location.x > 0) ? player.location.x : 300;
+                int y = (player.location != null && player.location.y > 0) ? player.location.y : 336;
+                long hp = player.nPoint != null ? player.nPoint.hp : 1;
+                long mp = player.nPoint != null ? player.nPoint.mp : 1;
+                if (player.isDie()) {
                     mapId = player.gender + 21;
                     x = 300;
                     y = 336;
+                    hp = 1;
+                    mp = 1;
+                } else if (!player.isOffline) {
+                    if (MapService.gI().isMapPhoBan(mapId) || MapService.gI().isMapBlackBallWar(mapId) || MapService.gI().isMapMaBu(mapId) || MapService.gI().isMapSieuThanhThuy(mapId) || ChangeMapService.gI().checkMapCanJoin(player, MapService.gI().getMapCanJoin(player, mapId, 0)) == null) {
+                        mapId = player.gender + 21;
+                        x = 300;
+                        y = 336;
+                    }
                 }
-            }
 
-            //data vị trí
-            dataArray.add(mapId);
-            dataArray.add(x);
-            dataArray.add(y);
-            String location = dataArray.toJSONString();
-            dataArray.clear();
-
-            //data chỉ số
-            dataArray.add(player.nPoint.limitPower);
-            dataArray.add(player.nPoint.power);
-            dataArray.add(player.nPoint.tiemNang);
-            dataArray.add(player.nPoint.stamina);
-            dataArray.add(player.nPoint.maxStamina);
-            dataArray.add(player.nPoint.hpg);
-            dataArray.add(player.nPoint.mpg);
-            dataArray.add(player.nPoint.dameg);
-            dataArray.add(player.nPoint.defg);
-            dataArray.add(player.nPoint.critg);
-            dataArray.add(0);
-            dataArray.add(hp);
-            dataArray.add(mp);
-            String point = dataArray.toJSONString();
-            dataArray.clear();
-
-            //data nhiệm vụ danh hiệu
-            dataArray.add(player.playerTask.taskdh.Nap);
-            dataArray.add(player.playerTask.taskdh.ResetTime);
-            dataArray.add(player.playerTask.taskdh.Shenron);
-            dataArray.add(player.playerTask.taskdh.Hagucboss);
-            dataArray.add(player.playerTask.taskdh.DapDo);
-            dataArray.add(player.playerTask.taskdh.SieuHang);
-            dataArray.add(player.playerTask.taskdh.TaskBoMong);
-            dataArray.add(player.playerTask.taskdh.ChoSuong);
-            dataArray.add(player.playerTask.taskdh.ChoNuoc);
-            dataArray.add(player.playerTask.taskdh.NhatDo);
-            dataArray.add(player.playerTask.taskdh.AnTrom);
-            dataArray.add(player.playerTask.taskdh.ODo);
-            dataArray.add(player.playerTask.taskdh.DungLoa);
-            String Danhieu = dataArray.toJSONString();
-            dataArray.clear();
-
-            //data đậu thần
-            dataArray.add(player.magicTree.level);
-            dataArray.add(player.magicTree.currPeas);
-            dataArray.add(player.magicTree.isUpgrade ? 1 : 0);
-            dataArray.add(player.magicTree.lastTimeHarvest);
-            dataArray.add(player.magicTree.lastTimeUpgrade);
-            String magicTree = dataArray.toJSONString();
-            dataArray.clear();
-
-            //data body
-            JSONArray dataItem = new JSONArray();
-            for (Item item : player.inventory.itemsBody) {
-                JSONArray opt = new JSONArray();
-                if (item.isNotNullItem()) {
-                    dataItem.add(item.template.id);
-                    dataItem.add(item.quantity);
-                    JSONArray options = new JSONArray();
-                    for (Item.ItemOption io : item.itemOptions) {
-                        opt.add(io.optionTemplate.id);
-                        opt.add(io.param);
-                        options.add(opt.toJSONString());
-                        opt.clear();
-                    }
-                    dataItem.add(options.toJSONString());
-                } else {
-                    dataItem.add(-1);
-                    dataItem.add(0);
-                    dataItem.add(opt.toJSONString());
-                }
-                dataItem.add(item.createTime);
-                dataArray.add(dataItem.toJSONString());
-                dataItem.clear();
-            }
-            String itemsBody = dataArray.toJSONString();
-            dataArray.clear();
-
-            int thoiVangBag = 0;
-            int thoiVangBox = 0;
-            int ngocRong3sBag = 0;
-            int ngocRong3sBox = 0;
-            int ngocRong4sBag = 0;
-            int ngocRong4sBox = 0;
-
-            //data bag
-            for (Item item : player.inventory.itemsBag) {
-                JSONArray opt = new JSONArray();
-                if (item.isNotNullItem()) {
-                    dataItem.add(item.template.id);
-                    dataItem.add(item.quantity);
-                    if (item.template.id == 457) {
-                        thoiVangBag = item.quantity;
-                    } else if (item.template.id == 16) {
-                        ngocRong3sBag = item.quantity;
-                    } else if (item.template.id == 17) {
-                        ngocRong4sBag = item.quantity;
-                    }
-                    JSONArray options = new JSONArray();
-                    for (Item.ItemOption io : item.itemOptions) {
-                        opt.add(io.optionTemplate.id);
-                        opt.add(io.param);
-                        options.add(opt.toJSONString());
-                        opt.clear();
-                    }
-                    dataItem.add(options.toJSONString());
-                } else {
-                    dataItem.add(-1);
-                    dataItem.add(0);
-                    dataItem.add(opt.toJSONString());
-                }
-                dataItem.add(item.createTime);
-                dataArray.add(dataItem.toJSONString());
-                dataItem.clear();
-            }
-            String itemsBag = dataArray.toJSONString();
-            dataArray.clear();
-
-            //data box
-            for (Item item : player.inventory.itemsBox) {
-                JSONArray opt = new JSONArray();
-                if (item.isNotNullItem()) {
-                    dataItem.add(item.template.id);
-                    dataItem.add(item.quantity);
-                    if (item.template.id == 457) {
-                        thoiVangBox = item.quantity;
-                    } else if (item.template.id == 16) {
-                        ngocRong3sBox = item.quantity;
-                    } else if (item.template.id == 17) {
-                        ngocRong4sBox = item.quantity;
-                    }
-                    JSONArray options = new JSONArray();
-                    for (Item.ItemOption io : item.itemOptions) {
-                        opt.add(io.optionTemplate.id);
-                        opt.add(io.param);
-                        options.add(opt.toJSONString());
-                        opt.clear();
-                    }
-                    dataItem.add(options.toJSONString());
-                } else {
-                    dataItem.add(-1);
-                    dataItem.add(0);
-                    dataItem.add(opt.toJSONString());
-                }
-                dataItem.add(item.createTime);
-                dataArray.add(dataItem.toJSONString());
-                dataItem.clear();
-            }
-            String itemsBox = dataArray.toJSONString();
-            dataArray.clear();
-
-            //data box crack ball
-            for (Item item : player.inventory.itemsBoxCrackBall) {
-                JSONArray opt = new JSONArray();
-                if (item.isNotNullItem()) {
-                    dataItem.add(item.template.id);
-                    dataItem.add(item.quantity);
-                    JSONArray options = new JSONArray();
-                    for (Item.ItemOption io : item.itemOptions) {
-                        opt.add(io.optionTemplate.id);
-                        opt.add(io.param);
-                        options.add(opt.toJSONString());
-                        opt.clear();
-                    }
-                    dataItem.add(options.toJSONString());
-                } else {
-                    dataItem.add(-1);
-                    dataItem.add(0);
-                    dataItem.add(opt.toJSONString());
-                }
-                dataItem.add(item.createTime);
-                dataArray.add(dataItem.toJSONString());
-                dataItem.clear();
-            }
-            String itemsBoxLuckyRound = dataArray.toJSONString();
-            dataArray.clear();
-
-            //data item da ban
-            for (Item item : player.inventory.itemsDaBan) {
-                JSONArray opt = new JSONArray();
-                if (item.isNotNullItem()) {
-                    dataItem.add(item.template.id);
-                    dataItem.add(item.quantity);
-                    JSONArray options = new JSONArray();
-                    for (Item.ItemOption io : item.itemOptions) {
-                        opt.add(io.optionTemplate.id);
-                        opt.add(io.param);
-                        options.add(opt.toJSONString());
-                        opt.clear();
-                    }
-                    dataItem.add(options.toJSONString());
-                } else {
-                    dataItem.add(-1);
-                    dataItem.add(0);
-                    dataItem.add(opt.toJSONString());
-                }
-                dataItem.add(item.createTime);
-                dataArray.add(dataItem.toJSONString());
-                dataItem.clear();
-            }
-            String itemsDaBan = dataArray.toJSONString();
-            dataArray.clear();
-
-            //data bạn bè
-            JSONArray dataFE = new JSONArray();
-            for (Friend f : player.friends) {
-                dataFE.add(f.id);
-                dataFE.add(f.name);
-                dataFE.add(f.head);
-                dataFE.add(f.body);
-                dataFE.add(f.leg);
-                dataFE.add(f.bag);
-                dataFE.add(f.power);
-                dataArray.add(dataFE.toJSONString());
-                dataFE.clear();
-            }
-            String friend = dataArray.toJSONString();
-            dataArray.clear();
-
-            //data kẻ thù
-            for (Friend e : player.enemies) {
-                dataFE.add(e.id);
-                dataFE.add(e.name);
-                dataFE.add(e.head);
-                dataFE.add(e.body);
-                dataFE.add(e.leg);
-                dataFE.add(e.bag);
-                dataFE.add(e.power);
-                dataArray.add(dataFE.toJSONString());
-                dataFE.clear();
-            }
-            String enemy = dataArray.toJSONString();
-            dataArray.clear();
-
-            //data nội tại
-            JSONArray dataIntrinsic = new JSONArray();
-            dataIntrinsic.add(player.playerIntrinsic.intrinsic.id);
-            dataIntrinsic.add(player.playerIntrinsic.intrinsic.param1);
-            dataIntrinsic.add(player.playerIntrinsic.countOpen);
-            dataIntrinsic.add(player.playerIntrinsic.intrinsic.param2);
-            String intrinsic = dataIntrinsic.toJSONString();
-
-            //data item time
-            dataArray.add((player.itemTime.isUseBoHuyet ? (ItemTime.TIME_ITEM - (System.currentTimeMillis() - player.itemTime.lastTimeBoHuyet)) : 0));
-            dataArray.add((player.itemTime.isUseBoHuyet2 ? (ItemTime.TIME_ITEM - (System.currentTimeMillis() - player.itemTime.lastTimeBoHuyet2)) : 0));
-            dataArray.add((player.itemTime.isUseBoKhi ? (ItemTime.TIME_ITEM - (System.currentTimeMillis() - player.itemTime.lastTimeBoKhi)) : 0));
-            dataArray.add((player.itemTime.isUseBoKhi2 ? (ItemTime.TIME_ITEM - (System.currentTimeMillis() - player.itemTime.lastTimeBoKhi2)) : 0));
-            dataArray.add((player.itemTime.isUseGiapXen ? (ItemTime.TIME_ITEM - (System.currentTimeMillis() - player.itemTime.lastTimeGiapXen)) : 0));
-            dataArray.add((player.itemTime.isUseGiapXen2 ? (ItemTime.TIME_ITEM - (System.currentTimeMillis() - player.itemTime.lastTimeGiapXen2)) : 0));
-            dataArray.add((player.itemTime.isUseCuongNo ? (ItemTime.TIME_ITEM - (System.currentTimeMillis() - player.itemTime.lastTimeCuongNo)) : 0));
-            dataArray.add((player.itemTime.isUseCuongNo2 ? (ItemTime.TIME_ITEM - (System.currentTimeMillis() - player.itemTime.lastTimeCuongNo2)) : 0));
-            dataArray.add((player.itemTime.isUseAnDanh ? (ItemTime.TIME_ITEM - (System.currentTimeMillis() - player.itemTime.lastTimeAnDanh)) : 0));
-            dataArray.add((player.itemTime.isUseAnDanh2 ? (ItemTime.TIME_ITEM - (System.currentTimeMillis() - player.itemTime.lastTimeAnDanh2)) : 0));
-            dataArray.add((player.itemTime.isOpenPower ? (ItemTime.TIME_OPEN_POWER - (System.currentTimeMillis() - player.itemTime.lastTimeOpenPower)) : 0));
-            dataArray.add((player.itemTime.isUseMayDo ? (ItemTime.TIME_MAY_DO - (System.currentTimeMillis() - player.itemTime.lastTimeUseMayDo)) : 0));
-            dataArray.add((player.itemTime.isUseMayDo2 ? (ItemTime.TIME_MAY_DO - (System.currentTimeMillis() - player.itemTime.lastTimeUseMayDo2)) : 0));
-            dataArray.add(0);
-            dataArray.add((player.itemTime.isEatMeal ? (ItemTime.TIME_EAT_MEAL - (System.currentTimeMillis() - player.itemTime.lastTimeEatMeal)) : 0));
-            dataArray.add(player.itemTime.iconMeal);
-            dataArray.add((player.itemTime.isUseTDLT ? ((player.itemTime.timeTDLT - (System.currentTimeMillis() - player.itemTime.lastTimeUseTDLT)) / 60 / 1000) : 0));
-            dataArray.add((player.itemTime.isUseCMS ? (ItemTime.TIME_CMS - (System.currentTimeMillis() - player.itemTime.lastTimeUseCMS)) : 0));
-            dataArray.add((player.itemTime.isUseGTPT ? (ItemTime.TIME_ITEM - (System.currentTimeMillis() - player.itemTime.lastTimeUseGTPT)) : 0));
-            dataArray.add((player.itemTime.isUseDK ? (ItemTime.TIME_DK - (System.currentTimeMillis() - player.itemTime.lastTimeUseDK)) : 0));
-            dataArray.add((player.itemTime.isUseRX ? ((player.itemTime.timeRX - (System.currentTimeMillis() - player.itemTime.lastTimeUseRX)) / 60 / 1000) : 0));
-            dataArray.add((player.itemTime.isEatMeal2 ? (ItemTime.TIME_EAT_MEAL - (System.currentTimeMillis() - player.itemTime.lastTimeEatMeal2)) : 0));
-            dataArray.add(player.itemTime.iconMeal2);
-            dataArray.add(0);
-            dataArray.add((player.itemTime.isUseNCD ? (ItemTime.TIME_NCD - (System.currentTimeMillis() - player.itemTime.lastTimeUseNCD)) : 0));
-            dataArray.add(0);
-            dataArray.add(0);
-            dataArray.add(player.itemTime.isKhauTrang ? (ItemTime.TIME_MAY_DO - (System.currentTimeMillis() - player.itemTime.lastTimeKhauTrang)) : 0);
-            dataArray.add(player.itemTime.isTnDeTu ? (ItemTime.TIME_MAY_DO - (System.currentTimeMillis() - player.itemTime.lastTimeTnDeTu)) : 0);
-            dataArray.add((player.itemTime.isXimuoihoadao ? (ItemTime.TIME_ITEM - (System.currentTimeMillis() - player.itemTime.lastTimeXimuoihoadao)) : 0));
-            dataArray.add((player.itemTime.isXimuoihoamai ? (ItemTime.TIME_ITEM - (System.currentTimeMillis() - player.itemTime.lastTimeXimuoihoamai)) : 0));
-            dataArray.add((player.itemTime.isBuaTNSM ? (ItemTime.TIME_ITEM - (System.currentTimeMillis() - player.itemTime.lastTimeBuaTNSM)) : 0));
-            String itemTime = dataArray.toJSONString();
-            dataArray.clear();
-
-            dataArray.add((player.itemTime.isUseCo4La ? (ItemTime.TIME_CO - (System.currentTimeMillis() - player.itemTime.lastTimeUseCo4La)) : 0));
-            dataArray.add((player.itemTime.banhchung ? (ItemTime.DEVNDUNG - (System.currentTimeMillis() - player.itemTime.banhchunglastTime)) : 0));
-            dataArray.add((player.itemTime.banhtet ? (ItemTime.DEVNDUNG - (System.currentTimeMillis() - player.itemTime.banhtetlastTime)) : 0));
-            dataArray.add((player.itemTime.nguqua ? (ItemTime.DEVNDUNG - (System.currentTimeMillis() - player.itemTime.nguqualastTime)) : 0));
-            String DevNdung = dataArray.toJSONString();
-            dataArray.clear();
-
-            //data nhiệm vụ
-            dataArray.add(player.playerTask.taskMain.id);
-            dataArray.add(player.playerTask.taskMain.index);
-            dataArray.add(player.playerTask.taskMain.subTasks.get(player.playerTask.taskMain.index).count);
-            dataArray.add(player.playerTask.taskMain.lastTime);
-            String task = dataArray.toJSONString();
-            dataArray.clear();
-
-            //data nhiệm vụ hàng ngày
-            dataArray.add(player.playerTask.sideTask.template != null ? player.playerTask.sideTask.template.id : -1);
-            dataArray.add(player.playerTask.sideTask.receivedTime);
-            dataArray.add(player.playerTask.sideTask.count);
-            dataArray.add(player.playerTask.sideTask.maxCount);
-            dataArray.add(player.playerTask.sideTask.leftTask);
-            dataArray.add(player.playerTask.sideTask.level);
-            dataArray.add(player.playerTask.sideTask.lastTimeCancel);
-            dataArray.add(player.playerTask.sideTask.cancelCount);
-            String sideTask = dataArray.toJSONString();
-            dataArray.clear();
-
-            //data trứng bư
-            if (player.mabuEgg != null) {
-                dataArray.add(player.mabuEgg.lastTimeCreate);
-                dataArray.add(player.mabuEgg.timeDone);
-            }
-            String mabuEgg = dataArray.toJSONString();
-            dataArray.clear();
-
-            //data bùa
-            dataArray.add(player.charms.tdTriTue);
-            dataArray.add(player.charms.tdManhMe);
-            dataArray.add(player.charms.tdDaTrau);
-            dataArray.add(player.charms.tdOaiHung);
-            dataArray.add(player.charms.tdBatTu);
-            dataArray.add(player.charms.tdDeoDai);
-            dataArray.add(player.charms.tdThuHut);
-            dataArray.add(player.charms.tdDeTu);
-            dataArray.add(player.charms.tdTriTue3);
-            dataArray.add(player.charms.tdTriTue4);
-            String charm = dataArray.toJSONString();
-            dataArray.clear();
-
-            //data skill
-            JSONArray dataSkill = new JSONArray();
-            for (Skill skill : player.playerSkill.skills) {
-                dataSkill.add(skill.template.id);
-                dataSkill.add(skill.point);
-                dataSkill.add(skill.lastTimeUseThisSkill);
-                dataSkill.add(skill.currLevel);
-                dataArray.add(dataSkill.toJSONString());
-                dataSkill.clear();
-            }
-            String skills = dataArray.toJSONString();
-            dataArray.clear();
-
-            //data skill shortcut
-            for (int skillId : player.playerSkill.skillShortCut) {
-                dataArray.add(skillId);
-            }
-            String skillShortcut = dataArray.toJSONString();
-            dataArray.clear();
-
-            String pet = "[]";
-            if (player.pet != null) {
-                JSONArray petDataArr = new JSONArray();
-                //pet info
-                dataArray.add(player.pet.typePet);
-                dataArray.add(player.pet.gender);
-                dataArray.add(player.pet.name);
-                dataArray.add(player.fusion.typeFusion);
-                int timeLeftFusion = (int) (Fusion.TIME_FUSION - (System.currentTimeMillis() - player.fusion.lastTimeFusion));
-                dataArray.add(timeLeftFusion < 0 ? 0 : timeLeftFusion);
-                dataArray.add(player.pet.status);
-                petDataArr.add(dataArray.toJSONString());
+                //data vị trí
+                dataArray.add(mapId);
+                dataArray.add(x);
+                dataArray.add(y);
+                String location = dataArray.toJSONString();
                 dataArray.clear();
-                //pet point
-                dataArray.add(player.pet.nPoint.limitPower);
-                dataArray.add(player.pet.nPoint.power);
-                dataArray.add(player.pet.nPoint.tiemNang);
-                dataArray.add(player.pet.nPoint.stamina);
-                dataArray.add(player.pet.nPoint.maxStamina);
-                dataArray.add(player.pet.nPoint.hpg);
-                dataArray.add(player.pet.nPoint.mpg);
-                dataArray.add(player.pet.nPoint.dameg);
-                dataArray.add(player.pet.nPoint.defg);
-                dataArray.add(player.pet.nPoint.critg);
-                dataArray.add(player.pet.nPoint.hp);
-                dataArray.add(player.pet.nPoint.mp);
-                petDataArr.add(dataArray.toJSONString());
+
+                //data chỉ số
+                dataArray.add(player.nPoint.limitPower);
+                dataArray.add(player.nPoint.power);
+                dataArray.add(player.nPoint.tiemNang);
+                dataArray.add(player.nPoint.stamina);
+                dataArray.add(player.nPoint.maxStamina);
+                dataArray.add(player.nPoint.hpg);
+                dataArray.add(player.nPoint.mpg);
+                dataArray.add(player.nPoint.dameg);
+                dataArray.add(player.nPoint.defg);
+                dataArray.add(player.nPoint.critg);
+                dataArray.add(0);
+                dataArray.add(hp);
+                dataArray.add(mp);
+                String point = dataArray.toJSONString();
                 dataArray.clear();
-                //pet body
-                JSONArray items = new JSONArray();
-                for (Item item : player.pet.inventory.itemsBody) {
+
+                //data nhiệm vụ danh hiệu
+                dataArray.add(player.playerTask.taskdh.Nap);
+                dataArray.add(player.playerTask.taskdh.ResetTime);
+                dataArray.add(player.playerTask.taskdh.Shenron);
+                dataArray.add(player.playerTask.taskdh.Hagucboss);
+                dataArray.add(player.playerTask.taskdh.DapDo);
+                dataArray.add(player.playerTask.taskdh.SieuHang);
+                dataArray.add(player.playerTask.taskdh.TaskBoMong);
+                dataArray.add(player.playerTask.taskdh.ChoSuong);
+                dataArray.add(player.playerTask.taskdh.ChoNuoc);
+                dataArray.add(player.playerTask.taskdh.NhatDo);
+                dataArray.add(player.playerTask.taskdh.AnTrom);
+                dataArray.add(player.playerTask.taskdh.ODo);
+                dataArray.add(player.playerTask.taskdh.DungLoa);
+                String Danhieu = dataArray.toJSONString();
+                dataArray.clear();
+
+                //data đậu thần
+                dataArray.add(player.magicTree.level);
+                dataArray.add(player.magicTree.currPeas);
+                dataArray.add(player.magicTree.isUpgrade ? 1 : 0);
+                dataArray.add(player.magicTree.lastTimeHarvest);
+                dataArray.add(player.magicTree.lastTimeUpgrade);
+                String magicTree = dataArray.toJSONString();
+                dataArray.clear();
+
+                //data body
+                JSONArray dataItem = new JSONArray();
+                for (Item item : player.inventory.itemsBody) {
                     JSONArray opt = new JSONArray();
                     if (item.isNotNullItem()) {
                         dataItem.add(item.template.id);
@@ -810,280 +524,627 @@ public class PlayerDAO {
                         dataItem.add(opt.toJSONString());
                     }
                     dataItem.add(item.createTime);
-                    items.add(dataItem.toJSONString());
+                    dataArray.add(dataItem.toJSONString());
                     dataItem.clear();
                 }
-                petDataArr.add(items.toJSONString());
-                //pet skill
-                JSONArray petSkills = new JSONArray();
-                for (Skill s : player.pet.playerSkill.skills) {
-                    JSONArray pskill = new JSONArray();
-                    if (s.skillId != -1) {
-                        pskill.add(s.template.id);
-                        pskill.add(s.point);
-                        pskill.add(s.lastTimeUseThisSkill);
-                        pskill.add(s.currLevel);
+                String itemsBody = dataArray.toJSONString();
+                dataArray.clear();
+
+                //data bag
+                for (Item item : player.inventory.itemsBag) {
+                    JSONArray opt = new JSONArray();
+                    if (item.isNotNullItem()) {
+                        dataItem.add(item.template.id);
+                        dataItem.add(item.quantity);
+                        JSONArray options = new JSONArray();
+                        for (Item.ItemOption io : item.itemOptions) {
+                            opt.add(io.optionTemplate.id);
+                            opt.add(io.param);
+                            options.add(opt.toJSONString());
+                            opt.clear();
+                        }
+                        dataItem.add(options.toJSONString());
                     } else {
-                        pskill.add(-1);
-                        pskill.add(0);
-                        pskill.add(0);
-                        pskill.add(0);
+                        dataItem.add(-1);
+                        dataItem.add(0);
+                        dataItem.add(opt.toJSONString());
                     }
-                    petSkills.add(pskill.toJSONString());
+                    dataItem.add(item.createTime);
+                    dataArray.add(dataItem.toJSONString());
+                    dataItem.clear();
                 }
-                petDataArr.add(petSkills.toJSONString());
-                pet = petDataArr.toJSONString();
-            }
+                String itemsBag = dataArray.toJSONString();
+                dataArray.clear();
 
-            //data thưởng ngọc rồng đen
-            for (int i = 0; i < player.rewardBlackBall.timeOutOfDateReward.length; i++) {
-                JSONArray dataBlackBallArr = new JSONArray();
-                dataBlackBallArr.add(player.rewardBlackBall.timeOutOfDateReward[i]);
-                dataBlackBallArr.add(player.rewardBlackBall.lastTimeGetReward[i]);
-                dataBlackBallArr.add(player.rewardBlackBall.quantilyBlackBall[i]);
-                dataArray.add(dataBlackBallArr.toJSONString());
-                dataBlackBallArr.clear();
-            }
-            String dataBlackBall = dataArray.toJSONString();
-            dataArray.clear();
-
-            //Ma Bao Ve
-            dataArray.add(player.mbv);
-            dataArray.add(player.baovetaikhoan);
-            dataArray.add(player.mbvtime);
-            String dataBVTK = dataArray.toJSONString();
-            dataArray.clear();
-
-            //Card
-            String dataCard = JSONValue.toJSONString(player.Cards);
-
-            //BDKB
-            dataArray.add(player.timesPerDayBDKB);
-            dataArray.add(player.lastTimeJoinBDKB);
-            String dataBDKB = dataArray.toJSONString();
-            dataArray.clear();
-
-            //CDRD
-            dataArray.add(player.joinCDRD);
-            dataArray.add(player.lastTimeJoinCDRD);
-            dataArray.add(player.talkToThuongDe);
-            dataArray.add(player.talkToThanMeo);
-            String dataCDRD = dataArray.toJSONString();
-            dataArray.clear();
-
-            //Nhận Thỏi Vàng
-            dataArray.add(player.danhanthoivang);
-            dataArray.add(player.lastRewardGoldBarTime);
-            String dataNhanThoiVang = dataArray.toJSONString();
-            dataArray.clear();
-
-            //Rương Gỗ
-            dataArray.add(player.levelWoodChest);
-            dataArray.add(player.goldChallenge);
-            dataArray.add(player.rubyChallenge);
-            dataArray.add(player.lastTimeRewardWoodChest);
-            dataArray.add(player.lastTimePKDHVT23);
-            String dataRuongGo = dataArray.toJSONString();
-            dataArray.clear();
-
-            //Siêu thần thủy
-            dataArray.add(player.winSTT);
-            dataArray.add(player.lastTimeWinSTT);
-            dataArray.add(player.callBossPocolo);
-            String dataSieuThanThuy = dataArray.toJSONString();
-            dataArray.clear();
-
-            //Võ đài sinh tử
-            dataArray.add(player.haveRewardVDST);
-            dataArray.add(player.thoiVangVoDaiSinhTu);
-            dataArray.add(player.lastTimePKVoDaiSinhTu);
-            dataArray.add(player.timePKVDST);
-            String dataVoDaiSinhTu = dataArray.toJSONString();
-            dataArray.clear();
-
-            //Data item event
-            dataArray.add(player.itemEvent.remainingTVGSCount);
-            dataArray.add(player.itemEvent.lastTVGSTime);
-            dataArray.add(player.itemEvent.remainingHHCount);
-            dataArray.add(player.itemEvent.lastHHTime);
-            dataArray.add(player.itemEvent.remainingBNCount);
-            dataArray.add(player.itemEvent.lastBNTime);
-            String dataItemEvent = dataArray.toJSONString();
-            dataArray.clear();
-
-            //Data Luyện Tập
-//            dataArray.add(player.levelLuyenTap);
-//            dataArray.add(player.dangKyTapTuDong);
-//            dataArray.add(player.mapIdDangTapTuDong);
-//            dataArray.add(player.tnsmLuyenTap);
-//            if (player.isOffline) {
-//                dataArray.add(player.lastTimeOffline);
-//            } else {
-//                dataArray.add(System.currentTimeMillis());
-//            }
-//            dataArray.add(player.traning.getTop());
-//            dataArray.add(player.traning.getTime());
-//            dataArray.add(player.traning.getLastTime());
-//            dataArray.add(player.traning.getLastTop());
-//            dataArray.add(player.traning.getLastRewardTime());
-//            String dataLuyenTap = dataArray.toJSONString();
-//            dataArray.clear();
-// --- 1. Xử lý Data Luyện Tập (Auto tập luyện offline) ---
-            // Cột: data_luyentap
-            dataArray.add(player.levelLuyenTap);
-            dataArray.add(player.dangKyTapTuDong);
-            dataArray.add(player.mapIdDangTapTuDong);
-            dataArray.add(player.tnsmLuyenTap);
-            if (player.isOffline) {
-                dataArray.add(player.lastTimeOffline);
-            } else {
-                dataArray.add(System.currentTimeMillis());
-            }
-            String dataLuyenTap = dataArray.toJSONString();
-            dataArray.clear();
-
-            // --- 2. Xử lý Data Training (Luyện tập Whis) ---
-            // Cột: data_training
-            // Cấu trúc mảng: [Level, Time, LastTime, LastTop, LastRewardTime]
-            if (player.traning != null) {
-                dataArray.add(player.traning.getTop()); // Index 0: Level (Dùng để xếp hạng)
-                dataArray.add(player.traning.getTime());
-                dataArray.add(player.traning.getLastTime());
-                dataArray.add(player.traning.getLastTop());
-                dataArray.add(player.traning.getLastRewardTime());
-            } else {
-                // Mặc định nếu chưa có dữ liệu
-                dataArray.add(1); dataArray.add(0); dataArray.add(0); dataArray.add(0); dataArray.add(0);
-            }
-            String dataTrainingWhis = dataArray.toJSONString();
-            dataArray.clear();
-
-            //data nhiệm vụ bang hàng ngày
-            dataArray.add(player.playerTask.clanTask.template != null ? player.playerTask.clanTask.template.id : -1);
-            dataArray.add(player.playerTask.clanTask.receivedTime);
-            dataArray.add(player.playerTask.clanTask.count);
-            dataArray.add(player.playerTask.clanTask.maxCount);
-            dataArray.add(player.playerTask.clanTask.leftTask);
-            dataArray.add(player.playerTask.clanTask.level);
-            String clanTask = dataArray.toJSONString();
-            dataArray.clear();
-
-            //data vip
-            dataArray.add(player.timesPerDayCuuSat);
-            dataArray.add(player.lastTimeCuuSat);
-            dataArray.add(player.nhanDeTuNangVIP);
-            dataArray.add(player.nhanVangNangVIP);
-            dataArray.add(player.nhanSKHVIP);
-            String dataVip = dataArray.toJSONString();
-            dataArray.clear();
-
-            //Data doanh trại
-            dataArray.add(player.lastTimeJoinDT);
-            String doanhtrai = dataArray.toJSONString();
-            dataArray.clear();
-
-            //data achievement
-            if (player.achievement != null) {
-                for (Template.AchievementQuest aq : player.achievement.getAchievementList()) {
-                    JSONArray a = new JSONArray();
-                    a.add(aq.completed);
-                    a.add(aq.isRecieve);
-                    dataArray.add(a.toJSONString());
-                    a.clear();
+                //data box
+                for (Item item : player.inventory.itemsBox) {
+                    JSONArray opt = new JSONArray();
+                    if (item.isNotNullItem()) {
+                        dataItem.add(item.template.id);
+                        dataItem.add(item.quantity);
+                        JSONArray options = new JSONArray();
+                        for (Item.ItemOption io : item.itemOptions) {
+                            opt.add(io.optionTemplate.id);
+                            opt.add(io.param);
+                            options.add(opt.toJSONString());
+                            opt.clear();
+                        }
+                        dataItem.add(options.toJSONString());
+                    } else {
+                        dataItem.add(-1);
+                        dataItem.add(0);
+                        dataItem.add(opt.toJSONString());
+                    }
+                    dataItem.add(item.createTime);
+                    dataArray.add(dataItem.toJSONString());
+                    dataItem.clear();
                 }
+                String itemsBox = dataArray.toJSONString();
+                dataArray.clear();
+
+                //data box crack ball
+                synchronized (player.inventory.itemsBoxCrackBall) {
+                    for (Item item : player.inventory.itemsBoxCrackBall) {
+                        if (item == null) {
+                            continue;
+                        }
+                        JSONArray opt = new JSONArray();
+                        if (item.isNotNullItem()) {
+                            dataItem.add(item.template.id);
+                            dataItem.add(item.quantity);
+                            JSONArray options = new JSONArray();
+                            for (Item.ItemOption io : item.itemOptions) {
+                                opt.add(io.optionTemplate.id);
+                                opt.add(io.param);
+                                options.add(opt.toJSONString());
+                                opt.clear();
+                            }
+                            dataItem.add(options.toJSONString());
+                        } else {
+                            dataItem.add(-1);
+                            dataItem.add(0);
+                            dataItem.add(opt.toJSONString());
+                        }
+                        dataItem.add(item.createTime);
+                        dataArray.add(dataItem.toJSONString());
+                        dataItem.clear();
+                    }
+                }
+                String itemsBoxLuckyRound = dataArray.toJSONString();
+                dataArray.clear();
+
+                //data item da ban
+                for (Item item : player.inventory.itemsDaBan) {
+                    JSONArray opt = new JSONArray();
+                    if (item.isNotNullItem()) {
+                        dataItem.add(item.template.id);
+                        dataItem.add(item.quantity);
+                        JSONArray options = new JSONArray();
+                        for (Item.ItemOption io : item.itemOptions) {
+                            opt.add(io.optionTemplate.id);
+                            opt.add(io.param);
+                            options.add(opt.toJSONString());
+                            opt.clear();
+                        }
+                        dataItem.add(options.toJSONString());
+                    } else {
+                        dataItem.add(-1);
+                        dataItem.add(0);
+                        dataItem.add(opt.toJSONString());
+                    }
+                    dataItem.add(item.createTime);
+                    dataArray.add(dataItem.toJSONString());
+                    dataItem.clear();
+                }
+                String itemsDaBan = dataArray.toJSONString();
+                dataArray.clear();
+
+                //data bạn bè
+                JSONArray dataFE = new JSONArray();
+                for (Friend f : player.friends) {
+                    dataFE.add(f.id);
+                    dataFE.add(f.name);
+                    dataFE.add(f.head);
+                    dataFE.add(f.body);
+                    dataFE.add(f.leg);
+                    dataFE.add(f.bag);
+                    dataFE.add(f.power);
+                    dataArray.add(dataFE.toJSONString());
+                    dataFE.clear();
+                }
+                String friend = dataArray.toJSONString();
+                dataArray.clear();
+
+                //data kẻ thù
+                for (Friend e : player.enemies) {
+                    dataFE.add(e.id);
+                    dataFE.add(e.name);
+                    dataFE.add(e.head);
+                    dataFE.add(e.body);
+                    dataFE.add(e.leg);
+                    dataFE.add(e.bag);
+                    dataFE.add(e.power);
+                    dataArray.add(dataFE.toJSONString());
+                    dataFE.clear();
+                }
+                String enemy = dataArray.toJSONString();
+                dataArray.clear();
+
+                //data nội tại
+                JSONArray dataIntrinsic = new JSONArray();
+                dataIntrinsic.add(player.playerIntrinsic.intrinsic.id);
+                dataIntrinsic.add(player.playerIntrinsic.intrinsic.param1);
+                dataIntrinsic.add(player.playerIntrinsic.countOpen);
+                dataIntrinsic.add(player.playerIntrinsic.intrinsic.param2);
+                String intrinsic = dataIntrinsic.toJSONString();
+
+                //data item time
+                dataArray.add((player.itemTime.isUseBoHuyet ? (ItemTime.TIME_ITEM - (System.currentTimeMillis() - player.itemTime.lastTimeBoHuyet)) : 0));
+                dataArray.add((player.itemTime.isUseBoHuyet2 ? (ItemTime.TIME_ITEM - (System.currentTimeMillis() - player.itemTime.lastTimeBoHuyet2)) : 0));
+                dataArray.add((player.itemTime.isUseBoKhi ? (ItemTime.TIME_ITEM - (System.currentTimeMillis() - player.itemTime.lastTimeBoKhi)) : 0));
+                dataArray.add((player.itemTime.isUseBoKhi2 ? (ItemTime.TIME_ITEM - (System.currentTimeMillis() - player.itemTime.lastTimeBoKhi2)) : 0));
+                dataArray.add((player.itemTime.isUseGiapXen ? (ItemTime.TIME_ITEM - (System.currentTimeMillis() - player.itemTime.lastTimeGiapXen)) : 0));
+                dataArray.add((player.itemTime.isUseGiapXen2 ? (ItemTime.TIME_ITEM - (System.currentTimeMillis() - player.itemTime.lastTimeGiapXen2)) : 0));
+                dataArray.add((player.itemTime.isUseCuongNo ? (ItemTime.TIME_ITEM - (System.currentTimeMillis() - player.itemTime.lastTimeCuongNo)) : 0));
+                dataArray.add((player.itemTime.isUseCuongNo2 ? (ItemTime.TIME_ITEM - (System.currentTimeMillis() - player.itemTime.lastTimeCuongNo2)) : 0));
+                dataArray.add((player.itemTime.isUseAnDanh ? (ItemTime.TIME_ITEM - (System.currentTimeMillis() - player.itemTime.lastTimeAnDanh)) : 0));
+                dataArray.add((player.itemTime.isUseAnDanh2 ? (ItemTime.TIME_ITEM - (System.currentTimeMillis() - player.itemTime.lastTimeAnDanh2)) : 0));
+                dataArray.add((player.itemTime.isOpenPower ? (ItemTime.TIME_OPEN_POWER - (System.currentTimeMillis() - player.itemTime.lastTimeOpenPower)) : 0));
+                dataArray.add((player.itemTime.isUseMayDo ? (ItemTime.TIME_MAY_DO - (System.currentTimeMillis() - player.itemTime.lastTimeUseMayDo)) : 0));
+                dataArray.add((player.itemTime.isUseMayDo2 ? (ItemTime.TIME_MAY_DO - (System.currentTimeMillis() - player.itemTime.lastTimeUseMayDo2)) : 0));
+                dataArray.add(0);
+                dataArray.add((player.itemTime.isEatMeal ? (ItemTime.TIME_EAT_MEAL - (System.currentTimeMillis() - player.itemTime.lastTimeEatMeal)) : 0));
+                dataArray.add(player.itemTime.iconMeal);
+                dataArray.add((player.itemTime.isUseTDLT ? ((player.itemTime.timeTDLT - (System.currentTimeMillis() - player.itemTime.lastTimeUseTDLT)) / 60 / 1000) : 0));
+                dataArray.add((player.itemTime.isUseCMS ? (ItemTime.TIME_CMS - (System.currentTimeMillis() - player.itemTime.lastTimeUseCMS)) : 0));
+                dataArray.add((player.itemTime.isUseGTPT ? (ItemTime.TIME_ITEM - (System.currentTimeMillis() - player.itemTime.lastTimeUseGTPT)) : 0));
+                dataArray.add((player.itemTime.isUseDK ? (ItemTime.TIME_DK - (System.currentTimeMillis() - player.itemTime.lastTimeUseDK)) : 0));
+                dataArray.add((player.itemTime.isUseRX ? ((player.itemTime.timeRX - (System.currentTimeMillis() - player.itemTime.lastTimeUseRX)) / 60 / 1000) : 0));
+                dataArray.add((player.itemTime.isEatMeal2 ? (ItemTime.TIME_EAT_MEAL - (System.currentTimeMillis() - player.itemTime.lastTimeEatMeal2)) : 0));
+                dataArray.add(player.itemTime.iconMeal2);
+                dataArray.add(0);
+                dataArray.add((player.itemTime.isUseNCD ? (ItemTime.TIME_NCD - (System.currentTimeMillis() - player.itemTime.lastTimeUseNCD)) : 0));
+                dataArray.add(0);
+                dataArray.add(0);
+                dataArray.add(player.itemTime.isKhauTrang ? (ItemTime.TIME_MAY_DO - (System.currentTimeMillis() - player.itemTime.lastTimeKhauTrang)) : 0);
+                dataArray.add(player.itemTime.isTnDeTu ? (ItemTime.TIME_MAY_DO - (System.currentTimeMillis() - player.itemTime.lastTimeTnDeTu)) : 0);
+                dataArray.add((player.itemTime.isXimuoihoadao ? (ItemTime.TIME_ITEM - (System.currentTimeMillis() - player.itemTime.lastTimeXimuoihoadao)) : 0));
+                dataArray.add((player.itemTime.isXimuoihoamai ? (ItemTime.TIME_ITEM - (System.currentTimeMillis() - player.itemTime.lastTimeXimuoihoamai)) : 0));
+                dataArray.add((player.itemTime.isBuaTNSM ? (ItemTime.TIME_ITEM - (System.currentTimeMillis() - player.itemTime.lastTimeBuaTNSM)) : 0));
+                String itemTime = dataArray.toJSONString();
+                dataArray.clear();
+
+                dataArray.add((player.itemTime.isUseCo4La ? (ItemTime.TIME_CO - (System.currentTimeMillis() - player.itemTime.lastTimeUseCo4La)) : 0));
+                dataArray.add((player.itemTime.banhchung ? (ItemTime.DEVNDUNG - (System.currentTimeMillis() - player.itemTime.banhchunglastTime)) : 0));
+                dataArray.add((player.itemTime.banhtet ? (ItemTime.DEVNDUNG - (System.currentTimeMillis() - player.itemTime.banhtetlastTime)) : 0));
+                dataArray.add((player.itemTime.nguqua ? (ItemTime.DEVNDUNG - (System.currentTimeMillis() - player.itemTime.nguqualastTime)) : 0));
+                String DevNdung = dataArray.toJSONString();
+                dataArray.clear();
+
+                //data nhiệm vụ
+                dataArray.add(player.playerTask.taskMain.id);
+                dataArray.add(player.playerTask.taskMain.index);
+                dataArray.add(player.playerTask.taskMain.subTasks.get(player.playerTask.taskMain.index).count);
+                dataArray.add(player.playerTask.taskMain.lastTime);
+                String task = dataArray.toJSONString();
+                dataArray.clear();
+
+                //data nhiệm vụ hàng ngày
+                dataArray.add(player.playerTask.sideTask.template != null ? player.playerTask.sideTask.template.id : -1);
+                dataArray.add(player.playerTask.sideTask.receivedTime);
+                dataArray.add(player.playerTask.sideTask.count);
+                dataArray.add(player.playerTask.sideTask.maxCount);
+                dataArray.add(player.playerTask.sideTask.leftTask);
+                dataArray.add(player.playerTask.sideTask.level);
+                dataArray.add(player.playerTask.sideTask.lastTimeCancel);
+                dataArray.add(player.playerTask.sideTask.cancelCount);
+                String sideTask = dataArray.toJSONString();
+                dataArray.clear();
+
+                //data trứng bư
+                if (player.mabuEgg != null) {
+                    dataArray.add(player.mabuEgg.lastTimeCreate);
+                    dataArray.add(player.mabuEgg.timeDone);
+                }
+                String mabuEgg = dataArray.toJSONString();
+                dataArray.clear();
+
+                //data bùa
+                dataArray.add(player.charms.tdTriTue);
+                dataArray.add(player.charms.tdManhMe);
+                dataArray.add(player.charms.tdDaTrau);
+                dataArray.add(player.charms.tdOaiHung);
+                dataArray.add(player.charms.tdBatTu);
+                dataArray.add(player.charms.tdDeoDai);
+                dataArray.add(player.charms.tdThuHut);
+                dataArray.add(player.charms.tdDeTu);
+                dataArray.add(player.charms.tdTriTue3);
+                dataArray.add(player.charms.tdTriTue4);
+                String charm = dataArray.toJSONString();
+                dataArray.clear();
+
+                //data skill
+                JSONArray dataSkill = new JSONArray();
+                for (Skill skill : player.playerSkill.skills) {
+                    dataSkill.add(skill.template.id);
+                    dataSkill.add(skill.point);
+                    dataSkill.add(skill.lastTimeUseThisSkill);
+                    dataSkill.add(skill.currLevel);
+                    dataArray.add(dataSkill.toJSONString());
+                    dataSkill.clear();
+                }
+                String skills = dataArray.toJSONString();
+                dataArray.clear();
+
+                //data skill shortcut
+                for (int skillId : player.playerSkill.skillShortCut) {
+                    dataArray.add(skillId);
+                }
+                String skillShortcut = dataArray.toJSONString();
+                dataArray.clear();
+
+                String pet = "[]";
+                if (player.pet != null) {
+                    JSONArray petDataArr = new JSONArray();
+                    //pet info
+                    dataArray.add(player.pet.typePet);
+                    dataArray.add(player.pet.gender);
+                    dataArray.add(player.pet.name);
+                    dataArray.add(player.fusion.typeFusion);
+                    int timeLeftFusion = (int) (Fusion.TIME_FUSION - (System.currentTimeMillis() - player.fusion.lastTimeFusion));
+                    dataArray.add(timeLeftFusion < 0 ? 0 : timeLeftFusion);
+                    dataArray.add(player.pet.status);
+                    petDataArr.add(dataArray.toJSONString());
+                    dataArray.clear();
+                    //pet point
+                    dataArray.add(player.pet.nPoint.limitPower);
+                    dataArray.add(player.pet.nPoint.power);
+                    dataArray.add(player.pet.nPoint.tiemNang);
+                    dataArray.add(player.pet.nPoint.stamina);
+                    dataArray.add(player.pet.nPoint.maxStamina);
+                    dataArray.add(player.pet.nPoint.hpg);
+                    dataArray.add(player.pet.nPoint.mpg);
+                    dataArray.add(player.pet.nPoint.dameg);
+                    dataArray.add(player.pet.nPoint.defg);
+                    dataArray.add(player.pet.nPoint.critg);
+                    dataArray.add(player.pet.nPoint.hp);
+                    dataArray.add(player.pet.nPoint.mp);
+                    petDataArr.add(dataArray.toJSONString());
+                    dataArray.clear();
+                    //pet body
+                    JSONArray items = new JSONArray();
+                    for (Item item : player.pet.inventory.itemsBody) {
+                        JSONArray opt = new JSONArray();
+                        if (item.isNotNullItem()) {
+                            dataItem.add(item.template.id);
+                            dataItem.add(item.quantity);
+                            JSONArray options = new JSONArray();
+                            for (Item.ItemOption io : item.itemOptions) {
+                                opt.add(io.optionTemplate.id);
+                                opt.add(io.param);
+                                options.add(opt.toJSONString());
+                                opt.clear();
+                            }
+                            dataItem.add(options.toJSONString());
+                        } else {
+                            dataItem.add(-1);
+                            dataItem.add(0);
+                            dataItem.add(opt.toJSONString());
+                        }
+                        dataItem.add(item.createTime);
+                        items.add(dataItem.toJSONString());
+                        dataItem.clear();
+                    }
+                    petDataArr.add(items.toJSONString());
+                    //pet skill
+                    JSONArray petSkills = new JSONArray();
+                    for (Skill s : player.pet.playerSkill.skills) {
+                        JSONArray pskill = new JSONArray();
+                        if (s.skillId != -1) {
+                            pskill.add(s.template.id);
+                            pskill.add(s.point);
+                            pskill.add(s.lastTimeUseThisSkill);
+                            pskill.add(s.currLevel);
+                        } else {
+                            pskill.add(-1);
+                            pskill.add(0);
+                            pskill.add(0);
+                            pskill.add(0);
+                        }
+                        petSkills.add(pskill.toJSONString());
+                    }
+                    petDataArr.add(petSkills.toJSONString());
+                    pet = petDataArr.toJSONString();
+                }
+
+                //data thưởng ngọc rồng đen
+                for (int i = 0; i < player.rewardBlackBall.timeOutOfDateReward.length; i++) {
+                    JSONArray dataBlackBallArr = new JSONArray();
+                    dataBlackBallArr.add(player.rewardBlackBall.timeOutOfDateReward[i]);
+                    dataBlackBallArr.add(player.rewardBlackBall.lastTimeGetReward[i]);
+                    dataBlackBallArr.add(player.rewardBlackBall.quantilyBlackBall[i]);
+                    dataArray.add(dataBlackBallArr.toJSONString());
+                    dataBlackBallArr.clear();
+                }
+                String dataBlackBall = dataArray.toJSONString();
+                dataArray.clear();
+
+                //Ma Bao Ve
+                dataArray.add(player.mbv);
+                dataArray.add(player.baovetaikhoan);
+                dataArray.add(player.mbvtime);
+                String dataBVTK = dataArray.toJSONString();
+                dataArray.clear();
+
+                //Card
+                String dataCard = JSONValue.toJSONString(player.Cards);
+
+                //BDKB
+                dataArray.add(player.timesPerDayBDKB);
+                dataArray.add(player.lastTimeJoinBDKB);
+                String dataBDKB = dataArray.toJSONString();
+                dataArray.clear();
+
+                //CDRD
+                dataArray.add(player.joinCDRD);
+                dataArray.add(player.lastTimeJoinCDRD);
+                dataArray.add(player.talkToThuongDe);
+                dataArray.add(player.talkToThanMeo);
+                String dataCDRD = dataArray.toJSONString();
+                dataArray.clear();
+
+                //Nhận Thỏi Vàng
+                dataArray.add(player.danhanthoivang);
+                dataArray.add(player.lastRewardGoldBarTime);
+                String dataNhanThoiVang = dataArray.toJSONString();
+                dataArray.clear();
+
+                //Rương Gỗ
+                dataArray.add(player.levelWoodChest);
+                dataArray.add(player.goldChallenge);
+                dataArray.add(player.rubyChallenge);
+                dataArray.add(player.lastTimeRewardWoodChest);
+                dataArray.add(player.lastTimePKDHVT23);
+                String dataRuongGo = dataArray.toJSONString();
+                dataArray.clear();
+
+                //Siêu thần thủy
+                dataArray.add(player.winSTT);
+                dataArray.add(player.lastTimeWinSTT);
+                dataArray.add(player.callBossPocolo);
+                String dataSieuThanThuy = dataArray.toJSONString();
+                dataArray.clear();
+
+                //Võ đài sinh tử
+                dataArray.add(player.haveRewardVDST);
+                dataArray.add(player.thoiVangVoDaiSinhTu);
+                dataArray.add(player.lastTimePKVoDaiSinhTu);
+                dataArray.add(player.timePKVDST);
+                String dataVoDaiSinhTu = dataArray.toJSONString();
+                dataArray.clear();
+
+                //Data item event
+                dataArray.add(player.itemEvent.remainingTVGSCount);
+                dataArray.add(player.itemEvent.lastTVGSTime);
+                dataArray.add(player.itemEvent.remainingHHCount);
+                dataArray.add(player.itemEvent.lastHHTime);
+                dataArray.add(player.itemEvent.remainingBNCount);
+                dataArray.add(player.itemEvent.lastBNTime);
+                String dataItemEvent = dataArray.toJSONString();
+                dataArray.clear();
+
+                //Data Luyện Tập
+                dataArray.add(player.levelLuyenTap);
+                dataArray.add(player.dangKyTapTuDong);
+                dataArray.add(player.mapIdDangTapTuDong);
+                dataArray.add(player.tnsmLuyenTap);
+                if (player.isOffline) {
+                    dataArray.add(player.lastTimeOffline);
+                } else {
+                    dataArray.add(System.currentTimeMillis());
+                }
+                String dataLuyenTap = dataArray.toJSONString();
+                dataArray.clear();
+
+                //Data Training Whis
+                if (player.traning != null) {
+                    dataArray.add(player.traning.getTop());
+                    dataArray.add(player.traning.getTime());
+                    dataArray.add(player.traning.getLastTime());
+                    dataArray.add(player.traning.getLastTop());
+                    dataArray.add(player.traning.getLastRewardTime());
+                } else {
+                    dataArray.add(1); dataArray.add(0); dataArray.add(0); dataArray.add(0); dataArray.add(0);
+                }
+                String dataTrainingWhis = dataArray.toJSONString();
+                dataArray.clear();
+
+                //data nhiệm vụ bang hàng ngày
+                dataArray.add(player.playerTask.clanTask.template != null ? player.playerTask.clanTask.template.id : -1);
+                dataArray.add(player.playerTask.clanTask.receivedTime);
+                dataArray.add(player.playerTask.clanTask.count);
+                dataArray.add(player.playerTask.clanTask.maxCount);
+                dataArray.add(player.playerTask.clanTask.leftTask);
+                dataArray.add(player.playerTask.clanTask.level);
+                String clanTask = dataArray.toJSONString();
+                dataArray.clear();
+
+                //data vip
+                dataArray.add(player.timesPerDayCuuSat);
+                dataArray.add(player.lastTimeCuuSat);
+                dataArray.add(player.nhanDeTuNangVIP);
+                dataArray.add(player.nhanVangNangVIP);
+                dataArray.add(player.nhanSKHVIP);
+                String dataVip = dataArray.toJSONString();
+                dataArray.clear();
+
+                //Data doanh trại
+                dataArray.add(player.lastTimeJoinDT);
+                String doanhtrai = dataArray.toJSONString();
+                dataArray.clear();
+
+                //data achievement
+                if (player.achievement != null) {
+                    for (Template.AchievementQuest aq : player.achievement.getAchievementList()) {
+                        JSONArray a = new JSONArray();
+                        a.add(aq.completed);
+                        a.add(aq.isRecieve);
+                        dataArray.add(a.toJSONString());
+                        a.clear();
+                    }
+                }
+                String achievement = dataArray.toJSONString();
+                dataArray.clear();
+
+                //gift code
+                for (String code : player.giftCode.rewards) {
+                    dataArray.add(code);
+                }
+                String giftCode = dataArray.toJSONString();
+                dataArray.clear();
+
+                // Shop santa danh hiệu
+                JSONArray dataShopDanhHieu = new JSONArray();
+                dataShopDanhHieu.add(player.effect.getPointDaiGiaMoiNhu());
+                dataShopDanhHieu.add(player.effect.getPointTrumUocRong());
+                dataShopDanhHieu.add(player.effect.getPointTrumSanBoss());
+                dataShopDanhHieu.add(player.effect.getPointThanhDapDo());
+                dataShopDanhHieu.add(player.effect.getPointNongDanChamChi());
+                dataShopDanhHieu.add(player.effect.getPointOngThanVeChai());
+                dataShopDanhHieu.add(player.effect.getPointBiMocSachTui());
+                dataShopDanhHieu.add(player.effect.getPointPhanCung());
+                String shopDanhHieu = dataShopDanhHieu.toJSONString();
+                dataShopDanhHieu.clear();
+
+                dataArray.add(player.lastTimeLeaveClan);
+                dataArray.add(player.lastTimeRemoveClan);
+                String dataClan = dataArray.toJSONString();
+                dataArray.clear();
+
+                // Bùa Miễn phí
+                JSONArray bua = new JSONArray();
+                bua.add(player.luotNhanBuaMienPhi);
+                bua.add(player.diemDanhSuKien);
+                String buarandom = bua.toJSONString();
+                bua.clear();
+
+                JSONArray diemsk = new JSONArray();
+                diemsk.add(player.diemsukien);
+                diemsk.add(player.phaobong);
+                diemsk.add(player.lixi);
+                String skhe = diemsk.toJSONString();
+                diemsk.clear();
+
+                JSONArray hocKyNang = new JSONArray();
+                hocKyNang.add(player.hocKyNang.ItemTemplateSkillId);
+                hocKyNang.add(player.hocKyNang.Level);
+                hocKyNang.add(player.hocKyNang.PotentialLearn);
+                hocKyNang.add(player.hocKyNang.Time);
+                String sHocKyNang = hocKyNang.toJSONString();
+
+                Object[] params = new Object[] {
+                        player.getHead(), player.haveTennisSpaceShip, (player.clan != null ? player.clan.id : -1),
+                        inventory, location, point, magicTree,
+                        itemsBody, itemsBag, itemsBox, itemsBoxLuckyRound, itemsDaBan, friend,
+                        enemy, intrinsic, itemTime, DevNdung, task, mabuEgg, pet,
+                        dataBlackBall, sideTask, Danhieu, charm, skills, skillShortcut, player.notify,
+                        dataBVTK, dataCard, player.lastPkCommesonTime, dataBDKB, doanhtrai, dataCDRD, player.doesNotAttack,
+                        dataNhanThoiVang, dataRuongGo, dataSieuThanThuy, dataVoDaiSinhTu, player.lastTimeShenronAppeared, dataItemEvent, dataLuyenTap, dataTrainingWhis, clanTask, dataVip,
+                        player.superRank.rank, achievement, giftCode, shopDanhHieu, dataClan, Util.toDateString(player.firstTimeLogin), buarandom, skhe, player.banhtet,
+                        player.banhtrung,
+                        sHocKyNang, "[]", player.arenaWins, player.luckySpins, player.id
+                };
+
+                return new PlayerSaveSnapshot(player, player.id, player.name, player.isOffline, params);
+
+            } catch (Exception e) {
+                Logger.logException(PlayerDAO.class, e, "Lỗi extractSnapshot player " + player.name);
+                return null;
             }
-            String achievement = dataArray.toJSONString();
-            dataArray.clear();
+        }
+    }
 
-            //gift code
-            for (String code : player.giftCode.rewards) {
-                dataArray.add(code);
-            }
-            String giftCode = dataArray.toJSONString();
-            dataArray.clear();
+    public static void updatePlayer(Player player) {
+        PlayerSaveSnapshot snapshot = extractSnapshot(player);
+        if (snapshot == null) {
+            return;
+        }
 
-            // Shop santa danh hiệu
-            JSONArray dataShopDanhHieu = new JSONArray();
-            dataShopDanhHieu.add(player.effect.getPointDaiGiaMoiNhu());
-            dataShopDanhHieu.add(player.effect.getPointTrumUocRong());
-            dataShopDanhHieu.add(player.effect.getPointTrumSanBoss());
-            dataShopDanhHieu.add(player.effect.getPointThanhDapDo());
-            dataShopDanhHieu.add(player.effect.getPointNongDanChamChi());
-            dataShopDanhHieu.add(player.effect.getPointOngThanVeChai());
-            dataShopDanhHieu.add(player.effect.getPointBiMocSachTui());
-            dataShopDanhHieu.add(player.effect.getPointPhanCung());
-            String shopDanhHieu = dataShopDanhHieu.toJSONString();
-            dataShopDanhHieu.clear();
+        long st = System.currentTimeMillis();
+        try {
+            // Thực thi ghi JDBC hoàn toàn ở BÊN NGOÀI synchronized(player)
+            AlyraManager.executeUpdate(QUERY_UPDATE_PLAYER, snapshot.params);
 
-            dataArray.add(player.lastTimeLeaveClan);
-            dataArray.add(player.lastTimeRemoveClan);
-            String dataClan = dataArray.toJSONString();
-            dataArray.clear();
-
-            // Bùa Miễn phí
-            JSONArray bua = new JSONArray();
-            bua.add(player.luotNhanBuaMienPhi);
-            bua.add(player.diemDanhSuKien);
-            String buarandom = bua.toJSONString();
-            bua.clear();
-
-            JSONArray diemsk = new JSONArray();
-            diemsk.add(player.diemsukien);
-            diemsk.add(player.phaobong);
-            diemsk.add(player.lixi);
-            String skhe = diemsk.toJSONString();
-            diemsk.clear();
-
-            JSONArray hocKyNang = new JSONArray();
-            hocKyNang.add(player.hocKyNang.ItemTemplateSkillId);
-            hocKyNang.add(player.hocKyNang.Level);
-            hocKyNang.add(player.hocKyNang.PotentialLearn);
-            hocKyNang.add(player.hocKyNang.Time);
-            String sHocKyNang = hocKyNang.toJSONString();
-
-            //==================================================================
-            // PHẦN SỬA LỖI
-            //==================================================================
-//            String infoLog;
-//            boolean isAdmin = player.getSession() != null && player.getSession().isAdmin;
-//            infoLog = "Vàng tươi: " + (isAdmin ? Util.formatNumber(2000) : Util.formatNumber(player.inventory.gold)) + " (" + (isAdmin ? Util.powerToString(2000) : Util.powerToString(player.inventory.gold))
-//                    + ") | Thỏi vàng: " + (isAdmin ? 0 : Util.formatNumber(thoiVangBag + thoiVangBox)) + " (Bag: " + (isAdmin ? 0 : Util.formatNumber(thoiVangBag)) + " - Box: " + (isAdmin ? 0 : Util.formatNumber(thoiVangBox))
-//                    + ") | Ngọc rồng 3s: " + (isAdmin ? 0 : Util.formatNumber(ngocRong3sBag + ngocRong3sBox)) + " (Bag: " + (isAdmin ? 0 : Util.formatNumber(ngocRong3sBag)) + " - Box: " + (isAdmin ? 0 : Util.formatNumber(ngocRong3sBox))
-//                    + ") | Ngọc rồng 4s: " + Util.formatNumber(ngocRong4sBag + ngocRong4sBox) + " (Bag: " + Util.formatNumber(ngocRong4sBag) + " - Box: " + Util.formatNumber(ngocRong4sBox) + ")";
-//            //==================================================================
-
-            String query = "update player set head = ?, have_tennis_space_ship = ?, "
-                    + "clan_id = ?, data_inventory = ?, data_location = ?, data_point = ?, data_magic_tree = ?, "
-                    + "items_body = ?, items_bag = ?, items_box = ?, items_box_lucky_round = ?, items_daban = ?, friends = ?, "
-                    + "enemies = ?, data_intrinsic = ?, data_item_time = ?, devndung_time = ?, data_task = ?, data_mabu_egg = ?, pet = ?, "
-                    + "data_black_ball = ?, data_side_task = ?, data_danh_hieu = ?, data_charm = ?, skills = ?, skills_shortcut = ?, notify = ?, "
-                    + "baovetaikhoan = ?, data_card = ?, lasttimepkcommeson = ?, bandokhobau = ?, doanhtrai = ?, conduongrandoc = ?, masterDoesNotAttack = ?, "
-                    + "nhanthoivang = ?, ruonggo = ?, sieuthanthuy = ?, vodaisinhtu = ?, rongxuong = ?, data_item_event = ?, data_luyentap = ?, data_training = ?, data_clan_task = ?, data_vip = ?, "
-                    + "rank = ?, data_achievement = ?, giftcode = ?,danh_hieu_shop = ?, data_clan = ?, firstTimeLogin = ? ,buarandom = ?, dien_sukien = ?, banhtet = ?, "
-                    + "banhchung = ?, hoc_ky_nang = ?, boughtSkills = ?, arena_wins = ?, lucky_spins = ?"
-                    + " where id = ?";
-
-            AlyraManager.executeUpdate(query,
-                    player.getHead(), player.haveTennisSpaceShip, (player.clan != null ? player.clan.id : -1),
-                    inventory, location, point, magicTree,
-                    itemsBody, itemsBag, itemsBox, itemsBoxLuckyRound, itemsDaBan, friend,
-                    enemy, intrinsic, itemTime, DevNdung, task, mabuEgg, pet,
-                    dataBlackBall, sideTask, Danhieu, charm, skills, skillShortcut, player.notify,
-                    dataBVTK, dataCard, player.lastPkCommesonTime, dataBDKB, doanhtrai, dataCDRD, player.doesNotAttack,
-                    dataNhanThoiVang, dataRuongGo, dataSieuThanThuy, dataVoDaiSinhTu, player.lastTimeShenronAppeared, dataItemEvent, dataLuyenTap, dataTrainingWhis, clanTask, dataVip,
-                    player.superRank.rank, achievement, giftCode, shopDanhHieu, dataClan, Util.toDateString(player.firstTimeLogin), buarandom, skhe, player.banhtet,
-                    player.banhtrung,
-                    sHocKyNang, "[]", player.arenaWins,player.luckySpins, player.id);
-
-            if (player.isOffline) {
-                Logger.log(Logger.PURPLE, TimeUtil.getCurrHour() + "h" + TimeUtil.getCurrMin() + "m: Player OFFLINE " + player.name + " updated successfully! " + (System.currentTimeMillis() - st) + "ms\n");
-                player.dispose();
+            if (snapshot.isOffline) {
+                Logger.log(Logger.PURPLE, TimeUtil.getCurrHour() + "h" + TimeUtil.getCurrMin() + "m: Player OFFLINE " + snapshot.playerName + " updated successfully! " + (System.currentTimeMillis() - st) + "ms\n");
+                if (snapshot.player != null) {
+                    snapshot.player.dispose();
+                }
             } else {
-                Logger.success(TimeUtil.getCurrHour() + "h" + TimeUtil.getCurrMin() + "m: Player " + player.name + " saved successfully! " + (System.currentTimeMillis() - st) + "ms\n");
+                Logger.success(TimeUtil.getCurrHour() + "h" + TimeUtil.getCurrMin() + "m: Player " + snapshot.playerName + " saved successfully! " + (System.currentTimeMillis() - st) + "ms\n");
             }
         } catch (Exception e) {
-            Logger.logException(PlayerDAO.class, e, "Lỗi save player " + player.name);
+            Logger.logException(PlayerDAO.class, e, "Lỗi save player " + snapshot.playerName);
         }
+    }
+
+    public static boolean updatePlayersInTransaction(Player... players) {
+        if (players == null || players.length == 0) {
+            return false;
+        }
+
+        List<PlayerSaveSnapshot> snapshots = new ArrayList<>();
+        for (Player p : players) {
+            if (p != null) {
+                PlayerSaveSnapshot snap = extractSnapshot(p);
+                if (snap != null) {
+                    snapshots.add(snap);
+                }
+            }
+        }
+
+        if (snapshots.isEmpty()) {
+            return false;
+        }
+
+        Connection con = null;
+        PreparedStatement ps = null;
+        try {
+            con = AlyraManager.getConnection();
+            con.setAutoCommit(false);
+            ps = con.prepareStatement(QUERY_UPDATE_PLAYER);
+
+            for (PlayerSaveSnapshot snap : snapshots) {
+                for (int i = 0; i < snap.params.length; i++) {
+                    ps.setObject(i + 1, snap.params[i]);
+                }
+                ps.executeUpdate();
+            }
+
+            con.commit();
+            con.setAutoCommit(true);
+
+            for (PlayerSaveSnapshot snap : snapshots) {
+                if (snap.isOffline && snap.player != null) {
+                    snap.player.dispose();
+                }
+            }
+            return true;
+        } catch (Exception e) {
+            if (con != null) {
+                try {
+                    con.rollback();
+                } catch (SQLException ignored) {}
+            }
+            Logger.logException(PlayerDAO.class, e, "Lỗi updatePlayersInTransaction");
+            return false;
+        } finally {
+            if (ps != null) {
+                try { ps.close(); } catch (Exception ignored) {}
+            }
+            if (con != null) {
+                try { con.close(); } catch (Exception ignored) {}
+            }
         }
     }
 

@@ -2,9 +2,12 @@ package services;
 
 
 import consts.ConstPlayer;
+import models.item.Item;
+import models.map.ItemMap;
 import models.player.NewPet;
 import models.player.Pet;
 import models.player.Player;
+import services.Service;
 import services.map.ChangeMapService;
 import services.player.InventoryService;
 import utils.SkillUtil;
@@ -97,11 +100,44 @@ public class PetService {
         }
     }
 
+    private void returnPetItemsToMaster(Player player) {
+        if (player != null && player.pet != null && player.pet.inventory != null && player.pet.inventory.itemsBody != null) {
+            boolean hasReturned = false;
+            for (int i = 0; i < player.pet.inventory.itemsBody.size(); i++) {
+                Item item = player.pet.inventory.itemsBody.get(i);
+                if (item != null && item.isNotNullItem()) {
+                    boolean added = false;
+                    if (InventoryService.gI().getCountEmptyBag(player) > 0) {
+                        added = InventoryService.gI().addItemBag(player, item);
+                    }
+                    if (!added && InventoryService.gI().getCountEmptyBox(player) > 0) {
+                        added = InventoryService.gI().addItemBox(player, item);
+                    }
+                    if (!added && player.zone != null) {
+                        // Fallback an toàn tuyệt đối: drop ra đất trước mặt sư phụ nếu hành trang và rương đều đầy
+                        ItemMap itemMap = new ItemMap(player.zone, item.template.id, item.quantity, player.location.x, player.location.y, player.id);
+                        if (item.itemOptions != null) {
+                            itemMap.options.addAll(item.itemOptions);
+                        }
+                        Service.gI().dropItemMap(player.zone, itemMap);
+                    }
+                    hasReturned = true;
+                }
+            }
+            if (hasReturned) {
+                InventoryService.gI().sendItemBags(player);
+                InventoryService.gI().sendItemBox(player);
+                Service.gI().sendThongBao(player, "Trang bị của đệ tử cũ đã được hoàn trả vào hành trang/rương!");
+            }
+        }
+    }
+
     public void changeNormalPet(Player player, int gender) {
         byte limitPower = player.pet.nPoint.limitPower;
         if (player.fusion.typeFusion != ConstPlayer.NON_FUSION) {
             player.pet.unFusion();
         }
+        returnPetItemsToMaster(player);
         ChangeMapService.gI().exitMap(player.pet);
         player.pet.dispose();
         player.pet = null;
@@ -113,6 +149,7 @@ public class PetService {
         if (player.fusion.typeFusion != ConstPlayer.NON_FUSION) {
             player.pet.unFusion();
         }
+        returnPetItemsToMaster(player);
         ChangeMapService.gI().exitMap(player.pet);
         player.pet.dispose();
         player.pet = null;
@@ -135,6 +172,7 @@ public class PetService {
         if (player.fusion.typeFusion != ConstPlayer.NON_FUSION) {
             player.pet.unFusion();
         }
+        returnPetItemsToMaster(player);
         ChangeMapService.gI().exitMap(player.pet);
         player.pet.dispose();
         player.pet = null;

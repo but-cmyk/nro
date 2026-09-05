@@ -771,13 +771,19 @@ public class SkillService {
         } else if (player.setClothes.cadicM == 5) {
             dame += player.nPoint.hpMax * 50 / 100;
         }
-        Item TrangBi = player.inventory.itemsBody.get(5);
-        if (TrangBi != null) {
-            for (Item.ItemOption io : TrangBi.itemOptions) {
-                if (io.optionTemplate.id == 231) {
-                    break;
+        if (player.inventory != null && player.inventory.itemsBody != null && player.inventory.itemsBody.size() > 5) {
+            Item TrangBi = player.inventory.itemsBody.get(5);
+            if (TrangBi != null && TrangBi.isNotNullItem() && TrangBi.itemOptions != null) {
+                for (Item.ItemOption io : TrangBi.itemOptions) {
+                    if (io.optionTemplate.id == 231) {
+                        dame = (int) ((long) dame * 130L / 100L);
+                        break;
+                    }
                 }
             }
+        }
+        if (dame > 2_000_000_000 || dame < 0) {
+            dame = 2_000_000_000;
         }
         if (!player.isBoss) {
             for (Mob mob : player.zone.mobs) {

@@ -1,6 +1,8 @@
 package services;
+import consts.ConstItem;
 import models.item.Item;
 import models.player.Player;
+import services.func.LuckyRound;
 import services.player.InventoryService;
 import utils.Util;
 import java.util.ArrayList;
@@ -712,118 +714,128 @@ public class RewardService {
 
     //========================LUCKY ROUND========================
     public List<Item> getListItemLuckyRound(Player player, int num, boolean vip) {
+        return getListItemLuckyRound(player, num, vip ? LuckyRound.USING_TICKET : LuckyRound.USING_GOLD);
+    }
+
+    public List<Item> getListItemLuckyRound(Player player, int num, byte typeRound) {
         List<Item> list = new ArrayList<>();
         for (int i = 0; i < num; i++) {
-            Item it = ItemService.gI().createNewItem((short) 189); //vang
-            it.quantity = Util.nextInt(5, 50) * 1000;
-            boolean success = Util.isTrue(1, 2);
-            if (vip) {
-                if (Util.isTrue(1, 10000)) {
-                    it = ItemService.gI().createNewItem((short) Util.nextInt(2000, 2005));
-                    it.quantity = 1;
-                } else if (Util.isTrue(1, 1000)) {
-                    it = ItemService.gI().createNewItem((short) Util.nextInt(2000, 2002));
-                    it.quantity = Util.nextInt(1, 5);
-                } else if (Util.isTrue(1, 1000)) {
-                    it = ItemService.gI().createNewItem((short) Util.nextInt(1066, 1070));
-                    it.quantity = Util.nextInt(1, 5);
-                } else if (Util.isTrue(1, 500)) {
-                    it = ItemService.gI().createNewItem((short) 2074);
-                    it.quantity = Util.nextInt(1, 5);
-                } else if (Util.isTrue(1, 100)) {
-                    it = ItemService.gI().createNewItem((short) 956);
-                    it.quantity = Util.nextInt(1, 5);
-                } else if (Util.isTrue(50, 100)) {
-                    it = ItemService.gI().createNewItem((short) 1337);
-                    it.itemOptions.add(new Item.ItemOption(50, 26));
-                    it.itemOptions.add(new Item.ItemOption(77, 24));
-                    it.itemOptions.add(new Item.ItemOption(117, 16));
-                    it.itemOptions.add(new Item.ItemOption(229, 22));
-                    it.itemOptions.add(new Item.ItemOption(30, 0));
-                    it.itemOptions.add(new Item.ItemOption(93, Util.nextInt(1, 30)));
-                    it.quantity = 1;
-                } else if (Util.isTrue(50, 100)) {
-                    it = ItemService.gI().createNewItem((short) 1338);
-                    it.itemOptions.add(new Item.ItemOption(93, 30));
-                    it.itemOptions.add(new Item.ItemOption(30, 0));
-                    it.quantity = 1;
-                } else if (Util.isTrue(1, 50)) {
-                    if (Util.isTrue(50, 100)) {
-                        it = ItemService.gI().createNewItem((short) Util.nextInt(10, 15));
-                        it.quantity = Util.nextInt(1, 5);
-                    } else {
-                        it = ItemService.gI().createNewItem((short) Util.nextInt(2150, 2152));
+            Item it;
+            switch (typeRound) {
+                case LuckyRound.USING_TICKET -> {
+                    // Vòng quay đặc biệt (VIP - dùng Vé 821)
+                    int roll = Util.nextInt(1, 1000);
+                    if (roll == 1) {
+                        // 0.1% Cải trang Siêu VIP vĩnh viễn
+                        it = ItemService.gI().createNewItem((short) Util.nextInt(2000, 2005));
+                        it.itemOptions.add(new Item.ItemOption(50, Util.nextInt(25, 35))); // SĐ
+                        it.itemOptions.add(new Item.ItemOption(77, Util.nextInt(25, 35))); // HP
+                        it.itemOptions.add(new Item.ItemOption(103, Util.nextInt(25, 35))); // KI
+                        it.itemOptions.add(new Item.ItemOption(14, Util.nextInt(5, 15)));  // Chí mạng
+                        it.itemOptions.add(new Item.ItemOption(30, 0)); // Không thể GD
                         it.quantity = 1;
-                        if (Util.isTrue(5, 100)) {
-                            it.itemOptions.add(new Item.ItemOption(77, Util.nextInt(10, 24)));
-                            it.itemOptions.add(new Item.ItemOption(103, Util.nextInt(20, 24)));
-                            it.itemOptions.add(new Item.ItemOption(50, Util.nextInt(10, 23)));
-                            it.itemOptions.add(new Item.ItemOption(94, Util.nextInt(20, 23)));
-                            it.itemOptions.add(new Item.ItemOption(14, Util.nextInt(2, 15)));
-                            it.itemOptions.add(new Item.ItemOption(108, Util.nextInt(2, 20)));
-                            it.itemOptions.add(new Item.ItemOption(154, 0));
+                    } else if (roll <= 30) {
+                        // ~3% Cải trang sự kiện HSD 30 ngày (1337, 1338)
+                        it = ItemService.gI().createNewItem((short) (Util.isTrue(1, 2) ? 1337 : 1338));
+                        it.itemOptions.add(new Item.ItemOption(50, 25));
+                        it.itemOptions.add(new Item.ItemOption(77, 25));
+                        it.itemOptions.add(new Item.ItemOption(103, 25));
+                        it.itemOptions.add(new Item.ItemOption(14, 10));
+                        it.itemOptions.add(new Item.ItemOption(93, 30)); // 30 ngày
+                        it.itemOptions.add(new Item.ItemOption(30, 0));
+                        it.quantity = 1;
+                    } else if (roll <= 100) {
+                        // 7% Đá bảo vệ (987)
+                        it = ItemService.gI().createNewItem((short) 987, Util.nextInt(1, 3));
+                    } else if (roll <= 250) {
+                        // 15% Thỏi vàng (457)
+                        it = ItemService.gI().createNewItem((short) ConstItem.THOI_VANG, Util.nextInt(2, 5));
+                    } else if (roll <= 400) {
+                        // 15% Ngọc rồng 1 - 3 sao
+                        it = ItemService.gI().createNewItem((short) Util.nextInt(14, 16), 1);
+                    } else if (roll <= 600) {
+                        // 20% Đá nâng cấp C4 - C5 (223, 224)
+                        it = ItemService.gI().createNewItem((short) Util.nextInt(223, 224), Util.nextInt(1, 5));
+                    } else if (roll <= 800) {
+                        // 20% Đá nâng cấp C2 - C3 (221, 222)
+                        it = ItemService.gI().createNewItem((short) Util.nextInt(221, 222), Util.nextInt(3, 10));
+                    } else {
+                        // 20% Capsule vàng (73) hoặc Thức ăn VIP
+                        if (Util.isTrue(1, 2)) {
+                            it = ItemService.gI().createNewItem((short) 73, Util.nextInt(1, 5));
                         } else {
-                            it.itemOptions.add(new Item.ItemOption(77, Util.nextInt(10, 25)));
-                            it.itemOptions.add(new Item.ItemOption(103, Util.nextInt(20, 25)));
-                            if (Util.isTrue(5, 30)) {
-                                it.itemOptions.add(new Item.ItemOption(5, Util.nextInt(1, 15)));
-                            }
-                            it.itemOptions.add(new Item.ItemOption(50, Util.nextInt(10, 24)));
-                            it.itemOptions.add(new Item.ItemOption(94, Util.nextInt(20, 24)));
-                            it.itemOptions.add(new Item.ItemOption(14, Util.nextInt(2, 23)));
-                            it.itemOptions.add(new Item.ItemOption(93, Util.nextInt(1, 15)));
+                            it = ItemService.gI().createNewItem((short) Util.nextInt(663, 667), Util.nextInt(10, 30));
                         }
                     }
-                } else if (Util.isTrue(1, 50)) {
-                    it = ItemService.gI().createNewItem((short) Util.nextInt(220, 224));
-                    it.quantity = Util.nextInt(1, 5);
-                } else if (Util.isTrue(1, 20)) {
-                    it = ItemService.gI().createNewItem((short) 987);
-                    it.quantity = Util.nextInt(1, 2);
                 }
-            } else {
-                if (Util.isTrue(1, 2)) {
-                    int[] itemId = {467, 468, 469, 470, 471, 741, 745, 800, 801, 803, 804, 1000};
-                    int itemid = itemId[Util.nextInt(itemId.length)];
-                    if (Util.isTrue(20, 100)) {
-                        int[] itemId2 = {467, 468, 469, 470, 471, 741, 745, 800, 801, 803, 804, 999, 1000, 1001};
-                        itemid = itemId2[Util.nextInt(itemId2.length)];
+                case LuckyRound.USING_GEM -> {
+                    // Vòng quay bằng Ngọc (4 Ngọc / lượt)
+                    int roll = Util.nextInt(1, 100);
+                    if (roll <= 5) {
+                        // 5% Đá bảo vệ (987)
+                        it = ItemService.gI().createNewItem((short) 987, 1);
+                    } else if (roll <= 20) {
+                        // 15% Cải trang ngày HSD 7-30 ngày
+                        int[] itemId = {467, 468, 469, 470, 471, 741, 745, 800, 801, 803, 804, 1000};
+                        int itemid = itemId[Util.nextInt(itemId.length)];
+                        it = ItemService.gI().createNewItem((short) itemid);
+                        it.itemOptions.clear();
+                        byte[] opts = {77, 80, 81, 103, 50, 94, 14};
+                        byte optId = opts[Util.nextInt(opts.length)];
+                        it.itemOptions.add(new Item.ItemOption(optId, Util.nextInt(10, 20)));
+                        it.itemOptions.add(new Item.ItemOption(30, 0));
+                        it.itemOptions.add(new Item.ItemOption(93, Util.nextInt(7, 30)));
+                        it.quantity = 1;
+                    } else if (roll <= 40) {
+                        // 20% Thỏi vàng (457)
+                        it = ItemService.gI().createNewItem((short) ConstItem.THOI_VANG, Util.nextInt(1, 2));
+                    } else if (roll <= 60) {
+                        // 20% Ngọc rồng 3 - 5 sao
+                        it = ItemService.gI().createNewItem((short) Util.nextInt(16, 18), 1);
+                    } else if (roll <= 80) {
+                        // 20% Đá nâng cấp C2 - C4
+                        it = ItemService.gI().createNewItem((short) Util.nextInt(221, 223), Util.nextInt(1, 3));
+                    } else {
+                        // 20% Capsule vàng hoặc Đá may mắn
+                        it = ItemService.gI().createNewItem((short) Util.nextInt(828, 842), Util.nextInt(1, 3));
                     }
-                    byte[] option = {77, 80, 81, 103, 50, 94, 5};
-                    byte optionid;
-                    byte param;
-                    Item vpdl = ItemService.gI().createNewItem((short) itemid);
-                    vpdl.itemOptions.clear();
-                    optionid = option[Util.nextInt(0, 6)];
-                    param = (byte) Util.nextInt(5, 10);
-                    vpdl.itemOptions.add(new Item.ItemOption(optionid, param));
-                    vpdl.itemOptions.add(new Item.ItemOption(30, 0));
-                    vpdl.itemOptions.add(new Item.ItemOption(93, Util.nextInt(1, 30)));
-                    it = vpdl;
-                    it.quantity = 1;
-                } else if (Util.isTrue(1, 20)) {
-                    it = ItemService.gI().createNewItem((short) 585);
-                    it.quantity = Util.nextInt(1, 5);
-                } else if (Util.isTrue(1, 10)) {
-                    it = ItemService.gI().createNewItem((short) Util.nextInt(220, 224));
-                    it.quantity = Util.nextInt(1, 5);
-                } else if (Util.isTrue(1, 100)) {
-                    it = ItemService.gI().createNewItem((short) Util.nextInt(828, 842));
-                    it.quantity = Util.nextInt(1, 5);
-
+                }
+                default -> {
+                    // Vòng quay bằng Vàng (10M Vàng / lượt)
+                    int roll = Util.nextInt(1, 100);
+                    if (roll <= 15) {
+                        // 15% Cải trang HSD 3-7 ngày
+                        int[] itemId = {467, 468, 469, 470, 471, 741, 745, 800, 801, 803, 804};
+                        int itemid = itemId[Util.nextInt(itemId.length)];
+                        it = ItemService.gI().createNewItem((short) itemid);
+                        it.itemOptions.clear();
+                        byte[] opts = {77, 80, 81, 103, 50, 94};
+                        byte optId = opts[Util.nextInt(opts.length)];
+                        it.itemOptions.add(new Item.ItemOption(optId, Util.nextInt(5, 12)));
+                        it.itemOptions.add(new Item.ItemOption(30, 0));
+                        it.itemOptions.add(new Item.ItemOption(93, Util.nextInt(3, 7)));
+                        it.quantity = 1;
+                    } else if (roll <= 35) {
+                        // 20% Thỏi vàng (457)
+                        it = ItemService.gI().createNewItem((short) ConstItem.THOI_VANG, 1);
+                    } else if (roll <= 55) {
+                        // 20% Ngọc rồng 4 - 7 sao
+                        it = ItemService.gI().createNewItem((short) Util.nextInt(17, 20), 1);
+                    } else if (roll <= 75) {
+                        // 20% Đá nâng cấp C1 - C2
+                        it = ItemService.gI().createNewItem((short) Util.nextInt(220, 222), Util.nextInt(1, 3));
+                    } else if (roll <= 90) {
+                        // 15% Thức ăn bổ dưỡng
+                        it = ItemService.gI().createNewItem((short) Util.nextInt(663, 667), Util.nextInt(5, 15));
+                    } else {
+                        // 10% Vàng hoàn lại tương xứng (2M - 5M vàng)
+                        it = ItemService.gI().createNewItem((short) 189, Util.nextInt(2, 5) * 1_000_000);
+                    }
                 }
             }
-            it = itemRand(it, success);
             list.add(it);
         }
         return list;
-    }
-
-    public Item itemRand(Item item, boolean success) {
-        if (!success) {
-            item = ItemService.gI().createNewItem((short) 189, Util.nextInt(5, 50) * 1000);
-        }
-        return item;
     }
 
     public void rewardLancon(Player player) {

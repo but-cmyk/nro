@@ -48,7 +48,12 @@ public class RedRibbonHQService {
         if (pl.clan.doanhTrai != null) {
             pl.lastTimeJoinDT = System.currentTimeMillis();
             pl.clan.doanhTrai.updateHPDame();
-            ChangeMapService.gI().changeMap(pl, 53, 0, 125, 432);
+            Zone zoneDT = pl.clan.doanhTrai.getMapById(53);
+            if (zoneDT != null) {
+                ChangeMapService.gI().changeMap(pl, zoneDT, 125, 432);
+            } else {
+                Service.gI().sendThongBao(pl, "Không thể vào doanh trại lúc này!");
+            }
             return;
         }
         RedRibbonHQ doanhTrai = null;

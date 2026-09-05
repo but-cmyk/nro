@@ -303,7 +303,7 @@ public class TaskService {
     public boolean checkDoneTaskTalkNpc(Player player, Npc npc) {
         return switch (npc.tempId) {
             case ConstNpc.QUY_LAO_KAME ->
-                (doneTask(player, ConstTask.TASK_11_0)
+                player.gender == ConstPlayer.TRAI_DAT && (doneTask(player, ConstTask.TASK_11_0)
                 || doneTask(player, ConstTask.TASK_12_0)
                 || doneTask(player, ConstTask.TASK_12_1)
                 || doneTask(player, ConstTask.TASK_13_3)
@@ -374,9 +374,7 @@ public class TaskService {
                 (doneTask(player, ConstTask.TASK_31_5)
                 || doneTask(player, ConstTask.TASK_32_1));
             case ConstNpc.DR_DRIEF, ConstNpc.CARGO, ConstNpc.CUI ->
-                (player.zone.map.mapId == 19 && doneTask(player, ConstTask.TASK_19_3)
-                || player.zone.map.mapId == 19 && doneTask(player, ConstTask.TASK_20_6)
-                || player.zone.map.mapId == 19 && doneTask(player, ConstTask.TASK_21_4));
+                false;
             case ConstNpc.BUNMA, ConstNpc.DENDE, ConstNpc.APPULE ->
                 doneTask(player, ConstTask.TASK_7_2);
             case ConstNpc.BUNMA_TL ->
@@ -393,6 +391,9 @@ public class TaskService {
                 if (player.playerTask.taskMain.id == 29) {
                     if (player.nPoint.dameg >= 10000) {
                         yield doneTask(player, ConstTask.TASK_29_0);
+                    } else {
+                        Service.gI().sendThongBao(player, "Sức đánh gốc của con chưa đạt 10.000! Hãy luyện tập nâng thêm rồi quay lại gặp ta.");
+                        yield false;
                     }
                 }
                 yield doneTask(player, ConstTask.TASK_9_3);
@@ -543,6 +544,9 @@ public class TaskService {
                 case ConstItem.GIO_THUC_AN:
                     doneTask(player, ConstTask.TASK_31_6);
                     break;
+                case ConstItem.NHAN_THOI_KHONG_SAI_LECH:
+                    doneTask(player, ConstTask.TASK_31_0);
+                    break;
             }
         }
     }
@@ -663,6 +667,9 @@ public class TaskService {
                         case 1 ->
                             doneTask(player, ConstTask.TASK_32_4);
                     }
+                    break;
+                case BossID.BLACK_GOKU:
+                    doneTask(player, ConstTask.TASK_31_0);
                     break;
             }
         }
@@ -852,9 +859,44 @@ public class TaskService {
 
     private void rewardDoneTask(Player player) {
         if (player != null && player.nPoint != null && player.playerTask != null && player.playerTask.taskMain != null) {
-            long reward = Math.min(50_000_000L, (long) player.playerTask.taskMain.id * 500_000L + 50_000L);
+            int taskId = player.playerTask.taskMain.id;
+            // 1. Tiềm năng tăng dần theo cấp độ nhiệm vụ
+            long reward = (long) Math.pow(taskId + 1, 2) * 50_000L + 100_000L;
             player.nPoint.tiemNangUp(reward);
-            Service.gI().sendThongBao(player, "Chúc mừng bạn nhận được " + utils.Util.formatNumber(reward) + " tiềm năng!");
+
+            // 2. Thưởng vàng
+            int goldReward = (taskId + 1) * 500_000;
+            player.inventory.addGold(goldReward);
+
+            // 3. Thưởng mốc lớn (Milestone Cột Mốc)
+            switch (taskId) {
+                case 7 -> {
+                    player.inventory.gem += 20;
+                    Service.gI().sendThongBao(player, "Thưởng cột mốc: 20 Ngọc Xanh!");
+                }
+                case 11 -> {
+                    Item capsule = ItemService.gI().createNewItem((short) 193, 10);
+                    InventoryService.gI().addItemBag(player, capsule);
+                    Service.gI().sendThongBao(player, "Sư phụ thưởng: 10 Capsule Vàng!");
+                }
+                case 23 -> {
+                    player.inventory.gem += 100;
+                    Item thoiVang = ItemService.gI().createNewItem((short) 457, 5);
+                    InventoryService.gI().addItemBag(player, thoiVang);
+                    Service.gI().sendThongBao(player, "Chiến thắng Fide: Thưởng 100 Ngọc & 5 Thỏi Vàng!");
+                }
+                case 29 -> {
+                    player.inventory.ruby += 50;
+                    Item daNangCap = ItemService.gI().createNewItem((short) 223, 10);
+                    InventoryService.gI().addItemBag(player, daNangCap);
+                    Service.gI().sendThongBao(player, "Chinh phục Siêu Bọ Hung: Thưởng 50 Hồng Ngọc & 10 Đá May Mắn!");
+                }
+            }
+
+            InventoryService.gI().sendItemBags(player);
+            PlayerService.gI().sendInfoHpMpMoney(player);
+            Service.gI().sendThongBao(player, "Chúc mừng bạn nhận được " + utils.Util.formatNumber(reward) + " tiềm năng và "
+                    + utils.Util.formatNumber(goldReward) + " vàng!");
             Service.gI().point(player);
         }
     }

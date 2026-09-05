@@ -92,6 +92,17 @@ public class Broly extends Boss {
     }
 
     @Override
+    public Player getPlayerAttack() {
+        Player pl = super.getPlayerAttack();
+        // Nếu Broly đã tăng nộ mạnh (hpMax > 500.000) và mục tiêu là tân thủ (power < 1.500.000), tránh đồ sát
+        if (pl != null && this.nPoint != null && this.nPoint.hpMax > 500_000 && pl.nPoint != null && pl.nPoint.power < 1_500_000) {
+            this.playerTarger = null;
+            return null;
+        }
+        return pl;
+    }
+
+    @Override
     public void attack() {
         // Cooldown 800ms cho tất cả skill
         if (!Util.canDoWithTime(this.lastTimeAttack, 800) || this.typePk != ConstPlayer.PK_ALL) {

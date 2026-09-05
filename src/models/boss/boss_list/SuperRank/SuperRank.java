@@ -166,17 +166,16 @@ public abstract class SuperRank extends Boss {
                     && !Util.canDoWithTime(plAtt.effectSkill.lastTimeUpBinh, 3000)) {
                 return 0;
             }
-            if (plAtt != null && plAtt.isPl() && this.maBuHold != null && this.zone != null && this.zone.map.mapId == 128) {
-                this.precentMabuHold++;
-                damage = 1;
-            }
             if (plAtt != null && this.nPoint.islinhthuydanhbac) {
                 Service.gI().sendThongBao(plAtt, "Không thể tấn công! Vì người chơi này đã nạp lần đầu!");
                 return 0;
             }
 
-            if (plAtt != null && plAtt.playerSkill.skillSelect != null) {
-                switch (plAtt.playerSkill.skillSelect.template.id) {
+            int skillId = (plAtt != null && plAtt.playerSkill != null && plAtt.playerSkill.skillSelect != null
+                    && plAtt.playerSkill.skillSelect.template != null) ? plAtt.playerSkill.skillSelect.template.id : -1;
+
+            if (skillId != -1) {
+                switch (skillId) {
                     case Skill.KAMEJOKO:
                     case Skill.MASENKO:
                     case Skill.ANTOMIC:
@@ -191,8 +190,8 @@ public abstract class SuperRank extends Boss {
             int tlGiap = this.nPoint.tlGiap;
             int tlNeDon = this.nPoint.tlNeDon;
 
-            if (plAtt != null && !isMobAttack && plAtt.playerSkill.skillSelect != null) {
-                switch (plAtt.playerSkill.skillSelect.template.id) {
+            if (skillId != -1 && !isMobAttack) {
+                switch (skillId) {
                     case Skill.KAMEJOKO:
                     case Skill.MASENKO:
                     case Skill.ANTOMIC:
@@ -211,7 +210,7 @@ public abstract class SuperRank extends Boss {
                         break;
                 }
 
-                switch (plAtt.playerSkill.skillSelect.template.id) {
+                switch (skillId) {
                     case Skill.KAMEJOKO:
                     case Skill.MASENKO:
                     case Skill.ANTOMIC:
@@ -257,8 +256,8 @@ public abstract class SuperRank extends Boss {
             }
 
             boolean isUseGX = false;
-            if (!piercing && plAtt != null && plAtt.playerSkill.skillSelect != null) {
-                switch (plAtt.playerSkill.skillSelect.template.id) {
+            if (!piercing && skillId != -1) {
+                switch (skillId) {
                     case Skill.KAMEJOKO:
                     case Skill.MASENKO:
                     case Skill.ANTOMIC:

@@ -584,30 +584,24 @@ namespace Game1
     		{
     			EffecMn.addEff(new Effect(41, x, y, 3, 1, 1));
     		}
-    		if (!GameCanvas.lowGraphic && status != 1 && status != 0 && !GameCanvas.lowGraphic && GameCanvas.gameTick % (15 + mobId * 2) == 0)
+    		if (!GameCanvas.lowGraphic && status != 1 && status != 0 && GameCanvas.gameTick % (15 + mobId * 2) == 0)
     		{
     			for (int i = 0; i < GameScr.vCharInMap.size(); i++)
     			{
     				Char @char = (Char)GameScr.vCharInMap.elementAt(i);
     				if (@char != null && @char.isFlyAndCharge && @char.cf == 32)
     				{
-    					Char char2 = new Char();
-    					char2.cx = @char.cx;
-    					char2.cy = @char.cy - @char.ch;
     					if (@char.cgender == 0)
     					{
-    						MonsterDart.addMonsterDart(x + dir * w, y, checkIsBoss(), -100, -100, char2, 25);
+    						MonsterDart.addMonsterDart(x + dir * w, y, checkIsBoss(), -100, -100, @char.cx, @char.cy - @char.ch, 25);
     					}
     				}
     			}
     			if (Char.myCharz().isFlyAndCharge && Char.myCharz().cf == 32)
     			{
-    				Char char3 = new Char();
-    				char3.cx = Char.myCharz().cx;
-    				char3.cy = Char.myCharz().cy - Char.myCharz().ch;
     				if (Char.myCharz().cgender == 0)
     				{
-    					MonsterDart.addMonsterDart(x + dir * w, y, checkIsBoss(), -100, -100, char3, 25);
+    					MonsterDart.addMonsterDart(x + dir * w, y, checkIsBoss(), -100, -100, Char.myCharz().cx, Char.myCharz().cy - Char.myCharz().ch, 25);
     				}
     			}
     		}

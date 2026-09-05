@@ -21,6 +21,7 @@ public class NettySession extends MySession {
     private final Channel channel;
     private final ConcurrentLinkedQueue<Message> messageMailbox = new ConcurrentLinkedQueue<>();
     private final AtomicBoolean isProcessing = new AtomicBoolean(false);
+    private static final int MAX_MAILBOX_SIZE = 300;
 
     public NettySession(Channel channel) {
         super();
@@ -43,6 +44,7 @@ public class NettySession extends MySession {
 
     /**
      * Nhận gói tin từ Netty I/O thread và đưa vào Mailbox xử lý tuần tự (FIFO).
+     * Bổ sung cơ chế Bounded Mailbox (giới hạn 300 packets) bảo vệ RAM máy chủ.
      */
     public void enqueueMessage(Message msg) {
         if (msg == null) {
@@ -50,6 +52,12 @@ public class NettySession extends MySession {
         }
         if (!this.isConnected()) {
             msg.cleanup();
+            return;
+        }
+        if (this.messageMailbox.size() >= MAX_MAILBOX_SIZE) {
+            Logger.warning("Session " + this.getIP() + " Mailbox vượt ngưỡng (> " + MAX_MAILBOX_SIZE + ") -> Drop & Disconnect!");
+            msg.cleanup();
+            this.disconnect();
             return;
         }
         messageMailbox.offer(msg);
@@ -92,6 +100,12 @@ public class NettySession extends MySession {
     @Override
     public void sendMessage(Message msg) {
         if (this.isConnected() && msg != null) {
+            if (!this.channel.isWritable()) {
+                // Outbound buffer của Netty bị đầy (client lag mạng), bỏ qua packet để chống tràn RAM máy chủ
+                return;
+            }
+            // Đồng bộ hóa trích xuất payload trước khi chuyển giao bất đồng bộ cho Netty EventLoop
+            msg.getData();
             this.channel.writeAndFlush(msg);
         }
     }
@@ -122,8 +136,7 @@ public class NettySession extends MySession {
         while ((remainingMsg = messageMailbox.poll()) != null) {
             remainingMsg.cleanup();
         }
-        this.setIP(null);
-        this.ipAddress = null;
+        // Giữ lại IP để ServerManager.disconnect() và SessionManager.removeSession() có thể giảm IP counter chính xác
     }
 
     @Override

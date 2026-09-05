@@ -364,6 +364,24 @@ public ItemMap getItemMapByTempId(int tempId) {
 
             isFoodOrKid = (this.map.mapId >= 21 && this.map.mapId <= 23 && itemMap.itemTemplate.id == 74)
                     || (this.map.mapId >= 42 && this.map.mapId <= 44 && itemMap.itemTemplate.id == 78);
+
+            // Kiểm tra trước ô trống hành trang đối với trang bị/vật phẩm thông thường để chống mất đồ
+            int itemType = itemMap.itemTemplate.type;
+            boolean isCurrency = (itemType == 9 || itemType == 10 || itemType == 34);
+            boolean isBall = ItemMapService.gI().isBlackBall(itemMap.itemTemplate.id)
+                    || ItemMapService.gI().isNamecBall(itemMap.itemTemplate.id)
+                    || ItemMapService.gI().isNamecBallStone(itemMap.itemTemplate.id);
+
+            if (!isFoodOrKid && !isCurrency && !isBall) {
+                if (InventoryService.gI().getCountEmptyBag(player) <= 0) {
+                    Item existingItem = InventoryService.gI().findItemBagByTemp(player, itemMap.itemTemplate.id);
+                    if (existingItem == null || !itemMap.itemTemplate.isUpToUp) {
+                        Service.gI().sendThongBao(player, "Hành trang không còn chỗ trống, không thể nhặt thêm");
+                        return;
+                    }
+                }
+            }
+
             if (!isFoodOrKid) {
                 this.items.remove(itemMap);
             }
@@ -800,16 +818,38 @@ msg.writer().writeByte(plInfo.idMark != null ? plInfo.idMark.getIdSpaceShip() : 
     }
 
     public MaBuHold getMaBuHold() {
-        for (MaBuHold hold : MapService.gI().getMapById(128).zones.get(this.zoneId).maBuHolds) {
-            if (hold.player == null) {
-                return hold;
+        var map128 = MapService.gI().getMapById(128);
+        if (map128 == null || this.zoneId < 0 || this.zoneId >= map128.zones.size()) {
+            return null;
+        }
+        Zone z128 = map128.zones.get(this.zoneId);
+        if (z128 == null || z128.maBuHolds == null) {
+            return null;
+        }
+        synchronized (z128.maBuHolds) {
+            for (MaBuHold hold : z128.maBuHolds) {
+                if (hold != null && hold.player == null) {
+                    return hold;
+                }
             }
         }
         return null;
     }
 
     public void setMaBuHold(int slot, int zoneId, Player player) {
-        MapService.gI().getMapById(128).zones.get(zoneId).maBuHolds.set(slot, new MaBuHold(slot, player));
+        var map128 = MapService.gI().getMapById(128);
+        if (map128 == null || zoneId < 0 || zoneId >= map128.zones.size()) {
+            return;
+        }
+        Zone z128 = map128.zones.get(zoneId);
+        if (z128 == null || z128.maBuHolds == null) {
+            return;
+        }
+        synchronized (z128.maBuHolds) {
+            if (slot >= 0 && slot < z128.maBuHolds.size()) {
+                z128.maBuHolds.set(slot, new MaBuHold(slot, player));
+            }
+        }
     }
 
     public boolean isKhongCoTrongTaiTrongKhu() {
@@ -846,16 +886,13 @@ public void removeBoss(Boss boss) {
         this.humanoids.remove(boss); // Boss cũng là một humanoid, cần xóa ở đây nữa
     }
 }
-// Đặt phương thức này vào trong file Zone.java của bạn
 public void sendMessage(Message msg) {
     if (msg == null) {
         return;
     }
-    // Lấy danh sách người chơi hiện tại để tránh lỗi ConcurrentModificationException
-    List<Player> playersToSend = new ArrayList<>(this.players);
-
-    for (Player pl : playersToSend) {
-        if (pl != null) {
+    // this.players là CopyOnWriteArrayList, duyệt trực tiếp thread-safe, loại bỏ cấp phát rác GC
+    for (Player pl : this.players) {
+        if (pl != null && pl.getSession() != null) {
             pl.sendMessage(msg);
         }
     }

@@ -84,7 +84,8 @@ public class Drabura2 extends Boss {
     public synchronized int injured(Player plAtt, long damage, boolean piercing, boolean isMobAttack) {
         if (!this.isDie()) {
 
-            if (plAtt != null) {
+            if (plAtt != null && plAtt.playerSkill != null && plAtt.playerSkill.skillSelect != null
+                    && plAtt.playerSkill.skillSelect.template != null) {
                 switch (plAtt.playerSkill.skillSelect.template.id) {
                     case Skill.KAMEJOKO:
                     case Skill.MASENKO:
@@ -94,7 +95,7 @@ public class Drabura2 extends Boss {
                 }
             }
 
-            if (plAtt.isPl() && Util.isTrue(1, 5)) {
+            if (plAtt != null && plAtt.isPl() && Util.isTrue(1, 5)) {
                 plAtt.fightMabu.changePercentPoint((byte) 1);
             }
 
@@ -107,7 +108,11 @@ public class Drabura2 extends Boss {
                 damage = 1;
             }
 
-             int skillID = plAtt.playerSkill.skillSelect.template.id;
+            int skillID = -1;
+            if (plAtt != null && plAtt.playerSkill != null && plAtt.playerSkill.skillSelect != null
+                    && plAtt.playerSkill.skillSelect.template != null) {
+                skillID = plAtt.playerSkill.skillSelect.template.id;
+            }
 
         // Danh sách các skill được phép phá giới hạn damage
         boolean isSpecialSkill = (skillID == Skill.TU_SAT ||

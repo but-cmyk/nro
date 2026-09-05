@@ -162,7 +162,7 @@ public class TimeUtil {
     public static boolean isMabuOpen() {
         Calendar calendar = Calendar.getInstance();
         int hour = calendar.get(Calendar.HOUR_OF_DAY);  // lấy giờ hiện tại
-        return hour >= 1 && hour < 23;
+        return hour == 12;
     }
 
     public static boolean isMabu14HOpen() {

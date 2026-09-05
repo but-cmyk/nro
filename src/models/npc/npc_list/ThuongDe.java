@@ -38,20 +38,6 @@ public class ThuongDe extends Npc {
                             this.createOtherMenu(player, ConstNpc.BASE_MENU,
                                     "Từ nay con sẽ là đệ tử của ta. Ta sẽ truyền cho con tất cả tuyệt kĩ",
                                     player.dangKyTapTuDong ? "Hủy đăng\nký tập\ntự động" : "Đăng ký\ntập\ntự động", "Tập luyện\nvới\nThượng Đế", "Thách đấu\nThượng Đế", "Đến\nKaio", "Quay ngọc\nMay mắn");
-                        case 4 -> // Quay ngọc May mắn
-                            this.createOtherMenu(player, ConstNpc.MENU_CHOOSE_LUCKY_ROUND,
-                                    "Con muốn làm gì nào?",
-                                    "Quay bằng\nvàng",
-                                    "Quay bằng\nngọc", // <<-- THÊM LỰA CHỌN MỚI TẠI ĐÂY
-                                    "Vòng quay\nđặc biệt",
-                                    "Rương phụ\n("
-                                    + (player.inventory.itemsBoxCrackBall.size()
-                                    - InventoryService.gI().getCountEmptyListItem(player.inventory.itemsBoxCrackBall))
-                                    + " món)",
-                                    "Xóa hết\ntrong rương",
-                                    "BXH Quay Số", // Tên BXH mới của chúng ta
-                                    "Đóng");
-
                         default ->
                             this.createOtherMenu(player, ConstNpc.BASE_MENU,
                                     "Con đã mạnh hơn ta, ta sẽ chỉ đường cho con đến Kaio\nđể gặp thần Vũ Trụ Phương Bắc\nNgài là thần cai quản vũ trụ này, hãy theo ngài ấy học võ công.",

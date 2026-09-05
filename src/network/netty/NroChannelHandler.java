@@ -39,6 +39,7 @@ public class NroChannelHandler extends SimpleChannelInboundHandler<Message> {
         // 1. Kiểm tra giới hạn kết nối IP
         if (!ServerManager.canConnectWithIp(session.getIP())) {
             Logger.warning("Chặn kết nối từ IP quá giới hạn: " + session.getIP());
+            ctx.channel().attr(SESSION_ATTR).set(null);
             ctx.close();
             return;
         }

@@ -110,14 +110,7 @@ namespace Game1
     					{
     						Cout.println("LOI NHAN  MESS THU 1");
     					}
-    					try
-    					{
-    						Thread.Sleep(5);
-    					}
-    					catch (Exception)
-    					{
-    						Cout.println("LOI NHAN  MESS THU 2");
-    					}
+    
     				}
     			}
     			catch (Exception ex3)
@@ -300,7 +293,7 @@ namespace Game1
     
     	public static int count;
     
-    	public static MyVector recieveMsg = new MyVector();
+    	public static Queue<Message> recieveMsg = new Queue<Message>();
     
     	public Session_ME()
     	{
@@ -498,7 +491,7 @@ namespace Game1
     		{
     			lock (recieveMsg)
     			{
-    				recieveMsg.addElement(msg);
+    				recieveMsg.Enqueue(msg);
     			}
     		}
     	}
@@ -510,10 +503,9 @@ namespace Game1
     			Message message = null;
     			lock (recieveMsg)
     			{
-    				if (recieveMsg.size() > 0)
+    				if (recieveMsg.Count > 0)
     				{
-    					message = (Message)recieveMsg.elementAt(0);
-    					recieveMsg.removeElementAt(0);
+    					message = recieveMsg.Dequeue();
     				}
     			}
     			if (message == null)

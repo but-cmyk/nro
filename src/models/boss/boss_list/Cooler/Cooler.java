@@ -23,13 +23,36 @@ public class Cooler extends Boss {
 
     @Override
     public void reward(Player plKill) {
+        if (plKill == null) {
+            return;
+        }
         // Cộng điểm trùm
         if (plKill.effect != null) {
             plKill.effect.addPointTrumSanBoss();
         }
 
-        // Check nhiệm vụ
-        TaskService.gI().checkDoneTaskKillBoss(plKill, this);
+        // Check nhiệm vụ chỉ ở form cuối
+        if (this.currentLevel == this.data.length - 1) {
+            TaskService.gI().checkDoneTaskKillBoss(plKill, this);
+
+            // --- LOGIC NHIỆM VỤ RIÊNG ---
+            // Nên check null taskdh để tránh NullPointerException
+            if (plKill.playerTask != null && plKill.playerTask.taskdh != null) {
+                if (plKill.playerTask.taskdh.Hagucboss < 30) {
+                    plKill.playerTask.taskdh.Hagucboss++;
+                    plKill.playerTask.taskdh.ResetTime = System.currentTimeMillis();
+
+                    // Gửi thông báo tiến độ (Optional)
+                    // int required = 30;
+                    // int percentDone = (int) ((double) plKill.playerTask.taskdh.Hagucboss / required * 100);
+                    // Service.gI().sendThongBao(plKill, "Tiến độ hiện tại: " + percentDone + "%");
+                }
+            }
+        }
+
+        if (this.zone == null || this.location == null) {
+            return;
+        }
 
         // --- LOGIC DROP ĐỒ ---
         int x = this.location.x;
@@ -55,20 +78,6 @@ public class Cooler extends Boss {
         itemMap.options.add(new Item.ItemOption(30, 0)); // Option không bị khóa gd (ví dụ)
         Service.gI().dropItemMap(this.zone, itemMap);
         // }
-
-        // --- LOGIC NHIỆM VỤ RIÊNG ---
-        // Nên check null taskdh để tránh NullPointerException
-        if (plKill.playerTask != null && plKill.playerTask.taskdh != null) {
-            if (plKill.playerTask.taskdh.Hagucboss < 30) {
-                plKill.playerTask.taskdh.Hagucboss++;
-                plKill.playerTask.taskdh.ResetTime = System.currentTimeMillis();
-
-                // Gửi thông báo tiến độ (Optional)
-                // int required = 30;
-                // int percentDone = (int) ((double) plKill.playerTask.taskdh.Hagucboss / required * 100);
-                // Service.gI().sendThongBao(plKill, "Tiến độ hiện tại: " + percentDone + "%");
-            }
-        }
     }
 
     @Override

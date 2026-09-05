@@ -138,8 +138,11 @@ public class Pet extends Player {
             this.status = FUSION;
             ChangeMapService.gI().exitMap(this);
             fusionEffect(master.fusion.typeFusion);
+            int percentHp3 = master.nPoint.getCurrPercentHP();
+            int percentMp3 = master.nPoint.getCurrPercentMP();
             master.nPoint.calPoint();
-            master.nPoint.setFullHpMp();
+            master.nPoint.setHP((long) master.nPoint.hpMax * percentHp3 / 100L);
+            master.nPoint.setMP((long) master.nPoint.mpMax * percentMp3 / 100L);
             Service.gI().point(master);
             Service.gI().Send_Caitrang(master);
         } else {
@@ -165,8 +168,11 @@ public class Pet extends Player {
             this.status = FUSION;
             ChangeMapService.gI().exitMap(this);
             fusionEffect(master.fusion.typeFusion);
+            int percentHp2 = master.nPoint.getCurrPercentHP();
+            int percentMp2 = master.nPoint.getCurrPercentMP();
             master.nPoint.calPoint();
-            master.nPoint.setFullHpMp();
+            master.nPoint.setHP((long) master.nPoint.hpMax * percentHp2 / 100L);
+            master.nPoint.setMP((long) master.nPoint.mpMax * percentMp2 / 100L);
             Service.gI().point(master);
             Service.gI().Send_Caitrang(master);
         } else {
@@ -193,8 +199,11 @@ public class Pet extends Player {
             ChangeMapService.gI().exitMap(this);
             fusionEffect(master.fusion.typeFusion);
             Service.gI().Send_Caitrang(master);
+            int percentHp = master.nPoint.getCurrPercentHP();
+            int percentMp = master.nPoint.getCurrPercentMP();
             master.nPoint.calPoint();
-            master.nPoint.setFullHpMp();
+            master.nPoint.setHP((long) master.nPoint.hpMax * percentHp / 100L);
+            master.nPoint.setMP((long) master.nPoint.mpMax * percentMp / 100L);
             Service.gI().point(master);
         } else {
             Service.gI().sendThongBao(this.master, "Vui lòng đợi "

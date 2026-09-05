@@ -316,23 +316,34 @@ public class MapService {
             return getZoneByMapIDAndZoneID(mapId, zoneId);
         }
     }
-  public List<Map> getAllMaps() {
-        return this.getAllMaps();
+    public List<Map> getAllMaps() {
+        return server.Manager.MAPS;
     }
 
     public Zone getZone(int mapId) {
         Map map = getMapById(mapId);
-        if (map == null) {
+        if (map == null || map.zones == null || map.zones.isEmpty()) {
             return null;
         }
 
-        //int z = Util.nextInt(0, map.zones.size() - 1);
-        int z = 0;
-        while (map.zones.get(z).getNumOfPlayers() >= map.zones.get(z).maxPlayer) {
-            //   z = Util.nextInt(0, map.zones.size() - 1);
-            z++;
+        Zone bestZone = null;
+        int minPlayers = Integer.MAX_VALUE;
+
+        // Ưu tiên tìm zone còn chỗ trống
+        for (Zone zone : map.zones) {
+            if (zone != null) {
+                int count = zone.getNumOfPlayers();
+                if (count < zone.maxPlayer) {
+                    return zone;
+                }
+                if (count < minPlayers) {
+                    minPlayers = count;
+                    bestZone = zone;
+                }
+            }
         }
-        return map.zones.get(z);
+        // Nếu tất cả zone đều đầy, trả về zone ít người nhất hoặc zone 0 an toàn tuyệt đối
+        return bestZone != null ? bestZone : map.zones.get(0);
     }
 
     private Zone getZoneByMapIDAndZoneID(int mapId, int zoneId) {

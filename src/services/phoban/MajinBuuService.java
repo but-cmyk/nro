@@ -104,15 +104,24 @@ public class MajinBuuService {
                     }
                     return;
                 }
-                if (Util.isTrue(1, 100) && player.cFlag == 9) {
-                    getNpcBabiday(player).npcChat(player.zone, "Úm bala xì bùa " + player.name);
-                    Service.gI().sendThongBao(player, "Bạn đã bị Babiđây thôi miên");
-                    Service.gI().changeFlag(player, 10);
-                }
-                if (Util.isTrue(1, 50) && player.cFlag == 10) {
-                    getNpcOsin(player).npcChat(player.zone, "Úm bala xì bùa hóa giải cho " + player.name);
-                    Service.gI().sendThongBao(player, "Bạn đã được Ôsin giải bùa mê");
-                    Service.gI().changeFlag(player, 9);
+                if (player.fightMabu != null && Util.canDoWithTime(player.fightMabu.lastTimeChangeFlag, 60000)) {
+                    if (Util.isTrue(1, 100) && player.cFlag == 9) {
+                        var babiday = getNpcBabiday(player);
+                        if (babiday != null) {
+                            babiday.npcChat(player.zone, "Úm bala xì bùa " + player.name);
+                        }
+                        Service.gI().sendThongBao(player, "Bạn đã bị Babiđây thôi miên!");
+                        Service.gI().changeFlag(player, 10);
+                        player.fightMabu.lastTimeChangeFlag = System.currentTimeMillis();
+                    } else if (Util.isTrue(1, 50) && player.cFlag == 10) {
+                        var osin = getNpcOsin(player);
+                        if (osin != null) {
+                            osin.npcChat(player.zone, "Úm bala xì bùa hóa giải cho " + player.name);
+                        }
+                        Service.gI().sendThongBao(player, "Bạn đã được Ôsin giải bùa mê!");
+                        Service.gI().changeFlag(player, 9);
+                        player.fightMabu.lastTimeChangeFlag = System.currentTimeMillis();
+                    }
                 }
             } catch (Exception ignored) {
             }

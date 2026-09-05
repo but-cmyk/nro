@@ -283,7 +283,12 @@ public class FriendAndEnemyService {
                 if (player.isAdmin() || player.nPoint.teleport) {
                     if (!pl.itemTime.isUseAnDanh || player.isAdmin()) {
                         if ((player.isAdmin() || !pl.zone.isFullPlayer()) && !MapService.gI().isMapOffline(pl.zone.map.mapId) && !MapService.gI().isMapBlackBallWar(pl.zone.map.mapId) && !MapService.gI().isMapPhoBan(pl.zone.map.mapId) && !MapService.gI().isMapMaBu(pl.zone.map.mapId)) {
-                            ChangeMapService.gI().changeMapYardrat(player, ChangeMapService.gI().checkMapCanJoin(player, pl.zone), pl.location.x + Util.nextInt(-5, 5), pl.location.y);
+                            models.map.Zone zoneJoin = ChangeMapService.gI().checkMapCanJoin(player, pl.zone);
+                            if (zoneJoin != null) {
+                                ChangeMapService.gI().changeMapYardrat(player, zoneJoin, pl.location.x + Util.nextInt(-5, 5), pl.location.y);
+                            } else {
+                                Service.gI().sendThongBao(player, "Bạn chưa đủ điều kiện nhiệm vụ hoặc sức mạnh để đến khu vực này!");
+                            }
                         } else {
                             Service.gI().sendThongBao(player, "Không thể thực hiện");
                         }

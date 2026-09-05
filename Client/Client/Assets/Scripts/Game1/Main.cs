@@ -95,6 +95,7 @@ namespace Game1
 
         private void Awake()
         {
+            Application.runInBackground = true;
             if (main != null)
             {
                 TabManagement.tab = TabType.Tab1;

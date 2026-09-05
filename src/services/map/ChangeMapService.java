@@ -79,6 +79,7 @@ public class ChangeMapService {
                         }
                         msg.writer().writeUTF(zone.map.planetName);
                     }
+                    break;
                 case ConstMap.CHANGE_BLACK_BALL:
                     list = (pl.mapBlackBall != null ? pl.mapBlackBall
                             : (pl.mapBlackBall = MapService.gI().getMapBlackBall()));
@@ -390,6 +391,9 @@ public class ChangeMapService {
             this.goToMap(pl, zoneJoin);
             if (pl.pet != null) {
                 pl.pet.joinMapMaster();
+            }
+            if (pl.newPet != null) {
+                pl.newPet.joinMapMaster();
             }
             Service.gI().clearMap(pl);
             // Fix Lỗi Load Map 15/09/2023
@@ -858,8 +862,9 @@ public class ChangeMapService {
     public void goToDBKB(Player player) {
         if (!player.idMark.isGoToBDKB()) {
             if (Util.isAfterMidnight(player.lastTimeJoinBDKB)) {
+                player.lastTimeJoinBDKB = (player.clan != null && player.clan.lastTimeOpenBanDoKhoBau > 0) ? player.clan.lastTimeOpenBanDoKhoBau : System.currentTimeMillis();
                 player.timesPerDayBDKB = 1;
-            } else if (player.lastTimeJoinBDKB != player.clan.lastTimeOpenBanDoKhoBau) {
+            } else if (player.clan != null && player.lastTimeJoinBDKB != player.clan.lastTimeOpenBanDoKhoBau) {
                 player.lastTimeJoinBDKB = player.clan.lastTimeOpenBanDoKhoBau;
                 player.timesPerDayBDKB++;
                 if (player.timesPerDayBDKB > 3) {
@@ -1083,6 +1088,28 @@ public class ChangeMapService {
                 case 111:
                     if (player.nPoint.power > 1500000L) {
                         Service.gI().sendThongBao(player, "Sức mạnh phải dưới 1,5 triệu mới vào được");
+                        return null;
+                    }
+                    break;
+                case 148: // Bản đồ trung tâm Khí Gas
+                    if (player.clan == null || player.clan.KhiGasHuyDiet == null) {
+                        return null;
+                    }
+                    break;
+                case 160: // Hành tinh thực vật
+                case 161:
+                case 162:
+                case 163:
+                    if (TaskService.gI().getIdTask(player) < ConstTask.TASK_23_0 || player.nPoint.power < 1500000L) {
+                        Service.gI().sendThongBao(player, "Yêu cầu sức mạnh trên 1,5 triệu và hoàn thành nhiệm vụ tương ứng");
+                        return null;
+                    }
+                    break;
+                case 169: // Map Thần Kaio / Hủy Diệt
+                case 170:
+                case 171:
+                    if (TaskService.gI().getIdTask(player) < ConstTask.TASK_25_0 || player.nPoint.power < 1500000L) {
+                        Service.gI().sendThongBao(player, "Bạn chưa đủ điều kiện bước vào thánh địa Thần Kaio");
                         return null;
                     }
                     break;

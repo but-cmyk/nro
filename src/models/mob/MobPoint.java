@@ -26,10 +26,10 @@ public class MobPoint {
     }
 
     public void sethp(int hp) {
-        if (this.hp < 0) {
+        if (hp < 0) {
             this.hp = 0;
         } else {
-            this.hp = hp;
+            this.hp = (this.maxHp > 0) ? Math.min(hp, this.maxHp) : hp;
         }
     }
 

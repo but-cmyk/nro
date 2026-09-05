@@ -54,19 +54,20 @@ public final class MobMe extends Mob {
                 }
             }
 
-            if (mob != null) {
-                if (mob.point.gethp() > this.point.dame) {
-                    long tnsm = mob.getTiemNangForPlayer(this.player, this.point.dame);
+            if (mob != null && !mob.isDie()) {
+                int dame = !miss ? this.point.dame : 0;
+                if (dame > 0) {
+                    int mobHpBefore = mob.point.gethp();
+                    mob.injured(this.player, dame, true);
+                    int realDamage = Math.max(0, mobHpBefore - mob.point.gethp());
                     msg = new Message(-95);
                     msg.writer().writeByte(3);
                     msg.writer().writeInt(this.id);
                     msg.writer().writeInt((int) mob.id);
-                    mob.point.sethp(mob.point.gethp() - this.point.dame);
                     msg.writer().writeInt(mob.point.gethp());
-                    msg.writer().writeInt(this.point.dame);
+                    msg.writer().writeInt(realDamage > 0 ? realDamage : dame);
                     Service.gI().sendMessAllPlayerInMap(this.player, msg);
                     msg.cleanup();
-                    Service.gI().addSMTN(player, (byte) 2, tnsm, true);
                 }
             }
         } catch (Exception e) {

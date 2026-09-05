@@ -619,7 +619,7 @@ namespace Game1
     				}
     				gameTick = 0;
     			}
-                    if (!TabControll.Instance.isPointerHoldInTab()  && currentScreen != null)
+                    if (currentScreen != null)
     			{
     				if (ChatPopup.serverChatPopUp != null)
     				{
@@ -2601,7 +2601,6 @@ namespace Game1
     				mFont.tahoma_7_yellow.drawString(g, thongBaoTest, xThongBaoTranslate, num, 0);
     				g.setClip(0, 0, w, h);
     			}
-    			TabControll.Instance.paint(g);
     		}
     		catch (Exception)
     		{
