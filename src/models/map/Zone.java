@@ -434,17 +434,31 @@ public ItemMap getItemMapByTempId(int tempId) {
                                 player.effect.addPointOngThanVeChai();
                             }
                         }
+                        if (item.template.id == 73) {
+                            InventoryService.gI().sendItemBags(player);
+                        }
                     }
                 }
                 msg.writer().writeShort(item.quantity > Short.MAX_VALUE ? 9999 : item.quantity);
                 player.sendMessage(msg);
                 msg.cleanup();
                 Service.gI().sendToAntherMePickItem(player, itemMapId);
-                if (!isFoodOrKid) {
-                    itemMap.dispose();
-                }
             } catch (Exception e) {
                 Logger.logException(Zone.class, e);
+            }
+
+            // Ghi log nhặt vật phẩm thành công
+            if (itemMap != null && itemMap.itemTemplate != null) {
+                utils.PlayerAuditLogger.logAction(player, "PICK_ITEM_SUCCESS", "Item: " + itemMap.itemTemplate.name + " (ID: " + itemMap.itemTemplate.id + ", Qty: " + itemMap.quantity + ")");
+            }
+
+            // Kiểm tra nhiệm vụ TRƯỚC KHI dispose itemMap (tránh làm mất itemTemplate)
+            TaskService.gI().checkDoneTaskPickItem(player, itemMap);
+            TaskService.gI().checkDoneSideTaskPickItem(player, itemMap);
+            TaskService.gI().checkDoneClanTaskPickItem(player, itemMap);
+
+            if (!isFoodOrKid) {
+                itemMap.dispose();
             }
         } else {
             if (!isFoodOrKid) {
@@ -460,9 +474,6 @@ public ItemMap getItemMapByTempId(int tempId) {
                 return;
             }
         }
-        TaskService.gI().checkDoneTaskPickItem(player, itemMap);
-        TaskService.gI().checkDoneSideTaskPickItem(player, itemMap);
-        TaskService.gI().checkDoneClanTaskPickItem(player, itemMap);
     }
 
     public void addItem(ItemMap itemMap) {

@@ -11,21 +11,37 @@ namespace Game1.God
         public string name;
         public List<BossData> listData = new List<BossData>();
         public DateTime? timeStart;
+
         public static BossData getInstance()
         {
             return instance == null ? instance = new BossData() : instance;
         }
+
+        public string getElapsedTime()
+        {
+            if (this.timeStart == null) return "00:00";
+            TimeSpan elapsed = DateTime.Now - this.timeStart.Value;
+            if (elapsed.TotalSeconds < 0)
+            {
+                elapsed = TimeSpan.Zero;
+            }
+            if (elapsed.TotalHours >= 1)
+            {
+                return string.Format("{0:D2}:{1:D2}:{2:D2}", (int)elapsed.TotalHours, elapsed.Minutes, elapsed.Seconds);
+            }
+            return string.Format("{0:D2}:{1:D2}", elapsed.Minutes, elapsed.Seconds);
+        }
+
+        public string getDisplayString()
+        {
+            return this.name + " - " + this.getMapName() + " [" + this.getElapsedTime() + "]";
+        }
+
         public string getStartTimeSpan()
         {
-            TimeSpan timeSpan = DateTime.Now.Subtract(this.timeStart.Value);
-            int num = (int)timeSpan.TotalSeconds;
-            return string.Concat(new string[]
-            {
-            this.timeStart.Value.ToString("HH"),
-            "h:",
-            this.timeStart.Value.ToString("mm")
-            });
+            return getElapsedTime();
         }
+
         public string getMapName()
         {
             if (this.map != null && !(this.map == ""))
@@ -34,20 +50,35 @@ namespace Game1.God
             }
             return "Chưa có thông tin";
         }
+
         public void getBOSSInfo(string string_0)
         {
-            string[] array = string_0.Replace(string_0.StartsWith("BOSS") ? "BOSS " : "Boss ", "").Replace(" vừa xuất hiện tại ", "|").Replace(" appear at ", "|")
-                .Split(new char[] { '|' });
-            BossData bossInfo = new BossData
+            if (string.IsNullOrEmpty(string_0)) return;
+            try
             {
-                name = array[0].Trim(),
-                map = array[1].Trim(),
-                timeStart = new DateTime?(DateTime.Now)
-            };
-            listData.Add(bossInfo);
-            if (listData.Count > 5)
+                string text = string_0.StartsWith("BOSS ") ? string_0.Substring(5) : (string_0.StartsWith("Boss ") ? string_0.Substring(5) : string_0);
+                string[] array = text.Replace(" vừa xuất hiện tại ", "|").Replace(" appear at ", "|").Split('|');
+                if (array.Length < 2) return;
+
+                DateTime now = DateTime.Now;
+                string bName = array[0].Trim();
+                string bMap = array[1].Trim();
+
+                BossData bossInfo = new BossData
+                {
+                    name = bName,
+                    map = bMap,
+                    timeStart = now
+                };
+
+                listData.Add(bossInfo);
+                if (listData.Count > 5)
+                {
+                    listData.RemoveAt(0);
+                }
+            }
+            catch (Exception)
             {
-                listData.RemoveAt(0);
             }
         }
     }

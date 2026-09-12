@@ -35,7 +35,7 @@ public class MySession extends Session {
     public String pp;
 
     public int typeClient;
-    public byte zoomLevel;
+    public byte zoomLevel = 2;
 
     public long lastTimeLogout;
     public boolean joinedGame;

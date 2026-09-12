@@ -19,8 +19,8 @@ services:
       - --innodb-buffer-pool-size=512M
       - --innodb-log-buffer-size=16M
       - --max-connections=200
-      - --wait-timeout=60
-      - --interactive-timeout=60
+      - --wait-timeout=28800
+      - --interactive-timeout=28800
     healthcheck:
       test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -proot || exit 1"]
       interval: 5s

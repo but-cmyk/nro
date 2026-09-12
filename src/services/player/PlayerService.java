@@ -47,7 +47,7 @@ public class PlayerService {
     }
     public void dailyLogin(Player player) {
         if (Util.compareDay(Date.from(Instant.now()), player.firstTimeLogin)) {
-            player.luotNhanBuaMienPhi = 1;
+            player.luotNhanBuaMienPhi = 0;
             player.diemDanhSuKien = 1;
              player.lastCheckIn = null;
             player.firstTimeLogin = Date.from(Instant.now());

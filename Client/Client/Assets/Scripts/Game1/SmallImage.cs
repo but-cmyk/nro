@@ -58,6 +58,7 @@ namespace Game1
     
     	public static void init()
     	{
+    		loadBigRMS();
     		instance = null;
     		instance = new SmallImage();
     	}
@@ -71,7 +72,12 @@ namespace Game1
     		int num = 0;
     		try
     		{
-    			DataInputStream dataInputStream = new DataInputStream(Rms.loadRMS("NR_image"));
+    			sbyte[] data = Rms.loadRMS("NR_image");
+    			if (data == null)
+    			{
+    				return;
+    			}
+    			DataInputStream dataInputStream = new DataInputStream(data);
     			short num2 = dataInputStream.readShort();
     			smallImg = new int[num2][];
     			for (int i = 0; i < smallImg.Length; i++)
@@ -87,6 +93,7 @@ namespace Game1
     				smallImg[j][3] = dataInputStream.readShort();
     				smallImg[j][4] = dataInputStream.readShort();
     			}
+    			dataInputStream.close();
     		}
     		catch (Exception ex)
     		{
@@ -188,6 +195,10 @@ namespace Game1
     		}
     		if (imgbig == null)
     		{
+    			loadBigRMS();
+    		}
+    		if (imgbig == null)
+    		{
     			Small small = imgNew[id];
     			if (small == null)
     			{
@@ -246,6 +257,10 @@ namespace Game1
     			Small[] array = new Small[id + 100];
     			Array.Copy(imgNew, array, imgNew.Length);
     			imgNew = array;
+    		}
+    		if (imgbig == null)
+    		{
+    			loadBigRMS();
     		}
     		if (imgbig == null)
     		{

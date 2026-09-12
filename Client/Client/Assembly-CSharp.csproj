@@ -203,6 +203,7 @@
     <Compile Include="Assets\Scripts\Game1\Scroll.cs" />
     <Compile Include="Assets\Scripts\Game1\Firework.cs" />
     <Compile Include="Assets\Scripts\Game1\ItemOption.cs" />
+    <Compile Include="Assets\Scripts\Game1\God\Client\AutoSettingManager.cs" />
     <Compile Include="Assets\Scripts\Game1\Session_ME2.cs" />
     <Compile Include="Assets\Scripts\Game1\UI\Panels\ChestSubPanel.cs" />
     <Compile Include="Assets\Scripts\Game1\mFont.cs" />
@@ -267,6 +268,7 @@
     <Compile Include="Assets\Scripts\Game1\God\Map\MapController.cs" />
     <Compile Include="Assets\Scripts\Game1\God\Player\PetService.cs" />
     <Compile Include="Assets\Scripts\Game1\TField.cs" />
+    <Compile Include="Assets\Scripts\Game1\UI\Panels\ShopSubPanel.cs" />
     <Compile Include="Assets\Scripts\Game1\Session_ME.cs" />
     <Compile Include="Assets\Scripts\Game1\T2.cs" />
     <Compile Include="Assets\Scripts\Game1\ActionChat.cs" />

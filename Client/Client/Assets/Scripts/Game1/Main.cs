@@ -188,7 +188,7 @@ namespace Game1
                 checkInput();
                 Session_ME.update();
                 Session_ME2.update();
-                if (Event.current.type.Equals(EventType.Repaint))
+                if (Event.current.type == EventType.Repaint)
                 {
                     GUI.color = Color.white;
                     GUI.backgroundColor = Color.white;

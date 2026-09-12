@@ -550,6 +550,11 @@ namespace Game1
     
     	public MyVector splitFontVector(string src, int lineWidth)
     	{
+    		if (string.IsNullOrEmpty(src))
+    		{
+    			return new MyVector();
+    		}
+    		src = src.Replace("\\r\\n", "\n").Replace("\\n", "\n").Replace("\r\n", "\n").Replace("\r", "\n");
     		MyVector myVector = new MyVector();
     		string text = string.Empty;
     		for (int i = 0; i < src.Length; i++)
@@ -618,6 +623,11 @@ namespace Game1
     
     	public ArrayList splitStrInLineA(string src, int lineWidth)
     	{
+    		if (string.IsNullOrEmpty(src))
+    		{
+    			return new ArrayList();
+    		}
+    		src = src.Replace("\\r\\n", "\n").Replace("\\n", "\n").Replace("\r\n", "\n").Replace("\r", "\n");
     		ArrayList arrayList = new ArrayList();
     		int i = 0;
     		int num = 0;

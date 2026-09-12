@@ -313,11 +313,17 @@ public class ItemService {
     }
 
     public ItemOptionTemplate getItemOptionTemplate(int id) {
-        return Manager.ITEM_OPTION_TEMPLATES.get(id);
+        if (id >= 0 && id < Manager.ITEM_OPTION_TEMPLATES.size()) {
+            return Manager.ITEM_OPTION_TEMPLATES.get(id);
+        }
+        return null;
     }
 
     public Template.ItemTemplate getTemplate(int id) {
-        return Manager.ITEM_TEMPLATES.get(id);
+        if (id >= 0 && id < Manager.ITEM_TEMPLATES.size()) {
+            return Manager.ITEM_TEMPLATES.get(id);
+        }
+        return null;
     }
 
     public int getPercentTrainArmor(Item item) {

@@ -60,6 +60,10 @@ namespace Game1.God
 
         public static int MpBuff = 0;
 
+        public static int pickFilterMode = 0; // 0: Tất Cả, 1: Vàng & Đồ Quý, 2: Không Nhặt Rác
+
+        public static bool autoThuHoachDau = false;
+
         public static void Update()
         {
             MobController.Update();

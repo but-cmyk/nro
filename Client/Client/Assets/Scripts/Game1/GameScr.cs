@@ -1161,6 +1161,7 @@ namespace Game1
     	{
     		readPart();
     		SmallImage.init();
+    		SmallImage.loadBigRMS();
     	}
     
     	public static void paintOngMauPercent(Image img0, Image img1, Image img2, float x, float y, int size, float pixelPercent, mGraphics g)
@@ -1233,6 +1234,10 @@ namespace Game1
     		isLoadAllData = true;
     		isPaintOther = false;
     		base.switchToMe();
+    		if (Char.myCharz() != null && Char.myCharz().charID > 0)
+    		{
+    			Game1.God.AutoSettingManager.getInstance().Load(Char.myCharz().charID);
+    		}
     	}
     
     	public static int getMaxExp(int level)
@@ -1286,6 +1291,10 @@ namespace Game1
     				}
     			}
     		}
+    		if (onScreenSkill[0] == null && Char.myCharz().vSkillFight.size() > 0)
+    		{
+    			onScreenSkill[0] = (Skill)Char.myCharz().vSkillFight.elementAt(0);
+    		}
     	}
     
     	public void onKSkill(sbyte[] kSkillID)
@@ -1308,6 +1317,10 @@ namespace Game1
     					break;
     				}
     			}
+    		}
+    		if (keySkill[0] == null && Char.myCharz().vSkillFight.size() > 0)
+    		{
+    			keySkill[0] = (Skill)Char.myCharz().vSkillFight.elementAt(0);
     		}
     	}
     
@@ -1500,7 +1513,12 @@ namespace Game1
     		DataInputStream dataInputStream = null;
     		try
     		{
-    			dataInputStream = new DataInputStream(Rms.loadRMS("NR_part"));
+    			sbyte[] data = Rms.loadRMS("NR_part");
+    			if (data == null)
+    			{
+    				return;
+    			}
+    			dataInputStream = new DataInputStream(data);
     			int num = dataInputStream.readShort();
     			parts = new Part[num];
     			for (int i = 0; i < num; i++)
@@ -1524,7 +1542,10 @@ namespace Game1
     		{
     			try
     			{
-    				dataInputStream.close();
+    				if (dataInputStream != null)
+    				{
+    					dataInputStream.close();
+    				}
     			}
     			catch (Exception ex2)
     			{
@@ -1718,12 +1739,14 @@ namespace Game1
     			sbyte[] data = Rms.loadRMS("NR_skill");
     			if (data == null)
     			{
-    				Cout.LogError("NR_skill RMS is null!");
+    				Res.outz("[CLIENT_READ_SKILL_WARN] NR_skill RMS is null! Requesting updateData from server...");
+    				Service.gI().updateData();
     				return;
     			}
     			dataInputStream = new DataInputStream(data);
     			int num = dataInputStream.readShort();
     			sks = new SkillPaint[System.Math.Max(512, num + 100)];
+    			Res.outz("[CLIENT_READ_SKILL_SUCCESS] Parsing " + num + " skills from NR_skill RMS");
     			for (int i = 0; i < num; i++)
     			{
     				short num3 = dataInputStream.readShort();
@@ -2315,13 +2338,20 @@ namespace Game1
     			int num3 = Math.abs(Char.myCharz().cx - Char.myCharz().mobFocus.getX());
     			int num4 = Math.abs(Char.myCharz().cy - Char.myCharz().mobFocus.getY());
     			Char.myCharz().cvx = 0;
-    			if (num3 <= Char.myCharz().myskill.dx && num4 <= Char.myCharz().myskill.dy)
+    			int reachX = Char.myCharz().myskill.dx;
+    			int reachY = Char.myCharz().myskill.dy;
+    			if (Char.myCharz().myskill.template.type == 1)
+    			{
+    				if (reachX < 60) reachX = 60;
+    				if (reachY < 60) reachY = 60;
+    			}
+    			if (num3 <= reachX && num4 <= reachY)
     			{
     				if (Char.myCharz().myskill.template.id == 20)
     				{
     					return true;
     				}
-    				if (num4 > num3 && Res.abs(Char.myCharz().cy - Char.myCharz().mobFocus.getY()) > 30 && Char.myCharz().mobFocus.getTemplate().type == 4)
+    				if (num4 > num3 && Res.abs(Char.myCharz().cy - Char.myCharz().mobFocus.getY()) > 40 && Char.myCharz().mobFocus.getTemplate().type == 4)
     				{
     					Char.myCharz().currentMovePoint = new MovePoint(Char.myCharz().cx + Char.myCharz().cdir, Char.myCharz().mobFocus.getY());
     					Char.myCharz().endMovePointCommand = new Command(null, null, 8002, null);
@@ -2412,11 +2442,9 @@ namespace Game1
     			{
     				flag5 = true;
     			}
-    			int num10 = (Char.myCharz().myskill.dx - ((!flag5) ? 20 : 50)) * ((Char.myCharz().cx > Char.myCharz().mobFocus.getX()) ? 1 : (-1));
-    			if (num3 <= Char.myCharz().myskill.dx)
-    			{
-    				num10 = 0;
-    			}
+    			int approachDist = System.Math.Min(reachX - 15, 30);
+    			if (approachDist < 20) approachDist = 20;
+    			int num10 = ((!flag5) ? approachDist : 50) * ((Char.myCharz().cx > Char.myCharz().mobFocus.getX()) ? 1 : (-1));
     			Char.myCharz().currentMovePoint = new MovePoint(Char.myCharz().mobFocus.getX() + num10, Char.myCharz().mobFocus.getY());
     			Char.myCharz().endMovePointCommand = new Command(null, null, 8002, null);
     			GameCanvas.clearKeyHold();
@@ -2868,79 +2896,90 @@ namespace Game1
     				{
     					if (TField.isQwerty)
     					{
-    						if (GameCanvas.keyPressed[1])
+    						if (GameCanvas.keyAsciiPress == 49 || GameCanvas.keyPressed[1])
     						{
     							if (keySkill[0] != null)
     							{
     								doSelectSkill(keySkill[0], true);
     							}
+    							GameCanvas.keyAsciiPress = 0;
     						}
-    						else if (GameCanvas.keyPressed[2])
+    						else if (GameCanvas.keyAsciiPress == 50 || GameCanvas.keyPressed[2])
     						{
     							if (keySkill[1] != null)
     							{
     								doSelectSkill(keySkill[1], true);
     							}
+    							GameCanvas.keyAsciiPress = 0;
     						}
-    						else if (GameCanvas.keyPressed[3])
+    						else if (GameCanvas.keyAsciiPress == 51 || GameCanvas.keyPressed[3])
     						{
     							if (keySkill[2] != null)
     							{
     								doSelectSkill(keySkill[2], true);
     							}
+    							GameCanvas.keyAsciiPress = 0;
     						}
-    						else if (GameCanvas.keyPressed[4])
+    						else if (GameCanvas.keyAsciiPress == 52 || GameCanvas.keyPressed[4])
     						{
     							if (keySkill[3] != null)
     							{
     								doSelectSkill(keySkill[3], true);
     							}
+    							GameCanvas.keyAsciiPress = 0;
     						}
-    						else if (GameCanvas.keyPressed[5])
+    						else if (GameCanvas.keyAsciiPress == 53 || GameCanvas.keyPressed[5])
     						{
     							if (keySkill[4] != null)
     							{
     								doSelectSkill(keySkill[4], true);
     							}
+    							GameCanvas.keyAsciiPress = 0;
     						}
-    						else if (GameCanvas.keyPressed[6])
+    						else if (GameCanvas.keyAsciiPress == 54 || GameCanvas.keyPressed[6])
     						{
     							if (keySkill[5] != null)
     							{
     								doSelectSkill(keySkill[5], true);
     							}
+    							GameCanvas.keyAsciiPress = 0;
     						}
-    						else if (GameCanvas.keyPressed[7])
+    						else if (GameCanvas.keyAsciiPress == 55 || GameCanvas.keyPressed[7])
     						{
     							if (keySkill[6] != null)
     							{
     								doSelectSkill(keySkill[6], true);
     							}
+    							GameCanvas.keyAsciiPress = 0;
     						}
-    						else if (GameCanvas.keyPressed[8])
+    						else if (GameCanvas.keyAsciiPress == 56 || GameCanvas.keyPressed[8])
     						{
     							if (keySkill[7] != null)
     							{
     								doSelectSkill(keySkill[7], true);
     							}
+    							GameCanvas.keyAsciiPress = 0;
     						}
-    						else if (GameCanvas.keyPressed[9])
+    						else if (GameCanvas.keyAsciiPress == 57 || GameCanvas.keyPressed[9])
     						{
     							if (keySkill[8] != null)
     							{
     								doSelectSkill(keySkill[8], true);
     							}
+    							GameCanvas.keyAsciiPress = 0;
     						}
-    						else if (GameCanvas.keyPressed[0])
+    						else if (GameCanvas.keyAsciiPress == 48 || GameCanvas.keyPressed[0])
     						{
     							if (keySkill[9] != null)
     							{
     								doSelectSkill(keySkill[9], true);
     							}
+    							GameCanvas.keyAsciiPress = 0;
     						}
     						else if (GameCanvas.keyAsciiPress == 114)
     						{
     							ChatTextField.gI().startChat(this, string.Empty);
+    							GameCanvas.keyAsciiPress = 0;
     						}
                             ClientManager.getInstance().KeyPressed(GameCanvas.keyAsciiPress);
                         }
@@ -2964,7 +3003,7 @@ namespace Game1
     					}
     					else if (GameCanvas.keyAsciiPress == 57)
     					{
-    						if (keySkill[(!Main.isPC) ? 2 : 21] != null)
+    						if (keySkill[2] != null)
     						{
     							doSelectSkill(keySkill[2], true);
     						}
@@ -3472,6 +3511,7 @@ namespace Game1
     				{
     					isWaitingDoubleClick = false;
     					checkDoubleClick();
+    					GameCanvas.isPointerJustRelease = false;
     				}
     			}
     			if (GameCanvas.isPointerJustRelease)
@@ -3707,6 +3747,14 @@ namespace Game1
     			Char.myCharz().currentMovePoint = null;
     			Char.myCharz().cvx = (Char.myCharz().cvy = 0);
     			obj.stopMoving();
+    			if (obj is Mob)
+    			{
+    				Char.myCharz().mobFocus = (Mob)obj;
+    			}
+    			if (Char.myCharz().myskill == null && Char.myCharz().vSkillFight.size() > 0)
+    			{
+    				Char.myCharz().myskill = (Skill)Char.myCharz().vSkillFight.elementAt(0);
+    			}
     			auto = 10;
     			doFire(false, true);
     			clickToX = obj.getX();
@@ -4111,7 +4159,7 @@ namespace Game1
     				return;
     			}
     			Char.myCharz().cvx = (Char.myCharz().cvy = 0);
-    			if (Char.myCharz().isSelectingSkillUseAlone() && Char.myCharz().focusToAttack())
+    			if (Char.myCharz().isSelectingSkillUseAlone())
     			{
     				if (checkSkillValid())
     				{
@@ -4135,6 +4183,10 @@ namespace Game1
     				}
     				else
     				{
+    					if (sks == null || sks.Length == 0)
+    					{
+    						readSkill();
+    					}
     					bool flag = TileMap.tileTypeAt(Char.myCharz().cx, Char.myCharz().cy, 2);
     					SkillPaint skillPaint = null;
     					if (sks != null && Char.myCharz().myskill != null && Char.myCharz().myskill.skillId >= 0 && Char.myCharz().myskill.skillId < sks.Length)
@@ -4144,6 +4196,11 @@ namespace Game1
     					if (skillPaint == null && sks != null && sks.Length > 0)
     					{
     						skillPaint = sks[0];
+    					}
+    					if (skillPaint == null)
+    					{
+    						skillPaint = new SkillPaint();
+    						skillPaint.id = 0;
     					}
     					Char.myCharz().setSkillPaint(skillPaint, (!flag) ? 1 : 0);
     					if (flag)
@@ -4223,24 +4280,38 @@ namespace Game1
     
     	public void doSelectSkill(Skill skill, bool isShortcut)
     	{
-    		if (Char.myCharz().isCreateDark || isCharging() || Char.myCharz().taskMaint.taskId <= 1)
+    		if (Char.myCharz().isCreateDark || isCharging())
     		{
+    			Res.outz("[CLIENT_DO_SELECT_SKILL_BLOCKED] isCreateDark or isCharging is true");
     			return;
     		}
-    		if (skill != null && skill.paintCanNotUseSkill)
+    		if (skill == null)
     		{
-    			info1.addInfo("Chiêu thức đang hồi phục!", 0);
+    			Res.outz("[CLIENT_DO_SELECT_SKILL_BLOCKED] skill is NULL");
+    			return;
+    		}
+    		long now = mSystem.currentTimeMillis();
+    		if (skill.paintCanNotUseSkill)
+    		{
+    			long diff = now - skill.lastTimeUseThisSkill;
+    			if (diff >= skill.coolDown || diff < 0)
+    			{
+    				skill.paintCanNotUseSkill = false;
+    			}
+    			else
+    			{
+    				info1.addInfo("Chiêu thức đang hồi phục!", 0);
+    				Res.outz("[CLIENT_DO_SELECT_SKILL_BLOCKED] Cooldown not ready: diff=" + diff + " < cd=" + skill.coolDown);
+    				return;
+    			}
     		}
     		Char.myCharz().myskill = skill;
-    		if (lastSkill != skill && lastSkill != null)
+    		if (lastSkill != skill)
     		{
+    			Res.outz("[CLIENT_SELECT_SKILL_SEND] Sending selectSkill packet to server for skillId=" + skill.template.id + " (" + skill.template.name + ")");
     			Service.gI().selectSkill(skill.template.id);
     			saveRMSCurrentSkill(skill.template.id);
     			resetButton();
-    			lastSkill = skill;
-    			selectedIndexSkill = -1;
-    			gI().auto = 0;
-    			return;
     		}
     		if (Char.myCharz().isUseSkillSpec())
     		{
@@ -4255,32 +4326,44 @@ namespace Game1
     		}
     		if (Char.myCharz().isSelectingSkillUseAlone())
     		{
-    			Res.outz("use skill not focus");
+    			Res.outz("[CLIENT_SKILL_ALONE] Use skill alone: " + skill.template.name + " id=" + skill.template.id);
     			doUseSkillNotFocus(skill);
     			lastSkill = skill;
     			return;
     		}
     		selectedIndexSkill = -1;
-    		if (skill == null)
+    		// Nếu chưa chọn mục tiêu và đang ở map thường, tự động quét tìm quái gần nhất
+    		if (Char.myCharz().mobFocus == null && Char.myCharz().charFocus == null)
     		{
-    			return;
-    		}
-    		Res.outz("only select skill");
-    		if (lastSkill != skill)
-    		{
-    			Service.gI().selectSkill(skill.template.id);
-    			saveRMSCurrentSkill(skill.template.id);
-    			resetButton();
-    		}
-    		if (Char.myCharz().charFocus != null || !Char.myCharz().isSelectingSkillBuffToPlayer())
-    		{
-    			if (Char.myCharz().focusToAttack())
+    			Mob nearestMob = null;
+    			int minDistance = int.MaxValue;
+    			for (int i = 0; i < vMob.size(); i++)
     			{
-    				doFire(isShortcut, true);
-    				doSeleckSkillFlag = true;
+    				Mob m = (Mob)vMob.elementAt(i);
+    				if (m != null && m.status != 0 && m.status != 1 && !m.isMobMe)
+    				{
+    					int dist = Res.abs(Char.myCharz().cx - m.x) + Res.abs(Char.myCharz().cy - m.y);
+    					if (dist < minDistance && dist < 350)
+    					{
+    						minDistance = dist;
+    						nearestMob = m;
+    					}
+    				}
     			}
-    			lastSkill = skill;
+    			if (nearestMob != null)
+    			{
+    				Char.myCharz().mobFocus = nearestMob;
+    				Res.outz("[CLIENT_AUTO_TARGET] Auto focused nearest mob: " + (nearestMob.mobName != null ? nearestMob.mobName : "Mob") + " (id:" + nearestMob.mobId + ", templateId:" + nearestMob.templateId + ")");
+    			}
+    			else
+    			{
+    				Res.outz("[CLIENT_NO_TARGET] No mob or player in range 350 to target for attack skill!");
+    			}
     		}
+    		Res.outz("[CLIENT_DO_FIRE] Calling doFire, isAttack=" + isAttack() + ", mobFocus=" + (Char.myCharz().mobFocus != null) + ", charFocus=" + (Char.myCharz().charFocus != null));
+    		doFire(isShortcut, true);
+    		doSeleckSkillFlag = true;
+    		lastSkill = skill;
     	}
     
     	public void doUseSkill(Skill skill, bool isShortcut)
@@ -4308,6 +4391,10 @@ namespace Game1
     
     	public void doUseSkillNotFocus(Skill skill)
     	{
+    		if (skill != null)
+    		{
+    			Char.myCharz().myskill = skill;
+    		}
     		if (((TileMap.mapID != 112 && TileMap.mapID != 113) || Char.myCharz().cTypePk != 0) && checkSkillValid())
     		{
     			selectedIndexSkill = -1;
@@ -4316,7 +4403,6 @@ namespace Game1
     				Service.gI().selectSkill(skill.template.id);
     				saveRMSCurrentSkill(skill.template.id);
     				resetButton();
-    				Char.myCharz().myskill = skill;
     				Char.myCharz().useSkillNotFocus();
     				Char.myCharz().currentFireByShortcut = true;
     				auto = 0;
@@ -4534,7 +4620,6 @@ namespace Game1
     							{
     								continue;
     							}
-    							Res.err("find " + item.template.id);
     							if (item.template.id == 194)
     							{
     								isudungCapsun4 = item.quantity > 0;
@@ -4620,6 +4705,15 @@ namespace Game1
     					}
     					Skill skill = null;
     					skill = (Main.isPC ? keySkill[selectedIndexSkill] : onScreenSkill[selectedIndexSkill]);
+    					if (skill == null && Main.isPC && onScreenSkill != null && selectedIndexSkill < onScreenSkill.Length)
+    					{
+    						skill = onScreenSkill[selectedIndexSkill];
+    					}
+    					else if (skill == null && keySkill != null && selectedIndexSkill < keySkill.Length)
+    					{
+    						skill = keySkill[selectedIndexSkill];
+    					}
+    					Res.outz("[CLIENT_SKILL_CLICK] Slot: " + selectedIndexSkill + ", Main.isPC=" + Main.isPC + ", Skill: " + (skill != null ? (skill.template.name + " id=" + skill.template.id) : "NULL"));
     					if (skill != null)
     					{
     						doSelectSkill(skill, true);
@@ -6242,7 +6336,7 @@ namespace Game1
     		}
     		else
     		{
-    			if (GameCanvas.currentDialog != null || ChatPopup.currChatPopup != null || GameCanvas.menu.showMenu || isPaintPopup() || GameCanvas.panel.isShow || Char.myCharz().taskMaint.taskId == 0 || ChatTextField.gI().isShow || GameCanvas.currentScreen == MoneyCharge.instance)
+    			if (GameCanvas.currentDialog != null || ChatPopup.currChatPopup != null || GameCanvas.menu.showMenu || isPaintPopup() || GameCanvas.panel.isShow || ChatTextField.gI().isShow || GameCanvas.currentScreen == MoneyCharge.instance)
     			{
     				return;
     			}

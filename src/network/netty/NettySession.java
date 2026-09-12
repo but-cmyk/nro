@@ -100,8 +100,8 @@ public class NettySession extends MySession {
     @Override
     public void sendMessage(Message msg) {
         if (this.isConnected() && msg != null) {
-            if (!this.channel.isWritable()) {
-                // Outbound buffer của Netty bị đầy (client lag mạng), bỏ qua packet để chống tràn RAM máy chủ
+            if (!this.channel.isWritable() && msg.command != -74 && msg.command != -27) {
+                // Outbound buffer của Netty bị đầy (client lag mạng), bỏ qua packet không quan trọng để chống tràn RAM
                 return;
             }
             // Đồng bộ hóa trích xuất payload trước khi chuyển giao bất đồng bộ cho Netty EventLoop

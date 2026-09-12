@@ -147,6 +147,41 @@ namespace Game1
     	{
     		if (GameCanvas.loginScr.isLogin2 && Char.myCharz().taskMaint != null && Char.myCharz().taskMaint.taskId >= 2)
     		{
+    			Panel.strTool = new string[11]
+    			{
+    				mResources.radaCard,
+    				mResources.quayso,
+    				mResources.gameInfo,
+    				mResources.change_flag,
+    				mResources.change_zone,
+    				mResources.chat_world,
+    				mResources.account,
+    				mResources.option,
+    				"Cài Đặt Auto",
+    				mResources.change_account,
+    				mResources.REGISTOPROTECT
+    			};
+    			if (Char.myCharz().havePet)
+    			{
+    				Panel.strTool = new string[12]
+    				{
+    					mResources.radaCard,
+    					mResources.quayso,
+    					mResources.gameInfo,
+    					mResources.pet,
+    					mResources.change_flag,
+    					mResources.change_zone,
+    					mResources.chat_world,
+    					mResources.account,
+    					mResources.option,
+    					"Cài Đặt Auto",
+    					mResources.change_account,
+    					mResources.REGISTOPROTECT
+    				};
+    			}
+    		}
+    		else
+    		{
     			Panel.strTool = new string[10]
     			{
     				mResources.radaCard,
@@ -157,8 +192,8 @@ namespace Game1
     				mResources.chat_world,
     				mResources.account,
     				mResources.option,
-    				mResources.change_account,
-    				mResources.REGISTOPROTECT
+    				"Cài Đặt Auto",
+    				mResources.change_account
     			};
     			if (Char.myCharz().havePet)
     			{
@@ -173,38 +208,7 @@ namespace Game1
     					mResources.chat_world,
     					mResources.account,
     					mResources.option,
-    					mResources.change_account,
-    					mResources.REGISTOPROTECT
-    				};
-    			}
-    		}
-    		else
-    		{
-    			Panel.strTool = new string[9]
-    			{
-    				mResources.radaCard,
-    				mResources.quayso,
-    				mResources.gameInfo,
-    				mResources.change_flag,
-    				mResources.change_zone,
-    				mResources.chat_world,
-    				mResources.account,
-    				mResources.option,
-    				mResources.change_account
-    			};
-    			if (Char.myCharz().havePet)
-    			{
-    				Panel.strTool = new string[10]
-    				{
-    					mResources.radaCard,
-    					mResources.quayso,
-    					mResources.gameInfo,
-    					mResources.pet,
-    					mResources.change_flag,
-    					mResources.change_zone,
-    					mResources.chat_world,
-    					mResources.account,
-    					mResources.option,
+    					"Cài Đặt Auto",
     					mResources.change_account
     				};
     			}
@@ -294,6 +298,11 @@ namespace Game1
     	public void rain()
     	{
     		Sound.playMus(RAIN, 0.3f, true);
+    	}
+
+    	public void stopRain()
+    	{
+    		Sound.stopMusic(RAIN);
     	}
     
     	public void gongName()

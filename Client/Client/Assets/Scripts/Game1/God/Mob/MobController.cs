@@ -32,6 +32,8 @@ namespace Game1.God
 
         private static int IndexItemPick = 0;
 
+        private static long lastHarvestBeanTime = 0L;
+
         public static void Update()
         {
             if (IsWaiting())
@@ -43,9 +45,21 @@ namespace Game1.God
             {
                 return;
             }
-            if (GameScr.hpPotion >= 1 && (@char.cHP <= @char.cHPFull * Mobs.HpBuff / 100 || @char.cMP <= @char.cMPFull * Mobs.MpBuff / 100))
+            if (Mobs.HpBuff > 0 && GameScr.hpPotion >= 1 && (@char.cHP <= @char.cHPFull * Mobs.HpBuff / 100 || @char.cMP <= @char.cMPFull * Mobs.HpBuff / 100))
             {
                 GameScr.gI().doUseHP();
+            }
+            if (Mobs.autoThuHoachDau && GameScr.gI().magicTree != null)
+            {
+                MagicTree tree = GameScr.gI().magicTree;
+                if (tree.currPeas >= tree.maxPeas && tree.maxPeas > 0)
+                {
+                    if (mSystem.currentTimeMillis() - lastHarvestBeanTime > 10000L)
+                    {
+                        lastHarvestBeanTime = mSystem.currentTimeMillis();
+                        Service.gI().magicTree(1);
+                    }
+                }
             }
             if (Mobs.IsAutoPickItems)
             {
@@ -54,32 +68,38 @@ namespace Game1.God
                     if (IndexItemPick >= ItemPicks.Count)
                     {
                         IsPickingItems = false;
+                        ItemPicks.Clear();
+                        IndexItemPick = 0;
                         Wait(100);
                         return;
                     }
                     ItemMap itemMap = ItemPicks[IndexItemPick];
-                    if (GameScr.vItemMap.contains(itemMap))
+                    if (itemMap != null && GameScr.vItemMap.contains(itemMap))
                     {
                         Service.gI().pickItem(itemMap.itemMapID);
                         itemMap.countAutoPick++;
                     }
                     Wait(500);
                     IndexItemPick++;
-                }
-                ItemPicks.Clear();
-                IndexItemPick = 0;
-                for (int i = 0; i < GameScr.vItemMap.size(); i++)
-                {
-                    ItemMap itemMap2 = (ItemMap)GameScr.vItemMap.elementAt(i);
-                    if (GetTypePickItem(itemMap2) != 0)
-                    {
-                        ItemPicks.Add(itemMap2);
-                    }
-                }
-                if (ItemPicks.Count > 0)
-                {
-                    IsPickingItems = true;
                     return;
+                }
+                else
+                {
+                    ItemPicks.Clear();
+                    IndexItemPick = 0;
+                    for (int i = 0; i < GameScr.vItemMap.size(); i++)
+                    {
+                        ItemMap itemMap2 = (ItemMap)GameScr.vItemMap.elementAt(i);
+                        if (GetTypePickItem(itemMap2) != 0)
+                        {
+                            ItemPicks.Add(itemMap2);
+                        }
+                    }
+                    if (ItemPicks.Count > 0)
+                    {
+                        IsPickingItems = true;
+                        return;
+                    }
                 }
             }
             bool isTDLT = ItemTime.isExistItem(4387);
@@ -245,13 +265,15 @@ namespace Game1.God
             skill.paintCanNotUseSkill = true;
             skill.lastTimeUseThisSkill = mSystem.currentTimeMillis();
         }
+        private static readonly MyVector attackMobVector = new MyVector();
+        private static readonly MyVector emptyVector = new MyVector();
         public static void AttackMob(Mob mob)
         {
             try
             {
-                MyVector myVector = new MyVector();
-                myVector.addElement(mob);
-                Service.gI().sendPlayerAttack(myVector, new MyVector(), 1);
+                attackMobVector.removeAllElements();
+                attackMobVector.addElement(mob);
+                Service.gI().sendPlayerAttack(attackMobVector, emptyVector, 1);
             }
             catch
             {
@@ -321,6 +343,29 @@ namespace Game1.God
 
         private static bool FilterItemPick(ItemMap itemMap)
         {
+            if (itemMap == null || itemMap.template == null)
+            {
+                return false;
+            }
+            if (Mobs.pickFilterMode == 1)
+            {
+                bool isGold = itemMap.template.type == 9 || itemMap.template.id == 76 || (itemMap.template.id >= 188 && itemMap.template.id <= 190);
+                bool isGemOrDragonBall = itemMap.template.type == 12 || (itemMap.template.id >= 14 && itemMap.template.id <= 20);
+                bool isUpgradeStone = itemMap.template.id >= 220 && itemMap.template.id <= 224;
+                bool isRareItem = itemMap.template.isUpToUp || itemMap.template.type == 5 || itemMap.template.id == 457 || itemMap.template.id == 590;
+                if (!isGold && !isGemOrDragonBall && !isUpgradeStone && !isRareItem)
+                {
+                    return false;
+                }
+            }
+            else if (Mobs.pickFilterMode == 2)
+            {
+                bool isTrashEquip = itemMap.template.type >= 0 && itemMap.template.type <= 4 && !itemMap.template.isUpToUp;
+                if (isTrashEquip)
+                {
+                    return false;
+                }
+            }
             if ((Mobs.IdItemPicks.Count == 0 || Mobs.IdItemPicks.Contains(itemMap.template.id)) && (Mobs.IdItemBlocks.Count == 0 || !Mobs.IdItemBlocks.Contains(itemMap.template.id)) && (Mobs.TypeItemPicks.Count == 0 || Mobs.TypeItemPicks.Contains(itemMap.template.type)))
             {
                 if (Mobs.TypeItemBlock.Count != 0)
@@ -387,7 +432,11 @@ namespace Game1.God
                 return false;
             }
             bool flag = Mobs.neSieuQuai && !ItemTime.isExistItem(4387);
-            return (mob.levelBoss == 0 || !flag) && FilterMobTanSat(mob);
+            if (flag && (mob.levelBoss != 0 || mob.isBoss || mob.hp > mob.maxHp * 2))
+            {
+                return false;
+            }
+            return FilterMobTanSat(mob);
         }
 
         private static bool IsCharTanSat(Char c)
@@ -407,7 +456,7 @@ namespace Game1.God
             }
             if (Mobs.neSieuQuai && !ItemTime.isExistItem(4387) && mob.getTemplate().hp >= 3000)
             {
-                if (mob.levelBoss != 0)
+                if (mob.levelBoss != 0 || mob.isBoss)
                 {
                     Mob mob2 = null;
                     bool flag4 = false;

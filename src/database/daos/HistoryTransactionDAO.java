@@ -84,18 +84,13 @@ public class HistoryTransactionDAO {
     }
 
     public static void deleteHistory() {
-        PreparedStatement ps = null;
-        try (Connection con = AlyraManager.getConnection();) {
-            ps = con.prepareStatement("delete from history_transaction where time_tran < '"
-                    + TimeUtil.getTimeBeforeCurrent(23 * 24 * 60 * 60 * 1000, "yyyy-MM-dd") + "'");
+        String sql = "delete from history_transaction where time_tran < '"
+                + TimeUtil.getTimeBeforeCurrent(23 * 24 * 60 * 60 * 1000, "yyyy-MM-dd") + "'";
+        try (Connection con = AlyraManager.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
             ps.executeUpdate();
-            ps.close();
         } catch (Exception e) {
-        } finally {
-            try {
-                ps.close();
-            } catch (SQLException ex) {
-            }
+            utils.Logger.logException(HistoryTransactionDAO.class, e, "Lỗi khi xóa lịch sử giao dịch cũ");
         }
     }
 

@@ -30,3 +30,6 @@ data/DataGame.class
 data/wal/
 *.zip
 scratch/
+__pycache__/
+*.pyc
+

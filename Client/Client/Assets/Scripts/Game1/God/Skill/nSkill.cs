@@ -24,13 +24,16 @@ namespace Game1.God
             }
             return 0;
         }
+        private static readonly MyVector attackMobVector = new MyVector();
+        private static readonly MyVector attackCharVector = new MyVector();
+        private static readonly MyVector emptyVector = new MyVector();
         private void vAttack()
         {
             try
             {
-                MyVector myVector = new MyVector();
-                myVector.addElement(Char.myCharz().mobFocus);
-                Service.gI().sendPlayerAttack(myVector, new MyVector(), 1);
+                attackMobVector.removeAllElements();
+                attackMobVector.addElement(Char.myCharz().mobFocus);
+                Service.gI().sendPlayerAttack(attackMobVector, emptyVector, 1);
             }
             catch(Exception e)
             {
@@ -41,9 +44,9 @@ namespace Game1.God
         {
             try
             {
-                MyVector myVector = new MyVector();
-                myVector.addElement(Char.myCharz().charFocus);
-                Service.gI().sendPlayerAttack(new MyVector(), myVector, 2);
+                attackCharVector.removeAllElements();
+                attackCharVector.addElement(Char.myCharz().charFocus);
+                Service.gI().sendPlayerAttack(emptyVector, attackCharVector, 2);
             }
             catch
             {

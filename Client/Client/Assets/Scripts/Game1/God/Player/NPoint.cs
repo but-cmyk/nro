@@ -230,7 +230,7 @@ namespace Game1.God
                 if (getHPG() < hpg)
                 {
                     long tnUse = getHPPotential();
-                    if (tnUse >= 0)
+                    if (tnUse > 0)
                     {
                         long num = (hpg - getHPG()) / 20;
                         if (tnUse > num)
@@ -239,12 +239,17 @@ namespace Game1.God
                         }
                         upPotential(0, (int)tnUse);
                     }
+                    else
+                    {
+                        canIncrease = false;
+                        GameScr.info1.addInfo("Không đủ tiềm năng!", 0);
+                    }
                     return;
                 }
                 if (getMPG() < mpg)
                 {
                     long tnUse = getMPPotential();
-                    if (tnUse >= 0)
+                    if (tnUse > 0)
                     {
                         long num = (mpg - getMPG()) / 20;
                         if (tnUse > num)
@@ -253,12 +258,17 @@ namespace Game1.God
                         }
                         upPotential(1, (int)tnUse);
                     }
+                    else
+                    {
+                        canIncrease = false;
+                        GameScr.info1.addInfo("Không đủ tiềm năng!", 0);
+                    }
                     return;
                 }
                 if (getDameG() < dameg)
                 {
                     long tnUse = getDamePotential();
-                    if (tnUse >= 0)
+                    if (tnUse > 0)
                     {
                         long num = dameg - getDameG();
                         if (tnUse > num)
@@ -267,12 +277,17 @@ namespace Game1.God
                         }
                         upPotential(2, (int)tnUse);
                     }
+                    else
+                    {
+                        canIncrease = false;
+                        GameScr.info1.addInfo("Không đủ tiềm năng!", 0);
+                    }
                     return;
                 }
                 if (getDefG() < defg)
                 {
                     int tnUse = getDefPotential();
-                    if (tnUse >= 0)
+                    if (tnUse > 0)
                     {
                         int num = defg - getDefG();
                         if (tnUse > num)
@@ -281,8 +296,15 @@ namespace Game1.God
                         }
                         upPotential(3, tnUse);
                     }
+                    else
+                    {
+                        canIncrease = false;
+                        GameScr.info1.addInfo("Không đủ tiềm năng!", 0);
+                    }
                     return;
                 }
+                canIncrease = false;
+                GameScr.info1.addInfo("Đã cộng xong!", 0);
             }
         }
         public void perform(int idAction, object p)

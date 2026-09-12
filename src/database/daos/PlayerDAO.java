@@ -292,7 +292,7 @@ public class PlayerDAO {
                 } else {
                     skill.add(0); //level skill
                 }
-                skill.add(0); //thời gian sử dụng trước đó
+                skill.add(System.currentTimeMillis() - 10000L); //thời gian sử dụng trước đó
                 dataArray.add(skill.toString());
                 skill.clear();
             }
@@ -383,7 +383,7 @@ public class PlayerDAO {
             + "data_black_ball = ?, data_side_task = ?, data_danh_hieu = ?, data_charm = ?, skills = ?, skills_shortcut = ?, notify = ?, "
             + "baovetaikhoan = ?, data_card = ?, lasttimepkcommeson = ?, bandokhobau = ?, doanhtrai = ?, conduongrandoc = ?, masterDoesNotAttack = ?, "
             + "nhanthoivang = ?, ruonggo = ?, sieuthanthuy = ?, vodaisinhtu = ?, rongxuong = ?, data_item_event = ?, data_luyentap = ?, data_training = ?, data_clan_task = ?, data_vip = ?, "
-            + "rank = ?, data_achievement = ?, giftcode = ?, danh_hieu_shop = ?, data_clan = ?, firstTimeLogin = ?, buarandom = ?, dien_sukien = ?, banhtet = ?, "
+            + "`rank` = ?, data_achievement = ?, giftcode = ?, danh_hieu_shop = ?, data_clan = ?, firstTimeLogin = ?, buarandom = ?, dien_sukien = ?, banhtet = ?, "
             + "banhchung = ?, hoc_ky_nang = ?, boughtSkills = ?, arena_wins = ?, lucky_spins = ?"
             + " where id = ?";
 

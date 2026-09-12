@@ -95,18 +95,10 @@ namespace Game1.God
         }
         public static void useItemWithTime(int id, long time)
         {
-            foreach (var item in Char.myCharz().arrItemBag)
+            if (mSystem.currentTimeMillis() - timeUse >= time)
             {
-                if (item != null && item.template.id == id)
-                {
-                    if (mSystem.currentTimeMillis() - timeUse >= time)
-                    {
-                        timeUse = mSystem.currentTimeMillis();
-                        time = timeUse;
-                        UseItem(id);
-                        break;
-                    }
-                }
+                timeUse = mSystem.currentTimeMillis();
+                UseItem(id);
             }
         }
         public static void resetTF()

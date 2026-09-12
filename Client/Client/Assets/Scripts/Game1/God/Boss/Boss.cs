@@ -16,13 +16,8 @@ namespace Game1.God
             for (int i = 0; i < bosses.Count; i++)
             {
                 var bossInfos = bosses[i];
-                string name = bossInfos.name;
-                string map = bossInfos.getMapName();
-                var time = bossInfos.getStartTimeSpan();
-                string bBoss = string.Concat(new object[] {
-                name + " - " + map + " - " + time
-                });
-                mFont.tahoma_7b_yellow.drawString(g, bBoss, GameCanvas.w, 37 + 12 * i, mFont.RIGHT, mFont.tahoma_7);
+                string bBoss = bossInfos.getDisplayString();
+                mFont.tahoma_7b_yellow.drawString(g, bBoss, GameCanvas.w - 5, 37 + 12 * i, mFont.RIGHT, mFont.tahoma_7);
             }
         }
     }

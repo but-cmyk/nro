@@ -439,19 +439,27 @@ public class Map {
             }
             if (is != null) {
                 try (DataInputStream dis = new DataInputStream(is)) {
-                    tmw = dis.readByte() & 0xFF;
-                    tmh = dis.readByte() & 0xFF;
-                    pxw = tmw * SIZE;
-                    pxh = tmh * SIZE;
-                    maps = new int[tmw * tmh];
-                    for (int j = 0; j < maps.length; j++) {
-                        maps[j] = dis.readByte();
-                    }
-                    types = new int[maps.length];
-                    if (tileTop != null && tileTop.length > 0) {
+                    int w = dis.read();
+                    int h = dis.read();
+                    if (w != -1 && h != -1) {
+                        tmw = w & 0xFF;
+                        tmh = h & 0xFF;
+                        pxw = tmw * SIZE;
+                        pxh = tmh * SIZE;
+                        maps = new int[tmw * tmh];
                         for (int j = 0; j < maps.length; j++) {
-                            if (isTileTop(maps[j])) {
-                                types[j] |= ConstMap.TILE_TOP;
+                            int b = dis.read();
+                            if (b == -1) {
+                                break;
+                            }
+                            maps[j] = (byte) b;
+                        }
+                        types = new int[maps.length];
+                        if (tileTop != null && tileTop.length > 0) {
+                            for (int j = 0; j < maps.length; j++) {
+                                if (isTileTop(maps[j])) {
+                                    types[j] |= ConstMap.TILE_TOP;
+                                }
                             }
                         }
                     }

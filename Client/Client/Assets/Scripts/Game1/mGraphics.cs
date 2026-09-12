@@ -2,6 +2,7 @@ namespace Game1
 {
     using System;
     using System.Collections;
+    using System.Collections.Generic;
     using Game1.Assets.src.e;
     using UnityEngine;
     
@@ -99,15 +100,62 @@ namespace Game1
     
     	private Material lineMaterial;
     
+    	private static Dictionary<int, Texture2D> color1x1Cache = new Dictionary<int, Texture2D>();
+
+    	public static void clearCachedTextures()
+    	{
+    		foreach (DictionaryEntry entry in cachedTextures)
+    		{
+    			Texture tex = entry.Value as Texture;
+    			if (tex != null)
+    			{
+    				UnityEngine.Object.Destroy(tex);
+    			}
+    		}
+    		cachedTextures.Clear();
+    	}
+
+    	public static void clearColor1x1Cache()
+    	{
+    		foreach (KeyValuePair<int, Texture2D> pair in color1x1Cache)
+    		{
+    			if (pair.Value != null)
+    			{
+    				UnityEngine.Object.Destroy(pair.Value);
+    			}
+    		}
+    		color1x1Cache.Clear();
+    	}
+
+    	public static Texture2D get1x1Texture(float r, float g, float b, float a)
+    	{
+    		int key = ((int)(r * 255f) << 24) | ((int)(g * 255f) << 16) | ((int)(b * 255f) << 8) | (int)(a * 255f);
+    		Texture2D tex;
+    		if (!color1x1Cache.TryGetValue(key, out tex) || tex == null)
+    		{
+    			if (color1x1Cache.Count > 300)
+    			{
+    				clearColor1x1Cache();
+    			}
+    			tex = new Texture2D(1, 1);
+    			Color color = new Color(r, g, b, a);
+    			tex.SetPixel(0, 0, color);
+    			Image.setTextureQuality(tex);
+    			tex.Apply();
+    			color1x1Cache[key] = tex;
+    		}
+    		return tex;
+    	}
+
     	private void cache(string key, Texture value)
     	{
     		if (cachedTextures.Count > 400)
     		{
-    			cachedTextures.Clear();
+    			clearCachedTextures();
     		}
-    		if (value.width * value.height < GameCanvas.w * GameCanvas.h)
+    		if (value != null && value.width * value.height < GameCanvas.w * GameCanvas.h)
     		{
-    			cachedTextures.Add(key, value);
+    			cachedTextures[key] = value;
     		}
     	}
     
@@ -192,18 +240,7 @@ namespace Game1
                 num += (float)this.translateX;
                 num2 += (float)this.translateY;
             }
-            int _1 = 1;
-            string key = "fr" + _1 + _1 + r + g + b + a;
-            Texture2D texture2D = (Texture2D)cachedTextures[key];
-            if (texture2D == null)
-            {
-                texture2D = new Texture2D(_1, _1);
-                Color color = new Color(r, g, b, a);
-                texture2D.SetPixel(0, 0, color);
-                Image.setTextureQuality(texture2D);
-                texture2D.Apply();
-                cache(key, texture2D);
-            }
+            Texture2D texture2D = get1x1Texture(r, g, b, a);
             int num4 = 0;
             int num5 = 0;
             int num6 = 0;
@@ -275,16 +312,7 @@ namespace Game1
     			x2 += translateX;
     			y2 += translateY;
     		}
-    		string key = "dl" + r + g + b;
-    		Texture2D texture2D = (Texture2D)cachedTextures[key];
-    		if (texture2D == null)
-    		{
-    			texture2D = new Texture2D(1, 1);
-    			Color color = new Color(r, g, b);
-    			texture2D.SetPixel(0, 0, color);
-    			texture2D.Apply();
-    			cache(key, texture2D);
-    		}
+    		Texture2D texture2D = get1x1Texture(r, g, b, 1f);
     		Vector2 vector = new Vector2(x1, y1);
     		Vector2 vector2 = new Vector2(x2, y2);
     		Vector2 vector3 = vector2 - vector;
@@ -366,18 +394,7 @@ namespace Game1
     			x += translateX;
     			y += translateY;
     		}
-    		int num = 1;
-    		int num2 = 1;
-    		string key = "fr" + num + num2 + r + g + b + a;
-    		Texture2D texture2D = (Texture2D)cachedTextures[key];
-    		if (texture2D == null)
-    		{
-    			texture2D = new Texture2D(num, num2);
-    			Color color = new Color(r, g, b, a);
-    			texture2D.SetPixel(0, 0, color);
-    			texture2D.Apply();
-    			cache(key, texture2D);
-    		}
+    		Texture2D texture2D = get1x1Texture(r, g, b, a);
     		int num3 = 0;
     		int num4 = 0;
     		int num5 = 0;

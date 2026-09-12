@@ -631,24 +631,27 @@ namespace Game1
                             }
                             GameScr.isudungCapsun4 = false;
                             GameScr.isudungCapsun3 = false;
-                            for (int num154 = 0; num154 < Char.myCharz().arrItemBag.Length; num154++)
+                            if (Char.myCharz() != null && Char.myCharz().arrItemBag != null)
                             {
-                                Item item4 = Char.myCharz().arrItemBag[num154];
-                                if (item4 == null)
+                                for (int num154 = 0; num154 < Char.myCharz().arrItemBag.Length; num154++)
                                 {
-                                    continue;
-                                }
-                                if (item4.template.id == 194)
-                                {
-                                    GameScr.isudungCapsun4 = item4.quantity > 0;
-                                    if (GameScr.isudungCapsun4)
+                                    Item item4 = Char.myCharz().arrItemBag[num154];
+                                    if (item4 == null || item4.template == null)
                                     {
-                                        break;
+                                        continue;
                                     }
-                                }
-                                else if (item4.template.id == 193)
-                                {
-                                    GameScr.isudungCapsun3 = item4.quantity > 0;
+                                    if (item4.template.id == 194)
+                                    {
+                                        GameScr.isudungCapsun4 = item4.quantity > 0;
+                                        if (GameScr.isudungCapsun4)
+                                        {
+                                            break;
+                                        }
+                                    }
+                                    else if (item4.template.id == 193)
+                                    {
+                                        GameScr.isudungCapsun3 = item4.quantity > 0;
+                                    }
                                 }
                             }
                             break;
@@ -1274,6 +1277,8 @@ namespace Game1
                                 ServerListScreen.strWait = mResources.downloading_data;
                                 short nBig = msg.reader().readShort();
                                 ServerListScreen.nBig = nBig;
+                                ServerListScreen.demPercent = 0;
+                                ServerListScreen.percent = 0;
                                 Service.gI().getResource(2, null);
                             }
                             if (b36 == 2)
@@ -1283,7 +1288,12 @@ namespace Game1
                                     isLoadingData = true;
                                     GameCanvas.endDlg();
                                     ServerListScreen.demPercent++;
-                                    ServerListScreen.percent = ServerListScreen.demPercent * 100 / ServerListScreen.nBig;
+                                    int totalFiles = (ServerListScreen.nBig > 0) ? ServerListScreen.nBig : 1;
+                                    ServerListScreen.percent = ServerListScreen.demPercent * 100 / totalFiles;
+                                    if (ServerListScreen.percent > 100)
+                                    {
+                                        ServerListScreen.percent = 100;
+                                    }
                                     string original = msg.reader().readUTF();
                                     string[] array9 = Res.split(original, "/", 0);
                                     string filename = "x" + mGraphics.zoomLevel + array9[array9.Length - 1];
@@ -1300,6 +1310,7 @@ namespace Game1
                             if (b36 == 3 && flag7)
                             {
                                 isLoadingData = false;
+                                ServerListScreen.isGetData = false;
                                 int num94 = msg.reader().readInt();
                                 Res.outz("last version= " + num94);
                                 Rms.saveRMSString("ResVersion", num94 + string.Empty);
@@ -1745,6 +1756,17 @@ namespace Game1
                         Char.myCharz().expForOneAdd = msg.reader().readShort();
                         Char.myCharz().cDefGoc = msg.reader().readShort();
                         Char.myCharz().cCriticalGoc = msg.reader().readByte();
+                        try
+                        {
+                            if (msg.reader().available() > 0)
+                            {
+                                Char.myCharz().cPower = msg.reader().readLong();
+                                Char.myCharz().applyCharLevelPercent();
+                            }
+                        }
+                        catch (Exception)
+                        {
+                        }
                         InfoDlg.hide();
                         break;
                     case 1:
@@ -2231,79 +2253,88 @@ namespace Game1
                                 }
                                 else
                                 {
-                                    GameScr.findCharInMap(num135).isCharge = false;
+                                    Char targetChar = GameScr.findCharInMap(num135);
+                                    if (targetChar != null)
+                                    {
+                                        targetChar.isCharge = false;
+                                    }
                                 }
                             }
                             if (b51 == 4)
                             {
+                                short sec4 = (short)(msg.reader().readShort() - 1000);
                                 if (num135 == Char.myCharz().charID)
                                 {
-                                    Char.myCharz().seconds = msg.reader().readShort() - 1000;
+                                    Char.myCharz().seconds = sec4;
                                     Char.myCharz().last = mSystem.currentTimeMillis();
                                     Res.outz("second= " + Char.myCharz().seconds + " last= " + Char.myCharz().last);
                                 }
-                                else if (GameScr.findCharInMap(num135) != null)
+                                else
                                 {
-                                    Char char9 = GameScr.findCharInMap(num135);
-                                    switch (char9.cgender)
+                                    Char targetChar = GameScr.findCharInMap(num135);
+                                    short secRemain = msg.reader().readShort();
+                                    if (targetChar != null)
                                     {
-                                        case 0:
-                                            if (TileMap.mapID != 170)
-                                            {
-                                                @char.useChargeSkill(false);
-                                                break;
-                                            }
-                                            if (num136 >= 77 && num136 <= 83)
-                                            {
-                                                @char.useChargeSkill(true);
-                                            }
-                                            if (num136 >= 70 && num136 <= 76)
-                                            {
-                                                @char.useChargeSkill(false);
-                                            }
-                                            break;
-                                        case 1:
-                                            {
+                                        switch (targetChar.cgender)
+                                        {
+                                            case 0:
                                                 if (TileMap.mapID != 170)
                                                 {
-                                                    @char.useChargeSkill(true);
+                                                    targetChar.useChargeSkill(false);
                                                     break;
                                                 }
-                                                bool isGround2 = true;
-                                                if (num136 >= 70 && num136 <= 76)
-                                                {
-                                                    isGround2 = false;
-                                                }
                                                 if (num136 >= 77 && num136 <= 83)
                                                 {
-                                                    isGround2 = true;
+                                                    targetChar.useChargeSkill(true);
                                                 }
-                                                @char.useChargeSkill(isGround2);
+                                                if (num136 >= 70 && num136 <= 76)
+                                                {
+                                                    targetChar.useChargeSkill(false);
+                                                }
                                                 break;
-                                            }
-                                        default:
-                                            if (TileMap.mapID == 170)
-                                            {
-                                                bool isGround = true;
-                                                if (num136 >= 70 && num136 <= 76)
+                                            case 1:
                                                 {
-                                                    isGround = false;
+                                                    if (TileMap.mapID != 170)
+                                                    {
+                                                        targetChar.useChargeSkill(true);
+                                                        break;
+                                                    }
+                                                    bool isGround2 = true;
+                                                    if (num136 >= 70 && num136 <= 76)
+                                                    {
+                                                        isGround2 = false;
+                                                    }
+                                                    if (num136 >= 77 && num136 <= 83)
+                                                    {
+                                                        isGround2 = true;
+                                                    }
+                                                    targetChar.useChargeSkill(isGround2);
+                                                    break;
                                                 }
-                                                if (num136 >= 77 && num136 <= 83)
+                                            default:
+                                                if (TileMap.mapID == 170)
                                                 {
-                                                    isGround = true;
+                                                    bool isGround = true;
+                                                    if (num136 >= 70 && num136 <= 76)
+                                                    {
+                                                        isGround = false;
+                                                    }
+                                                    if (num136 >= 77 && num136 <= 83)
+                                                    {
+                                                        isGround = true;
+                                                    }
+                                                    targetChar.useChargeSkill(isGround);
                                                 }
-                                                @char.useChargeSkill(isGround);
-                                            }
-                                            break;
+                                                break;
+                                        }
+                                        targetChar.skillTemplateId = num136;
+                                        if (num136 >= 70 && num136 <= 76)
+                                        {
+                                            targetChar.isUseSkillAfterCharge = true;
+                                        }
+                                        targetChar.seconds = secRemain;
+                                        targetChar.last = mSystem.currentTimeMillis();
                                     }
-                                    @char.skillTemplateId = num136;
-                                    if (num136 >= 70 && num136 <= 76)
-                                    {
-                                        @char.isUseSkillAfterCharge = true;
-                                    }
-                                    @char.seconds = msg.reader().readShort();
-                                    @char.last = mSystem.currentTimeMillis();
                                 }
                             }
                             if (b51 == 5)
@@ -2312,42 +2343,61 @@ namespace Game1
                                 {
                                     Char.myCharz().stopUseChargeSkill();
                                 }
-                                else if (GameScr.findCharInMap(num135) != null)
+                                else
                                 {
-                                    GameScr.findCharInMap(num135).stopUseChargeSkill();
+                                    Char targetChar = GameScr.findCharInMap(num135);
+                                    if (targetChar != null)
+                                    {
+                                        targetChar.stopUseChargeSkill();
+                                    }
                                 }
                             }
                             if (b51 == 6)
                             {
+                                SkillPaint sp = (GameScr.sks != null && num136 >= 0 && num136 < GameScr.sks.Length) ? GameScr.sks[num136] : null;
                                 if (num135 == Char.myCharz().charID)
                                 {
-                                    Char.myCharz().setAutoSkillPaint(GameScr.sks[num136], 0);
+                                    Char.myCharz().setAutoSkillPaint(sp, 0);
                                 }
-                                else if (GameScr.findCharInMap(num135) != null)
+                                else
                                 {
-                                    GameScr.findCharInMap(num135).setAutoSkillPaint(GameScr.sks[num136], 0);
-                                    SoundMn.gI().gong();
+                                    Char targetChar = GameScr.findCharInMap(num135);
+                                    if (targetChar != null)
+                                    {
+                                        targetChar.setAutoSkillPaint(sp, 0);
+                                        SoundMn.gI().gong();
+                                    }
                                 }
                             }
                             if (b51 == 7)
                             {
+                                short sec7 = msg.reader().readShort();
                                 if (num135 == Char.myCharz().charID)
                                 {
-                                    Char.myCharz().seconds = msg.reader().readShort();
+                                    Char.myCharz().seconds = sec7;
                                     Res.outz("second = " + Char.myCharz().seconds);
                                     Char.myCharz().last = mSystem.currentTimeMillis();
                                 }
-                                else if (GameScr.findCharInMap(num135) != null)
+                                else
                                 {
-                                    GameScr.findCharInMap(num135).useChargeSkill(true);
-                                    GameScr.findCharInMap(num135).seconds = msg.reader().readShort();
-                                    GameScr.findCharInMap(num135).last = mSystem.currentTimeMillis();
-                                    SoundMn.gI().gong();
+                                    Char targetChar = GameScr.findCharInMap(num135);
+                                    if (targetChar != null)
+                                    {
+                                        targetChar.useChargeSkill(true);
+                                        targetChar.seconds = sec7;
+                                        targetChar.last = mSystem.currentTimeMillis();
+                                        SoundMn.gI().gong();
+                                    }
                                 }
                             }
-                            if (b51 == 8 && num135 != Char.myCharz().charID && GameScr.findCharInMap(num135) != null)
+                            if (b51 == 8 && num135 != Char.myCharz().charID)
                             {
-                                GameScr.findCharInMap(num135).setAutoSkillPaint(GameScr.sks[num136], 0);
+                                Char targetChar = GameScr.findCharInMap(num135);
+                                if (targetChar != null)
+                                {
+                                    SkillPaint sp = (GameScr.sks != null && num136 >= 0 && num136 < GameScr.sks.Length) ? GameScr.sks[num136] : null;
+                                    targetChar.setAutoSkillPaint(sp, 0);
+                                }
                             }
                             break;
                         }
@@ -2780,6 +2830,10 @@ namespace Game1
                             InfoDlg.hide();
                             if (text4.Equals(string.Empty))
                             {
+                                if (empty.StartsWith("BOSS") || empty.StartsWith("Boss"))
+                                {
+                                    Game1.God.BossData.getInstance().getBOSSInfo(empty);
+                                }
                                 GameScr.info1.addInfo(empty, 0);
                                 break;
                             }
@@ -2804,7 +2858,12 @@ namespace Game1
                         break;
                     case -25:
                         GameCanvas.debug("SA3", 2);
-                        GameScr.info1.addInfo(msg.reader().readUTF(), 0);
+                        string notice25 = msg.reader().readUTF();
+                        if (notice25.StartsWith("BOSS") || notice25.StartsWith("Boss"))
+                        {
+                            Game1.God.BossData.getInstance().getBOSSInfo(notice25);
+                        }
+                        GameScr.info1.addInfo(notice25, 0);
                         break;
                     case 94:
                         GameCanvas.debug("SA3", 2);
@@ -3180,17 +3239,24 @@ namespace Game1
                         break;
                     case 50:
                         {
-                            sbyte b64 = msg.reader().readByte();
-                            Panel.vGameInfo.removeAllElements();
-                            for (int num155 = 0; num155 < b64; num155++)
+                            try
                             {
-                                GameInfo gameInfo = new GameInfo();
-                                gameInfo.id = msg.reader().readShort();
-                                gameInfo.main = msg.reader().readUTF();
-                                gameInfo.content = msg.reader().readUTF();
-                                Panel.vGameInfo.addElement(gameInfo);
-                                bool hasRead = ((Rms.loadRMSInt(gameInfo.id + string.Empty) != -1) ? true : false);
-                                gameInfo.hasRead = hasRead;
+                                sbyte b64 = msg.reader().readByte();
+                                Panel.vGameInfo.removeAllElements();
+                                for (int num155 = 0; num155 < b64; num155++)
+                                {
+                                    GameInfo gameInfo = new GameInfo();
+                                    gameInfo.id = msg.reader().readShort();
+                                    gameInfo.main = msg.reader().readUTF();
+                                    gameInfo.content = msg.reader().readUTF();
+                                    Panel.vGameInfo.addElement(gameInfo);
+                                    bool hasRead = ((Rms.loadRMSInt(gameInfo.id + string.Empty) != -1) ? true : false);
+                                    gameInfo.hasRead = hasRead;
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                Cout.println("Loi read case 50: " + ex.ToString());
                             }
                             break;
                         }
@@ -3354,32 +3420,39 @@ namespace Game1
                         }
                     case 68:
                         {
-                            Res.outz("ADD ITEM TO MAP --------------------------------------");
-                            GameCanvas.debug("SA6333", 2);
-                            short itemMapID = msg.reader().readShort();
-                            short itemTemplateID = msg.reader().readShort();
-                            int x = msg.reader().readShort();
-                            int y = msg.reader().readShort();
-                            int num125 = msg.reader().readInt();
-                            short r = 0;
-                            if (num125 == -2)
+                            try
                             {
-                                r = msg.reader().readShort();
-                            }
-                            ItemMap itemMap = new ItemMap(num125, itemMapID, itemTemplateID, x, y, r);
-                            bool flag10 = false;
-                            for (int num126 = 0; num126 < GameScr.vItemMap.size(); num126++)
-                            {
-                                ItemMap itemMap2 = (ItemMap)GameScr.vItemMap.elementAt(num126);
-                                if (itemMap2.itemMapID == itemMap.itemMapID)
+                                Res.outz("ADD ITEM TO MAP --------------------------------------");
+                                GameCanvas.debug("SA6333", 2);
+                                short itemMapID = msg.reader().readShort();
+                                short itemTemplateID = msg.reader().readShort();
+                                int x = msg.reader().readShort();
+                                int y = msg.reader().readShort();
+                                int num125 = msg.reader().readInt();
+                                short r = 0;
+                                if (num125 == -2)
                                 {
-                                    flag10 = true;
-                                    break;
+                                    r = msg.reader().readShort();
+                                }
+                                ItemMap itemMap = new ItemMap(num125, itemMapID, itemTemplateID, x, y, r);
+                                bool flag10 = false;
+                                for (int num126 = 0; num126 < GameScr.vItemMap.size(); num126++)
+                                {
+                                    ItemMap itemMap2 = (ItemMap)GameScr.vItemMap.elementAt(num126);
+                                    if (itemMap2 != null && itemMap2.itemMapID == itemMap.itemMapID)
+                                    {
+                                        flag10 = true;
+                                        break;
+                                    }
+                                }
+                                if (!flag10)
+                                {
+                                    GameScr.vItemMap.addElement(itemMap);
                                 }
                             }
-                            if (!flag10)
+                            catch (Exception exCmd68)
                             {
-                                GameScr.vItemMap.addElement(itemMap);
+                                Res.err("[Controller] Error handling ADD_ITEM_MAP (cmd 68): " + exCmd68.Message);
                             }
                             break;
                         }
@@ -4790,6 +4863,7 @@ namespace Game1
             GameScr.gI().auto = 0;
             GameScr.isChangeZone = false;
             CreateCharScr.instance = null;
+            CreateCharScr.isCreateChar = false;
             GameScr.info1.isUpdate = false;
             GameScr.info2.isUpdate = false;
             GameScr.lockTick = 0;
@@ -4799,7 +4873,7 @@ namespace Game1
             {
                 GameScr.gI().initSelectChar();
             }
-            GameScr.loadCamera(false, (teleport3 != 1) ? (-1) : Char.myCharz().cx, (teleport3 == 0) ? (-1) : 0);
+            GameScr.loadCamera(false, (teleport3 == 0 || teleport3 == 2) ? (-1) : Char.myCharz().cx, (teleport3 == 0 || teleport3 == 2) ? (-1) : 0);
             TileMap.loadMainTile();
             TileMap.loadMap(TileMap.tileID);
             Res.outz("LOAD GAMESCR 2");
@@ -5032,7 +5106,7 @@ namespace Game1
                     for (int l = 0; l < GameScr.vItemMap.size(); l++)
                     {
                         ItemMap itemMap2 = (ItemMap)GameScr.vItemMap.elementAt(l);
-                        if (itemMap2.itemMapID == itemMap.itemMapID)
+                        if (itemMap2 != null && itemMap2.itemMapID == itemMap.itemMapID)
                         {
                             flag = true;
                             break;

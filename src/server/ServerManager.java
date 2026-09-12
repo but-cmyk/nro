@@ -100,8 +100,8 @@ public class ServerManager {
         DataGame.init();
         ItemData.init();
 
-        // Migrate passwords to BCrypt
-        migratePasswordsToBCrypt();
+        // Migrate passwords to BCrypt (chạy ngầm, không block tiến trình khởi động Server)
+        new Thread(this::migratePasswordsToBCrypt, "BCrypt-Migration-Thread").start();
 
         isRunning = true;
 

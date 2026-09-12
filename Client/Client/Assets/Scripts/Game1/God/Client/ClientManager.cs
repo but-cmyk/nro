@@ -8,7 +8,7 @@ namespace Game1.God
     {
         private static ClientManager instance { get; set; }
         private int xJ, yJ;
-        private int speedRun = 4;
+        public static int speedRun = 4;
         public static ClientManager getInstance()
         {
             return (instance == null) ? (instance = new ClientManager()) : instance;
@@ -269,7 +269,7 @@ namespace Game1.God
                 "Auto Login",
                 "Tốc Độ Game",
                 "Tốc Độ Di Chuyển",
-                "Nút Chuyển Tab"
+                "Bật/Tắt Mưa"
             };
             MyVector myVector = new MyVector();
             for(int i = 0; i < listIndex.Length; i++)
@@ -314,6 +314,18 @@ namespace Game1.God
                     return true;
                 case "adt":
                     perform(4, null);
+                    return true;
+                case "tmua":
+                    BackgroudEffect.isEnableRain = !BackgroudEffect.isEnableRain;
+                    if (!BackgroudEffect.isEnableRain)
+                    {
+                        BackgroudEffect.clearAllRain();
+                        GameScr.info1.addInfo("Đã tắt hiệu ứng mưa", 0);
+                    }
+                    else
+                    {
+                        GameScr.info1.addInfo("Đã bật hiệu ứng mưa", 0);
+                    }
                     return true;
             }
             return false;
@@ -363,6 +375,14 @@ namespace Game1.God
                     break;
                 case 11:
                     Utils.startChat(this, "Tốc Độ Di Chuyển", "Nhập tốc độ di chuyển (4 - 50)", TField.INPUT_TYPE_NUMERIC);
+                    break;
+                case 12:
+                    BackgroudEffect.isEnableRain = !BackgroudEffect.isEnableRain;
+                    if (!BackgroudEffect.isEnableRain)
+                    {
+                        BackgroudEffect.clearAllRain();
+                    }
+                    Utils.addInfo1("Hiệu ứng mưa", BackgroudEffect.isEnableRain);
                     break;
             }
         }

@@ -30,6 +30,7 @@ import services.map.NpcService;
 import services.player.ClanService;
 import services.player.InventoryService;
 import utils.Logger;
+import utils.PlayerAuditLogger;
 import utils.Util;
 import server.Client;
 import models.task.ClanTask;
@@ -160,7 +161,7 @@ public class TaskService {
             msg.writer().writeShort(tm.id);
             msg.writer().writeByte(tm.index);
             msg.writer().writeUTF(tm.name + "[" + tm.id + "]");
-            msg.writer().writeUTF(tm.detail != null ? tm.detail : "");
+            msg.writer().writeUTF(tm.detail != null ? tm.detail.replace("\\r\\n", "\n").replace("\\n", "\n") : "");
             msg.writer().writeByte(tm.subTasks.size());
             for (SubTaskMain stm : tm.subTasks) {
                 msg.writer().writeUTF(stm.name != null ? stm.name : "");
@@ -202,6 +203,10 @@ public class TaskService {
                 Service.gI().sendThongBao(player, "Nhiệm vụ tiếp theo của bạn là "
                         + player.playerTask.taskMain.subTasks.get(player.playerTask.taskMain.index).name);
             }
+            if (player.nPoint != null) {
+                checkDoneTaskPower(player, player.nPoint.power);
+            }
+            Service.gI().point(player);
         } else {
             // Đã đạt mốc nhiệm vụ tối đa của server
             if (player.playerTask.taskMain.subTasks != null && !player.playerTask.taskMain.subTasks.isEmpty()) {
@@ -348,8 +353,18 @@ public class TaskService {
                 || doneTask(player, ConstTask.TASK_22_4)
                 || doneTask(player, ConstTask.TASK_23_3)
                 || doneTask(player, ConstTask.TASK_19_2));
-            case ConstNpc.ONG_GOHAN, ConstNpc.ONG_MOORI, ConstNpc.ONG_PARAGUS ->
-                (doneTask(player, ConstTask.TASK_0_2)
+            case ConstNpc.ONG_GOHAN, ConstNpc.ONG_MOORI, ConstNpc.ONG_PARAGUS -> {
+                if (player.playerTask != null && player.playerTask.taskMain != null
+                        && player.playerTask.taskMain.id == 2 && player.playerTask.taskMain.index == 0) {
+                    Item chickenLeg = InventoryService.gI().findItemBagByTemp(player, ConstItem.DUI_GA);
+                    if (chickenLeg != null && chickenLeg.quantity >= 10) {
+                        int cur = player.playerTask.taskMain.subTasks.get(0).count;
+                        for (int i = cur; i < 10; i++) {
+                            doneTask(player, ConstTask.TASK_2_0);
+                        }
+                    }
+                }
+                yield (doneTask(player, ConstTask.TASK_0_2)
                 || doneTask(player, ConstTask.TASK_0_5)
                 || doneTask(player, ConstTask.TASK_1_1)
                 || doneTask(player, ConstTask.TASK_2_1)
@@ -363,6 +378,7 @@ public class TaskService {
                 || doneTask(player, ConstTask.TASK_10_3)
                 || doneTask(player, ConstTask.TASK_11_1)
                 || doneTask(player, ConstTask.TASK_24_0));
+            }
             case ConstNpc.BO_MONG ->
                 (doneTask(player, ConstTask.TASK_9_0)
                 || doneTask(player, ConstTask.TASK_10_2));
@@ -523,10 +539,23 @@ public class TaskService {
 
     //kiểm tra hoàn thành nhiệm vụ khi nhặt item
     public void checkDoneTaskPickItem(Player player, ItemMap item) {
-        if (!player.isBoss && !player.isPet && item != null) {
+        if (!player.isBoss && !player.isPet && item != null && item.itemTemplate != null) {
             switch (item.itemTemplate.id) {
                 case ConstItem.DUI_GA:
-                    doneTask(player, ConstTask.TASK_2_0);
+                case ConstItem.DUI_GA_NUONG:
+                    if (TaskService.gI().isCurrentTask(player, ConstTask.TASK_2_0)) {
+                        Item chickenLeg = InventoryService.gI().findItemBagByTemp(player, ConstItem.DUI_GA);
+                        int bagCount = chickenLeg != null ? chickenLeg.quantity : 0;
+                        int currentCount = player.playerTask.taskMain.subTasks.get(player.playerTask.taskMain.index).count;
+                        int targetCount = Math.max(currentCount + 1, bagCount);
+                        int toAdd = Math.min(targetCount, 10) - currentCount;
+                        if (toAdd <= 0) {
+                            toAdd = 1;
+                        }
+                        for (int i = 0; i < toAdd; i++) {
+                            doneTask(player, ConstTask.TASK_2_0);
+                        }
+                    }
                     break;
                 case ConstItem.DUA_BE:
                     doneTask(player, ConstTask.TASK_3_1);
@@ -798,6 +827,11 @@ public class TaskService {
                         npcSay(player, ConstTask.NPC_NHA, "Con nhặt được rất nhiều đùi gà rồi đấy! Mau về báo cáo với ta nào.");
                         break;
                     case ConstTask.TASK_2_1:
+                        Item chickenLeg = InventoryService.gI().findItemBagByTemp(player, ConstItem.DUI_GA);
+                        if (chickenLeg != null) {
+                            InventoryService.gI().subQuantityItemsBag(player, chickenLeg, 10);
+                            InventoryService.gI().sendItemBags(player);
+                        }
                         npcSay(player, ConstTask.NPC_NHA, "Tuyệt vời, ta đã dạy con kỹ năng bay lượn! Vừa có một vật thể lạ rơi xuống hành tinh chúng ta, con hãy sử dụng tiềm năng nâng cao sức mạnh rồi đi khám phá vật thể lạ đó nhé!");
                         break;
                     case ConstTask.TASK_3_0:
@@ -857,16 +891,58 @@ public class TaskService {
         NpcService.gI().createTutorial(player, avatar, text);
     }
 
+    public long getRewardSMTNByTaskId(int taskId) {
+        return switch (taskId) {
+            case 1 -> 500L;
+            case 2 -> 1_000L;
+            case 3 -> 2_000L;
+            case 4, 5, 6 -> 4_000L;
+            case 7 -> 8_000L;
+            case 8, 10 -> 15_000L;
+            case 12 -> 20_000L;
+            case 14 -> 80_000L;
+            case 15, 16 -> 150_000L;
+            case 17 -> 200_000L;
+            case 18 -> 500_000L;
+            case 19 -> 5_000_000L;
+            case 20 -> 50_000_000L;
+            case 21, 22, 23 -> 20_000_000L;
+            case 24, 25, 26, 27, 28, 29 -> 1_000_000L;
+            case 31 -> 10_000_000L;
+            default -> 0L;
+        };
+    }
+
     private void rewardDoneTask(Player player) {
         if (player != null && player.nPoint != null && player.playerTask != null && player.playerTask.taskMain != null) {
             int taskId = player.playerTask.taskMain.id;
-            // 1. Tiềm năng tăng dần theo cấp độ nhiệm vụ
-            long reward = (long) Math.pow(taskId + 1, 2) * 50_000L + 100_000L;
-            player.nPoint.tiemNangUp(reward);
+            // 1. Thưởng Sức Mạnh & Tiềm Năng đúng chuẩn hiển thị trong giao diện nhiệm vụ
+            long rewardSMTN = getRewardSMTNByTaskId(taskId);
+            if (rewardSMTN > 0) {
+                Service.gI().addSMTN(player, (byte) 2, rewardSMTN, false);
+            }
 
-            // 2. Thưởng vàng
-            int goldReward = (taskId + 1) * 500_000;
-            player.inventory.addGold(goldReward);
+            // 2. Thưởng vàng hợp lý theo mốc nhiệm vụ (nhiệm vụ tân thủ 0-3 không lạm phát vàng)
+            int goldReward = switch (taskId) {
+                case 0, 1, 2, 3 -> 0;
+                case 4, 5, 6 -> 1_000;
+                case 7 -> 5_000;
+                case 8, 10 -> 10_000;
+                case 12 -> 20_000;
+                case 14 -> 50_000;
+                case 15, 16 -> 100_000;
+                case 17 -> 200_000;
+                case 18 -> 500_000;
+                case 19 -> 1_000_000;
+                case 20 -> 5_000_000;
+                case 21, 22, 23 -> 2_000_000;
+                case 24, 25, 26, 27, 28, 29 -> 1_000_000;
+                case 31 -> 2_000_000;
+                default -> 0;
+            };
+            if (goldReward > 0) {
+                player.inventory.addGold(goldReward);
+            }
 
             // 3. Thưởng mốc lớn (Milestone Cột Mốc)
             switch (taskId) {
@@ -895,9 +971,15 @@ public class TaskService {
 
             InventoryService.gI().sendItemBags(player);
             PlayerService.gI().sendInfoHpMpMoney(player);
-            Service.gI().sendThongBao(player, "Chúc mừng bạn nhận được " + utils.Util.formatNumber(reward) + " tiềm năng và "
-                    + utils.Util.formatNumber(goldReward) + " vàng!");
+            if (rewardSMTN > 0 && goldReward > 0) {
+                Service.gI().sendThongBao(player, "Chúc mừng bạn nhận được " + Util.formatNumber(rewardSMTN) + " sức mạnh, "
+                        + Util.formatNumber(rewardSMTN) + " tiềm năng và " + Util.formatNumber(goldReward) + " vàng!");
+            } else if (rewardSMTN > 0) {
+                Service.gI().sendThongBao(player, "Chúc mừng bạn nhận được " + Util.formatNumber(rewardSMTN) + " sức mạnh và "
+                        + Util.formatNumber(rewardSMTN) + " tiềm năng!");
+            }
             Service.gI().point(player);
+            PlayerAuditLogger.logAction(player, "TASK_REWARD", "Completed Task " + taskId + " -> SMTN: +" + rewardSMTN + ", Gold: +" + goldReward);
         }
     }
 
@@ -919,6 +1001,7 @@ public class TaskService {
             }
             SubTaskMain currentStm = tm.subTasks.get(tm.index);
             currentStm.count += 1;
+            PlayerAuditLogger.logAction(player, "TASK_PROGRESS", "Task ID " + tm.id + " SubTask " + tm.index + ": count=" + currentStm.count + "/" + currentStm.maxCount);
             if (currentStm.count >= currentStm.maxCount) {
                 tm.index++;
                 if (tm.index >= tm.subTasks.size()) {
@@ -995,6 +1078,7 @@ public class TaskService {
         if (text == null) {
             return "";
         }
+        text = text.replace("\\r\\n", "\n").replace("\\n", "\n");
         switch (player.gender) {
             case ConstPlayer.TRAI_DAT:
                 text = text.replaceAll(ConstTask.TEN_QUAI_1000, "phi long mẹ");
@@ -1421,7 +1505,7 @@ public class TaskService {
     }
 
     public void checkDoneSideTaskPickItem(Player player, ItemMap item) {
-        if (player.playerTask != null && player.playerTask.sideTask != null && player.playerTask.sideTask.template != null) {
+        if (player.playerTask != null && player.playerTask.sideTask != null && player.playerTask.sideTask.template != null && item != null && item.itemTemplate != null) {
             if ((player.playerTask.sideTask.template.id == 58 && item.itemTemplate.type == 9)) {
                 player.playerTask.sideTask.count += item.quantity;
                 notifyProcessSideTask(player);

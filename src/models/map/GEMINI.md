@@ -1,0 +1,19 @@
+# Module GEMINI: Bản Đồ, Khu Vực & Quái Vật (World Realtime Engine)
+
+## 1. Trách Nhiệm & Kiến Trúc
+- **Phạm vi**: Quản lý không gian bản đồ, chia khu vực (Zone), định tuyến tọa độ, spawn quái vật và các waypoint chuyển map.
+- **Class trọng tâm**:
+  - `Map.java`: Cấu trúc bản đồ chung, chứa danh sách các `Zone`.
+  - `Zone.java`: Không gian thực thi thời gian thực, chứa `players`, `mobs`, `items`. Vòng lặp `update()` của Zone chạy định kỳ để điều khiển quái đánh, hồi sinh quái, biến mất item rớt sàn.
+  - `Mob.java`: AI quái vật, máu quái, cơ chế tấn công trả đũa.
+  - `TileMap.java`: Dữ liệu vật lý địa hình (block va chạm, nhảy, bơi, rơi tự do).
+
+## 2. Các Bất Biến Bắt Buộc
+- **Thread-Safety Trong Zone Loop**:
+  - Danh sách người chơi và quái vật trong Zone được truy cập liên tục bởi cả luồng mạng (Netty Worker) và luồng update nội tại. Bắt buộc dùng `ConcurrentHashMap`, `CopyOnWriteArrayList` hoặc synchronize danh sách khi duyệt qua để tránh `ConcurrentModificationException`.
+- **Giới Hạn Tọa Độ & Chuyển Zone**:
+  - Khi player di chuyển hoặc dịch chuyển, tọa độ X, Y phải được kiểm tra trong biên của `map.mapWidth` và `map.mapHeight`.
+
+## 3. Lỗi Thường Gặp Cần Tránh
+- Crash cả Zone khi 1 Player out map đột ngột trong lúc Server đang duyệt danh sách gửi packet khu vực.
+- Quái chết nhưng không kích hoạt timer hồi sinh hoặc rơi vật phẩm sai tỷ lệ.

@@ -27,7 +27,7 @@ public class DataGame {
 
     public static byte vsData = 11;
     public static byte vsMap = 3;
-    public static byte vsSkill = 1;
+    public static byte vsSkill = 3;
     public static byte vsItem = 9;
     public static int vsRes = 1;
     public static short maxSmallVersion = 32767;
@@ -588,7 +588,8 @@ public class DataGame {
         try {
             msg = new Message(-74);
             msg.writer().writeByte(1);
-            final File[] files = new File("data/res/x" + session.zoomLevel).listFiles();
+            int zoom = (session.zoomLevel > 0 && session.zoomLevel <= 4) ? session.zoomLevel : 2;
+            final File[] files = new File("data/res/x" + zoom).listFiles();
             if (files != null) {
                 msg.writer().writeShort(files.length);
             } else {
@@ -607,17 +608,27 @@ public class DataGame {
     public static void sendRes(MySession session) {
         Message msg = null;
         try {
-            File dir = new File("data/res/x" + session.zoomLevel);
+            int zoom = (session.zoomLevel > 0 && session.zoomLevel <= 4) ? session.zoomLevel : 2;
+            File dir = new File("data/res/x" + zoom);
             File[] files = dir.listFiles();
             if (files == null) {
                 return;
             }
 
+            int count = 0;
             for (final File fileEntry : files) {
                 String original = fileEntry.getName();
                 byte[] res = FileIO.readFile(fileEntry.getAbsolutePath());
                 if (res == null) {
                     continue;
+                }
+
+                if (session instanceof network.netty.NettySession nettySession) {
+                    int waitCount = 0;
+                    while (!nettySession.getChannel().isWritable() && nettySession.isConnected() && waitCount < 100) {
+                        Thread.sleep(5);
+                        waitCount++;
+                    }
                 }
 
                 msg = new Message(-74);
@@ -627,6 +638,19 @@ public class DataGame {
                 msg.writer().write(res);
                 session.sendMessage(msg);
                 msg.cleanup(); // Cleanup sau mỗi lần gửi loop
+
+                count++;
+                if (count % 20 == 0) {
+                    Thread.sleep(2);
+                }
+            }
+
+            if (session instanceof network.netty.NettySession nettySession) {
+                int waitCount = 0;
+                while (!nettySession.getChannel().isWritable() && nettySession.isConnected() && waitCount < 100) {
+                    Thread.sleep(5);
+                    waitCount++;
+                }
             }
 
             msg = new Message(-74);

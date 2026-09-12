@@ -26,26 +26,38 @@ namespace Game1.God
         private void autoUse()
         {
             if (itemUses == null || itemUses.Count == 0) return;
-            foreach(var item in itemUses)
+            long now = mSystem.currentTimeMillis();
+            for (int i = 0; i < itemUses.Count; i++)
             {
-                Utils.useItemWithTime(item.id, timeUses * 1000L);
+                var item = itemUses[i];
+                long delay = item.delayMs > 0 ? item.delayMs : (timeUses > 0 ? timeUses * 1000L : 5000L);
+                if (now - item.lastTimeUse >= delay)
+                {
+                    item.lastTimeUse = now;
+                    itemUses[i] = item;
+                    Utils.UseItem(item.id);
+                }
             }
         }
         private void autoBuy()
         {
-            if (itemBuys == null && itemBuys.Count == 0) return;
-            foreach (var item in itemBuys)
+            if (itemBuys == null || itemBuys.Count == 0) return;
+            if (quantity <= 0)
             {
-                if (quantity == 0)
+                itemBuys.Clear();
+                GameScr.info1.addInfo("Xong!", 0);
+                return;
+            }
+            if (mSystem.currentTimeMillis() - timeBuys >= 200L)
+            {
+                timeBuys = mSystem.currentTimeMillis();
+                var item = itemBuys[0];
+                Service.gI().buyItem((sbyte)(item.buyGold ? 0 : 1), item.id, 0);
+                quantity--;
+                if (quantity <= 0)
                 {
-                    itemBuys.Remove(item);
-                    GameScr.info1.addInfo("Xong!", 0);
-                    break;
-                }
-                while (quantity > 0 && mSystem.currentTimeMillis() - timeBuys >= 200L)
-                {
-                    Service.gI().buyItem((sbyte)((item.buyGold) ? 0 : 1), item.id, 0);
-                    quantity--;
+                    itemBuys.Clear();
+                    GameScr.info1.addInfo("Mua thành công!", 0);
                 }
             }
         }
@@ -89,19 +101,33 @@ namespace Game1.God
             ChatTextField chatTextField = ChatTextField.gI();
             if (chatTextField.strChat.Equals(inputUses[0]))
             {
-                int time = int.Parse(chatTextField.tfChat.getText());
-                timeUses = time;
-                GameScr.info1.addInfo($"Delay: {time} giây", 0);
-                itemUses.Add(listUses);
+                if (int.TryParse(chatTextField.tfChat.getText().Trim(), out int time) && time > 0)
+                {
+                    timeUses = time;
+                    listUses.delayMs = time * 1000L;
+                    listUses.lastTimeUse = 0;
+                    GameScr.info1.addInfo($"Delay: {time} giây", 0);
+                    itemUses.Add(listUses);
+                }
+                else
+                {
+                    GameScr.info1.addInfo("Thời gian không hợp lệ!", 0);
+                }
                 Utils.resetTF();
                 return;
             }
             else if (chatTextField.strChat.Equals(inputBuys[0]))
             {
-                int num = int.Parse(chatTextField.tfChat.getText());
-                quantity = num;
-                GameScr.info1.addInfo($"Số Lượng: {num}", 0);
-                itemBuys.Add(listBuys);
+                if (int.TryParse(chatTextField.tfChat.getText().Trim(), out int num) && num > 0)
+                {
+                    quantity = num;
+                    GameScr.info1.addInfo($"Số Lượng: {num}", 0);
+                    itemBuys.Add(listBuys);
+                }
+                else
+                {
+                    GameScr.info1.addInfo("Số lượng không hợp lệ!", 0);
+                }
                 Utils.resetTF();
                 return;
             }
