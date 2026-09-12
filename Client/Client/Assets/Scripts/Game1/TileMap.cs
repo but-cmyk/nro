@@ -180,7 +180,7 @@ namespace Game1
     
     	public static MyVector vObject = new MyVector();
     
-    	public static int[] offlineId = new int[6] { 21, 22, 23, 39, 40, 41 };
+    	public static int[] offlineId = new int[3] { 21, 22, 23 };
     
     	public static int[] highterId = new int[6] { 21, 22, 23, 24, 25, 26 };
     
@@ -282,7 +282,7 @@ namespace Game1
     
     	public static bool isHighterMap()
     	{
-    		for (int i = 0; i < offlineId.Length; i++)
+    		for (int i = 0; i < highterId.Length; i++)
     		{
     			if (mapID == highterId[i])
     			{

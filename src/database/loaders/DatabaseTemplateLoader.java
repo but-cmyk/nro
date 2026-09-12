@@ -209,14 +209,35 @@ public class DatabaseTemplateLoader {
                 skillTemplate.damInfo = rs.getString("dam_info");
                 nClass.skillTemplatess.add(skillTemplate);
 
-                dataArray = (JSONArray) JSONValue.parse(
-                        rs.getString("skills")
-                                .replaceAll("\\[\"", "[")
-                                .replaceAll("\"\\[", "[")
-                                .replaceAll("\"\\]", "]")
-                                .replaceAll("\\]\"", "]")
-                                .replaceAll("\\}\",\"\\{", "},{")
-                );
+                String skillsRaw = rs.getString("skills");
+                dataArray = null;
+                try {
+                    String cleaned = skillsRaw
+                            .replaceAll("\\\\\"", "\"")
+                            .replaceAll("\\[\"", "[")
+                            .replaceAll("\"\\[", "[")
+                            .replaceAll("\"\\]", "]")
+                            .replaceAll("\\]\"", "]")
+                            .replaceAll("\\}\"\\s*,\\s*\"\\{", "},{")
+                            .replaceAll("\\}\",\"\\{", "},{");
+                    Object parsed = JSONValue.parse(cleaned);
+                    if (parsed instanceof JSONArray ja) {
+                        dataArray = ja;
+                    }
+                } catch (Exception ignored) {
+                }
+                if (dataArray == null) {
+                    try {
+                        Object parsed = JSONValue.parse(skillsRaw);
+                        if (parsed instanceof JSONArray ja) {
+                            dataArray = ja;
+                        }
+                    } catch (Exception ignored) {
+                    }
+                }
+                if (dataArray == null) {
+                    dataArray = new JSONArray();
+                }
                 for (int j = 0; j < dataArray.size(); j++) {
                     JSONObject dts = (JSONObject) JSONValue.parse(String.valueOf(dataArray.get(j)));
                     Skill skill = new Skill();
@@ -271,7 +292,7 @@ public class DatabaseTemplateLoader {
             while (rs.next()) {
                 Intrinsic intrinsic = new Intrinsic();
                 intrinsic.id = rs.getByte("id");
-                intrinsic.name = rs.getString("name");
+                intrinsic.name = rs.getString("name") != null ? rs.getString("name").replace("\\r\\n", "\n").replace("\\n", "\n") : "";
                 intrinsic.paramFrom1 = rs.getShort("param_from_1");
                 intrinsic.paramTo1 = rs.getShort("param_to_1");
                 intrinsic.paramFrom2 = rs.getShort("param_from_2");
@@ -307,7 +328,7 @@ public class DatabaseTemplateLoader {
                     task = new TaskMain();
                     task.id = taskId;
                     task.name = rs.getString("name");
-                    task.detail = rs.getString("detail");
+                    task.detail = rs.getString("detail") != null ? rs.getString("detail").replace("\\r\\n", "\n").replace("\\n", "\n") : "";
                     Manager.TASKS.add(task);
                 }
                 SubTaskMain subTask = new SubTaskMain();

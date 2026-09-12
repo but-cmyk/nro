@@ -29,14 +29,16 @@ public class Intrinsic {
     }
 
     public String getDescription() {
-        return this.name.replaceAll("p0", String.valueOf(paramFrom1))
+        String n = this.name != null ? this.name.replace("\\r\\n", "\n").replace("\\n", "\n") : "";
+        return n.replaceAll("p0", String.valueOf(paramFrom1))
                 .replaceAll("p1", String.valueOf(paramTo1))
                 .replaceAll("p2", String.valueOf(paramFrom2))
                 .replaceAll("p3", String.valueOf(paramTo2));
     }
 
     public String getName() {
-        return this.name.replaceAll("p0% đến p1", "p0").replaceAll("p2% đến p3", "p1")
+        String n = this.name != null ? this.name.replace("\\r\\n", "\n").replace("\\n", "\n") : "";
+        return n.replaceAll("p0% đến p1", "p0").replaceAll("p2% đến p3", "p1")
                 .replaceAll("p0", String.valueOf(this.param1))
                 .replaceAll("p1", String.valueOf(this.param2)) + (this.id != 0 ? " [" + this.paramFrom1 + " đến " + this.paramTo1 + "]" : "");
     }

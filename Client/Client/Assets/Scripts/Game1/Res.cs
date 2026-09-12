@@ -188,7 +188,7 @@ namespace Game1
     
     	public static void err(string s)
     	{
-    		Debug.Log("[Error] " + s);
+    		Debug.Log(s);
     	}
     
     	public static void outz2(string s)

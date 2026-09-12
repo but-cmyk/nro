@@ -7,22 +7,40 @@ public static class UnityLogger
     private static readonly string LogFilePath = Path.Combine(Application.dataPath, string.Format("../unity_log_{0}.txt", System.Diagnostics.Process.GetCurrentProcess().Id));
     private static readonly object logLock = new object();
 
+    private static bool isInitialized;
+
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     private static void Initialize()
     {
+        if (isInitialized)
+        {
+            return;
+        }
+        isInitialized = true;
+
         try
         {
             lock (logLock)
             {
-                // Clear previous log on startup to keep it clean and clear
-                File.WriteAllText(LogFilePath, "=== UNITY LOG STARTED AT " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + " ===\n");
+                using (FileStream fs = new FileStream(LogFilePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite))
+                using (StreamWriter sw = new StreamWriter(fs))
+                {
+                    sw.WriteLine("=== UNITY LOG STARTED AT " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + " ===");
+                }
             }
-            
+        }
+        catch (Exception)
+        {
+            // If another process or previous instance holds the file, ignore instead of crashing/error badge
+        }
+
+        try
+        {
+            Application.logMessageReceivedThreaded -= HandleLog;
             Application.logMessageReceivedThreaded += HandleLog;
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            Debug.LogError("Failed to initialize file logger: " + ex.Message);
         }
     }
 
@@ -38,7 +56,11 @@ public static class UnityLogger
             }
             lock (logLock)
             {
-                File.AppendAllText(LogFilePath, formattedLog);
+                using (FileStream fs = new FileStream(LogFilePath, FileMode.Append, FileAccess.Write, FileShare.ReadWrite))
+                using (StreamWriter sw = new StreamWriter(fs))
+                {
+                    sw.Write(formattedLog);
+                }
             }
         }
         catch (Exception)

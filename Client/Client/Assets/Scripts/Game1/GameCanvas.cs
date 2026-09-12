@@ -1632,7 +1632,7 @@ namespace Game1
     				BackgroudEffect.yfog = TileMap.pxh - 160;
     			}
     			BackgroudEffect.clearImage();
-    			randomRaintEff(typeBG);
+    			applyMapWeatherEffect(typeBG);
     			if ((TileMap.lastBgID == typeBG && TileMap.lastType == TileMap.bgType) || typeBG == -1)
     			{
     				return;
@@ -2009,12 +2009,118 @@ namespace Game1
     		}
     	}
     
+    	public static long lastRainTime = 0;
+
+    	private static void applyMapWeatherEffect(int typeBG)
+    	{
+    		try
+    		{
+    			// 1. Dọn dẹp các hiệu ứng thời tiết cũ của map trước
+    			BackgroudEffect.clearWeatherEffects();
+
+    			// 2. Không tạo hiệu ứng nếu đang bật chế độ giảm đồ họa hoặc ẩn map
+    			if (GameCanvas.lowGraphic || ListChars.getInstance().HideMap)
+    			{
+    				return;
+    			}
+
+    			int mapId = TileMap.mapID;
+
+    			// 3. Map Trong Nhà / Phi thuyền / Nhà Bang Hội (21, 22, 23, 39, 40, 41, 102...)
+    			if (TileMap.isOfflineMap() || mapId == 21 || mapId == 22 || mapId == 23 || mapId == 39 || mapId == 40 || mapId == 41 || mapId == 102)
+    			{
+    				// Hoàn toàn không có mưa, gió, tuyết trong nhà
+    				return;
+    			}
+
+    			// 4. Map Thần Điện Kami & Thần Giới (45-50, Kami, Beerus, Kaio, Time Room...)
+    			if ((mapId >= 45 && mapId <= 50) || TileMap.bgType == TileMap.KAMISAMA || TileMap.bgType == TileMap.TIME_ROOM || TileMap.bgType == TileMap.BEERUS)
+    			{
+    				// Mây trôi bồng bềnh thanh khiết
+    				BackgroudEffect.addEffect(13);
+    				return;
+    			}
+
+    			// 5. Map Võ Đài thi đấu (51, 103, 112, 113, 129, 130...)
+    			if (TileMap.isVoDaiMap())
+    			{
+    				// Đấu trường sạch sẽ, không mưa che khuất tầm nhìn đấu thủ
+    				BackgroudEffect.addEffect(13);
+    				return;
+    			}
+
+    			// 6. Map Băng Tuyết (105-110...)
+    			if (TileMap.isMapCold())
+    			{
+    				BackgroudEffect.addEffect(11); // Tuyết rơi
+    				return;
+    			}
+
+    			// 7. Đảo Kame (Map 5 - Bờ biển nắng vàng)
+    			if (mapId == 5 || TileMap.bgType == TileMap.TRAIDAT_DAORUA)
+    			{
+    				BackgroudEffect.addEffect(13); // Mây trôi biển xanh
+    				return;
+    			}
+
+    			// 8. Địa Ngục (HELL)
+    			if (TileMap.bgType == TileMap.HELL || TileMap.bgType == TileMap.THE_HELL)
+    			{
+    				return;
+    			}
+
+    			// 9. Hành tinh Namếc (planetID == 1 hoặc bgType thuộc Namếc)
+    			if (TileMap.planetID == 1 || TileMap.bgType == TileMap.NAMEK_DOINUI || TileMap.bgType == TileMap.NAMEK_THUNGLUNG || TileMap.bgType == TileMap.NAMEK_RUNG || TileMap.bgType == TileMap.NAMEK_DAO)
+    			{
+    				// Lá cây Namếc rơi xanh ngọc
+    				int leafType = (Res.random(0, 2) == 0) ? 5 : 7;
+    				BackgroudEffect.addEffect(leafType);
+    				if (Res.random(0, 3) == 0)
+    				{
+    					BackgroudEffect.addEffect(13);
+    				}
+    				return;
+    			}
+
+    			// 10. Hành tinh Xayda (planetID == 2 hoặc bgType thuộc Sayai)
+    			if (TileMap.planetID == 2 || TileMap.bgType == TileMap.SAYAI_DOINUI || TileMap.bgType == TileMap.SAYAI_RUNG || TileMap.bgType == TileMap.SAYAI_CITY || TileMap.bgType == TileMap.SAYAI_NIGHT)
+    			{
+    				if (TileMap.bgType == TileMap.SAYAI_NIGHT)
+    				{
+    					BackgroudEffect.addEffect(16); // Đom đóm đêm Xayda
+    					BackgroudEffect.addEffect(4);  // Sao trời
+    				}
+    				else
+    				{
+    					BackgroudEffect.addEffect(6);  // Tàn tro / lá đỏ Xayda
+    				}
+    				return;
+    			}
+
+    			// 11. Hành tinh Trái Đất (planetID == 0 hoặc map tự nhiên ngoài trời)
+    			int leafEarth = (Res.random(0, 2) == 0) ? 1 : 2;
+    			BackgroudEffect.addEffect(leafEarth);
+
+    			// Mưa Động: Chỉ có xác suất 20%, cách cơn mưa trước ít nhất 3 phút (180.000 ms)
+    			long now = mSystem.currentTimeMillis();
+    			if (BackgroudEffect.isEnableRain && (now - lastRainTime > 180000) && Res.random(0, 100) < 20)
+    			{
+    				lastRainTime = now;
+    				BackgroudEffect.addEffect(0);
+    				if (GameCanvas.isPlaySound)
+    				{
+    					SoundMn.gI().rain();
+    				}
+    			}
+    		}
+    		catch (Exception)
+    		{
+    		}
+    	}
+
     	private static void randomRaintEff(int typeBG)
     	{
-    		if (!TileMap.isMapCold())
-    		{
-    			BackgroudEffect.addEffect(0);
-    		}
+    		applyMapWeatherEffect(typeBG);
     	}
     
     	public void keyPressedz(int keyCode)
@@ -2106,14 +2212,14 @@ namespace Game1
     			keyPressed[0] = true;
     			break;
     		case 49:
-    			if (currentScreen == CrackBallScr.instance || (currentScreen == GameScr.instance && isMoveNumberPad && !ChatTextField.gI().isShow))
+    			if (currentScreen == CrackBallScr.instance || (currentScreen == GameScr.instance && !ChatTextField.gI().isShow))
     			{
     				keyHold[1] = true;
     				keyPressed[1] = true;
     			}
     			break;
     		case 51:
-    			if (currentScreen == CrackBallScr.instance || (currentScreen == GameScr.instance && isMoveNumberPad && !ChatTextField.gI().isShow))
+    			if (currentScreen == CrackBallScr.instance || (currentScreen == GameScr.instance && !ChatTextField.gI().isShow))
     			{
     				keyHold[3] = true;
     				keyPressed[3] = true;
@@ -2146,35 +2252,35 @@ namespace Game1
     			keyPressed[13] = true;
     			break;
     		case 50:
-    			if (currentScreen == CrackBallScr.instance || (currentScreen == GameScr.instance && isMoveNumberPad && !ChatTextField.gI().isShow))
+    			if (currentScreen == CrackBallScr.instance || (currentScreen == GameScr.instance && !ChatTextField.gI().isShow))
     			{
     				keyHold[2] = true;
     				keyPressed[2] = true;
     			}
     			break;
     		case 52:
-    			if (currentScreen == CrackBallScr.instance || (currentScreen == GameScr.instance && isMoveNumberPad && !ChatTextField.gI().isShow))
+    			if (currentScreen == CrackBallScr.instance || (currentScreen == GameScr.instance && !ChatTextField.gI().isShow))
     			{
     				keyHold[4] = true;
     				keyPressed[4] = true;
     			}
     			break;
     		case 54:
-    			if (currentScreen == CrackBallScr.instance || (currentScreen == GameScr.instance && isMoveNumberPad && !ChatTextField.gI().isShow))
+    			if (currentScreen == CrackBallScr.instance || (currentScreen == GameScr.instance && !ChatTextField.gI().isShow))
     			{
     				keyHold[6] = true;
     				keyPressed[6] = true;
     			}
     			break;
     		case 56:
-    			if (currentScreen == CrackBallScr.instance || (currentScreen == GameScr.instance && isMoveNumberPad && !ChatTextField.gI().isShow))
+    			if (currentScreen == CrackBallScr.instance || (currentScreen == GameScr.instance && !ChatTextField.gI().isShow))
     			{
     				keyHold[8] = true;
     				keyPressed[8] = true;
     			}
     			break;
     		case 53:
-    			if (currentScreen == CrackBallScr.instance || (currentScreen == GameScr.instance && isMoveNumberPad && !ChatTextField.gI().isShow))
+    			if (currentScreen == CrackBallScr.instance || (currentScreen == GameScr.instance && !ChatTextField.gI().isShow))
     			{
     				keyHold[5] = true;
     				keyPressed[5] = true;
@@ -2602,8 +2708,9 @@ namespace Game1
     				g.setClip(0, 0, w, h);
     			}
     		}
-    		catch (Exception)
+    		catch (Exception ex)
     		{
+    			Debug.LogException(ex);
     		}
     	}
     

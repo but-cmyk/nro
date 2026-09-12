@@ -10,7 +10,7 @@ namespace Game1
     
     	private const int MAXTIME = 500;
     
-    	public Texture2D texture = new Texture2D(1, 1);
+    	public Texture2D texture;
     
     	public static Image imgTemp;
     
@@ -311,7 +311,6 @@ namespace Game1
     
     	public static byte[] loadData(string filename)
     	{
-    		Image image = new Image();
     		TextAsset textAsset = (TextAsset)Resources.Load(filename, typeof(TextAsset));
     		if (textAsset == null || textAsset.bytes == null || textAsset.bytes.Length == 0)
     		{
@@ -347,6 +346,7 @@ namespace Game1
     		Image image = new Image();
     		try
     		{
+    			image.texture = new Texture2D(1, 1);
     			image.texture.LoadImage(imageData);
     			image.w = image.texture.width;
     			image.h = image.texture.height;
@@ -386,7 +386,9 @@ namespace Game1
     
     	private static Image __createEmptyImage()
     	{
-    		return new Image();
+    		Image image = new Image();
+    		image.texture = new Texture2D(1, 1);
+    		return image;
     	}
     
     	public static Image __createImage(int w, int h)

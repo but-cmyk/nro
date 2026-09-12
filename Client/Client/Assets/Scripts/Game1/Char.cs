@@ -5094,32 +5094,53 @@ namespace Game1
     		}
     		if (skillPaint == null)
     		{
+    			if (GameScr.sks == null || GameScr.sks.Length == 0)
+    			{
+    				GameScr.gI().readSkill();
+    			}
     			if (GameScr.sks != null && GameScr.sks.Length > 0 && GameScr.sks[0] != null)
     			{
     				skillPaint = GameScr.sks[0];
     			}
     			else
     			{
-    				return;
+    				skillPaint = new SkillPaint();
+    				skillPaint.id = 0;
     			}
     		}
     		Res.outz("skill id= " + skillPaint.id);
-    		if ((me && dart != null) || TileMap.isOfflineMap())
+    		if ((me && dart != null) || (TileMap.isOfflineMap() && mobFocus == null))
     		{
     			return;
     		}
     		long num = mSystem.currentTimeMillis();
     		if (me)
     		{
+    			if (myskill == null && vSkillFight != null && vSkillFight.size() > 0)
+    			{
+    				myskill = (Skill)vSkillFight.elementAt(0);
+    			}
+    			if (myskill == null)
+    			{
+    				Res.outz("[CLIENT_SET_SKILL_PAINT_BLOCKED] myskill is NULL");
+    				return;
+    			}
     			if (isSelectingSkillBuffToPlayer() && charFocus == null)
     			{
+    				Res.outz("[CLIENT_SET_SKILL_PAINT_BLOCKED] Buff to player but charFocus is NULL");
     				return;
+    			}
+    			if (num < myskill.lastTimeUseThisSkill)
+    			{
+    				myskill.lastTimeUseThisSkill = num - myskill.coolDown;
     			}
     			if (num - myskill.lastTimeUseThisSkill < myskill.coolDown)
     			{
     				myskill.paintCanNotUseSkill = true;
+    				Res.outz("[CLIENT_SET_SKILL_PAINT_BLOCKED] Cooldown not ready: elapsed=" + (num - myskill.lastTimeUseThisSkill) + " < cd=" + myskill.coolDown);
     				return;
     			}
+    			myskill.paintCanNotUseSkill = false;
     			myskill.lastTimeUseThisSkill = num;
     			if (myskill.template.manaUseType == 2)
     			{
@@ -5246,6 +5267,10 @@ namespace Game1
     	public void useSkillNotFocus()
     	{
     		GameScr.gI().auto = 0;
+    		if (GameScr.sks == null || GameScr.sks.Length == 0)
+    		{
+    			GameScr.gI().readSkill();
+    		}
     		SkillPaint sp = null;
     		if (GameScr.sks != null && myCharz().myskill != null && myCharz().myskill.skillId >= 0 && myCharz().myskill.skillId < GameScr.sks.Length)
     		{
@@ -5254,6 +5279,11 @@ namespace Game1
     		if (sp == null && GameScr.sks != null && GameScr.sks.Length > 0)
     		{
     			sp = GameScr.sks[0];
+    		}
+    		if (sp == null)
+    		{
+    			sp = new SkillPaint();
+    			sp.id = 0;
     		}
     		myCharz().setSkillPaint(sp, (!TileMap.tileTypeAt(myCharz().cx, myCharz().cy, 2)) ? 1 : 0);
     	}
@@ -5266,10 +5296,18 @@ namespace Game1
     			return;
     		}
     		long num = mSystem.currentTimeMillis();
-    		if (me && num - myskill.lastTimeUseThisSkill < myskill.coolDown)
+    		if (me)
     		{
-    			myskill.paintCanNotUseSkill = true;
-    			return;
+    			if (num < myskill.lastTimeUseThisSkill)
+    			{
+    				myskill.lastTimeUseThisSkill = num - myskill.coolDown;
+    			}
+    			if (num - myskill.lastTimeUseThisSkill < myskill.coolDown)
+    			{
+    				myskill.paintCanNotUseSkill = true;
+    				return;
+    			}
+    			myskill.paintCanNotUseSkill = false;
     		}
     		if (myskill.template.id == 10)
     		{
@@ -5515,9 +5553,14 @@ namespace Game1
     			if (myVector.size() == 0 && myVector2.size() == 0)
     			{
     				stopUseChargeSkill();
+    				if (me)
+    				{
+    					Res.outz("[CLIENT_ATTACK_NO_TARGET] myVector & myVector2 empty, type=" + type);
+    				}
     			}
     			if (me && !isSelectingSkillUseAlone() && !hasSendAttack)
     			{
+    				Res.outz("[CLIENT_SEND_ATTACK] Sending attack packet type=" + type + ", vMob=" + myVector.size() + ", vChar=" + myVector2.size());
     				Service.gI().sendPlayerAttack(myVector, myVector2, type);
     				hasSendAttack = true;
     			}

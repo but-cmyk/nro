@@ -1,4 +1,6 @@
 @echo off
+chcp 65001 > nul
+set DOCKER_CONTEXT=default
 title NRO GAME SERVER (2026)
 
 echo ===================================================================
@@ -14,7 +16,7 @@ if %errorlevel% neq 0 goto RUN_NATIVE
 echo [OK] Da phat hien Docker dang hoat dong san sang!
 echo.
 echo Vui long chon che do khoi chay:
-echo   [1] KHOI DONG SIEU TOC (Native Java + Auto Redis Docker) - [MUC DINH: 1.5 giay]
+echo   [1] KHOI DONG SIEU TOC (Native Java + Auto Docker MySQL 3308 va Redis) - [MUC DINH: 1.5 giay]
 echo   [2] Chay toan bo cum trong Docker (MySQL + Redis + Server)
 echo   [3] Chi bat Redis Cache trong Docker
 echo   [4] Dung (Down) toan bo cum Docker
@@ -30,8 +32,9 @@ if errorlevel 1 goto RUN_NATIVE_REDIS
 
 :RUN_NATIVE_REDIS
 echo.
-echo [DOCKER] Kich hoat nhanh Redis Cache trong Docker...
-docker start nro_redis >nul 2>&1 || docker compose up -d redis >nul 2>&1
+echo [DOCKER] Kich hoat nhanh MySQL (3308) va Redis Cache trong Docker...
+docker start nro_mysql nro_redis >nul 2>&1 || docker compose up -d mysql redis >nul 2>&1
+timeout /t 2 /nobreak >nul 2>&1
 goto RUN_NATIVE
 
 :RUN_DOCKER_COMPOSE
@@ -73,7 +76,7 @@ echo.
 echo ===================================================================
 echo           KHOI DONG NRO GAME SERVER (NATIVE JAVA 22)
 echo ===================================================================
-java -server -Xms128M -Xmx1024M -XX:+UseG1GC --add-opens java.base/jdk.internal.misc=ALL-UNNAMED --add-opens java.base/java.lang=ALL-UNNAMED -Dio.netty.tryReflectionSetAccessible=true "-Dfile.encoding=UTF-8" -cp "build\classes;dist\NROK.jar;lib\*" server.ServerManager
+java -server -Xms128M -Xmx1024M -XX:+UseG1GC --add-opens java.base/jdk.internal.misc=ALL-UNNAMED --add-opens java.base/java.lang=ALL-UNNAMED "-Dio.netty.tryReflectionSetAccessible=true" "-Dfile.encoding=UTF-8" -cp "build\classes;dist\NROK.jar;lib\*" server.ServerManager
 
 if %errorlevel% neq 0 (
     echo.

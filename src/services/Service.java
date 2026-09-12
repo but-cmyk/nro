@@ -505,6 +505,7 @@ public class Service {
                 msg.writer().writeShort(100);
                 msg.writer().writeShort(player.nPoint.defg);
                 msg.writer().writeByte(player.nPoint.critg);
+                msg.writer().writeLong(player.nPoint.power);
                 player.sendMessage(msg);
                 msg.cleanup();
             } catch (Exception e) {

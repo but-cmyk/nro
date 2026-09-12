@@ -95,6 +95,7 @@ namespace Game1
     			tAddName.isFocus = true;
     		}
     		tAddName.setIputType(TField.INPUT_TYPE_ANY);
+    		tAddName.setMaxTextLenght(10);
     		tAddName.showSubTextField = false;
     		tAddName.strInfo = mResources.char_name;
     		if (tAddName.getText().Equals("@"))
@@ -231,6 +232,11 @@ namespace Game1
     		GameCanvas.menu.showMenu = false;
     		GameCanvas.endDlg();
     		base.switchToMe();
+    		if (GameScr.parts == null || SmallImage.smallImg == null || SmallImage.imgbig == null)
+    		{
+    			GameScr.gI().initSelectChar();
+    			SmallImage.loadBigRMS();
+    		}
     		indexGender = Res.random(0, 3);
     		indexHair = Res.random(0, 3);
     		doChangeMap();
@@ -283,6 +289,12 @@ namespace Game1
     		if (selected != 0)
     		{
     			tAddName.isFocus = false;
+    		}
+    		if (LoginScr.isUpdateAll && !LoginScr.isUpdateData && !LoginScr.isUpdateItem && !LoginScr.isUpdateMap && !LoginScr.isUpdateSkill)
+    		{
+    			LoginScr.isUpdateAll = false;
+    			mSystem.gcc();
+    			Service.gI().finishUpdate();
     		}
     	}
     
@@ -416,90 +428,122 @@ namespace Game1
     
     	public override void paint(mGraphics g)
     	{
-    		if (Char.isLoadingMap)
+    		try
     		{
-    			return;
-    		}
-    		GameCanvas.paintBGGameScr(g);
-    		g.translate(-GameScr.cmx, -GameScr.cmy);
-    		if (!GameCanvas.lowGraphic)
-    		{
-    			for (int i = 0; i < MapTemplate.vCurrItem[indexGender].size(); i++)
+    			if (Char.isLoadingMap)
     			{
-    				BgItem bgItem = (BgItem)MapTemplate.vCurrItem[indexGender].elementAt(i);
-    				if (bgItem.idImage != -1 && bgItem.layer == 1)
-    				{
-    					bgItem.paint(g);
-    				}
+    				return;
     			}
-    		}
-    		if (mSystem.clientType == 5)
-    		{
-    			GameCanvas.paint_ios_bg(g);
-    		}
-    		else
-    		{
-    			TileMap.paintTilemap(g);
-    		}
-    		int num = 30;
-    		if (GameCanvas.w == 128)
-    		{
-    			num = 20;
-    		}
-    		int num2 = hairID[indexGender][indexHair];
-    		int num3 = defaultLeg[indexGender];
-    		int num4 = defaultBody[indexGender];
-    		g.drawImage(TileMap.bong, cx, cy + dy, 3);
-    		Part part = GameScr.parts[num2];
-    		Part part2 = GameScr.parts[num3];
-    		Part part3 = GameScr.parts[num4];
-    		SmallImage.drawSmallImage(g, part.pi[Char.CharInfo[cf][0][0]].id, cx + Char.CharInfo[cf][0][1] + part.pi[Char.CharInfo[cf][0][0]].dx, cy - Char.CharInfo[cf][0][2] + part.pi[Char.CharInfo[cf][0][0]].dy + dy, 0, 0);
-    		SmallImage.drawSmallImage(g, part2.pi[Char.CharInfo[cf][1][0]].id, cx + Char.CharInfo[cf][1][1] + part2.pi[Char.CharInfo[cf][1][0]].dx, cy - Char.CharInfo[cf][1][2] + part2.pi[Char.CharInfo[cf][1][0]].dy + dy, 0, 0);
-    		SmallImage.drawSmallImage(g, part3.pi[Char.CharInfo[cf][2][0]].id, cx + Char.CharInfo[cf][2][1] + part3.pi[Char.CharInfo[cf][2][0]].dx, cy - Char.CharInfo[cf][2][2] + part3.pi[Char.CharInfo[cf][2][0]].dy + dy, 0, 0);
-    		if (!GameCanvas.lowGraphic)
-    		{
-    			for (int j = 0; j < MapTemplate.vCurrItem[indexGender].size(); j++)
+    			if (GameScr.parts == null || SmallImage.smallImg == null || SmallImage.imgbig == null)
     			{
-    				BgItem bgItem2 = (BgItem)MapTemplate.vCurrItem[indexGender].elementAt(j);
-    				if (bgItem2.idImage != -1 && bgItem2.layer == 3)
-    				{
-    					bgItem2.paint(g);
-    				}
+    				GameScr.gI().initSelectChar();
+    				SmallImage.loadBigRMS();
     			}
-    		}
-    		g.translate(-g.getTranslateX(), -g.getTranslateY());
-    		if (GameCanvas.w < 200)
-    		{
-    			GameCanvas.paintz.paintFrame(GameScr.popupX, GameScr.popupY, GameScr.popupW, GameScr.popupH, g);
-    			SmallImage.drawSmallImage(g, part.pi[Char.CharInfo[0][0][0]].id, GameCanvas.w / 2 + Char.CharInfo[0][0][1] + part.pi[Char.CharInfo[0][0][0]].dx, GameScr.popupY + 30 + 3 * num - Char.CharInfo[0][0][2] + part.pi[Char.CharInfo[0][0][0]].dy + dy, 0, 0);
-    			SmallImage.drawSmallImage(g, part2.pi[Char.CharInfo[0][1][0]].id, GameCanvas.w / 2 + Char.CharInfo[0][1][1] + part2.pi[Char.CharInfo[0][1][0]].dx, GameScr.popupY + 30 + 3 * num - Char.CharInfo[0][1][2] + part2.pi[Char.CharInfo[0][1][0]].dy + dy, 0, 0);
-    			SmallImage.drawSmallImage(g, part3.pi[Char.CharInfo[0][2][0]].id, GameCanvas.w / 2 + Char.CharInfo[0][2][1] + part3.pi[Char.CharInfo[0][2][0]].dx, GameScr.popupY + 30 + 3 * num - Char.CharInfo[0][2][2] + part3.pi[Char.CharInfo[0][2][0]].dy + dy, 0, 0);
-    			for (int k = 0; k < mResources.MENUNEWCHAR.Length; k++)
+    			GameCanvas.paintBGGameScr(g);
+    			g.translate(-GameScr.cmx, -GameScr.cmy);
+    			if (!GameCanvas.lowGraphic && MapTemplate.vCurrItem != null && indexGender >= 0 && indexGender < MapTemplate.vCurrItem.Length && MapTemplate.vCurrItem[indexGender] != null)
     			{
-    				if (selected == k)
+    				for (int i = 0; i < MapTemplate.vCurrItem[indexGender].size(); i++)
     				{
-    					g.drawRegion(GameScr.arrow, 0, 0, 13, 16, 2, GameScr.popupX + 10 + ((GameCanvas.gameTick % 7 > 3) ? 1 : 0), GameScr.popupY + 35 + k * num, StaticObj.VCENTER_HCENTER);
-    					g.drawRegion(GameScr.arrow, 0, 0, 13, 16, 0, GameScr.popupX + GameScr.popupW - 10 - ((GameCanvas.gameTick % 7 > 3) ? 1 : 0), GameScr.popupY + 35 + k * num, StaticObj.VCENTER_HCENTER);
-    				}
-    				mFont.tahoma_7b_dark.drawString(g, mResources.MENUNEWCHAR[k], GameScr.popupX + 20, GameScr.popupY + 30 + k * num, 0);
-    			}
-    			mFont.tahoma_7b_dark.drawString(g, mResources.MENUGENDER[indexGender], GameScr.popupX + 70, GameScr.popupY + 30 + num, mFont.LEFT);
-    			mFont.tahoma_7b_dark.drawString(g, mResources.hairStyleName[indexGender][indexHair], GameScr.popupX + 55, GameScr.popupY + 30 + 2 * num, mFont.LEFT);
-    			tAddName.paint(g);
-    		}
-    		else
-    		{
-    			if (!Main.isPC)
-    			{
-    				if (mGraphics.addYWhenOpenKeyBoard != 0)
-    				{
-    					yButton = 110;
-    					disY = 60;
-    					if (GameCanvas.w > GameCanvas.h)
+    					BgItem bgItem = (BgItem)MapTemplate.vCurrItem[indexGender].elementAt(i);
+    					if (bgItem != null && bgItem.idImage != -1 && bgItem.layer == 1)
     					{
-    						yButton = GameScr.popupY + 30 + 3 * num + part3.pi[Char.CharInfo[0][2][0]].dy + dy - 15;
-    						disY = 35;
+    						bgItem.paint(g);
     					}
+    				}
+    			}
+    			if (mSystem.clientType == 5)
+    			{
+    				GameCanvas.paint_ios_bg(g);
+    			}
+    			else
+    			{
+    				TileMap.paintTilemap(g);
+    			}
+    			int num = 30;
+    			if (GameCanvas.w == 128)
+    			{
+    				num = 20;
+    			}
+    			int num2 = (hairID != null && indexGender >= 0 && indexGender < hairID.Length && hairID[indexGender] != null && indexHair >= 0 && indexHair < hairID[indexGender].Length) ? hairID[indexGender][indexHair] : 0;
+    			int num3 = (defaultLeg != null && indexGender >= 0 && indexGender < defaultLeg.Length) ? defaultLeg[indexGender] : 0;
+    			int num4 = (defaultBody != null && indexGender >= 0 && indexGender < defaultBody.Length) ? defaultBody[indexGender] : 0;
+    			g.drawImage(TileMap.bong, cx, cy + dy, 3);
+    			Part part = (GameScr.parts != null && num2 >= 0 && num2 < GameScr.parts.Length) ? GameScr.parts[num2] : null;
+    			Part part2 = (GameScr.parts != null && num3 >= 0 && num3 < GameScr.parts.Length) ? GameScr.parts[num3] : null;
+    			Part part3 = (GameScr.parts != null && num4 >= 0 && num4 < GameScr.parts.Length) ? GameScr.parts[num4] : null;
+    			if (part != null && part2 != null && part3 != null && part.pi != null && part2.pi != null && part3.pi != null && Char.CharInfo != null && cf >= 0 && cf < Char.CharInfo.Length)
+    			{
+    				if (part.pi.Length > Char.CharInfo[cf][0][0] && part2.pi.Length > Char.CharInfo[cf][1][0] && part3.pi.Length > Char.CharInfo[cf][2][0])
+    				{
+    					SmallImage.drawSmallImage(g, part.pi[Char.CharInfo[cf][0][0]].id, cx + Char.CharInfo[cf][0][1] + part.pi[Char.CharInfo[cf][0][0]].dx, cy - Char.CharInfo[cf][0][2] + part.pi[Char.CharInfo[cf][0][0]].dy + dy, 0, 0);
+    					SmallImage.drawSmallImage(g, part2.pi[Char.CharInfo[cf][1][0]].id, cx + Char.CharInfo[cf][1][1] + part2.pi[Char.CharInfo[cf][1][0]].dx, cy - Char.CharInfo[cf][1][2] + part2.pi[Char.CharInfo[cf][1][0]].dy + dy, 0, 0);
+    					SmallImage.drawSmallImage(g, part3.pi[Char.CharInfo[cf][2][0]].id, cx + Char.CharInfo[cf][2][1] + part3.pi[Char.CharInfo[cf][2][0]].dx, cy - Char.CharInfo[cf][2][2] + part3.pi[Char.CharInfo[cf][2][0]].dy + dy, 0, 0);
+    				}
+    			}
+    			if (!GameCanvas.lowGraphic && MapTemplate.vCurrItem != null && indexGender >= 0 && indexGender < MapTemplate.vCurrItem.Length && MapTemplate.vCurrItem[indexGender] != null)
+    			{
+    				for (int j = 0; j < MapTemplate.vCurrItem[indexGender].size(); j++)
+    				{
+    					BgItem bgItem2 = (BgItem)MapTemplate.vCurrItem[indexGender].elementAt(j);
+    					if (bgItem2 != null && bgItem2.idImage != -1 && bgItem2.layer == 3)
+    					{
+    						bgItem2.paint(g);
+    					}
+    				}
+    			}
+    			g.translate(-g.getTranslateX(), -g.getTranslateY());
+    			if (GameCanvas.w < 200)
+    			{
+    				GameCanvas.paintz.paintFrame(GameScr.popupX, GameScr.popupY, GameScr.popupW, GameScr.popupH, g);
+    				if (part != null && part2 != null && part3 != null && part.pi != null && part2.pi != null && part3.pi != null && Char.CharInfo != null && Char.CharInfo.Length > 0)
+    				{
+    					if (part.pi.Length > Char.CharInfo[0][0][0] && part2.pi.Length > Char.CharInfo[0][1][0] && part3.pi.Length > Char.CharInfo[0][2][0])
+    					{
+    						SmallImage.drawSmallImage(g, part.pi[Char.CharInfo[0][0][0]].id, GameCanvas.w / 2 + Char.CharInfo[0][0][1] + part.pi[Char.CharInfo[0][0][0]].dx, GameScr.popupY + 30 + 3 * num - Char.CharInfo[0][0][2] + part.pi[Char.CharInfo[0][0][0]].dy + dy, 0, 0);
+    						SmallImage.drawSmallImage(g, part2.pi[Char.CharInfo[0][1][0]].id, GameCanvas.w / 2 + Char.CharInfo[0][1][1] + part2.pi[Char.CharInfo[0][1][0]].dx, GameScr.popupY + 30 + 3 * num - Char.CharInfo[0][1][2] + part2.pi[Char.CharInfo[0][1][0]].dy + dy, 0, 0);
+    						SmallImage.drawSmallImage(g, part3.pi[Char.CharInfo[0][2][0]].id, GameCanvas.w / 2 + Char.CharInfo[0][2][1] + part3.pi[Char.CharInfo[0][2][0]].dx, GameScr.popupY + 30 + 3 * num - Char.CharInfo[0][2][2] + part3.pi[Char.CharInfo[0][2][0]].dy + dy, 0, 0);
+    					}
+    				}
+    				for (int k = 0; k < mResources.MENUNEWCHAR.Length; k++)
+    				{
+    					if (selected == k)
+    					{
+    						g.drawRegion(GameScr.arrow, 0, 0, 13, 16, 2, GameScr.popupX + 10 + ((GameCanvas.gameTick % 7 > 3) ? 1 : 0), GameScr.popupY + 35 + k * num, StaticObj.VCENTER_HCENTER);
+    						g.drawRegion(GameScr.arrow, 0, 0, 13, 16, 0, GameScr.popupX + GameScr.popupW - 10 - ((GameCanvas.gameTick % 7 > 3) ? 1 : 0), GameScr.popupY + 35 + k * num, StaticObj.VCENTER_HCENTER);
+    					}
+    					mFont.tahoma_7b_dark.drawString(g, mResources.MENUNEWCHAR[k], GameScr.popupX + 20, GameScr.popupY + 30 + k * num, 0);
+    				}
+    				mFont.tahoma_7b_dark.drawString(g, mResources.MENUGENDER[indexGender], GameScr.popupX + 70, GameScr.popupY + 30 + num, mFont.LEFT);
+    				mFont.tahoma_7b_dark.drawString(g, mResources.hairStyleName[indexGender][indexHair], GameScr.popupX + 55, GameScr.popupY + 30 + 2 * num, mFont.LEFT);
+    				tAddName.paint(g);
+    			}
+    			else
+    			{
+    				int part3Dy = (part3 != null && part3.pi != null && Char.CharInfo != null && Char.CharInfo.Length > 0 && part3.pi.Length > Char.CharInfo[0][2][0]) ? part3.pi[Char.CharInfo[0][2][0]].dy : 0;
+    				if (!Main.isPC)
+    				{
+    					if (mGraphics.addYWhenOpenKeyBoard != 0)
+    					{
+    						yButton = 110;
+    						disY = 60;
+    						if (GameCanvas.w > GameCanvas.h)
+    						{
+    							yButton = GameScr.popupY + 30 + 3 * num + part3Dy + dy - 15;
+    							disY = 35;
+    						}
+    					}
+    					else
+    					{
+    						yButton = 110;
+    						disY = 60;
+    						if (GameCanvas.w > GameCanvas.h)
+    						{
+    							yButton = 100;
+    							disY = 45;
+    						}
+    					}
+    					tAddName.y = yButton - tAddName.height - disY + 5;
     				}
     				else
     				{
@@ -510,61 +554,54 @@ namespace Game1
     						yButton = 100;
     						disY = 45;
     					}
+    					tAddName.y = yBegin;
     				}
-    				tAddName.y = yButton - tAddName.height - disY + 5;
-    			}
-    			else
-    			{
-    				yButton = 110;
-    				disY = 60;
-    				if (GameCanvas.w > GameCanvas.h)
+    				for (int l = 0; l < 3; l++)
     				{
-    					yButton = 100;
-    					disY = 45;
-    				}
-    				tAddName.y = yBegin;
-    			}
-    			for (int l = 0; l < 3; l++)
-    			{
-    				int num5 = 78;
-    				if (l != indexGender)
-    				{
-    					g.drawImage(GameScr.imgLbtn, GameCanvas.w / 2 - num5 + l * num5, yButton, 3);
-    				}
-    				else
-    				{
-    					if (selected == 1)
+    					int num5 = 78;
+    					if (l != indexGender)
     					{
-    						g.drawRegion(GameScr.arrow, 0, 0, 13, 16, 4, GameCanvas.w / 2 - num5 + l * num5, yButton - 20 + ((GameCanvas.gameTick % 7 > 3) ? 1 : 0), StaticObj.VCENTER_HCENTER);
+    						g.drawImage(GameScr.imgLbtn, GameCanvas.w / 2 - num5 + l * num5, yButton, 3);
     					}
-    					g.drawImage(GameScr.imgLbtnFocus, GameCanvas.w / 2 - num5 + l * num5, yButton, 3);
-    				}
-    				mFont.tahoma_7b_dark.drawString(g, mResources.MENUGENDER[l], GameCanvas.w / 2 - num5 + l * num5, yButton - 5, mFont.CENTER);
-    			}
-    			for (int m = 0; m < 3; m++)
-    			{
-    				int num6 = 78;
-    				if (m != indexHair)
-    				{
-    					g.drawImage(GameScr.imgLbtn, GameCanvas.w / 2 - num6 + m * num6, yButton + disY, 3);
-    				}
-    				else
-    				{
-    					if (selected == 2)
+    					else
     					{
-    						g.drawRegion(GameScr.arrow, 0, 0, 13, 16, 4, GameCanvas.w / 2 - num6 + m * num6, yButton + disY - 20 + ((GameCanvas.gameTick % 7 > 3) ? 1 : 0), StaticObj.VCENTER_HCENTER);
+    						if (selected == 1)
+    						{
+    							g.drawRegion(GameScr.arrow, 0, 0, 13, 16, 4, GameCanvas.w / 2 - num5 + l * num5, yButton - 20 + ((GameCanvas.gameTick % 7 > 3) ? 1 : 0), StaticObj.VCENTER_HCENTER);
+    						}
+    						g.drawImage(GameScr.imgLbtnFocus, GameCanvas.w / 2 - num5 + l * num5, yButton, 3);
     					}
-    					g.drawImage(GameScr.imgLbtnFocus, GameCanvas.w / 2 - num6 + m * num6, yButton + disY, 3);
+    					mFont.tahoma_7b_dark.drawString(g, mResources.MENUGENDER[l], GameCanvas.w / 2 - num5 + l * num5, yButton - 5, mFont.CENTER);
     				}
-    				mFont.tahoma_7b_dark.drawString(g, mResources.hairStyleName[indexGender][m], GameCanvas.w / 2 - num6 + m * num6, yButton + disY - 5, mFont.CENTER);
+    				for (int m = 0; m < 3; m++)
+    				{
+    					int num6 = 78;
+    					if (m != indexHair)
+    					{
+    						g.drawImage(GameScr.imgLbtn, GameCanvas.w / 2 - num6 + m * num6, yButton + disY, 3);
+    					}
+    					else
+    					{
+    						if (selected == 2)
+    						{
+    							g.drawRegion(GameScr.arrow, 0, 0, 13, 16, 4, GameCanvas.w / 2 - num6 + m * num6, yButton + disY - 20 + ((GameCanvas.gameTick % 7 > 3) ? 1 : 0), StaticObj.VCENTER_HCENTER);
+    						}
+    						g.drawImage(GameScr.imgLbtnFocus, GameCanvas.w / 2 - num6 + m * num6, yButton + disY, 3);
+    					}
+    					mFont.tahoma_7b_dark.drawString(g, mResources.hairStyleName[indexGender][m], GameCanvas.w / 2 - num6 + m * num6, yButton + disY - 5, mFont.CENTER);
+    				}
+    				tAddName.paint(g);
     			}
-    			tAddName.paint(g);
+    			g.setClip(0, 0, GameCanvas.w, GameCanvas.h);
+    			mFont.tahoma_7b_white.drawString(g, mResources.server + " " + LoginScr.serverName, 5, 5, 0, mFont.tahoma_7b_dark);
+    			if (!TouchScreenKeyboard.visible)
+    			{
+    				base.paint(g);
+    			}
     		}
-    		g.setClip(0, 0, GameCanvas.w, GameCanvas.h);
-    		mFont.tahoma_7b_white.drawString(g, mResources.server + " " + LoginScr.serverName, 5, 5, 0, mFont.tahoma_7b_dark);
-    		if (!TouchScreenKeyboard.visible)
+    		catch (Exception ex)
     		{
-    			base.paint(g);
+    			Debug.LogException(ex);
     		}
     	}
     
@@ -583,9 +620,14 @@ namespace Game1
     				GameCanvas.startOKDlg(mResources.char_name_short);
     				break;
     			}
-    			if (tAddName.getText().Length > 15)
+    			if (tAddName.getText().Length > 10)
     			{
     				GameCanvas.startOKDlg(mResources.char_name_long);
+    				break;
+    			}
+    			if (!Session_ME.gI().isConnected())
+    			{
+    				GameCanvas.startOKDlg(mResources.maychutathoacmatsong);
     				break;
     			}
     			InfoDlg.showWait();

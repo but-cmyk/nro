@@ -185,13 +185,16 @@ namespace Game1
     			{
     				g.drawImage(imageFlare, x, y + status + 13, mGraphics.BOTTOM | mGraphics.HCENTER);
     			}
-    			if (status <= 0)
+    			if (template != null)
     			{
-    				SmallImage.drawSmallImage(g, template.iconID, x, y + status + 3, 0, mGraphics.BOTTOM | mGraphics.HCENTER);
-    			}
-    			else
-    			{
-    				SmallImage.drawSmallImage(g, template.iconID, x, y + 3, 0, mGraphics.BOTTOM | mGraphics.HCENTER);
+    				if (status <= 0)
+    				{
+    					SmallImage.drawSmallImage(g, template.iconID, x, y + status + 3, 0, mGraphics.BOTTOM | mGraphics.HCENTER);
+    				}
+    				else
+    				{
+    					SmallImage.drawSmallImage(g, template.iconID, x, y + 3, 0, mGraphics.BOTTOM | mGraphics.HCENTER);
+    				}
     			}
     			if (Char.myCharz().itemFocus != null && Char.myCharz().itemFocus.Equals(this) && status != 2)
     			{
@@ -202,8 +205,7 @@ namespace Game1
     
     	private bool isAuraItem()
     	{
-    		bool flag = false;
-    		if (template.type == 22)
+    		if (template != null && template.type == 22)
     		{
     			return true;
     		}
@@ -259,7 +261,7 @@ namespace Game1
     				{
     					g.drawImage(imageAuraItem3, xDot[i], yDot[i] + 3, mGraphics.BOTTOM | mGraphics.HCENTER);
     				}
-    				else
+    				else if (template != null)
     				{
     					SmallImage.drawSmallImage(g, template.iconID, xDot[i], yDot[i] + 3, 0, mGraphics.BOTTOM | mGraphics.HCENTER);
     				}

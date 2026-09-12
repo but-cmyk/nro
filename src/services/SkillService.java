@@ -19,6 +19,7 @@ import services.player.PlayerService;
 import utils.Logger;
 import utils.SkillUtil;
 import utils.Util;
+import utils.PlayerAuditLogger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -42,13 +43,22 @@ public class SkillService {
     public boolean useSkill(Player player, Player plTarget, Mob mobTarget, int status, Message msg) {
         if (plTarget != null && player.clan != null && plTarget.clan != null && player.clan == plTarget.clan && MapService.gI().isMapBlackBallWar(plTarget.zone.map.mapId)) {
             Service.gI().chatJustForMe(player, plTarget, "Ê cùng bang mà");
+            if (player.isPl()) {
+                PlayerAuditLogger.logSkillUsage(player, "Unknown", -1, "Player: " + plTarget.name, false, "Cùng bang trong map BlackBallWar");
+            }
             return false;
         }
         if (plTarget != null && (player.idNRNM != -1 || plTarget.idNRNM != -1) && player.clan != null && plTarget.clan != null && player.clan == plTarget.clan) {
             Service.gI().chatJustForMe(player, plTarget, "Ê cùng bang mà");
+            if (player.isPl()) {
+                PlayerAuditLogger.logSkillUsage(player, "Unknown", -1, "Player: " + plTarget.name, false, "Cùng bang mang NRNM");
+            }
             return false;
         }
         if (plTarget != null && !Util.canDoWithTime(plTarget.lastTimeRevived, 1500)) {
+            if (player.isPl()) {
+                PlayerAuditLogger.logSkillUsage(player, "Unknown", -1, "Player: " + plTarget.name, false, "Mục tiêu vừa hồi sinh (<1500ms)");
+            }
             return false;
         }
 
@@ -70,6 +80,9 @@ public class SkillService {
             }
         }
         if (player.playerSkill == null) {
+            if (player.isPl()) {
+                PlayerAuditLogger.logSkillUsage(player, "Unknown", -1, "Target", false, "playerSkill is NULL");
+            }
             return false;
         }
         if (player.playerSkill.skillSelect == null) {
@@ -77,21 +90,72 @@ public class SkillService {
                     ? Skill.DRAGON : (player.gender == ConstPlayer.NAMEC ? Skill.DEMON : Skill.GALICK));
         }
         if (player.playerSkill.skillSelect == null) {
+            if (player.isPl()) {
+                PlayerAuditLogger.logSkillUsage(player, "Unknown", -1, "Target", false, "skillSelect is NULL (default punch not found)");
+            }
             return false;
         }
+
+        String curSkillName = player.playerSkill.skillSelect.template != null ? player.playerSkill.skillSelect.template.name : "UnknownSkill";
+        int curSkillTemplateId = player.playerSkill.skillSelect.template != null ? player.playerSkill.skillSelect.template.id : -1;
+        String targetDesc = plTarget != null ? ("Player: " + plTarget.name + "(ID:" + plTarget.id + ")") : (mobTarget != null ? ("Mob: " + (mobTarget.name != null ? mobTarget.name : "Mob") + "(ID:" + mobTarget.id + ", HP:" + (mobTarget.point != null ? mobTarget.point.hp : 0) + ")") : ("NoTarget (status:" + status + ")"));
+
         if (player.playerSkill.skillSelect.template.type == 2 && canUseSkillWithMana(player) && canUseSkillWithCooldown(player)) {
             useSkillBuffToPlayer(player, plTarget);
+            if (player.isPl()) {
+                PlayerAuditLogger.logSkillUsage(player, curSkillName, curSkillTemplateId, targetDesc, true, "Buff To Player (Type 2)");
+            }
             return true;
         }
-        if ((player.effectSkill != null && player.effectSkill.isHaveEffectSkill()
+        if (player.effectSkill != null && player.effectSkill.isHaveEffectSkill()
                 && (player.playerSkill.skillSelect.template.id != Skill.TU_SAT
                 && player.playerSkill.skillSelect.template.id != Skill.QUA_CAU_KENH_KHI
-                && player.playerSkill.skillSelect.template.id != Skill.MAKANKOSAPPO))
-                || (plTarget != null && !canAttackPlayer(player, plTarget))
-                || (mobTarget != null && mobTarget.isDie())
-                || !canUseSkillWithMana(player) || !canUseSkillWithCooldown(player)) {
+                && player.playerSkill.skillSelect.template.id != Skill.MAKANKOSAPPO)) {
+            if (player.isPl()) {
+                String effDesc = "";
+                if (player.effectSkill.isStun) effDesc += "Choáng ";
+                if (player.effectSkill.isBlindDCTT) effDesc += "Mù_DCTT ";
+                if (player.effectSkill.anTroi) effDesc += "Bị_trói ";
+                if (player.effectSkill.isThoiMien) effDesc += "Thôi_miên ";
+                if (player.effectSkill.isStone) effDesc += "Hóa_đá ";
+                if (player.effectSkill.isMabuHold) effDesc += "Mabu_nuốt ";
+                if (player.effectSkill.isUseSkillMonkey) effDesc += "Đang_biến_khỉ ";
+                PlayerAuditLogger.logSkillUsage(player, curSkillName, curSkillTemplateId, targetDesc, false, "Bị chặn bởi hiệu ứng bất lợi: [" + effDesc.trim() + "]");
+            }
             return false;
         }
+        if (plTarget != null && !canAttackPlayer(player, plTarget)) {
+            if (player.isPl()) {
+                PlayerAuditLogger.logSkillUsage(player, curSkillName, curSkillTemplateId, targetDesc, false, "Không thể tấn công player này (Khu vực/Cờ/PK không hợp lệ)");
+            }
+            return false;
+        }
+        if (mobTarget != null && mobTarget.isDie()) {
+            if (player.isPl()) {
+                PlayerAuditLogger.logSkillUsage(player, curSkillName, curSkillTemplateId, targetDesc, false, "Quái mục tiêu đã chết");
+            }
+            return false;
+        }
+        if (!canUseSkillWithMana(player)) {
+            if (player.isPl()) {
+                int mpReq = player.playerSkill.skillSelect.manaUse;
+                if (player.playerSkill.skillSelect.template.manaUseType == 1) {
+                    mpReq = (int) ((long) player.nPoint.mpMax * player.playerSkill.skillSelect.manaUse / 100);
+                }
+                PlayerAuditLogger.logSkillUsage(player, curSkillName, curSkillTemplateId, targetDesc, false, String.format("Không đủ KI/MP (Hiện có: %d, Cần: %d, Type:%d)", player.nPoint.mp, mpReq, player.playerSkill.skillSelect.template.manaUseType));
+            }
+            return false;
+        }
+        if (!canUseSkillWithCooldown(player)) {
+            if (player.isPl()) {
+                long cd = player.playerSkill.skillSelect.coolDown;
+                long elapsed = System.currentTimeMillis() - player.playerSkill.skillSelect.lastTimeUseThisSkill;
+                long remain = Math.max(0, cd - elapsed);
+                PlayerAuditLogger.logSkillUsage(player, curSkillName, curSkillTemplateId, targetDesc, false, String.format("Chiêu thức đang hồi phục (CD: %dms, Còn lại: %dms)", cd, remain));
+            }
+            return false;
+        }
+
         if (player.effectSkill != null && player.effectSkill.isHaveEffectSkill() && player.effectSkill.useTroi) {
             EffectSkillService.gI().removeUseTroi(player);
         }
@@ -100,11 +164,17 @@ public class SkillService {
         }
         if (status == 20 && skillId != -1 && player.playerSkill.skillSelect.template.id != skillId) {
             selectSkill(player, skillId);
+            if (player.isPl()) {
+                PlayerAuditLogger.logSkillUsage(player, curSkillName, curSkillTemplateId, targetDesc, false, "Status=20 yêu cầu đổi skill sang ID:" + skillId);
+            }
             return false;
         } else {
             if (player.playerSkill.skillSelect.template.type == 1) {
                 long nowAttack = System.currentTimeMillis();
                 if (nowAttack - player.lastTimeAttack < 300) {
+                    if (player.isPl()) {
+                        PlayerAuditLogger.logSkillUsage(player, curSkillName, curSkillTemplateId, targetDesc, false, "Spam attack rate limit (<300ms, diff=" + (nowAttack - player.lastTimeAttack) + "ms)");
+                    }
                     return false;
                 }
                 player.lastTimeAttack = nowAttack;
@@ -117,8 +187,14 @@ public class SkillService {
                 case 4 ->
                     useNewSkillNotFocus(player, plTarget, mobTarget, status, skillId, dx, dy, dir, x, y);
                 default -> {
+                    if (player.isPl()) {
+                        PlayerAuditLogger.logSkillUsage(player, curSkillName, curSkillTemplateId, targetDesc, false, "Loại skill không hợp lệ (Template type = " + player.playerSkill.skillSelect.template.type + ")");
+                    }
                     return false;
                 }
+            }
+            if (player.isPl()) {
+                PlayerAuditLogger.logSkillUsage(player, curSkillName, curSkillTemplateId, targetDesc, true, "Thi triển thành công (Type: " + player.playerSkill.skillSelect.template.type + ", CD: " + player.playerSkill.skillSelect.coolDown + "ms)");
             }
         }
         return true;
@@ -1391,13 +1467,18 @@ public class SkillService {
     }
 
     public void selectSkill(Player player, int skillId) {
+        Skill matched = null;
         if (player.playerSkill != null && player.playerSkill.skills != null) {
             for (Skill skill : player.playerSkill.skills) {
                 if (skill.skillId != -1 && skill.template.id == skillId) {
                     player.playerSkill.skillSelect = skill;
+                    matched = skill;
                     break;
                 }
             }
+        }
+        if (player.isPl()) {
+            PlayerAuditLogger.logSkillSelect(player, skillId, matched, matched != null ? "SUCCESS" : "FAILED (Skill not found in playerSkill.skills)");
         }
     }
 

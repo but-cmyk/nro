@@ -838,6 +838,10 @@ namespace Game1.Assets.src.f
 				{
 					string str = msg.reader().readUTF();
 					str = Res.changeString(str);
+					if (str.StartsWith("BOSS") || str.StartsWith("Boss"))
+					{
+						Game1.God.BossData.getInstance().getBOSSInfo(str);
+					}
 					GameScr.gI().chatVip(str);
 					break;
 				}
@@ -1037,12 +1041,16 @@ namespace Game1.Assets.src.f
 					GameCanvas.panel.cmy = (GameCanvas.panel.cmtoY = 0);
 					break;
 				}
+				default:
+					return false;
 				}
+				return true;
 			}
 			catch (Exception ex4)
 			{
 				Res.outz("=====> Controller2 " + ex4.StackTrace);
 			}
+			return false;
 		}
 
 		private static void readLuckyRound(Message msg)
@@ -1209,16 +1217,11 @@ namespace Game1.Assets.src.f
 						@char.idAuraEff = idAuraEff;
 						@char.idEff_Set_Item = msg.reader().readByte();
 					}
-					break;
-				default:
-					return false;
 				}
-				return true;
 			}
 			catch (Exception)
 			{
 			}
-			return false;
 		}
 
 		private static void readInfoEffChar(Message msg)

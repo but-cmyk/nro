@@ -45,6 +45,14 @@ public class PlayerSkill {
             msg.writer().write(skillShortCut);
             player.sendMessage(msg);
             msg.cleanup();
+            if (skillSelect != null && skillSelect.template != null) {
+                msg = Service.gI().messageSubCommand((byte) 61);
+                msg.writer().writeUTF("CSkill");
+                msg.writer().writeInt(1);
+                msg.writer().writeByte(skillSelect.template.id);
+                player.sendMessage(msg);
+                msg.cleanup();
+            }
         } catch (Exception e) {
         }
     }

@@ -16,6 +16,15 @@ namespace Game1.God
         {
             return instance == null ? instance = new ListChars() : instance;
         }
+        private static readonly string[] indexPrefixes;
+        static ListChars()
+        {
+            indexPrefixes = new string[100];
+            for (int i = 0; i < 100; i++)
+            {
+                indexPrefixes[i] = i + ". ";
+            }
+        }
         public void paintPlayerMap(mGraphics g)
         {
             if (!isShow) return;
@@ -32,45 +41,35 @@ namespace Game1.God
                 }
                 g.setColor(2721889, 0.5f);
                 g.fillRect(GameCanvas.w - widthRect, num + 2, widthRect - 2, heightRect);
-                if (@char.cName != null && @char.cName != "" && !@char.isPet && !@char.isMiniPet && !@char.cName.StartsWith("#") && !@char.cName.StartsWith("$") && @char.cName != "Trọng tài")
+                if (@char.cName != null && @char.cName.Length > 0 && !@char.isPet && !@char.isMiniPet && !@char.cName.StartsWith("#") && !@char.cName.StartsWith("$") && @char.cName != "Trọng tài")
                 {
-                    string text = string.Concat(new object[4]
-                    {
-                        @char.cName,
-                        " [",
-                        NinjaUtil.getMoneys(@char.cHP),
-                        "]"
-                    });
-                    bool flag;
-                    if (!(flag = isBoss(@char)))
-                        text = string.Concat(new object[6]
-                        {
-                            @char.cName,
-                            " [",
-                            NinjaUtil.getMoneys(@char.cHP),
-                            " - ",
-                            @char.getGenderName(),
-                            "]"
-                        });
+                    bool flag = isBoss(@char);
+                    string hpStr = NinjaUtil.getMoneys(@char.cHP);
+                    string text = flag
+                        ? (@char.cName + " [" + hpStr + "]")
+                        : (@char.cName + " [" + hpStr + " - " + @char.getGenderName() + "]");
+                    string prefix = (i + 1 < indexPrefixes.Length) ? indexPrefixes[i + 1] : (i + 1) + ". ";
+                    string fullText = prefix + text;
+
                     if (Char.myCharz().charFocus != null && Char.myCharz().charFocus.cName == @char.cName)
                     {
                         g.setColor(14155776);
                         g.drawLine(Char.myCharz().cx - GameScr.cmx, Char.myCharz().cy - GameScr.cmy + 1, @char.cx - GameScr.cmx, @char.cy - GameScr.cmy);
-                        mFont.tahoma_7_red.drawString(g, i + 1 + ". " + text, GameCanvas.w - widthRect + 2, num, 0);
+                        mFont.tahoma_7_red.drawString(g, fullText, GameCanvas.w - widthRect + 2, num, 0);
                     }
                     else if (flag)
                     {
                         g.setColor(16383818);
                         g.drawLine(Char.myCharz().cx - GameScr.cmx, Char.myCharz().cy - GameScr.cmy + 1, @char.cx - GameScr.cmx, @char.cy - GameScr.cmy);
-                        mFont.tahoma_7_yellow.drawString(g, i + 1 + ". " + text, GameCanvas.w - widthRect + 2, num, 0);
+                        mFont.tahoma_7_yellow.drawString(g, fullText, GameCanvas.w - widthRect + 2, num, 0);
                     }
                     else if (@char.cHPFull > 100000000 && @char.cHP > 0)
                     {
-                        mFont.tahoma_7_red.drawString(g, i + 1 + ". " + text, GameCanvas.w - widthRect + 2, num, 0);
+                        mFont.tahoma_7_red.drawString(g, fullText, GameCanvas.w - widthRect + 2, num, 0);
                     }
                     else
                     {
-                        mFont.tahoma_7.drawString(g, i + 1 + ". " + text, GameCanvas.w - widthRect + 2, num, 0);
+                        mFont.tahoma_7.drawString(g, fullText, GameCanvas.w - widthRect + 2, num, 0);
                     }
                     num += heightRect + 1;
                 }
@@ -78,7 +77,7 @@ namespace Game1.God
         }
         public bool isBoss(Char ch)
         {
-            if (ch.cName != null && ch.cName != "" && !ch.isPet && !ch.isMiniPet && char.IsUpper(char.Parse(ch.cName.Substring(0, 1))) && ch.cName != "Trọng tài" && !ch.cName.StartsWith("#"))
+            if (ch.cName != null && ch.cName.Length > 0 && !ch.isPet && !ch.isMiniPet && char.IsUpper(ch.cName[0]) && ch.cName != "Trọng tài" && !ch.cName.StartsWith("#"))
                 return !ch.cName.StartsWith("$");
             return false;
         }

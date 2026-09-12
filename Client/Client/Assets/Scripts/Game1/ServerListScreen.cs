@@ -1117,18 +1117,19 @@ namespace Game1
     			GameCanvas.endDlg();
     			Rms.clearAll();
     			SmallImage.freeBig();
+    			SmallImage.imgNew = null;
     			BgItem.clearHashTable();
     			TileMap.vItemBg.removeAllElements();
     			show2();
-    			if (!isGetData)
-    			{
-    				isGetData = true;
-    				stopDownload = false;
-    				demPercent = 0;
-    				percent = 0;
-    				GameCanvas.connect();
-    				Service.gI().getResource(1, null);
-    			}
+    			stopDownload = false;
+    			cmdDownload = new Command(mResources.huy, this, 4, null);
+    			cmdDownload.x = GameCanvas.w / 2 - mScreen.cmdW / 2;
+    			cmdDownload.y = GameCanvas.hh + 65;
+    			isGetData = true;
+    			demPercent = 0;
+    			percent = 0;
+    			GameCanvas.connect();
+    			Service.gI().getResource(1, null);
     		}
     		if (idAction == 16)
     		{

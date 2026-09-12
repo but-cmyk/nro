@@ -9,16 +9,6 @@ import server.Manager;
 
 public class SkillUtil {
 
-    private final static NClass nClassTD;
-    private final static NClass nClassNM;
-    private final static NClass nClassXD;
-
-    static {
-        nClassTD = Manager.NCLASS.get(0);
-        nClassNM = Manager.NCLASS.get(1);
-        nClassXD = Manager.NCLASS.get(2);
-    }
-
     public static Skill createSkill(int tempId, int level) {
         Skill skill = null;
         SkillTemplate template = findSkillTemplate(tempId);
@@ -32,14 +22,13 @@ public class SkillUtil {
     }
 
     private static SkillTemplate findSkillTemplate(int tempId) {
-        SkillTemplate template = nClassTD.getSkillTemplate(tempId);
-        if (template == null) {
-            template = nClassNM.getSkillTemplate(tempId);
+        for (NClass nClass : Manager.NCLASS) {
+            SkillTemplate template = nClass.getSkillTemplate(tempId);
+            if (template != null) {
+                return template;
+            }
         }
-        if (template == null) {
-            template = nClassXD.getSkillTemplate(tempId);
-        }
-        return template;
+        return null;
     }
 
     public static Skill createEmptySkill() {

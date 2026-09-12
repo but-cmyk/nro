@@ -77,6 +77,16 @@ namespace Game1
     	private int yWater;
     
     	private int colorWater;
+
+    	public long timeStart;
+
+    	public long durationMs;
+
+    	public bool isStopping;
+
+    	public bool isFinished;
+
+    	public static bool isEnableRain = true;
     
     	public const int TYPE_MUA = 0;
     
@@ -212,6 +222,10 @@ namespace Game1
     		case 0:
     		case 12:
     		{
+    			timeStart = mSystem.currentTimeMillis();
+    			durationMs = Res.random(45000, 90000);
+    			isStopping = false;
+    			isFinished = false;
     			if (imgHatMua == null)
     			{
     				imgHatMua = GameCanvas.loadImageRMS("/bg/mua.png");
@@ -698,16 +712,34 @@ namespace Game1
     			case 0:
     			case 12:
     			{
+    				long nowRain = mSystem.currentTimeMillis();
+    				if (!isEnableRain || (durationMs > 0 && nowRain - timeStart >= durationMs))
+    				{
+    					isStopping = true;
+    				}
+    				bool hasRainDropAlive = false;
     				for (int l = 0; l < sum; l++)
     				{
+    					if (isStopping && y[l] > GameCanvas.h + GameScr.cmy + 50)
+    					{
+    						continue;
+    					}
+    					hasRainDropAlive = true;
     					if (l % 3 != 0 && typeEff != 12 && TileMap.tileTypeAt(x[l], y[l] - GameCanvas.transY, 2))
     					{
     						activeEff[l] = true;
     					}
     					if (l % 3 == 0 && y[l] > GameCanvas.h + GameScr.cmy)
     					{
-    						x[l] = Res.random(-10, GameCanvas.w + 300) + GameScr.cmx;
-    						y[l] = Res.random(-100, 0) + GameScr.cmy;
+    						if (isStopping)
+    						{
+    							y[l] = GameCanvas.h + GameScr.cmy + 100;
+    						}
+    						else
+    						{
+    							x[l] = Res.random(-10, GameCanvas.w + 300) + GameScr.cmx;
+    							y[l] = Res.random(-100, 0) + GameScr.cmy;
+    						}
     					}
     					if (!activeEff[l])
     					{
@@ -727,10 +759,21 @@ namespace Game1
     						{
     							frame[l] = 0;
     							activeEff[l] = false;
-    							x[l] = Res.random(-10, GameCanvas.w + 300) + GameScr.cmx;
-    							y[l] = Res.random(-100, 0) + GameScr.cmy;
+    							if (isStopping)
+    							{
+    								y[l] = GameCanvas.h + GameScr.cmy + 100;
+    							}
+    							else
+    							{
+    								x[l] = Res.random(-10, GameCanvas.w + 300) + GameScr.cmx;
+    								y[l] = Res.random(-100, 0) + GameScr.cmy;
+    							}
     						}
     					}
+    				}
+    				if (isStopping && !hasRainDropAlive)
+    				{
+    					isFinished = true;
     				}
     				break;
     			}
@@ -1182,12 +1225,52 @@ namespace Game1
     		}
     	}
     
+    	public static void clearAllRain()
+    	{
+    		for (int i = vBgEffect.size() - 1; i >= 0; i--)
+    		{
+    			BackgroudEffect eff = (BackgroudEffect)vBgEffect.elementAt(i);
+    			if (eff.typeEff == 0 || eff.typeEff == 12)
+    			{
+    				vBgEffect.removeElementAt(i);
+    			}
+    		}
+    		Sound.stopMusic(SoundMn.RAIN);
+    	}
+
+    	public static void clearWeatherEffects()
+    	{
+    		for (int i = vBgEffect.size() - 1; i >= 0; i--)
+    		{
+    			BackgroudEffect eff = (BackgroudEffect)vBgEffect.elementAt(i);
+    			if (eff.typeEff == 0 || eff.typeEff == 12 || eff.typeEff == 1 || eff.typeEff == 2 
+    				|| eff.typeEff == 5 || eff.typeEff == 6 || eff.typeEff == 7 || eff.typeEff == 11 
+    				|| eff.typeEff == 13 || eff.typeEff == 16 || eff.typeEff == 17)
+    			{
+    				vBgEffect.removeElementAt(i);
+    			}
+    		}
+    		if (!isHaveRain())
+    		{
+    			Sound.stopMusic(SoundMn.RAIN);
+    		}
+    	}
+
     	public static void updateEff()
         {
             if (ListChars.getInstance().HideMap) return;
-            for (int i = 0; i < vBgEffect.size(); i++)
+            for (int i = vBgEffect.size() - 1; i >= 0; i--)
     		{
-    			((BackgroudEffect)vBgEffect.elementAt(i)).update();
+    			BackgroudEffect eff = (BackgroudEffect)vBgEffect.elementAt(i);
+    			eff.update();
+    			if (eff.isFinished)
+    			{
+    				vBgEffect.removeElementAt(i);
+    				if (!isHaveRain())
+    				{
+    					Sound.stopMusic(SoundMn.RAIN);
+    				}
+    			}
     		}
     	}
     }

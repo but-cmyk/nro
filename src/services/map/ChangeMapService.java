@@ -399,11 +399,11 @@ public class ChangeMapService {
             // Fix Lỗi Load Map 15/09/2023
             if (!pl.isPl()) {
                 pl.zone.load_Me_To_Another(pl);
+                pl.idMark.setIdSpaceShip(NON_SPACE_SHIP);
             } else {
                 zoneJoin.mapInfo(pl); //-24
                 pl.timeChangeZone = System.currentTimeMillis();
             }
-            pl.idMark.setIdSpaceShip(NON_SPACE_SHIP);
             if (pl.isPl() && nextMapIsMabu) {
                 if (zoneJoin.map.mapId == 117) {
                     Service.gI().sendThongBao(pl, "Đây là không gian cao trọng lực, hãy cẩn thận");
@@ -562,6 +562,10 @@ public class ChangeMapService {
             player.zone.load_Me_To_Another(player);
             player.zone.load_Another_To_Me(player);
         } catch (Exception e) {
+        }
+        player.idMark.setIdSpaceShip(NON_SPACE_SHIP);
+        if (player.location.y <= 10 && player.zone != null && player.zone.map != null) {
+            player.location.y = player.zone.map.yPhysicInTop(player.location.x, 100);
         }
         TaskService.gI().checkDoneTaskGoToMap(player, player.zone);
         Service.gI().sendEffAllPlayerMapToMe(player);

@@ -162,7 +162,7 @@ namespace Game1
     
         public string[] planetNames;
     
-        public static string[] strTool = new string[7]
+        public static string[] strTool = new string[8]
         {
             mResources.gameInfo,
             mResources.change_flag,
@@ -170,6 +170,7 @@ namespace Game1
             mResources.chat_world,
             mResources.account,
             mResources.option,
+            "Cài Đặt Auto",
             mResources.change_account
         };
     
@@ -225,7 +226,7 @@ namespace Game1
     
         private static string[][] boxPet = mResources.petMainTab;
     
-        public string[][][] tabName = new string[27][][]
+        public string[][][] tabName = new string[30][][]
         {
             null,
             null,
@@ -253,6 +254,9 @@ namespace Game1
             new string[1][] { new string[1] { string.Empty } },
             new string[1][] { new string[1] { string.Empty } },
             new string[1][] { new string[1] { string.Empty } },
+            new string[1][] { new string[1] { string.Empty } },
+            new string[1][] { new string[1] { string.Empty } },
+            new string[1][] { new string[2] { "Cài Đặt Auto", string.Empty } },
             new string[1][] { new string[1] { string.Empty } }
         };
     
@@ -2334,6 +2338,9 @@ namespace Game1
                     case 22:
                         updateKeyAuto();
                         break;
+                    case 28:
+                        updateKeyAutoSetting();
+                        break;
                 }
                 GameCanvas.clearKeyHold();
                 for (int i = 0; i < GameCanvas.keyPressed.Length; i++)
@@ -3838,11 +3845,21 @@ namespace Game1
         private void setTabPetInventory()
         {
             ITEM_HEIGHT = 30;
+            if (Char.myPetz() == null)
+            {
+                currentListLength = 0;
+                return;
+            }
             Item[] arrItemBody = Char.myPetz().arrItemBody;
             Skill[] arrPetSkill = Char.myPetz().arrPetSkill;
-            currentListLength = arrItemBody.Length + arrPetSkill.Length;
+            int len1 = (arrItemBody != null) ? arrItemBody.Length : 0;
+            int len2 = (arrPetSkill != null) ? arrPetSkill.Length : 0;
+            currentListLength = len1 + len2;
             cmyLim = currentListLength * ITEM_HEIGHT - hScroll;
-            cmy = (cmtoY = cmyLast[currentTabIndex]);
+            if (currentTabIndex >= 0 && currentTabIndex < cmyLast.Length)
+            {
+                cmy = (cmtoY = cmyLast[currentTabIndex]);
+            }
             if (cmyLim < 0)
             {
                 cmyLim = 0;
@@ -4367,6 +4384,9 @@ namespace Game1
                 case 22:
                     paintAuto(g);
                     break;
+                case 28:
+                    AutoSettingManager.getInstance().paint(g, this);
+                    break;
                 }
             }
             GameScr.resetTranslate(g);
@@ -4384,7 +4404,7 @@ namespace Game1
             g.translate(-cmx, 0);
         }
     
-        private void paintShop(mGraphics g)
+        public void paintShop(mGraphics g)
         {
             try
             {
@@ -4845,7 +4865,7 @@ namespace Game1
             paintScrollArrow(g);
         }
     
-        private void paintScrollArrow(mGraphics g)
+        public void paintScrollArrow(mGraphics g)
         {
             g.translate(-g.getTranslateX(), -g.getTranslateY());
             if ((cmy > 24 && currentListLength > 0) || (Equals(GameCanvas.panel) && typeShop == 2 && maxPageShop[currentTabIndex] > 1))
@@ -6024,6 +6044,10 @@ namespace Game1
     
         public void paintInventory(mGraphics g)
         {
+            if (Char.myCharz() == null || Char.myCharz().arrItemBody == null || Char.myCharz().arrItemBag == null)
+            {
+                return;
+            }
             bool flag = true;
             if (flag && isnewInventory)
             {
@@ -6291,7 +6315,6 @@ namespace Game1
                     }
                     cachedOptionFont.drawString(g, cachedOptionText, xScroll + 5, num14 + 11, mFont.LEFT);
                 }
-                }
             }
             if (flag && isnewInventory)
             {
@@ -6498,6 +6521,13 @@ namespace Game1
                 mFont.tahoma_7b_dark.drawString(g, mResources.autoFunction, xScroll + wScroll / 2, 59, mFont.CENTER);
                 return;
             }
+            if (type == 28)
+            {
+                g.setColor(13524492);
+                g.fillRect(X + 1, 78, W - 2, 1);
+                mFont.tahoma_7b_dark.drawString(g, "Cài Đặt Auto", xScroll + wScroll / 2, 59, mFont.CENTER);
+                return;
+            }
             if (type == 19)
             {
                 g.setColor(13524492);
@@ -6623,7 +6653,7 @@ namespace Game1
                     g.drawImage(ItemMap.imageFlare, startTabPos + i * TAB_W + TAB_W / 2, 62, 3);
                 }
                 mFont mFont2 = ((i != currentTabIndex) ? mFont.tahoma_7_grey : mFont.tahoma_7_green2);
-                if (!currentTabName[i][1].Equals(string.Empty))
+                if (currentTabName[i].Length > 1 && !currentTabName[i][1].Equals(string.Empty))
                 {
                     mFont2.drawString(g, currentTabName[i][0], startTabPos + i * TAB_W + TAB_W / 2, 53, mFont.CENTER);
                     mFont2.drawString(g, currentTabName[i][1], startTabPos + i * TAB_W + TAB_W / 2, 64, mFont.CENTER);
@@ -7126,6 +7156,10 @@ namespace Game1
                     paintToolInfo(g);
                     break;
                 case 22:
+                    SmallImage.drawSmallImage(g, Char.myCharz().avatarz(), X + 25, 50, 0, 33);
+                    paintToolInfo(g);
+                    break;
+                case 28:
                     SmallImage.drawSmallImage(g, Char.myCharz().avatarz(), X + 25, 50, 0, 33);
                     paintToolInfo(g);
                     break;
@@ -7877,6 +7911,9 @@ namespace Game1
                         case 22:
                             doFireAuto();
                             break;
+                        case 28:
+                            AutoSettingManager.getInstance().doFire(this, selected);
+                            break;
                     }
                 }
             }
@@ -8433,6 +8470,16 @@ namespace Game1
         {
             if (selected < 0)
             {
+                return;
+            }
+            if (selected >= 0 && selected < strTool.Length && strTool[selected].Equals("Cài Đặt Auto"))
+            {
+                setTypeAutoSetting();
+                return;
+            }
+            if (selected >= 0 && selected < strTool.Length && strTool[selected].Equals(mResources.change_account))
+            {
+                GameCanvas.loginScr.backToRegister();
                 return;
             }
             if (SoundMn.IsDelAcc && selected == strTool.Length - 1)
@@ -10809,6 +10856,29 @@ namespace Game1
             }
         }
     
+        public void setTypeAutoSetting()
+        {
+            type = 28;
+            setType(0);
+            AutoSettingManager.getInstance().setTabAutoSetting(this);
+            cmx = (cmtoX = 0);
+        }
+
+        private void updateKeyAutoSetting()
+        {
+            updateKeyOption();
+            if (GameCanvas.keyPressed[(!Main.isPC) ? 4 : 23])
+            {
+                GameCanvas.keyPressed[(!Main.isPC) ? 4 : 23] = false;
+                AutoSettingManager.getInstance().doKeyStep(selected, -1);
+            }
+            if (GameCanvas.keyPressed[(!Main.isPC) ? 6 : 24])
+            {
+                GameCanvas.keyPressed[(!Main.isPC) ? 6 : 24] = false;
+                AutoSettingManager.getInstance().doKeyStep(selected, 1);
+            }
+        }
+
         public void setTypeOption()
         {
             type = 19;

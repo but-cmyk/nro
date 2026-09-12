@@ -94,12 +94,25 @@ namespace Game1
     				for (int j = 0; j < playerData.Length; j++)
     				{
     					PopUp.paintPopUp(g, cx[j] - 20, cy[j] + offsetY, rectPanel[2], 60, 16777215, false);
-    					Part part = GameScr.parts[playerData[j].head];
-    					Part part2 = GameScr.parts[playerData[j].leg];
-    					Part part3 = GameScr.parts[playerData[j].body];
-    					SmallImage.drawSmallImage(g, part.pi[Char.CharInfo[cf][0][0]].id, cx[j] + Char.CharInfo[cf][0][1] + part.pi[Char.CharInfo[cf][0][0]].dx, cy[j] - Char.CharInfo[cf][0][2] + part.pi[Char.CharInfo[cf][0][0]].dy, 0, 0);
-    					SmallImage.drawSmallImage(g, part2.pi[Char.CharInfo[cf][1][0]].id, cx[j] + Char.CharInfo[cf][1][1] + part2.pi[Char.CharInfo[cf][1][0]].dx, cy[j] - Char.CharInfo[cf][1][2] + part2.pi[Char.CharInfo[cf][1][0]].dy, 0, 0);
-    					SmallImage.drawSmallImage(g, part3.pi[Char.CharInfo[cf][2][0]].id, cx[j] + Char.CharInfo[cf][2][1] + part3.pi[Char.CharInfo[cf][2][0]].dx, cy[j] - Char.CharInfo[cf][2][2] + part3.pi[Char.CharInfo[cf][2][0]].dy, 0, 0);
+    					if (GameScr.parts == null)
+    					{
+    						GameScr.gI().initSelectChar();
+    					}
+    					int hId = playerData[j].head;
+    					int lId = playerData[j].leg;
+    					int bId = playerData[j].body;
+    					Part part = (GameScr.parts != null && hId >= 0 && hId < GameScr.parts.Length) ? GameScr.parts[hId] : null;
+    					Part part2 = (GameScr.parts != null && lId >= 0 && lId < GameScr.parts.Length) ? GameScr.parts[lId] : null;
+    					Part part3 = (GameScr.parts != null && bId >= 0 && bId < GameScr.parts.Length) ? GameScr.parts[bId] : null;
+    					if (part != null && part2 != null && part3 != null && part.pi != null && part2.pi != null && part3.pi != null && Char.CharInfo != null && cf >= 0 && cf < Char.CharInfo.Length)
+    					{
+    						if (part.pi.Length > Char.CharInfo[cf][0][0] && part2.pi.Length > Char.CharInfo[cf][1][0] && part3.pi.Length > Char.CharInfo[cf][2][0])
+    						{
+    							SmallImage.drawSmallImage(g, part.pi[Char.CharInfo[cf][0][0]].id, cx[j] + Char.CharInfo[cf][0][1] + part.pi[Char.CharInfo[cf][0][0]].dx, cy[j] - Char.CharInfo[cf][0][2] + part.pi[Char.CharInfo[cf][0][0]].dy, 0, 0);
+    							SmallImage.drawSmallImage(g, part2.pi[Char.CharInfo[cf][1][0]].id, cx[j] + Char.CharInfo[cf][1][1] + part2.pi[Char.CharInfo[cf][1][0]].dx, cy[j] - Char.CharInfo[cf][1][2] + part2.pi[Char.CharInfo[cf][1][0]].dy, 0, 0);
+    							SmallImage.drawSmallImage(g, part3.pi[Char.CharInfo[cf][2][0]].id, cx[j] + Char.CharInfo[cf][2][1] + part3.pi[Char.CharInfo[cf][2][0]].dx, cy[j] - Char.CharInfo[cf][2][2] + part3.pi[Char.CharInfo[cf][2][0]].dy, 0, 0);
+    						}
+    					}
     					if (focus == j)
     					{
     						mFont.tahoma_7b_yellow.drawString(g, playerData[j].name, cx[j] + rectPanel[2] - 25, cy[j] + offsetY, 1);

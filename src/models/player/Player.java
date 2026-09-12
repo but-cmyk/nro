@@ -81,7 +81,7 @@ public class Player extends Character {
         this.session = session;
     }
 
-    public int luotNhanBuaMienPhi = 1;
+    public int luotNhanBuaMienPhi = 0;
     public int diemDanhSuKien = 1;
     public Date firstTimeLogin;
     public int luckySpins;

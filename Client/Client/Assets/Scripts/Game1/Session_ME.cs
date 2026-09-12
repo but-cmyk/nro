@@ -231,9 +231,8 @@ namespace Game1
     				}
     				return new Message(b, array);
     			}
-    			catch (Exception ex)
+    			catch (Exception)
     			{
-    				Debug.Log(ex.StackTrace.ToString());
     			}
     			return null;
     		}
@@ -483,7 +482,7 @@ namespace Game1
     
     	public static void onRecieveMsg(Message msg)
     	{
-    		if (Thread.CurrentThread.Name == Main.mainThreadName)
+    		if (Thread.CurrentThread.Name == Main.mainThreadName && !Controller.isStopReadMessage)
     		{
     			messageHandler.onMessage(msg);
     		}
@@ -500,6 +499,10 @@ namespace Game1
     	{
     		while (true)
     		{
+    			if (Controller.isStopReadMessage)
+    			{
+    				break;
+    			}
     			Message message = null;
     			lock (recieveMsg)
     			{
@@ -509,10 +512,6 @@ namespace Game1
     				}
     			}
     			if (message == null)
-    			{
-    				break;
-    			}
-    			if (Controller.isStopReadMessage)
     			{
     				break;
     			}

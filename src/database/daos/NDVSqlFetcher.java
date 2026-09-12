@@ -955,10 +955,12 @@ public class NDVSqlFetcher {
                 taskMain.index = subIndex;
                 taskMain.subTasks.get(subIndex).count = Short.parseShort(String.valueOf(dataArray.get(2)));
             }
-            if (dataArray.size() > 3) {
-                taskMain.lastTime = Long.parseLong(String.valueOf(dataArray.get(3)));
-            } else {
-                taskMain.lastTime = System.currentTimeMillis();
+            if (taskMain != null) {
+                if (dataArray.size() > 3) {
+                    taskMain.lastTime = Long.parseLong(String.valueOf(dataArray.get(3)));
+                } else {
+                    taskMain.lastTime = System.currentTimeMillis();
+                }
             }
             player.playerTask.taskMain = taskMain;
             TaskService.gI().checkDoneTaskPower(player, player.nPoint.power);
@@ -1079,7 +1081,11 @@ public class NDVSqlFetcher {
                 } else {
                     skill = SkillUtil.createSkillLevel0(tempId);
                 }
-                skill.lastTimeUseThisSkill = Long.parseLong(String.valueOf(dataSkill.get(2)));
+                long lastTimeSkill = Long.parseLong(String.valueOf(dataSkill.get(2)));
+                if (lastTimeSkill <= 0 || lastTimeSkill > System.currentTimeMillis()) {
+                    lastTimeSkill = System.currentTimeMillis() - skill.coolDown;
+                }
+                skill.lastTimeUseThisSkill = lastTimeSkill;
                 if (dataSkill.size() > 3) {
                     skill.currLevel = Short.parseShort(String.valueOf(dataSkill.get(3)));
                 }
@@ -1091,6 +1097,11 @@ public class NDVSqlFetcher {
             dataArray = (JSONArray) JSONValue.parse(rs.getString("skills_shortcut"));
             for (int i = 0; i < dataArray.size(); i++) {
                 player.playerSkill.skillShortCut[i] = Byte.parseByte(String.valueOf(dataArray.get(i)));
+            }
+            if (player.playerSkill.skillShortCut[0] == -1) {
+                byte defaultPunch = (byte) (player.gender == ConstPlayer.TRAI_DAT
+                        ? Skill.DRAGON : (player.gender == ConstPlayer.NAMEC ? Skill.DEMON : Skill.GALICK));
+                player.playerSkill.skillShortCut[0] = defaultPunch;
             }
 
             for (int i : player.playerSkill.skillShortCut) {

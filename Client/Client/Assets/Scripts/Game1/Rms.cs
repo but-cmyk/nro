@@ -18,6 +18,7 @@ namespace Game1
         private static readonly object rmsLock = new object();
 
         private static string cachedPath = null;
+        public static string rootPersistentPath = null;
 
         public static void saveRMS(string filename, sbyte[] data)
         {
@@ -260,7 +261,8 @@ namespace Game1
             {
                 try
                 {
-                    cachedPath = Application.persistentDataPath + "/Game1";
+                    rootPersistentPath = Application.persistentDataPath;
+                    cachedPath = rootPersistentPath + "/Game1";
                 }
                 catch
                 {
@@ -279,7 +281,7 @@ namespace Game1
             try
             {
                 string text = GetiPhoneDocumentsPath() + "/" + filename;
-                using (FileStream fileStream = new FileStream(text, FileMode.Create, FileAccess.Write, FileShare.None))
+                using (FileStream fileStream = new FileStream(text, FileMode.Create, FileAccess.Write, FileShare.ReadWrite))
                 {
                     fileStream.Write(ArrayCast.cast(data), 0, data.Length);
                     fileStream.Flush();
@@ -294,14 +296,51 @@ namespace Game1
 
         private static sbyte[] __loadRMS(string filename)
         {
+            if (string.IsNullOrEmpty(filename))
+            {
+                return null;
+            }
             try
             {
                 string text = GetiPhoneDocumentsPath() + "/" + filename;
                 if (!File.Exists(text))
                 {
-                    return null;
+                    string root = rootPersistentPath;
+                    if (string.IsNullOrEmpty(root))
+                    {
+                        try
+                        {
+                            root = Application.persistentDataPath;
+                        }
+                        catch
+                        {
+                        }
+                    }
+                    if (!string.IsNullOrEmpty(root))
+                    {
+                        string fallback = root + "/" + filename;
+                        if (File.Exists(fallback))
+                        {
+                            try
+                            {
+                                File.Copy(fallback, text, true);
+                            }
+                            catch
+                            {
+                                text = fallback;
+                            }
+                        }
+                        else
+                        {
+                            return null;
+                        }
+                    }
+                    else
+                    {
+                        return null;
+                    }
                 }
-                using (FileStream fileStream = new FileStream(text, FileMode.Open, FileAccess.Read, FileShare.Read))
+                using (FileStream fileStream = new FileStream(text, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
                 {
                     byte[] array = new byte[fileStream.Length];
                     fileStream.Read(array, 0, array.Length);
@@ -319,10 +358,20 @@ namespace Game1
             try
             {
                 Cout.Log("clean rms");
-                FileInfo[] files = new DirectoryInfo(GetiPhoneDocumentsPath() + "/").GetFiles();
-                foreach (FileInfo fileInfo in files)
+                string dirPath = GetiPhoneDocumentsPath();
+                if (Directory.Exists(dirPath))
                 {
-                    fileInfo.Delete();
+                    FileInfo[] files = new DirectoryInfo(dirPath).GetFiles();
+                    foreach (FileInfo fileInfo in files)
+                    {
+                        try
+                        {
+                            fileInfo.Delete();
+                        }
+                        catch
+                        {
+                        }
+                    }
                 }
             }
             catch
