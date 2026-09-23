@@ -343,9 +343,9 @@ namespace Game1
     			for (int i = 0; i < this.itemOption.Length; i++)
     			{
     				if (itemOption[i] == null)
-    					return false;
+    					continue;
     				ItemOption itemOption2 = this.itemOption[i];
-    				if (itemOption2 != null && itemOption2.optionTemplate.id == id)
+    				if (itemOption2 != null && itemOption2.optionTemplate != null && itemOption2.optionTemplate.id == id)
     				{
     					return true;
     				}
@@ -367,6 +367,21 @@ namespace Game1
     				itemOption.optionTemplate = ((ItemOption)options.elementAt(i)).optionTemplate;
     				itemOption.param = ((ItemOption)options.elementAt(i)).param;
     				item.options.addElement(itemOption);
+    			}
+    		}
+    		if (itemOption != null)
+    		{
+    			item.itemOption = new ItemOption[itemOption.Length];
+    			for (int j = 0; j < itemOption.Length; j++)
+    			{
+    				if (itemOption[j] != null)
+    				{
+    					item.itemOption[j] = new ItemOption();
+    					item.itemOption[j].optionTemplate = itemOption[j].optionTemplate;
+    					item.itemOption[j].param = itemOption[j].param;
+    					item.itemOption[j].active = itemOption[j].active;
+    					item.itemOption[j].activeCard = itemOption[j].activeCard;
+    				}
     			}
     		}
     		item.itemId = itemId;

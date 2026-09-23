@@ -74,6 +74,15 @@ public class ServerManager {
         return this.executorService;
     }
 
+    public void execute(Runnable task) {
+        if (task == null) return;
+        if (this.executorService != null && !this.executorService.isShutdown()) {
+            this.executorService.submit(task);
+        } else {
+            Thread.startVirtualThread(task);
+        }
+    }
+
     public static ServerManager gI() {
         if (instance == null) {
             synchronized (ServerManager.class) {

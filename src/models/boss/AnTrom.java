@@ -22,9 +22,9 @@ public class AnTrom extends Boss {
     private long lastTimeAnTrom;
     private long lastTimeJoinMap;
     private long goldAnTrom;
-    private static final long TIME_CHANGE_MAP = 180000;
+    private int stealsInCurrentMap = 0;
+    private static final long TIME_CHANGE_MAP = 300000;
     private List<Item> ITEM;
-    private static final int ITEM_TO_STEAL_ID = 457;
     private long lastTimeAttack;
     private long lastTimeTargetPlayer;
     private int timeTargetPlayer;
@@ -33,7 +33,6 @@ public class AnTrom extends Boss {
     private long moveAwayTime;
     private static final long TIME_MOVE_AWAY = 1500;
     private static final long TIME_RETURN = 5000;
-
     private long lastChatTime = 0;
     private static final long CHAT_COOLDOWN = 5000;
     private long moveAwayStartTime = 0;
@@ -46,10 +45,9 @@ public class AnTrom extends Boss {
                 new short[]{201, 202, 203, -1, -1, -1},
                 1,
                 new int[]{100},
-                new int[]{3, 4, 5, 6, 27, 28, 29, 30,
-                    9, 11, 12, 13, 10, 34, 33, 32, 31,
-                    16, 17, 18, 19, 20, 37, 38, 36, 35,
-                    24, 25, 26},
+                new int[]{3, 4, 6, 27, 28, 29, 30,
+                    9, 11, 12, 34, 33, 32, 31,
+                    16, 17, 18, 19, 37, 38, 36, 35},
                 new int[][]{
                     {Skill.THAI_DUONG_HA_SAN, 3, 20000}},
                 new String[]{"|-1|Tới giờ làm việc, lụm lụm", "|-1|Cảm giác mình vào phải khu người nghèo :))"},
@@ -62,6 +60,7 @@ public class AnTrom extends Boss {
         lastTimeJoinMap = System.currentTimeMillis() + TIME_CHANGE_MAP;
         this.moveAwayTime = 0;
         this.movedAway = false;
+        this.stealsInCurrentMap = 0;
     }
 
     @Override
@@ -71,13 +70,17 @@ public class AnTrom extends Boss {
     @Override
     public Zone getMapJoin() {
         int mapId = this.data[this.currentLevel].getMapJoin()[Util.nextInt(0, this.data[this.currentLevel].getMapJoin().length - 1)];
-        return MapService.gI().getMapById(mapId).zones.get(0);
+        models.map.Map map = MapService.gI().getMapById(mapId);
+        if (map != null && !map.zones.isEmpty()) {
+            return map.zones.get(Util.nextInt(0, map.zones.size() - 1));
+        }
+        return MapService.gI().getMapById(3).zones.get(0);
     }
 
     @Override
     public synchronized int injured(Player plAtt, long damage, boolean piercing, boolean isMobAttack) {
         if (!this.isDie()) {
-            damage = 1;
+            damage = Util.nextInt(1, 3);
             moveAwayFromPlayer(plAtt);
             this.movedAway = true;
             moveAwayTime = System.currentTimeMillis();
@@ -96,7 +99,7 @@ public class AnTrom extends Boss {
 
     @Override
     public void attack() {
-        if (Util.canDoWithTime(this.lastTimeAttack, 100) && this.typePk == ConstPlayer.PK_ALL) {
+        if (Util.canDoWithTime(this.lastTimeAttack, 500) && this.typePk == ConstPlayer.PK_ALL) {
             this.lastTimeAttack = System.currentTimeMillis();
             try {
                 Player pl = getPlayerAttack();
@@ -104,31 +107,32 @@ public class AnTrom extends Boss {
                     return;
                 }
                 if (Util.getDistance(this, pl) <= 40) {
-                    if (!Util.canDoWithTime(this.lastTimeAnTrom, 1000) || goldAnTrom > 10_000_000_000L) {
+                    if (!Util.canDoWithTime(this.lastTimeAnTrom, 15000) || goldAnTrom > 10_000_000_000L) {
                         return;
                     }
-                    int gold = 0;
 
-                    if (pl.inventory.gold >= 1_000_000) {
-                        //  chatWithCooldown("Ít nhưng còn hơn không.");
-                        gold = 1000;
-                    } else {
-                        chatWithCooldown("Nghèo thế");
-                        gold = 0;
+                    if (pl.inventory.gold < 5_000_000) {
+                        chatWithCooldown("Nghèo thế, tha cho đấy!");
+                        return;
                     }
-                    chatWithCooldown("Trộm được " + Util.powerToString(goldAnTrom) + " Vàng rồi!");
-                    if (gold > 0) {
-                        pl.inventory.gold -= gold;
-                        goldAnTrom += gold;
-                        this.stolenItemCount += gold;
-                        this.lastTimeAnTrom = System.currentTimeMillis();
-                        Service.gI().stealMoney(pl, -gold);
+
+                    int gold = Util.nextInt(1000, 3000);
+                    pl.inventory.gold -= gold;
+                    goldAnTrom += gold;
+                    this.stolenItemCount += gold;
+                    this.lastTimeAnTrom = System.currentTimeMillis();
+                    Service.gI().stealMoney(pl, -gold);
+                    chatWithCooldown("Trộm được " + Util.powerToString(gold) + " Vàng rồi! Chuồn thôi!");
+                    moveAwayFromPlayer(pl);
+                    stealsInCurrentMap++;
+                    if (stealsInCurrentMap >= 3) {
+                        lastTimeJoinMap = 0; // Đổi map sau khi trộm đủ 3 lần
                     }
                 } else {
                     if (this.movedAway && System.currentTimeMillis() - moveAwayTime > TIME_RETURN) {
                         this.moveToPlayer(pl);
                         this.movedAway = false;
-                    } else if (Util.isTrue(1, 2)) {
+                    } else if (Util.isTrue(1, 4)) {
                         this.moveToPlayer(pl);
                     }
                 }
@@ -179,7 +183,6 @@ public class AnTrom extends Boss {
             int percentDone = (int) ((double) plKill.playerTask.taskdh.AnTrom / 30 * 100);
             plKill.playerTask.taskdh.AnTrom++;
             plKill.playerTask.taskdh.ResetTime = System.currentTimeMillis();
-            //Service.gI().sendThongBao(plKill, "Tiến độ hiện tại: " + percentDone + "%");
         }
     }
 
@@ -188,38 +191,74 @@ public class AnTrom extends Boss {
         super.joinMap();
     }
 
+    private boolean isSafeMap(int mapId) {
+        if (mapId == 0 || mapId == 7 || mapId == 14) return true; // Làng Aru, Mori, Kakarot
+        if (mapId >= 21 && mapId <= 26) return true; // Nhà riêng và trạm tàu vũ trụ 3 hành tinh
+        if (mapId == 5 || mapId == 13 || mapId == 20) return true; // Đảo Kame, Guru, Bunma
+        if (mapId >= 39 && mapId <= 62) return true; // Tương lai, địa ngục, phó bản
+        if (mapId >= 111 && mapId <= 130) return true; // Mabu, gas, doanh trại
+        if (mapId == 102 || mapId == 103) return true;
+        return MapService.gI().isMapDoanhTrai(mapId) 
+                || MapService.gI().isMapMaBu(mapId) 
+                || MapService.gI().isMapBlackBallWar(mapId)
+                || MapService.gI().isMapPhoBan(mapId);
+    }
+
+    private boolean zoneHasAnTrom(Zone z) {
+        if (z == null) return false;
+        List<Player> bosses = z.getBosses();
+        if (bosses == null) return false;
+        for (int i = 0; i < bosses.size(); i++) {
+            Player b = bosses.get(i);
+            if (b != null && b != this && b instanceof AnTrom && !b.isDie()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     @Override
     public void update() {
         super.update();
         if (isMovingAway) {
             returnToOriginalPosition();
         }
-        if (this.zone != null) {
+        if (this.zone != null && System.currentTimeMillis() > this.lastTimeJoinMap) {
+            Zone targetZone = null;
             List<Player> players = Client.gI().getPlayers();
             int playerCount = players.size();
-            if (playerCount > 0) {
-                Player ramdonPlayer = players.get(Util.nextInt(playerCount));
-                if (ramdonPlayer != null && ramdonPlayer.zone != null && ramdonPlayer.zone.isKhongCoTrongTaiTrongKhu()) {
-                    int mapId = ramdonPlayer.zone.map.mapId;
-                    if (mapId != 51 && mapId != 113 && mapId != 129 && mapId != 21 && mapId != 22 && mapId != 23 && mapId != 39 && mapId != 40 && mapId != 41 && mapId != 42 && mapId != 43 && mapId != 44
-                            && this.zone.getPlayers().size() <= 2 && System.currentTimeMillis() > this.lastTimeJoinMap) {
-                        if (ramdonPlayer.id != -1000000) {
-                            lastTimeJoinMap = System.currentTimeMillis() + TIME_CHANGE_MAP;
-                            ChangeMapService.gI().spaceShipArrive(this, (byte) 2, ChangeMapService.DEFAULT_SPACE_SHIP);
-                            ChangeMapService.gI().exitMap(this);
-                            this.zone = ramdonPlayer.zone;
-                            this.location.x = Util.nextInt(Math.max(100, zone.map.mapWidth - 100));
-                            this.location.y = zone.map.yPhysicInTop(this.location.x, 100);
-                            this.joinMap();
-                        }
-                        if (this.zone != null) {
-                            if (this.playerTarger == null || Util.canDoWithTime(this.lastTimeTargetPlayer, this.timeTargetPlayer)) {
-                                this.playerTarger = this.zone.getRandomPlayerInMap();
-                                this.lastTimeTargetPlayer = System.currentTimeMillis();
-                                this.timeTargetPlayer = Util.nextInt(5000, 10000);
-                            }
-                        }
-                    }
+            // 25% cơ hội tìm đến map dã ngoại của một player, 75% đi ngẫu nhiên map dã ngoại
+            if (Util.isTrue(1, 4) && playerCount > 0) {
+                Player randomPlayer = players.get(Util.nextInt(playerCount));
+                if (randomPlayer != null && randomPlayer.zone != null 
+                        && randomPlayer.zone.isKhongCoTrongTaiTrongKhu() 
+                        && !isSafeMap(randomPlayer.zone.map.mapId)
+                        && !zoneHasAnTrom(randomPlayer.zone)
+                        && randomPlayer.id != -1000000) {
+                    targetZone = randomPlayer.zone;
+                }
+            }
+            if (targetZone == null) {
+                Zone randomZone = getMapJoin();
+                if (randomZone != null && !zoneHasAnTrom(randomZone) && !isSafeMap(randomZone.map.mapId)) {
+                    targetZone = randomZone;
+                }
+            }
+            if (targetZone != null && targetZone != this.zone) {
+                lastTimeJoinMap = System.currentTimeMillis() + TIME_CHANGE_MAP;
+                this.stealsInCurrentMap = 0;
+                ChangeMapService.gI().spaceShipArrive(this, (byte) 2, ChangeMapService.DEFAULT_SPACE_SHIP);
+                ChangeMapService.gI().exitMap(this);
+                this.zone = targetZone;
+                this.location.x = Util.nextInt(Math.max(100, zone.map.mapWidth - 100));
+                this.location.y = zone.map.yPhysicInTop(this.location.x, 100);
+                this.joinMap();
+            }
+            if (this.zone != null) {
+                if (this.playerTarger == null || Util.canDoWithTime(this.lastTimeTargetPlayer, this.timeTargetPlayer)) {
+                    this.playerTarger = this.zone.getRandomPlayerInMap();
+                    this.lastTimeTargetPlayer = System.currentTimeMillis();
+                    this.timeTargetPlayer = Util.nextInt(5000, 10000);
                 }
             }
         }

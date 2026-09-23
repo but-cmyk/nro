@@ -11,17 +11,25 @@ namespace Game1
     
     	public static ItemTemplate get(short id)
     	{
-    		return (ItemTemplate)itemTemplates.get(id);
+    		ItemTemplate it = (ItemTemplate)itemTemplates.get(id);
+    		if (it == null)
+    		{
+    			it = new ItemTemplate(id, 0, 0, "Item " + id, string.Empty, 0, 0, 0, 0, false);
+    			itemTemplates.put(id, it);
+    		}
+    		return it;
     	}
-    
+
     	public static short getPart(short itemTemplateID)
     	{
-    		return get(itemTemplateID).part;
+    		ItemTemplate it = get(itemTemplateID);
+    		return (it != null) ? it.part : (short)0;
     	}
-    
+
     	public static short getIcon(short itemTemplateID)
     	{
-    		return get(itemTemplateID).iconID;
+    		ItemTemplate it = get(itemTemplateID);
+    		return (it != null) ? it.iconID : (short)0;
     	}
     }
 }

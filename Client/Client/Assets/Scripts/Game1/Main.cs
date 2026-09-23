@@ -91,14 +91,31 @@ namespace Game1
 
         private float gameSpeedAccumulator;
 
-        public static TabType mainTab;
+        public static int lastScreenWidth;
+
+        public static int lastScreenHeight;
+
+        public static void onScreenSizeChanged()
+        {
+            ScaleGUI.initScaleGUI();
+            if (MotherCanvas.instance != null)
+            {
+                MotherCanvas.instance.checkZoomLevel(Screen.width, Screen.height);
+                int newW = MotherCanvas.instance.getWidthz();
+                int newH = MotherCanvas.instance.getHeightz();
+                if (GameMidlet.gameCanvas != null)
+                {
+                    GameMidlet.gameCanvas.sizeChanged(newW, newH);
+                }
+            }
+        }
 
         private void Awake()
         {
             Application.runInBackground = true;
+            Rms.Init();
             if (main != null)
             {
-                TabManagement.tab = TabType.Tab1;
                 Destroy(this.gameObject);
                 SoundMn.gI().loadSound(TileMap.mapID);
                 return;
@@ -139,7 +156,7 @@ namespace Game1
             {
                 // Removed forced SolidColor and black background to restore original sky
             }
-            if (isPC)
+            if (isPC && !Application.isEditor)
             {
                 level = Rms.loadRMSInt("levelScreenKN");
                 if (level == 1)
@@ -217,6 +234,8 @@ namespace Game1
                     main = this;
                 }
                 isRun = true;
+                lastScreenWidth = Screen.width;
+                lastScreenHeight = Screen.height;
                 ScaleGUI.initScaleGUI();
                 if (isPC)
                 {
@@ -259,7 +278,6 @@ namespace Game1
                 InfoMe.gI().loadCharId();
                 Panel.loadBg();
                 Menu.loadBg();
-                TabCommand.loadBG();
                 Key.mapKeyPC();
                 SoundMn.gI().loadSound(TileMap.mapID);
             }
@@ -330,6 +348,12 @@ namespace Game1
                 }
                 up++;
                 setsizeChange();
+                if (isRun && (Screen.width != lastScreenWidth || Screen.height != lastScreenHeight))
+                {
+                    lastScreenWidth = Screen.width;
+                    lastScreenHeight = Screen.height;
+                    onScreenSizeChanged();
+                }
                 updateCount++;
 
                 gameSpeedAccumulator += Mathf.Max(0.1f, gameSpeed);

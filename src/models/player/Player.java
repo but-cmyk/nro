@@ -81,6 +81,12 @@ public class Player extends Character {
         this.session = session;
     }
 
+    private final java.util.concurrent.locks.ReentrantLock tradeLock = new java.util.concurrent.locks.ReentrantLock();
+
+    public java.util.concurrent.locks.ReentrantLock getTradeLock() {
+        return this.tradeLock;
+    }
+
     public int luotNhanBuaMienPhi = 0;
     public int diemDanhSuKien = 1;
     public Date firstTimeLogin;

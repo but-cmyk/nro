@@ -13,7 +13,7 @@ PlayerSettings:
   useOnDemandResources: 0
   accelerometerFrequency: 60
   companyName: Team
-  productName: Nro6Tab
+  productName: NgocRongOnline
   defaultCursor: {fileID: 0}
   cursorHotspot: {x: 0, y: 0}
   m_SplashScreenBackgroundColor: {r: 0.12156863, g: 0.12156863, b: 0.1254902, a: 1}
@@ -158,8 +158,8 @@ PlayerSettings:
   androidSupportedAspectRatio: 1
   androidMaxAspectRatio: 2.1
   applicationIdentifier:
-    Android: com.Team.Nro6Tab
-    Standalone: com.Team.Nro6Tab
+    Android: com.Team.NgocRongOnline
+    Standalone: com.Team.NgocRongOnline
   buildNumber:
     Standalone: 0
     VisionOS: 0

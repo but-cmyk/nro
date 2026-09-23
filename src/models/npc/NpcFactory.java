@@ -722,24 +722,10 @@ public class NpcFactory {
                     }
                     case ConstNpc.HOP_QUA_THAN_LINH -> {
                         switch (select) {
-                            case 0:
-                                try {
-                                    ItemService.gI().settltd(player);
-                                } catch (Exception e) {
-                                }
-                                break;
-                            case 1:
-                                try {
-                                    ItemService.gI().settlnm(player);
-                                } catch (Exception e) {
-                                }
-                                break;
-                            default:
-                                try {
-                                    ItemService.gI().settlxd(player);
-                                } catch (Exception e) {
-                                }
-                                break;
+                            case 0 -> ItemService.gI().settltd(player);
+                            case 1 -> ItemService.gI().settlnm(player);
+                            case 2 -> ItemService.gI().settlxd(player);
+                            default -> {}
                         }
                     }
 

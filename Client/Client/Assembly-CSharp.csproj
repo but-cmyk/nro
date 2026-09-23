@@ -74,6 +74,7 @@
     <Compile Include="Assets\Scripts\Game1\EffectChar.cs" />
     <Compile Include="Assets\Scripts\Game1\Timer.cs" />
     <Compile Include="Assets\Scripts\Game1\God\Client\ClientManager.cs" />
+    <Compile Include="Assets\Scripts\Game1\Constants\PanelConstants.cs" />
     <Compile Include="Assets\Scripts\Game1\IPaint.cs" />
     <Compile Include="Assets\Scripts\Game1\T3.cs" />
     <Compile Include="Assets\Scripts\Game1\Assets\src\g\PetFollow.cs" />
@@ -90,13 +91,13 @@
     <Compile Include="Assets\Scripts\UnityLogger.cs" />
     <Compile Include="Assets\Scripts\Game1\Assets\src\e\SmallSave.cs" />
     <Compile Include="Assets\Scripts\Game1\GameCanvas.cs" />
+    <Compile Include="Assets\Scripts\Game1\Constants\NetworkOpcodes.cs" />
     <Compile Include="Assets\Scripts\Game1\mGraphics.cs" />
     <Compile Include="Assets\Scripts\Game1\MobCapcha.cs" />
     <Compile Include="Assets\Scripts\Game1\Archivement.cs" />
     <Compile Include="Assets\Scripts\Game1\ItemTime.cs" />
     <Compile Include="Assets\Scripts\Game1\NClass.cs" />
     <Compile Include="Assets\Scripts\Game1\Paint.cs" />
-    <Compile Include="Assets\Scripts\TabManagement.cs" />
     <Compile Include="Assets\Scripts\Game1\God\Player\AutoControlPanel.cs" />
     <Compile Include="Assets\Scripts\Game1\ActionPaint.cs" />
     <Compile Include="Assets\Scripts\Game1\God\Player\TypePoint.cs" />
@@ -111,7 +112,6 @@
     <Compile Include="Assets\Scripts\Game1\God\Mob\Mobs.cs" />
     <Compile Include="Assets\Scripts\Game1\Mob.cs" />
     <Compile Include="Assets\Scripts\Game1\MyKeyMap.cs" />
-    <Compile Include="Assets\Scripts\Game1\TabControl.cs" />
     <Compile Include="Assets\Scripts\Game1\Skill.cs" />
     <Compile Include="Assets\Scripts\Game1\MyRandom.cs" />
     <Compile Include="Assets\Scripts\Game1\EffectFeet.cs" />
@@ -161,7 +161,6 @@
     <Compile Include="Assets\Scripts\Game1\EPosition.cs" />
     <Compile Include="Assets\Scripts\Game1\PopUp.cs" />
     <Compile Include="Assets\Scripts\Game1\ClanImage.cs" />
-    <Compile Include="Assets\Scripts\TabType.cs" />
     <Compile Include="Assets\Scripts\Game1\InputStream.cs" />
     <Compile Include="Assets\Scripts\Game1\PKFlag.cs" />
     <Compile Include="Assets\Scripts\Game1\EffecMn.cs" />
@@ -186,6 +185,7 @@
     <Compile Include="Assets\Scripts\Game1\Service.cs" />
     <Compile Include="Assets\Scripts\Game1\Cout.cs" />
     <Compile Include="Assets\Scripts\Game1\KeyConstant.cs" />
+    <Compile Include="Assets\Scripts\Game1\Network\Handlers\CombatPacketHandler.cs" />
     <Compile Include="Assets\Scripts\Game1\PlayerData.cs" />
     <Compile Include="Assets\Scripts\Game1\PartImage.cs" />
     <Compile Include="Assets\Scripts\Game1\Effect2.cs" />
@@ -195,7 +195,6 @@
     <Compile Include="Assets\Scripts\Game1\BallInfo.cs" />
     <Compile Include="Assets\Scripts\Game1\God\Boss\BossData.cs" />
     <Compile Include="Assets\Scripts\Game1\ClanMessage.cs" />
-    <Compile Include="Assets\Scripts\Game1\TabCommand.cs" />
     <Compile Include="Assets\Scripts\Game1\BgItem.cs" />
     <Compile Include="Assets\Scripts\Game1\InfoItem.cs" />
     <Compile Include="Assets\Scripts\Game1\Res.cs" />
@@ -244,6 +243,7 @@
     <Compile Include="Assets\Scripts\Game1\iPhoneGeneration.cs" />
     <Compile Include="Assets\Scripts\Game1\Line.cs" />
     <Compile Include="Assets\Scripts\Game1\Command.cs" />
+    <Compile Include="Assets\Scripts\Game1\Network\Handlers\ItemPacketHandler.cs" />
     <Compile Include="Assets\Scripts\Game1\mSystem.cs" />
     <Compile Include="Assets\Scripts\Game1\ArrayCast.cs" />
     <Compile Include="Assets\Scripts\Game1\Assets\src\f\Controller2.cs" />
@@ -251,11 +251,13 @@
     <Compile Include="Assets\Scripts\Game1\Arrowpaint.cs" />
     <Compile Include="Assets\Scripts\Game1\God\Item\ItemGroup.cs" />
     <Compile Include="Assets\Scripts\Game1\BackgroudEffect.cs" />
+    <Compile Include="Assets\Scripts\Game1\DefaultItemOptions.cs" />
     <Compile Include="Assets\Scripts\Game1\Assets\src\g\ImageSource.cs" />
     <Compile Include="Assets\Scripts\Game1\Systems\Combat\CharacterCombat.cs" />
     <Compile Include="Assets\Scripts\Game1\Position.cs" />
     <Compile Include="Assets\Scripts\Game1\iPhoneSettings.cs" />
     <Compile Include="Assets\Scripts\Game1\Net.cs" />
+    <Compile Include="Assets\Scripts\Game1\Constants\GameEnums.cs" />
     <Compile Include="Assets\Scripts\Game1\Hint.cs" />
     <Compile Include="Assets\Scripts\Game1\SmallDart.cs" />
     <Compile Include="Assets\Scripts\Game1\God\Mob\MobController.cs" />
@@ -268,12 +270,15 @@
     <Compile Include="Assets\Scripts\Game1\God\Map\MapController.cs" />
     <Compile Include="Assets\Scripts\Game1\God\Player\PetService.cs" />
     <Compile Include="Assets\Scripts\Game1\TField.cs" />
+    <Compile Include="Assets\Scripts\Game1\Constants\GameKeys.cs" />
     <Compile Include="Assets\Scripts\Game1\UI\Panels\ShopSubPanel.cs" />
     <Compile Include="Assets\Scripts\Game1\Session_ME.cs" />
     <Compile Include="Assets\Scripts\Game1\T2.cs" />
     <Compile Include="Assets\Scripts\Game1\ActionChat.cs" />
+    <Compile Include="Assets\Scripts\Game1\Network\Handlers\TradePacketHandler.cs" />
     <Compile Include="Assets\Scripts\Game1\Npc.cs" />
     <Compile Include="Assets\Scripts\Game1\T1.cs" />
+    <Compile Include="Assets\Scripts\Game1\UI\Panels\ClanSubPanel.cs" />
     <Compile Include="Assets\Scripts\Game1\IMapObject.cs" />
     <Compile Include="Assets\Scripts\Game1\TileMap.cs" />
     <Compile Include="Assets\Scripts\Game1\Network\Handlers\AuthPacketHandler.cs" />
@@ -297,6 +302,7 @@
     <Compile Include="Assets\Scripts\Game1\God\Utils\Utils.cs" />
     <Compile Include="Assets\Scripts\Game1\CreateCharScr.cs" />
     <Compile Include="Assets\Scripts\Game1\ItemMap.cs" />
+    <Compile Include="Assets\Scripts\Game1\Network\Handlers\MapMovementPacketHandler.cs" />
     <Compile Include="Assets\Scripts\Game1\CrackBallScr.cs" />
     <Compile Include="Assets\Scripts\Game1\MyHashTable.cs" />
     <Compile Include="Assets\Scripts\Game1\God\Boss\Boss.cs" />

@@ -150,6 +150,14 @@ public class TaskService {
                     || player.playerTask.taskMain.subTasks == null || player.playerTask.taskMain.subTasks.isEmpty()) {
                 return;
             }
+            if (player.playerTask.taskMain.id > 3) {
+                Item duaBe = InventoryService.gI().findItemBagByTemp(player, ConstItem.DUA_BE);
+                if (duaBe != null) {
+                    InventoryService.gI().subQuantityItemsBag(player, duaBe, duaBe.quantity);
+                    InventoryService.gI().sendItemBags(player);
+                    Service.gI().sendFlagBag(player);
+                }
+            }
             TaskMain tm = player.playerTask.taskMain;
             if (tm.index < 0) {
                 tm.index = 0;
@@ -362,6 +370,15 @@ public class TaskService {
                         for (int i = cur; i < 10; i++) {
                             doneTask(player, ConstTask.TASK_2_0);
                         }
+                    }
+                }
+                if (player.playerTask != null && player.playerTask.taskMain != null
+                        && player.playerTask.taskMain.id > 3) {
+                    Item duaBe = InventoryService.gI().findItemBagByTemp(player, ConstItem.DUA_BE);
+                    if (duaBe != null) {
+                        InventoryService.gI().subQuantityItemsBag(player, duaBe, duaBe.quantity);
+                        InventoryService.gI().sendItemBags(player);
+                        Service.gI().sendFlagBag(player);
                     }
                 }
                 yield (doneTask(player, ConstTask.TASK_0_2)
@@ -841,6 +858,12 @@ public class TaskService {
                         npcSay(player, ConstTask.NPC_NHA, "Con đã thấy vật thể lạ chưa? Hãy mau chóng kiểm tra nó rồi quay về báo cáo với ta.");
                         break;
                     case ConstTask.TASK_3_2:
+                        Item duaBe = InventoryService.gI().findItemBagByTemp(player, ConstItem.DUA_BE);
+                        if (duaBe != null) {
+                            InventoryService.gI().subQuantityItemsBag(player, duaBe, duaBe.quantity);
+                            InventoryService.gI().sendItemBags(player);
+                        }
+                        Service.gI().sendFlagBag(player);
                         npcSay(player, ConstTask.NPC_NHA, "Vật thể lạ đó chính là phi thuyền của người Saiyan! Sẽ có nhiều thử thách lớn phía trước. Bây giờ, con hãy di chuyển đến trạm tàu vũ trụ để đi sang các hành tinh khác thách đấu nhé!");
                         break;
                     case ConstTask.TASK_7_2:
@@ -853,6 +876,11 @@ public class TaskService {
                         npcSay(player, ConstTask.NPC_NHA, "Con đã tìm thấy ngọc rồng 7 sao! Hãy đem về báo cáo cho ta.");
                         break;
                     case ConstTask.TASK_8_2:
+                        Item nr7 = InventoryService.gI().findItemBagByTemp(player, ConstItem.NGOC_RONG_7_SAO);
+                        if (nr7 != null) {
+                            InventoryService.gI().subQuantityItemsBag(player, nr7, 1);
+                            InventoryService.gI().sendItemBags(player);
+                        }
                         npcSay(player, ConstTask.NPC_NHA, "Tốt lắm! Bây giờ con hãy đi tìm Bò Mộng ở rừng Karin để hỏi thêm tin tức về các viên ngọc rồng khác.");
                         break;
                     case ConstTask.TASK_9_0:
@@ -916,6 +944,14 @@ public class TaskService {
     private void rewardDoneTask(Player player) {
         if (player != null && player.nPoint != null && player.playerTask != null && player.playerTask.taskMain != null) {
             int taskId = player.playerTask.taskMain.id;
+            if (taskId == 3) {
+                Item duaBe = InventoryService.gI().findItemBagByTemp(player, ConstItem.DUA_BE);
+                if (duaBe != null) {
+                    InventoryService.gI().subQuantityItemsBag(player, duaBe, duaBe.quantity);
+                    InventoryService.gI().sendItemBags(player);
+                }
+                Service.gI().sendFlagBag(player);
+            }
             // 1. Thưởng Sức Mạnh & Tiềm Năng đúng chuẩn hiển thị trong giao diện nhiệm vụ
             long rewardSMTN = getRewardSMTNByTaskId(taskId);
             if (rewardSMTN > 0) {

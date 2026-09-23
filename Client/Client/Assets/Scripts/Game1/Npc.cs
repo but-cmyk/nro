@@ -131,7 +131,7 @@ namespace Game1
     
     	public override void update()
     	{
-    		if (template.npcTemplateId == 51)
+    		if (template != null && template.npcTemplateId == 51)
     		{
     			cur = mSystem.currentTimeMillis();
     			if (cur - last >= 1000)
@@ -148,17 +148,17 @@ namespace Game1
     		{
     			updateShadown();
     		}
-    		if (effTask == null)
+    		if (effTask == null && template != null && Char.myCharz() != null)
     		{
     			sbyte[] array = new sbyte[7] { -1, 9, 9, 10, 10, 11, 11 };
-    			if (Char.myCharz().ctaskId >= 9 && Char.myCharz().ctaskId <= 10 && Char.myCharz().nClass.classId > 0 && array[Char.myCharz().nClass.classId] == template.npcTemplateId)
+    			if (Char.myCharz().ctaskId >= 9 && Char.myCharz().ctaskId <= 10 && Char.myCharz().nClass != null && Char.myCharz().nClass.classId >= 0 && Char.myCharz().nClass.classId < array.Length && array[Char.myCharz().nClass.classId] == template.npcTemplateId)
     			{
     				if (Char.myCharz().taskMaint == null)
     				{
     					effTask = (GameScr.efs != null && GameScr.efs.Length > 57) ? GameScr.efs[57] : null;
     					indexEffTask = 0;
     				}
-    				else if (Char.myCharz().taskMaint != null && Char.myCharz().taskMaint.index + 1 == Char.myCharz().taskMaint.subNames.Length)
+    				else if (Char.myCharz().taskMaint != null && Char.myCharz().taskMaint.subNames != null && Char.myCharz().taskMaint.index + 1 == Char.myCharz().taskMaint.subNames.Length)
     				{
     					effTask = (GameScr.efs != null && GameScr.efs.Length > 62) ? GameScr.efs[62] : null;
     					indexEffTask = 0;
@@ -173,7 +173,7 @@ namespace Game1
     				}
     				else if (Char.myCharz().taskMaint != null && taskNpcId == template.npcTemplateId)
     				{
-    					if (Char.myCharz().taskMaint.index + 1 == Char.myCharz().taskMaint.subNames.Length)
+    					if (Char.myCharz().taskMaint.subNames != null && Char.myCharz().taskMaint.index + 1 == Char.myCharz().taskMaint.subNames.Length)
     					{
     						effTask = (GameScr.efs != null && GameScr.efs.Length > 98) ? GameScr.efs[98] : null;
     					}
@@ -190,7 +190,7 @@ namespace Game1
     		{
     			return;
     		}
-    		if (cx > Char.myCharz().cx)
+    		if (Char.myCharz() != null && cx > Char.myCharz().cx)
     		{
     			cdir = -1;
     		}
@@ -198,7 +198,7 @@ namespace Game1
     		{
     			cdir = 1;
     		}
-    		if (template.npcTemplateId % 2 == 0)
+    		if (template != null && template.npcTemplateId % 2 == 0)
     		{
     			if (cf == 1)
     			{
@@ -249,7 +249,7 @@ namespace Game1
     			if (template.npcTemplateId == 3)
     			{
     				SmallImage.drawSmallImage(g, 265, cx, cy, 0, mGraphics.BOTTOM | mGraphics.HCENTER);
-    				if (Char.myCharz().npcFocus != null && Char.myCharz().npcFocus.Equals(this) && ChatPopup.currChatPopup == null)
+    				if (Char.myCharz() != null && Char.myCharz().npcFocus != null && Char.myCharz().npcFocus.Equals(this) && ChatPopup.currChatPopup == null)
     				{
     					g.drawRegion(Mob.imgHP, 0, 0, 9, 6, 0, cx, cy - ch + 4, mGraphics.BOTTOM | mGraphics.HCENTER);
     				}
@@ -259,7 +259,7 @@ namespace Game1
     			{
     				if (template.npcTemplateId == 50 || template.npcTemplateId == 51)
     				{
-    					if (duahau != null)
+    					if (duahau != null && duaHauIndex >= 0 && duaHauIndex < duahau.Length)
     					{
     						if (template.npcTemplateId == 50 && mabuEff)
     						{
@@ -285,12 +285,13 @@ namespace Game1
     							}
     						}
     						int num = 0;
-    						if (SmallImage.imgNew[duahau[duaHauIndex]] != null && SmallImage.imgNew[duahau[duaHauIndex]].img != null)
+    						int iconDuaHau = duahau[duaHauIndex];
+    						if (SmallImage.imgNew != null && iconDuaHau >= 0 && iconDuaHau < SmallImage.imgNew.Length && SmallImage.imgNew[iconDuaHau] != null && SmallImage.imgNew[iconDuaHau].img != null)
     						{
-    							num = mGraphics.getImageHeight(SmallImage.imgNew[duahau[duaHauIndex]].img);
+    							num = mGraphics.getImageHeight(SmallImage.imgNew[iconDuaHau].img);
     						}
-    						SmallImage.drawSmallImage(g, duahau[duaHauIndex], cx + Res.random(-1, 1), cy, 0, mGraphics.BOTTOM | mGraphics.HCENTER);
-    						if (Char.myCharz().npcFocus != null && Char.myCharz().npcFocus.Equals(this))
+    						SmallImage.drawSmallImage(g, iconDuaHau, cx + Res.random(-1, 1), cy, 0, mGraphics.BOTTOM | mGraphics.HCENTER);
+    						if (Char.myCharz() != null && Char.myCharz().npcFocus != null && Char.myCharz().npcFocus.Equals(this))
     						{
     							if (ChatPopup.currChatPopup == null)
     							{
@@ -307,7 +308,7 @@ namespace Game1
     				else if (template.npcTemplateId == 6)
     				{
     					SmallImage.drawSmallImage(g, 545, cx, cy + 5, 0, mGraphics.BOTTOM | mGraphics.HCENTER);
-    					if (Char.myCharz().npcFocus != null && Char.myCharz().npcFocus.Equals(this) && ChatPopup.currChatPopup == null)
+    					if (Char.myCharz() != null && Char.myCharz().npcFocus != null && Char.myCharz().npcFocus.Equals(this) && ChatPopup.currChatPopup == null)
     					{
     						g.drawRegion(Mob.imgHP, 0, 0, 9, 6, 0, cx, cy - ch - 9, mGraphics.BOTTOM | mGraphics.HCENTER);
     					}
@@ -342,13 +343,13 @@ namespace Game1
     						{
     							num2 = 47;
     						}
-    						if (Char.myCharz().npcFocus != null && Char.myCharz().npcFocus.Equals(this))
+    						if (Char.myCharz() != null && Char.myCharz().npcFocus != null && Char.myCharz().npcFocus.Equals(this))
     						{
     							if (ChatPopup.currChatPopup == null)
     							{
     								int num3 = 0;
     								int num4 = 0;
-    								if (Char.myCharz().npcFocus.template.npcTemplateId == 28 || Char.myCharz().npcFocus.template.npcTemplateId == 41)
+    								if (Char.myCharz().npcFocus.template != null && (Char.myCharz().npcFocus.template.npcTemplateId == 28 || Char.myCharz().npcFocus.template.npcTemplateId == 41))
     								{
     									num3 = 3;
     									num4 = -12;
@@ -368,7 +369,7 @@ namespace Game1
     					dyEff = 65;
     				}
     			}
-    			if (indexEffTask < 0 || effTask == null || cTypePk != 0)
+    			if (indexEffTask < 0 || effTask == null || cTypePk != 0 || effTask.arrEfInfo == null || effTask.arrEfInfo.Length == 0 || indexEffTask >= effTask.arrEfInfo.Length)
     			{
     				return;
     			}
@@ -392,7 +393,7 @@ namespace Game1
     		}
     		if (template.npcTemplateId == 3)
     		{
-    			if (Char.myCharz().npcFocus != null && Char.myCharz().npcFocus.Equals(this))
+    			if (Char.myCharz() != null && Char.myCharz().npcFocus != null && Char.myCharz().npcFocus.Equals(this))
     			{
     				mFont.tahoma_7_yellow.drawString(g, template.name, cx, cy - ch - mFont.tahoma_7.getHeight() - 5, mFont.CENTER, mFont.tahoma_7_grey);
     			}
@@ -410,14 +411,15 @@ namespace Game1
     			}
     			if (template.npcTemplateId == 50 || template.npcTemplateId == 51)
     			{
-    				if (duahau != null)
+    				if (duahau != null && duaHauIndex >= 0 && duaHauIndex < duahau.Length)
     				{
     					int num = 0;
-    					if (SmallImage.imgNew[duahau[duaHauIndex]] != null && SmallImage.imgNew[duahau[duaHauIndex]].img != null)
+    					int iconDuaHau = duahau[duaHauIndex];
+    					if (SmallImage.imgNew != null && iconDuaHau >= 0 && iconDuaHau < SmallImage.imgNew.Length && SmallImage.imgNew[iconDuaHau] != null && SmallImage.imgNew[iconDuaHau].img != null)
     					{
-    						num = mGraphics.getImageHeight(SmallImage.imgNew[duahau[duaHauIndex]].img);
+    						num = mGraphics.getImageHeight(SmallImage.imgNew[iconDuaHau].img);
     					}
-    					if (Char.myCharz().npcFocus != null && Char.myCharz().npcFocus.Equals(this))
+    					if (Char.myCharz() != null && Char.myCharz().npcFocus != null && Char.myCharz().npcFocus.Equals(this))
     					{
     						mFont.tahoma_7_yellow.drawString(g, template.name, cx, cy - ch - mFont.tahoma_7.getHeight() - num, mFont.CENTER, mFont.tahoma_7_grey);
     					}
@@ -430,7 +432,7 @@ namespace Game1
     			}
     			if (template.npcTemplateId == 6)
     			{
-    				if (Char.myCharz().npcFocus != null && Char.myCharz().npcFocus.Equals(this))
+    				if (Char.myCharz() != null && Char.myCharz().npcFocus != null && Char.myCharz().npcFocus.Equals(this))
     				{
     					mFont.tahoma_7_yellow.drawString(g, template.name, cx, cy - ch - mFont.tahoma_7.getHeight() - 16, mFont.CENTER, mFont.tahoma_7_grey);
     				}
@@ -447,13 +449,13 @@ namespace Game1
     				{
     					num2 = 47;
     				}
-    				if (Char.myCharz().npcFocus != null && Char.myCharz().npcFocus.Equals(this))
+    				if (Char.myCharz() != null && Char.myCharz().npcFocus != null && Char.myCharz().npcFocus.Equals(this))
     				{
     					if (TileMap.mapID != 113)
     					{
     						int num3 = 0;
     						int num4 = 0;
-    						if (Char.myCharz().npcFocus.template.npcTemplateId == 28 || Char.myCharz().npcFocus.template.npcTemplateId == 41)
+    						if (Char.myCharz().npcFocus.template != null && (Char.myCharz().npcFocus.template.npcTemplateId == 28 || Char.myCharz().npcFocus.template.npcTemplateId == 41))
     						{
     							num3 = 3;
     							num4 = -12;

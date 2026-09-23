@@ -516,8 +516,16 @@ namespace Game1
     	{
     		for (int i = GameScr.gssx; i < GameScr.gssxe; i++)
     		{
+    			if (i < 0 || i >= tmw)
+    			{
+    				continue;
+    			}
     			for (int j = GameScr.gssy; j < GameScr.gssye; j++)
     			{
+    				if (j < 0 || j >= tmh)
+    				{
+    					continue;
+    				}
     				int num = maps[j * tmw + i] - 1;
     				if (num != -1)
     				{
@@ -566,8 +574,16 @@ namespace Game1
                     g.setColor(Color.black);
                     for (int n = GameScr.gssx; n < GameScr.gssxe; n++)
                     {
+                        if (n < 0 || n >= TileMap.tmw)
+                        {
+                            continue;
+                        }
                         for (int num5 = GameScr.gssy; num5 < GameScr.gssye; num5++)
                         {
+                            if (num5 < 0 || num5 >= TileMap.tmh)
+                            {
+                                continue;
+                            }
                             bool flag18 = TileMap.maps[num5 * TileMap.tmw + n] != 0 && ((!TileMap.tileTypeAt(n * 24, (num5 + 1) * 24, 2) && !TileMap.tileTypeAt(n * 24, (num5 + 2) * 24, 2) && !TileMap.tileTypeAt(n * 24, num5 * 24, 2)) || TileMap.tileTypeAt(n * 24, num5 * 24, 2));
                             if (flag18)
                             {
@@ -596,8 +612,16 @@ namespace Game1
                 }
                 for (int j = GameScr.gssx; j < GameScr.gssxe; j++)
                 {
+                    if (j < 0 || j >= tmw)
+                    {
+                        continue;
+                    }
                     for (int k = GameScr.gssy; k < GameScr.gssye; k++)
                     {
+                        if (k < 0 || k >= tmh)
+                        {
+                            continue;
+                        }
                         if (j == 0 || j == tmw - 1)
                         {
                             continue;
@@ -629,7 +653,7 @@ namespace Game1
                             if (tileID == 3)
                             {
                             }
-                            if ((tileTypeAt(j, k) & 0x10) == 16)
+                            if ((tileTypeAt(j, k) & 0x10) == 16 && num != -1)
                             {
                                 bx = j * size - GameScr.cmx;
                                 dbx = bx - GameScr.gW2;
@@ -652,10 +676,14 @@ namespace Game1
                         }
                     }
                 }
-                if (GameScr.cmx < 24)
+                if (GameScr.cmx < 24 && tmw > 1)
                 {
                     for (int l = GameScr.gssy; l < GameScr.gssye; l++)
                     {
+                        if (l < 0 || l >= tmh)
+                        {
+                            continue;
+                        }
                         int num2 = maps[l * tmw + 1] - 1;
                         if (num2 != -1)
                         {
@@ -668,12 +696,19 @@ namespace Game1
                     return;
                 }
                 int num3 = tmw - 2;
-                for (int m = GameScr.gssy; m < GameScr.gssye; m++)
+                if (num3 >= 0 && num3 < tmw)
                 {
-                    int num4 = maps[m * tmw + num3] - 1;
-                    if (num4 != -1)
+                    for (int m = GameScr.gssy; m < GameScr.gssye; m++)
                     {
-                        paintTile(g, num4, num3 + 1, m);
+                        if (m < 0 || m >= tmh)
+                        {
+                            continue;
+                        }
+                        int num4 = maps[m * tmw + num3] - 1;
+                        if (num4 != -1)
+                        {
+                            paintTile(g, num4, num3 + 1, m);
+                        }
                     }
                 }
             }

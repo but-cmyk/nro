@@ -58,10 +58,11 @@ public class Item {
     }
 
     public String getName() {
-        return template.name;
+        return template != null ? template.name : "";
     }
 
     public String getInfoItem() {
+        if (template == null) return "";
         String strInfo = "|1|" + template.name + "\n|0|";
         for (ItemOption itemOption : itemOptions) {
             strInfo += itemOption.getOptionString() + "\n";
@@ -71,7 +72,7 @@ public class Item {
     }
 
     public String getContent() {
-        return "Yêu cầu sức mạnh " + this.template.strRequire + " trở lên";
+        return this.template != null ? "Yêu cầu sức mạnh " + this.template.strRequire + " trở lên" : "";
     }
 
     public void dispose() {

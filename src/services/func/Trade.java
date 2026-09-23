@@ -399,78 +399,81 @@ public class Trade {
         Player firstLock = player1.id < player2.id ? player1 : player2;
         Player secondLock = player1.id < player2.id ? player2 : player1;
 
-        synchronized (firstLock) {
-            synchronized (secondLock) {
-                byte tradeStatus = SUCCESS;
-                try {
-                    if (player1.isDie() || player2.isDie() || player1.getSession() == null || player2.getSession() == null) {
-                        tradeStatus = FAIL_ERROR;
-                    } else if (goldTrade1 < 0 || player1.inventory.gold < goldTrade1) {
-                        tradeStatus = FAIL_NOT_ENOUGH_GOLD_PLAYER1;
-                    } else if (goldTrade2 < 0 || player2.inventory.gold < goldTrade2) {
-                        tradeStatus = FAIL_NOT_ENOUGH_GOLD_PLAYER2;
-                    } else if (player1.inventory.gold > player1.inventory.getGoldLimit() - goldTrade2) {
-                        tradeStatus = FAIL_MAX_GOLD_PLAYER1;
-                    } else if (player2.inventory.gold > player2.inventory.getGoldLimit() - goldTrade1) {
-                        tradeStatus = FAIL_MAX_GOLD_PLAYER2;
-                    }
-
-                    if (tradeStatus != SUCCESS) {
-                        sendNotifyTrade(tradeStatus);
-                        return;
-                    }
-
-                    for (Item item : itemsTrade1) {
-                        if (!InventoryService.gI().addItemList(itemsBag2, item)) {
-                            tradeStatus = FAIL_NOT_ENOUGH_BAG_P1;
-                            break;
-                        }
-                    }
-
-                    if (tradeStatus != SUCCESS) {
-                        sendNotifyTrade(tradeStatus);
-                        return;
-                    }
-
-                    for (Item item : itemsTrade2) {
-                        if (!InventoryService.gI().addItemList(itemsBag1, item)) {
-                            tradeStatus = FAIL_NOT_ENOUGH_BAG_P2;
-                            break;
-                        }
-                    }
-
-                    if (tradeStatus != SUCCESS) {
-                        sendNotifyTrade(tradeStatus);
-                        return;
-                    }
-
-                    player1.inventory.subGold(goldTrade1);
-                    player1.inventory.addGold(goldTrade2);
-                    player2.inventory.subGold(goldTrade2);
-                    player2.inventory.addGold(goldTrade1);
-                    player1.inventory.itemsBag = itemsBag1;
-                    player2.inventory.itemsBag = itemsBag2;
-
-                    InventoryService.gI().sendItemBags(player1);
-                    InventoryService.gI().sendItemBags(player2);
-                    PlayerService.gI().sendInfoHpMpMoney(player1);
-                    PlayerService.gI().sendInfoHpMpMoney(player2);
-
-                    HistoryTransactionDAO.insert(player1, player2, goldTrade1, goldTrade2, itemsTrade1, itemsTrade2,
-                            bag1Before, bag2Before, this.player1.inventory.itemsBag, this.player2.inventory.itemsBag,
-                            gold1Before, gold2Before, this.player1.inventory.gold, this.player2.inventory.gold);
-
-                    database.daos.PlayerDAO.updatePlayersInTransactionAsync(player1, player2);
-
-                    sendNotifyTrade(SUCCESS);
-                } catch (Exception e) {
-                    Logger.logException(Trade.class, e);
-                    sendNotifyTrade(FAIL_ERROR);
-                } finally {
-                    closeTab();
-                    dispose();
+        firstLock.getTradeLock().lock();
+        secondLock.getTradeLock().lock();
+        try {
+            byte tradeStatus = SUCCESS;
+            try {
+                if (player1.isDie() || player2.isDie() || player1.getSession() == null || player2.getSession() == null) {
+                    tradeStatus = FAIL_ERROR;
+                } else if (goldTrade1 < 0 || player1.inventory.gold < goldTrade1) {
+                    tradeStatus = FAIL_NOT_ENOUGH_GOLD_PLAYER1;
+                } else if (goldTrade2 < 0 || player2.inventory.gold < goldTrade2) {
+                    tradeStatus = FAIL_NOT_ENOUGH_GOLD_PLAYER2;
+                } else if (player1.inventory.gold > player1.inventory.getGoldLimit() - goldTrade2) {
+                    tradeStatus = FAIL_MAX_GOLD_PLAYER1;
+                } else if (player2.inventory.gold > player2.inventory.getGoldLimit() - goldTrade1) {
+                    tradeStatus = FAIL_MAX_GOLD_PLAYER2;
                 }
+
+                if (tradeStatus != SUCCESS) {
+                    sendNotifyTrade(tradeStatus);
+                    return;
+                }
+
+                for (Item item : itemsTrade1) {
+                    if (!InventoryService.gI().addItemList(itemsBag2, item)) {
+                        tradeStatus = FAIL_NOT_ENOUGH_BAG_P1;
+                        break;
+                    }
+                }
+
+                if (tradeStatus != SUCCESS) {
+                    sendNotifyTrade(tradeStatus);
+                    return;
+                }
+
+                for (Item item : itemsTrade2) {
+                    if (!InventoryService.gI().addItemList(itemsBag1, item)) {
+                        tradeStatus = FAIL_NOT_ENOUGH_BAG_P2;
+                        break;
+                    }
+                }
+
+                if (tradeStatus != SUCCESS) {
+                    sendNotifyTrade(tradeStatus);
+                    return;
+                }
+
+                player1.inventory.subGold(goldTrade1);
+                player1.inventory.addGold(goldTrade2);
+                player2.inventory.subGold(goldTrade2);
+                player2.inventory.addGold(goldTrade1);
+                player1.inventory.itemsBag = itemsBag1;
+                player2.inventory.itemsBag = itemsBag2;
+
+                InventoryService.gI().sendItemBags(player1);
+                InventoryService.gI().sendItemBags(player2);
+                PlayerService.gI().sendInfoHpMpMoney(player1);
+                PlayerService.gI().sendInfoHpMpMoney(player2);
+
+                HistoryTransactionDAO.insertAsync(player1, player2, goldTrade1, goldTrade2, itemsTrade1, itemsTrade2,
+                        bag1Before, bag2Before, this.player1.inventory.itemsBag, this.player2.inventory.itemsBag,
+                        gold1Before, gold2Before, this.player1.inventory.gold, this.player2.inventory.gold);
+
+                database.daos.PlayerDAO.updatePlayersInTransactionAsync(player1, player2);
+
+                sendNotifyTrade(SUCCESS);
+            } catch (Exception e) {
+                Logger.logException(Trade.class, e);
+                sendNotifyTrade(FAIL_ERROR);
+            } finally {
+                closeTab();
+                dispose();
             }
+        } finally {
+            secondLock.getTradeLock().unlock();
+            firstLock.getTradeLock().unlock();
         }
     }
 

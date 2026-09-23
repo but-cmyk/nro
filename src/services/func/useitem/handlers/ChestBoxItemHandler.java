@@ -36,7 +36,7 @@ public class ChestBoxItemHandler implements ItemActionHandler {
         int id = item.template.id;
         return id == 570 || id == 380 || id == 1426 || id == 1427 || id == 1428 || id == 1429
                 || id == 648 || id == 1143 || id == 1198 || id == 1199 || id == 1200 || id == 736
-                || id == 1318 || id == 1319 || id == 2000;
+                || id == 1318 || id == 1319 || id == 2000 || id == 1324;
     }
 
     @Override
@@ -63,6 +63,7 @@ public class ChestBoxItemHandler implements ItemActionHandler {
             case 736 -> ItemService.gI().OpenItem736(player, item);
             case 1318, 1319 -> useHopbabytry(player, item);
             case 2000 -> itemSKH(player, item);
+            case 1324 -> useHopQuaThanLinh(player, item);
         }
     }
 
@@ -271,5 +272,10 @@ public class ChestBoxItemHandler implements ItemActionHandler {
 
     public static void itemSKH(Player pl, Item item) {
         NpcService.gI().createMenuConMeo(pl, item.template.id, -1, "Hãy chọn một món quà", "Áo", "Quần", "Găng", "Giày", "Rada", "Từ Chối");
+    }
+
+    public static void useHopQuaThanLinh(Player player, Item item) {
+        NpcService.gI().createMenuConMeo(player, ConstNpc.HOP_QUA_THAN_LINH, -1,
+                "Chọn set Thần Linh bạn muốn nhận:", "Set Trái Đất", "Set Namếc", "Set Xayda", "Từ chối");
     }
 }

@@ -40,10 +40,7 @@ public class MapDauDinh extends Boss {
             if (Util.isTrue(50, 100)) {
                 short itTemp = (short) services.ItemService.gI().randTempItemDoSao(plKill.gender);
                 ItemMap itDoSao = new ItemMap(this.zone, itTemp, 1, this.location.x + Util.nextInt(-20, 20), this.zone.map.yPhysicInTop(this.location.x, this.location.y - 24), plKill.id);
-                var ops = services.ItemService.gI().getListOptionItemShop(itTemp);
-                if (!ops.isEmpty()) {
-                    itDoSao.options = ops;
-                }
+                services.RewardService.gI().initBaseOptionClothes(itTemp, itDoSao.itemTemplate.type, itDoSao.options);
                 itDoSao.options.add(new models.item.Item.ItemOption(107, Util.nextInt(1, 3)));
                 Service.gI().dropItemMap(this.zone, itDoSao);
             } else {

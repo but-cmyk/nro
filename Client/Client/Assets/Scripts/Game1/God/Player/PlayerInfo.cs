@@ -28,23 +28,44 @@ namespace Game1.God
         }
         private void Login()
         {
-            if(GameCanvas.currentScreen is LoginScr || GameCanvas.currentScreen is ServerListScreen)
+            if (GameCanvas.currentScreen is ServerListScreen)
             {
-                if(GameCanvas.loginScr == null)
+                long now = mSystem.currentTimeMillis();
+                if (timeWait == 0)
                 {
-                    GameCanvas.loginScr = new LoginScr();
+                    timeWait = now;
                 }
-                GameCanvas.loginScr.switchToMe();
-                if (mSystem.currentTimeMillis() - timeWait >= 15000L)
+                // Chờ 3 giây để người chơi nhận biết thông báo mất kết nối, sau đó tự đăng nhập lại
+                if (now - timeWait >= 3000L)
                 {
-                    timeWait = mSystem.currentTimeMillis();
-                    if (mSystem.currentTimeMillis() - timeLogin >= 2000L)
+                    timeWait = now + 10000L; // Cooldown 10s giữa các lần thử lại
+                    GameCanvas.endDlg();
+                    if (GameCanvas.serverScreen != null)
                     {
-                        timeLogin = mSystem.currentTimeMillis();
-                        if (GameCanvas.currentScreen is LoginScr)
-                            GameCanvas.loginScr.doLogin();
+                        GameCanvas.serverScreen.perform(3, null); // Chọn "Chơi tiếp: [acc]"
                     }
                 }
+            }
+            else if (GameCanvas.currentScreen is LoginScr)
+            {
+                long now = mSystem.currentTimeMillis();
+                if (timeWait == 0)
+                {
+                    timeWait = now;
+                }
+                if (now - timeWait >= 3000L)
+                {
+                    timeWait = now + 10000L;
+                    GameCanvas.endDlg();
+                    if (GameCanvas.loginScr != null)
+                    {
+                        GameCanvas.loginScr.doLogin();
+                    }
+                }
+            }
+            else
+            {
+                timeWait = 0;
             }
         }
     }
