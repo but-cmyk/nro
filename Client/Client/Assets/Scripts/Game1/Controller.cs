@@ -4036,6 +4036,21 @@ namespace Game1
                                 Char.myCharz().cPower += num181;
                                 Char.myCharz().cTiemNang += num181;
                             }
+                            try
+                            {
+                                if (msg.reader().available() >= 16)
+                                {
+                                    Char.myCharz().cPower = msg.reader().readLong();
+                                    Char.myCharz().cTiemNang = msg.reader().readLong();
+                                }
+                                else if (msg.reader().available() >= 8)
+                                {
+                                    Char.myCharz().cPower = msg.reader().readLong();
+                                }
+                            }
+                            catch (Exception)
+                            {
+                            }
                             Char.myCharz().applyCharLevelPercent();
                             if (Char.myCharz().cTypePk != 3)
                             {

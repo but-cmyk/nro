@@ -1,0 +1,202 @@
+{
+  "version": "1.0.0",
+  "description": "Fast-Path Semantic Code Routing Index for NRO Project (Server Java & Client Unity C#)",
+  "routes": [
+    {
+      "domain": "economy_items",
+      "keywords": ["item", "vat_pham", "tui_do", "ruong_do", "inventory", "dupe", "giao_dich", "trade", "dap_do", "combine", "ba_hat_mit", "nang_cap", "pha_le_hoa", "shop", "ky_gui", "consign"],
+      "doc_module": "src/services/GEMINI.md",
+      "core_files": [
+        "src/services/ItemService.java",
+        "src/services/CombineService.java",
+        "src/services/func/Trade.java",
+        "src/services/ShopService.java",
+        "src/services/ConsignShopService.java",
+        "src/models/player/Inventory.java"
+      ],
+      "key_methods": [
+        "ItemService.createNewItem",
+        "ItemService.addItemBag",
+        "ItemService.subQuantityItemsBag",
+        "CombineService.combine",
+        "CombineService.showInfoCombine",
+        "Trade.tradeItem",
+        "Inventory.addItemSpecial"
+      ],
+      "invariants": [
+        "Check quantityRequired <= item.quantity trước khi trừ",
+        "Không bao giờ để quantity <= 0",
+        "Luôn đồng bộ lock item khi Combine / Trade để chặn spam packet dupe",
+        "Tạo item mới phải qua deep copy / createNewItem, cấm gán tham chiếu static template"
+      ]
+    },
+    {
+      "domain": "player_engine",
+      "keywords": ["player", "nguoi_choi", "npoint", "chi_so", "hp", "ki", "dame", "suc_danh", "giap", "chi_mang", "suc_manh", "tiem_nang", "de_tu", "pet", "cai_trang", "skill", "ky_nang", "hieu_ung", "bien_khi", "choang", "overflow"],
+      "doc_module": "src/models/player/GEMINI.md",
+      "core_files": [
+        "src/models/player/Player.java",
+        "src/models/player/NPoint.java",
+        "src/models/player/PlayerSkill.java",
+        "src/models/player/EffectSkill.java",
+        "src/services/PetService.java"
+      ],
+      "key_methods": [
+        "NPoint.calPoint",
+        "NPoint.setHp",
+        "NPoint.setMp",
+        "NPoint.addHp",
+        "Player.zone",
+        "PlayerSkill.getSkillbyId",
+        "PetService.createPet"
+      ],
+      "invariants": [
+        "Chỉ số tích lũy (tiềm năng, sức mạnh, exp, hp tối đa) bắt buộc dùng long để tránh tràn số 2 tỷ",
+        "Trong NPoint.calPoint() luôn phân biệt rõ player.isPet, player.isBoss, player.isPl",
+        "Khởi tạo nPoint, taskMain, location trước khi load vào map"
+      ]
+    },
+    {
+      "domain": "world_map_mob",
+      "keywords": ["map", "ban_do", "khu_vuc", "zone", "mob", "quai", "quai_vat", "spawn", "tilemap", "roi_do", "drop", "chuyen_map", "waypoint", "dich_chuyen"],
+      "doc_module": "src/models/map/GEMINI.md",
+      "core_files": [
+        "src/models/map/Map.java",
+        "src/models/map/Zone.java",
+        "src/models/map/Mob.java",
+        "src/models/map/TileMap.java",
+        "src/services/MapService.java"
+      ],
+      "key_methods": [
+        "Zone.update",
+        "Zone.load_players",
+        "Zone.load_mobs",
+        "Mob.update",
+        "Mob.injured",
+        "MapService.changeMap"
+      ],
+      "invariants": [
+        "Zone loop dùng ConcurrentHashMap hoặc synchronize khi duyệt players/mobs tránh ConcurrentModificationException",
+        "Tọa độ di chuyển phải clamp trong giới hạn mapWidth và mapHeight"
+      ]
+    },
+    {
+      "domain": "boss_event",
+      "keywords": ["boss", "trum", "fide", "broly", "cooler", "super_broly", "xuat_hien", "spawn_boss", "ai_boss", "hoi_sinh_boss", "boss_manager", "reward_boss"],
+      "doc_module": "src/models/boss/GEMINI.md",
+      "core_files": [
+        "src/models/boss/Boss.java",
+        "src/models/boss/BossData.java",
+        "src/models/boss/BossesData.java",
+        "src/services/BossManager.java"
+      ],
+      "key_methods": [
+        "Boss.active",
+        "Boss.update",
+        "Boss.afk",
+        "Boss.leaveMap",
+        "Boss.reward",
+        "BossManager.loadBoss"
+      ],
+      "invariants": [
+        "Boss kế thừa từ Player nhưng không áp dụng các set kích hoạt / cải trang đồ của player trừ kịch bản đặc thù",
+        "Khi Boss chết phải dọn sạch đối tượng khỏi Zone trước khi respawn"
+      ]
+    },
+    {
+      "domain": "task_achievement",
+      "keywords": ["task", "nhiem_vu", "danh_hieu", "task_danh_hieu", "task_main", "side_task", "clan_task", "nhiem_vu_bang", "thuong_nhiem_vu"],
+      "doc_module": "src/models/task/GEMINI.md",
+      "core_files": [
+        "src/models/task/TaskDanhHieu.java",
+        "src/models/task/TaskPlayer.java",
+        "src/models/task/TaskOrder.java",
+        "src/services/TaskService.java"
+      ],
+      "key_methods": [
+        "TaskService.checkDoneTask",
+        "TaskService.rewardTask",
+        "TaskDanhHieu.checkDone",
+        "TaskDanhHieu.addCount"
+      ],
+      "invariants": [
+        "Task index phải đồng bộ với dữ liệu XML/JSON nhiệm vụ bên Client",
+        "Khi hoàn thành task phải cập nhật DB đồng thời gửi packet cập nhật UI cho client"
+      ]
+    },
+    {
+      "domain": "network_socket",
+      "keywords": ["network", "socket", "netty", "packet", "message", "opcode", "command", "controller", "session", "disconnect", "connect", "writebyte", "readbyte", "protocol"],
+      "doc_module": "src/network/GEMINI.md",
+      "core_files": [
+        "src/server/NettyServer.java",
+        "src/server/NettySession.java",
+        "src/server/Message.java",
+        "src/server/Controller.java",
+        "src/services/Service.java"
+      ],
+      "key_methods": [
+        "Controller.onMessage",
+        "Service.sendMessage",
+        "Message.writer",
+        "Message.reader",
+        "NettySession.sendMessage"
+      ],
+      "invariants": [
+        "Thứ tự write byte/short/int/UTF ở Service.java phải khớp 100% với Controller.cs của Client",
+        "Chuỗi UTF null phải ghi chuỗi rỗng \"\" tránh ném StreamCorruptedException",
+        "Kiểm tra channel.isWritable() khi gửi các packet lớn (-74 data)"
+      ]
+    },
+    {
+      "domain": "database_storage",
+      "keywords": ["database", "db", "mysql", "hikaricp", "dao", "playerdao", "superrankdao", "sql", "query", "save_player", "load_player", "mojibake", "utf8mb4", "connection_pool"],
+      "doc_module": "src/database/GEMINI.md",
+      "core_files": [
+        "src/database/AlyraManager.java",
+        "src/database/daos/PlayerDAO.java",
+        "src/database/daos/SuperRankDAO.java",
+        "src/database/NDVSqlFetcher.java"
+      ],
+      "key_methods": [
+        "AlyraManager.getConnection",
+        "PlayerDAO.updatePlayer",
+        "PlayerDAO.createNewPlayer",
+        "SuperRankDAO.loadRank"
+      ],
+      "invariants": [
+        "100% truy vấn DB bắt buộc dùng try-with-resources để tự động đóng Connection/PreparedStatement/ResultSet",
+        "Bọc dấu backtick cho các cột trùng từ khóa MySQL 8.0: `rank`, `order`, `group`",
+        "Tuyệt đối không giữ static Connection dùng chung"
+      ]
+    },
+    {
+      "domain": "client_unity",
+      "keywords": ["client", "unity", "csharp", "cs", "gamecanvas", "mothercanvas", "gamescr", "panel", "session_me", "controller_cs", "service_cs", "single_client", "ui_freeze", "paint", "fps"],
+      "doc_module": "Client/Client/Assets/Scripts/GEMINI.md",
+      "core_files": [
+        "Client/Client/Assets/Scripts/Game1/GameCanvas.cs",
+        "Client/Client/Assets/Scripts/Game1/GameScr.cs",
+        "Client/Client/Assets/Scripts/Game1/Panel.cs",
+        "Client/Client/Assets/Scripts/Game1/Session_ME.cs",
+        "Client/Client/Assets/Scripts/Game1/Controller.cs",
+        "Client/Client/Assets/Scripts/Game1/Service.cs",
+        "Client/Client/Assets/Scripts/Game1/Network/Handlers/CombatPacketHandler.cs",
+        "Client/Client/Assets/Scripts/Game1/Network/Handlers/TradePacketHandler.cs"
+      ],
+      "key_methods": [
+        "GameCanvas.update",
+        "GameCanvas.paint",
+        "Panel.setType",
+        "Controller.onMessage",
+        "Service.requestLogin",
+        "Session_ME.sendMessage"
+      ],
+      "invariants": [
+        "Đồng bộ thứ tự đọc stream 1:1 với Server Service.java",
+        "Reset toàn bộ popup và cờ chuyển màn hình khi vào game tránh đơ UI",
+        "Không cấp phát bộ nhớ rác (GC alloc: new string, new byte[]) trong paint() và update() 60 FPS"
+      ]
+    }
+  ]
+}

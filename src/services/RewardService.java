@@ -34,10 +34,10 @@ public class RewardService {
                 optionId = 96;
             case 443 -> //phản sát thương
                 optionId = 97;
-            case 444 ->
-                optionId = 73;
-            case 445 -> {
-            }
+            case 444 -> //xuyên giáp chưởng
+                optionId = 98;
+            case 445 -> //xuyên giáp cận chiến
+                optionId = 99;
             case 446 -> //vàng
                 optionId = 100;
             case 447 -> //tnsm
@@ -48,18 +48,18 @@ public class RewardService {
                 optionId = 96;
             case 1354 -> //phản sát thương
                 optionId = 97;
-            case 1355 ->
-                optionId = 73;
-            case 1356 ->
-                optionId = 95;
+            case 1355 -> //xuyên giáp chưởng
+                optionId = 98;
+            case 1356 -> //xuyên giáp cận chiến
+                optionId = 99;
             case 1357 -> //vàng
                 optionId = 100;
             case 1358 -> //tnsm
                 optionId = 101;
-            case 1350 -> //tnsm
+            case 1350 -> //chí mạng
                 optionId = 14;
             case 1351 -> //tnsm
-                optionId = 198;
+                optionId = 101;
             case 1359 -> {
                 itemReward.itemOptions.add(new Item.ItemOption(95, 6));
                 return;
@@ -74,11 +74,13 @@ public class RewardService {
                 return;
             }
             case 1362 -> {
-                itemReward.itemOptions.add(new Item.ItemOption(73, 6));
+                //xuyên giáp chưởng
+                itemReward.itemOptions.add(new Item.ItemOption(98, 6));
                 return;
             }
             case 1363 -> {
-                itemReward.itemOptions.add(new Item.ItemOption(95, 6));
+                //xuyên giáp cận chiến
+                itemReward.itemOptions.add(new Item.ItemOption(99, 6));
                 return;
             }
             case 1364 -> {
@@ -92,13 +94,13 @@ public class RewardService {
                 return;
             }
             case 1366 -> {
-                //tnsm
+                //chí mạng
                 itemReward.itemOptions.add(new Item.ItemOption(14, 6));
                 return;
             }
             case 1367 -> {
                 //tnsm
-                itemReward.itemOptions.add(new Item.ItemOption(198, 6));
+                itemReward.itemOptions.add(new Item.ItemOption(101, 6));
                 return;
             }
         }

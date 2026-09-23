@@ -103,6 +103,10 @@ namespace Game1
 
     	public string getOptionString()
     	{
+    		if (optionTemplateId == 73 || optionTemplateId == 206)
+    		{
+    			return string.Empty;
+    		}
     		ItemOptionTemplate opt = optionTemplate;
     		string templateName = (opt != null) ? opt.name : null;
     		if (string.IsNullOrEmpty(templateName) && optionTemplateId >= 0)
@@ -111,17 +115,21 @@ namespace Game1
     		}
     		if (!string.IsNullOrEmpty(templateName))
     		{
+    			if (templateName.StartsWith("Option", System.StringComparison.OrdinalIgnoreCase))
+    			{
+    				return string.Empty;
+    			}
     			return NinjaUtil.replace(templateName, "#", param + string.Empty);
-    		}
-    		if (optionTemplateId >= 0)
-    		{
-    			return "Option " + optionTemplateId + ": +" + param;
     		}
     		return string.Empty;
     	}
 
     	public string getOptionName()
     	{
+    		if (optionTemplateId == 73 || optionTemplateId == 206)
+    		{
+    			return string.Empty;
+    		}
     		ItemOptionTemplate opt = optionTemplate;
     		string templateName = (opt != null) ? opt.name : null;
     		if (string.IsNullOrEmpty(templateName) && optionTemplateId >= 0)
@@ -130,27 +138,35 @@ namespace Game1
     		}
     		if (!string.IsNullOrEmpty(templateName))
     		{
+    			if (templateName.StartsWith("Option", System.StringComparison.OrdinalIgnoreCase))
+    			{
+    				return string.Empty;
+    			}
     			string name = NinjaUtil.replace(templateName, "+#", string.Empty);
     			name = NinjaUtil.replace(name, "#", string.Empty);
     			name = NinjaUtil.replace(name, "$", string.Empty);
     			return name;
-    		}
-    		if (optionTemplateId >= 0)
-    		{
-    			return "Option " + optionTemplateId;
     		}
     		return string.Empty;
     	}
 
     	public string getOptiongColor()
     	{
+    		if (optionTemplateId == 73 || optionTemplateId == 206)
+    		{
+    			return string.Empty;
+    		}
     		ItemOptionTemplate opt = optionTemplate;
     		string templateName = (opt != null) ? opt.name : null;
     		if (string.IsNullOrEmpty(templateName) && optionTemplateId >= 0)
     		{
     			templateName = DefaultItemOptions.GetOptionName(optionTemplateId);
     		}
-    		return (templateName != null) ? NinjaUtil.replace(templateName, "$", string.Empty) : "";
+    		if (string.IsNullOrEmpty(templateName) || templateName.StartsWith("Option", System.StringComparison.OrdinalIgnoreCase))
+    		{
+    			return string.Empty;
+    		}
+    		return NinjaUtil.replace(templateName, "$", string.Empty);
     	}
     }
 }
