@@ -32,4 +32,4 @@ data/wal/
 scratch/
 __pycache__/
 *.pyc
-
+**/.vs/
