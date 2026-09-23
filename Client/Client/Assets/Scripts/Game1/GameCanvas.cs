@@ -1190,11 +1190,22 @@ namespace Game1
     						fillRect(g, color1, 0, yb[num - 1] + bgH[num - 1], GameScr.gW, yb[num] - (yb[num - 1] + bgH[num - 1]), deltaY);
     					}
     				}
+    				if (num == 0 && (color2 == -1 || color2 == 0))
+    				{
+    					if (typeBg == 0)
+    					{
+    						color2 = 0x0D4F0D;
+    					}
+    					else if (colorBotton != null && colorBotton.Length > 0 && colorBotton[0] != -1 && colorBotton[0] != 0)
+    					{
+    						color2 = colorBotton[0];
+    					}
+    				}
     				if (color2 != -1 && color2 != 0)
     				{
     					if (num == 0)
     					{
-    						fillRect(g, color2, 0, yb[num] + bgH[num], GameScr.gW, GameScr.gH - (yb[num] + bgH[num]), deltaY);
+    						fillRect(g, color2, 0, yb[num] + bgH[num], GameScr.gW, ((h > GameScr.gH) ? h : GameScr.gH) - (yb[num] + bgH[num]), deltaY);
     					}
     					else
     					{
@@ -1547,6 +1558,10 @@ namespace Game1
     		try
     		{
     			int gH = GameScr.gH23;
+    			if (gH <= 0)
+    			{
+    				gH = h * 2 / 3;
+    			}
     			switch (typeBg)
     			{
     			case 0:
@@ -1848,7 +1863,7 @@ namespace Game1
     							while (botY2 >= 0)
     							{
     								imgBG[j].getRGB(ref data2, 0, 1, mGraphics.getRealImageWidth(imgBG[j]) / 2, botY2, 1, 1);
-    								if (data2[0] != 0 && ((data2[0] >> 24) & 0xFF) > 128)
+    								if (data2[0] != 0 && (((data2[0] >> 24) & 0xFF) > 128 || ((data2[0] >> 24) & 0xFF) == 0))
     								{
     									botColor2 = data2[0];
     									break;
@@ -1902,12 +1917,16 @@ namespace Game1
     							while (botY3 >= 0)
     							{
     								imgBG[k].getRGB(ref data3, 0, 1, mGraphics.getRealImageWidth(imgBG[k]) / 2, botY3, 1, 1);
-    								if (data3[0] != 0 && ((data3[0] >> 24) & 0xFF) > 128)
+    								if (data3[0] != 0 && (((data3[0] >> 24) & 0xFF) > 128 || ((data3[0] >> 24) & 0xFF) == 0))
     								{
     									botColor3 = data3[0];
     									break;
     								}
     								botY3--;
+    							}
+    							if (botColor3 == -1 && typeBg == 0 && k == 0)
+    							{
+    								botColor3 = 0x0D4F0D;
     							}
     							colorBotton[k] = botColor3;
     						}
@@ -3191,6 +3210,7 @@ namespace Game1
     
     	public static void paintShukiren(int x, int y, mGraphics g)
     	{
+    		Main.f = (gameTick / 2) % 8;
     		g.drawRegion(imgShuriken, 0, Main.f * 16, 16, 16, 0, x, y, mGraphics.HCENTER | mGraphics.VCENTER);
     	}
     

@@ -26,6 +26,11 @@ namespace Game1
     	{
     		GameCanvas.clearKeyPressed();
     		GameCanvas.clearKeyHold();
+    		if (GameCanvas.currentScreen is SplashScr && SplashScr.splashScrStat < SplashScr.MIN_SPLASH_TICKS)
+    		{
+    			SplashScr.pendingScreen = this;
+    			return;
+    		}
     		if (GameCanvas.currentScreen != null)
     		{
     			GameCanvas.currentScreen.unLoad();

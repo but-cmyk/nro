@@ -347,17 +347,17 @@ namespace Game1
     	public override void paint(mGraphics g)
 	{
 		int num = 105;
-		if (!GameCanvas.paintBG || GameCanvas.imgBG == null)
-		{
-			TileMap.lastBgID = -1;
-			TileMap.lastType = -1;
-			GameCanvas.loadBG(0);
-		}
 		if (GameScr.cmy == 0 && GameScr.cmx == 0)
 		{
 			GameScr.loadCamera(true, -1, -1);
 			GameScr.cmx = 100;
 			GameScr.cmy = 200;
+		}
+		if (!GameCanvas.paintBG || GameCanvas.imgBG == null)
+		{
+			TileMap.lastBgID = -1;
+			TileMap.lastType = -1;
+			GameCanvas.loadBG(0);
 		}
 		GameCanvas.paintBGGameScr(g);
 		int num2 = 2;

@@ -1268,7 +1268,8 @@ namespace Game1
     		float num = cl.r * 255f;
     		float num2 = cl.b * 255f;
     		float num3 = cl.g * 255f;
-    		return (((int)num & 0xFF) << 16) | (((int)num3 & 0xFF) << 8) | ((int)num2 & 0xFF);
+    		float num4 = cl.a * 255f;
+    		return (((int)num4 & 0xFF) << 24) | (((int)num & 0xFF) << 16) | (((int)num3 & 0xFF) << 8) | ((int)num2 & 0xFF);
     	}
     
     	public static int getRealImageWidth(Image img)

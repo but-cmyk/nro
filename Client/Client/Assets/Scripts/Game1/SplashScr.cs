@@ -2,6 +2,10 @@ namespace Game1
 {
     public class SplashScr : mScreen
     {
+    	public const int MIN_SPLASH_TICKS = 45;
+
+    	public static mScreen pendingScreen;
+
     	public static int splashScrStat;
     
     	private bool isCheckConnect;
@@ -28,11 +32,12 @@ namespace Game1
     	public static void loadSplashScr()
     	{
     		splashScrStat = 0;
+    		pendingScreen = null;
     	}
     
     	public override void update()
     	{
-    		if (splashScrStat == 30 && !isCheckConnect)
+    		if (splashScrStat == 20 && !isCheckConnect)
     		{
     			isCheckConnect = true;
     			if (Rms.loadRMSInt("serverchat") != -1)
@@ -60,6 +65,13 @@ namespace Game1
     		}
     		splashScrStat++;
     		ServerListScreen.updateDeleteData();
+    		if (pendingScreen != null && splashScrStat >= MIN_SPLASH_TICKS && nData == -1)
+    		{
+    			mScreen next = pendingScreen;
+    			pendingScreen = null;
+    			next.switchToMe();
+    			return;
+    		}
     		if (splashScrStat >= 150)
     		{
     			Res.outz("cho man hinh nay qa lau");
@@ -125,90 +137,120 @@ namespace Game1
     
     	public override void paint(mGraphics g)
     	{
-    		if (imgLogo != null && splashScrStat < 30)
-    		{
-    			g.setColor(16777215);
-    			g.fillRect(0, 0, GameCanvas.w, GameCanvas.h);
-    			g.drawImage(imgLogo, GameCanvas.w / 2, GameCanvas.h / 2, 3);
-    		}
     		if (nData != -1)
-		{
-			if (!GameCanvas.paintBG || GameCanvas.imgBG == null)
-			{
-				TileMap.lastBgID = -1;
-				TileMap.lastType = -1;
-				GameCanvas.loadBG(0);
-			}
-			if (GameScr.cmy == 0 && GameScr.cmx == 0)
-			{
-				GameScr.loadCamera(true, -1, -1);
-				GameScr.cmx = 100;
-				GameScr.cmy = 200;
-			}
-			GameCanvas.paintBGGameScr(g);
-			g.drawImage(LoginScr.imgTitle, GameCanvas.w / 2, GameCanvas.h / 2 - 40, StaticObj.BOTTOM_HCENTER);
+    		{
+    			if (!GameCanvas.paintBG || GameCanvas.imgBG == null)
+    			{
+    				TileMap.lastBgID = -1;
+    				TileMap.lastType = -1;
+    				GameCanvas.loadBG(0);
+    			}
+    			if (GameScr.cmy == 0 && GameScr.cmx == 0)
+    			{
+    				GameScr.loadCamera(true, -1, -1);
+    				GameScr.cmx = 100;
+    				GameScr.cmy = 200;
+    			}
+    			GameCanvas.paintBGGameScr(g);
+    			if (LoginScr.imgTitle != null)
+    			{
+    				g.drawImage(LoginScr.imgTitle, GameCanvas.w / 2, GameCanvas.h / 2 - 40, StaticObj.BOTTOM_HCENTER);
+    			}
 
-			int percent = (maxData > 0) ? (nData * 100 / maxData) : 0;
-			mFont.tahoma_7b_dark.drawString(g, mResources.downloading_data + percent + "%", GameCanvas.w / 2, GameCanvas.h / 2 - 12, 2);
+    			int percent = (maxData > 0) ? (nData * 100 / maxData) : 0;
+    			mFont.tahoma_7b_dark.drawString(g, mResources.downloading_data + percent + "%", GameCanvas.w / 2, GameCanvas.h / 2 - 12, 2);
 
-			int barW = 190;
-			int barH = 11;
-			int barX = GameCanvas.w / 2 - barW / 2;
-			int barY = GameCanvas.h / 2 + 6;
+    			int barW = 190;
+    			int barH = 11;
+    			int barX = GameCanvas.w / 2 - barW / 2;
+    			int barY = GameCanvas.h / 2 + 6;
 
-			g.setColor(0x4a1403);
-			g.fillRect(barX, barY, barW, barH, 4);
-			g.setColor(0x8c2b06);
-			g.drawRect(barX, barY, barW, barH);
+    			g.setColor(0x4a1403);
+    			g.fillRect(barX, barY, barW, barH, 4);
+    			g.setColor(0x8c2b06);
+    			g.drawRect(barX, barY, barW, barH);
 
-			int fillW = (int)((float)barW * (float)percent / 100f);
-			if (fillW > barW) fillW = barW;
-			if (fillW > 0)
-			{
-				g.setColor(0x00d2d3);
-				g.fillRect(barX, barY, fillW, barH, 4);
-				g.setColor(0xffffff);
-				g.fillRect(barX, barY + 1, fillW, 2);
-			}
-		}
-		else if (splashScrStat >= 30)
-		{
-			g.setColor(0);
-			g.fillRect(0, 0, GameCanvas.w, GameCanvas.h);
-			GameCanvas.paintShukiren(GameCanvas.hw, GameCanvas.hh, g);
-			if (ServerListScreen.cmdDeleteRMS != null)
-			{
-				int btnW = 96;
-				int btnH = 24;
-				int btnX = GameCanvas.w - btnW - 6;
-				int btnY = GameCanvas.h - btnH - 6;
-				ServerListScreen.cmdDeleteRMS.x = btnX;
-				ServerListScreen.cmdDeleteRMS.y = btnY;
-				ServerListScreen.cmdDeleteRMS.w = btnW;
-				ServerListScreen.cmdDeleteRMS.h = btnH;
+    			int fillW = (int)((float)barW * (float)percent / 100f);
+    			if (fillW > barW) fillW = barW;
+    			if (fillW > 0)
+    			{
+    				g.setColor(0x00d2d3);
+    				g.fillRect(barX, barY, fillW, barH, 4);
+    				g.setColor(0xffffff);
+    				g.fillRect(barX, barY + 1, fillW, 2);
+    			}
+    			return;
+    		}
 
-				bool isHover = ServerListScreen.cmdDeleteRMS.isPointerPressInside();
-				if (Command.btn0left != null && Command.btn0mid != null && Command.btn0right != null)
-				{
-					Command.paintOngMau(isHover ? Command.btn1left : Command.btn0left, isHover ? Command.btn1mid : Command.btn0mid, isHover ? Command.btn1right : Command.btn0right, btnX, btnY, btnW, g);
-				}
-				else
-				{
-					g.setColor(0x6d1f05);
-					g.fillRect(btnX, btnY, btnW, btnH, 5);
-					g.setColor(0xfcd34d);
-					g.fillRect(btnX + 1, btnY + 1, btnW - 2, btnH - 2, 4);
-					g.setColor(isHover ? 0xf58e38 : 0xe67824);
-					g.fillRect(btnX + 2, btnY + 2, btnW - 4, btnH - 4, 3);
-				}
-				mFont.tahoma_7b_dark.drawString(g, mResources.xoadulieu, btnX + btnW / 2, btnY + 6, 2);
-			}
-		}
+    		// Nền tối sang trọng (Dark Slate Navy)
+    		g.setColor(0x0c0f17);
+    		g.fillRect(0, 0, GameCanvas.w, GameCanvas.h);
+
+    		// 1. Logo Game
+    		if (LoginScr.imgTitle == null)
+    		{
+    			LoginScr.imgTitle = GameCanvas.loadImage("/mainImage/logo1.png");
+    		}
+    		if (LoginScr.imgTitle != null)
+    		{
+    			g.drawImage(LoginScr.imgTitle, GameCanvas.hw, GameCanvas.hh - 28, StaticObj.BOTTOM_HCENTER);
+    		}
+
+    		// 2. Viên ngọc rồng xoay xoay
+    		int ballY = GameCanvas.hh + 18;
+    		GameCanvas.paintShukiren(GameCanvas.hw, ballY, g);
+
+    		// 3. Dòng chữ trang nhã kèm dấu ba chấm động
+    		string dots = "";
+    		int dotCount = (splashScrStat / 8) % 4;
+    		for (int i = 0; i < dotCount; i++)
+    		{
+    			dots += ".";
+    		}
+    		string loadingText = "Đang kiểm tra dữ liệu và kết nối máy chủ" + dots;
+    		int textY = ballY + 18;
+
+    		// Đổ bóng chữ để tạo chiều sâu thẩm mỹ
+    		mFont.tahoma_7_grey.drawString(g, loadingText, GameCanvas.hw + 1, textY + 1, 2);
+    		mFont.tahoma_7b_white.drawString(g, loadingText, GameCanvas.hw, textY, 2);
+
+    		// 4. Nút Xóa dữ liệu (góc dưới bên phải)
+    		if (ServerListScreen.cmdDeleteRMS != null)
+    		{
+    			int btnW = 96;
+    			int btnH = 24;
+    			int btnX = GameCanvas.w - btnW - 6;
+    			int btnY = GameCanvas.h - btnH - 6;
+    			ServerListScreen.cmdDeleteRMS.x = btnX;
+    			ServerListScreen.cmdDeleteRMS.y = btnY;
+    			ServerListScreen.cmdDeleteRMS.w = btnW;
+    			ServerListScreen.cmdDeleteRMS.h = btnH;
+
+    			bool isHover = ServerListScreen.cmdDeleteRMS.isPointerPressInside();
+    			if (Command.btn0left != null && Command.btn0mid != null && Command.btn0right != null)
+    			{
+    				Command.paintOngMau(isHover ? Command.btn1left : Command.btn0left, isHover ? Command.btn1mid : Command.btn0mid, isHover ? Command.btn1right : Command.btn0right, btnX, btnY, btnW, g);
+    			}
+    			else
+    			{
+    				g.setColor(0x6d1f05);
+    				g.fillRect(btnX, btnY, btnW, btnH, 5);
+    				g.setColor(0xfcd34d);
+    				g.fillRect(btnX + 1, btnY + 1, btnW - 2, btnH - 2, 4);
+    				g.setColor(isHover ? 0xf58e38 : 0xe67824);
+    				g.fillRect(btnX + 2, btnY + 2, btnW - 4, btnH - 4, 3);
+    			}
+    			mFont.tahoma_7b_dark.drawString(g, mResources.xoadulieu, btnX + btnW / 2, btnY + 6, 2);
+    		}
     	}
     
     	public static void loadImg()
     	{
     		imgLogo = GameCanvas.loadImage("/gamelogo.png");
+    		if (LoginScr.imgTitle == null)
+    		{
+    			LoginScr.imgTitle = GameCanvas.loadImage("/mainImage/logo1.png");
+    		}
     	}
     }
 }
