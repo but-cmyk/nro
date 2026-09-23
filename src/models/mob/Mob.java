@@ -232,6 +232,9 @@ public class Mob {
         if (pl.zone.map.mapId >= 53 && pl.zone.map.mapId <= 63) {
             tiemNang *= 3;
         }
+        if (this.lvMob > 0) {
+            tiemNang *= 3;
+        }
         if (tiemNang <= 0) {
             tiemNang = 1;
         }
@@ -640,13 +643,17 @@ public class Mob {
         }
 
       //========================VÀNG RƠI========================
-        if (Util.isTrue(5 * co4LaRate, 100)) { // 10% mặc định, 20% khi có cỏ 4 lá
+        if (this.lvMob > 0 || Util.isTrue(5 * co4LaRate, 100)) { // 10% mặc định, 20% khi có cỏ 4 lá, siêu quái luôn rơi vàng
             int vang = MapService.gI().isMapNappa(mapid) ? Util.nextInt(5000, 10000)
                     : MapService.gI().isMap3Planets(mapid) ? Util.nextInt(500, 1000)
                     : MapService.gI().isMapTuongLai(mapid) ? Util.nextInt(9000, 15000)
                     : MapService.gI().isMapCold(mapid) ? Util.nextInt(15000, 20000)
                     : (mapid >= 155 && mapid <= 159) ? Util.nextInt(10000, 15000)
                             : Util.nextInt(1000, 5000);
+
+            if (this.lvMob > 0) {
+                vang *= 3;
+            }
 
             if (player.nPoint.tlGold > 0) {
                 vang += vang * player.nPoint.tlGold / 100;

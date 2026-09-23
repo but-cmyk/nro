@@ -2449,7 +2449,10 @@ namespace Game1
     				Char.myCharz().mobFocus = null;
     				Char.myCharz().currentMovePoint = null;
     			}
-    			isAutoPlay = true;
+    			if (canAutoPlay)
+    			{
+    				isAutoPlay = true;
+    			}
     			if (!isMeCanAttackMob(Char.myCharz().mobFocus))
     			{
     				Res.outz("can not attack");
@@ -2519,11 +2522,21 @@ namespace Game1
     				}
     				if (num4 > num3 && Res.abs(Char.myCharz().cy - Char.myCharz().mobFocus.getY()) > 40 && Char.myCharz().mobFocus.getTemplate().type == 4)
     				{
-    					Char.myCharz().currentMovePoint = new MovePoint(Char.myCharz().cx + Char.myCharz().cdir, Char.myCharz().mobFocus.getY());
-    					Char.myCharz().endMovePointCommand = new Command(null, null, 8002, null);
-    					GameCanvas.clearKeyHold();
-    					GameCanvas.clearKeyPressed();
-    					return false;
+    					if (canAutoPlay)
+    					{
+    						Char.myCharz().currentMovePoint = null;
+    						Char.myCharz().cx = Char.myCharz().mobFocus.getX();
+    						Char.myCharz().cy = Char.myCharz().mobFocus.getY();
+    						Service.gI().charMove();
+    					}
+    					else
+    					{
+    						Char.myCharz().currentMovePoint = new MovePoint(Char.myCharz().cx + Char.myCharz().cdir, Char.myCharz().mobFocus.getY());
+    						Char.myCharz().endMovePointCommand = new Command(null, null, 8002, null);
+    						GameCanvas.clearKeyHold();
+    						GameCanvas.clearKeyPressed();
+    						return false;
+    					}
     				}
     				int num5 = 20;
     				bool flag = false;
@@ -2550,56 +2563,62 @@ namespace Game1
     				}
     				if (num3 <= num5 && !flag2)
     				{
-    					if (Char.myCharz().cx > Char.myCharz().mobFocus.getX())
+    					if (num3 < 10)
     					{
-    						int num7 = Char.myCharz().mobFocus.getX() + num5 + (flag ? 30 : 0);
-    						int i = Char.myCharz().mobFocus.getX();
-    						bool flag3 = false;
-    						for (; i < num7; i += 24)
+    						if (Char.myCharz().cx > Char.myCharz().mobFocus.getX())
     						{
-    							if (TileMap.tileTypeAtPixel(i, Char.myCharz().cy + 3) == 8 || TileMap.tileTypeAtPixel(i, Char.myCharz().cy + 3) == 4)
+    							int num7 = Char.myCharz().mobFocus.getX() + num5 + (flag ? 30 : 0);
+    							int i = Char.myCharz().mobFocus.getX();
+    							bool flag3 = false;
+    							for (; i < num7; i += 24)
     							{
-    								flag3 = true;
-    								break;
+    								if (TileMap.tileTypeAtPixel(i, Char.myCharz().cy + 3) == 8 || TileMap.tileTypeAtPixel(i, Char.myCharz().cy + 3) == 4)
+    								{
+    									flag3 = true;
+    									break;
+    								}
     							}
-    						}
-    						if (flag3)
-    						{
-    							Char.myCharz().cx = i - 24;
+    							if (flag3)
+    							{
+    								Char.myCharz().cx = i - 24;
+    							}
+    							else
+    							{
+    								Char.myCharz().cx = num7;
+    							}
+    							Char.myCharz().cdir = -1;
     						}
     						else
     						{
-    							Char.myCharz().cx = num7;
+    							int num8 = Char.myCharz().mobFocus.getX() - num5 - (flag ? 30 : 0);
+    							int num9 = Char.myCharz().mobFocus.getX();
+    							bool flag4 = false;
+    							while (num9 > num8)
+    							{
+    								if (TileMap.tileTypeAtPixel(num9, Char.myCharz().cy + 3) == 8 || TileMap.tileTypeAtPixel(num9, Char.myCharz().cy + 3) == 4)
+    								{
+    									flag4 = true;
+    									break;
+    								}
+    								num9 -= 24;
+    							}
+    							if (flag4)
+    							{
+    								Char.myCharz().cx = num9 + 24;
+    							}
+    							else
+    							{
+    								Char.myCharz().cx = num8;
+    							}
+    							Char.myCharz().cdir = 1;
     						}
-    						Char.myCharz().cdir = -1;
+    						Service.gI().charMove();
     					}
     					else
     					{
-    						int num8 = Char.myCharz().mobFocus.getX() - num5 - (flag ? 30 : 0);
-    						int num9 = Char.myCharz().mobFocus.getX();
-    						bool flag4 = false;
-    						while (num9 > num8)
-    						{
-    							if (TileMap.tileTypeAtPixel(num9, Char.myCharz().cy + 3) == 8 || TileMap.tileTypeAtPixel(num9, Char.myCharz().cy + 3) == 4)
-    							{
-    								flag4 = true;
-    								break;
-    							}
-    							num9 -= 24;
-    						}
-    						if (flag4)
-    						{
-    							Char.myCharz().cx = num9 + 24;
-    						}
-    						else
-    						{
-    							Char.myCharz().cx = num8;
-    						}
-    						Char.myCharz().cdir = 1;
+    						Char.myCharz().cdir = (Char.myCharz().cx <= Char.myCharz().mobFocus.getX()) ? 1 : -1;
     					}
-    					Service.gI().charMove();
     				}
-    				GameCanvas.clearKeyHold();
     				GameCanvas.clearKeyPressed();
     				return true;
     			}
@@ -2611,11 +2630,22 @@ namespace Game1
     			int approachDist = System.Math.Min(reachX - 15, 30);
     			if (approachDist < 20) approachDist = 20;
     			int num10 = ((!flag5) ? approachDist : 50) * ((Char.myCharz().cx > Char.myCharz().mobFocus.getX()) ? 1 : (-1));
-    			Char.myCharz().currentMovePoint = new MovePoint(Char.myCharz().mobFocus.getX() + num10, Char.myCharz().mobFocus.getY());
-    			Char.myCharz().endMovePointCommand = new Command(null, null, 8002, null);
-    			GameCanvas.clearKeyHold();
-    			GameCanvas.clearKeyPressed();
-    			return false;
+    			if (canAutoPlay)
+    			{
+    				Char.myCharz().currentMovePoint = null;
+    				Char.myCharz().cx = Char.myCharz().mobFocus.getX() + num10;
+    				Char.myCharz().cy = Char.myCharz().mobFocus.getY();
+    				Service.gI().charMove();
+    				num3 = Math.abs(Char.myCharz().cx - Char.myCharz().mobFocus.getX());
+    				num4 = Math.abs(Char.myCharz().cy - Char.myCharz().mobFocus.getY());
+    			}
+    			else
+    			{
+    				Char.myCharz().currentMovePoint = new MovePoint(Char.myCharz().mobFocus.getX() + num10, Char.myCharz().mobFocus.getY());
+    				Char.myCharz().endMovePointCommand = new Command(null, null, 8002, null);
+    				GameCanvas.clearKeyPressed();
+    				return false;
+    			}
     		}
     		if (Char.myCharz().npcFocus != null)
     		{
@@ -3054,7 +3084,15 @@ namespace Game1
     			}
     			if (Char.myCharz().skillPaint != null)
     			{
-    				return;
+    				if (Char.myCharz().hasSendAttack && (GameCanvas.keyHold[(!Main.isPC) ? 4 : 23] || GameCanvas.keyHold[(!Main.isPC) ? 6 : 24] || GameCanvas.keyHold[(!Main.isPC) ? 2 : 21]))
+    				{
+    					Char.myCharz().skillPaint = null;
+    					Char.myCharz().skillPaintRandomPaint = null;
+    				}
+    				else
+    				{
+    					return;
+    				}
     			}
     			if (GameCanvas.keyAsciiPress != 0)
     			{
@@ -3916,6 +3954,10 @@ namespace Game1
     			if (obj is Mob)
     			{
     				Char.myCharz().mobFocus = (Mob)obj;
+    				if (canAutoPlay)
+    				{
+    					isAutoPlay = true;
+    				}
     			}
     			if (Char.myCharz().myskill == null && Char.myCharz().vSkillFight.size() > 0)
     			{
@@ -4062,13 +4104,27 @@ namespace Game1
     	private void checkAuto()
     	{
     		long num = mSystem.currentTimeMillis();
-    		if (GameCanvas.keyPressed[(!Main.isPC) ? 2 : 21] || GameCanvas.keyPressed[(!Main.isPC) ? 4 : 23] || GameCanvas.keyPressed[(!Main.isPC) ? 6 : 24] || GameCanvas.keyPressed[1] || GameCanvas.keyPressed[3])
+    		if (GameCanvas.keyPressed[(!Main.isPC) ? 2 : 21] || GameCanvas.keyPressed[(!Main.isPC) ? 4 : 23] || GameCanvas.keyPressed[(!Main.isPC) ? 6 : 24] || GameCanvas.keyPressed[(!Main.isPC) ? 8 : 22] || GameCanvas.keyPressed[1] || GameCanvas.keyPressed[3] ||
+    		    GameCanvas.keyHold[(!Main.isPC) ? 2 : 21] || GameCanvas.keyHold[(!Main.isPC) ? 4 : 23] || GameCanvas.keyHold[(!Main.isPC) ? 6 : 24] || GameCanvas.keyHold[(!Main.isPC) ? 8 : 22] || (GameCanvas.keyHold[1] && mobCapcha == null) || (GameCanvas.keyHold[3] && mobCapcha == null))
     		{
     			auto = 0;
-    			isAutoPlay = false;
+    			if (isAutoPlay)
+    			{
+    				isAutoPlay = false;
+    				Char.myCharz().mobFocus = null;
+    				Char.myCharz().currentMovePoint = null;
+    			}
     		}
     		if (GameCanvas.keyPressed[(!Main.isPC) ? 5 : 25] && !isPaintPopup())
     		{
+    			if (canAutoPlay && !isAutoPlay)
+    			{
+    				isAutoPlay = true;
+    				if (Char.myCharz().mobFocus == null)
+    				{
+    					autoPlay();
+    				}
+    			}
     			if (auto == 0)
     			{
     				if (num - lastFire < 800 && checkSkillValid2() && (Char.myCharz().mobFocus != null || (Char.myCharz().charFocus != null && Char.myCharz().isMeCanAttackOtherPlayer(Char.myCharz().charFocus))))
@@ -4190,7 +4246,7 @@ namespace Game1
     		{
     			timeSkill--;
     		}
-    		if (!canAutoPlay || isChangeZone || Char.myCharz().statusMe == 14 || Char.myCharz().statusMe == 5 || Char.myCharz().isCharge || Char.myCharz().isFlyAndCharge || Char.myCharz().isUseChargeSkill())
+    		if (!canAutoPlay || !isAutoPlay || isChangeZone || Char.myCharz().statusMe == 14 || Char.myCharz().statusMe == 5 || Char.myCharz().isCharge || Char.myCharz().isFlyAndCharge || Char.myCharz().isUseChargeSkill())
     		{
     			return;
     		}
@@ -4225,24 +4281,38 @@ namespace Game1
     		{
     			doUseHP();
     		}
-    		if (Char.myCharz().mobFocus == null || (Char.myCharz().mobFocus != null && Char.myCharz().mobFocus.isMobMe))
+    		if (Char.myCharz().mobFocus != null && (Char.myCharz().mobFocus.hp <= 0 || Char.myCharz().mobFocus.status == 1 || Char.myCharz().mobFocus.status == 0 || Char.myCharz().mobFocus.isMobMe))
     		{
+    			Char.myCharz().mobFocus = null;
+    		}
+    		if (Char.myCharz().mobFocus == null)
+    		{
+    			MyVector aliveMobs = new MyVector();
     			for (int k = 0; k < vMob.size(); k++)
     			{
     				Mob mob2 = (Mob)vMob.elementAt(k);
-    				if (mob2.status != 0 && mob2.status != 1 && mob2.hp > 0 && !mob2.isMobMe)
+    				if (mob2 != null && mob2.status != 0 && mob2.status != 1 && mob2.hp > 0 && !mob2.isMobMe)
     				{
-    					Char.myCharz().cx = mob2.x;
-    					Char.myCharz().cy = mob2.y;
-    					Char.myCharz().mobFocus = mob2;
-    					Service.gI().charMove();
-    					break;
+    					aliveMobs.addElement(mob2);
     				}
     			}
+    			if (aliveMobs.size() > 0)
+    			{
+    				int rndIndex = Res.random(0, aliveMobs.size());
+    				Mob chosenMob = (Mob)aliveMobs.elementAt(rndIndex);
+    				Char.myCharz().currentMovePoint = null;
+    				Char.myCharz().cx = chosenMob.x;
+    				Char.myCharz().cy = chosenMob.y;
+    				Char.myCharz().mobFocus = chosenMob;
+    				Service.gI().charMove();
+    			}
     		}
-    		else if (Char.myCharz().mobFocus.hp <= 0 || Char.myCharz().mobFocus.status == 1 || Char.myCharz().mobFocus.status == 0)
+    		else if (Res.distance(Char.myCharz().cx, Char.myCharz().cy, Char.myCharz().mobFocus.x, Char.myCharz().mobFocus.y) > 60)
     		{
-    			Char.myCharz().mobFocus = null;
+    			Char.myCharz().currentMovePoint = null;
+    			Char.myCharz().cx = Char.myCharz().mobFocus.x;
+    			Char.myCharz().cy = Char.myCharz().mobFocus.y;
+    			Service.gI().charMove();
     		}
     		if (Char.myCharz().mobFocus == null || timeSkill != 0 || (Char.myCharz().skillInfoPaint() != null && Char.myCharz().indexSkill < Char.myCharz().skillInfoPaint().Length && Char.myCharz().dart != null && Char.myCharz().arr != null))
     		{
@@ -5056,7 +5126,7 @@ namespace Game1
     		{
     			shock_scr = 30;
     		}
-    		if (isAutoPlay && GameCanvas.gameTick % 20 == 0)
+    		if (canAutoPlay && isAutoPlay && GameCanvas.gameTick % 10 == 0)
     		{
     			autoPlay();
     		}

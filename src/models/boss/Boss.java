@@ -902,7 +902,7 @@ public class Boss extends Player implements IBoss {
 
     @Override
     public void moveToPlayer(Player pl) {
-        if (pl.location != null) {
+        if (pl != null && pl.location != null) {
             moveTo(pl.location.x, pl.location.y);
         }
     }
@@ -911,7 +911,18 @@ public class Boss extends Player implements IBoss {
     public void moveTo(int x, int y) {
         byte dir = (byte) (this.location.x - x < 0 ? 1 : -1);
         byte move = (byte) Util.nextInt(40, 60);
-        PlayerService.gI().playerMove(this, this.location.x + (dir == 1 ? move : -move), y + (Util.isTrue(3, 10) ? -50 : 0));
+        int targetX = this.location.x + (dir == 1 ? move : -move);
+        int targetY = y;
+        if (this.zone != null && this.zone.map != null) {
+            targetX = Math.max(30, Math.min(this.zone.map.mapWidth - 30, targetX));
+            int groundY = this.zone.map.yPhysicInTop(targetX, Math.max(0, y - 24));
+            if (groundY > 0) {
+                targetY = (Util.isTrue(3, 10) && groundY > 80) ? (groundY - 40) : groundY;
+            } else {
+                targetY = Math.max(24, Math.min(this.zone.map.mapHeight - 48, y));
+            }
+        }
+        PlayerService.gI().playerMove(this, targetX, targetY);
     }
 
     public void chat(String text) {
@@ -1057,11 +1068,14 @@ public class Boss extends Player implements IBoss {
     }
 
     protected void teleportNearPlayer(Player pl) {
-        if (pl == null) {
+        if (pl == null || pl.location == null) {
             return;
         }
         int dis = Util.nextInt(40, 50);
         int newX = pl.location.x + (Util.isTrue(50, 100) ? dis : -dis);
+        if (this.zone != null && this.zone.map != null) {
+            newX = Math.max(30, Math.min(this.zone.map.mapWidth - 30, newX));
+        }
         PlayerService.gI().playerMove(this, newX, pl.location.y);
     }
 

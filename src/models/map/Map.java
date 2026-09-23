@@ -347,7 +347,17 @@ public class Map {
                     break;
                 }
             }
-            return rY;
+            if (rY == 0) {
+                // Quét từ trên xuống để tìm tile top bất kỳ trong cột
+                for (int i = 0; i < tileMap.length; i++) {
+                    if (isTileTop(tileMap[i][rX])) {
+                        rY = i * SIZE;
+                        break;
+                    }
+                }
+            }
+            // Không bao giờ trả về 0 (nóc trời), trả về rY nếu tìm thấy hoặc độ cao an toàn
+            return rY > 0 ? rY : (y > 0 ? y : (tileMap.length * SIZE - 48));
         } catch (Exception e) {
             return y;
         }

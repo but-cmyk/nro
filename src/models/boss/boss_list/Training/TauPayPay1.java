@@ -9,6 +9,7 @@ import utils.Util;
 
 import java.io.IOException;
 
+import managers.boss.OtherBossManager;
 import consts.BossID;
 import consts.BossStatus;
 import static consts.BossType.PHOBAN;
@@ -27,17 +28,23 @@ public class TauPayPay1 extends TrainingBoss {
 
     @Override
     public void joinMap() {
-        if (playerAtt.zone != null) {
-            this.zone = playerAtt.zone;
-            ChangeMapService.gI().changeMapBySpaceShip(this, this.zone, 775);
+        if (playerAtt != null && playerAtt.zone != null) {
+            ChangeMapService.gI().changeMapBySpaceShip(this, playerAtt.zone, 775);
             this.changeStatus(BossStatus.CHAT_S);
         }
     }
 
     @Override
     public void checkPlayerDie(Player pl) {
-        Service.gI().sendPVB(playerAtt, this, ConstPlayer.PK_PVP);
-        TaskService.gI().doneTask(pl, ConstTask.TASK_9_1);
+        if (pl != null && pl.isDie()) {
+            this.changeToTypeNonPK();
+            Service.gI().sendPlayerVS(playerAtt, null, (byte) 0);
+            if (TaskService.gI().getIdTask(pl) == ConstTask.TASK_9_1) {
+                TaskService.gI().doneTask(pl, ConstTask.TASK_9_1);
+            }
+            this.chat("Hừ, ngươi quá yếu!");
+            this.changeStatus(BossStatus.LEAVE_MAP);
+        }
     }
 
     @Override
@@ -45,11 +52,14 @@ public class TauPayPay1 extends TrainingBoss {
         this.changeStatus(BossStatus.LEAVE_MAP);
         this.chatE();
         this.lastTimeAFK = 0;
+        this.changeToTypeNonPK();
         Service.gI().sendPlayerVS(playerAtt, null, (byte) 0);
-        if (TaskService.gI().getIdTask(plKill) == ConstTask.TASK_9_1) {
-            TaskService.gI().doneTask(plKill, ConstTask.TASK_9_1);
-        } else {
-            TaskService.gI().doneTask(plKill, ConstTask.TASK_10_1);
+        if (plKill != null) {
+            if (TaskService.gI().getIdTask(plKill) == ConstTask.TASK_9_1) {
+                TaskService.gI().doneTask(plKill, ConstTask.TASK_9_1);
+            } else {
+                TaskService.gI().doneTask(plKill, ConstTask.TASK_10_1);
+            }
         }
     }
 
@@ -76,16 +86,12 @@ public class TauPayPay1 extends TrainingBoss {
     @Override
     public void leaveMap() {
         ChangeMapService.gI().spaceShipArrive(this, (byte) 2, ChangeMapService.DEFAULT_SPACE_SHIP);
-        Message msg;
-        try {
-            msg = new Message(-6);
-            msg.writer().writeInt((int) this.id);
-            playerAtt.sendMessage(msg);
-            msg.cleanup();
-            this.zone = null;
-        } catch (IOException e) {
-            Logger.logException(MapService.class, e);
-        }
+        ChangeMapService.gI().exitMap(this);
+        this.lastZone = null;
+        this.lastTimeRest = System.currentTimeMillis();
+        this.changeStatus(BossStatus.REST);
+        OtherBossManager.gI().removeBoss(this);
+        this.dispose();
     }
 
     @Override

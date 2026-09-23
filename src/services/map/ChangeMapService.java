@@ -351,12 +351,14 @@ public class ChangeMapService {
         }
         zoneJoin = checkMapCanJoin(pl, zoneJoin);
         if (zoneJoin != null) {
-            boolean currMapIsCold = MapService.gI().isMapCold(pl.zone.map);
-            boolean nextMapIsCold = MapService.gI().isMapCold(zoneJoin.map);
-            boolean nextMapIsMabu = MapService.gI().isMapMaBu(zoneJoin.map.mapId);
-            boolean sameZone = pl.zone.map.mapId == zoneJoin.map.mapId;
+            boolean currMapIsCold = pl.zone != null && MapService.gI().isMapCold(pl.zone.map);
+            boolean nextMapIsCold = zoneJoin.map != null && MapService.gI().isMapCold(zoneJoin.map);
+            boolean nextMapIsMabu = zoneJoin.map != null && MapService.gI().isMapMaBu(zoneJoin.map.mapId);
+            boolean sameZone = pl.zone != null && pl.zone.map.mapId == zoneJoin.map.mapId;
             if (typeSpace == AUTO_SPACE_SHIP) {
-                spaceShipArrive(pl, (byte) 0, pl.haveTennisSpaceShip ? TENNIS_SPACE_SHIP : DEFAULT_SPACE_SHIP);
+                if (pl.zone != null) {
+                    spaceShipArrive(pl, (byte) 0, pl.haveTennisSpaceShip ? TENNIS_SPACE_SHIP : DEFAULT_SPACE_SHIP);
+                }
                 pl.idMark.setIdSpaceShip(pl.haveTennisSpaceShip ? TENNIS_SPACE_SHIP : DEFAULT_SPACE_SHIP);
             } else {
                 pl.idMark.setIdSpaceShip(typeSpace);
@@ -423,8 +425,9 @@ public class ChangeMapService {
                     }
                 }
             }
-            if (zoneJoin.map.mapId == 47) {
-                if (TaskService.gI().getIdTask(pl) > ConstTask.TASK_9_0 && TaskService.gI().getIdTask(pl) < ConstTask.TASK_10_2) {
+            if (zoneJoin.map.mapId == 47 && pl.isPl()) {
+                int idTask = TaskService.gI().getIdTask(pl);
+                if (idTask == ConstTask.TASK_9_1 || idTask == ConstTask.TASK_10_1) {
                     TrainingService.gI().callBoss(pl, BossID.TAUPAYPAY, false);
                 }
             }
@@ -467,8 +470,7 @@ public class ChangeMapService {
     }
 
     public void changeMapWaypoint(Player player) {
-        if (!Util.canDoWithTime(player.timeChangeZone, 1000)) {
-            Service.gI().resetPoint(player, player.location.x, player.location.y);
+        if (!Util.canDoWithTime(player.timeChangeZone, 400)) {
             return;
         }
         Zone zoneJoin = null;
@@ -538,13 +540,17 @@ public class ChangeMapService {
             return;
 
         } else {
-            resetPoint(player);
+            if (player.zone != null && player.zone.map != null) {
+                int minBorder = 24;
+                int maxBorder = player.zone.map.mapWidth - 24;
+                if (player.location.x < minBorder || player.location.x > maxBorder) {
+                    resetPoint(player);
+                }
+            }
             if (MapService.gI().isMapPhoBan(player.zone.map.mapId)) {
                 Service.gI().sendThongBao(player, "Chưa hạ hết đối thủ");
                 return;
             }
-          //  Service.gI().sendThongBao(player, "Bạn chưa thể đến khu vực này");
-
         }
 
     }

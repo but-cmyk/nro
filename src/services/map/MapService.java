@@ -31,8 +31,13 @@ public class MapService {
     }
 
     public WayPoint getWaypointPlayerIn(Player player) {
+        if (player.zone == null || player.zone.map == null || player.zone.map.wayPoints == null) {
+            return null;
+        }
+        int pad = 30; // Dung sai 30px bù trừ độ trễ mạng khi nhân vật bay hoặc chạy tốc độ cao
         for (WayPoint wp : player.zone.map.wayPoints) {
-            if (player.location.x >= wp.minX && player.location.x <= wp.maxX && player.location.y >= wp.minY && player.location.y <= wp.maxY) {
+            if (player.location.x >= (wp.minX - pad) && player.location.x <= (wp.maxX + pad)
+                    && player.location.y >= (wp.minY - pad) && player.location.y <= (wp.maxY + pad)) {
                 return wp;
             }
         }

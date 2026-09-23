@@ -106,8 +106,8 @@ public class TileMapDataLoader {
         byte[] cachedData = MapDataManager.gI().getTileMapData(mapId);
         if (cachedData != null && cachedData.length > 0) {
             try (DataInputStream dis = new DataInputStream(new ByteArrayInputStream(cachedData))) {
-                int w = dis.readByte();
-                int h = dis.readByte();
+                int w = dis.readUnsignedByte();
+                int h = dis.readUnsignedByte();
                 int[][] tileMap = new int[h][w];
                 for (int[] tm : tileMap) {
                     for (int j = 0; j < tm.length; j++) {
@@ -122,8 +122,8 @@ public class TileMapDataLoader {
         // Fallback đọc trực tiếp từ đĩa nếu cache chưa sẵn sàng
         int[][] tileMap = null;
         try (DataInputStream dis = new DataInputStream(new FileInputStream("data/map/tile_map_data/" + mapId))) {
-            int w = dis.readByte();
-            int h = dis.readByte();
+            int w = dis.readUnsignedByte();
+            int h = dis.readUnsignedByte();
             tileMap = new int[h][w];
             for (int[] tm : tileMap) {
                 for (int j = 0; j < tm.length; j++) {

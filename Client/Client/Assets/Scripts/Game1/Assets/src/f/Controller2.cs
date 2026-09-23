@@ -482,6 +482,7 @@ namespace Game1.Assets.src.f
 					break;
 				case -116:
 					GameScr.canAutoPlay = msg.reader().readByte() == 1;
+					GameScr.isAutoPlay = GameScr.canAutoPlay;
 					break;
 				case -115:
 					Char.myCharz().setPowerInfo(msg.reader().readUTF(), msg.reader().readShort(), msg.reader().readShort(), msg.reader().readShort());

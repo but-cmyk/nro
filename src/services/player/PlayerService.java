@@ -140,7 +140,7 @@ public class PlayerService {
     }
 
     public void playerMove(Player player, int x, int y) {
-        if (player.zone == null) {
+        if (player.zone == null || player.zone.map == null) {
             return;
         }
         if (!player.isDie()) {
@@ -149,6 +149,12 @@ public class PlayerService {
             }
             if (player.effectSkill.useTroi) {
                 EffectSkillService.gI().removeUseTroi(player);
+            }
+            if (player.zone.map.mapWidth > 48) {
+                x = Math.max(24, Math.min(player.zone.map.mapWidth - 24, x));
+            }
+            if (player.zone.map.mapHeight > 48) {
+                y = Math.max(24, Math.min(player.zone.map.mapHeight - 24, y));
             }
             player.location.x = x;
             player.location.y = y;

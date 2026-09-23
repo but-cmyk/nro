@@ -2454,9 +2454,7 @@ namespace Game1
     						}
     						isLockKey = true;
     						ischangingMap = true;
-    						GameCanvas.clearKeyHold();
     						GameCanvas.clearKeyPressed();
-    						InfoDlg.showWait();
     						return;
     					}
     					if (statusMe != 4 && Res.abs(cx - cxSend) + Res.abs(cy - cySend) >= 70 && cy - cySend <= 0 && me)
@@ -3284,7 +3282,7 @@ namespace Game1
     				arr.ay = cy + array2[num].ady;
     			}
     		}
-    		if ((mobFocus != null || (!me && charFocus != null) || (me && charFocus != null && (isMeCanAttackOtherPlayer(charFocus) || isSelectingSkillBuffToPlayer()) && arr == null && dart == null)) && indexSkill == array.Length - 1)
+    		if ((mobFocus != null || (!me && charFocus != null) || (me && charFocus != null && (isMeCanAttackOtherPlayer(charFocus) || isSelectingSkillBuffToPlayer()) && arr == null && dart == null)) && (indexSkill >= array.Length / 2 || indexSkill == array.Length - 1))
     		{
     			setAttack();
     			if (me && myskill.template.isAttackSkill())
@@ -4077,9 +4075,7 @@ namespace Game1
     			}
     			isLockKey = true;
     			ischangingMap = true;
-    			GameCanvas.clearKeyHold();
     			GameCanvas.clearKeyPressed();
-    			InfoDlg.showWait();
     			return;
     		}
     		if (statusMe != 16 && (TileMap.tileTypeAt(cx, cy - ch + 24, 8192) || cy < 0))
@@ -4149,8 +4145,9 @@ namespace Game1
     			cp3 = 0;
     			return;
     		}
-    		if (cy % 24 == 0 && (TileMap.tileTypeAtPixel(cx, cy) & 2) == 2)
+    		if ((TileMap.tileTypeAtPixel(cx, cy) & 2) == 2)
     		{
+    			cy = TileMap.tileYofPixel(cy);
     			delayFall = 0;
     			if (me)
     			{
@@ -6766,6 +6763,16 @@ namespace Game1
     
     	public void moveTo(int toX, int toY, int type)
     	{
+    		if (TileMap.pxw > 20)
+    		{
+    			if (toX < 10) toX = 10;
+    			else if (toX > TileMap.pxw - 10) toX = TileMap.pxw - 10;
+    		}
+    		if (TileMap.pxh > 20)
+    		{
+    			if (toY < 10) toY = 10;
+    			else if (toY > TileMap.pxh - 10) toY = TileMap.pxh - 10;
+    		}
     		if (type == 1 || Res.abs(toX - cx) > 100 || Res.abs(toY - cy) > 300)
     		{
     			createShadow(cx, cy, 10);
