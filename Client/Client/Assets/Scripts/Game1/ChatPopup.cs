@@ -364,6 +364,7 @@ namespace Game1
     			g.translate(0, -cmyText);
     		}
     		int num6 = -1;
+    		int lastAlign = 2;
     		for (int i = 0; i < says.Length; i++)
     		{
     			if (says[i].StartsWith("--"))
@@ -373,27 +374,34 @@ namespace Game1
     				continue;
     			}
     			mFont mFont2 = mFont.tahoma_7;
-    			int num7 = 2;
+    			int num7 = lastAlign;
     			string st = says[i];
     			int num8 = 0;
     			if (says[i].StartsWith("|"))
     			{
     				string[] array = Res.split(says[i], "|", 0);
-    				if (array.Length == 3)
+    				if (array.Length >= 4)
     				{
+    					int.TryParse(array[1], out num8);
+    					int.TryParse(array[2], out num7);
+    					int firstPipe = says[i].IndexOf('|');
+    					int secondPipe = says[i].IndexOf('|', firstPipe + 1);
+    					int thirdPipe = says[i].IndexOf('|', secondPipe + 1);
+    					st = (thirdPipe >= 0 && thirdPipe < says[i].Length - 1) ? says[i].Substring(thirdPipe + 1) : array[3];
+    				}
+    				else if (array.Length == 3)
+    				{
+    					int.TryParse(array[1], out num8);
     					st = array[2];
+    					num7 = 2;
     				}
-    				if (array.Length == 4)
-    				{
-    					st = array[3];
-    					num7 = int.Parse(array[2]);
-    				}
-    				num8 = int.Parse(array[1]);
     				num6 = num8;
+    				lastAlign = num7;
     			}
     			else
     			{
     				num8 = num6;
+    				num7 = lastAlign;
     			}
     			switch (num8)
     			{
@@ -417,6 +425,9 @@ namespace Game1
     				break;
     			case 5:
     				mFont2 = mFont.tahoma_7_blue;
+    				break;
+    			case 6:
+    				mFont2 = mFont.tahoma_7_grey;
     				break;
     			case 7:
     				mFont2 = mFont.tahoma_7b_red;
@@ -451,9 +462,13 @@ namespace Game1
     				{
     					mFont2.drawString(g, st, cx + sayWidth / 2, cy + sayRun + i * 12 - strY + 12, num7);
     				}
-    				if (num7 == 1)
+    				else if (num7 == 1)
     				{
     					mFont2.drawString(g, st, cx + sayWidth - 5, cy + sayRun + i * 12 - strY + 12, num7);
+    				}
+    				else if (num7 == 0)
+    				{
+    					mFont2.drawString(g, st, cx + 5, cy + sayRun + i * 12 - strY + 12, num7);
     				}
     			}
     		}
@@ -553,6 +568,7 @@ namespace Game1
     			return;
     		}
     		int num7 = -1;
+    		int lastAlign2 = 2;
     		for (int i = 0; i < says.Length; i++)
     		{
     			if (says[i].StartsWith("--"))
@@ -562,27 +578,34 @@ namespace Game1
     				continue;
     			}
     			mFont mFont2 = mFont.tahoma_7_white;
-    			int num8 = 2;
+    			int num8 = lastAlign2;
     			string st = says[i];
     			int num9 = 0;
     			if (says[i].StartsWith("|"))
     			{
     				string[] array = Res.split(says[i], "|", 0);
-    				if (array.Length == 3)
+    				if (array.Length >= 4)
     				{
+    					int.TryParse(array[1], out num9);
+    					int.TryParse(array[2], out num8);
+    					int firstPipe = says[i].IndexOf('|');
+    					int secondPipe = says[i].IndexOf('|', firstPipe + 1);
+    					int thirdPipe = says[i].IndexOf('|', secondPipe + 1);
+    					st = (thirdPipe >= 0 && thirdPipe < says[i].Length - 1) ? says[i].Substring(thirdPipe + 1) : array[3];
+    				}
+    				else if (array.Length == 3)
+    				{
+    					int.TryParse(array[1], out num9);
     					st = array[2];
+    					num8 = 2;
     				}
-    				if (array.Length == 4)
-    				{
-    					st = array[3];
-    					num8 = int.Parse(array[2]);
-    				}
-    				num9 = int.Parse(array[1]);
     				num7 = num9;
+    				lastAlign2 = num8;
     			}
     			else
     			{
     				num9 = num7;
+    				num8 = lastAlign2;
     			}
     			switch (num9)
     			{
@@ -625,9 +648,13 @@ namespace Game1
     				{
     					mFont2.drawString(g, st, cx + sayWidth / 2, cy + sayRun + i * 12 - strY, num8);
     				}
-    				if (num8 == 1)
+    				else if (num8 == 1)
     				{
     					mFont2.drawString(g, st, cx + sayWidth - 5, cy + sayRun + i * 12 - strY, num8);
+    				}
+    				else if (num8 == 0)
+    				{
+    					mFont2.drawString(g, st, cx + 5, cy + sayRun + i * 12 - strY, num8);
     				}
     			}
     		}

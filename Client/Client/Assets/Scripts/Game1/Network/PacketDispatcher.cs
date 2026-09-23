@@ -49,16 +49,28 @@ namespace Game1
         private void RegisterHandlers()
         {
             AuthPacketHandler auth = new AuthPacketHandler();
-            Register(auth, -26);
+            Register(auth, NetworkOpcodes.LOGOUT);
 
             PlayerStatsPacketHandler stats = new PlayerStatsPacketHandler();
-            Register(stats, 6, -69, -68, -97);
+            Register(stats, NetworkOpcodes.UPDATE_HP, NetworkOpcodes.UPDATE_MP, NetworkOpcodes.UPDATE_EXP, NetworkOpcodes.UPDATE_NANG_DONG);
 
             TaskNpcPacketHandler npc = new TaskNpcPacketHandler();
-            Register(npc, -70, 38, 32);
+            Register(npc, NetworkOpcodes.TASK_UPDATE, NetworkOpcodes.NPC_MENU, NetworkOpcodes.NPC_CHAT);
 
             ClanPacketHandler clan = new ClanPacketHandler();
-            Register(clan, -51, -53, -52, -50, -47, -46);
+            Register(clan, NetworkOpcodes.CLAN_MESSAGE, NetworkOpcodes.CLAN_INFO, NetworkOpcodes.CLAN_UPDATE, NetworkOpcodes.CLAN_MEMBER, NetworkOpcodes.CLAN_SEARCH, NetworkOpcodes.CLAN_CREATE_INFO);
+
+            TradePacketHandler trade = new TradePacketHandler();
+            Register(trade, NetworkOpcodes.TRADE_ACTION, NetworkOpcodes.TRADE_ORDER);
+
+            ItemPacketHandler item = new ItemPacketHandler();
+            Register(item, NetworkOpcodes.ITEM_MAP_REMOVE, NetworkOpcodes.ITEM_MAP_PICK, NetworkOpcodes.ITEM_MAP_OTHER_PICK, NetworkOpcodes.ITEM_MAP_DROP, NetworkOpcodes.ITEM_MAP_OTHER_DROP, NetworkOpcodes.ITEM_MAP_ADD);
+
+            MapMovementPacketHandler mapMove = new MapMovementPacketHandler();
+            Register(mapMove, NetworkOpcodes.CHANGE_MAP_PREPARE, NetworkOpcodes.RESET_POINT, NetworkOpcodes.MOVE_FAST, NetworkOpcodes.MAP_TRANS);
+
+            CombatPacketHandler combat = new CombatPacketHandler();
+            Register(combat, NetworkOpcodes.CHAR_INJURE, NetworkOpcodes.REVIVE, NetworkOpcodes.MOB_ME_ATTACK, NetworkOpcodes.SKILL_COOLDOWN);
         }
     }
 }

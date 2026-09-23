@@ -102,6 +102,14 @@ namespace Game1
                 {
                     Cout.println("Loi tairequestItemPlayer 1" + ex.ToString());
                 }
+                if (item.options != null && item.options.size() > 0)
+                {
+                    item.itemOption = new ItemOption[item.options.size()];
+                    for (int i = 0; i < item.options.size(); i++)
+                    {
+                        item.itemOption[i] = (ItemOption)item.options.elementAt(i);
+                    }
+                }
             }
             catch (Exception ex2)
             {
@@ -1910,8 +1918,9 @@ namespace Game1
                                     continue;
                                 }
                                 Char.myCharz().arrItemBody[num54] = new Item();
-                                Char.myCharz().arrItemBody[num54].template = ItemTemplates.get(num55);
-                                int num56 = Char.myCharz().arrItemBody[num54].template.type;
+                                ItemTemplate itBody = ItemTemplates.get(num55);
+                                Char.myCharz().arrItemBody[num54].template = itBody;
+                                int num56 = (itBody != null) ? itBody.type : 0;
                                 Char.myCharz().arrItemBody[num54].quantity = msg.reader().readInt();
                                 Char.myCharz().arrItemBody[num54].info = msg.reader().readUTF();
                                 Char.myCharz().arrItemBody[num54].content = msg.reader().readUTF();
@@ -1932,10 +1941,16 @@ namespace Game1
                                 switch (num56)
                                 {
                                     case 0:
-                                        Char.myCharz().body = Char.myCharz().arrItemBody[num54].template.part;
+                                        if (itBody != null)
+                                        {
+                                            Char.myCharz().body = itBody.part;
+                                        }
                                         break;
                                     case 1:
-                                        Char.myCharz().leg = Char.myCharz().arrItemBody[num54].template.part;
+                                        if (itBody != null)
+                                        {
+                                            Char.myCharz().leg = itBody.part;
+                                        }
                                         break;
                                 }
                             }
@@ -3321,19 +3336,16 @@ namespace Game1
                                     num = msg.reader().readShort();
                                     if (itemMap4.template.type == 9)
                                     {
-                                        num = msg.reader().readShort();
                                         Char.myCharz().xu += num;
                                         Char.myCharz().xuStr = Res.formatNumber(Char.myCharz().xu);
                                     }
                                     else if (itemMap4.template.type == 10)
                                     {
-                                        num = msg.reader().readShort();
                                         Char.myCharz().luong += num;
                                         Char.myCharz().luongStr = mSystem.numberTostring(Char.myCharz().luong);
                                     }
                                     else if (itemMap4.template.type == 34)
                                     {
-                                        num = msg.reader().readShort();
                                         Char.myCharz().luongKhoa += num;
                                         Char.myCharz().luongKhoaStr = mSystem.numberTostring(Char.myCharz().luongKhoa);
                                     }
@@ -6015,7 +6027,14 @@ namespace Game1
                                 SoundMn.gI().HP_MPup();
                                 if (Char.myCharz().petFollow != null && Char.myCharz().petFollow.smallID == 5003)
                                 {
-                                    MonsterDart.addMonsterDart(Char.myCharz().petFollow.cmx + ((Char.myCharz().petFollow.dir != 1) ? (-10) : 10), Char.myCharz().petFollow.cmy + 10, true, -1, -1, Char.myCharz(), 29);
+                                    try
+                                    {
+                                        int dartType = (GameScr.darts != null && GameScr.darts.Length > 29 && GameScr.darts[29] != null) ? 29 : 0;
+                                        MonsterDart.addMonsterDart(Char.myCharz().petFollow.cmx + ((Char.myCharz().petFollow.dir != 1) ? (-10) : 10), Char.myCharz().petFollow.cmy + 10, true, -1, -1, Char.myCharz(), dartType);
+                                    }
+                                    catch (Exception)
+                                    {
+                                    }
                                 }
                             }
                             if (Char.myCharz().cHP < cHP)
@@ -6043,7 +6062,14 @@ namespace Game1
                                 SoundMn.gI().HP_MPup();
                                 if (Char.myCharz().petFollow != null && Char.myCharz().petFollow.smallID == 5001)
                                 {
-                                    MonsterDart.addMonsterDart(Char.myCharz().petFollow.cmx + ((Char.myCharz().petFollow.dir != 1) ? (-10) : 10), Char.myCharz().petFollow.cmy + 10, true, -1, -1, Char.myCharz(), 29);
+                                    try
+                                    {
+                                        int dartType = (GameScr.darts != null && GameScr.darts.Length > 29 && GameScr.darts[29] != null) ? 29 : 0;
+                                        MonsterDart.addMonsterDart(Char.myCharz().petFollow.cmx + ((Char.myCharz().petFollow.dir != 1) ? (-10) : 10), Char.myCharz().petFollow.cmy + 10, true, -1, -1, Char.myCharz(), dartType);
+                                    }
+                                    catch (Exception)
+                                    {
+                                    }
                                 }
                             }
                             if (Char.myCharz().cMP < cMP)

@@ -316,16 +316,8 @@ namespace Game1.God
                     perform(4, null);
                     return true;
                 case "tmua":
-                    BackgroudEffect.isEnableRain = !BackgroudEffect.isEnableRain;
-                    if (!BackgroudEffect.isEnableRain)
-                    {
-                        BackgroudEffect.clearAllRain();
-                        GameScr.info1.addInfo("Đã tắt hiệu ứng mưa", 0);
-                    }
-                    else
-                    {
-                        GameScr.info1.addInfo("Đã bật hiệu ứng mưa", 0);
-                    }
+                    bool rState = AutoSettingManager.getInstance().toggleItem("rain");
+                    Utils.addInfo1("Hiệu ứng mưa", rState);
                     return true;
             }
             return false;
@@ -335,40 +327,40 @@ namespace Game1.God
             switch (idAction)
             {
                 case 1:
-                    Revive.getInstance().setRevive();
-                    Utils.addInfo1("Tự Động Hồi Sinh", Revive.getInstance().getRevive());
+                    bool ahsState = AutoSettingManager.getInstance().toggleItem("ahs");
+                    Utils.addInfo1("Tự Động Hồi Sinh", ahsState);
                     break;
                 case 2:
-                    nSkill.getInstance().canAttack =! nSkill.getInstance().canAttack;
-                    Utils.addInfo1("Tự Đánh", nSkill.getInstance().canAttack);
+                    bool akState = AutoSettingManager.getInstance().toggleItem("ak");
+                    Utils.addInfo1("Tự Đánh", akState);
                     break;
                 case 3:
-                    Mobs.IsTanSat =! Mobs.IsTanSat;
-                    Utils.addInfo1("Tàn Sát", Mobs.IsTanSat);
+                    bool tsState = AutoSettingManager.getInstance().toggleItem("ts");
+                    Utils.addInfo1("Tàn Sát", tsState);
                     break;
                 case 4:
-                    PetService.getInstance().setUp();
-                    Utils.addInfo1("Auto Up Đệ", PetService.getInstance().getUp());
+                    bool updeState = AutoSettingManager.getInstance().toggleItem("upde");
+                    Utils.addInfo1("Auto Up Đệ", updeState);
                     break;
                 case 5:
-                    Boss.getInstance().isShow =! Boss.getInstance().isShow;
-                    Utils.addInfo1("Thông báo BOSS", Boss.getInstance().isShow);
+                    bool bossState = AutoSettingManager.getInstance().toggleItem("boss");
+                    Utils.addInfo1("Thông báo BOSS", bossState);
                     break;
                 case 6:
-                    ListChars.getInstance().isShow = !ListChars.getInstance().isShow;
-                    Utils.addInfo1("D.s Nhân Vật", ListChars.getInstance().isShow);
+                    bool dsnvState = AutoSettingManager.getInstance().toggleItem("dsnv");
+                    Utils.addInfo1("D.s Nhân Vật", dsnvState);
                     break;
                 case 7:
-                    Mobs.IsAutoPickItems =!Mobs.IsAutoPickItems;
-                    Utils.addInfo1("Auto Nhặt", Mobs.IsAutoPickItems);
+                    bool pickState = AutoSettingManager.getInstance().toggleItem("pick");
+                    Utils.addInfo1("Auto Nhặt", pickState);
                     break;
                 case 8:
-                    ListChars.getInstance().HideMap = !ListChars.getInstance().HideMap;
-                    Utils.addInfo1("Giảm Đồ Họa", ListChars.getInstance().HideMap);
+                    bool lowgState = AutoSettingManager.getInstance().toggleItem("lowg");
+                    Utils.addInfo1("Giảm Đồ Họa", lowgState);
                     break;
                 case 9:
-                    PlayerInfo.getInstance().canLogin =!PlayerInfo.getInstance().canLogin;
-                    Utils.addInfo1("Auto Login", PlayerInfo.getInstance().canLogin);
+                    bool aloginState = AutoSettingManager.getInstance().toggleItem("alogin");
+                    Utils.addInfo1("Auto Login", aloginState);
                     break;
                 case 10:
                     Utils.startChat(this, "Tốc Độ Game", "Nhập tốc độ game (1 - 100)", TField.INPUT_TYPE_NUMERIC);
@@ -377,12 +369,8 @@ namespace Game1.God
                     Utils.startChat(this, "Tốc Độ Di Chuyển", "Nhập tốc độ di chuyển (4 - 50)", TField.INPUT_TYPE_NUMERIC);
                     break;
                 case 12:
-                    BackgroudEffect.isEnableRain = !BackgroudEffect.isEnableRain;
-                    if (!BackgroudEffect.isEnableRain)
-                    {
-                        BackgroudEffect.clearAllRain();
-                    }
-                    Utils.addInfo1("Hiệu ứng mưa", BackgroudEffect.isEnableRain);
+                    bool rainState = AutoSettingManager.getInstance().toggleItem("rain");
+                    Utils.addInfo1("Hiệu ứng mưa", rainState);
                     break;
             }
         }

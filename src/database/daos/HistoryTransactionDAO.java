@@ -83,12 +83,31 @@ public class HistoryTransactionDAO {
         }
     }
 
+    public static void insertAsync(Player pl1, Player pl2,
+            int goldP1, int goldP2, List<Item> itemP1, List<Item> itemP2,
+            List<Item> bag1Before, List<Item> bag2Before,
+            List<Item> bag1After,
+            List<Item> bag2After,
+            long gold1Before, long gold2Before, long gold1After, long gold2After) {
+        server.ServerManager.gI().execute(() -> {
+            try {
+                insert(pl1, pl2, goldP1, goldP2, itemP1, itemP2, bag1Before, bag2Before, bag1After, bag2After, gold1Before, gold2Before, gold1After, gold2After);
+            } catch (Exception e) {
+                utils.Logger.logException(HistoryTransactionDAO.class, e, "Lỗi khi ghi lịch sử giao dịch async");
+            }
+        });
+    }
+
     public static void deleteHistory() {
-        String sql = "delete from history_transaction where time_tran < '"
-                + TimeUtil.getTimeBeforeCurrent(23 * 24 * 60 * 60 * 1000, "yyyy-MM-dd") + "'";
+        long cutoffMillis = System.currentTimeMillis() - (23L * 24 * 60 * 60 * 1000);
+        String sql = "DELETE FROM history_transaction WHERE time_tran < ?";
         try (Connection con = AlyraManager.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.executeUpdate();
+            ps.setTimestamp(1, new Timestamp(cutoffMillis));
+            int deleted = ps.executeUpdate();
+            if (deleted > 0) {
+                utils.Logger.log("Đã dọn dẹp " + deleted + " bản ghi lịch sử giao dịch cũ (>23 ngày).");
+            }
         } catch (Exception e) {
             utils.Logger.logException(HistoryTransactionDAO.class, e, "Lỗi khi xóa lịch sử giao dịch cũ");
         }

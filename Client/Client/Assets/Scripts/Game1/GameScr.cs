@@ -165,9 +165,85 @@ namespace Game1
     
     	public Item itemFocus;
     
-    	public ItemOptionTemplate[] iOptionTemplates;
+    	public static ItemOptionTemplate[] s_iOptionTemplates;
     
-    	public SkillOptionTemplate[] sOptionTemplates;
+    	public ItemOptionTemplate[] iOptionTemplates
+    	{
+    		get
+    		{
+    			if (s_iOptionTemplates == null || s_iOptionTemplates.Length == 0)
+    			{
+    				loadOptionTemplatesFromRMS();
+    			}
+    			return s_iOptionTemplates;
+    		}
+    		set
+    		{
+    			s_iOptionTemplates = value;
+    		}
+    	}
+    
+    	public static SkillOptionTemplate[] s_sOptionTemplates;
+    
+    	public SkillOptionTemplate[] sOptionTemplates
+    	{
+    		get
+    		{
+    			return s_sOptionTemplates;
+    		}
+    		set
+    		{
+    			s_sOptionTemplates = value;
+    		}
+    	}
+    
+    	public static ItemOptionTemplate getItemOptionTemplate(int id)
+    	{
+    		if (s_iOptionTemplates == null || s_iOptionTemplates.Length == 0)
+    		{
+    			loadOptionTemplatesFromRMS();
+    		}
+    		if (s_iOptionTemplates != null && id >= 0 && id < s_iOptionTemplates.Length && s_iOptionTemplates[id] != null && !string.IsNullOrEmpty(s_iOptionTemplates[id].name))
+    		{
+    			return s_iOptionTemplates[id];
+    		}
+    		return DefaultItemOptions.CreateTemplate(id);
+    	}
+    
+    	public static void loadOptionTemplatesFromRMS()
+    	{
+    		try
+    		{
+    			sbyte[] data = Rms.loadRMS("NRitem0");
+    			if (data != null && data.Length > 2)
+    			{
+    				DataInputStream dataInputStream = new DataInputStream(data);
+    				myReader d = dataInputStream.r;
+    				sbyte vcItem = d.readByte();
+    				sbyte type = d.readByte();
+    				if (type == 0)
+    				{
+    					int count = d.readUnsignedByte();
+    					s_iOptionTemplates = new ItemOptionTemplate[count];
+    					for (int i = 0; i < count; i++)
+    					{
+    						s_iOptionTemplates[i] = new ItemOptionTemplate();
+    						s_iOptionTemplates[i].id = i;
+    						s_iOptionTemplates[i].name = d.readUTF();
+    						s_iOptionTemplates[i].type = d.readByte();
+    					}
+    				}
+    			}
+    		}
+    		catch (Exception ex)
+    		{
+    			Res.outz("loadOptionTemplatesFromRMS error: " + ex.Message);
+    		}
+    		if (s_iOptionTemplates == null || s_iOptionTemplates.Length == 0)
+    		{
+    			s_iOptionTemplates = DefaultItemOptions.CreateAllTemplates();
+    		}
+    	}
     
     	private static Scroll scrInfo = new Scroll();
     
@@ -1656,7 +1732,16 @@ namespace Game1
     		DataInputStream dataInputStream = null;
     		try
     		{
-    			dataInputStream = new DataInputStream(Rms.loadRMS("NR_dart"));
+    			sbyte[] array = Rms.loadRMS("NR_dart");
+    			if (array == null)
+    			{
+    				if (darts == null)
+    				{
+    					darts = new DartInfo[0];
+    				}
+    				return;
+    			}
+    			dataInputStream = new DataInputStream(array);
     			int num = dataInputStream.readShort();
     			darts = new DartInfo[num];
     			for (int i = 0; i < num; i++)
@@ -1694,7 +1779,7 @@ namespace Game1
     				darts[i].head = new short[num2][];
     				for (int n = 0; n < num2; n++)
     				{
-    					short num3 = dataInputStream.readShort();
+    					int num3 = dataInputStream.readShort();
     					darts[i].head[n] = new short[num3];
     					for (int num4 = 0; num4 < num3; num4++)
     					{
@@ -1705,7 +1790,7 @@ namespace Game1
     				darts[i].headBorder = new short[num2][];
     				for (int num5 = 0; num5 < num2; num5++)
     				{
-    					short num6 = dataInputStream.readShort();
+    					int num6 = dataInputStream.readShort();
     					darts[i].headBorder[num5] = new short[num6];
     					for (int num7 = 0; num7 < num6; num7++)
     					{
@@ -1717,12 +1802,19 @@ namespace Game1
     		catch (Exception ex)
     		{
     			Cout.LogError("Loi ham ReadDart: " + ex.ToString());
+    			if (darts == null)
+    			{
+    				darts = new DartInfo[0];
+    			}
     		}
     		finally
     		{
     			try
     			{
-    				dataInputStream.close();
+    				if (dataInputStream != null)
+    				{
+    					dataInputStream.close();
+    				}
     			}
     			catch (Exception ex2)
     			{
@@ -1902,35 +1994,68 @@ namespace Game1
     		{
     			gssw++;
     		}
-    		cmxLim = (TileMap.tmw - 1) * TileMap.size - gW;
-    		cmyLim = (TileMap.tmh - 1) * TileMap.size - gH;
-    		if (cx == -1 && cy == -1)
+    		int mapW = (TileMap.tmw - 1) * TileMap.size;
+    		int mapH = (TileMap.tmh - 1) * TileMap.size;
+    		if (mapW <= gW)
     		{
-    			cmx = (cmtoX = Char.myCharz().cx - gW2 + gW6 * Char.myCharz().cdir);
-    			cmy = (cmtoY = Char.myCharz().cy - gH23);
+    			cmxLim = (TileMap.pxw - gW) / 2;
+    			cmx = (cmtoX = cmxLim);
     		}
     		else
     		{
-    			cmx = (cmtoX = cx - gW23 + gW6 * Char.myCharz().cdir);
-    			cmy = (cmtoY = cy - gH23);
+    			cmxLim = mapW - gW;
+    			if (cx == -1 && cy == -1)
+    			{
+    				if (Char.myCharz() != null)
+    				{
+    					cmx = (cmtoX = Char.myCharz().cx - gW2 + gW6 * Char.myCharz().cdir);
+    				}
+    			}
+    			else
+    			{
+    				if (Char.myCharz() != null)
+    				{
+    					cmx = (cmtoX = cx - gW23 + gW6 * Char.myCharz().cdir);
+    				}
+    			}
+    			if (cmx < 24)
+    			{
+    				cmx = (cmtoX = 24);
+    			}
+    			if (cmx > cmxLim)
+    			{
+    				cmx = (cmtoX = cmxLim);
+    			}
     		}
-    		firstY = cmy;
-    		if (cmx < 24)
+    		if (mapH <= gH)
     		{
-    			cmx = (cmtoX = 24);
-    		}
-    		if (cmx > cmxLim)
-    		{
-    			cmx = (cmtoX = cmxLim);
-    		}
-    		if (cmy < 0)
-    		{
-    			cmy = (cmtoY = 0);
-    		}
-    		if (cmy > cmyLim)
-    		{
+    			cmyLim = mapH - gH;
     			cmy = (cmtoY = cmyLim);
     		}
+    		else
+    		{
+    			cmyLim = mapH - gH;
+    			if (cx == -1 && cy == -1)
+    			{
+    				if (Char.myCharz() != null)
+    				{
+    					cmy = (cmtoY = Char.myCharz().cy - gH23);
+    				}
+    			}
+    			else
+    			{
+    				cmy = (cmtoY = cy - gH23);
+    			}
+    			if (cmy < 0)
+    			{
+    				cmy = (cmtoY = 0);
+    			}
+    			if (cmy > cmyLim)
+    			{
+    				cmy = (cmtoY = cmyLim);
+    			}
+    		}
+    		firstY = cmy;
     		gssx = cmx / TileMap.size - 1;
     		if (gssx < 0)
     		{
@@ -1943,9 +2068,13 @@ namespace Game1
     		{
     			gssy = 0;
     		}
-    		if (gssye > TileMap.tmh - 1)
+    		if (gssxe > TileMap.tmw)
     		{
-    			gssye = TileMap.tmh - 1;
+    			gssxe = TileMap.tmw;
+    		}
+    		if (gssye > TileMap.tmh)
+    		{
+    			gssye = TileMap.tmh;
     		}
     		TileMap.countx = (gssxe - gssx) * 4;
     		if (TileMap.countx > TileMap.tmw)
@@ -1980,6 +2109,20 @@ namespace Game1
     		ChatTextField.gI().parentScreen = instance;
     		ChatTextField.gI().tfChat.y = GameCanvas.h - 35 - ChatTextField.gI().tfChat.height;
     		ChatTextField.gI().initChatTextField();
+    		updateUIPositions();
+    		disXC = ((GameCanvas.w <= 200) ? 30 : 40);
+    		if (Rms.loadRMSInt("viewchat") == -1)
+    		{
+    			GameCanvas.panel.isViewChatServer = true;
+    		}
+    		else
+    		{
+    			GameCanvas.panel.isViewChatServer = Rms.loadRMSInt("viewchat") == 1;
+    		}
+    	}
+
+    	public static void updateUIPositions()
+    	{
     		if (GameCanvas.isTouch)
     		{
     			yTouchBar = gH - 88;
@@ -2002,19 +2145,14 @@ namespace Game1
     				yF -= 5;
     				xTG -= 10;
     			}
+    			if (isAnalog != 0)
+    			{
+    				setTouchBtn();
+    			}
     		}
     		setSkillBarPosition();
-    		disXC = ((GameCanvas.w <= 200) ? 30 : 40);
-    		if (Rms.loadRMSInt("viewchat") == -1)
-    		{
-    			GameCanvas.panel.isViewChatServer = true;
-    		}
-    		else
-    		{
-    			GameCanvas.panel.isViewChatServer = Rms.loadRMSInt("viewchat") == 1;
-    		}
     	}
-    
+
     	public static void setSkillBarPosition()
     	{
     		Skill[] array = ((!GameCanvas.isTouch) ? keySkill : onScreenSkill);
@@ -2110,21 +2248,37 @@ namespace Game1
     			cmdy += cmvy;
     			cmy += cmdy >> 4;
     			cmdy &= 15;
-    			if (cmx < 24)
+    			int mapW = (TileMap.tmw - 1) * TileMap.size;
+    			int mapH = (TileMap.tmh - 1) * TileMap.size;
+    			if (mapW <= gW)
     			{
-    				cmx = 24;
+    				cmx = (cmtoX = (TileMap.pxw - gW) / 2);
     			}
-    			if (cmx > cmxLim)
+    			else
     			{
-    				cmx = cmxLim;
+    				if (cmx < 24)
+    				{
+    					cmx = 24;
+    				}
+    				if (cmx > cmxLim)
+    				{
+    					cmx = cmxLim;
+    				}
     			}
-    			if (cmy < 0)
+    			if (mapH <= gH)
     			{
-    				cmy = 0;
+    				cmy = (cmtoY = mapH - gH);
     			}
-    			if (cmy > cmyLim)
+    			else
     			{
-    				cmy = cmyLim;
+    				if (cmy < 0)
+    				{
+    					cmy = 0;
+    				}
+    				if (cmy > cmyLim)
+    				{
+    					cmy = cmyLim;
+    				}
     			}
     		}
     		gssx = cmx / TileMap.size - 1;
@@ -2139,9 +2293,13 @@ namespace Game1
     		{
     			gssy = 0;
     		}
-    		if (gssye > TileMap.tmh - 1)
+    		if (gssxe > TileMap.tmw)
     		{
-    			gssye = TileMap.tmh - 1;
+    			gssxe = TileMap.tmw;
+    		}
+    		if (gssye > TileMap.tmh)
+    		{
+    			gssye = TileMap.tmh;
     		}
     		TileMap.gssx = (Char.myCharz().cx - 2 * gW) / TileMap.size;
     		if (TileMap.gssx < 0)
@@ -2154,6 +2312,10 @@ namespace Game1
     			TileMap.gssxe = TileMap.tmw;
     			TileMap.gssx = TileMap.gssxe - TileMap.countx;
     		}
+    		if (TileMap.gssx < 0)
+    		{
+    			TileMap.gssx = 0;
+    		}
     		TileMap.gssy = (Char.myCharz().cy - 2 * gH) / TileMap.size;
     		if (TileMap.gssy < 0)
     		{
@@ -2164,6 +2326,10 @@ namespace Game1
     		{
     			TileMap.gssye = TileMap.tmh;
     			TileMap.gssy = TileMap.gssye - TileMap.county;
+    		}
+    		if (TileMap.gssy < 0)
+    		{
+    			TileMap.gssy = 0;
     		}
     		scrMain.updatecm();
     		scrInfo.updatecm();

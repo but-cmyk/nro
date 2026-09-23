@@ -734,151 +734,128 @@ namespace Game1
     		{
     			return;
     		}
+    		int cardW = (GameCanvas.w < 250) ? (GameCanvas.w - 20) : 220;
+    		int cardH = 145;
+    		int cardX = GameCanvas.hw - cardW / 2;
+    		int cardY = GameCanvas.hh - cardH / 2 + 10;
+    		xLog = cardX;
+    		yLog = cardY;
+
+    		if (imgTitle != null)
+    		{
+    			int titleY = Mathf.Max(22, cardY - 45);
+    			g.drawImage(imgTitle, GameCanvas.hw, titleY, 3);
+    		}
+
     		if (GameCanvas.currentDialog == null)
     		{
-    			int h = 105;
-    			int w = ((GameCanvas.w < 200) ? 160 : 180);
-    			PopUp.paintPopUp(g, xLog, yLog - 10, w, h, -1, true);
-    			if (GameCanvas.h > 160 && imgTitle != null)
-    			{
-    				g.drawImage(imgTitle, GameCanvas.hw, 60, 3);
-    			}
-    			GameCanvas.debug("PLG4", 1);
-    			int num2 = 4;
-    			int num3 = num2 * 32 + 23 + 33;
-    			if (num3 >= GameCanvas.w)
-    			{
-    				num2--;
-    				num3 = num2 * 32 + 23 + 33;
-    			}
-    			xLog = GameCanvas.w / 2 - num3 / 2;
-    			tfUser.x = xLog + 10;
-    			tfUser.y = yLog + 20;
-    			tfPass.x = xLog + 10;
-    			tfPass.y = yLog + 55;
+    			PopUp.paintPopUp(g, cardX, cardY, cardW, cardH, -1, true);
+
+    			string titleStr = isRes ? "ĐĂNG KÝ TÀI KHOẢN" : "ĐĂNG NHẬP";
+    			mFont.tahoma_7b_dark.drawString(g, titleStr, cardX + cardW / 2, cardY + 10, 2);
+
+    			// Nhãn & Ô Tài Khoản
+    			mFont.tahoma_7b_dark.drawString(g, "Tài khoản:", cardX + 16, cardY + 28, 0);
+    			tfUser.x = cardX + 15;
+    			tfUser.y = cardY + 41;
+    			tfUser.width = cardW - 30;
     			tfUser.paint(g);
+
+    			// Nhãn & Ô Mật Khẩu
+    			mFont.tahoma_7b_dark.drawString(g, "Mật khẩu:", cardX + 16, cardY + 68, 0);
+    			tfPass.x = cardX + 15;
+    			tfPass.y = cardY + 81;
+    			tfPass.width = cardW - 30;
     			tfPass.paint(g);
-    			int num4 = 0;
-    			if (GameCanvas.w >= 176)
+
+    			// Hai nút bấm bên trong Card
+    			int btnW = (cardW - 40) / 2;
+    			int btnH = 24;
+    			int btnY = cardY + 112;
+
+    			if (cmdLogin != null)
     			{
-    				num4 = 50;
+    				cmdLogin.x = cardX + 15;
+    				cmdLogin.y = btnY;
+    				cmdLogin.w = btnW;
+    				cmdLogin.h = btnH;
+    				cmdLogin.caption = isRes ? "Đăng ký" : "Đăng nhập";
+    				cmdLogin.paint(g);
     			}
-    			else
+
+    			if (cmdBackFromRegister != null)
     			{
-    				mFont.tahoma_7b_green2.drawString(g, mResources.acc + ":", tfUser.x - 35, tfUser.y + 7, 0);
-    				mFont.tahoma_7b_green2.drawString(g, mResources.pwd + ":", tfPass.x - 35, tfPass.y + 7, 0);
-    				mFont.tahoma_7b_green2.drawString(g, mResources.server + ":" + serverName, GameCanvas.w / 2, tfPass.y + 32, 2);
-    				num4 = 0;
+    				cmdBackFromRegister.x = cardX + cardW - 15 - btnW;
+    				cmdBackFromRegister.y = btnY;
+    				cmdBackFromRegister.w = btnW;
+    				cmdBackFromRegister.h = btnH;
+    				cmdBackFromRegister.caption = "Quay lại";
+    				cmdBackFromRegister.paint(g);
     			}
     		}
     		base.paint(g);
     	}
-    
+
     	public override void updateKey()
     	{
-    		if (GameCanvas.isTouch)
+    		if (cmdCallHotline != null && GameCanvas.isTouch && cmdCallHotline.isPointerPressInside())
     		{
-    			if (cmdCallHotline != null && cmdCallHotline.isPointerPressInside())
-    			{
-    				cmdCallHotline.performAction();
-    			}
-    		}
-    		else if (mSystem.clientType == 1 && GameCanvas.keyPressed[13])
-    		{
-    			GameCanvas.keyPressed[13] = false;
     			cmdCallHotline.performAction();
     		}
     		if (isContinueToLogin)
     		{
     			return;
     		}
-    		if (!GameCanvas.isTouch)
+    		if (GameCanvas.isPointerJustRelease)
     		{
-    			if (tfUser.isFocus)
+    			if (cmdLogin != null && cmdLogin.isPointerPressInside())
     			{
-    				right = tfUser.cmdClear;
+    				cmdLogin.performAction();
+    				return;
     			}
-    			else
+    			if (cmdBackFromRegister != null && cmdBackFromRegister.isPointerPressInside())
     			{
-    				right = tfPass.cmdClear;
+    				cmdBackFromRegister.performAction();
+    				return;
     			}
-    		}
-    		if (GameCanvas.keyPressed[(!Main.isPC) ? 2 : 21])
-    		{
-    			focus--;
-    			if (focus < 0)
-    			{
-    				focus = 1;
-    			}
-    		}
-    		else if (GameCanvas.keyPressed[(!Main.isPC) ? 8 : 22] || GameCanvas.keyPressed[16])
-    		{
-    			focus++;
-    			if (focus > 1)
-    			{
-    				focus = 0;
-    			}
-    		}
-    		if (GameCanvas.keyPressed[(!Main.isPC) ? 2 : 21] || GameCanvas.keyPressed[(!Main.isPC) ? 8 : 22] || GameCanvas.keyPressed[16])
-    		{
-    			GameCanvas.clearKeyPressed();
-    			if (!isLogin2 || isRes)
-    			{
-    				if (focus == 1)
-    				{
-    					tfUser.isFocus = false;
-    					tfPass.isFocus = true;
-    				}
-    				else if (focus == 0)
-    				{
-    					tfUser.isFocus = true;
-    					tfPass.isFocus = false;
-    				}
-    				else
-    				{
-    					tfUser.isFocus = false;
-    					tfPass.isFocus = false;
-    				}
-    			}
-    		}
-    		if (GameCanvas.isTouch)
-    		{
-    			if (isRes)
-    			{
-    				center = cmdRes;
-    				left = cmdBackFromRegister;
-    			}
-    			else
-    			{
-    				center = cmdOK;
-    				left = cmdFogetPass;
-    			}
-    		}
-    		else if (isRes)
-    		{
-    			center = cmdRes;
-    			left = cmdBackFromRegister;
-    		}
-    		else
-    		{
-    			center = cmdOK;
-    			left = cmdFogetPass;
-    		}
-    		if (GameCanvas.isPointerJustRelease && (!isLogin2 || isRes))
-    		{
     			if (GameCanvas.isPointerHoldIn(tfUser.x, tfUser.y, tfUser.width, tfUser.height))
     			{
     				focus = 0;
+    				tfUser.isFocus = true;
+    				tfPass.isFocus = false;
     			}
     			else if (GameCanvas.isPointerHoldIn(tfPass.x, tfPass.y, tfPass.width, tfPass.height))
     			{
     				focus = 1;
+    				tfUser.isFocus = false;
+    				tfPass.isFocus = true;
     			}
     		}
-    		if (Main.isPC && GameCanvas.keyPressed[(!Main.isPC) ? 5 : 25] && right != null)
+    		if (GameCanvas.keyPressed[(!Main.isPC) ? 2 : 21] || GameCanvas.keyPressed[(!Main.isPC) ? 8 : 22] || GameCanvas.keyPressed[16])
     		{
-    			right.performAction();
+    			focus = (focus == 0) ? 1 : 0;
+    			GameCanvas.clearKeyPressed();
+    			tfUser.isFocus = (focus == 0);
+    			tfPass.isFocus = (focus == 1);
     		}
+    		if (GameCanvas.keyPressed[(!Main.isPC) ? 5 : 25])
+    		{
+    			GameCanvas.clearKeyPressed();
+    			if (cmdLogin != null)
+    			{
+    				cmdLogin.performAction();
+    			}
+    		}
+    		if (GameCanvas.keyPressed[13] || GameCanvas.keyPressed[27] || GameCanvas.keyPressed[1])
+    		{
+    			GameCanvas.clearKeyPressed();
+    			if (cmdBackFromRegister != null)
+    			{
+    				cmdBackFromRegister.performAction();
+    			}
+    		}
+    		center = cmdLogin;
+    		left = cmdBackFromRegister;
     		base.updateKey();
     		GameCanvas.clearKeyPressed();
     	}
@@ -946,7 +923,14 @@ namespace Game1
     			GameCanvas.serverScreen.switchToMe();
     			break;
     		case 10021:
-    			actRegisterLeft();
+    			if (isRes)
+    			{
+    				actRegisterLeft();
+    			}
+    			else
+    			{
+    				GameCanvas.serverScreen.switchToMe();
+    			}
     			break;
     		case 1003:
     			GameCanvas.startOKDlg(mResources.goToWebForPassword);
@@ -1016,7 +1000,8 @@ namespace Game1
     		isRes = false;
     		tfPass.isFocus = false;
     		tfUser.isFocus = true;
-    		left = cmdMenu;
+    		left = cmdBackFromRegister;
+    		center = cmdLogin;
     	}
     
     	public void actRegister()
@@ -1025,6 +1010,8 @@ namespace Game1
     		isRes = true;
     		tfPass.isFocus = false;
     		tfUser.isFocus = true;
+    		left = cmdBackFromRegister;
+    		center = cmdLogin;
     	}
     
     	public void backToRegister()
@@ -1041,7 +1028,7 @@ namespace Game1
     			GameMidlet.isBackWindowsPhone = true;
     		}
     		GameCanvas.instance.resetToLoginScr = false;
-    		GameCanvas.instance.doResetToLoginScr(GameCanvas.loginScr);
+    		GameCanvas.instance.doResetToLoginScr(GameCanvas.serverScreen);
     	}
     }
 }

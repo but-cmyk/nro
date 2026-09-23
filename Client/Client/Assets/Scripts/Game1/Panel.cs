@@ -938,6 +938,7 @@ namespace Game1
             RegisterSubPanel(TYPE_BOX, new ChestSubPanel());
             RegisterSubPanel(TYPE_COMBINE, new CombineSubPanel());
             RegisterSubPanel(TYPE_SHOP, new ShopSubPanel());
+            RegisterSubPanel(TYPE_CLANS, new ClanSubPanel());
         }
 
         public Panel()
@@ -1737,6 +1738,10 @@ namespace Game1
     
         public void addItemDetail(Item item)
         {
+            if (item == null || item.template == null)
+            {
+                return;
+            }
             try
             {
                 cp = new ChatPopup();
@@ -1746,15 +1751,15 @@ namespace Game1
                 {
                     if (item.template.gender == 0)
                     {
-                        text = text + "\n|7|1|" + mResources.from_earth;
+                        text = text + "|7|1|" + mResources.from_earth + "\n";
                     }
                     else if (item.template.gender == 1)
                     {
-                        text = text + "\n|7|1|" + mResources.from_namec;
+                        text = text + "|7|1|" + mResources.from_namec + "\n";
                     }
                     else if (item.template.gender == 2)
                     {
-                        text = text + "\n|7|1|" + mResources.from_sayda;
+                        text = text + "|7|1|" + mResources.from_sayda + "\n";
                     }
                 }
                 string text2 = string.Empty;
@@ -1850,15 +1855,18 @@ namespace Game1
                         {
                             for (int l = 0; l < item.itemOption[k].param - 7; l++)
                             {
-                                cp.starCuongHoa[l + 7] = true;
+                                if (cp.starCuongHoa != null && l + 7 < cp.starCuongHoa.Length)
+                                {
+                                    cp.starCuongHoa[l + 7] = true;
+                                }
                             }
                         }
                     }
                 }
-                if (currItem.template.strRequire > 1)
+                if (item.template.strRequire > 1)
                 {
-                    string text3 = mResources.pow_request + ": " + currItem.template.strRequire;
-                    if (currItem.template.strRequire > Char.myCharz().cPower)
+                    string text3 = mResources.pow_request + ": " + item.template.strRequire;
+                    if (item.template.strRequire > Char.myCharz().cPower)
                     {
                         text = text + "\n|3|1|" + text3;
                         string text4 = text;
@@ -1869,16 +1877,15 @@ namespace Game1
                         text = text + "\n|6|1|" + text3;
                     }
                 }
-                else
+                item.compare = getCompare(item);
+                if (!string.IsNullOrEmpty(item.template.description))
                 {
-                    text += "\n|6|1|";
+                    text += "\n--";
+                    text = text + "\n|6|" + item.template.description;
                 }
-                currItem.compare = getCompare(currItem);
-                text += "\n--";
-                text = text + "\n|6|" + item.template.description;
-                if (!item.reason.Equals(string.Empty))
+                if (!string.IsNullOrEmpty(item.reason))
                 {
-                    if (!item.template.description.Equals(string.Empty))
+                    if (string.IsNullOrEmpty(item.template.description))
                     {
                         text += "\n--";
                     }
@@ -2146,11 +2153,11 @@ namespace Game1
                 {
                     chatTField.left.performAction();
                 }
-                if (chatTField.right != null && (GameCanvas.keyPressed[13] || mScreen.getCmdPointerLast(chatTField.right)) && chatTField.right != null)
+                if (chatTField.right != null && (GameKeys.IsSoftRightPressed() || mScreen.getCmdPointerLast(chatTField.right)) && chatTField.right != null)
                 {
                     chatTField.right.performAction();
                 }
-                if (chatTField.center != null && (GameCanvas.keyPressed[(!Main.isPC) ? 5 : 25] || mScreen.getCmdPointerLast(chatTField.center)) && chatTField.center != null)
+                if (chatTField.center != null && (GameKeys.IsFirePressed() || mScreen.getCmdPointerLast(chatTField.center)) && chatTField.center != null)
                 {
                     chatTField.center.performAction();
                 }
@@ -2190,9 +2197,9 @@ namespace Game1
                     cmdClose.performAction();
                     return;
                 }
-                if (GameCanvas.keyPressed[13])
+                if (GameKeys.IsSoftRightPressed())
                 {
-                    if (type != 4)
+                    if (type != TYPE_MAP)
                     {
                         hide();
                         return;
@@ -2200,7 +2207,7 @@ namespace Game1
                     setTypeMain();
                     cmx = (cmtoX = 0);
                 }
-                if (GameCanvas.keyPressed[12] || GameCanvas.keyPressed[(!Main.isPC) ? 5 : 25])
+                if (GameKeys.IsSoftLeftPressed() || GameKeys.IsFirePressed())
                 {
                     if (left.idAction > 0)
                     {
@@ -2896,7 +2903,7 @@ namespace Game1
             {
                 return;
             }
-            if (GameCanvas.keyPressed[(!Main.isPC) ? 4 : 23])
+            if (GameKeys.IsLeftPressed())
             {
                 currMess = getCurrMessage();
                 cSelected--;
@@ -2909,7 +2916,7 @@ namespace Game1
                     cSelected = currMess.option.Length - 1;
                 }
             }
-            else if (GameCanvas.keyPressed[(!Main.isPC) ? 6 : 24])
+            else if (GameKeys.IsRightPressed())
             {
                 currMess = getCurrMessage();
                 cSelected++;
@@ -3010,7 +3017,7 @@ namespace Game1
                 return;
             }
             bool flag = false;
-            if (GameCanvas.keyPressed[(!Main.isPC) ? 2 : 21])
+            if (GameKeys.IsUpPressed())
             {
                 flag = true;
                 if (isTabInven() && isnewInventory)
@@ -3023,7 +3030,7 @@ namespace Game1
                 else
                 {
                     selected--;
-                    if (type == 24)
+                    if (type == TYPE_GAMEINFOSUB)
                     {
                         selected -= 2;
                         if (selected < 0)
@@ -3061,7 +3068,7 @@ namespace Game1
                     getCurrClanOtion();
                 }
             }
-            else if (GameCanvas.keyPressed[(!Main.isPC) ? 8 : 22])
+            else if (GameKeys.IsDownPressed())
             {
                 flag = true;
                 if (isTabInven() && isnewInventory)
@@ -3360,7 +3367,7 @@ namespace Game1
             }
             else if (!IsTabOption())
             {
-                if (GameCanvas.keyPressed[(!Main.isPC) ? 6 : 24])
+                if (GameKeys.IsRightPressed())
                 {
                     if (isTabInven())
                     {
@@ -3406,7 +3413,7 @@ namespace Game1
                         lastTabIndex[type] = currentTabIndex;
                     }
                 }
-                if (GameCanvas.keyPressed[(!Main.isPC) ? 4 : 23])
+                if (GameKeys.IsLeftPressed())
                 {
                     currentTabIndex--;
                     if (currentTabIndex < 0)
@@ -4243,43 +4250,43 @@ namespace Game1
             {
                 switch (type)
                 {
-                case 9:
+                case TYPE_ARCHIVEMENT:
                     paintArchivement(g);
                     break;
-                case 21:
-                    if (currentTabIndex == 0)
+                case TYPE_PET_MAIN:
+                    if (currentTabIndex == PanelConstants.PetTabs.PET_INVENTORY)
                     {
                         paintPetInventory(g);
                     }
-                    if (currentTabIndex == 1)
+                    if (currentTabIndex == PanelConstants.PetTabs.PET_STATUS)
                     {
                         paintPetStatus(g);
                     }
-                    if (currentTabIndex == 2)
+                    if (currentTabIndex == PanelConstants.PetTabs.INVENTORY)
                     {
                         paintInventory(g);
                     }
                     break;
-                case 24:
+                case TYPE_GAMEINFOSUB:
                     paintGameSubInfo(g);
                     break;
-                case 23:
+                case TYPE_GAMEINFO:
                     paintGameInfo(g);
                     break;
-                case 0:
-                    if (currentTabIndex == 0)
+                case TYPE_MAIN:
+                    if (currentTabIndex == PanelConstants.MainTabs.TASK)
                     {
                         paintTask(g);
                     }
-                    if (currentTabIndex == 1)
+                    if (currentTabIndex == PanelConstants.MainTabs.INVENTORY)
                     {
                         paintInventory(g);
                     }
-                    if (currentTabIndex == 2)
+                    if (currentTabIndex == PanelConstants.MainTabs.SKILL)
                     {
                         paintSkill(g);
                     }
-                    if (currentTabIndex == 3)
+                    if (currentTabIndex == PanelConstants.MainTabs.CLANS)
                     {
                         if (mainTabName.Length == 4)
                         {
@@ -4290,65 +4297,65 @@ namespace Game1
                             paintClans(g);
                         }
                     }
-                    if (currentTabIndex == 4)
+                    if (currentTabIndex == PanelConstants.MainTabs.TOOLS)
                     {
                         paintTools(g);
                     }
                     break;
-                case 2:
-                    if (currentTabIndex == 0)
+                case TYPE_BOX:
+                    if (currentTabIndex == PanelConstants.ChestTabs.CHEST)
                     {
                         paintBox(g);
                     }
-                    if (currentTabIndex == 1)
+                    if (currentTabIndex == PanelConstants.ChestTabs.INVENTORY)
                     {
                         paintInventory(g);
                     }
                     break;
-                case 3:
+                case TYPE_ZONE:
                     paintZone(g);
                     break;
-                case 1:
+                case TYPE_SHOP:
                     paintShop(g);
                     break;
-                case 25:
+                case TYPE_SPEACIALSKILL:
                     paintSpeacialSkill(g);
                     break;
-                case 4:
+                case TYPE_MAP:
                     paintMap(g);
                     break;
-                case 7:
+                case TYPE_BODY:
                     paintInventory(g);
                     break;
-                case 17:
+                case TYPE_KIGUI:
                     paintShop(g);
                     break;
-                case 8:
+                case TYPE_MESS:
                     paintLogChat(g);
                     break;
-                case 10:
+                case TYPE_OPTION - 9: // TYPE_PLAYER_MENU = 10
                     paintPlayerMenu(g);
                     break;
-                case 11:
+                case TYPE_FRIEND:
                     paintFriend(g);
                     break;
-                case 16:
+                case TYPE_ENEMY:
                     paintEnemy(g);
                     break;
-                case 15:
+                case TYPE_TOP:
                     paintTop(g);
                     break;
-                case 12:
-                    if (currentTabIndex == 0)
+                case TYPE_COMBINE:
+                    if (currentTabIndex == PanelConstants.CombineTabs.COMBINE)
                     {
                         paintCombine(g);
                     }
-                    if (currentTabIndex == 1)
+                    if (currentTabIndex == PanelConstants.CombineTabs.INVENTORY)
                     {
                         paintInventory(g);
                     }
                     break;
-                case 13:
+                case TYPE_GIAODICH:
                     if (currentTabIndex == 0)
                     {
                         if (Equals(GameCanvas.panel))
@@ -4485,7 +4492,7 @@ namespace Game1
                     {
                         string text = string.Empty;
                         mFont mFont2 = mFont.tahoma_7_green2;
-                        if (item.isMe != 0 && typeShop == 2 && currentTabIndex <= 3 && !Equals(GameCanvas.panel2) && item.template.name.Length < 20)
+                        if (item.isMe != 0 && typeShop == 2 && currentTabIndex <= 3 && !Equals(GameCanvas.panel2) && item.template != null && item.template.name != null && item.template.name.Length < 20)
                         {
                             mFont2 = mFont.tahoma_7b_green;
                         }
@@ -4493,6 +4500,10 @@ namespace Game1
                         {
                             for (int j = 0; j < item.itemOption.Length; j++)
                             {
+                                if (item.itemOption[j] == null || item.itemOption[j].optionTemplate == null)
+                                {
+                                    continue;
+                                }
                                 if (item.itemOption[j].optionTemplate.id == 72)
                                 {
                                     text = " [+" + item.itemOption[j].param + "]";
@@ -4522,16 +4533,19 @@ namespace Game1
                                 }
                             }
                         }
-                        mFont2.drawString(g, item.template.name + text, num2 + 5, num3 + 1, 0);
+                        if (item.template != null && item.template.name != null)
+                        {
+                            mFont2.drawString(g, item.template.name + text, num2 + 5, num3 + 1, 0);
+                        }
                         string text2 = string.Empty;
                         if (item.itemOption != null && item.itemOption.Length >= 1)
                         {
-                            if (item.itemOption[0] != null && item.itemOption[0].optionTemplate.id != 102 && item.itemOption[0].optionTemplate.id != 107)
+                            if (item.itemOption[0] != null && item.itemOption[0].optionTemplate != null && item.itemOption[0].optionTemplate.id != 102 && item.itemOption[0].optionTemplate.id != 107)
                             {
                                 text2 += item.itemOption[0].getOptionString();
                             }
                             mFont mFont3 = mFont.tahoma_7_blue;
-                            if (item.compare < 0 && item.template.type != 5)
+                            if (item.compare < 0 && item.template != null && item.template.type != 5)
                             {
                                 mFont3 = mFont.tahoma_7_red;
                             }
@@ -4626,7 +4640,10 @@ namespace Game1
                                 }
                             }
                         }
-                        SmallImage.drawSmallImage(g, item.template.iconID, num5 + num7 / 2, num6 + num8 / 2, 0, 3);
+                        if (item.template != null)
+                        {
+                            SmallImage.drawSmallImage(g, item.template.iconID, num5 + num7 / 2, num6 + num8 / 2, 0, 3);
+                        }
                         if (item.quantity > 1)
                         {
                             mFont.tahoma_7_yellow.drawString(g, string.Empty + item.quantity, num5 + num7, num6 + num8 - mFont.tahoma_7_yellow.getHeight(), 1);
@@ -4671,8 +4688,9 @@ namespace Game1
                 }
                 paintScrollArrow(g);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                Cout.LogError("Loi paintShop: " + ex.ToString());
             }
         }
     
@@ -5657,7 +5675,7 @@ namespace Game1
             paintScrollArrow(g);
         }
     
-        private void paintClans(mGraphics g)
+        public void paintClans(mGraphics g)
         {
             g.setClip(xScroll, yScroll, wScroll, hScroll);
             g.translate(-cmx, -cmy);
@@ -6125,10 +6143,13 @@ namespace Game1
                                     {
                                         g.drawImage(imgNew, x2, y, 3);
                                     }
-                                    for (int l = 0; l < item.itemOption.Length; l++)
+                                    if (item.itemOption != null)
                                     {
-                                        if (item.itemOption[l] != null && item.itemOption[l].optionTemplate != null)
-                                            paintOptSlotItem(g, item.itemOption[l].optionTemplate.id, item.itemOption[l].param, x2, y, num13, h);
+                                        for (int l = 0; l < item.itemOption.Length; l++)
+                                        {
+                                            if (item.itemOption[l] != null && item.itemOption[l].optionTemplate != null)
+                                                paintOptSlotItem(g, item.itemOption[l].optionTemplate.id, item.itemOption[l].param, x2, y, num13, h);
+                                        }
                                     }
                                 }
                                 if (!flag2)
@@ -6282,22 +6303,25 @@ namespace Game1
                     {
                         lastItemInvenNew = itemInvenNew;
                         string text2 = string.Empty;
-                        if (itemInvenNew.itemOption.Length > 0 && itemInvenNew.itemOption[0] != null && itemInvenNew.itemOption[0].optionTemplate.id != 102 && itemInvenNew.itemOption[0].optionTemplate.id != 107)
+                        if (itemInvenNew.itemOption != null)
                         {
-                            text2 += itemInvenNew.itemOption[0].getOptionString();
-                        }
-                        cachedOptionFont = mFont.tahoma_7_blue;
-                        if (itemInvenNew.compare < 0 && itemInvenNew.template.type != 5)
-                        {
-                            cachedOptionFont = mFont.tahoma_7_red;
-                        }
-                        if (itemInvenNew.itemOption.Length > 1)
-                        {
-                            for (int num17 = 1; num17 < 2; num17++)
+                            if (itemInvenNew.itemOption.Length > 0 && itemInvenNew.itemOption[0] != null && itemInvenNew.itemOption[0].optionTemplate != null && itemInvenNew.itemOption[0].optionTemplate.id != 102 && itemInvenNew.itemOption[0].optionTemplate.id != 107)
                             {
-                                if (itemInvenNew.itemOption[num17] != null && itemInvenNew.itemOption[num17].optionTemplate.id != 102 && itemInvenNew.itemOption[num17].optionTemplate.id != 107)
+                                text2 += itemInvenNew.itemOption[0].getOptionString();
+                            }
+                            cachedOptionFont = mFont.tahoma_7_blue;
+                            if (itemInvenNew.compare < 0 && itemInvenNew.template.type != 5)
+                            {
+                                cachedOptionFont = mFont.tahoma_7_red;
+                            }
+                            if (itemInvenNew.itemOption.Length > 1)
+                            {
+                                for (int num17 = 1; num17 < 2; num17++)
                                 {
-                                    text2 = text2 + "," + itemInvenNew.itemOption[num17].getOptionString();
+                                    if (itemInvenNew.itemOption[num17] != null && itemInvenNew.itemOption[num17].optionTemplate != null && itemInvenNew.itemOption[num17].optionTemplate.id != 102 && itemInvenNew.itemOption[num17].optionTemplate.id != 107)
+                                    {
+                                        text2 = text2 + "," + itemInvenNew.itemOption[num17].getOptionString();
+                                    }
                                 }
                             }
                         }
@@ -6500,21 +6524,21 @@ namespace Game1
         private void paintTab(mGraphics g)
         {
            
-            if (type == 23 || type == 24)
+            if (type == TYPE_GAMEINFO || type == TYPE_GAMEINFOSUB)
             {
                 g.setColor(13524492);
                 g.fillRect(X + 1, 78, W - 2, 1);
                 mFont.tahoma_7b_dark.drawString(g, mResources.gameInfo, xScroll + wScroll / 2, 59, mFont.CENTER);
                 return;
             }
-            if (type == 20)
+            if (type == TYPE_ACCOUNT)
             {
                 g.setColor(13524492);
                 g.fillRect(X + 1, 78, W - 2, 1);
                 mFont.tahoma_7b_dark.drawString(g, mResources.account, xScroll + wScroll / 2, 59, mFont.CENTER);
                 return;
             }
-            if (type == 22)
+            if (type == TYPE_AUTO)
             {
                 g.setColor(13524492);
                 g.fillRect(X + 1, 78, W - 2, 1);
@@ -6528,105 +6552,105 @@ namespace Game1
                 mFont.tahoma_7b_dark.drawString(g, "Cài Đặt Auto", xScroll + wScroll / 2, 59, mFont.CENTER);
                 return;
             }
-            if (type == 19)
+            if (type == TYPE_OPTION)
             {
                 g.setColor(13524492);
                 g.fillRect(X + 1, 78, W - 2, 1);
                 mFont.tahoma_7b_dark.drawString(g, mResources.option, xScroll + wScroll / 2, 59, mFont.CENTER);
                 return;
             }
-            if (type == 18)
+            if (type == TYPE_FLAG)
             {
                 g.setColor(13524492);
                 g.fillRect(X + 1, 78, W - 2, 1);
                 mFont.tahoma_7b_dark.drawString(g, mResources.change_flag, xScroll + wScroll / 2, 59, mFont.CENTER);
                 return;
             }
-            if (type == 13 && Equals(GameCanvas.panel2))
+            if (type == TYPE_GIAODICH && Equals(GameCanvas.panel2))
             {
                 g.setColor(13524492);
                 g.fillRect(X + 1, 78, W - 2, 1);
                 mFont.tahoma_7b_dark.drawString(g, mResources.item_receive2, xScroll + wScroll / 2, 59, mFont.CENTER);
                 return;
             }
-            if (type == 12 && GameCanvas.panel2 != null)
+            if (type == TYPE_COMBINE && GameCanvas.panel2 != null)
             {
                 g.setColor(13524492);
                 g.fillRect(X + 1, 78, W - 2, 1);
                 mFont.tahoma_7b_dark.drawString(g, mResources.UPGRADE, xScroll + wScroll / 2, 59, mFont.CENTER);
                 return;
             }
-            if (type == 11)
+            if (type == TYPE_FRIEND)
             {
                 g.setColor(13524492);
                 g.fillRect(X + 1, 78, W - 2, 1);
                 mFont.tahoma_7b_dark.drawString(g, mResources.friend, xScroll + wScroll / 2, 59, mFont.CENTER);
                 return;
             }
-            if (type == 16)
+            if (type == TYPE_ENEMY)
             {
                 g.setColor(13524492);
                 g.fillRect(X + 1, 78, W - 2, 1);
                 mFont.tahoma_7b_dark.drawString(g, mResources.enemy, xScroll + wScroll / 2, 59, mFont.CENTER);
                 return;
             }
-            if (type == 15)
+            if (type == TYPE_TOP)
             {
                 g.setColor(13524492);
                 g.fillRect(X + 1, 78, W - 2, 1);
                 mFont.tahoma_7b_dark.drawString(g, topName, xScroll + wScroll / 2, 59, mFont.CENTER);
                 return;
             }
-            if (type == 2 && GameCanvas.panel2 != null)
+            if (type == TYPE_BOX && GameCanvas.panel2 != null)
             {
                 g.setColor(13524492);
                 g.fillRect(X + 1, 78, W - 2, 1);
                 mFont.tahoma_7b_dark.drawString(g, mResources.chest, xScroll + wScroll / 2, 59, mFont.CENTER);
                 return;
             }
-            if (type == 9)
+            if (type == TYPE_ARCHIVEMENT)
             {
                 g.setColor(13524492);
                 g.fillRect(X + 1, 78, W - 2, 1);
                 mFont.tahoma_7b_dark.drawString(g, mResources.achievement_mission, xScroll + wScroll / 2, 59, mFont.CENTER);
                 return;
             }
-            if (type == 3)
+            if (type == TYPE_ZONE)
             {
                 g.setColor(13524492);
                 g.fillRect(X + 1, 78, W - 2, 1);
                 mFont.tahoma_7b_dark.drawString(g, mResources.select_zone, startTabPos + TAB_W / 2, 59, mFont.CENTER);
                 return;
             }
-            if (type == 14)
+            if (type == TYPE_MAPTRANS)
             {
                 g.setColor(13524492);
                 g.fillRect(X + 1, 78, W - 2, 1);
                 mFont.tahoma_7b_dark.drawString(g, mResources.select_map, startTabPos + TAB_W / 2, 59, mFont.CENTER);
                 return;
             }
-            if (type == 4)
+            if (type == TYPE_MAP)
             {
                 mFont.tahoma_7b_dark.drawString(g, mResources.map, startTabPos + TAB_W / 2, 59, mFont.CENTER);
                 g.setColor(13524492);
                 g.fillRect(X + 1, 78, W - 2, 1);
                 return;
             }
-            if (type == 7)
+            if (type == TYPE_BODY)
             {
                 mFont.tahoma_7b_dark.drawString(g, mResources.trangbi, startTabPos + TAB_W / 2, 59, mFont.CENTER);
                 g.setColor(13524492);
                 g.fillRect(X + 1, 78, W - 2, 1);
                 return;
             }
-            if (type == 17)
+            if (type == TYPE_KIGUI)
             {
                 mFont.tahoma_7b_dark.drawString(g, mResources.kigui, startTabPos + TAB_W / 2, 59, mFont.CENTER);
                 g.setColor(13524492);
                 g.fillRect(X + 1, 78, W - 2, 1);
                 return;
             }
-            if (type == 8)
+            if (type == TYPE_MESS)
             {
                 mFont.tahoma_7b_dark.drawString(g, mResources.msg, startTabPos + TAB_W / 2, 59, mFont.CENTER);
                 g.setColor(13524492);
@@ -7634,10 +7658,19 @@ namespace Game1
             isShow = false;
             if ((Char.myCharz().cHP <= 0 || Char.myCharz().statusMe == 14 || Char.myCharz().statusMe == 5) && Char.myCharz().meDead)
             {
-                Command center = new Command(mResources.DIES[0], 11038, GameScr.gI());
-                GameScr.gI().center = center;
+                GameScr.gI().center = GetDeadCenterCommand();
                 Char.myCharz().cHP = 0;
             }
+        }
+
+        private static Command cmdDeadCenter;
+        private static Command GetDeadCenterCommand()
+        {
+            if (cmdDeadCenter == null)
+            {
+                cmdDeadCenter = new Command(mResources.DIES[0], 11038, GameScr.gI());
+            }
+            return cmdDeadCenter;
         }
     
         public void hide()
@@ -7730,8 +7763,7 @@ namespace Game1
             pointerIsDowning = false;
             if ((Char.myCharz().cHP <= 0 || Char.myCharz().statusMe == 14 || Char.myCharz().statusMe == 5) && Char.myCharz().meDead)
             {
-                Command center = new Command(mResources.DIES[0], 11038, GameScr.gI());
-                GameScr.gI().center = center;
+                GameScr.gI().center = GetDeadCenterCommand();
                 Char.myCharz().cHP = 0;
             }
         }
@@ -10867,21 +10899,21 @@ namespace Game1
         private void updateKeyAutoSetting()
         {
             updateKeyOption();
-            if (GameCanvas.keyPressed[(!Main.isPC) ? 4 : 23])
+            if (GameKeys.IsLeftPressed())
             {
-                GameCanvas.keyPressed[(!Main.isPC) ? 4 : 23] = false;
+                GameKeys.ClearLeft();
                 AutoSettingManager.getInstance().doKeyStep(selected, -1);
             }
-            if (GameCanvas.keyPressed[(!Main.isPC) ? 6 : 24])
+            if (GameKeys.IsRightPressed())
             {
-                GameCanvas.keyPressed[(!Main.isPC) ? 6 : 24] = false;
+                GameKeys.ClearRight();
                 AutoSettingManager.getInstance().doKeyStep(selected, 1);
             }
         }
 
         public void setTypeOption()
         {
-            type = 19;
+            type = TYPE_OPTION;
             setType(0);
             setTabOption();
             cmx = (cmtoX = 0);
@@ -11522,7 +11554,8 @@ namespace Game1
     
         private bool isTabInven()
         {
-            if ((type == 0 && currentTabIndex == 1) || (type == 7 && currentTabIndex == 0))
+            if ((type == TYPE_MAIN && currentTabIndex == PanelConstants.MainTabs.INVENTORY) || 
+                (type == TYPE_BODY && currentTabIndex == PanelConstants.BodyTabs.INVENTORY))
             {
                 return true;
             }
@@ -11535,7 +11568,7 @@ namespace Game1
             {
                 return;
             }
-            if (GameCanvas.keyPressed[(!Main.isPC) ? 4 : 23])
+            if (GameKeys.IsLeftPressed())
             {
                 newSelected--;
                 if (isnewInventory)
@@ -11554,7 +11587,7 @@ namespace Game1
             }
             else
             {
-                if (!GameCanvas.keyPressed[(!Main.isPC) ? 6 : 24])
+                if (!GameKeys.IsRightPressed())
                 {
                     return;
                 }

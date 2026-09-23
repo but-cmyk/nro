@@ -40,5 +40,19 @@ namespace Game1
         public void OnClose()
         {
         }
+
+        public bool PointerHoldIn(int x, int y)
+        {
+            return false;
+        }
+
+        public bool PointerClick(int x, int y)
+        {
+            return false;
+        }
+
+        public void OnTabChanged(int newTab)
+        {
+        }
     }
 }

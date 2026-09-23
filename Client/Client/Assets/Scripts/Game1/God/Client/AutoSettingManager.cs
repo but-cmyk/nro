@@ -162,6 +162,27 @@ namespace Game1.God
             }));
         }
 
+        public bool toggleItem(string key)
+        {
+            for (int i = 0; i < items.Count; i++)
+            {
+                if (items[i].key.Equals(key))
+                {
+                    items[i].isEnabled = !items[i].isEnabled;
+                    try
+                    {
+                        items[i].onApply?.Invoke(items[i]);
+                    }
+                    catch (Exception)
+                    {
+                    }
+                    Save(Char.myCharz() != null ? Char.myCharz().charID : lastLoadedCharId);
+                    return items[i].isEnabled;
+                }
+            }
+            return false;
+        }
+
         public void updateItemState(string key, bool enabled)
         {
             for (int i = 0; i < items.Count; i++)
@@ -169,13 +190,17 @@ namespace Game1.God
                 if (items[i].key.Equals(key))
                 {
                     items[i].isEnabled = enabled;
+                    try
+                    {
+                        items[i].onApply?.Invoke(items[i]);
+                    }
+                    catch (Exception)
+                    {
+                    }
                     break;
                 }
             }
-            if (Char.myCharz() != null)
-            {
-                Save(Char.myCharz().charID);
-            }
+            Save(Char.myCharz() != null ? Char.myCharz().charID : lastLoadedCharId);
         }
 
         public static string GetItemValueString(AutoSettingItem it)
@@ -202,7 +227,10 @@ namespace Game1.God
 
         public void Save(int charId)
         {
-            if (charId <= 0) return;
+            if (charId <= 0 && Char.myCharz() != null)
+            {
+                charId = Char.myCharz().charID;
+            }
             try
             {
                 StringBuilder sb = new StringBuilder();
@@ -223,7 +251,12 @@ namespace Game1.God
                         sb.Append(";");
                     }
                 }
-                Rms.saveRMSString("nro_auto_" + charId, sb.ToString());
+                string data = sb.ToString();
+                if (charId > 0)
+                {
+                    Rms.saveRMSString("nro_auto_" + charId, data);
+                }
+                Rms.saveRMSString("nro_auto_default", data);
             }
             catch (Exception ex)
             {
@@ -233,11 +266,31 @@ namespace Game1.God
 
         public void Load(int charId)
         {
-            if (charId <= 0) return;
-            lastLoadedCharId = charId;
+            if (charId <= 0 && Char.myCharz() != null)
+            {
+                charId = Char.myCharz().charID;
+            }
+            // Nếu đã load cấu hình cho nhân vật này trong phiên chơi, khi chuyển map giữ nguyên dữ liệu trong RAM
+            if (charId > 0 && lastLoadedCharId == charId && items.Count > 0)
+            {
+                applyAll();
+                return;
+            }
+            if (charId > 0)
+            {
+                lastLoadedCharId = charId;
+            }
             try
             {
-                string raw = Rms.loadRMSString("nro_auto_" + charId);
+                string raw = null;
+                if (charId > 0)
+                {
+                    raw = Rms.loadRMSString("nro_auto_" + charId);
+                }
+                if (string.IsNullOrEmpty(raw))
+                {
+                    raw = Rms.loadRMSString("nro_auto_default");
+                }
                 if (!string.IsNullOrEmpty(raw))
                 {
                     string[] pairs = raw.Split(';');

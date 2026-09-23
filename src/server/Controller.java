@@ -91,6 +91,9 @@ public class Controller implements IMessageHandler {
                     return;
                 }
             }
+            if (server.network.ServerPacketDispatcher.gI().dispatch(_session, player, _msg)) {
+                return;
+            }
             switch (cmd) {
                 case -100:
                     if (player == null) {

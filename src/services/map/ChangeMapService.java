@@ -491,15 +491,19 @@ public class ChangeMapService {
                 if (zoneJoin != null) {
                     xGo = wp.goX;
                     yGo = wp.goY;
-                    // Tránh việc người chơi spawn đè lên waypoint của map mới, gây văng ngược lại
+                    // Tránh việc người chơi spawn đè lên waypoint của map mới (chỉ áp dụng cho waypoint tự động chạm là chuyển !isEnter)
                     if (zoneJoin.map != null && zoneJoin.map.wayPoints != null) {
                         for (WayPoint targetWp : zoneJoin.map.wayPoints) {
-                            if (xGo >= targetWp.minX && xGo <= targetWp.maxX 
+                            if (!targetWp.isEnter && xGo >= targetWp.minX && xGo <= targetWp.maxX 
                                     && yGo >= targetWp.minY && yGo <= targetWp.maxY) {
                                 if (xGo < zoneJoin.map.mapWidth / 2) {
-                                    xGo = (short) (targetWp.maxX + 100);
+                                    xGo = (short) (targetWp.maxX + 30);
                                 } else {
-                                    xGo = (short) (targetWp.minX - 100);
+                                    xGo = (short) (targetWp.minX - 30);
+                                }
+                                int groundY = zoneJoin.map.yPhysicInTop(xGo, Math.max(0, yGo - 24));
+                                if (groundY > 0) {
+                                    yGo = groundY;
                                 }
                                 break;
                             }

@@ -3,17 +3,58 @@ namespace Game1
     public class ItemOption
     {
     	public int param;
-    
+
     	public sbyte active;
-    
+
     	public sbyte activeCard;
-    
-    	public ItemOptionTemplate optionTemplate;
-    
+
+    	public int optionTemplateId = -1;
+
+    	private ItemOptionTemplate _optionTemplate;
+
+    	public ItemOptionTemplate optionTemplate
+    	{
+    		get
+    		{
+    			if (_optionTemplate == null || string.IsNullOrEmpty(_optionTemplate.name))
+    			{
+    				if (optionTemplateId >= 0)
+    				{
+    					ItemOptionTemplate t = GameScr.getItemOptionTemplate(optionTemplateId);
+    					if (t != null && !string.IsNullOrEmpty(t.name))
+    					{
+    						_optionTemplate = t;
+    					}
+    					else
+    					{
+    						string defaultName = DefaultItemOptions.GetOptionName(optionTemplateId);
+    						if (!string.IsNullOrEmpty(defaultName))
+    						{
+    							_optionTemplate = new ItemOptionTemplate
+    							{
+    								id = optionTemplateId,
+    								name = defaultName
+    							};
+    						}
+    					}
+    				}
+    			}
+    			return _optionTemplate;
+    		}
+    		set
+    		{
+    			_optionTemplate = value;
+    			if (value != null)
+    			{
+    				optionTemplateId = value.id;
+    			}
+    		}
+    	}
+
     	public ItemOption()
     	{
     	}
-    
+
     	public ItemOption(int optionTemplateId, int param)
     	{
     		if (optionTemplateId == 22)
@@ -27,25 +68,89 @@ namespace Game1
     			param *= 1000;
     		}
     		this.param = param;
-    		if (GameScr.gI().iOptionTemplates != null && optionTemplateId >= 0 && optionTemplateId < GameScr.gI().iOptionTemplates.Length)
+    		this.optionTemplateId = optionTemplateId;
+    		_optionTemplate = GameScr.getItemOptionTemplate(optionTemplateId);
+    		if (_optionTemplate == null || string.IsNullOrEmpty(_optionTemplate.name))
     		{
-    			optionTemplate = GameScr.gI().iOptionTemplates[optionTemplateId];
+    			string optName = string.Empty;
+    			if (optionTemplateId == 66)
+    			{
+    				optName = "Chưa có";
+    			}
+    			else if (optionTemplateId == 63)
+    			{
+    				optName = "Còn # ngày";
+    			}
+    			else if (optionTemplateId == 64)
+    			{
+    				optName = "Còn # giờ";
+    			}
+    			else if (optionTemplateId == 65)
+    			{
+    				optName = "Còn # phút";
+    			}
+    			else
+    			{
+    				optName = DefaultItemOptions.GetOptionName(optionTemplateId);
+    			}
+    			_optionTemplate = new ItemOptionTemplate
+    			{
+    				id = optionTemplateId,
+    				name = optName
+    			};
     		}
     	}
-    
+
     	public string getOptionString()
     	{
-    		return optionTemplate != null ? NinjaUtil.replace(optionTemplate.name, "#", param + string.Empty) : "";
+    		ItemOptionTemplate opt = optionTemplate;
+    		string templateName = (opt != null) ? opt.name : null;
+    		if (string.IsNullOrEmpty(templateName) && optionTemplateId >= 0)
+    		{
+    			templateName = DefaultItemOptions.GetOptionName(optionTemplateId);
+    		}
+    		if (!string.IsNullOrEmpty(templateName))
+    		{
+    			return NinjaUtil.replace(templateName, "#", param + string.Empty);
+    		}
+    		if (optionTemplateId >= 0)
+    		{
+    			return "Option " + optionTemplateId + ": +" + param;
+    		}
+    		return string.Empty;
     	}
-    
+
     	public string getOptionName()
     	{
-    		return optionTemplate != null ? NinjaUtil.replace(optionTemplate.name, "+#", string.Empty) : "";
+    		ItemOptionTemplate opt = optionTemplate;
+    		string templateName = (opt != null) ? opt.name : null;
+    		if (string.IsNullOrEmpty(templateName) && optionTemplateId >= 0)
+    		{
+    			templateName = DefaultItemOptions.GetOptionName(optionTemplateId);
+    		}
+    		if (!string.IsNullOrEmpty(templateName))
+    		{
+    			string name = NinjaUtil.replace(templateName, "+#", string.Empty);
+    			name = NinjaUtil.replace(name, "#", string.Empty);
+    			name = NinjaUtil.replace(name, "$", string.Empty);
+    			return name;
+    		}
+    		if (optionTemplateId >= 0)
+    		{
+    			return "Option " + optionTemplateId;
+    		}
+    		return string.Empty;
     	}
-    
+
     	public string getOptiongColor()
     	{
-    		return optionTemplate != null ? NinjaUtil.replace(optionTemplate.name, "$", string.Empty) : "";
+    		ItemOptionTemplate opt = optionTemplate;
+    		string templateName = (opt != null) ? opt.name : null;
+    		if (string.IsNullOrEmpty(templateName) && optionTemplateId >= 0)
+    		{
+    			templateName = DefaultItemOptions.GetOptionName(optionTemplateId);
+    		}
+    		return (templateName != null) ? NinjaUtil.replace(templateName, "$", string.Empty) : "";
     	}
     }
 }

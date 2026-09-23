@@ -170,29 +170,65 @@ namespace Game1
     			}
     			return;
     		}
-    		if (caption != string.Empty)
+    		if (!string.IsNullOrEmpty(caption))
     		{
+    			int btnH = (h > 0) ? h : 24;
     			if (!isFocus)
     			{
-    				paintOngMau(btn0left, btn0mid, btn0right, x, y, w, g);
+    				if (btn0left != null && btn0mid != null && btn0right != null)
+    				{
+    					paintOngMau(btn0left, btn0mid, btn0right, x, y, w, g);
+    				}
+    				else
+    				{
+    					g.setColor(0x6d1f05);
+    					g.fillRect(x, y, w, btnH, 4);
+    					g.setColor(0xfcd34d);
+    					g.fillRect(x + 1, y + 1, w - 2, btnH - 2, 3);
+    					g.setColor(0xe67824);
+    					g.fillRect(x + 2, y + 2, w - 4, btnH - 4, 2);
+    				}
     			}
     			else
     			{
-    				paintOngMau(btn1left, btn1mid, btn1right, x, y, w, g);
+    				if (btn1left != null && btn1mid != null && btn1right != null)
+    				{
+    					paintOngMau(btn1left, btn1mid, btn1right, x, y, w, g);
+    				}
+    				else
+    				{
+    					g.setColor(0x6d1f05);
+    					g.fillRect(x, y, w, btnH, 4);
+    					g.setColor(0xffffff);
+    					g.fillRect(x + 1, y + 1, w - 2, btnH - 2, 3);
+    					g.setColor(0xf58e38);
+    					g.fillRect(x + 2, y + 2, w - 4, btnH - 4, 2);
+    				}
+    			}
+    			int textY = y + (btnH - mFont.tahoma_7b_dark.getHeight()) / 2;
+    			if (!isFocus)
+    			{
+    				mFont.tahoma_7b_dark.drawString(g, caption, x + w / 2, textY, 2);
+    			}
+    			else
+    			{
+    				mFont.tahoma_7b_green2.drawString(g, caption, x + w / 2, textY, 2);
     			}
     		}
-    		if (!isFocus)
-    		{
-    			mFont.tahoma_7b_dark.drawString(g, caption, x + w / 2, y + 7, 2);
-    		}
-    		else
-    		{
-    			mFont.tahoma_7b_green2.drawString(g, caption, x + w / 2, y + 7, 2);
-    		}
     	}
-    
+
     	public static void paintOngMau(Image img0, Image img1, Image img2, int x, int y, int size, mGraphics g)
     	{
+    		if (img0 == null || img1 == null || img2 == null)
+    		{
+    			g.setColor(0x6d1f05);
+    			g.fillRect(x, y, size, 24, 4);
+    			g.setColor(0xfcd34d);
+    			g.fillRect(x + 1, y + 1, size - 2, 22, 3);
+    			g.setColor(0xe67824);
+    			g.fillRect(x + 2, y + 2, size - 4, 20, 2);
+    			return;
+    		}
     		for (int i = 10; i <= size - 20; i += 10)
     		{
     			g.drawImage(img1, x + i, y, 0);

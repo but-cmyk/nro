@@ -29,6 +29,7 @@ import services.ItemService;
 import services.map.MapService;
 import models.skill.Skill;
 import services.ChatGlobalService;
+import services.RewardService;
 import utils.TimeUtil;
 
 public class Mob {
@@ -684,10 +685,7 @@ public class Mob {
                 short itTemp = (short) ItemService.gI().randTempItemKichHoat(player.gender);
                 ItemMap it = new ItemMap(zone, itTemp, 1, x, yEnd, player.id);
 
-                List<Item.ItemOption> ops = ItemService.gI().getListOptionItemShop(itTemp);
-                if (!ops.isEmpty()) {
-                    it.options = ops;
-                }
+                RewardService.gI().initBaseOptionClothes(itTemp, it.itemTemplate.type, it.options);
 
                 int[] opsrand = ItemService.gI().randOptionItemKichHoat(player.gender);
                 it.options.add(new Item.ItemOption(opsrand[0], 0));
@@ -707,10 +705,7 @@ public class Mob {
                 short itTemp = (short) ItemService.gI().randTempItemKichHoat(player.gender);
                 ItemMap it = new ItemMap(zone, itTemp, 1, x, yEnd, player.id);
 
-                List<Item.ItemOption> ops = ItemService.gI().getListOptionItemShop(itTemp);
-                if (!ops.isEmpty()) {
-                    it.options = ops;
-                }
+                RewardService.gI().initBaseOptionClothes(itTemp, it.itemTemplate.type, it.options);
 
                 it.options.add(new Item.ItemOption(107, randomSaoDo())); // sao đỏ ngẫu nhiên
                 it.options.add(new Item.ItemOption(208, 0));
@@ -729,10 +724,7 @@ public class Mob {
                 short itTemp1 = (short) ItemService.gI().randTempItemDoSao(player.gender);
                 ItemMap it = new ItemMap(zone, itTemp1, 1, x, yEnd, player.id);
 
-                List<Item.ItemOption> ops = ItemService.gI().getListOptionItemShop(itTemp1);
-                if (!ops.isEmpty()) {
-                    it.options = ops;
-                }
+                RewardService.gI().initBaseOptionClothes(itTemp1, it.itemTemplate.type, it.options);
 
                 it.options.add(new Item.ItemOption(107, randomSaoDo())); // thêm sao đỏ ngẫu nhiên
 

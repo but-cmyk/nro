@@ -249,6 +249,36 @@ namespace Game1
     	public static int[] moveX;
     
     	public static int[] moveXSpeed;
+
+    	private static void SetLayerSpeed5(int a, int b, int c, int d, int e)
+    	{
+    		if (layerSpeed == null || layerSpeed.Length < 5) layerSpeed = new int[5];
+    		layerSpeed[0] = a; layerSpeed[1] = b; layerSpeed[2] = c; layerSpeed[3] = d; layerSpeed[4] = e;
+    	}
+
+    	private static void SetLayerSpeed4(int a, int b, int c, int d)
+    	{
+    		if (layerSpeed == null || layerSpeed.Length < 4) layerSpeed = new int[4];
+    		layerSpeed[0] = a; layerSpeed[1] = b; layerSpeed[2] = c; layerSpeed[3] = d;
+    	}
+
+    	private static void SetMoveX(int a, int b, int c, int d, int e)
+    	{
+    		if (moveX == null || moveX.Length < 5) moveX = new int[5];
+    		moveX[0] = a; moveX[1] = b; moveX[2] = c; moveX[3] = d; moveX[4] = e;
+    	}
+
+    	private static void SetMoveXSpeed(int a, int b, int c, int d, int e)
+    	{
+    		if (moveXSpeed == null || moveXSpeed.Length < 5) moveXSpeed = new int[5];
+    		moveXSpeed[0] = a; moveXSpeed[1] = b; moveXSpeed[2] = c; moveXSpeed[3] = d; moveXSpeed[4] = e;
+    	}
+
+    	private static void ResetMoveX()
+    	{
+    		if (moveX == null || moveX.Length < 5) moveX = new int[5]; else Array.Clear(moveX, 0, moveX.Length);
+    		if (moveXSpeed == null || moveXSpeed.Length < 5) moveXSpeed = new int[5]; else Array.Clear(moveXSpeed, 0, moveXSpeed.Length);
+    	}
     
     	public static bool isBoltEff;
     
@@ -715,7 +745,7 @@ namespace Game1
     			if (resetToLoginScr)
     			{
     				resetToLoginScr = false;
-    				doResetToLoginScr(loginScr);
+    				doResetToLoginScr(serverScreen);
     			}
     			debug("Zzz", 0);
     			if ((currentScreen != serverScr || !serverScr.isPaintNewUi) && Controller.isConnectOK)
@@ -839,7 +869,7 @@ namespace Game1
     		}
     		if (currentScreen != serverScreen)
     		{
-    			startOKDlg(mResources.maychutathoacmatsong);
+    			startOKDlg("Mất kết nối với máy chủ, vui lòng thử lại!");
     		}
     		else
     		{
@@ -1113,7 +1143,7 @@ namespace Game1
     			}
     			else
     			{
-    				if (imgBG == null || imgBG[num] == null)
+    				if (imgBG == null || imgBG[num] == null || bgW[num] <= 0)
     				{
     					return;
     				}
@@ -1128,14 +1158,23 @@ namespace Game1
     				}
     				if (layerSpeed[num] != 0)
     				{
-    					for (int i = -((GameScr.cmx + moveX[num] >> layerSpeed[num]) % bgW[num]); i < GameScr.gW; i += bgW[num])
+    					int startX = -((GameScr.cmx + moveX[num] >> layerSpeed[num]) % bgW[num]);
+    					while (startX > 0)
+    					{
+    						startX -= bgW[num];
+    					}
+    					while (startX < -bgW[num])
+    					{
+    						startX += bgW[num];
+    					}
+    					for (int i = startX; i < GameScr.gW + bgW[num]; i += bgW[num])
     					{
     						g.drawImage(imgBG[num], i, yb[num] - ((deltaY > 0) ? (cmy >> deltaY) : 0), 0);
     					}
     				}
     				else
     				{
-    					for (int j = 0; j < GameScr.gW; j += bgW[num])
+    					for (int j = 0; j < GameScr.gW + bgW[num]; j += bgW[num])
     					{
     						g.drawImage(imgBG[num], j, yb[num] - ((deltaY > 0) ? (cmy >> deltaY) : 0), 0);
     					}
@@ -1151,7 +1190,7 @@ namespace Game1
     						fillRect(g, color1, 0, yb[num - 1] + bgH[num - 1], GameScr.gW, yb[num] - (yb[num - 1] + bgH[num - 1]), deltaY);
     					}
     				}
-    				if (color2 != -1)
+    				if (color2 != -1 && color2 != 0)
     				{
     					if (num == 0)
     					{
@@ -1293,6 +1332,16 @@ namespace Game1
     						g.fillRect(0, 0, w, h);
     						return;
     					}
+    				}
+    				if (colorTop != null && colorTop.Length > 3 && colorTop[3] != -1)
+    				{
+    					g.setColor(colorTop[3]);
+    					g.fillRect(0, 0, w, h);
+    				}
+    				else if (colorTop != null && colorTop.Length > 2 && colorTop[2] != -1)
+    				{
+    					g.setColor(colorTop[2]);
+    					g.fillRect(0, 0, w, h);
     				}
     				if (typeBg == 0)
     				{
@@ -1640,9 +1689,8 @@ namespace Game1
     			transY = 12;
     			TileMap.lastBgID = (sbyte)typeBG;
     			TileMap.lastType = (sbyte)TileMap.bgType;
-    			layerSpeed = new int[5] { 1, 2, 3, 7, 8 };
-    			moveX = new int[5];
-    			moveXSpeed = new int[5];
+    			SetLayerSpeed5(1, 2, 3, 7, 8);
+    			ResetMoveX();
     			typeBg = typeBG;
     			isBoltEff = false;
     			GameScr.firstY = GameScr.cmy;
@@ -1655,7 +1703,7 @@ namespace Game1
     			{
     			case 0:
     				imgCaycot = loadImageRMS("/bg/caycot.png");
-    				layerSpeed = new int[4] { 1, 3, 5, 7 };
+    				SetLayerSpeed4(1, 3, 5, 7);
     				nBg = 4;
     				if (TileMap.bgType == 2)
     				{
@@ -1667,8 +1715,8 @@ namespace Game1
     				nBg = 4;
     				break;
     			case 2:
-    				moveX = new int[5] { 0, 0, 1, 0, 0 };
-    				moveXSpeed = new int[5] { 0, 0, 2, 0, 0 };
+    				SetMoveX(0, 0, 1, 0, 0);
+    				SetMoveXSpeed(0, 0, 2, 0, 0);
     				nBg = 5;
     				break;
     			case 3:
@@ -1676,16 +1724,16 @@ namespace Game1
     				break;
     			case 4:
     				BackgroudEffect.addEffect(3);
-    				moveX = new int[5] { 0, 1, 0, 0, 0 };
-    				moveXSpeed = new int[5] { 0, 1, 0, 0, 0 };
+    				SetMoveX(0, 1, 0, 0, 0);
+    				SetMoveXSpeed(0, 1, 0, 0, 0);
     				nBg = 4;
     				break;
     			case 5:
     				nBg = 4;
     				break;
     			case 6:
-    				moveX = new int[5] { 1, 0, 0, 0, 0 };
-    				moveXSpeed = new int[5] { 2, 0, 0, 0, 0 };
+    				SetMoveX(1, 0, 0, 0, 0);
+    				SetMoveXSpeed(2, 0, 0, 0, 0);
     				nBg = 5;
     				break;
     			case 7:
@@ -1710,8 +1758,8 @@ namespace Game1
     				BackgroudEffect.addEffect(16);
     				break;
     			case 12:
-    				moveX = new int[5] { 1, 1, 0, 0, 0 };
-    				moveXSpeed = new int[5] { 2, 1, 0, 0, 0 };
+    				SetMoveX(1, 1, 0, 0, 0);
+    				SetMoveXSpeed(2, 1, 0, 0, 0);
     				nBg = 3;
     				break;
     			case 13:
@@ -1722,16 +1770,16 @@ namespace Game1
     				nBg = 2;
     				break;
     			case 16:
-    				layerSpeed = new int[4] { 1, 3, 5, 7 };
+    				SetLayerSpeed4(1, 3, 5, 7);
     				nBg = 4;
     				break;
     			case 19:
-    				moveX = new int[5] { 0, 2, 1, 0, 0 };
-    				moveXSpeed = new int[5] { 0, 2, 1, 0, 0 };
+    				SetMoveX(0, 2, 1, 0, 0);
+    				SetMoveXSpeed(0, 2, 1, 0, 0);
     				nBg = 5;
     				break;
     			default:
-    				layerSpeed = new int[4] { 1, 3, 5, 7 };
+    				SetLayerSpeed4(1, 3, 5, 7);
     				nBg = 4;
     				break;
     			}
@@ -1795,9 +1843,19 @@ namespace Game1
     							int[] data2 = new int[1];
     							imgBG[j].getRGB(ref data2, 0, 1, mGraphics.getRealImageWidth(imgBG[j]) / 2, 0, 1, 1);
     							colorTop[j] = data2[0];
-    							data2 = new int[1];
-    							imgBG[j].getRGB(ref data2, 0, 1, mGraphics.getRealImageWidth(imgBG[j]) / 2, mGraphics.getRealImageHeight(imgBG[j]) - 1, 1, 1);
-    							colorBotton[j] = data2[0];
+    							int botY2 = mGraphics.getRealImageHeight(imgBG[j]) - 1;
+    							int botColor2 = -1;
+    							while (botY2 >= 0)
+    							{
+    								imgBG[j].getRGB(ref data2, 0, 1, mGraphics.getRealImageWidth(imgBG[j]) / 2, botY2, 1, 1);
+    								if (data2[0] != 0 && ((data2[0] >> 24) & 0xFF) > 128)
+    								{
+    									botColor2 = data2[0];
+    									break;
+    								}
+    								botY2--;
+    							}
+    							colorBotton[j] = botColor2;
     						}
     						catch (Exception) {}
     						bgW[j] = mGraphics.getImageWidth(imgBG[j]);
@@ -1839,9 +1897,19 @@ namespace Game1
     							int[] data3 = new int[1];
     							imgBG[k].getRGB(ref data3, 0, 1, mGraphics.getRealImageWidth(imgBG[k]) / 2, 0, 1, 1);
     							colorTop[k] = data3[0];
-    							data3 = new int[1];
-    							imgBG[k].getRGB(ref data3, 0, 1, mGraphics.getRealImageWidth(imgBG[k]) / 2, mGraphics.getRealImageHeight(imgBG[k]) - 1, 1, 1);
-    							colorBotton[k] = data3[0];
+    							int botY3 = mGraphics.getRealImageHeight(imgBG[k]) - 1;
+    							int botColor3 = -1;
+    							while (botY3 >= 0)
+    							{
+    								imgBG[k].getRGB(ref data3, 0, 1, mGraphics.getRealImageWidth(imgBG[k]) / 2, botY3, 1, 1);
+    								if (data3[0] != 0 && ((data3[0] >> 24) & 0xFF) > 128)
+    								{
+    									botColor3 = data3[0];
+    									break;
+    								}
+    								botY3--;
+    							}
+    							colorBotton[k] = botColor3;
     						}
     						catch (Exception) {}
     						bgW[k] = mGraphics.getImageWidth(imgBG[k]);
@@ -1970,8 +2038,8 @@ namespace Game1
     						break;
     					}
     					case 19:
-    						moveX = new int[5] { 0, 2, 1, 0, 0 };
-    						moveXSpeed = new int[5] { 0, 2, 1, 0, 0 };
+    						SetMoveX(0, 2, 1, 0, 0);
+    						SetMoveXSpeed(0, 2, 1, 0, 0);
     						nBg = 5;
     						break;
     					default:
@@ -2816,8 +2884,61 @@ namespace Game1
     		return (py - start) / w;
     	}
     
-    	protected void sizeChanged(int w, int h)
+    	public void sizeChanged(int newW, int newH)
     	{
+    		w = newW;
+    		h = newH;
+    		hw = w / 2;
+    		hh = h / 2;
+    		wd3 = w / 3;
+    		hd3 = h / 3;
+    		w2d3 = 2 * w / 3;
+    		h2d3 = 2 * h / 3;
+    		w3d4 = 3 * w / 4;
+    		h3d4 = 3 * h / 4;
+    		wd6 = w / 6;
+    		hd6 = h / 6;
+    		if (w < 320)
+    		{
+    			isTouchControlSmallScreen = true;
+    			isTouchControlLargeScreen = false;
+    		}
+    		else
+    		{
+    			isTouchControlSmallScreen = false;
+    			isTouchControlLargeScreen = true;
+    		}
+    		if (h <= 160)
+    		{
+    			Paint.hTab = 15;
+    		}
+    		else
+    		{
+    			Paint.hTab = 24;
+    		}
+    		mScreen.initPos();
+    		if (currentScreen == GameScr.instance && GameScr.instance != null)
+    		{
+    			GameScr.loadCamera(false, -1, -1);
+    			GameScr.updateUIPositions();
+    			GameScr.gI().initSelectChar();
+    		}
+    		else if (currentScreen != null)
+    		{
+    			currentScreen.switchToMe();
+    		}
+    		if (panel != null && panel.isShow)
+    		{
+    			panel.init();
+    		}
+    		if (panel2 != null && panel2.isShow)
+    		{
+    			panel2.init();
+    		}
+    		if (ChatTextField.gI() != null && ChatTextField.gI().isShow)
+    		{
+    			ChatTextField.gI().initChatTextField();
+    		}
     	}
     
     	public static bool isGetResourceFromServer()

@@ -1740,4 +1740,34 @@ public class PlayerDAO {
             Logger.logException(PlayerDAO.class, e, "Lỗi updateBlackBallReward cho playerId: " + playerId);
         }
     }
+
+    public static long getSafeLong(JSONArray arr, int index, long defaultValue) {
+        if (arr != null && index >= 0 && index < arr.size()) {
+            Object val = arr.get(index);
+            if (val instanceof Number num) return num.longValue();
+            try {
+                if (val != null) return Long.parseLong(String.valueOf(val).trim());
+            } catch (Exception ignored) {}
+        }
+        return defaultValue;
+    }
+
+    public static int getSafeInt(JSONArray arr, int index, int defaultValue) {
+        if (arr != null && index >= 0 && index < arr.size()) {
+            Object val = arr.get(index);
+            if (val instanceof Number num) return num.intValue();
+            try {
+                if (val != null) return Integer.parseInt(String.valueOf(val).trim());
+            } catch (Exception ignored) {}
+        }
+        return defaultValue;
+    }
+
+    public static String getSafeString(JSONArray arr, int index, String defaultValue) {
+        if (arr != null && index >= 0 && index < arr.size()) {
+            Object val = arr.get(index);
+            if (val != null) return String.valueOf(val);
+        }
+        return defaultValue;
+    }
 }

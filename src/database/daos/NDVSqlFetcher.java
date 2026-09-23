@@ -27,6 +27,7 @@ import models.AntiLogin;
 import services.player.ClanService;
 import services.player.IntrinsicService;
 import services.ItemService;
+import services.RewardService;
 import services.map.MapService;
 import services.Service;
 import services.TaskService;
@@ -145,16 +146,38 @@ public class NDVSqlFetcher {
                 Item item = ItemService.gI().createNewItem(tempId, quantity);
                 if (dataItem.size() > 2 && dataItem.get(2) != null) {
                     try {
-                        JSONArray options = parseJSONArraySafe(String.valueOf(dataItem.get(2)).replaceAll("\"", ""));
-                        for (int j = 0; j < options.size(); j++) {
-                            JSONArray opt = parseJSONArraySafe(String.valueOf(options.get(j)));
-                            int optId = getIntSafe(opt, 0, -1);
-                            int optParam = getIntSafe(opt, 1, 0);
-                            if (optId != -1) {
-                                item.itemOptions.add(new Item.ItemOption(optId, optParam));
+                        String rawOptions = String.valueOf(dataItem.get(2));
+                        JSONArray options = parseJSONArraySafe(rawOptions);
+                        if (options == null || options.isEmpty()) {
+                            options = parseJSONArraySafe(rawOptions.replaceAll("\"", ""));
+                        }
+                        if (options != null) {
+                            for (int j = 0; j < options.size(); j++) {
+                                Object optObj = options.get(j);
+                                if (optObj instanceof JSONObject) {
+                                    JSONObject jo = (JSONObject) optObj;
+                                    int optId = jo.containsKey("id") ? Integer.parseInt(String.valueOf(jo.get("id"))) : -1;
+                                    int optParam = jo.containsKey("param") ? Integer.parseInt(String.valueOf(jo.get("param"))) : 0;
+                                    if (optId != -1) {
+                                        item.itemOptions.add(new Item.ItemOption(optId, optParam));
+                                    }
+                                } else {
+                                    JSONArray opt = (optObj instanceof JSONArray) ? (JSONArray) optObj : parseJSONArraySafe(String.valueOf(optObj));
+                                    int optId = getIntSafe(opt, 0, -1);
+                                    int optParam = getIntSafe(opt, 1, 0);
+                                    if (optId != -1) {
+                                        item.itemOptions.add(new Item.ItemOption(optId, optParam));
+                                    }
+                                }
                             }
                         }
-                    } catch (Exception ignored) {}
+                    } catch (Exception e) {
+                        Logger.logException(NDVSqlFetcher.class, e, "Lỗi parse options item: " + tempId);
+                    }
+                }
+                // Defensive Fallback: Nếu là trang bị (áo, quần, găng, giày, rada) mà không có options do lỗi CSDL cũ
+                if (item.itemOptions.isEmpty() && item.template != null && item.template.type >= 0 && item.template.type <= 4) {
+                    RewardService.gI().initBaseOptionClothes(tempId, item.template.type, item.itemOptions);
                 }
                 item.createTime = getLongSafe(dataItem, 3, System.currentTimeMillis());
                 if (item.template != null && item.template.id == 2132) {
@@ -167,7 +190,8 @@ public class NDVSqlFetcher {
                 }
                 return item;
             }
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            Logger.logException(NDVSqlFetcher.class, e, "Lỗi parseItemSafe");
         }
         return ItemService.gI().createItemNull();
     }

@@ -250,7 +250,7 @@ public class BossManager {
         this.createBoss(BossID.RONG_5_SAO);
         this.createBoss(BossID.RONG_6_SAO);
         this.createBoss(BossID.RONG_7_SAO);
-        this.createBoss(BossID.AN_TROM, 20);
+        this.createBoss(BossID.AN_TROM, 2);
         this.createBoss(BossID.THO_DAI_KA, 5);
 
         for (int i = 20; i != -1; i--) {//20: số lượng boss

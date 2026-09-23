@@ -27,7 +27,7 @@ namespace Game1
     
     	public void checkZoomLevel(int w, int h)
     	{
-    		 if (!Main.isPC)
+    		if (!Main.isPC)
     		{
     			if (Main.isIpod)
     			{
@@ -45,14 +45,29 @@ namespace Game1
     			{
     				mGraphics.zoomLevel = 2;
     			}
-    		}
-    		else
-    		{
-    			mGraphics.zoomLevel = 2;
-    			if (w * h < 480000)
+    			else
     			{
     				mGraphics.zoomLevel = 1;
     			}
+    		}
+    		else
+    		{
+    			if (h < 360 || w < 600)
+    			{
+    				mGraphics.zoomLevel = 1;
+    			}
+    			else if (h >= 1440)
+    			{
+    				mGraphics.zoomLevel = 4;
+    			}
+    			else
+    			{
+    				mGraphics.zoomLevel = 2;
+    			}
+    		}
+    		if (mGraphics.zoomLevel < 1)
+    		{
+    			mGraphics.zoomLevel = 1;
     		}
     	}
     

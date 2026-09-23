@@ -63,7 +63,18 @@ namespace Game1
     
     	public MonsterDart(int x, int y, bool isBoss, int dame, int dameMp, Char c, int dartType)
     	{
-    		info = GameScr.darts[dartType];
+    		if (GameScr.darts != null && dartType >= 0 && dartType < GameScr.darts.Length && GameScr.darts[dartType] != null)
+    		{
+    			info = GameScr.darts[dartType];
+    		}
+    		else if (GameScr.darts != null && GameScr.darts.Length > 0 && GameScr.darts[0] != null)
+    		{
+    			info = GameScr.darts[0];
+    		}
+    		if (info == null || c == null)
+    		{
+    			return;
+    		}
     		this.x = x;
     		this.y = y;
     		this.isBoss = isBoss;
@@ -80,7 +91,18 @@ namespace Game1
     
     	public MonsterDart(int x, int y, bool isBoss, int dame, int dameMp, int xTo, int yTo, int dartType)
     	{
-    		info = GameScr.darts[dartType];
+    		if (GameScr.darts != null && dartType >= 0 && dartType < GameScr.darts.Length && GameScr.darts[dartType] != null)
+    		{
+    			info = GameScr.darts[dartType];
+    		}
+    		else if (GameScr.darts != null && GameScr.darts.Length > 0 && GameScr.darts[0] != null)
+    		{
+    			info = GameScr.darts[0];
+    		}
+    		if (info == null)
+    		{
+    			return;
+    		}
     		this.x = x;
     		this.y = y;
     		this.isBoss = isBoss;
@@ -106,6 +128,10 @@ namespace Game1
     
     	public static void addMonsterDart(int x, int y, bool isBoss, int dame, int dameMp, Char c, int dartType)
     	{
+    		if (c == null)
+    		{
+    			return;
+    		}
     		Effect2.vEffect2.addElement(new MonsterDart(x, y, isBoss, dame, dameMp, c, dartType));
     	}
     
@@ -116,6 +142,11 @@ namespace Game1
     
     	public override void update()
     	{
+    		if (info == null)
+    		{
+    			Effect2.vEffect2.removeElement(this);
+    			return;
+    		}
     		for (int i = 0; i < info.nUpdate; i++)
     		{
     			if (info.tail.Length > 0)
@@ -218,6 +249,10 @@ namespace Game1
     
     	public override void paint(mGraphics g)
     	{
+    		if (info == null)
+    		{
+    			return;
+    		}
     		int num = findDirIndexFromAngle(360 - angle);
     		int num2 = FRAME[num];
     		int transform = TRANSFORM[num];

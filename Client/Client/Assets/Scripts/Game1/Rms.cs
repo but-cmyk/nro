@@ -255,6 +255,23 @@ namespace Game1
             }
         }
 
+        public static void Init()
+        {
+            try
+            {
+                rootPersistentPath = Application.persistentDataPath;
+                cachedPath = rootPersistentPath + "/Game1";
+                if (!Directory.Exists(cachedPath))
+                {
+                    Directory.CreateDirectory(cachedPath);
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning("Rms.Init exception: " + ex.Message);
+            }
+        }
+
         public static string GetiPhoneDocumentsPath()
         {
             if (cachedPath == null)
@@ -266,12 +283,18 @@ namespace Game1
                 }
                 catch
                 {
-                    cachedPath = "Game1";
+                    return (rootPersistentPath != null) ? (rootPersistentPath + "/Game1") : "Game1";
                 }
             }
             if (!Directory.Exists(cachedPath))
             {
-                Directory.CreateDirectory(cachedPath);
+                try
+                {
+                    Directory.CreateDirectory(cachedPath);
+                }
+                catch
+                {
+                }
             }
             return cachedPath;
         }
@@ -321,24 +344,48 @@ namespace Game1
                         string fallback = root + "/" + filename;
                         if (File.Exists(fallback))
                         {
-                            try
-                            {
-                                File.Copy(fallback, text, true);
-                            }
-                            catch
-                            {
-                                text = fallback;
-                            }
+                            text = fallback;
                         }
                         else
                         {
-                            return null;
+                            string fallbackGame1 = root + "/Game1/" + filename;
+                            if (File.Exists(fallbackGame1))
+                            {
+                                text = fallbackGame1;
+                            }
                         }
                     }
-                    else
+                }
+                if (!File.Exists(text))
+                {
+                    try
                     {
-                        return null;
+                        string userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+                        string[] possiblePaths = new string[]
+                        {
+                            userProfile + "/AppData/LocalLow/Team/NgocRongOnline/Game1/" + filename,
+                            userProfile + "/AppData/LocalLow/Team/NgocRongOnline/" + filename,
+                            userProfile + "/AppData/LocalLow/Team/Nro6Tab/Game1/" + filename,
+                            userProfile + "/AppData/LocalLow/Team/Nro6Tab/" + filename,
+                            "Game1/" + filename,
+                            filename
+                        };
+                        foreach (string p in possiblePaths)
+                        {
+                            if (File.Exists(p))
+                            {
+                                text = p;
+                                break;
+                            }
+                        }
                     }
+                    catch
+                    {
+                    }
+                }
+                if (!File.Exists(text))
+                {
+                    return null;
                 }
                 using (FileStream fileStream = new FileStream(text, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
                 {

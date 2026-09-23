@@ -25,5 +25,20 @@ namespace Game1
         void OnSelectTab();
 
         void OnClose();
+
+        /// <summary>
+        /// Xử lý sự kiện giữ con trỏ/chuột trong vùng SubPanel.
+        /// </summary>
+        bool PointerHoldIn(int x, int y);
+
+        /// <summary>
+        /// Xử lý sự kiện click con trỏ/chuột trong vùng SubPanel.
+        /// </summary>
+        bool PointerClick(int x, int y);
+
+        /// <summary>
+        /// Thông báo khi tab con hoặc tab chính thay đổi.
+        /// </summary>
+        void OnTabChanged(int newTab);
     }
 }
