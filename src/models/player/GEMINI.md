@@ -8,7 +8,13 @@
   - `Inventory.java`: Quản lý hành trang, rương đồ, trang bị trên người (`itemsBody`).
   - `PlayerSkill.java` / `Skill.java`: Danh sách kỹ năng và thời gian hồi chiêu.
 
-## 2. Các Bất Biến Bắt Buộc
+## 2. Landmark Index & Core Methods
+- `NPoint.calPoint()`: Tính toán toàn bộ chỉ số sau khi mang đồ/cải trang/hiệu ứng bùa.
+- `NPoint.setHp(long hp)` / `NPoint.setMp(long mp)`: Gán máu/ki an toàn, chặn giá trị âm.
+- `Player.zone`: Khu vực bản đồ hiện tại của người chơi.
+- `Inventory.addItemSpecial()`: Nhận đồ đặc biệt (đệ tử, bí kiếp).
+
+## 3. Các Bất Biến Bắt Buộc
 - **Phân định rõ Type thực thể**:
   - Trong `NPoint.calPoint()`, luôn có cờ kiểm tra: `if (this.player.isPet) { ... } else if (this.player.isBoss) { ... } else { ... }`.
   - Không bao giờ áp dụng logic trang bị cải trang hoặc set kích hoạt của Player cho Boss trừ khi có kịch bản đặc thù.
@@ -17,6 +23,6 @@
 - **Khởi Tạo Trạng Thái Toàn Vẹn**:
   - Khi tạo mới Player hoặc load từ DB, các đối tượng phụ thuộc như `taskMain`, `location`, `nPoint` phải được khởi tạo trước khi gọi logic hồi phục HP/vào map.
 
-## 3. Lỗi Thường Gặp Cần Tránh
+## 4. Lỗi Thường Gặp Cần Tránh
 - NullPointerException khi truy cập `player.inventory` hoặc `player.playerTask` trên nhân vật mới tạo.
 - Tính toán chỉ số cộng dồn không giới hạn dẫn đến lỗi HP âm hoặc bug bất tử.

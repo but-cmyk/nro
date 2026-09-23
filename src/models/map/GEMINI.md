@@ -8,12 +8,18 @@
   - `Mob.java`: AI quái vật, máu quái, cơ chế tấn công trả đũa.
   - `TileMap.java`: Dữ liệu vật lý địa hình (block va chạm, nhảy, bơi, rơi tự do).
 
-## 2. Các Bất Biến Bắt Buộc
+## 2. Landmark Index & Core Methods
+- `Zone.update()`: Vòng lặp realtime của khu vực, duyệt người chơi và quái vật.
+- `Zone.load_players()` / `Zone.load_mobs()`: Nạp đối tượng khi tham gia khu vực.
+- `Mob.injured(Player plAtt, long dame, boolean die)`: Xử lý quái nhận sát thương.
+- `src/services/MapService.changeMap()`: Điều hướng nhân vật sang tọa độ và khu vực mới.
+
+## 3. Các Bất Biến Bắt Buộc
 - **Thread-Safety Trong Zone Loop**:
   - Danh sách người chơi và quái vật trong Zone được truy cập liên tục bởi cả luồng mạng (Netty Worker) và luồng update nội tại. Bắt buộc dùng `ConcurrentHashMap`, `CopyOnWriteArrayList` hoặc synchronize danh sách khi duyệt qua để tránh `ConcurrentModificationException`.
 - **Giới Hạn Tọa Độ & Chuyển Zone**:
   - Khi player di chuyển hoặc dịch chuyển, tọa độ X, Y phải được kiểm tra trong biên của `map.mapWidth` và `map.mapHeight`.
 
-## 3. Lỗi Thường Gặp Cần Tránh
+## 4. Lỗi Thường Gặp Cần Tránh
 - Crash cả Zone khi 1 Player out map đột ngột trong lúc Server đang duyệt danh sách gửi packet khu vực.
 - Quái chết nhưng không kích hoạt timer hồi sinh hoặc rơi vật phẩm sai tỷ lệ.

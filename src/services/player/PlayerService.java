@@ -33,12 +33,16 @@ public class PlayerService {
     }
 
     public void sendTNSM(Player player, byte type, long param) {
-        if (param > 0) {
+        if (param > 0 && player != null) {
             Message msg;
             try {
                 msg = new Message(-3);
                 msg.writer().writeByte(type);// 0 là cộng sm, 1 cộng tn, 2 là cộng cả 2
                 msg.writer().writeInt((int) param);// số tn cần cộng
+                if (player.nPoint != null) {
+                    msg.writer().writeLong(player.nPoint.power);
+                    msg.writer().writeLong(player.nPoint.tiemNang);
+                }
                 player.sendMessage(msg);
                 msg.cleanup();
             } catch (Exception e) {

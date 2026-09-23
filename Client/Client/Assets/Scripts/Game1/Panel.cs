@@ -2676,26 +2676,26 @@ namespace Game1
                 string text2 = string.Empty;
                 if (item.itemOption != null)
                 {
-                    if (item.itemOption.Length > 0 && item.itemOption[0] != null)
+                    for (int l = 0; l < item.itemOption.Length; l++)
                     {
-                        text2 += item.itemOption[0].getOptionString();
-                    }
-                    mFont mFont3 = mFont.tahoma_7_blue;
-                    if (item.compare < 0 && item.template.type != 5)
-                    {
-                        mFont3 = mFont.tahoma_7_red;
-                    }
-                    if (item.itemOption.Length > 1)
-                    {
-                        for (int l = 1; l < item.itemOption.Length; l++)
+                        if (item.itemOption[l] != null && (item.itemOption[l].optionTemplate == null || (item.itemOption[l].optionTemplate.id != 102 && item.itemOption[l].optionTemplate.id != 107)))
                         {
-                            if (item.itemOption[l] != null && item.itemOption[l].optionTemplate != null && item.itemOption[l].optionTemplate.id != 102 && item.itemOption[l].optionTemplate.id != 107)
+                            string optStr = item.itemOption[l].getOptionString();
+                            if (!string.IsNullOrEmpty(optStr))
                             {
-                                text2 = text2 + "," + item.itemOption[l].getOptionString();
+                                text2 = string.IsNullOrEmpty(text2) ? optStr : (text2 + "," + optStr);
                             }
                         }
                     }
-                    mFont3.drawString(g, text2, num + 5, num2 + 11, mFont.LEFT);
+                    if (!string.IsNullOrEmpty(text2))
+                    {
+                        mFont mFont3 = mFont.tahoma_7_blue;
+                        if (item.compare < 0 && item.template.type != 5)
+                        {
+                            mFont3 = mFont.tahoma_7_red;
+                        }
+                        mFont3.drawString(g, text2, num + 5, num2 + 11, mFont.LEFT);
+                    }
                 }
                 SmallImage.drawSmallImage(g, item.template.iconID, num5 + num7 / 2, num6 + num8 / 2, 0, 3);
                 if (item.itemOption != null)
@@ -4540,22 +4540,28 @@ namespace Game1
                         string text2 = string.Empty;
                         if (item.itemOption != null && item.itemOption.Length >= 1)
                         {
-                            if (item.itemOption[0] != null && item.itemOption[0].optionTemplate != null && item.itemOption[0].optionTemplate.id != 102 && item.itemOption[0].optionTemplate.id != 107)
+                            for (int l = 0; l < item.itemOption.Length; l++)
                             {
-                                text2 += item.itemOption[0].getOptionString();
+                                if (item.itemOption[l] != null && (item.itemOption[l].optionTemplate == null || (item.itemOption[l].optionTemplate.id != 102 && item.itemOption[l].optionTemplate.id != 107)))
+                                {
+                                    string optStr = item.itemOption[l].getOptionString();
+                                    if (!string.IsNullOrEmpty(optStr))
+                                    {
+                                        text2 = string.IsNullOrEmpty(text2) ? optStr : (text2 + "," + optStr);
+                                    }
+                                }
                             }
-                            mFont mFont3 = mFont.tahoma_7_blue;
-                            if (item.compare < 0 && item.template != null && item.template.type != 5)
+                            if (!string.IsNullOrEmpty(text2))
                             {
-                                mFont3 = mFont.tahoma_7_red;
-                            }
-                            if (typeShop == 2 && item.itemOption.Length > 1 && item.buyType != -1)
-                            {
-                                text2 += string.Empty;
-                            }
-                            if (typeShop != 2 || (typeShop == 2 && item.buyType <= 1))
-                            {
-                                mFont3.drawString(g, text2, num2 + 5, num3 + 11, 0);
+                                mFont mFont3 = mFont.tahoma_7_blue;
+                                if (item.compare < 0 && item.template != null && item.template.type != 5)
+                                {
+                                    mFont3 = mFont.tahoma_7_red;
+                                }
+                                if (typeShop != 2 || (typeShop == 2 && item.buyType <= 1))
+                                {
+                                    mFont3.drawString(g, text2, num2 + 5, num3 + 11, 0);
+                                }
                             }
                         }
                         if (item.buySpec > 0)
@@ -4820,26 +4826,27 @@ namespace Game1
                     string text2 = string.Empty;
                     if (item.itemOption != null)
                     {
-                        if (item.itemOption.Length > 0 && item.itemOption[0] != null && item.itemOption[0].optionTemplate != null && item.itemOption[0].optionTemplate.id != 102 && item.itemOption[0].optionTemplate.id != 107)
+                        for (int l = 0; l < item.itemOption.Length; l++)
                         {
-                            text2 += item.itemOption[0].getOptionString();
-                        }
-                        mFont mFont3 = mFont.tahoma_7_blue;
-                        if (item.compare < 0 && item.template.type != 5)
-                        {
-                            mFont3 = mFont.tahoma_7_red;
-                        }
-                        if (item.itemOption.Length > 1)
-                        {
-                            for (int l = 1; l < 2; l++)
+                            if (item.itemOption[l] != null && (item.itemOption[l].optionTemplate == null || (item.itemOption[l].optionTemplate.id != 102 && item.itemOption[l].optionTemplate.id != 107)))
                             {
-                                if (item.itemOption[l] != null && item.itemOption[l].optionTemplate != null && item.itemOption[l].optionTemplate.id != 102 && item.itemOption[l].optionTemplate.id != 107)
+                                string optStr = item.itemOption[l].getOptionString();
+                                if (!string.IsNullOrEmpty(optStr))
                                 {
-                                    text2 = text2 + "," + item.itemOption[l].getOptionString();
+                                    text2 = string.IsNullOrEmpty(text2) ? optStr : (text2 + "," + optStr);
+                                    if (text2.Contains(",")) break;
                                 }
                             }
                         }
-                        mFont3.drawString(g, text2, num3 + 5, num4 + 11, mFont.LEFT);
+                        if (!string.IsNullOrEmpty(text2))
+                        {
+                            mFont mFont3 = mFont.tahoma_7_blue;
+                            if (item.compare < 0 && item.template.type != 5)
+                            {
+                                mFont3 = mFont.tahoma_7_red;
+                            }
+                            mFont3.drawString(g, text2, num3 + 5, num4 + 11, mFont.LEFT);
+                        }
                     }
                     SmallImage.drawSmallImage(g, item.template.iconID, num6 + num8 / 2, num7 + num9 / 2, 0, 3);
                     if (item.itemOption != null)
@@ -5352,26 +5359,26 @@ namespace Game1
                     string text2 = string.Empty;
                     if (item.itemOption != null)
                     {
-                        if (item.itemOption.Length > 0 && item.itemOption[0] != null)
+                        for (int m = 0; m < item.itemOption.Length; m++)
                         {
-                            text2 += item.itemOption[0].getOptionString();
-                        }
-                        mFont mFont3 = mFont.tahoma_7_blue;
-                        if (item.compare < 0 && item.template.type != 5)
-                        {
-                            mFont3 = mFont.tahoma_7_red;
-                        }
-                        if (item.itemOption.Length > 1)
-                        {
-                            for (int m = 1; m < item.itemOption.Length; m++)
+                            if (item.itemOption[m] != null && (item.itemOption[m].optionTemplate == null || (item.itemOption[m].optionTemplate.id != 102 && item.itemOption[m].optionTemplate.id != 107)))
                             {
-                                if (item.itemOption[m] != null && item.itemOption[m].optionTemplate != null && item.itemOption[m].optionTemplate.id != 102 && item.itemOption[m].optionTemplate.id != 107)
+                                string optStr = item.itemOption[m].getOptionString();
+                                if (!string.IsNullOrEmpty(optStr))
                                 {
-                                    text2 = text2 + "," + item.itemOption[m].getOptionString();
+                                    text2 = string.IsNullOrEmpty(text2) ? optStr : (text2 + "," + optStr);
                                 }
                             }
                         }
-                        mFont3.drawString(g, text2, num2 + 5, num3 + 11, mFont.LEFT);
+                        if (!string.IsNullOrEmpty(text2))
+                        {
+                            mFont mFont3 = mFont.tahoma_7_blue;
+                            if (item.compare < 0 && item.template.type != 5)
+                            {
+                                mFont3 = mFont.tahoma_7_red;
+                            }
+                            mFont3.drawString(g, text2, num2 + 5, num3 + 11, mFont.LEFT);
+                        }
                     }
                     SmallImage.drawSmallImage(g, item.template.iconID, num5 + num7 / 2, num6 + num8 / 2, 0, 3);
                     if (item.itemOption != null)
@@ -6011,26 +6018,26 @@ namespace Game1
                 string text2 = string.Empty;
                 if (item.itemOption != null)
                 {
-                    if (item.itemOption.Length > 0 && item.itemOption[0] != null && item.itemOption[0].optionTemplate != null && item.itemOption[0].optionTemplate.id != 102 && item.itemOption[0].optionTemplate.id != 107)
+                    for (int m = 0; m < item.itemOption.Length; m++)
                     {
-                        text2 += item.itemOption[0].getOptionString();
-                    }
-                    mFont mFont3 = mFont.tahoma_7_blue;
-                    if (item.compare < 0 && item.template.type != 5)
-                    {
-                        mFont3 = mFont.tahoma_7_red;
-                    }
-                    if (item.itemOption.Length > 1)
-                    {
-                        for (int m = 1; m < item.itemOption.Length; m++)
+                        if (item.itemOption[m] != null && (item.itemOption[m].optionTemplate == null || (item.itemOption[m].optionTemplate.id != 102 && item.itemOption[m].optionTemplate.id != 107)))
                         {
-                            if (item.itemOption[m] != null && item.itemOption[m].optionTemplate != null && item.itemOption[m].optionTemplate.id != 102 && item.itemOption[m].optionTemplate.id != 107)
+                            string optStr = item.itemOption[m].getOptionString();
+                            if (!string.IsNullOrEmpty(optStr))
                             {
-                                text2 = text2 + "," + item.itemOption[m].getOptionString();
+                                text2 = string.IsNullOrEmpty(text2) ? optStr : (text2 + "," + optStr);
                             }
                         }
                     }
-                    mFont3.drawString(g, text2, num + 5, num2 + 11, mFont.LEFT);
+                    if (!string.IsNullOrEmpty(text2))
+                    {
+                        mFont mFont3 = mFont.tahoma_7_blue;
+                        if (item.compare < 0 && item.template.type != 5)
+                        {
+                            mFont3 = mFont.tahoma_7_red;
+                        }
+                        mFont3.drawString(g, text2, num + 5, num2 + 11, mFont.LEFT);
+                    }
                 }
                 SmallImage.drawSmallImage(g, item.template.iconID, num5 + num7 / 2, num6 + num8 / 2, 0, 3);
                 if (item.itemOption != null)
@@ -6305,24 +6312,22 @@ namespace Game1
                         string text2 = string.Empty;
                         if (itemInvenNew.itemOption != null)
                         {
-                            if (itemInvenNew.itemOption.Length > 0 && itemInvenNew.itemOption[0] != null && itemInvenNew.itemOption[0].optionTemplate != null && itemInvenNew.itemOption[0].optionTemplate.id != 102 && itemInvenNew.itemOption[0].optionTemplate.id != 107)
+                            for (int num17 = 0; num17 < itemInvenNew.itemOption.Length; num17++)
                             {
-                                text2 += itemInvenNew.itemOption[0].getOptionString();
+                                if (itemInvenNew.itemOption[num17] != null && (itemInvenNew.itemOption[num17].optionTemplate == null || (itemInvenNew.itemOption[num17].optionTemplate.id != 102 && itemInvenNew.itemOption[num17].optionTemplate.id != 107)))
+                                {
+                                    string optStr = itemInvenNew.itemOption[num17].getOptionString();
+                                    if (!string.IsNullOrEmpty(optStr))
+                                    {
+                                        text2 = string.IsNullOrEmpty(text2) ? optStr : (text2 + "," + optStr);
+                                        if (text2.Contains(",")) break;
+                                    }
+                                }
                             }
                             cachedOptionFont = mFont.tahoma_7_blue;
                             if (itemInvenNew.compare < 0 && itemInvenNew.template.type != 5)
                             {
                                 cachedOptionFont = mFont.tahoma_7_red;
-                            }
-                            if (itemInvenNew.itemOption.Length > 1)
-                            {
-                                for (int num17 = 1; num17 < 2; num17++)
-                                {
-                                    if (itemInvenNew.itemOption[num17] != null && itemInvenNew.itemOption[num17].optionTemplate != null && itemInvenNew.itemOption[num17].optionTemplate.id != 102 && itemInvenNew.itemOption[num17].optionTemplate.id != 107)
-                                    {
-                                        text2 = text2 + "," + itemInvenNew.itemOption[num17].getOptionString();
-                                    }
-                                }
                             }
                         }
                         try
@@ -6472,26 +6477,27 @@ namespace Game1
                     string text4 = string.Empty;
                     if (item3.itemOption != null)
                     {
-                        if (item3.itemOption.Length > 0 && item3.itemOption[0] != null && item3.itemOption[0].optionTemplate != null && item3.itemOption[0].optionTemplate.id != 102 && item3.itemOption[0].optionTemplate.id != 107)
+                        for (int num32 = 0; num32 < item3.itemOption.Length; num32++)
                         {
-                            text4 += item3.itemOption[0].getOptionString();
-                        }
-                        mFont mFont5 = mFont.tahoma_7_blue;
-                        if (item3.compare < 0 && item3.template.type != 5)
-                        {
-                            mFont5 = mFont.tahoma_7_red;
-                        }
-                        if (item3.itemOption.Length > 1)
-                        {
-                            for (int num32 = 1; num32 < 2; num32++)
+                            if (item3.itemOption[num32] != null && (item3.itemOption[num32].optionTemplate == null || (item3.itemOption[num32].optionTemplate.id != 102 && item3.itemOption[num32].optionTemplate.id != 107)))
                             {
-                                if (item3.itemOption[num32] != null && item3.itemOption[num32].optionTemplate != null && item3.itemOption[num32].optionTemplate.id != 102 && item3.itemOption[num32].optionTemplate.id != 107)
+                                string optStr = item3.itemOption[num32].getOptionString();
+                                if (!string.IsNullOrEmpty(optStr))
                                 {
-                                    text4 = text4 + "," + item3.itemOption[num32].getOptionString();
+                                    text4 = string.IsNullOrEmpty(text4) ? optStr : (text4 + "," + optStr);
+                                    if (text4.Contains(",")) break;
                                 }
                             }
                         }
-                        mFont5.drawString(g, text4, num23 + 5, num24 + 11, mFont.LEFT);
+                        if (!string.IsNullOrEmpty(text4))
+                        {
+                            mFont mFont5 = mFont.tahoma_7_blue;
+                            if (item3.compare < 0 && item3.template.type != 5)
+                            {
+                                mFont5 = mFont.tahoma_7_red;
+                            }
+                            mFont5.drawString(g, text4, num23 + 5, num24 + 11, mFont.LEFT);
+                        }
                     }
                     SmallImage.drawSmallImage(g, item3.template.iconID, num26 + num28 / 2, num27 + num29 / 2, 0, 3);
                     if (item3.itemOption != null)
