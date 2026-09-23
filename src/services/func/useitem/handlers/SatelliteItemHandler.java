@@ -39,6 +39,7 @@ public class SatelliteItemHandler implements ItemActionHandler {
 
         if (satellite != null) {
             InventoryService.gI().subQuantityItemsBag(player, item, 1);
+            InventoryService.gI().sendItemBags(player);
             satellite.sendVeTinh();
         }
     }

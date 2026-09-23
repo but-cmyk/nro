@@ -101,6 +101,7 @@ public class SkillBookItemHandler implements ItemActionHandler {
             if (skillSlot != -1 && SkillUtil.upSkillPet(pl.pet.playerSkill.skills, skillSlot)) {
                 Service.gI().chatJustForMe(pl, pl.pet, "Cám ơn sư phụ");
                 InventoryService.gI().subQuantityItemsBag(pl, item, 1);
+                InventoryService.gI().sendItemBags(pl);
             } else {
                 Service.gI().sendThongBao(pl, "Không thể thực hiện");
             }

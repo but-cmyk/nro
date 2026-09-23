@@ -3,6 +3,7 @@ package services.phoban;
 
 import models.boss.Boss;
 import consts.BossID;
+import managers.boss.OtherBossManager;
 import models.boss.boss_list.Training.Karin;
 import models.boss.boss_list.Training.KhiBubbles;
 import models.boss.boss_list.Training.MrPoPo;
@@ -77,6 +78,14 @@ public class TrainingService {
             }
             switch (bossID) {
                 case BossID.TAUPAYPAY -> {
+                    for (Boss b : OtherBossManager.gI().getBosses()) {
+                        if (b instanceof TauPayPay1 t && t.playerAtt != null && t.playerAtt.equals(pl)) {
+                            if (!t.isDie() && t.zone != null && pl.zone != null && t.zone.equals(pl.zone)) {
+                                return t;
+                            }
+                            t.leaveMap();
+                        }
+                    }
                     return new TauPayPay1(pl);
                 }
                 case BossID.KARIN -> {

@@ -606,6 +606,7 @@ public class ClanService {
                 Service.gI().sendFlagBag(player);
                 sendMyClan(player);
                 Service.gI().sendThongBao(player, "Chúc mừng bạn đã tạo bang thành công.");
+                checkDoneTaskJoinClan(clan);
             }
         }
     }
@@ -1051,8 +1052,8 @@ public class ClanService {
         }
     }
 
-    private void checkDoneTaskJoinClan(Clan clan) {
-        if (clan.getMembers().size() >= 2) {
+    public void checkDoneTaskJoinClan(Clan clan) {
+        if (clan != null && clan.getMembers().size() >= 1) {
             for (Player player : clan.membersInGame) {
                 TaskService.gI().checkDoneTaskJoinClan(player);
             }

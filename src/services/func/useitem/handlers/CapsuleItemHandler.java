@@ -26,8 +26,13 @@ public class CapsuleItemHandler implements ItemActionHandler {
 
     @Override
     public void handle(Player player, Item item, int bagIndex) {
+        if (player.idNRNM != -1) {
+            Service.gI().sendThongBao(player, "Không thể mang ngọc rồng này lên Phi thuyền");
+            return;
+        }
         if (item.template.id == 193) {
             InventoryService.gI().subQuantityItemsBag(player, item, 1);
+            InventoryService.gI().sendItemBags(player);
         }
         openCapsuleUI(player);
     }

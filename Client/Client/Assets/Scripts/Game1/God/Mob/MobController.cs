@@ -119,12 +119,9 @@ namespace Game1.God
                     @char.mobFocus = GetMobTanSat();
                     if (isTDLT && @char.mobFocus != null)
                     {
-                        if (Mobs.telePem)
+                        if (Mobs.telePem || isTDLT)
                         {
-                            if (Math.abs(@char.mobFocus.xFirst - @char.cx) >= 20 || Math.abs(@char.mobFocus.yFirst - @char.cy) >= 20)
-                            {
-                                MoveTo(@char.mobFocus.xFirst, @char.mobFocus.yFirst);
-                            }
+                            MoveTo(@char.mobFocus.xFirst, @char.mobFocus.yFirst);
                             return;
                         }
                         @char.cx = @char.mobFocus.xFirst;
@@ -164,12 +161,9 @@ namespace Game1.God
                             }
                             else
                             {
-                                if (Mobs.telePem)
+                                if (Mobs.telePem || isTDLT)
                                 {
-                                    if (Math.abs(mobFocus.xFirst - @char.cx) >= 20 || Math.abs(mobFocus.yFirst - @char.cy) >= 20)
-                                    {
-                                        MoveTo(mobFocus.xFirst, mobFocus.yFirst);
-                                    }
+                                    MoveTo(mobFocus.xFirst, mobFocus.yFirst);
                                     return;
                                 }
                                 Move(mobFocus.xFirst, mobFocus.yFirst);
@@ -379,20 +373,36 @@ namespace Game1.God
 
         private static Mob GetMobTanSat()
         {
-            Mob result = null;
-            int num = int.MaxValue;
-            Char @char = Char.myCharz();
+            List<Mob> list = new List<Mob>();
             for (int i = 0; i < GameScr.vMob.size(); i++)
             {
                 Mob mob = (Mob)GameScr.vMob.elementAt(i);
-                int num2 = (mob.xFirst - @char.cx) * (mob.xFirst - @char.cx) + (mob.yFirst - @char.cy) * (mob.yFirst - @char.cy);
-                if (IsMobTanSat(mob) && num2 < num)
+                if (IsMobTanSat(mob))
                 {
-                    result = mob;
-                    num = num2;
+                    list.Add(mob);
                 }
             }
-            return result;
+            if (list.Count > 0)
+            {
+                if (ItemTime.isExistItem(4387))
+                {
+                    return list[Res.random(0, list.Count)];
+                }
+                Mob result = null;
+                int num = int.MaxValue;
+                Char @char = Char.myCharz();
+                foreach (Mob m in list)
+                {
+                    int num2 = (m.xFirst - @char.cx) * (m.xFirst - @char.cx) + (m.yFirst - @char.cy) * (m.yFirst - @char.cy);
+                    if (num2 < num)
+                    {
+                        result = m;
+                        num = num2;
+                    }
+                }
+                return result;
+            }
+            return null;
         }
 
         private static Char GetCharTanSat()

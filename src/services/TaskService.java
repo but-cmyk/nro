@@ -317,7 +317,7 @@ public class TaskService {
         return switch (npc.tempId) {
             case ConstNpc.QUY_LAO_KAME ->
                 player.gender == ConstPlayer.TRAI_DAT && (doneTask(player, ConstTask.TASK_11_0)
-                || doneTask(player, ConstTask.TASK_12_0)
+                || (player.clan != null && player.clan.getMembers().size() >= 1 && doneTask(player, ConstTask.TASK_12_0))
                 || doneTask(player, ConstTask.TASK_12_1)
                 || doneTask(player, ConstTask.TASK_13_3)
                 || doneTask(player, ConstTask.TASK_14_2)
@@ -333,7 +333,7 @@ public class TaskService {
                 || doneTask(player, ConstTask.TASK_19_2));
             case ConstNpc.TRUONG_LAO_GURU ->
                 player.gender == ConstPlayer.NAMEC && (doneTask(player, ConstTask.TASK_11_0)
-                || doneTask(player, ConstTask.TASK_12_0)
+                || (player.clan != null && player.clan.getMembers().size() >= 1 && doneTask(player, ConstTask.TASK_12_0))
                 || doneTask(player, ConstTask.TASK_12_1)
                 || doneTask(player, ConstTask.TASK_13_3)
                 || doneTask(player, ConstTask.TASK_14_2)
@@ -348,7 +348,7 @@ public class TaskService {
                 || doneTask(player, ConstTask.TASK_19_2));
             case ConstNpc.VUA_VEGETA ->
                 player.gender == ConstPlayer.XAYDA && (doneTask(player, ConstTask.TASK_11_0)
-                || doneTask(player, ConstTask.TASK_12_0)
+                || (player.clan != null && player.clan.getMembers().size() >= 1 && doneTask(player, ConstTask.TASK_12_0))
                 || doneTask(player, ConstTask.TASK_12_1)
                 || doneTask(player, ConstTask.TASK_13_3)
                 || doneTask(player, ConstTask.TASK_15_4)
@@ -442,7 +442,9 @@ public class TaskService {
     //kiểm tra hoàn thành nhiệm vụ gia nhập bang hội
     public void checkDoneTaskJoinClan(Player player) {
         if (!player.isBoss && !player.isPet) {
-            doneTask(player, ConstTask.TASK_12_0);
+            if (player.clan != null && player.clan.getMembers().size() >= 1) {
+                doneTask(player, ConstTask.TASK_12_0);
+            }
         }
     }
 
@@ -502,6 +504,9 @@ public class TaskService {
     //kiểm tra hoàn thành nhiệm vụ khi vào map nào đó
     public void checkDoneTaskGoToMap(Player player, Zone zoneJoin) {
         if (!player.isBoss && !player.isPet) {
+            if (player.clan != null && player.clan.getMembers().size() >= 1) {
+                checkDoneTaskJoinClan(player);
+            }
             if (zoneJoin != null) {
                 switch (zoneJoin.map.mapId) {
                     case 39:
@@ -885,6 +890,10 @@ public class TaskService {
                         break;
                     case ConstTask.TASK_9_0:
                         npcSay(player, ConstNpc.BO_MONG, "Cẩn thận! Tàu Pảy Pảy đang ở đây và hắn rất nguy hiểm!");
+                        TrainingService.gI().callBoss(player, BossID.TAUPAYPAY, false);
+                        break;
+                    case ConstTask.TASK_9_1:
+                        Service.gI().sendThongBao(player, "Hắn quá mạnh! Mau bỏ chạy lên tháp Karin!");
                         break;
                     case ConstTask.TASK_9_3:
                         npcSay(player, ConstNpc.THAN_MEO_KARIN, "Ta là Thần Mèo Karin. Nếu con muốn đánh bại Tàu Pảy Pảy, con phải vượt qua thử thách tập luyện của ta!");
