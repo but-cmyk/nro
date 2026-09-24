@@ -33,12 +33,16 @@ public class PlayerService {
     }
 
     public void sendTNSM(Player player, byte type, long param) {
-        if (param > 0) {
+        if (param > 0 && player != null) {
             Message msg;
             try {
                 msg = new Message(-3);
                 msg.writer().writeByte(type);// 0 là cộng sm, 1 cộng tn, 2 là cộng cả 2
                 msg.writer().writeInt((int) param);// số tn cần cộng
+                if (player.nPoint != null) {
+                    msg.writer().writeLong(player.nPoint.power);
+                    msg.writer().writeLong(player.nPoint.tiemNang);
+                }
                 player.sendMessage(msg);
                 msg.cleanup();
             } catch (Exception e) {
@@ -47,7 +51,7 @@ public class PlayerService {
     }
     public void dailyLogin(Player player) {
         if (Util.compareDay(Date.from(Instant.now()), player.firstTimeLogin)) {
-            player.luotNhanBuaMienPhi = 1;
+            player.luotNhanBuaMienPhi = 0;
             player.diemDanhSuKien = 1;
              player.lastCheckIn = null;
             player.firstTimeLogin = Date.from(Instant.now());
@@ -136,7 +140,7 @@ public class PlayerService {
     }
 
     public void playerMove(Player player, int x, int y) {
-        if (player.zone == null) {
+        if (player.zone == null || player.zone.map == null) {
             return;
         }
         if (!player.isDie()) {
@@ -145,6 +149,12 @@ public class PlayerService {
             }
             if (player.effectSkill.useTroi) {
                 EffectSkillService.gI().removeUseTroi(player);
+            }
+            if (player.zone.map.mapWidth > 48) {
+                x = Math.max(24, Math.min(player.zone.map.mapWidth - 24, x));
+            }
+            if (player.zone.map.mapHeight > 48) {
+                y = Math.max(24, Math.min(player.zone.map.mapHeight - 24, y));
             }
             player.location.x = x;
             player.location.y = y;

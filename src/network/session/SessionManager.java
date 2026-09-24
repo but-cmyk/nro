@@ -114,6 +114,10 @@ public class SessionManager {
         }, MEMORY_CHECK_INTERVAL, MEMORY_CHECK_INTERVAL, TimeUnit.MILLISECONDS);
     }
 
+    public void addSession(ISession session) {
+        putSession(session);
+    }
+
     public void putSession(ISession session) {
         if (session == null) {
             Logger.warning("Attempted to add null session");
@@ -123,6 +127,11 @@ public class SessionManager {
         if (isShuttingDown) {
             Logger.warning("SessionManager is shutting down, rejecting new session");
             session.disconnect();
+            return;
+        }
+
+        if (!session.isConnected()) {
+            Logger.warning("Rejecting an already disconnected session");
             return;
         }
         

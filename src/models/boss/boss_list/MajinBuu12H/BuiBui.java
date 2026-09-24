@@ -75,7 +75,8 @@ public class BuiBui extends Boss {
         }
 
         // Kháng skill đặc biệt
-        if (plAtt != null && plAtt.playerSkill != null && plAtt.playerSkill.skillSelect != null) {
+        if (plAtt != null && plAtt.playerSkill != null && plAtt.playerSkill.skillSelect != null
+                && plAtt.playerSkill.skillSelect.template != null) {
             int skillId = plAtt.playerSkill.skillSelect.template.id;
             if (skillId == Skill.KAMEJOKO || skillId == Skill.MASENKO ||
                     skillId == Skill.ANTOMIC || skillId == Skill.LIEN_HOAN) {

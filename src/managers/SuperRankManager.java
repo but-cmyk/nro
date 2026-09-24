@@ -5,12 +5,13 @@ import utils.Functions;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import lombok.NonNull;
 import models.map.Zone;
 import models.Template.WaitSuperRank;
 import models.player.Player;
 import server.Client;
 import server.Maintenance;
+
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class SuperRankManager implements Runnable {
 
@@ -28,8 +29,8 @@ public class SuperRankManager implements Runnable {
     }
 
     public SuperRankManager() {
-        waitList = new ArrayList<>();
-        list = new ArrayList<>();
+        waitList = new CopyOnWriteArrayList<>();
+        list = new CopyOnWriteArrayList<>();
     }
 
     @Override
@@ -94,7 +95,7 @@ public class SuperRankManager implements Runnable {
         return false;
     }
 
-    public boolean SPRCheck(@NonNull Zone zone) {
+    public boolean SPRCheck( Zone zone) {
         for (int i = list.size() - 1; i >= 0; i--) {
             SuperRank spr = list.get(i);
             if (spr.getZone() != null && spr.getZone().equals(zone)) {
@@ -116,9 +117,10 @@ public class SuperRankManager implements Runnable {
     public String getCompeting(long plId) {
         for (int i = list.size() - 1; i >= 0; i--) {
             SuperRank spr = list.get(i);
-            if (spr.getPlayerId() == plId) {
+            if (spr == null) continue;
+            if (spr.getPlayerId() == plId && spr.getRival() != null && spr.getZone() != null) {
                 return "VS " + spr.getRival().name + " kv: " + spr.getZone().zoneId;
-            } else if (spr.getRivalId() == plId) {
+            } else if (spr.getRivalId() == plId && spr.getPlayer() != null && spr.getZone() != null) {
                 return "VS " + spr.getPlayer().name + " kv: " + spr.getZone().zoneId;
             }
         }

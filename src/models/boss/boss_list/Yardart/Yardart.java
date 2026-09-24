@@ -129,7 +129,8 @@ public abstract class Yardart extends Boss {
                     if (Util.getDistance(this, pl) <= this.getRangeCanAttackWithSkillSelect()) {
                         if (Util.getDistance(this, pl) < 50) {
                             if (SkillUtil.isUseSkillChuong(this)) {
-                                while (true) {
+                                int maxTries1 = 10;
+                                while (maxTries1-- > 0) {
                                     this.playerSkill.skillSelect = this.playerSkill.skills.get(Util.nextInt(0, this.playerSkill.skills.size() - 1));
                                     if (!SkillUtil.isUseSkillChuong(this)) {
                                         break;
@@ -142,7 +143,8 @@ public abstract class Yardart extends Boss {
                                 this.moveTo(pl.location.x, pl.location.y);
                             } else {
                                 if (Util.isTrue(1, 5)) {
-                                    while (true) {
+                                    int maxTries2 = 10;
+                                    while (maxTries2-- > 0) {
                                         this.playerSkill.skillSelect = this.playerSkill.skills.get(Util.nextInt(0, this.playerSkill.skills.size() - 1));
                                         if (SkillUtil.isUseSkillChuong(this)) {
                                             break;
@@ -160,7 +162,8 @@ public abstract class Yardart extends Boss {
                         }
                     } else {
                         if (Util.isTrue(3, 4)) {
-                            while (!SkillUtil.isUseSkillChuong(this)) {
+                            int maxTries3 = 10;
+                            while (maxTries3-- > 0 && !SkillUtil.isUseSkillChuong(this)) {
                                 this.playerSkill.skillSelect = this.playerSkill.skills.get(Util.nextInt(0, this.playerSkill.skills.size() - 1));
                                 if (SkillUtil.isUseSkillChuong(this)) {
                                     break;

@@ -12,6 +12,8 @@ import utils.TimeUtil;
 import utils.Util;
 
 import java.sql.Connection;
+import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.Map;
 import java.util.Set;
@@ -109,6 +111,8 @@ public class TransactionService implements Runnable {
                         } else {
                             Service.gI().sendThongBao(pl, "Không thể thực hiện");
                         }
+                    } else {
+                        Service.gI().sendThongBao(pl, "Người chơi không ở gần hoặc đã rời khu vực");
                     }
                     break;
                 case ADD_ITEM_TRADE:
@@ -123,7 +127,7 @@ public class TransactionService implements Runnable {
                         if (quantity == 0) {//do
                             quantity = 1;
                         }
-                        if (index != -1 && quantity > Trade.QUANLITY_MAX) {
+                        if (quantity > Trade.QUANLITY_MAX) {
                             Service.gI().sendThongBao(pl, "Đã quá giới hạn giao dịch...");
                             trade.cancelTrade();
                             break;
@@ -151,13 +155,10 @@ public class TransactionService implements Runnable {
                         break;
                     }
                     if (trade != null) {
-                        trade.acceptTrade();
+                        trade.acceptTrade(pl);
                         if (trade.accept == 1) {
                             Service.gI().sendThongBao(pl, "Xin chờ đối phương đồng ý");
-                        } else if (trade.accept == 2) {
-                            trade.dispose();
                         }
-                        pl.isTrade = false;
                     }
                     break;
             }
@@ -206,12 +207,19 @@ public class TransactionService implements Runnable {
         while (!Maintenance.isRunning) {
             try {
                 long st = System.currentTimeMillis();
-                Set<Map.Entry<Player, Trade>> entrySet = PLAYER_TRADE.entrySet();
-                for (Map.Entry entry : entrySet) {
-                    ((Trade) entry.getValue()).update();
+                Set<Trade> updatedTrades = Collections.newSetFromMap(new IdentityHashMap<>());
+                for (Trade trade : PLAYER_TRADE.values()) {
+                    if (trade != null && updatedTrades.add(trade)) {
+                        trade.update();
+                    }
                 }
-                Thread.sleep(300 - (System.currentTimeMillis() - st));
-            } catch (Exception e) {
+                long timeTaken = System.currentTimeMillis() - st;
+                long sleepTime = Math.max(50, 300 - timeTaken);
+                Thread.sleep(sleepTime);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                break;
+            } catch (Exception ignored) {
             }
         }
     }

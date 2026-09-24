@@ -31,7 +31,7 @@ public class ItemTimeService {
         ItemTimeService.gI().sendTextConDuongRanDoc(player);
         ItemTimeService.gI().sendTextKhiGasHuyDiet(player);
         ItemTimeService.gI().sendTextTimePickDoanhTrai(player);
-        ItemTimeService.gI().send_text_time_nhan_bua_mien_phi(player);
+
         if (player.fusion.typeFusion == ConstPlayer.LUONG_LONG_NHAT_THE) {
             sendItemTime(player, player.gender == ConstPlayer.NAMEC ? 3901 : 3790,
                     (int) ((Fusion.TIME_FUSION - (System.currentTimeMillis() - player.fusion.lastTimeFusion)) / 1000));
@@ -205,14 +205,7 @@ public class ItemTimeService {
         }
     }
     private String str = "Nhận ngẫu nhiên bùa 1h mỗi ngày tại Bà Hạt Mít ở vách núi !!";
-
     public void send_text_time_nhan_bua_mien_phi(Player player) {
-        if (Util.canDoWithTime(player.itemTime.lastTimeSendTextTime, 60000)) {
-            if (player.luotNhanBuaMienPhi == 1) {
-                ItemTimeService.gI().sendTextTime(player, TEXT_NHAN_BUA_MIEN_PHI, str, 30);
-            }
-            player.itemTime.lastTimeSendTextTime = System.currentTimeMillis();
-        }
     }
 
     public void sendTextBanDoKhoBau(Player player) {
@@ -293,7 +286,7 @@ public class ItemTimeService {
         try {
             msg = new Message(-106);
             msg.writer().writeShort(itemId);
-            msg.writer().writeShort(time);
+            msg.writer().writeShort((short) Math.max(0, Math.min(time, Short.MAX_VALUE)));
             player.sendMessage(msg);
             msg.cleanup();
         } catch (IOException e) {

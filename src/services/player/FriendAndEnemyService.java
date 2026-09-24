@@ -86,8 +86,7 @@ public class FriendAndEnemyService {
                     break;
                 case REMOVE_ENEMY:
                     int enemyIdToRemove = msg.reader().readInt();
-                
-                    removeEnemy(player, msg.reader().readInt());
+                    removeEnemy(player, enemyIdToRemove);
                     break;
             }
         } catch (IOException ex) {
@@ -202,6 +201,8 @@ public class FriendAndEnemyService {
                     npcSay = "Bạn có muốn kết bạn với " + pl.name + " ?";
                 }
                 NpcService.gI().createMenuConMeo(player, ConstNpc.MAKE_FRIEND, -1, npcSay, new String[]{"Đồng ý", "Từ chối"}, playerId);
+            } else {
+                Service.gI().sendThongBao(player, "Người chơi không online hoặc không tồn tại!");
             }
         }
     }
@@ -245,9 +246,13 @@ public class FriendAndEnemyService {
                 Player pl = Client.gI().getPlayer(playerId);
                 if (pl != null) {
                     Service.gI().chatPrivate(player, pl, text);
+                } else {
+                    Service.gI().sendThongBao(player, "Người chơi hiện đang offline!");
                 }
             } catch (Exception e) {
             }
+        } else {
+            Service.gI().sendThongBao(player, "Bạn đang chat quá nhanh, vui lòng thử lại sau!");
         }
     }
 
@@ -278,7 +283,12 @@ public class FriendAndEnemyService {
                 if (player.isAdmin() || player.nPoint.teleport) {
                     if (!pl.itemTime.isUseAnDanh || player.isAdmin()) {
                         if ((player.isAdmin() || !pl.zone.isFullPlayer()) && !MapService.gI().isMapOffline(pl.zone.map.mapId) && !MapService.gI().isMapBlackBallWar(pl.zone.map.mapId) && !MapService.gI().isMapPhoBan(pl.zone.map.mapId) && !MapService.gI().isMapMaBu(pl.zone.map.mapId)) {
-                            ChangeMapService.gI().changeMapYardrat(player, ChangeMapService.gI().checkMapCanJoin(player, pl.zone), pl.location.x + Util.nextInt(-5, 5), pl.location.y);
+                            models.map.Zone zoneJoin = ChangeMapService.gI().checkMapCanJoin(player, pl.zone);
+                            if (zoneJoin != null) {
+                                ChangeMapService.gI().changeMapYardrat(player, zoneJoin, pl.location.x + Util.nextInt(-5, 5), pl.location.y);
+                            } else {
+                                Service.gI().sendThongBao(player, "Bạn chưa đủ điều kiện nhiệm vụ hoặc sức mạnh để đến khu vực này!");
+                            }
                         } else {
                             Service.gI().sendThongBao(player, "Không thể thực hiện");
                         }
@@ -288,6 +298,8 @@ public class FriendAndEnemyService {
                 } else {
                     Service.gI().sendThongBao(player, "Yêu cầu trang bị có khả năng dịch chuyển tức thời");
                 }
+            } else {
+                Service.gI().sendThongBao(player, "Người chơi không online hoặc không tồn tại!");
             }
         } catch (IOException ex) {
 
@@ -295,10 +307,14 @@ public class FriendAndEnemyService {
     }
 
     public void addEnemy(Player player, Player enemy) {
+        if (player == null || enemy == null || player.equals(enemy)) {
+            return;
+        }
         boolean hadEnemy = false;
         for (Enemy ene : player.enemies) {
-            if (ene.id == ene.id) {
+            if (ene != null && ene.id == enemy.id) {
                 hadEnemy = true;
+                break;
             }
         }
         if (!hadEnemy) {

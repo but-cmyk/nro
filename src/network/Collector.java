@@ -1,7 +1,6 @@
 package network;
 
 import java.net.Socket;
-import lombok.Setter;
 import java.io.DataInputStream;
 import java.io.IOException;
 import interfaces.IMessageSendCollect;
@@ -12,11 +11,14 @@ import network.io.Message;
 import utils.Logger;
 
 public final class Collector implements Runnable {
-    private volatile ISession session; // Volatile để thread-safe
+    private volatile ISession session;
     private DataInputStream dis;
-    @Setter
     private IMessageSendCollect collect;
     private volatile boolean running = true; // Control flag
+
+    public void setCollect(IMessageSendCollect collect) {
+        this.collect = collect;
+    }
 
     public Collector(ISession session, Socket socket) {
         this.session = session;

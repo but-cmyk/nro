@@ -32,12 +32,14 @@ public class Rival extends SuperRank {
                 skillTemp[i][2] = skill.coolDown;
             }
         }
+        int dame = player.nPoint.dame > 0 ? player.nPoint.dame : player.nPoint.dameg;
+        int hpMax = player.nPoint.hpMax > 0 ? player.nPoint.hpMax : player.nPoint.hpg;
         return new BossData(
                 player.name,
                 player.gender,
                 new short[]{player.getHead(), player.getBody(), player.getLeg(), player.getFlagBag(), player.getAura(), player.getEffFront()},
-                player.nPoint.dameg,
-                new int[]{player.nPoint.hpg},
+                dame,
+                new int[]{hpMax},
                 new int[]{180},
                 skillTemp,
                 new String[]{}, //text chat 1

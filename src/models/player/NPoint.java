@@ -22,7 +22,6 @@ import utils.Util;
 import java.util.ArrayList;
 import java.util.List;
 import database.daos.EventDAO;
-import lombok.Setter;
 import models.mob.Mob;
 import utils.TimeUtil;
 
@@ -30,8 +29,11 @@ public class NPoint {
 
     public static final byte MAX_LIMIT = 9;
 
-    @Setter
     private Player player;
+
+    public void setPlayer(Player player) {
+        this.player = player;
+    }
 
     public NPoint(Player player) {
         this.player = player;
@@ -220,17 +222,17 @@ public class NPoint {
         if (this.intrinsic != null && this.intrinsic.id == ID_NOI_TAI_TANG_VANG) {
             this.tlGold += this.intrinsic.param1;
         }
-        if (this.player.rewardBlackBall.timeOutOfDateReward[2] > System.currentTimeMillis()) {
+        if (this.player.rewardBlackBall != null && this.player.rewardBlackBall.timeOutOfDateReward[2] > System.currentTimeMillis()) {
             tlHutHp += RewardBlackBall.R3S_1;
         }
-        if (this.player.rewardBlackBall.timeOutOfDateReward[3] > System.currentTimeMillis()) {
+        if (this.player.rewardBlackBall != null && this.player.rewardBlackBall.timeOutOfDateReward[3] > System.currentTimeMillis()) {
             tlPST += RewardBlackBall.R4S_2;
         }
-        if (this.player.rewardBlackBall.timeOutOfDateReward[4] > System.currentTimeMillis()) {
+        if (this.player.rewardBlackBall != null && this.player.rewardBlackBall.timeOutOfDateReward[4] > System.currentTimeMillis()) {
             tlDameCrit.add(RewardBlackBall.R5S_1);
             tlSDCM += RewardBlackBall.R5S_1;
         }
-        if (this.player.rewardBlackBall.timeOutOfDateReward[6] > System.currentTimeMillis()) {
+        if (this.player.rewardBlackBall != null && this.player.rewardBlackBall.timeOutOfDateReward[6] > System.currentTimeMillis()) {
             tlNeDon += RewardBlackBall.R7S_1;
         }
 
@@ -754,143 +756,99 @@ public class NPoint {
     }
 
     private void setHpMax() {
-        // Tính toán giới hạn hpMax
-        long hpMax = this.hpg + this.hpAdd;
+        // 1. Tính toán HP cơ bản (gốc + cộng trực tiếp)
+        long baseHp = this.hpg + this.hpAdd;
 
-        // Áp dụng các yếu tố ảnh hưởng đến hpMax
+        // 2. Gom toàn bộ % tăng HP từ trang bị, danh hiệu, set đồ theo cơ chế Additive (cộng dồn)
+        long totalPercentHp = 0;
         for (Integer tl : this.tlHp) {
-            hpMax += (hpMax * tl / 100L);
+            totalPercentHp += tl;
         }
         if (this.player.setClothes.cadicM >= 2) {
-            hpMax += (hpMax * 20L / 100L);
+            totalPercentHp += 20;
         }
-        // Xử lý set nappa
         if (this.player.setClothes.nappa == 5) {
-            hpMax += (hpMax * 80L / 100L);
+            totalPercentHp += 80;
         }
-
-        // Xử lý set worldcup
         if (this.player.setClothes.worldcup == 2) {
-            hpMax += (hpMax * 10 / 100L);
+            totalPercentHp += 10;
         }
-
-        // Xử lý rồng xương
         if (player.itemTime != null && player.itemTime.isUseRX) {
-            hpMax += (hpMax * 10L / 100L);
+            totalPercentHp += 10;
         }
-
-        // Xử lý set nhật ấn
         if (this.isNhatAn) {
-            hpMax += (hpMax * 15L / 100L);
+            totalPercentHp += 15;
+        }
+        if (this.player.rewardBlackBall != null && this.player.rewardBlackBall.timeOutOfDateReward[1] > System.currentTimeMillis()) {
+            totalPercentHp += RewardBlackBall.R2S_1;
+        }
+        if (this.player.itemTime != null && this.player.itemTime.isEatMeal2 && this.player.itemTime.iconMeal2 == 8062) {
+            totalPercentHp += 5;
+        }
+        if (this.isGogeta) {
+            totalPercentHp += 10;
+        }
+        // Xử lý cho Đệ tử khi sư phụ hợp thể các cấp
+        boolean masterFused = this.player.isPet
+                && ((Pet) this.player).master.fusion.typeFusion != ConstPlayer.NON_FUSION
+                && ((Pet) this.player).master.fusion.typeFusion != ConstPlayer.LUONG_LONG_NHAT_THE;
+        if (this.player.isPet && ((Pet) this.player).typePet == 1 && masterFused) {
+            totalPercentHp += 25;
+        }
+        if (this.player.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA2) {
+            totalPercentHp += 10;
+        }
+        if (this.player.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA3) {
+            totalPercentHp += 20;
         }
 
-        // Xử lý ngọc rồng đen 2 sao
-        if (this.player.rewardBlackBall.timeOutOfDateReward[1] > System.currentTimeMillis()) {
-            hpMax += (hpMax * RewardBlackBall.R2S_1 / 100L);
+        // Áp dụng % trang bị tuyến tính lên HP cơ bản
+        long hpMax = baseHp + (baseHp * totalPercentHp / 100L);
+
+        // 3. Cộng thẳng các giá trị cố định
+        if (this.player.isPhuHoMapMabu) {
+            hpMax += 1_000_000;
+        }
+        if (this.player.fusion.typeFusion != ConstPlayer.NON_FUSION) {
+            hpMax += this.player.pet.nPoint.hpMax;
         }
 
-        // Xử lý khỉ
+        // 4. Áp dụng các trạng thái nhân hệ số đặc biệt (Biến khỉ, Phù map, Bổ huyết, Chibi, v.v.)
         if (this.player.effectSkill.isMonkey) {
             if (!this.player.isPet || (this.player.isPet && ((Pet) this.player).status != Pet.FUSION)) {
                 int percent = SkillUtil.getPercentHpMonkey(player.effectSkill.levelMonkey);
                 hpMax += (hpMax * percent / 100L);
             }
         }
-
-        // --- Xử lý cho Đệ tử khi sư phụ hợp thể các cấp ---
-        // Biến kiểm tra sư phụ có đang hợp thể hay không (tất cả các cấp)
-        boolean masterFused = this.player.isPet
-                && ((Pet) this.player).master.fusion.typeFusion != ConstPlayer.NON_FUSION
-                && ((Pet) this.player).master.fusion.typeFusion != ConstPlayer.LUONG_LONG_NHAT_THE;
-
-        // Xử lý pet pic
-        if (this.player.isPet && ((Pet) this.player).typePet == 3 && masterFused) {
-            hpMax += (hpMax * 20 / 100L);
-        }
-
-        // Xử lý pet mabư
-        if (this.player.isPet && ((Pet) this.player).typePet == 1 && masterFused) {
-            hpMax += (hpMax * 25 / 100L);
-        }
-
-        // Xử lý pet berus
-        if (this.player.isPet && ((Pet) this.player).typePet == 2 && masterFused) {
-            hpMax += (hpMax * 30 / 100L);
-        }
-
-        // Xử lý pet black
-        if (this.player.isPet && ((Pet) this.player).typePet == 4 && masterFused) {
-            hpMax += (hpMax * 40 / 100L);
-        }
-        // ------------------------------------------------
-
-        // Xử lý phù
         if (this.player.zone != null && MapService.gI().isMapBlackBallWar(this.player.zone.map.mapId)) {
             hpMax *= this.player.effectSkin.xHPKI;
         }
-
-        // Xử lý thức ăn 2
-        if (this.player.itemTime != null && this.player.itemTime.isEatMeal2 && this.player.itemTime.iconMeal2 == 8062) {
-            hpMax += (hpMax * 5 / 100L);
-        }
-
-        // Xử lý gogeta
-        if (this.isGogeta) {
-            hpMax += (hpMax * 10 / 100L);
-        }
-
-        // --- Xử lý cho Sư phụ khi hợp thể Porata cấp 2, 3, 4 ---
-        if (this.player.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA2) {
-            hpMax += (hpMax * 10 / 100L);
-        }
-        if (this.player.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA3) {
-            hpMax += (hpMax * 20 / 100L);
-        }
-        // ----------------------------------------------------
-
-        // Phù map mabu
-        if (this.player.isPhuHoMapMabu) {
-            hpMax += 1_000_000;
-        }
-
-        // Xử lý +hp đệ
-        if (this.player.fusion.typeFusion != ConstPlayer.NON_FUSION) {
-            hpMax += this.player.pet.nPoint.hpMax;
-        }
-
-        // Xử lý bổ huyết
         if (this.player.itemTime != null && this.player.itemTime.isUseBoHuyet && !this.player.itemTime.isUseBoHuyet2) {
             hpMax *= 2;
         }
-
-        // Xử lý item sieu cap
         if (this.player.itemTime != null && this.player.itemTime.isUseBoHuyet2) {
-            hpMax *= 2.2;
+            hpMax = (long) (hpMax * 2.2);
         }
-
-        // Xử lý huýt sáo
         if (!this.player.isPet || (this.player.isPet && ((Pet) this.player).status != Pet.FUSION)) {
             if (this.player.effectSkill.tiLeHPHuytSao != 0) {
                 hpMax += (hpMax * this.player.effectSkill.tiLeHPHuytSao / 100L);
             }
         }
-
-        // Xử lý chibi
         if (this.player.effectSkill != null && this.player.effectSkill.isChibi && this.player.typeChibi == 3) {
             hpMax *= 2;
         }
-
-        // Xử lý map lạnh
         if (this.player.zone != null && MapService.gI().isMapCold(this.player.zone.map) && !this.isKhongLanh) {
             hpMax /= 2;
         }
-
         if (!this.player.isBoss && !this.player.isNewPet && TimeUtil.checkTime(EventDAO.getRemainingTimeToIncreaseHP())) {
             hpMax += hpMax / 10;
         }
 
-        if (hpMax > 2_000_000_000) {
+        if (hpMax > 2_000_000_000 || hpMax < 0) {
             hpMax = 2_000_000_000;
+        }
+        if (hpMax <= 0) {
+            hpMax = 1;
         }
 
         this.hpMax = (int) hpMax;
@@ -901,110 +859,75 @@ public class NPoint {
     }
 
     private void setMpMax() {
-        // Tính toán giới hạn mpMax
-        long mpMax = this.mpg + this.mpAdd;
+        // 1. Tính toán KI cơ bản (gốc + cộng trực tiếp)
+        long baseMp = this.mpg + this.mpAdd;
 
-        // Áp dụng các yếu tố ảnh hưởng đến mpMax
+        // 2. Gom toàn bộ % tăng KI từ trang bị, danh hiệu, set đồ theo cơ chế Additive
+        long totalPercentMp = 0;
         for (Integer tl : this.tlMp) {
-            mpMax += (mpMax * tl / 100L);
+            totalPercentMp += tl;
         }
-
-        // Xử lý set picolo
-        if (this.player.setClothes.picolo == 5) {
-            mpMax *= 2;
-        }
-
-        // Xử lý set nguyệt ấn
         if (this.isNguyetAn) {
-            mpMax += (mpMax * 15L / 100L);
+            totalPercentMp += 15;
         }
-
-        // Xử lý ngọc rồng đen 6 sao
-        if (this.player.rewardBlackBall.timeOutOfDateReward[5] > System.currentTimeMillis()) {
-            mpMax += (mpMax * RewardBlackBall.R6S_1 / 100L);
+        if (this.player.rewardBlackBall != null && this.player.rewardBlackBall.timeOutOfDateReward[5] > System.currentTimeMillis()) {
+            totalPercentMp += RewardBlackBall.R6S_1;
         }
-
-        // Xử lý set worldcup
         if (this.player.setClothes.worldcup == 2) {
-            mpMax += (this.mpMax * 10 / 100L);
+            totalPercentMp += 10;
         }
-
-        // --- Xử lý cho Đệ tử khi sư phụ hợp thể các cấp ---
         boolean masterFused = this.player.isPet
                 && ((Pet) this.player).master.fusion.typeFusion != ConstPlayer.NON_FUSION
                 && ((Pet) this.player).master.fusion.typeFusion != ConstPlayer.LUONG_LONG_NHAT_THE;
-
-        // Xử lý pet pic
-        if (this.player.isPet && ((Pet) this.player).typePet == 3 && masterFused) {
-            mpMax += (this.mpMax * 20 / 100L);
-        }
-
-        // Xử lý pet mabư
         if (this.player.isPet && ((Pet) this.player).typePet == 1 && masterFused) {
-            mpMax += (this.mpMax * 25 / 100L);
+            totalPercentMp += 25;
         }
-
-        // Xử lý pet br
-        if (this.player.isPet && ((Pet) this.player).typePet == 2 && masterFused) {
-            mpMax += (this.mpMax * 30 / 100L);// MP berus
-        }
-
-        // Xử lý pet black
-        if (this.player.isPet && ((Pet) this.player).typePet == 4 && masterFused) {
-            mpMax += (this.mpMax * 40 / 100L);// MP black
-        }
-        // ------------------------------------------------
-
-        // Xử lý phù
-        if (this.player.zone != null && MapService.gI().isMapBlackBallWar(this.player.zone.map.mapId)) {
-            mpMax *= this.player.effectSkin.xHPKI;
-        }
-
-        // Xử lý gogeta
         if (this.isGogeta) {
-            mpMax += (mpMax * 10 / 100L);
+            totalPercentMp += 10;
+        }
+        if (player.itemTime != null && player.itemTime.isUseRX) {
+            totalPercentMp += 10;
+        }
+        if (this.player.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA2) {
+            totalPercentMp += 10;
+        }
+        if (this.player.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA3) {
+            totalPercentMp += 20;
         }
 
-        // Phù map mabu
+        // Áp dụng % trang bị tuyến tính lên KI cơ bản
+        long mpMax = baseMp + (baseMp * totalPercentMp / 100L);
+
+        // 3. Cộng thẳng các giá trị cố định
         if (this.player.isPhuHoMapMabu) {
             mpMax += 1_000_000;
         }
-
-        // Xử lý rồng xương
-        if (player.itemTime != null && player.itemTime.isUseRX) {
-            mpMax += (mpMax * 10L / 100L);
-        }
-
-        // Xử lý hợp thể
         if (this.player.fusion.typeFusion != 0) {
             mpMax += this.player.pet.nPoint.mpMax;
         }
 
-        // Xử lý bổ khí
+        // 4. Áp dụng các trạng thái nhân hệ số đặc biệt
+        if (this.player.setClothes.picolo == 5) {
+            mpMax *= 2;
+        }
+        if (this.player.zone != null && MapService.gI().isMapBlackBallWar(this.player.zone.map.mapId)) {
+            mpMax *= this.player.effectSkin.xHPKI;
+        }
         if (this.player.itemTime != null && this.player.itemTime.isUseBoKhi && !this.player.itemTime.isUseBoKhi2) {
             mpMax *= 2;
         }
-
-        // Xử lý item sieu cap
         if (this.player.itemTime != null && this.player.itemTime.isUseBoKhi2) {
-            mpMax *= 2.2;
+            mpMax = (long) (mpMax * 2.2);
         }
-
         if (!this.player.isBoss && !this.player.isNewPet && TimeUtil.checkTime(EventDAO.getRemainingTimeToIncreaseMP())) {
             mpMax += mpMax / 10;
         }
 
-        // --- Xử lý cho Sư phụ khi hợp thể Porata cấp 2, 3, 4 ---
-        if (this.player.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA2) {
-            mpMax += (mpMax * 10 / 100L);
-        }
-        if (this.player.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA3 ) {
-            mpMax += (mpMax * 20 / 100L);
-        }
-        // ----------------------------------------------------
-
-        if (mpMax > 2_000_000_000) {
+        if (mpMax > 2_000_000_000 || mpMax < 0) {
             mpMax = 2_000_000_000;
+        }
+        if (mpMax <= 0) {
+            mpMax = 1;
         }
 
         this.mpMax = (int) mpMax;
@@ -1043,155 +966,117 @@ public class NPoint {
     }
 
     private void setDame() {
-        long dame = this.dameg + this.dameAdd;
+        // 1. Sức đánh cơ bản (gốc + cộng trực tiếp)
+        long baseDame = this.dameg + this.dameAdd;
 
+        // 2. Gom toàn bộ % tăng/giảm sức đánh theo cơ chế Additive
+        long totalPercentDame = 0;
         for (Integer tl : this.tlDame) {
-            dame += (dame * tl / 100L);
+            totalPercentDame += tl;
         }
-
-//        for (Integer tl : this.tlSDDep) {
-//            dame += (dame * tl / 100L);
-//        }
         if (this.player.itemTime != null && this.player.itemTime.isXimuoihoadao) {
-            dame += (dame * 20 / 100L);
+            totalPercentDame += 20;
         }
         if (this.player.itemTime != null && this.player.itemTime.isXimuoihoamai) {
-            dame += (dame * 20 / 100L);
+            totalPercentDame += 20;
         }
-
-        // --- Xử lý cho Đệ tử khi sư phụ hợp thể các cấp ---
         boolean masterFused = this.player.isPet
                 && ((Pet) this.player).master.fusion.typeFusion != ConstPlayer.NON_FUSION
                 && ((Pet) this.player).master.fusion.typeFusion != ConstPlayer.LUONG_LONG_NHAT_THE;
-
-        // Xử lý pet pic
-        if (this.player.isPet && ((Pet) this.player).typePet == 3 && masterFused) {
-            dame += (dame * 20 / 100L);
-        }
-
-        // Xử lý pet mabư
         if (this.player.isPet && ((Pet) this.player).typePet == 1 && masterFused) {
-            dame += (dame * 25 / 100L);
+            totalPercentDame += 25;
         }
-
-        // Xử lý pet br
-        if (this.player.isPet && ((Pet) this.player).typePet == 2 && masterFused) {
-            dame += (dame * 30 / 100L);
-        }
-
-        // Xử lý pet black
-        if (this.player.isPet && ((Pet) this.player).typePet == 4 && masterFused) {
-            dame += (dame * 40 / 100L);
-        }
-        // ------------------------------------------------
-
-        // --- Xử lý cho Sư phụ khi hợp thể Porata cấp 2, 3, 4 ---
         if (this.player.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA2) {
-            dame += (dame * 10 / 100L);
+            totalPercentDame += 10;
         }
         if (this.player.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA3) {
-            dame += (dame * 20 / 100L);
+            totalPercentDame += 20;
         }
-        // ----------------------------------------------------
-
-        // Xử lý set tinh ấn
         if (this.isTinhAn) {
-            dame += (dame * 15L / 100L);
+            totalPercentDame += 15;
         }
-
-        // Xử lý thức ăn
         if (!this.player.isPet && this.player.itemTime != null && this.player.itemTime.isEatMeal || this.player.isPet && this.player.itemTime != null && ((Pet) this.player).master.itemTime.isEatMeal) {
-            dame += (dame * 10 / 100L);
+            totalPercentDame += 10;
         }
-
-        // Xử lý thức ăn 2
         if (this.player.itemTime != null && this.player.itemTime.isEatMeal2 && this.player.itemTime.iconMeal2 == 8060) {
-            dame += (dame * 5 / 100L);
+            totalPercentDame += 5;
         }
         if (this.player.setClothes.nail >= 2) {
             this.tlDameCrit.add(20);
         }
-
         if (this.player.itemTime != null && this.player.itemTime.banhtet) {
-            dame += (dame * 15 / 100L);
+            totalPercentDame += 15;
         }
         if (this.player.itemTime != null && this.player.itemTime.banhchung) {
-            dame += (dame * 25 / 100L);
+            totalPercentDame += 25;
         }
-        // Xử lý thức ăn 2
         if (this.player.itemTime != null && this.player.itemTime.isEatMeal2 && this.player.itemTime.iconMeal2 == 8061) {
             this.tlDameCrit.add(5);
             this.tlSDCM += 5;
         }
-
-        // Xử lý cuồng nộ
-        if (this.player.itemTime != null && this.player.itemTime.isUseCuongNo && !this.player.itemTime.isUseCuongNo2) {
-            dame *= 2;
+        if (this.player.rewardBlackBall != null && this.player.rewardBlackBall.timeOutOfDateReward[0] > System.currentTimeMillis()) {
+            totalPercentDame += RewardBlackBall.R1S_2;
         }
-        if (this.player.itemTime != null && this.player.itemTime.isUseCuongNo2) {
-            dame *= 2.2;
-        }
-
-        // Xử lý ngọc rồng đen 1 sao
-        if (this.player.rewardBlackBall.timeOutOfDateReward[0] > System.currentTimeMillis()) {
-            dame += (dame * RewardBlackBall.R1S_2 / 100L);
-        }
-
-        // Xử lý set worldcup
         if (this.player.setClothes.worldcup == 2) {
-            dame += (dame * 10 / 100L);
+            totalPercentDame += 10;
         }
-
-        // Xử lý gogeta
         if (this.isGogeta) {
-            dame += (dame * 10 / 100L);
+            totalPercentDame += 10;
         }
+        if (this.player.zone != null && MapService.gI().isMapMaBu(this.player.zone.map.mapId)) {
+            if (this.player.itemTime != null && this.player.itemTime.isUseGTPT && this.player.fightMabu != null) {
+                int bonusPercent = Math.min(50, this.player.fightMabu.pointMabu * 5);
+                if (bonusPercent > 0) {
+                    totalPercentDame += bonusPercent;
+                }
+            }
+        }
+        if (player.itemTime != null && player.itemTime.isUseRX) {
+            totalPercentDame += 10;
+        }
+        // Sức đánh đẹp và giáp tập luyện
+        totalPercentDame += tlSexyDame;
+        totalPercentDame -= tlSubSD;
 
-        // Phù map mabu
+        // Áp dụng % trang bị tuyến tính lên sức đánh cơ bản
+        long dame = baseDame + (baseDame * totalPercentDame / 100L);
+
+        // 3. Cộng thẳng các giá trị cố định
         if (this.player.isPhuHoMapMabu) {
             dame += 10_000;
         }
-
-        // Xử lý rồng xương
-        if (player.itemTime != null && player.itemTime.isUseRX) {
-            dame += (dame * 10L / 100L);
-        }
-
-        // Xử lý phù
-        if (this.player.zone != null && MapService.gI().isMapBlackBallWar(this.player.zone.map.mapId)) {
-            dame *= this.player.effectSkin.xDame;
-        }
-
-        // Xử lý hợp thể
         if (this.player.fusion.typeFusion != 0) {
             dame += this.player.pet.nPoint.dame;
         }
 
-        // Xử lý khỉ
+        // 4. Áp dụng các trạng thái nhân hệ số đặc biệt
+        if (this.player.itemTime != null && this.player.itemTime.isUseCuongNo && !this.player.itemTime.isUseCuongNo2) {
+            dame *= 2;
+        }
+        if (this.player.itemTime != null && this.player.itemTime.isUseCuongNo2) {
+            dame = (long) (dame * 2.2);
+        }
+        if (this.player.zone != null && MapService.gI().isMapBlackBallWar(this.player.zone.map.mapId)) {
+            dame *= this.player.effectSkin.xDame;
+        }
         if (this.player.effectSkill.isMonkey) {
             if (!this.player.isPet || (this.player.isPet && ((Pet) this.player).status != Pet.FUSION)) {
                 int percent = SkillUtil.getPercentDameMonkey(player.effectSkill.levelMonkey);
                 dame += (dame * percent / 100L);
             }
         }
-
-        //Sức đánh đẹp
-        dame += (dame * tlSexyDame / 100L);
-
-        // Xử lý giảm dame
-        dame -= (dame * tlSubSD / 100L);
-
-        // Xử lý map cold
         if (this.player.zone != null && MapService.gI().isMapCold(this.player.zone.map) && !this.isKhongLanh) {
             dame /= 2;
         }
-
         if (!this.player.isBoss && !this.player.isNewPet && TimeUtil.checkTime(EventDAO.getRemainingTimeToIncreaseDame())) {
             dame += dame / 10;
         }
 
-        if (dame > 2_000_000_000) {
+        if (dame > 2_000_000_000 || dame < 0) {
             dame = 2_000_000_000;
+        }
+        if (dame <= 0) {
+            dame = 1;
         }
 
         this.dame = (int) dame;
@@ -1424,20 +1309,22 @@ public class NPoint {
                 int dameSkill = (int) Math.min(2_000_000_000L, (long) this.mpMax * percentDameSkill / 100);
                 //  System.out.println(" Makanko KI Gốc: " + player.nPoint.mpMax);
                 //  System.out.println(" KI Damage: " + dameSkill);
-                Item TrangBi = player.inventory.itemsBody.get(5);
-                if (TrangBi != null) {
-                    for (Item.ItemOption io : TrangBi.itemOptions) {
-                        if (io.optionTemplate.id == 232) {
-                            dameSkill = (int) (dameSkill * 1.3);
-                            break;
+                if (player.inventory != null && player.inventory.itemsBody != null && player.inventory.itemsBody.size() > 5) {
+                    Item TrangBi = player.inventory.itemsBody.get(5);
+                    if (TrangBi != null && TrangBi.isNotNullItem() && TrangBi.itemOptions != null) {
+                        for (Item.ItemOption io : TrangBi.itemOptions) {
+                            if (io.optionTemplate.id == 232) {
+                                dameSkill = (int) (dameSkill * 1.3);
+                                break;
+                            }
                         }
                     }
                 }
                 //System.out.println("Damage MaKanKo Tăng: " + dameSkill);
                 return dameSkill;
             case Skill.QUA_CAU_KENH_KHI:
-                int hpmob = 0;
-                int hppl = 0;
+                long hpmob = 0;
+                long hppl = 0;
 
                 for (Mob mob : this.player.zone.mobs) {
                     if (!mob.isDie() && Util.getDistance(this.player, mob) <= SkillUtil.getRangeQCKK(this.player.playerSkill.skillSelect.point)) {
@@ -1451,17 +1338,20 @@ public class NPoint {
                     }
                 }
 
-                int dameqckk = (hpmob * 10 / 100) + (hppl * 10 / 100) + this.dame * 10;
+                long dameqckk = (hpmob * 10L / 100L) + (hppl * 10L / 100L) + (long) this.dame * 10L;
 
                 if (this.player.setClothes.kirin == 5) {
-                    dameqckk *= 2;
+                    dameqckk *= 2L;
                 }
 
-                dameqckk = dameqckk + (Util.nextInt(-5, 5) * dameqckk / 100);
-                if (dameqckk > 2_000_000_000) {
-                    dameqckk = 2_000_000_000;
+                dameqckk = dameqckk + (Util.nextInt(-5, 5) * dameqckk / 100L);
+                if (dameqckk > 2_000_000_000L || dameqckk < 0) {
+                    dameqckk = 2_000_000_000L;
                 }
-                return dameqckk;
+                if (dameqckk <= 0) {
+                    dameqckk = 1L;
+                }
+                return (int) dameqckk;
             case Skill.DE_TRUNG:
                 if (player.setClothes.pikkoroDaimao == 5) {
                     dameAttack *= 4;
@@ -1500,8 +1390,8 @@ public class NPoint {
         dameAfter = 0;
 
         if (isCrit) {
-            dameAttack *= 2;
-            dameAttack += (dameAttack * tlSDCM / 100);
+            long critMultiplier = 200L + this.tlSDCM;
+            dameAttack = (long) dameAttack * critMultiplier / 100L;
         }
 
         dameAttack += ((long) dameAttack * percentXDame / 100);
@@ -1511,8 +1401,11 @@ public class NPoint {
             tempDameAttack = 1;
         }
         dameAttack += (long) (Util.getOne(-1, 1) * Util.nextInt((int) tempDameAttack) + 1);
-        if (dameAttack > 2_000_000_000) {
+        if (dameAttack > 2_000_000_000 || dameAttack < 0) {
             dameAttack = 2_000_000_000;
+        }
+        if (dameAttack <= 0) {
+            dameAttack = 1;
         }
 
         return (int) dameAttack;
@@ -1538,7 +1431,6 @@ public class NPoint {
         this.hp -= sub;
         if (this.hp <= 0) {
             this.hp = 0;
-            this.setHp(0);
         }
     }
 
@@ -1582,9 +1474,6 @@ public class NPoint {
             if (this.player.charms.tdTriTue4 > System.currentTimeMillis()) {
                 tiemNang += tn * 3;
             }
-            if (this.player.charms.tdTriTue4 > System.currentTimeMillis()) {
-                tiemNang += tn * 3;
-            }
             if (this.player.effectSkill.isChibi && this.player.typeChibi == 2) {
                 tiemNang += tn * 2;
             }
@@ -1608,11 +1497,14 @@ public class NPoint {
 //                tiemNang -= ((long) tiemNang * 99 / 100);
 //            }
             if (this.player.isPet) {
-                if (((Pet) this.player).master.charms.tdDeTu > System.currentTimeMillis()) {
-                    tiemNang += tn * 2;
-                }
-                if (((Pet) this.player).master.nPoint != null && ((Pet) this.player).master.nPoint.tlTNSMPet > 0) {
-                    tiemNang += tn / 100 * (((Pet) this.player).master.nPoint.tlTNSMPet + 100);
+                Player master = ((Pet) this.player).master;
+                if (master != null) {
+                    if (master.charms != null && master.charms.tdDeTu > System.currentTimeMillis()) {
+                        tiemNang += tn * 2;
+                    }
+                    if (master.nPoint != null && master.nPoint.tlTNSMPet > 0) {
+                        tiemNang += (long) tn * master.nPoint.tlTNSMPet / 100;
+                    }
                 }
             }
 //            if (TimeUtil.checkTime(EventDAO.getRemainingTimeToIncreasePotentialAndPower())) {
@@ -1858,14 +1750,14 @@ public class NPoint {
         this.tiemNang += tiemNang;
     }
 
-    public void increasePoint(byte type, short point, boolean manualForPet) {
+    public synchronized void increasePoint(byte type, short point, boolean manualForPet) {
         if (point <= 0 || point > 100) {
             return;
         }
-        long tiemNangUse;
+        long tiemNangUse = 0;
         if (type == 0) {
             int pointHp = point * 20;
-            tiemNangUse = point * (2 * (this.hpg + 1000) + pointHp - 20) / 2;
+            tiemNangUse = (long) point * (2L * (this.hpg + 1000) + pointHp - 20) / 2L;
             if ((this.hpg + pointHp) <= getHpMpLimit()) {
                 if (doUseTiemNang(tiemNangUse)) {
                     hpg += pointHp;
@@ -1877,7 +1769,7 @@ public class NPoint {
         }
         if (type == 1) {
             int pointMp = point * 20;
-            tiemNangUse = point * (2 * (this.mpg + 1000) + pointMp - 20) / 2;
+            tiemNangUse = (long) point * (2L * (this.mpg + 1000) + pointMp - 20) / 2L;
             if ((this.mpg + pointMp) <= getHpMpLimit()) {
                 if (doUseTiemNang(tiemNangUse)) {
                     mpg += pointMp;
@@ -1889,7 +1781,7 @@ public class NPoint {
         }
         if (type == 2) {
             //  TaskService.gI().checkDoneTaskNangCS(player);
-            tiemNangUse = point * (2 * this.dameg + point - 1) / 2 * 100;
+            tiemNangUse = (long) point * (2L * this.dameg + point - 1) / 2L * 100L;
             if ((this.dameg + point) <= getDameLimit()) {
                 if (doUseTiemNang(tiemNangUse)) {
                     dameg += point;
@@ -1901,7 +1793,8 @@ public class NPoint {
             }
         }
         if (type == 3) {
-            tiemNangUse = 2 * (this.defg + 5) / 2 * 100000;
+            // Công thức cấp số cộng chuẩn cho Giáp: cost(k) = (defg + k + 5) * 100,000
+            tiemNangUse = (long) point * (2L * this.defg + point + 9L) / 2L * 100000L;
             if ((this.defg + point) <= getDefLimit()) {
                 if (doUseTiemNang(tiemNangUse)) {
                     defg += point;
@@ -1912,9 +1805,23 @@ public class NPoint {
             }
         }
         if (type == 4) {
-            tiemNangUse = 50000000L;
-            for (int i = 0; i < this.critg; i++) {
-                tiemNangUse *= 5L;
+            // Tính toán lũy kế từng điểm cho Chí Mạng
+            tiemNangUse = 0;
+            for (int p = 0; p < point; p++) {
+                long costForOnePoint = 50000000L;
+                int currentCrit = this.critg + p;
+                for (int i = 0; i < currentCrit; i++) {
+                    costForOnePoint *= 5L;
+                    if (costForOnePoint < 0) {
+                        costForOnePoint = Long.MAX_VALUE;
+                        break;
+                    }
+                }
+                tiemNangUse += costForOnePoint;
+                if (tiemNangUse < 0) {
+                    tiemNangUse = Long.MAX_VALUE;
+                    break;
+                }
             }
             if ((this.critg + point) <= getCritLimit()) {
                 if (doUseTiemNang(tiemNangUse)) {

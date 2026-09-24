@@ -2,9 +2,12 @@ package services;
 
 
 import consts.ConstPlayer;
+import models.item.Item;
+import models.map.ItemMap;
 import models.player.NewPet;
 import models.player.Pet;
 import models.player.Player;
+import services.Service;
 import services.map.ChangeMapService;
 import services.player.InventoryService;
 import utils.SkillUtil;
@@ -23,7 +26,7 @@ public class PetService {
 
     public void createNormalPet(Player player, int gender, byte... limitPower) {
         try {
-            createNewPet(player, false, false, false, false, (byte) gender);
+            createNewPet(player, false, (byte) gender);
             if (limitPower != null && limitPower.length == 1) {
                 player.pet.nPoint.limitPower = limitPower[0];
             }
@@ -42,7 +45,7 @@ public class PetService {
 
     public void createNormalPet(Player player, byte... limitPower) {
         try {
-            createNewPet(player, false, false, false, false);
+            createNewPet(player, false);
             if (limitPower != null && limitPower.length == 1) {
                 player.pet.nPoint.limitPower = limitPower[0];
             }
@@ -61,7 +64,7 @@ public class PetService {
 
     public void createMabuPet(Player player, byte... limitPower) {
         try {
-            createNewPet(player, true, false, false, false);
+            createNewPet(player, true);
             if (limitPower != null && limitPower.length == 1) {
                 player.pet.nPoint.limitPower = limitPower[0];
             }
@@ -80,7 +83,7 @@ public class PetService {
 
     public void createMabuPet(Player player, int gender, byte... limitPower) {
         try {
-            createNewPet(player, true, false, false, false, (byte) gender);
+            createNewPet(player, true, (byte) gender);
             if (limitPower != null && limitPower.length == 1) {
                 player.pet.nPoint.limitPower = limitPower[0];
             }
@@ -97,11 +100,44 @@ public class PetService {
         }
     }
 
+    private void returnPetItemsToMaster(Player player) {
+        if (player != null && player.pet != null && player.pet.inventory != null && player.pet.inventory.itemsBody != null) {
+            boolean hasReturned = false;
+            for (int i = 0; i < player.pet.inventory.itemsBody.size(); i++) {
+                Item item = player.pet.inventory.itemsBody.get(i);
+                if (item != null && item.isNotNullItem()) {
+                    boolean added = false;
+                    if (InventoryService.gI().getCountEmptyBag(player) > 0) {
+                        added = InventoryService.gI().addItemBag(player, item);
+                    }
+                    if (!added && InventoryService.gI().getCountEmptyBox(player) > 0) {
+                        added = InventoryService.gI().addItemBox(player, item);
+                    }
+                    if (!added && player.zone != null) {
+                        // Fallback an toàn tuyệt đối: drop ra đất trước mặt sư phụ nếu hành trang và rương đều đầy
+                        ItemMap itemMap = new ItemMap(player.zone, item.template.id, item.quantity, player.location.x, player.location.y, player.id);
+                        if (item.itemOptions != null) {
+                            itemMap.options.addAll(item.itemOptions);
+                        }
+                        Service.gI().dropItemMap(player.zone, itemMap);
+                    }
+                    hasReturned = true;
+                }
+            }
+            if (hasReturned) {
+                InventoryService.gI().sendItemBags(player);
+                InventoryService.gI().sendItemBox(player);
+                Service.gI().sendThongBao(player, "Trang bị của đệ tử cũ đã được hoàn trả vào hành trang/rương!");
+            }
+        }
+    }
+
     public void changeNormalPet(Player player, int gender) {
         byte limitPower = player.pet.nPoint.limitPower;
         if (player.fusion.typeFusion != ConstPlayer.NON_FUSION) {
             player.pet.unFusion();
         }
+        returnPetItemsToMaster(player);
         ChangeMapService.gI().exitMap(player.pet);
         player.pet.dispose();
         player.pet = null;
@@ -113,6 +149,7 @@ public class PetService {
         if (player.fusion.typeFusion != ConstPlayer.NON_FUSION) {
             player.pet.unFusion();
         }
+        returnPetItemsToMaster(player);
         ChangeMapService.gI().exitMap(player.pet);
         player.pet.dispose();
         player.pet = null;
@@ -135,6 +172,7 @@ public class PetService {
         if (player.fusion.typeFusion != ConstPlayer.NON_FUSION) {
             player.pet.unFusion();
         }
+        returnPetItemsToMaster(player);
         ChangeMapService.gI().exitMap(player.pet);
         player.pet.dispose();
         player.pet = null;
@@ -190,24 +228,14 @@ public class PetService {
         return petData;
     }
 
-    private int[] getDataPetPic() {
-        int[] petData = new int[5];
-        petData[0] = Util.nextInt(40, 115) * 20; //hp
-        petData[1] = Util.nextInt(40, 115) * 20; //mp
-        petData[2] = Util.nextInt(70, 140); //dame
-        petData[3] = Util.nextInt(9, 50); //def
-        petData[4] = Util.nextInt(0, 2); //crit
-        return petData;
-    }
-
-    private void createNewPet(Player player, boolean isMabu, boolean isBeerus, boolean isPic, boolean isBlack, byte... gender) {
-        int[] data = isMabu ? isPic ? getDataPetMabu() : getDataPetPic() : getDataPetNormal();
+    private void createNewPet(Player player, boolean isMabu, byte... gender) {
+        int[] data = isMabu ? getDataPetMabu() : getDataPetNormal();
         Pet pet = new Pet(player);
-        pet.name = "$" + (isMabu ? "Mabư" : isBeerus ? "Beerus" : isPic ? "Pic" : isBlack ? "Black" : "Đệ tử");
+        pet.name = "$" + (isMabu ? "Mabư" : "Đệ tử");
         pet.gender = (gender != null && gender.length != 0) ? gender[0] : (byte) Util.nextInt(0, 2);
         pet.id = player.isPl() ? -player.id : -Math.abs(player.id) - 100000;
-        pet.nPoint.power = isMabu || isBeerus || isPic || isBlack ? 1500000 : 2000;
-        pet.typePet = (byte) (isMabu ? 1 : isBeerus ? 2 : isPic ? 3 : isBlack ? 4 : 0);
+        pet.nPoint.power = isMabu ? 1500000 : 2000;
+        pet.typePet = (byte) (isMabu ? 1 : 0);
         pet.nPoint.stamina = 1000;
         pet.nPoint.maxStamina = 1000;
         pet.nPoint.hpg = data[0];

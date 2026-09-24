@@ -31,8 +31,13 @@ public class MapService {
     }
 
     public WayPoint getWaypointPlayerIn(Player player) {
+        if (player.zone == null || player.zone.map == null || player.zone.map.wayPoints == null) {
+            return null;
+        }
+        int pad = 30; // Dung sai 30px bù trừ độ trễ mạng khi nhân vật bay hoặc chạy tốc độ cao
         for (WayPoint wp : player.zone.map.wayPoints) {
-            if (player.location.x >= wp.minX && player.location.x <= wp.maxX && player.location.y >= wp.minY && player.location.y <= wp.maxY) {
+            if (player.location.x >= (wp.minX - pad) && player.location.x <= (wp.maxX + pad)
+                    && player.location.y >= (wp.minY - pad) && player.location.y <= (wp.maxY + pad)) {
                 return wp;
             }
         }
@@ -316,23 +321,34 @@ public class MapService {
             return getZoneByMapIDAndZoneID(mapId, zoneId);
         }
     }
-  public List<Map> getAllMaps() {
-        return this.getAllMaps();
+    public List<Map> getAllMaps() {
+        return server.Manager.MAPS;
     }
 
     public Zone getZone(int mapId) {
         Map map = getMapById(mapId);
-        if (map == null) {
+        if (map == null || map.zones == null || map.zones.isEmpty()) {
             return null;
         }
 
-        //int z = Util.nextInt(0, map.zones.size() - 1);
-        int z = 0;
-        while (map.zones.get(z).getNumOfPlayers() >= map.zones.get(z).maxPlayer) {
-            //   z = Util.nextInt(0, map.zones.size() - 1);
-            z++;
+        Zone bestZone = null;
+        int minPlayers = Integer.MAX_VALUE;
+
+        // Ưu tiên tìm zone còn chỗ trống
+        for (Zone zone : map.zones) {
+            if (zone != null) {
+                int count = zone.getNumOfPlayers();
+                if (count < zone.maxPlayer) {
+                    return zone;
+                }
+                if (count < minPlayers) {
+                    minPlayers = count;
+                    bestZone = zone;
+                }
+            }
         }
-        return map.zones.get(z);
+        // Nếu tất cả zone đều đầy, trả về zone ít người nhất hoặc zone 0 an toàn tuyệt đối
+        return bestZone != null ? bestZone : map.zones.get(0);
     }
 
     private Zone getZoneByMapIDAndZoneID(int mapId, int zoneId) {

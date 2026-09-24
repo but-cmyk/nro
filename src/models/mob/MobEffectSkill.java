@@ -53,7 +53,7 @@ public class MobEffectSkill {
     }
 
     public boolean isHaveEffectSkill() {
-        return isAnTroi || isBlindDCTT || isStun || isThoiMien;
+        return isAnTroi || isBlindDCTT || isStun || isThoiMien || isSocola || isBinh;
     }
 
     public void startStun(long lastTimeStartBlind, int timeBlind) {

@@ -67,6 +67,14 @@ public class Command {
             // Thông báo cho người chơi biết đã mở
             Service.gI().sendThongBao(player, "Đã mở bảng Admin Tool trên máy chủ!");
         });
+        adminCommands.put("toplag", player -> {
+            String report = server.network.PacketProfiler.gI().getTopLagReport();
+            NpcService.gI().createMenuConMeo(player, consts.ConstNpc.IGNORE_MENU, -1, report, "Đóng");
+        });
+        adminCommands.put("prof", player -> {
+            String report = server.network.PacketProfiler.gI().getTopLagReport();
+            NpcService.gI().createMenuConMeo(player, consts.ConstNpc.IGNORE_MENU, -1, report, "Đóng");
+        });
 
 
         adminCommands.put("s", player -> {

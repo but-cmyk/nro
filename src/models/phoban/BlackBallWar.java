@@ -4,18 +4,19 @@ import database.daos.NDVSqlFetcher;
 import database.daos.PlayerDAO;
 import models.player.Player;
 import services.map.MapService;
+import services.player.PlayerService;
 import services.Service;
 import services.map.ChangeMapService;
 import utils.TimeUtil;
 import utils.Util;
 
-import lombok.Data;
 import models.map.Zone;
 import server.Client;
 import server.Maintenance;
 
-@Data
 public class BlackBallWar {
+
+    public Zone getZone() { return this.zone; }
 
     public static final int TIME_CAN_PICK_BLACK_BALL_AFTER_DROP = 5000;
 
@@ -84,24 +85,35 @@ public class BlackBallWar {
     private void win(Player player) {
         player.zone.finishBlackBallWar = true;
         int star = player.idMark.getTempIdBlackBallHold() - 371;
+
+        // Reset trạng thái giữ ngọc của người thắng ngay tại đây để không kích hoạt dropBlackBall rơi thừa ngọc
+        player.idMark.setHoldBlackBall(false);
+        player.idMark.setTempIdBlackBallHold(-1);
+        Service.gI().sendFlagBag(player);
+
         player.rewardBlackBall.reward((byte) star);
-        Service.gI().sendThongBao(player, "Chúc mừng bạn đã "
-                + "dành được Ngọc rồng " + star + " sao đen cho bang");
+        PlayerDAO.updatePlayerAsync(player);
+        Service.gI().sendThongBao(player, "Chúc mừng bạn đã dành được Ngọc rồng " + star + " sao đen cho bang");
+
         if (player.clan != null) {
-            player.clan.members.forEach(m -> {
-                if (Client.gI().getPlayer(m.id) != null) {
-                    Player p = Client.gI().getPlayer(m.id);
-                    if (p != null) {
-                        p.rewardBlackBall.reward((byte) star);
-                    }
-                } else {
-                    Player p = NDVSqlFetcher.loadById(m.id);
-                    if (p != null) {
-                        p.rewardBlackBall.reward((byte) star);
-                        if (p.getSession() != null) {
-                            PlayerDAO.updatePlayer(p);
+            final long winnerId = player.id;
+            Thread.ofVirtual().name("BlackBallWar-RewardWorker").start(() -> {
+                try {
+                    for (int i = 0; i < player.clan.members.size(); i++) {
+                        var m = player.clan.members.get(i);
+                        if (m.id == winnerId) {
+                            continue;
+                        }
+                        Player onlinePlayer = Client.gI().getPlayer(m.id);
+                        if (onlinePlayer != null) {
+                            onlinePlayer.rewardBlackBall.reward((byte) star);
+                            PlayerDAO.updatePlayerAsync(onlinePlayer);
+                        } else {
+                            PlayerDAO.updateBlackBallReward(m.id, (byte) star);
                         }
                     }
+                } catch (Exception e) {
+                    utils.Logger.error("Lỗi trao thưởng bang hội BlackBallWar: " + e.getMessage());
                 }
             });
         }
@@ -110,9 +122,11 @@ public class BlackBallWar {
     }
 
     private void kickOutOfMap(Player player) {
-        if (player.cFlag == 8) {
-            Service.gI().changeFlag(player, Util.nextInt(1, 7));
+        if (player.isDie()) {
+            PlayerService.gI().hoiSinh(player);
         }
+
+        Service.gI().changeFlag(player, 0);
 
         Service.gI().sendThongBao(player, "Trò chơi tìm ngọc hôm nay đã kết thúc, hẹn gặp lại vào 20h ngày mai");
 

@@ -250,7 +250,7 @@ public class BossManager {
         this.createBoss(BossID.RONG_5_SAO);
         this.createBoss(BossID.RONG_6_SAO);
         this.createBoss(BossID.RONG_7_SAO);
-        this.createBoss(BossID.AN_TROM, 20);
+        this.createBoss(BossID.AN_TROM, 2);
         this.createBoss(BossID.THO_DAI_KA, 5);
 
         for (int i = 20; i != -1; i--) {//20: số lượng boss
@@ -284,11 +284,18 @@ public class BossManager {
     }
 
     public Boss getBossByIndex(int index) {
-        if (index < 0 || index >= this.bosses.size()) {
+        if (index < 0) {
             return null;
         }
         try {
-            return this.bosses.get(index);
+            if (index < this.bosses.size()) {
+                return this.bosses.get(index);
+            }
+            int brolyIndex = index - this.bosses.size();
+            if (brolyIndex >= 0 && brolyIndex < BrolyManager.gI().bosses.size()) {
+                return BrolyManager.gI().bosses.get(brolyIndex);
+            }
+            return null;
         } catch (Exception e) {
             return null;
         }
@@ -301,13 +308,38 @@ public class BossManager {
         player.idMark.setMenuType(3);
         Message msg;
         try {
+            List<Boss> allBosses = new java.util.ArrayList<>(this.bosses);
+            if (this != BrolyManager.gI()) {
+                allBosses.addAll(BrolyManager.gI().bosses);
+            }
+
+            int count = 0;
+            for (Boss boss : allBosses) {
+                if (boss != null && boss.data != null && boss.data.length > 0
+                        && boss.data[0].getMapJoin() != null && boss.data[0].getMapJoin().length > 0) {
+                    int mapJoinId = boss.data[0].getMapJoin()[0];
+                    if (!MapService.gI().isMapBossFinal(mapJoinId) && !MapService.gI().isMapHuyDiet(mapJoinId)
+                            && !MapService.gI().isMapYardart(mapJoinId) && !MapService.gI().isMapMaBu(mapJoinId)
+                            && !MapService.gI().isMapBlackBallWar(mapJoinId)) {
+                        count++;
+                    }
+                }
+            }
+
             msg = new Message(-96);
             msg.writer().writeByte(0);
             msg.writer().writeUTF("Boss");
-            msg.writer().writeByte((int) bosses.stream().filter(boss -> !MapService.gI().isMapBossFinal(boss.data[0].getMapJoin()[0]) && !MapService.gI().isMapHuyDiet(boss.data[0].getMapJoin()[0]) && !MapService.gI().isMapYardart(boss.data[0].getMapJoin()[0]) && !MapService.gI().isMapMaBu(boss.data[0].getMapJoin()[0]) && !MapService.gI().isMapBlackBallWar(boss.data[0].getMapJoin()[0])).count());
-            for (int i = 0; i < bosses.size(); i++) {
-                Boss boss = this.bosses.get(i);
-                if (MapService.gI().isMapBossFinal(boss.data[0].getMapJoin()[0]) || MapService.gI().isMapYardart(boss.data[0].getMapJoin()[0]) || MapService.gI().isMapHuyDiet(boss.data[0].getMapJoin()[0]) || MapService.gI().isMapMaBu(boss.data[0].getMapJoin()[0]) || MapService.gI().isMapBlackBallWar(boss.data[0].getMapJoin()[0])) {
+            msg.writer().writeByte(count);
+            for (int i = 0; i < allBosses.size(); i++) {
+                Boss boss = allBosses.get(i);
+                if (boss == null || boss.data == null || boss.data.length == 0
+                        || boss.data[0].getMapJoin() == null || boss.data[0].getMapJoin().length == 0) {
+                    continue;
+                }
+                int mapJoinId = boss.data[0].getMapJoin()[0];
+                if (MapService.gI().isMapBossFinal(mapJoinId) || MapService.gI().isMapYardart(mapJoinId)
+                        || MapService.gI().isMapHuyDiet(mapJoinId) || MapService.gI().isMapMaBu(mapJoinId)
+                        || MapService.gI().isMapBlackBallWar(mapJoinId)) {
                     continue;
                 }
                 msg.writer().writeInt(i);
@@ -351,10 +383,15 @@ public class BossManager {
 
     public void update() {
         for (int i = this.bosses.size() - 1; i >= 0; i--) {
-            try {
-                this.bosses.get(i).update();
-            } catch (Exception e) {
-                e.printStackTrace();
+            if (i < this.bosses.size()) {
+                Boss boss = this.bosses.get(i);
+                if (boss != null) {
+                    try {
+                        boss.update();
+                    } catch (Exception e) {
+                        Logger.logException(BossManager.class, e, "Lỗi update boss: " + boss.name);
+                    }
+                }
             }
         }
     }

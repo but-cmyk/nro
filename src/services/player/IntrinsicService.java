@@ -108,7 +108,12 @@ public class IntrinsicService {
                 player.playerIntrinsic.intrinsic.paramTo2
         );
 
-        Service.gI().sendThongBao(player, "Bạn nhận được Nội tại:\n" + player.playerIntrinsic.intrinsic.getName().substring(0, player.playerIntrinsic.intrinsic.getName().indexOf(" [")));
+        String intrinsicName = player.playerIntrinsic.intrinsic.getName();
+        int indexBracket = intrinsicName.indexOf(" [");
+        if (indexBracket != -1) {
+            intrinsicName = intrinsicName.substring(0, indexBracket);
+        }
+        Service.gI().sendThongBao(player, "Bạn nhận được Nội tại:\n" + intrinsicName);
         sendInfoIntrinsic(player);
     }
 
@@ -152,6 +157,10 @@ public class IntrinsicService {
     }
 
     public void open(Player player) {
+        if (player.playerIntrinsic.countOpen < 0 || player.playerIntrinsic.countOpen >= COST_OPEN.length) {
+            Service.gI().sendThongBao(player, "Bạn hãy chuyển qua mở VIP");
+            return;
+        }
         if (player.nPoint.power >= 10000000000L) {
             int goldRequire = COST_OPEN[player.playerIntrinsic.countOpen] * 1000000;
             if (player.inventory.gold >= goldRequire) {

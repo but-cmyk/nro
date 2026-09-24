@@ -45,31 +45,20 @@ public class AchievementService {
     }
 
     public void confirmAchievement(Player player, byte select) {
-    if (player.achievement == null) {
-        return;
-    }
+        if (player.achievement == null || select < 0 || select >= Manager.ACHIEVEMENT_TEMPLATE.size()) {
+            return;
+        }
 
-    // Loại bỏ check findItemTVC, luôn tiếp tục nếu achievement có giá trị
-    if (!player.achievement.canReward(select)) {
-        Service.gI().sendThongBao(player, "Không thể thực hiện");
-        return;
-    }
+        if (!player.achievement.canReward(select)) {
+            Service.gI().sendThongBao(player, "Không thể thực hiện");
+            return;
+        }
 
-    if (InventoryService.gI().getCountEmptyBag(player) > 0) {
         int money = Manager.ACHIEVEMENT_TEMPLATE.get(select).money;
         player.achievement.reward(select);
-        player.inventory.gem += money;
-     //   Item item = ItemService.gI().createNewItem((short) 457, money * 1);
-     //   InventoryService.gI().addItemBag(player, item);
-        InventoryService.gI().sendItemBags(player);
+        player.inventory.addGem(money);
         Service.gI().sendMoney(player);
         Service.gI().sendThongBao(player, "Bạn vừa nhận được " + money + " Ngọc Xanh");
-      //  Service.gI().sendThongBao(player, "Bạn vừa nhận được " + money * 1 + " thỏi vàng.");
-        //Service.gI().sendThongBao(player, "Bạn vừa nhận được " + money + " điểm sự kiện.");
-    } else {
-        Service.gI().sendThongBao(player, "Cần tối thiểu 1 ô trống hành trang để nhận thưởng");
-        return;
-    }
 
     Message msg = null;
     try {

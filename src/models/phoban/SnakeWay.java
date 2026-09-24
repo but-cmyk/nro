@@ -17,23 +17,27 @@ import utils.Util;
 
 import java.util.ArrayList;
 import java.util.List;
-import lombok.Data;
-import server.Maintenance;
-import services.map.ItemMapService;
 import utils.TimeUtil;
+import utils.Logger;
+import services.map.ItemMapService;
+import services.player.PlayerService;
 
-@Data
 public class SnakeWay {
 
 //    public static final long POWER_CAN_GO_TO_CDRD = 2000000000;
-    public static final int AVAILABLE = 1;
+    public static final int AVAILABLE = 5;
     public static final int TIME_CON_DUONG_RAN_DOC = 1800000;
 
     public int id;
     public byte level;
     public final List<Zone> zones;
-
     public Clan clan;
+
+    public List<Zone> getZones() { return this.zones; }
+    public Clan getClan() { return this.clan; }
+    public void setClan(Clan clan) { this.clan = clan; }
+    public int getId() { return this.id; }
+    public long getLastTimeOpen() { return this.lastTimeOpen; }
     public boolean isOpened;
     private long lastTimeOpen;
     private long lastTimeUpdateMessage;
@@ -184,8 +188,6 @@ public class SnakeWay {
                 } catch (Exception exception) {
                     exception.printStackTrace();
                 }
-
-
             }
         }
     }
@@ -196,15 +198,30 @@ public class SnakeWay {
             for (int i = zone.getPlayers().size() - 1; i >= 0; i--) {
                 if (i < zone.getPlayers().size()) {
                     Player pl = zone.getPlayers().get(i);
-                    kickOutOfCDRD(pl);
+                    if (pl != null) {
+                        pl.joinCDRD = false;
+                        kickOutOfCDRD(pl);
+                    }
                 }
             }
-
+        }
+        if (this.clan != null) {
+            for (Player pl : this.clan.membersInGame) {
+                if (pl != null) {
+                    pl.joinCDRD = false;
+                }
+            }
         }
     }
 
     private void kickOutOfCDRD(Player player) {
-        if (MapService.gI().isMapConDuongRanDoc(player.zone.map.mapId)) {
+        if (player != null && player.zone != null && MapService.gI().isMapConDuongRanDoc(player.zone.map.mapId)) {
+            if (player.isDie()) {
+                player.nPoint.hp = player.nPoint.hpMax;
+                player.nPoint.mp = player.nPoint.mpMax;
+                Service.gI().Send_Info_NV(player);
+                PlayerService.gI().sendInfoHpMp(player);
+            }
             ChangeMapService.gI().changeMapBySpaceShip(player, 5, -1, 1038);
         }
     }
@@ -235,26 +252,40 @@ public class SnakeWay {
     }
 
     public void dispose() {
-        // remove bosses
-        for (Boss boss : bosses) {
-            if (!boss.isDie()) {
-                boss.leaveMap();
-            }
-        }
-        for (Zone zone : zones) {
-            for (int i = zone.items.size() - 1; i >= 0; i--) {
-                if (i < zone.items.size()) {
-                    ItemMapService.gI().removeItemMap(zone.items.get(i));
+        try {
+            // remove bosses
+            for (Boss boss : bosses) {
+                if (boss != null && !boss.isDie()) {
+                    boss.leaveMap();
                 }
             }
+            for (Zone zone : zones) {
+                synchronized (zone.items) {
+                    for (int i = zone.items.size() - 1; i >= 0; i--) {
+                        if (i < zone.items.size()) {
+                            ItemMapService.gI().removeItemMap(zone.items.get(i));
+                        }
+                    }
+                }
+            }
+            this.removeTextConDuongRanDoc();
+        } catch (Exception e) {
+            Logger.logException(SnakeWay.class, e, "Lỗi dispose CDRD");
+        } finally {
+            this.bosses.clear();
+            this.allMobsDead = false;
+            this.endCDRD = false;
+            this.isOpened = false;
+            if (this.clan != null) {
+                for (Player pl : this.clan.membersInGame) {
+                    if (pl != null) {
+                        pl.joinCDRD = false;
+                    }
+                }
+                this.clan.ConDuongRanDoc = null;
+            }
+            this.clan = null;
+            this.kickoutcdrd = false;
         }
-        this.removeTextConDuongRanDoc();
-        this.bosses.clear();
-        this.allMobsDead = false;
-        this.endCDRD = false;
-        this.isOpened = false;
-        this.clan.ConDuongRanDoc = null;
-        this.clan = null;
-        this.kickoutcdrd = false;
     }
 }

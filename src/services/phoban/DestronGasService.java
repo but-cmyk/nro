@@ -45,6 +45,9 @@ public class DestronGasService {
                     return;
                 }
                 if (player.clan.KhiGasHuyDiet == null) {
+                    if (clan.lastTimeOpenKhiGasHuyDiet > 0 && (System.currentTimeMillis() - clan.lastTimeOpenKhiGasHuyDiet >= 3L * 86400000L)) {
+                        clan.timesPerDayKGHD = 0;
+                    }
                     if (level >= 1 && level <= 110) {
                         if (clan.isLeader(player)) {
                             DestronGas khiGasHuyDiet = null;

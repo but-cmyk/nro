@@ -1,7 +1,6 @@
 package models.player;
 
 import consts.ConstPlayer;
-import lombok.Getter;
 import services.map.MapService;
 import models.mob.Mob;
 import models.skill.Skill;
@@ -34,8 +33,11 @@ public class Pet extends Player {
     public static final byte HTVV = 5;
 
     public Player master;
-    @Getter
     public byte status = 0;
+
+    public byte getStatus() {
+        return this.status;
+    }
 
     public byte typePet;
     public boolean isTransform;
@@ -108,22 +110,6 @@ public class Pet extends Player {
     }
 
     private String getTextStatus(byte status) {
-        if (this.typePet == 4) {
-            switch (status) {
-                case FOLLOW:
-                    return "Lũ con người không đủ tư cách để nói chuyện với ta";
-                case PROTECT:
-                    return "Ta sẽ cho người biết sức mạnh của một vị thần là như thế nào !";
-                case ATTACK:
-                    return "Ta sẽ thống trị vũ trụ";
-                case GOHOME:
-                    return "Không lí nào ta lại run sợ bọn con người sao";
-                case HTVV:
-                    return "Lũ các ngươi làm ta thấy đau rồi ấy haha";
-                default:
-                    return "Sức mạnh của ta là không có giới hạn";
-            }
-        }
         switch (status) {
             case FOLLOW:
                 return "Ok con theo sư phụ";
@@ -152,8 +138,11 @@ public class Pet extends Player {
             this.status = FUSION;
             ChangeMapService.gI().exitMap(this);
             fusionEffect(master.fusion.typeFusion);
+            int percentHp3 = master.nPoint.getCurrPercentHP();
+            int percentMp3 = master.nPoint.getCurrPercentMP();
             master.nPoint.calPoint();
-            master.nPoint.setFullHpMp();
+            master.nPoint.setHP((long) master.nPoint.hpMax * percentHp3 / 100L);
+            master.nPoint.setMP((long) master.nPoint.mpMax * percentMp3 / 100L);
             Service.gI().point(master);
             Service.gI().Send_Caitrang(master);
         } else {
@@ -179,8 +168,11 @@ public class Pet extends Player {
             this.status = FUSION;
             ChangeMapService.gI().exitMap(this);
             fusionEffect(master.fusion.typeFusion);
+            int percentHp2 = master.nPoint.getCurrPercentHP();
+            int percentMp2 = master.nPoint.getCurrPercentMP();
             master.nPoint.calPoint();
-            master.nPoint.setFullHpMp();
+            master.nPoint.setHP((long) master.nPoint.hpMax * percentHp2 / 100L);
+            master.nPoint.setMP((long) master.nPoint.mpMax * percentMp2 / 100L);
             Service.gI().point(master);
             Service.gI().Send_Caitrang(master);
         } else {
@@ -207,8 +199,11 @@ public class Pet extends Player {
             ChangeMapService.gI().exitMap(this);
             fusionEffect(master.fusion.typeFusion);
             Service.gI().Send_Caitrang(master);
+            int percentHp = master.nPoint.getCurrPercentHP();
+            int percentMp = master.nPoint.getCurrPercentMP();
             master.nPoint.calPoint();
-            master.nPoint.setFullHpMp();
+            master.nPoint.setHP((long) master.nPoint.hpMax * percentHp / 100L);
+            master.nPoint.setMP((long) master.nPoint.mpMax * percentMp / 100L);
             Service.gI().point(master);
         } else {
             Service.gI().sendThongBao(this.master, "Vui lòng đợi "
@@ -217,13 +212,19 @@ public class Pet extends Player {
     }
 
     public void unFusion() {
-        master.fusion.typeFusion = 0;
+        if (master != null && master.fusion != null) {
+            master.fusion.typeFusion = 0;
+        }
         this.status = PROTECT;
-        Service.gI().point(master);
-        joinMapMaster();
-        fusionEffect(master.fusion.typeFusion);
-        Service.gI().Send_Caitrang(master);
-        Service.gI().point(master);
+        if (master != null) {
+            Service.gI().point(master);
+            joinMapMaster();
+            if (master.fusion != null) {
+                fusionEffect(master.fusion.typeFusion);
+            }
+            Service.gI().Send_Caitrang(master);
+            Service.gI().point(master);
+        }
         this.lastTimeUnfusion = System.currentTimeMillis();
     }
 
@@ -315,13 +316,7 @@ public class Pet extends Player {
                         }
                         playerAttack = findPlayerAttack();
                         if (playerAttack != null) {
-                            if ((this.typePet == 2 || this.typePet == 4) && Util.isTrue(1, 5) && playerAttack.nPoint.hp < 1_000_000_000 && !playerAttack.nPoint.islinhthuydanhbac && !playerAttack.isBoss) {
-                                playerAttack.setDie(this);
-                                Service.gI().chat(this, "HAKAI " + playerAttack.name + "!");
-                                Service.gI().sendThongBao(playerAttack, "Bạn đã bị Hakai!");
-                            } else {
-                                petSay(playerAttack);
-                            }
+                            petSay(playerAttack);
                             int disToPlayer = Util.getDistance(this, playerAttack);
                             if (disToPlayer <= ARANGE_ATT_SKILL1) {
                                 //đấm
@@ -409,13 +404,7 @@ public class Pet extends Player {
                         }
                         playerAttack = findPlayerAttack();
                         if (playerAttack != null) {
-                            if ((this.typePet == 2 || this.typePet == 4) && Util.isTrue(1, 5) && playerAttack.nPoint.hp < 1_000_000_000 && !playerAttack.nPoint.islinhthuydanhbac && !playerAttack.isBoss) {
-                                playerAttack.setDie(this);
-                                Service.gI().chat(this, "HAKAI " + playerAttack.name + "!");
-                                Service.gI().sendThongBao(playerAttack, "Bạn đã bị Hakai!");
-                            } else {
-                                petSay(playerAttack);
-                            }
+                            petSay(playerAttack);
                             int disToPlayer = Util.getDistance(this, playerAttack);
                             if (disToPlayer <= ARANGE_ATT_SKILL1) {
                                 //đấm
@@ -562,7 +551,7 @@ public class Pet extends Player {
                 lastTimeAskPea = System.currentTimeMillis();
                 return;
             }
-            Service.gI().chatJustForMe(master, this, this.typePet == 4 ? "Đưa ta đậu, nếu không ta sẽ hủy diệt thế giới này!" : "Sư phụ ơi cho con đậu thần");
+            Service.gI().chatJustForMe(master, this, "Sư phụ ơi cho con đậu thần");
             UseItem.gI().eatPea(master);
             lastTimeAskPea = System.currentTimeMillis();
         }
@@ -860,7 +849,7 @@ public class Pet extends Player {
 
     private boolean cantAttack(Player player) {
         return player == null || player.location == null || player.isDie() || Util.getDistance(this, player) > 500
-                || this.equals(player) || (player.equals(master) && this.typePet != 2 && this.typePet != 4)
+                || this.equals(player) || player.equals(master)
                 || (!temporaryEnemies.contains(player) && !master.temporaryEnemies.contains(player))
                 || (!SkillService.gI().canAttackPlayer(this, player));
     }
@@ -973,7 +962,7 @@ public class Pet extends Player {
     public boolean canAttack() {
         if (this.master.isPl() && this.master.doesNotAttack && this.master.charms.tdDeTu < System.currentTimeMillis()) {
             if (Util.canDoWithTime(lastTimeAskAttack, 10000)) {
-                Service.gI().chatJustForMe(master, this, this.typePet == 4 ? "Sao ngươi không đánh đi?" : "Sao sư phụ không đánh đi?");
+                Service.gI().chatJustForMe(master, this, "Sao sư phụ không đánh đi?");
                 lastTimeAskAttack = System.currentTimeMillis();
             }
             return false;
@@ -982,32 +971,17 @@ public class Pet extends Player {
     }
 
     public void petSay(Player player) {
-        if (this.typePet == 4) {
-            if (Util.canDoWithTime(lastTimeChat, indexChat == 0 ? 15000 : 1500)) {
-                String[] chat = {
-                    "Ta chính là thế giới",
-                    "Ta chính là công lí",
-                    "Hãy chiêm ngưỡng vẻ đẹp của ta! Hỡi con người",
-                    "Sức mạnh to lớn nằm trong cơ thể bất tử",
-                    "Ta sẽ đem công lí tới toàn bộ vũ trụ này"
-                };
-                Service.gI().chat(this, chat[indexChat]);
-                indexChat = (indexChat + 1) % chat.length;
-                lastTimeChat = System.currentTimeMillis();
-            }
-        } else {
-            if (Util.canDoWithTime(lastTimeChat, indexChat == 0 ? 15000 : 1500)) {
-                String[] chat = {
-                    "Mày chán sống rồi à " + player.name + "?",
-                    "Mày muốn chết đúng không?",
-                    "Ngày này năm sau",
-                    "Tao sẽ nhớ uống thật nhiều nước",
-                    "Để đái vào mộ mày"
-                };
-                Service.gI().chat(this, chat[indexChat]);
-                indexChat = (indexChat + 1) % chat.length;
-                lastTimeChat = System.currentTimeMillis();
-            }
+        if (Util.canDoWithTime(lastTimeChat, indexChat == 0 ? 15000 : 1500)) {
+            String[] chat = {
+                "Mày chán sống rồi à " + player.name + "?",
+                "Mày muốn chết đúng không?",
+                "Ngày này năm sau",
+                "Tao sẽ nhớ uống thật nhiều nước",
+                "Để đái vào mộ mày"
+            };
+            Service.gI().chat(this, chat[indexChat]);
+            indexChat = (indexChat + 1) % chat.length;
+            lastTimeChat = System.currentTimeMillis();
         }
     }
 

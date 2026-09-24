@@ -3,7 +3,9 @@ package managers;
 import models.matches.PVP;
 import models.player.Player;
 import server.ServerManager;
-import java.util.ArrayList;
+import utils.Logger;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class PVPManager implements Runnable {
 
@@ -16,11 +18,13 @@ public class PVPManager implements Runnable {
         return i;
     }
 
-    private ArrayList<PVP> pvps;
+    private final List<PVP> pvps;
 
     public PVPManager() {
-        this.pvps = new ArrayList<>();
-        new Thread(this, "Update pvp").start();
+        this.pvps = new CopyOnWriteArrayList<>();
+        Thread pvpThread = new Thread(this, "Update-PVP-Worker");
+        pvpThread.setDaemon(true);
+        pvpThread.start();
     }
 
     public void removePVP(PVP pvp) {
@@ -32,8 +36,11 @@ public class PVPManager implements Runnable {
     }
 
     public PVP getPVP(Player player) {
+        if (player == null) {
+            return null;
+        }
         for (PVP pvp : this.pvps) {
-            if (pvp.p1.equals(player) || pvp.p2.equals(player)) {
+            if (pvp != null && (player.equals(pvp.p1) || player.equals(pvp.p2))) {
                 return pvp;
             }
         }
@@ -50,10 +57,18 @@ public class PVPManager implements Runnable {
             try {
                 long st = System.currentTimeMillis();
                 for (PVP pvp : pvps) {
-                    pvp.update();
+                    if (pvp != null) {
+                        pvp.update();
+                    }
                 }
-                Thread.sleep(1000 - (System.currentTimeMillis() - st));
+                long elapsed = System.currentTimeMillis() - st;
+                long sleepTime = Math.max(50, 1000 - elapsed);
+                Thread.sleep(sleepTime);
+            } catch (InterruptedException ie) {
+                Thread.currentThread().interrupt();
+                break;
             } catch (Exception e) {
+                Logger.logException(PVPManager.class, e, "Error in PVPManager update loop");
             }
         }
     }

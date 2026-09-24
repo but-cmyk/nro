@@ -43,6 +43,7 @@ public class BoMong extends Npc {
                 if (player.idMark.isBaseMenu()) {
                     switch (select) {
                         case 0 -> {
+                            player.playerTask.sideTask.renew();
                             if (player.playerTask.sideTask.template != null) {
                                 String npcSay = "Nhiệm vụ hiện tại: " + player.playerTask.sideTask.getName() + " ("
                                         + player.playerTask.sideTask.getLevel() + ")"
@@ -52,10 +53,28 @@ public class BoMong extends Npc {
                                         + player.playerTask.sideTask.leftTask + "/" + ConstTask.MAX_SIDE_TASK;
                                 this.createOtherMenu(player, ConstNpc.MENU_OPTION_PAY_SIDE_TASK,
                                         npcSay, "Trả nhiệm\nvụ", "Hủy nhiệm\nvụ");
+                            } else if (player.playerTask.sideTask.leftTask <= 0) {
+                                this.createOtherMenu(player, ConstNpc.IGNORE_MENU,
+                                        "Hôm nay bạn đã hoàn thành tối đa " + ConstTask.MAX_SIDE_TASK + " nhiệm vụ rồi!\nHãy nghỉ ngơi và quay lại vào ngày mai nhé.",
+                                        "Đóng");
+                            } else if (player.playerTask.sideTask.cancelCount > 3 && player.playerTask.sideTask.getRemainingCooldownSeconds() > 0) {
+                                int remainSeconds = player.playerTask.sideTask.getRemainingCooldownSeconds();
+                                int m = remainSeconds / 60;
+                                int s = remainSeconds % 60;
+                                String timeStr = (m > 0 ? m + " phút " : "") + s + " giây";
+                                this.createOtherMenu(player, ConstNpc.MENU_QUICK_RESET_SIDE_TASK,
+                                        "Bạn đã hủy nhiệm vụ quá 3 lần hôm nay!\nCần chờ " + timeStr + " mới có thể nhận nhiệm vụ mới.\n"
+                                        + "Bạn có muốn dùng 1 Ngọc Xanh để đổi nhiệm vụ ngay lập tức?",
+                                        "Đổi ngay\n(1 Ngọc)", "Chờ đợi");
                             } else {
                                 this.createOtherMenu(player, ConstNpc.MENU_OPTION_LEVEL_SIDE_TASK,
-                                        "Tôi có vài nhiệm vụ theo cấp bậc, sức cậu có thể làm được cái nào?",
-                                        "Dễ", "Bình thường", "Khó", "Từ chối");
+                                        "Tôi có vài nhiệm vụ theo cấp bậc, sức cậu có thể làm được cái nào?\n(Lưu ý: Cần đủ Sức mạnh và đã mở bản đồ tương ứng)",
+                                        "Dễ\n(Tân thủ)",
+                                        "Bình thường\n(>= 1.5M SM)",
+                                        "Khó\n(>= 15M SM)",
+                                        "Siêu khó\n(>= 150M SM)",
+                                        "Địa ngục\n(>= 1.5 Tỷ SM)",
+                                        "Từ chối");
                             }
                         }
                         case 1 ->
@@ -72,7 +91,7 @@ public class BoMong extends Npc {
 
                 } else if (player.idMark.getIndexMenu() == ConstNpc.MENU_OPTION_LEVEL_SIDE_TASK) {
                     switch (select) {
-                        case 0, 1, 2 ->
+                        case 0, 1, 2, 3, 4 ->
                             TaskService.gI().changeSideTask(player, (byte) select);
                     }
                 } else if (player.idMark.getIndexMenu() == ConstNpc.MENU_OPTION_PAY_SIDE_TASK) {
@@ -81,6 +100,11 @@ public class BoMong extends Npc {
                             TaskService.gI().paySideTask(player);
                         case 1 ->
                             TaskService.gI().removeSideTask(player);
+                    }
+                } else if (player.idMark.getIndexMenu() == ConstNpc.MENU_QUICK_RESET_SIDE_TASK) {
+                    switch (select) {
+                        case 0 ->
+                            TaskService.gI().quickResetSideTaskWithGem(player, this);
                     }
                 }
             }

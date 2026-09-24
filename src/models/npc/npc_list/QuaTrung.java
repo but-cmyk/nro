@@ -19,6 +19,9 @@ public class QuaTrung extends Npc {
     @Override
     public void openBaseMenu(Player player) {
         if (canOpenNpc(player)) {
+            if (player.mabuEgg == null) {
+                return;
+            }
             if (this.mapId == (21 + player.gender)) {
                 player.mabuEgg.sendMabuEgg();
                 if (player.mabuEgg.getSecondDone() != 0) {
@@ -36,6 +39,9 @@ public class QuaTrung extends Npc {
     @Override
     public void confirmMenu(Player player, int select) {
         if (canOpenNpc(player)) {
+            if (player.mabuEgg == null) {
+                return;
+            }
             if (this.mapId == (21 + player.gender)) {
                 switch (player.idMark.getIndexMenu()) {
                     case ConstNpc.CAN_NOT_OPEN_EGG -> {
@@ -43,11 +49,17 @@ public class QuaTrung extends Npc {
                             this.createOtherMenu(player, ConstNpc.CONFIRM_DESTROY_EGG,
                                     "Bạn có chắc chắn muốn hủy bỏ trứng Mabư?", "Đồng ý", "Từ chối");
                         } else if (select == 1) {
+                            if (player.mabuEgg.getSecondDone() <= 0) {
+                                Service.gI().sendThongBao(player, "Trứng đã sẵn sàng nở, không cần ấp nhanh!");
+                                return;
+                            }
                             if (player.inventory.gem >= COST_AP_TRUNG_NHANH) {
                                 player.inventory.gem -= COST_AP_TRUNG_NHANH;
                                 player.mabuEgg.timeDone = 0;
                                 Service.gI().sendMoney(player);
                                 player.mabuEgg.sendMabuEgg();
+                                Service.gI().sendThongBao(player, "Đã ấp trứng thành công!");
+                                this.createOtherMenu(player, ConstNpc.CAN_OPEN_EGG, "Bư bư bư...", "Nở", "Hủy bỏ\ntrứng", "Đóng");
                             } else {
                                 Service.gI().sendThongBao(player,
                                         "Bạn không đủ ngọc để thực hiện, còn thiếu "
@@ -81,8 +93,9 @@ public class QuaTrung extends Npc {
                         }
                     }
                     case ConstNpc.CONFIRM_DESTROY_EGG -> {
-                        if (select == 0) {
+                        if (select == 0 && player.mabuEgg != null) {
                             player.mabuEgg.destroyEgg();
+                            Service.gI().sendThongBao(player, "Đã hủy bỏ trứng Mabư thành công!");
                         }
                     }
                 }

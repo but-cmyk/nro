@@ -81,7 +81,7 @@ public class Boss10 {
 //    }
 
     public void update(Player player) {
-        if (player.zone == null || !MapService.gI().isMapBlackBallWar(player.zone.map.mapId)) {
+        if (player != null && player.zone != null && MapService.gI().isMap22h(player.zone.map.mapId)) {
             try {
                 long now = System.currentTimeMillis();
                 if ((now < TIME_OPEN_22h || now > TIME_CLOSE_22h)) {
@@ -89,7 +89,6 @@ public class Boss10 {
                 }
             } catch (Exception ignored) {
             }
-
         }
     }
 }

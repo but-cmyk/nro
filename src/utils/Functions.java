@@ -42,7 +42,7 @@ public class Functions {
     public static void sleep(long l) {
         try {
             Thread.sleep(l);
-        } catch (InterruptedException _) {
+        } catch (InterruptedException ignored) {
         }
     }
 

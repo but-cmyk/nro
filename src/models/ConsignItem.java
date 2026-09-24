@@ -16,11 +16,16 @@ public class ConsignItem {
     public byte isUpTop;
     public List<ItemOption> options = new ArrayList<>();
     public boolean isBuy;
+    public String playerName = "";
 
 //    public ConsignItem(){
 //    }
 
     public ConsignItem(int i,short id,int plId,byte t,int gold,int gem,int q,byte isUp,List<ItemOption> op,boolean b){
+        this(i, id, plId, t, gold, gem, q, isUp, op, b, "");
+    }
+
+    public ConsignItem(int i,short id,int plId,byte t,int gold,int gem,int q,byte isUp,List<ItemOption> op,boolean b, String plName){
         this.id = i;
         itemId = id;
         player_sell=plId;
@@ -31,6 +36,7 @@ public class ConsignItem {
         isUpTop = isUp;
         options = op;
         isBuy = b;
+        this.playerName = (plName != null) ? plName : "";
     }
 }
 

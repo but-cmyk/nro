@@ -3,7 +3,6 @@ package models.player;
 import consts.ConstAchievement;
 import java.util.ArrayList;
 import java.util.List;
-import lombok.Getter;
 import models.Template.AchievementQuest;
 import models.Template.AchievementTemplate;
 import server.Manager;
@@ -11,9 +10,11 @@ import server.Manager;
 public class Achievement {
 
     private Player player;
-
-    @Getter
     private List<AchievementQuest> achievementList;
+
+    public List<AchievementQuest> getAchievementList() {
+        return this.achievementList;
+    }
 
     public Achievement(Player player) {
         this.player = player;
@@ -58,6 +59,9 @@ public class Achievement {
     }
 
     public boolean canReward(int index) {
+        if (index < 0 || index >= Manager.ACHIEVEMENT_TEMPLATE.size()) {
+            return false;
+        }
         AchievementQuest aq = get(index);
         AchievementTemplate at = Manager.ACHIEVEMENT_TEMPLATE.get(index);
         return aq != null && !aq.isRecieve && getCompleted(index) >= at.maxCount;

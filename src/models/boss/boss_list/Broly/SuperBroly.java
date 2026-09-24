@@ -9,10 +9,14 @@ import static consts.BossType.BROLY;
 import consts.ConstPlayer;
 import models.map.Zone;
 import models.player.Player;
+import models.item.Item;
+import models.map.ItemMap;
 import services.PetService;
+import services.Service;
 import services.SkillService;
 import services.map.ChangeMapService;
 import models.skill.Skill;
+import utils.Logger;
 import utils.Util;
 
 public class SuperBroly extends Boss {
@@ -49,6 +53,18 @@ public class SuperBroly extends Boss {
         if (plKill.pet == null) {
             PetService.gI().createNormalPet(plKill);
             this.chat("Hãy chăm sóc đệ tử của ta...");
+        } else {
+            // Người chơi đã có đệ tử: Rơi cọc vàng lớn (500k - 1M) và 20% Đá Nâng Cấp (Không rơi đồ thần, không rơi ngọc rồng)
+            int gold = Util.nextInt(500_000, 1_000_000);
+            ItemMap itGold = new ItemMap(this.zone, 190, gold, this.location.x, this.zone.map.yPhysicInTop(this.location.x, this.location.y - 24), plKill.id);
+            Service.gI().dropItemMap(this.zone, itGold);
+
+            if (Util.isTrue(20, 100)) {
+                int randDNC = Util.nextInt(0, 4);
+                ItemMap itDNC = new ItemMap(this.zone, 220 + randDNC, 1, this.location.x + Util.nextInt(-20, 20), this.zone.map.yPhysicInTop(this.location.x, this.location.y - 24), plKill.id);
+                itDNC.options.add(new Item.ItemOption(71 - randDNC, 0));
+                Service.gI().dropItemMap(this.zone, itDNC);
+            }
         }
     }
 
@@ -72,7 +88,9 @@ public class SuperBroly extends Boss {
                         break;
                     }
                 }
-            } catch(Exception e){}
+            } catch (Exception e) {
+                Logger.logException(SuperBroly.class, e, "Error scanning zone for SuperBroly");
+            }
         }
 
         ChangeMapService.gI().changeMap(this, this.zone, this.location.x, this.location.y);
@@ -106,7 +124,11 @@ public class SuperBroly extends Boss {
             return 0;
         }
 
-        int skillID = plAtt.playerSkill.skillSelect.template.id;
+        int skillID = -1;
+        if (plAtt != null && plAtt.playerSkill != null && plAtt.playerSkill.skillSelect != null
+                && plAtt.playerSkill.skillSelect.template != null) {
+            skillID = plAtt.playerSkill.skillSelect.template.id;
+        }
 
         boolean isSpecialSkill = (skillID == Skill.TU_SAT ||
                 skillID == Skill.MAKANKOSAPPO ||
@@ -239,7 +261,9 @@ public class SuperBroly extends Boss {
         this.nPoint.hpMax = (int)hpMax;
         this.nPoint.dame = (int)(hpMax / 10);
 
-        if (this.nPoint.hpMax >= 16_070_777) ;
+        if (this.nPoint.hpMax >= 16_070_777) {
+            this.leaveMap();
+        }
     }
 
     @Override

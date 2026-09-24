@@ -57,9 +57,18 @@ public class Message implements IMessage {
         return this.dis;
     }
 
+    private byte[] cachedData;
+
     @Override
-    public byte[] getData() {
-        return this.os.toByteArray();
+    public synchronized byte[] getData() {
+        if (this.cachedData == null) {
+            if (this.os != null) {
+                this.cachedData = this.os.toByteArray();
+            } else {
+                this.cachedData = new byte[0];
+            }
+        }
+        return this.cachedData;
     }
 
     @Override
@@ -77,7 +86,7 @@ public class Message implements IMessage {
             if (this.dos != null) {
                 this.dos.close();
             }
-        } catch (IOException _) {
+        } catch (IOException ignored) {
         }
     }
 
@@ -88,5 +97,6 @@ public class Message implements IMessage {
         this.is = null;
         this.dos = null;
         this.os = null;
+        // cachedData được giữ lại để các luồng Netty EventLoop đang encode dở không bị null
     }
 }

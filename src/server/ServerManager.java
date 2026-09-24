@@ -4,68 +4,47 @@ import bot.BotManager;
 import bot.NewBot;
 import database.AlyraManager;
 import database.AlyraResultSet;
-import utils.FileRunner;
-import managers.boss.BrolyManager;
 import database.daos.HistoryTransactionDAO;
-import managers.boss.BossManager;
-import managers.boss.OtherBossManager;
-import managers.boss.TreasureUnderSeaManager;
-import managers.boss.SnakeWayManager;
-import managers.boss.RedRibbonHQManager;
-import managers.boss.GasDestroyManager;
-import managers.boss.YardartManager;
-import managers.boss.ChristmasEventManager;
-import managers.boss.FinalBossManager;
-import managers.boss.HalloweenEventManager;
-import managers.boss.HungVuongEventManager;
-import managers.boss.LunarNewYearEventManager;
-import managers.boss.SkillSummonedManager;
-import managers.boss.TrungThuEventManager;
-import java.io.IOException;
-import interfaces.ISession;
-import network.Network;
-import network.io.MyKeyHandler;
-import network.session.MySession;
-import services.player.ClanService;
-import services.phoban.NgocRongNamecService;
-import services.func.minigame.CSMM;
-import utils.Logger;
-import utils.TimeUtil;
-
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
-import managers.tournament.The23rdMartialArtCongressManager;
-import managers.tournament.DeathOrAliveArenaManager;
-import event.EventManager;
 import database.daos.EventDAO;
 import database.daos.PlayerDAO;
-import managers.tournament.WorldMartialArtsTournamentManager;
-import network.io.MessageSendCollect;
-import managers.ShenronEventManager;
-import interfaces.ISessionAcceptHandler;
-import java.net.Socket;
-import javax.swing.SwingUtilities;
+import event.EventManager;
 import managers.AdminToolFrame;
 import managers.ConsignShopManager;
 import managers.SuperRankManager;
+import managers.boss.BossManager;
+import managers.tournament.DeathOrAliveArenaManager;
+import managers.tournament.The23rdMartialArtCongressManager;
+import managers.tournament.WorldMartialArtsTournamentManager;
 import models.player.Player;
-import services.Service;
+import network.netty.NettyServer;
+import network.session.MySession;
 import services.TopService;
-
-// Import thêm các class Data cache
+import services.func.minigame.CSMM;
+import services.phoban.NgocRongNamecService;
+import services.player.ClanService;
+import utils.FileRunner;
+import utils.Logger;
+import utils.TimeUtil;
 import data.DataGame;
 import data.ItemData;
+
+import javax.swing.SwingUtilities;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Scanner;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class ServerManager {
 
     public static String timeStart;
 
-    // Sử dụng ConcurrentHashMap để thread-safe khi quản lý kết nối IP
+    // Quản lý kết nối IP thread-safe
     public static final Map<String, Integer> CLIENTS = new ConcurrentHashMap<>();
 
     public static String NAME = "Vũ trụ 1";
-    // Để 0.0.0.0 để lắng nghe tất cả các interface mạng (tránh lỗi trên VPS)
     public static String IP = "0.0.0.0";
     public static int PORT = 14445;
 
@@ -84,17 +63,24 @@ public class ServerManager {
         Manager.gI();
         HistoryTransactionDAO.deleteHistory();
 
-        // Tối ưu số lượng Thread dựa trên CPU Core
         int corePoolSize = Runtime.getRuntime().availableProcessors();
         executorService = Executors.newFixedThreadPool(corePoolSize * 2);
         scheduledExecutorService = Executors.newScheduledThreadPool(5);
 
-        // Cleanup khi tắt server
         Runtime.getRuntime().addShutdownHook(new Thread(this::cleanupResources));
     }
 
     public ExecutorService getExecutorService() {
         return this.executorService;
+    }
+
+    public void execute(Runnable task) {
+        if (task == null) return;
+        if (this.executorService != null && !this.executorService.isShutdown()) {
+            this.executorService.submit(task);
+        } else {
+            Thread.startVirtualThread(task);
+        }
     }
 
     public static ServerManager gI() {
@@ -118,13 +104,13 @@ public class ServerManager {
     }
 
     public void run() {
-        // 1. Load dữ liệu Cache trước tiên (Rất quan trọng)
+        // 1. Load dữ liệu Cache trước tiên
         Logger.log("Đang tải dữ liệu Cache...");
         DataGame.init();
         ItemData.init();
 
-        // Migrate passwords to BCrypt
-        migratePasswordsToBCrypt();
+        // Migrate passwords to BCrypt (chạy ngầm, không block tiến trình khởi động Server)
+        new Thread(this::migratePasswordsToBCrypt, "BCrypt-Migration-Thread").start();
 
         isRunning = true;
 
@@ -136,7 +122,6 @@ public class ServerManager {
         executorService.submit(() -> DeathOrAliveArenaManager.gI().run());
         executorService.submit(() -> WorldMartialArtsTournamentManager.gI().run());
         executorService.submit(() -> AutoBtri.gI().run());
-        executorService.submit(() -> ShenronEventManager.gI().run());
 
         // 3. Load Boss và Map
         Logger.log("Đang tải dữ liệu Boss và Map...");
@@ -146,68 +131,53 @@ public class ServerManager {
         EventManager.gI().init();
         ServerManager.isReloading = false;
 
-        // 4. Chạy luồng Boss (Hiện tại được quản lý và cập nhật tập trung thông qua GameLoopManager)
-
         new Thread(TopService.gI(), "Top Service Thread").start();
 
         executorService.submit(() -> CSMM.gI().run());
-        // Khởi chạy luồng quản lý Bot
         new Thread(BotManager.gI(), "Bot Manager").start();
 
-        // Tạo Bot (Khởi tạo 10 Bot thông minh để test tính năng)
+        // Tạo 10 Bot thông minh test
         NewBot.gI().runBot(0, 10);
         System.out.println("Đã khởi tạo 10 Bot thông minh chạy map!");
-        // 5. Memory optimizer
+
+        // 4. Memory optimizer
         tools.MemoryOptimizer.gI(450, true);
 
-        // 6. Start Auto Save
+        // 5. Start Auto Save & Game Loop
         startAutoSaveTask();
         GameLoopManager.gI().start();
 
-        // 7. Mở Port kết nối và CMD (Mở cuối cùng để đảm bảo data đã load xong)
-        Logger.log("Mở cổng kết nối máy chủ...");
+        // 6. Mở Port kết nối Netty 4.x & CLI
+        Logger.log("Mở cổng kết nối máy chủ Netty 4.x...");
         activeServerSocket();
         activeCommandLine();
 
-        Logger.success("Máy chủ khởi động thành công trên PORT: " + PORT);
+        Logger.success("Máy chủ Netty khởi động thành công trên PORT: " + PORT);
     }
 
     private void startAutoSaveTask() {
-        // SỬA 1: Đổi thời gian chạy luồng check từ 5 phút thành 60 giây
-        // Lý do: Để server check liên tục xem ai cần lưu, thay vì dồn cục 5 phút mới làm 1 lần.
         autoSaveTask = scheduledExecutorService.scheduleWithFixedDelay(() -> {
             try {
                 if (!isRunning) {
                     return;
                 }
 
-                // Copy list để tránh lỗi khi người chơi thoát game giữa chừng
                 List<Player> players = new ArrayList<>(Client.gI().getPlayers());
                 if (players.isEmpty()) {
                     return;
                 }
 
-                // Logger.log("Đang kiểm tra auto-save cho " + players.size() + " người chơi..."); // Comment lại cho đỡ spam log
                 AtomicInteger savedCount = new AtomicInteger(0);
                 long currentTime = System.currentTimeMillis();
-                long TIME_TO_SAVE = 5 * 60 * 1000; // 5 phút (300.000ms)
+                long TIME_TO_SAVE = 5 * 60 * 1000; // 5 phút
 
-                // Duyệt qua danh sách người chơi
                 for (Player player : players) {
                     if (player != null && player.isPl()) {
-
-                        // SỬA 2: Thêm kiểm tra lastTimeSave
-                        // Chỉ lưu nếu thời gian hiện tại trừ thời gian lưu cuối > 5 phút
                         if (currentTime - player.lastTimeSave >= TIME_TO_SAVE) {
                             try {
                                 PlayerDAO.updatePlayer(player);
-
-                                // SỬA 3: Cập nhật lại thời gian đã lưu
                                 player.lastTimeSave = System.currentTimeMillis();
-
                                 savedCount.incrementAndGet();
-
-                                // Delay cực nhỏ để giảm tải CPU và DB (quan trọng)
                                 Thread.sleep(10);
                             } catch (Exception e) {
                                 Logger.error("Lỗi auto-save player: " + player.name);
@@ -216,7 +186,6 @@ public class ServerManager {
                     }
                 }
 
-                // Chỉ log nếu có người được lưu để đỡ spam console
                 if (savedCount.get() > 0) {
                     Logger.success("Auto-save hoàn tất: Đã lưu " + savedCount.get() + " người chơi.");
                 }
@@ -225,46 +194,32 @@ public class ServerManager {
                 Logger.error("Auto-save error: " + e.getMessage());
                 e.printStackTrace();
             }
-        }, 60, 60, TimeUnit.SECONDS); // Chạy mỗi 60 giây
+        }, 60, 60, TimeUnit.SECONDS);
     }
 
     private void activeServerSocket() {
         try {
-            Network.gI().init().setAcceptHandler(new ISessionAcceptHandler() {
-                @Override
-                public void sessionInit(ISession is) {
-                    if (!canConnectWithIp(is.getIP())) {
-                        is.disconnect();
-                        return;
-                    }
-                    is.setMessageHandler(Controller.gI())
-                            .setSendCollect(new MessageSendCollect())
-                            .setKeyHandler(new MyKeyHandler())
-                            .startCollect().startQueueHandler();
-                }
-
-                @Override
-                public void sessionDisconnect(ISession session) {
-                    Client.gI().kickSession((MySession) session);
-                    disconnect((MySession) session);
-                }
-            }).setTypeSessionClone(MySession.class)
-                    .setDoSomeThingWhenClose(this::cleanupResources)
-                    .start(PORT);
+            NettyServer.gI().start(PORT);
         } catch (Exception e) {
-            Logger.error("Error starting server socket: " + e.getMessage());
-            System.exit(1); // Lỗi không mở được port thì tắt server luôn
+            Logger.error("Lỗi khi khởi chạy Netty Server: " + e.getMessage());
+            System.exit(1);
         }
     }
 
-    private boolean canConnectWithIp(String ipAddress) {
-        int currentConnections = CLIENTS.computeIfAbsent(ipAddress, k -> 0);
-        if (currentConnections < Manager.MAX_PER_IP) {
-            CLIENTS.put(ipAddress, currentConnections + 1);
+    public static boolean canConnectWithIp(String ipAddress) {
+        if (ipAddress == null) {
             return true;
-        } else {
-            return false;
         }
+        final boolean[] accepted = {false};
+        CLIENTS.compute(ipAddress, (ip, currentConnections) -> {
+            int count = currentConnections == null ? 0 : currentConnections;
+            if (count < Manager.MAX_PER_IP) {
+                accepted[0] = true;
+                return count + 1;
+            }
+            return count;
+        });
+        return accepted[0];
     }
 
     public void disconnect(MySession session) {
@@ -306,6 +261,13 @@ public class ServerManager {
         }
 
         try {
+            Logger.log("Closing Netty Server...");
+            NettyServer.gI().close();
+        } catch (Exception e) {
+            Logger.error("Error closing NettyServer: " + e.getMessage());
+        }
+
+        try {
             Logger.log("Saving consign shop...");
             ConsignShopManager.gI().save();
             EventDAO.save();
@@ -332,9 +294,56 @@ public class ServerManager {
     private void cleanupResources() {
         Logger.log("Cleaning up server resources...");
         try {
+            if (isRunning) {
+                isRunning = false;
+                Logger.log("Saving all online players before shutdown (Parallel Flush)...");
+                List<Player> players = new ArrayList<>(Client.gI().getPlayers());
+                List<Player> validPlayers = new ArrayList<>();
+                for (Player pl : players) {
+                    if (pl != null && pl.isPl()) {
+                        try {
+                            if (pl.zone != null && pl.zone.map != null) {
+                                pl.mapIdBeforeLogout = pl.zone.map.mapId;
+                            }
+                            validPlayers.add(pl);
+                        } catch (Exception ignored) {
+                        }
+                    }
+                }
+
+                if (!validPlayers.isEmpty()) {
+                    CountDownLatch latch = new CountDownLatch(validPlayers.size());
+                    AtomicInteger savedCount = new AtomicInteger(0);
+                    for (Player pl : validPlayers) {
+                        Thread.ofVirtual().name("shutdown-save-" + pl.id).start(() -> {
+                            try {
+                                PlayerDAO.updatePlayer(pl);
+                                savedCount.incrementAndGet();
+                            } catch (Exception ex) {
+                                Logger.error("Error saving player on shutdown: " + (pl != null ? pl.name : "unknown"));
+                            } finally {
+                                latch.countDown();
+                            }
+                        });
+                    }
+                    try {
+                        if (!latch.await(30, TimeUnit.SECONDS)) {
+                            Logger.warning("Shutdown save timeout: " + (validPlayers.size() - savedCount.get()) + " players could not finish saving in 30s!");
+                        } else {
+                            Logger.success("Shutdown save completed: " + savedCount.get() + "/" + validPlayers.size() + " players saved successfully.");
+                        }
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
+                }
+                try {
+                    ConsignShopManager.gI().save();
+                    ClanService.gI().close();
+                } catch (Exception ignored) {
+                }
+            }
             if (executorService != null && !executorService.isShutdown()) {
                 executorService.shutdown();
-                // Không force shutdown ngay để các task quan trọng kịp chạy xong
             }
             if (scheduledExecutorService != null && !scheduledExecutorService.isShutdown()) {
                 scheduledExecutorService.shutdown();
@@ -369,26 +378,44 @@ public class ServerManager {
 
     public void saveAllPlayersData() {
         try {
-            Logger.log("Starting manual player data save...");
+            Logger.log("Starting player data auto-save (Parallel Flush)...");
             List<Player> players = new ArrayList<>(Client.gI().getPlayers());
-            AtomicInteger savedCount = new AtomicInteger(0);
-
+            List<Player> validPlayers = new ArrayList<>();
             for (Player pl : players) {
-                try {
-                    if (pl != null && pl.isPl()) {
-                        PlayerDAO.updatePlayer(pl);
-                        savedCount.incrementAndGet();
-                        // Delay nhỏ để Database thở
-                        Thread.sleep(10);
-                    }
-                } catch (Exception exx) {
-                    Logger.error("Error saving player: " + (pl != null ? pl.name : "unknown"));
+                if (pl != null && pl.isPl()) {
+                    validPlayers.add(pl);
                 }
             }
-            Logger.success("Manual save completed: " + savedCount.get() + " players saved");
 
+            if (!validPlayers.isEmpty()) {
+                CountDownLatch latch = new CountDownLatch(validPlayers.size());
+                AtomicInteger savedCount = new AtomicInteger(0);
+                for (Player pl : validPlayers) {
+                    Thread.ofVirtual().name("autosave-" + pl.id).start(() -> {
+                        try {
+                            PlayerDAO.updatePlayer(pl);
+                            savedCount.incrementAndGet();
+                        } catch (Exception exx) {
+                            Logger.error("Error saving player: " + (pl != null ? pl.name : "unknown"));
+                        } finally {
+                            latch.countDown();
+                        }
+                    });
+                }
+                try {
+                    if (!latch.await(30, TimeUnit.SECONDS)) {
+                        Logger.warning("Auto-save timeout: " + (validPlayers.size() - savedCount.get()) + " players did not complete in 30s!");
+                    } else {
+                        Logger.success("Auto-save completed: " + savedCount.get() + "/" + validPlayers.size() + " players saved.");
+                    }
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            } else {
+                Logger.log("No players online to save.");
+            }
         } catch (Exception ex) {
-            Logger.error("Error in manual player data save");
+            Logger.error("Error in player data save: " + ex.getMessage());
         }
     }
 
@@ -398,14 +425,19 @@ public class ServerManager {
         int count = 0;
         try {
             rs = AlyraManager.executeQuery("SELECT id, password FROM account");
+            java.util.Map<Integer, String> toUpdate = new java.util.HashMap<>();
             while (rs.next()) {
                 int id = rs.getInt("id");
                 String password = rs.getString("password");
                 if (password != null && !password.startsWith("$2a$") && !password.startsWith("$2b$") && !password.startsWith("$2y$")) {
-                    String hashed = utils.PasswordUtils.hashPassword(password);
-                    AlyraManager.executeUpdate("UPDATE account SET password = ? WHERE id = ?", hashed, id);
-                    count++;
+                    toUpdate.put(id, utils.PasswordUtils.hashPassword(password));
                 }
+            }
+            rs.dispose();
+            rs = null;
+            for (java.util.Map.Entry<Integer, String> entry : toUpdate.entrySet()) {
+                AlyraManager.executeUpdate("UPDATE account SET password = ? WHERE id = ?", entry.getValue(), entry.getKey());
+                count++;
             }
             if (count > 0) {
                 Logger.log(Logger.GREEN, "Đã migrate thành công " + count + " tài khoản sang mật khẩu BCrypt.\n");

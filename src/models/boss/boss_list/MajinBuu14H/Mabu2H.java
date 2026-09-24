@@ -28,7 +28,7 @@ public class Mabu2H extends Boss {
     private long lastTimeEat;
     private long lastTimeUseSkill;
     private long timeUseSkill;
-    public List<Player> maBuEat = new ArrayList<>();
+    public List<Player> maBuEat = new java.util.concurrent.CopyOnWriteArrayList<>();
 
     public Mabu2H() throws Exception {
         super(FINAL, BossID.MABU, BossesData.MABU, BossesData.SUPER_BU, BossesData.BU_TENK, BossesData.BU_HAN, BossesData.KID_BU);
@@ -199,13 +199,18 @@ public class Mabu2H extends Boss {
                 damage = 1;
             }
 
-            // Logic Kid Buu (Form cuối) chỉ nhận sát thương từ Quả cầu kênh khi
+            // Logic Kid Buu (Form cuối) chỉ nhận sát thương kết liễu từ Quả cầu kênh khi, Makankosappo hoặc Tự sát
             if (this.currentLevel == this.data.length - 1) {
-                if (plAtt.playerSkill.skillSelect.template.id != Skill.QUA_CAU_KENH_KHI) {
-                    // Nếu damage vượt quá HP hiện tại -> set damage = 0 (Bất tử)
-                    // Logic cũ của bạn: damage = damage >= this.nPoint.hp ? 0 : damage;
-                    // Logic này có nghĩa là nếu đánh đòn kết liễu mà ko phải QCKK thì sẽ bất tử.
-                    if(damage >= this.nPoint.hp) damage = 0;
+                if (plAtt != null && plAtt.playerSkill != null && plAtt.playerSkill.skillSelect != null
+                        && plAtt.playerSkill.skillSelect.template != null) {
+                    int skillId = plAtt.playerSkill.skillSelect.template.id;
+                    if (skillId != Skill.QUA_CAU_KENH_KHI && skillId != Skill.MAKANKOSAPPO && skillId != Skill.TU_SAT) {
+                        if (damage >= this.nPoint.hp) {
+                            damage = 0;
+                        }
+                    }
+                } else if (damage >= this.nPoint.hp) {
+                    damage = 0;
                 }
             }
 

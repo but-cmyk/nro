@@ -32,6 +32,24 @@ public class SO2 extends Boss {
         if (this.currentLevel == 1) {
             return;
         }
+        if (this.zone != null && this.location != null) {
+            int gold = Util.nextInt(30000, 60000);
+            ItemMap itGold = new ItemMap(this.zone, 190, gold, this.location.x, this.zone.map.yPhysicInTop(this.location.x, this.location.y - 24), plKill.id);
+            Service.gI().dropItemMap(this.zone, itGold);
+
+            if (Util.isTrue(20, 100)) {
+                if (Util.isTrue(50, 100)) {
+                    int nr = Util.nextInt(19, 21); // NRO 4 - 6 sao
+                    ItemMap itNR = new ItemMap(this.zone, nr, 1, this.location.x + Util.nextInt(-15, 15), this.zone.map.yPhysicInTop(this.location.x, this.location.y - 24), plKill.id);
+                    Service.gI().dropItemMap(this.zone, itNR);
+                } else {
+                    int randDNC = Util.nextInt(0, 4);
+                    ItemMap itDNC = new ItemMap(this.zone, 220 + randDNC, 1, this.location.x + Util.nextInt(-15, 15), this.zone.map.yPhysicInTop(this.location.x, this.location.y - 24), plKill.id);
+                    itDNC.options.add(new Item.ItemOption(71 - randDNC, 0));
+                    Service.gI().dropItemMap(this.zone, itDNC);
+                }
+            }
+        }
     }
 
     @Override

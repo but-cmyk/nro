@@ -1,4 +1,5 @@
 package services;
+
 import models.Template;
 import models.Template.ItemOptionTemplate;
 import models.item.Item;
@@ -116,49 +117,52 @@ public class ItemService {
         return 0;
     }
 
-//    public int randTempItemDoSao() {
-//        // Mảng các vật phẩm được chia theo loại
-//        int[][] items = {
-//            // Áo
-//            {0, 1, 2, 3, 4, 5, 33, 34, 41, 42, 49, 50, 136, 137, 138, 139, 152, 153, 154, 155, 168, 169, 170, 171},
-//            // Quần
-//            {6, 7, 8, 9, 10, 11, 35, 36, 43, 44, 51, 52, 140, 141, 142, 143, 156, 157, 158, 159, 172, 173, 174, 175},
-//            // Găng
-//            {21, 22, 23, 24, 25, 26, 37, 38, 45, 46, 53, 54, 144, 145, 146, 147, 160, 161, 162, 163, 176, 177, 178, 179},
-//            // Giày
-//            {27, 28, 29, 30, 31, 32, 39, 40, 47, 48, 55, 56, 148, 149, 150, 151},
-//            // Rada
-//            {12, 57, 58, 59, 184, 185, 186, 187}
-//        };
-//
-//        // Lựa chọn loại vật phẩm ngẫu nhiên dựa trên xác suất
-//        int type;
-//        if (Util.isTrue(10, 100)) {
-//            type = 4; // rada
-//        } else if (Util.isTrue(30, 100)) {
-//            type = 3; // gang
-//        } else if (Util.isTrue(50, 100)) {
-//            type = 1; // quan
-//        } else if (Util.isTrue(70, 100)) {
-//            type = 0; // ao
-//        } else {
-//            type = 2; // giay
-//        }
-//
-//        // Kiểm tra xem `type` có hợp lệ hay không
-//        if (type < 0 || type >= items.length) {
-//            return -1; // Trường hợp không hợp lệ cho type
-//        }
-//
-//        // Kiểm tra mảng items[type] có phần tử không
-//        if (items[type].length > 0) {
-//            // Trả về ID ngẫu nhiên từ mảng tương ứng
-//            return items[type][Util.nextInt(items[type].length)];
-//        } else {
-//            // Nếu mảng không có phần tử hợp lệ, trả về -1 hoặc xử lý theo cách khác
-//            return -1; // ID mặc định không hợp lệ
-//        }
-//    }
+    // public int randTempItemDoSao() {
+    // // Mảng các vật phẩm được chia theo loại
+    // int[][] items = {
+    // // Áo
+    // {0, 1, 2, 3, 4, 5, 33, 34, 41, 42, 49, 50, 136, 137, 138, 139, 152, 153, 154,
+    // 155, 168, 169, 170, 171},
+    // // Quần
+    // {6, 7, 8, 9, 10, 11, 35, 36, 43, 44, 51, 52, 140, 141, 142, 143, 156, 157,
+    // 158, 159, 172, 173, 174, 175},
+    // // Găng
+    // {21, 22, 23, 24, 25, 26, 37, 38, 45, 46, 53, 54, 144, 145, 146, 147, 160,
+    // 161, 162, 163, 176, 177, 178, 179},
+    // // Giày
+    // {27, 28, 29, 30, 31, 32, 39, 40, 47, 48, 55, 56, 148, 149, 150, 151},
+    // // Rada
+    // {12, 57, 58, 59, 184, 185, 186, 187}
+    // };
+    //
+    // // Lựa chọn loại vật phẩm ngẫu nhiên dựa trên xác suất
+    // int type;
+    // if (Util.isTrue(10, 100)) {
+    // type = 4; // rada
+    // } else if (Util.isTrue(30, 100)) {
+    // type = 3; // gang
+    // } else if (Util.isTrue(50, 100)) {
+    // type = 1; // quan
+    // } else if (Util.isTrue(70, 100)) {
+    // type = 0; // ao
+    // } else {
+    // type = 2; // giay
+    // }
+    //
+    // // Kiểm tra xem `type` có hợp lệ hay không
+    // if (type < 0 || type >= items.length) {
+    // return -1; // Trường hợp không hợp lệ cho type
+    // }
+    //
+    // // Kiểm tra mảng items[type] có phần tử không
+    // if (items[type].length > 0) {
+    // // Trả về ID ngẫu nhiên từ mảng tương ứng
+    // return items[type][Util.nextInt(items[type].length)];
+    // } else {
+    // // Nếu mảng không có phần tử hợp lệ, trả về -1 hoặc xử lý theo cách khác
+    // return -1; // ID mặc định không hợp lệ
+    // }
+    // }
 
     public Item DoThienSu(int itemId, int gender) {
         Item dots = createItemSetKichHoat(itemId, 1);
@@ -167,42 +171,62 @@ public class ItemService {
         List<Integer> gang = Arrays.asList(1054, 1055, 1056);
         List<Integer> giay = Arrays.asList(1057, 1058, 1059);
         List<Integer> nhan = Arrays.asList(1060, 1061, 1062);
-        //áo
+        // áo
         if (ao.contains(itemId)) {
-            dots.itemOptions.add(new ItemOption(47, Util.highlightsItem(gender == 2, new Random().nextInt(1201) + 2800))); // áo từ 2800-4000 giáp
+            dots.itemOptions
+                    .add(new ItemOption(47, Util.highlightsItem(gender == 2, new Random().nextInt(1201) + 2800))); // áo
+                                                                                                                   // từ
+                                                                                                                   // 2800-4000
+                                                                                                                   // giáp
         }
-        //quần
+        // quần
         if (Util.isTrue(80, 100)) {
             if (quan.contains(itemId)) {
-                dots.itemOptions.add(new ItemOption(22, Util.highlightsItem(gender == 0, new Random().nextInt(11) + 120))); // hp 120k-130k
+                dots.itemOptions
+                        .add(new ItemOption(22, Util.highlightsItem(gender == 0, new Random().nextInt(11) + 120))); // hp
+                                                                                                                    // 120k-130k
             }
         } else {
             if (quan.contains(itemId)) {
-                dots.itemOptions.add(new ItemOption(22, Util.highlightsItem(gender == 0, new Random().nextInt(21) + 130))); // hp 130-150k 15%
+                dots.itemOptions
+                        .add(new ItemOption(22, Util.highlightsItem(gender == 0, new Random().nextInt(21) + 130))); // hp
+                                                                                                                    // 130-150k
+                                                                                                                    // 15%
             }
         }
-        //găng
+        // găng
         if (Util.isTrue(80, 100)) {
             if (gang.contains(itemId)) {
-                dots.itemOptions.add(new ItemOption(0, Util.highlightsItem(gender == 2, new Random().nextInt(651) + 10350))); // 9350-10000
+                dots.itemOptions
+                        .add(new ItemOption(0, Util.highlightsItem(gender == 2, new Random().nextInt(651) + 10350))); // 9350-10000
             }
         } else {
             if (gang.contains(itemId)) {
-                dots.itemOptions.add(new ItemOption(0, Util.highlightsItem(gender == 2, new Random().nextInt(1001) + 15500))); // gang 15% 10-11k -xayda 12k1
+                dots.itemOptions
+                        .add(new ItemOption(0, Util.highlightsItem(gender == 2, new Random().nextInt(1001) + 15500))); // gang
+                                                                                                                       // 15%
+                                                                                                                       // 10-11k
+                                                                                                                       // -xayda
+                                                                                                                       // 12k1
             }
         }
-        //giày
+        // giày
         if (Util.isTrue(80, 100)) {
             if (giay.contains(itemId)) {
-                dots.itemOptions.add(new ItemOption(23, Util.highlightsItem(gender == 1, new Random().nextInt(21) + 90))); // ki 90-110k
+                dots.itemOptions
+                        .add(new ItemOption(23, Util.highlightsItem(gender == 1, new Random().nextInt(21) + 90))); // ki
+                                                                                                                   // 90-110k
             }
         } else {
             if (giay.contains(itemId)) {
-                dots.itemOptions.add(new ItemOption(23, Util.highlightsItem(gender == 1, new Random().nextInt(21) + 110))); // ki 110-130k
+                dots.itemOptions
+                        .add(new ItemOption(23, Util.highlightsItem(gender == 1, new Random().nextInt(21) + 110))); // ki
+                                                                                                                    // 110-130k
             }
         }
         if (nhan.contains(itemId)) {
-            dots.itemOptions.add(new ItemOption(14, Util.highlightsItem(gender == 1, new Random().nextInt(6) + 1))); // nhẫn 18-20%
+            dots.itemOptions.add(new ItemOption(14, Util.highlightsItem(gender == 1, new Random().nextInt(6) + 1))); // nhẫn
+                                                                                                                     // 18-20%
         }
         dots.itemOptions.add(new ItemOption(21, 30));
         dots.itemOptions.add(new ItemOption(30, 1));
@@ -233,14 +257,27 @@ public class ItemService {
         item.quantity = quantity;
         item.createTime = System.currentTimeMillis();
 
-        item.content = item.getContent();
-        item.info = item.getInfo();
+        if (item.template != null) {
+            item.content = item.getContent();
+            item.info = item.getInfo();
+        } else {
+            item.content = "";
+            item.info = "";
+        }
         return item;
     }
 
-//    public Item createNewItemLock(int tempId) {
-//        return createNewItemLock(tempId, 1);
-//    }
+    public Item createNewItemWithBaseOption(short tempId, int quantity) {
+        Item item = createNewItem(tempId, quantity);
+        if (item.template != null && item.template.type >= 0 && item.template.type <= 4) {
+            RewardService.gI().initBaseOptionClothes(tempId, item.template.type, item.itemOptions);
+        }
+        return item;
+    }
+
+    // public Item createNewItemLock(int tempId) {
+    // return createNewItemLock(tempId, 1);
+    // }
 
     public Item createNewItemLock(int tempId, int quantity) {
         Item item = new Item();
@@ -253,47 +290,47 @@ public class ItemService {
         return item;
     }
 
-//    public Item createNewItemPhieuTangNgoc(int tempId, int quantity) {
-//        Item item = new Item();
-//        item.template = getTemplate(tempId);
-//        item.quantity = 1;
-//        item.createTime = System.currentTimeMillis();
-//        item.content = item.getContent();
-//        item.info = item.getInfo();
-//        item.itemOptions.add(new ItemOption(31, quantity));
-//        item.itemOptions.add(new ItemOption(30, 1));
-//        return item;
-//    }
-//
-//    public Item otpts(short tempId, int quantity) {
-//        Item item = new Item();
-//        item.template = getTemplate(tempId);
-//        item.quantity = quantity;
-//        item.createTime = System.currentTimeMillis();
-//        if (item.template.type == 0) {
-//            item.itemOptions.add(new ItemOption(21, 80));
-//            item.itemOptions.add(new ItemOption(47, Util.nextInt(2000, 2500)));
-//        }
-//        if (item.template.type == 1) {
-//            item.itemOptions.add(new ItemOption(21, 80));
-//            item.itemOptions.add(new ItemOption(22, Util.nextInt(150, 200)));
-//        }
-//        if (item.template.type == 2) {
-//            item.itemOptions.add(new ItemOption(21, 80));
-//            item.itemOptions.add(new ItemOption(0, Util.nextInt(18000, 20000)));
-//        }
-//        if (item.template.type == 3) {
-//            item.itemOptions.add(new ItemOption(21, 80));
-//            item.itemOptions.add(new ItemOption(23, Util.nextInt(150, 200)));
-//        }
-//        if (item.template.type == 4) {
-//            item.itemOptions.add(new ItemOption(21, 80));
-//            item.itemOptions.add(new ItemOption(14, Util.nextInt(20, 25)));
-//        }
-//        item.content = item.getContent();
-//        item.info = item.getInfo();
-//        return item;
-//    }
+    // public Item createNewItemPhieuTangNgoc(int tempId, int quantity) {
+    // Item item = new Item();
+    // item.template = getTemplate(tempId);
+    // item.quantity = 1;
+    // item.createTime = System.currentTimeMillis();
+    // item.content = item.getContent();
+    // item.info = item.getInfo();
+    // item.itemOptions.add(new ItemOption(31, quantity));
+    // item.itemOptions.add(new ItemOption(30, 1));
+    // return item;
+    // }
+    //
+    // public Item otpts(short tempId, int quantity) {
+    // Item item = new Item();
+    // item.template = getTemplate(tempId);
+    // item.quantity = quantity;
+    // item.createTime = System.currentTimeMillis();
+    // if (item.template.type == 0) {
+    // item.itemOptions.add(new ItemOption(21, 80));
+    // item.itemOptions.add(new ItemOption(47, Util.nextInt(2000, 2500)));
+    // }
+    // if (item.template.type == 1) {
+    // item.itemOptions.add(new ItemOption(21, 80));
+    // item.itemOptions.add(new ItemOption(22, Util.nextInt(150, 200)));
+    // }
+    // if (item.template.type == 2) {
+    // item.itemOptions.add(new ItemOption(21, 80));
+    // item.itemOptions.add(new ItemOption(0, Util.nextInt(18000, 20000)));
+    // }
+    // if (item.template.type == 3) {
+    // item.itemOptions.add(new ItemOption(21, 80));
+    // item.itemOptions.add(new ItemOption(23, Util.nextInt(150, 200)));
+    // }
+    // if (item.template.type == 4) {
+    // item.itemOptions.add(new ItemOption(21, 80));
+    // item.itemOptions.add(new ItemOption(14, Util.nextInt(20, 25)));
+    // }
+    // item.content = item.getContent();
+    // item.info = item.getInfo();
+    // return item;
+    // }
 
     public Item createItemSetKichHoat(int tempId, int quantity) {
         Item item = new Item();
@@ -313,11 +350,17 @@ public class ItemService {
     }
 
     public ItemOptionTemplate getItemOptionTemplate(int id) {
-        return Manager.ITEM_OPTION_TEMPLATES.get(id);
+        if (id >= 0 && id < Manager.ITEM_OPTION_TEMPLATES.size()) {
+            return Manager.ITEM_OPTION_TEMPLATES.get(id);
+        }
+        return null;
     }
 
     public Template.ItemTemplate getTemplate(int id) {
-        return Manager.ITEM_TEMPLATES.get(id);
+        if (id >= 0 && id < Manager.ITEM_TEMPLATES.size()) {
+            return Manager.ITEM_TEMPLATES.get(id);
+        }
+        return null;
     }
 
     public int getPercentTrainArmor(Item item) {
@@ -623,145 +666,146 @@ public class ItemService {
 
     public Item cadic(boolean rating) {
         Item item = createItemSetKichHoat(1192, 1);
-        item.itemOptions.add(new Item.ItemOption(50, 19));//VIP
-        item.itemOptions.add(new Item.ItemOption(77, 19));//hp 28%
-        item.itemOptions.add(new Item.ItemOption(103, 19));//ki 25%
+        item.itemOptions.add(new Item.ItemOption(50, 19));// VIP
+        item.itemOptions.add(new Item.ItemOption(77, 19));// hp 28%
+        item.itemOptions.add(new Item.ItemOption(103, 19));// ki 25%
         if (Util.isTrue(995, 1000) && rating) {// tỉ lệ ra hsd
-            item.itemOptions.add(new Item.ItemOption(93, new Random().nextInt(15) + 7));//hsd
+            item.itemOptions.add(new Item.ItemOption(93, new Random().nextInt(15) + 7));// hsd
         }
         return item;
     }
 
-//    public Item cadicssj(boolean rating) {
-//        Item item = createItemSetKichHoat(1193, 1);
-//        item.itemOptions.add(new Item.ItemOption(50, 22));//VIP
-//        item.itemOptions.add(new Item.ItemOption(77, 22));//hp 28%
-//        item.itemOptions.add(new Item.ItemOption(103, 22));//ki 25%
-//        item.itemOptions.add(new Item.ItemOption(106, 0));//k chết rét
-//        item.itemOptions.add(new Item.ItemOption(5, 22));//stcm 22%
-//        if (Util.isTrue(995, 1000) && rating) {// tỉ lệ ra hsd
-//            item.itemOptions.add(new Item.ItemOption(93, new Random().nextInt(15) + 7));//hsd
-//        }
-//        return item;
-//    }
+    // public Item cadicssj(boolean rating) {
+    // Item item = createItemSetKichHoat(1193, 1);
+    // item.itemOptions.add(new Item.ItemOption(50, 22));//VIP
+    // item.itemOptions.add(new Item.ItemOption(77, 22));//hp 28%
+    // item.itemOptions.add(new Item.ItemOption(103, 22));//ki 25%
+    // item.itemOptions.add(new Item.ItemOption(106, 0));//k chết rét
+    // item.itemOptions.add(new Item.ItemOption(5, 22));//stcm 22%
+    // if (Util.isTrue(995, 1000) && rating) {// tỉ lệ ra hsd
+    // item.itemOptions.add(new Item.ItemOption(93, new Random().nextInt(15) +
+    // 7));//hsd
+    // }
+    // return item;
+    // }
 
     public Item cadicssj2(boolean rating) {
         Item item = createItemSetKichHoat(1194, 1);
-        item.itemOptions.add(new Item.ItemOption(50, 24));//VIP
-        item.itemOptions.add(new Item.ItemOption(77, 24));//hp 28%
-        item.itemOptions.add(new Item.ItemOption(103, 24));//ki 25%
-        item.itemOptions.add(new Item.ItemOption(5, 24));//stcm 22%
-        item.itemOptions.add(new Item.ItemOption(106, 0));//ki 25%
+        item.itemOptions.add(new Item.ItemOption(50, 24));// VIP
+        item.itemOptions.add(new Item.ItemOption(77, 24));// hp 28%
+        item.itemOptions.add(new Item.ItemOption(103, 24));// ki 25%
+        item.itemOptions.add(new Item.ItemOption(5, 24));// stcm 22%
+        item.itemOptions.add(new Item.ItemOption(106, 0));// ki 25%
         if (Util.isTrue(995, 1000) && rating) {// tỉ lệ ra hsd
-            item.itemOptions.add(new Item.ItemOption(93, new Random().nextInt(15) + 7));//hsd
+            item.itemOptions.add(new Item.ItemOption(93, new Random().nextInt(15) + 7));// hsd
         }
         return item;
     }
 
     public Item cadicssj2m(boolean rating) {
         Item item = createItemSetKichHoat(1195, 1);
-        item.itemOptions.add(new Item.ItemOption(50, 24));//VIP
-        item.itemOptions.add(new Item.ItemOption(77, 24));//hp 28%
-        item.itemOptions.add(new Item.ItemOption(103, 24));//ki 25%
-        item.itemOptions.add(new Item.ItemOption(5, 24));//stcm 22%
-        item.itemOptions.add(new Item.ItemOption(106, 0));//ki 25%
+        item.itemOptions.add(new Item.ItemOption(50, 24));// VIP
+        item.itemOptions.add(new Item.ItemOption(77, 24));// hp 28%
+        item.itemOptions.add(new Item.ItemOption(103, 24));// ki 25%
+        item.itemOptions.add(new Item.ItemOption(5, 24));// stcm 22%
+        item.itemOptions.add(new Item.ItemOption(106, 0));// ki 25%
         if (Util.isTrue(995, 1000) && rating) {// tỉ lệ ra hsd
-            item.itemOptions.add(new Item.ItemOption(93, new Random().nextInt(15) + 7));//hsd
+            item.itemOptions.add(new Item.ItemOption(93, new Random().nextInt(15) + 7));// hsd
         }
         return item;
     }
 
     public Item gokussj3(boolean rating) {
         Item item = createItemSetKichHoat(1203, 1);
-        item.itemOptions.add(new Item.ItemOption(50, 24));//VIP
-        item.itemOptions.add(new Item.ItemOption(77, 24));//hp 28%
-        item.itemOptions.add(new Item.ItemOption(103, 24));//ki 25%
-        item.itemOptions.add(new Item.ItemOption(5, 24));//stcm 22%
-        item.itemOptions.add(new Item.ItemOption(106, 0));//ki 25%
+        item.itemOptions.add(new Item.ItemOption(50, 24));// VIP
+        item.itemOptions.add(new Item.ItemOption(77, 24));// hp 28%
+        item.itemOptions.add(new Item.ItemOption(103, 24));// ki 25%
+        item.itemOptions.add(new Item.ItemOption(5, 24));// stcm 22%
+        item.itemOptions.add(new Item.ItemOption(106, 0));// ki 25%
         if (Util.isTrue(995, 1000) && rating) {// tỉ lệ ra hsd
-            item.itemOptions.add(new Item.ItemOption(93, new Random().nextInt(15) + 7));//hsd
+            item.itemOptions.add(new Item.ItemOption(93, new Random().nextInt(15) + 7));// hsd
         }
         return item;
     }
 
     public Item cadicssj3(boolean rating) {
         Item item = createItemSetKichHoat(1196, 1);
-        item.itemOptions.add(new Item.ItemOption(50, 24));//VIP
-        item.itemOptions.add(new Item.ItemOption(77, 24));//hp 28%
-        item.itemOptions.add(new Item.ItemOption(103, 24));//ki 25%
-        item.itemOptions.add(new Item.ItemOption(106, 0));//ki 25%
-        item.itemOptions.add(new Item.ItemOption(5, 24));//stcm 22%
-        item.itemOptions.add(new Item.ItemOption(19, 20));//ki 25%
-        item.itemOptions.add(new Item.ItemOption(14, Util.nextInt(1, 10)));//ki 25%
+        item.itemOptions.add(new Item.ItemOption(50, 24));// VIP
+        item.itemOptions.add(new Item.ItemOption(77, 24));// hp 28%
+        item.itemOptions.add(new Item.ItemOption(103, 24));// ki 25%
+        item.itemOptions.add(new Item.ItemOption(106, 0));// ki 25%
+        item.itemOptions.add(new Item.ItemOption(5, 24));// stcm 22%
+        item.itemOptions.add(new Item.ItemOption(19, 20));// ki 25%
+        item.itemOptions.add(new Item.ItemOption(14, Util.nextInt(1, 10)));// ki 25%
         if (Util.isTrue(995, 1000) && rating) {// tỉ lệ ra hsd
-            item.itemOptions.add(new Item.ItemOption(93, new Random().nextInt(15) + 7));//hsd
+            item.itemOptions.add(new Item.ItemOption(93, new Random().nextInt(15) + 7));// hsd
         }
         return item;
     }
 
     public Item gokugod(boolean rating) {
         Item item = createItemSetKichHoat(1204, 1);
-        item.itemOptions.add(new Item.ItemOption(50, 24));//VIP
-        item.itemOptions.add(new Item.ItemOption(77, 24));//hp 28%
-        item.itemOptions.add(new Item.ItemOption(103, 24));//ki 25%
-        item.itemOptions.add(new Item.ItemOption(106, 0));//ki 25%
-        item.itemOptions.add(new Item.ItemOption(5, 24));//stcm 22%
-        item.itemOptions.add(new Item.ItemOption(19, 20));//ki 25%
-        item.itemOptions.add(new Item.ItemOption(14, Util.nextInt(1, 10)));//ki 25%
+        item.itemOptions.add(new Item.ItemOption(50, 24));// VIP
+        item.itemOptions.add(new Item.ItemOption(77, 24));// hp 28%
+        item.itemOptions.add(new Item.ItemOption(103, 24));// ki 25%
+        item.itemOptions.add(new Item.ItemOption(106, 0));// ki 25%
+        item.itemOptions.add(new Item.ItemOption(5, 24));// stcm 22%
+        item.itemOptions.add(new Item.ItemOption(19, 20));// ki 25%
+        item.itemOptions.add(new Item.ItemOption(14, Util.nextInt(1, 10)));// ki 25%
         if (Util.isTrue(995, 1000) && rating) {// tỉ lệ ra hsd
-            item.itemOptions.add(new Item.ItemOption(93, new Random().nextInt(15) + 7));//hsd
+            item.itemOptions.add(new Item.ItemOption(93, new Random().nextInt(15) + 7));// hsd
         }
         return item;
     }
 
     public Item cadicblue(boolean rating) {
         Item item = createItemSetKichHoat(1197, 1);
-        item.itemOptions.add(new Item.ItemOption(50, 25));//VIP
-        item.itemOptions.add(new Item.ItemOption(77, 25));//hp 28%
-        item.itemOptions.add(new Item.ItemOption(103, 25));//ki 25%
-        item.itemOptions.add(new Item.ItemOption(106, 0));//ki 25%
-        item.itemOptions.add(new Item.ItemOption(5, 25));//stcm 22%
-        item.itemOptions.add(new Item.ItemOption(19, 20));//ki 25%
-        item.itemOptions.add(new Item.ItemOption(108, Util.nextInt(1, 10)));//ki 25%
-        item.itemOptions.add(new Item.ItemOption(14, Util.nextInt(1, 10)));//ki 25%
+        item.itemOptions.add(new Item.ItemOption(50, 25));// VIP
+        item.itemOptions.add(new Item.ItemOption(77, 25));// hp 28%
+        item.itemOptions.add(new Item.ItemOption(103, 25));// ki 25%
+        item.itemOptions.add(new Item.ItemOption(106, 0));// ki 25%
+        item.itemOptions.add(new Item.ItemOption(5, 25));// stcm 22%
+        item.itemOptions.add(new Item.ItemOption(19, 20));// ki 25%
+        item.itemOptions.add(new Item.ItemOption(108, Util.nextInt(1, 10)));// ki 25%
+        item.itemOptions.add(new Item.ItemOption(14, Util.nextInt(1, 10)));// ki 25%
         if (Util.isTrue(995, 1000) && rating) {// tỉ lệ ra hsd
-            item.itemOptions.add(new Item.ItemOption(93, new Random().nextInt(15) + 7));//hsd
+            item.itemOptions.add(new Item.ItemOption(93, new Random().nextInt(15) + 7));// hsd
         }
         return item;
     }
 
     public Item gokublue(boolean rating) {
         Item item = createItemSetKichHoat(1205, 1);
-        item.itemOptions.add(new Item.ItemOption(50, 25));//VIP
-        item.itemOptions.add(new Item.ItemOption(77, 25));//hp 28%
-        item.itemOptions.add(new Item.ItemOption(103, 25));//ki 25%
-        item.itemOptions.add(new Item.ItemOption(106, 0));//ki 25%
-        item.itemOptions.add(new Item.ItemOption(5, 25));//stcm 22%
-        item.itemOptions.add(new Item.ItemOption(19, 20));//ki 25%
-        item.itemOptions.add(new Item.ItemOption(108, Util.nextInt(1, 10)));//ki 25%
-        item.itemOptions.add(new Item.ItemOption(14, Util.nextInt(1, 10)));//ki 25%
+        item.itemOptions.add(new Item.ItemOption(50, 25));// VIP
+        item.itemOptions.add(new Item.ItemOption(77, 25));// hp 28%
+        item.itemOptions.add(new Item.ItemOption(103, 25));// ki 25%
+        item.itemOptions.add(new Item.ItemOption(106, 0));// ki 25%
+        item.itemOptions.add(new Item.ItemOption(5, 25));// stcm 22%
+        item.itemOptions.add(new Item.ItemOption(19, 20));// ki 25%
+        item.itemOptions.add(new Item.ItemOption(108, Util.nextInt(1, 10)));// ki 25%
+        item.itemOptions.add(new Item.ItemOption(14, Util.nextInt(1, 10)));// ki 25%
         if (Util.isTrue(995, 1000) && rating) {// tỉ lệ ra hsd
-            item.itemOptions.add(new Item.ItemOption(93, new Random().nextInt(15) + 7));//hsd
+            item.itemOptions.add(new Item.ItemOption(93, new Random().nextInt(15) + 7));// hsd
         }
         return item;
     }
 
-    //Cải trang sự kiện 20/11
+    // Cải trang sự kiện 20/11
     public Item caitrang2011(boolean rating) {
         Item item = createItemSetKichHoat(681, 1);
-        item.itemOptions.add(new Item.ItemOption(76, 1));//VIP
-        item.itemOptions.add(new Item.ItemOption(77, 24));//hp 28%
-        item.itemOptions.add(new Item.ItemOption(103, 24));//ki 25%
-        item.itemOptions.add(new Item.ItemOption(50, 24));//sd 26%
-        item.itemOptions.add(new Item.ItemOption(108, 20));//sd 26%
-        item.itemOptions.add(new Item.ItemOption(106, 0));//sd 26%
+        item.itemOptions.add(new Item.ItemOption(76, 1));// VIP
+        item.itemOptions.add(new Item.ItemOption(77, 24));// hp 28%
+        item.itemOptions.add(new Item.ItemOption(103, 24));// ki 25%
+        item.itemOptions.add(new Item.ItemOption(50, 24));// sd 26%
+        item.itemOptions.add(new Item.ItemOption(108, 20));// sd 26%
+        item.itemOptions.add(new Item.ItemOption(106, 0));// sd 26%
         if (Util.isTrue(999, 1000) && rating) {// tỉ lệ ra hsd
-            item.itemOptions.add(new Item.ItemOption(93, new Random().nextInt(5) + 1));//hsd
+            item.itemOptions.add(new Item.ItemOption(93, new Random().nextInt(5) + 1));// hsd
         }
         return item;
     }
 
-    //Cải trang sự kiện giáng sinh
+    // Cải trang sự kiện giáng sinh
     public Item caitrangChristmas(boolean rating) {
         Item item = createItemSetKichHoat(Util.nextInt(824, 827), 1);
         item.itemOptions.add(new Item.ItemOption(50, Util.nextInt(15, 25)));
@@ -769,9 +813,9 @@ public class ItemService {
         item.itemOptions.add(new Item.ItemOption(103, Util.nextInt(15, 25)));
         item.itemOptions.add(new Item.ItemOption(95, Util.nextInt(10, 25)));
         item.itemOptions.add(new Item.ItemOption(96, Util.nextInt(10, 25)));
-        item.itemOptions.add(new Item.ItemOption(106, 0));//sd 26%
+        item.itemOptions.add(new Item.ItemOption(106, 0));// sd 26%
         if (Util.isTrue(995, 1000) && rating) {// tỉ lệ ra hsd
-            item.itemOptions.add(new Item.ItemOption(93, new Random().nextInt(3) + 1));//hsd
+            item.itemOptions.add(new Item.ItemOption(93, new Random().nextInt(3) + 1));// hsd
         }
         return item;
     }
@@ -783,7 +827,7 @@ public class ItemService {
         item.itemOptions.add(new Item.ItemOption(103, Util.nextInt(12, 16)));
         item.itemOptions.add(new Item.ItemOption(5, Util.nextInt(1, 10)));
         if (Util.isTrue(90, 100) && rating) {// tỉ lệ ra hsd
-            item.itemOptions.add(new Item.ItemOption(93, new Random().nextInt(15) + 1));//hsd
+            item.itemOptions.add(new Item.ItemOption(93, new Random().nextInt(15) + 1));// hsd
         }
         return item;
     }
@@ -795,7 +839,7 @@ public class ItemService {
         item.itemOptions.add(new Item.ItemOption(103, Util.nextInt(12, 16)));
         item.itemOptions.add(new Item.ItemOption(14, Util.nextInt(1, 15)));
         if (Util.isTrue(90, 100) && rating) {// tỉ lệ ra hsd
-            item.itemOptions.add(new Item.ItemOption(93, new Random().nextInt(10) + 1));//hsd
+            item.itemOptions.add(new Item.ItemOption(93, new Random().nextInt(10) + 1));// hsd
         }
         return item;
     }
@@ -807,7 +851,7 @@ public class ItemService {
         item.itemOptions.add(new Item.ItemOption(103, Util.nextInt(12, 16)));
         item.itemOptions.add(new Item.ItemOption(101, Util.nextInt(5, 20)));
         if (Util.isTrue(90, 100) && rating) {// tỉ lệ ra hsd
-            item.itemOptions.add(new Item.ItemOption(93, new Random().nextInt(7) + 1));//hsd
+            item.itemOptions.add(new Item.ItemOption(93, new Random().nextInt(7) + 1));// hsd
         }
         return item;
     }
@@ -819,7 +863,7 @@ public class ItemService {
         item.itemOptions.add(new Item.ItemOption(103, Util.nextInt(10, 16)));
         item.itemOptions.add(new Item.ItemOption(94, Util.nextInt(10, 30)));
         if (Util.isTrue(90, 100) && rating) {// tỉ lệ ra hsd
-            item.itemOptions.add(new Item.ItemOption(93, new Random().nextInt(7) + 1));//hsd
+            item.itemOptions.add(new Item.ItemOption(93, new Random().nextInt(7) + 1));// hsd
         }
         return item;
     }
@@ -831,13 +875,13 @@ public class ItemService {
         item.itemOptions.add(new Item.ItemOption(103, Util.nextInt(10, 15)));
         item.itemOptions.add(new Item.ItemOption(5, Util.nextInt(1, 5)));
         if (Util.isTrue(90, 100) && rating) {// tỉ lệ ra hsd
-            item.itemOptions.add(new Item.ItemOption(93, new Random().nextInt(7) + 1));//hsd
+            item.itemOptions.add(new Item.ItemOption(93, new Random().nextInt(7) + 1));// hsd
         }
         return item;
     }
 
-    //610 - bong hoa
-    //Phụ kiện bó hoa 20/11
+    // 610 - bong hoa
+    // Phụ kiện bó hoa 20/11
     public Item phuKien2011(boolean rating) {
         Item item = createItemSetKichHoat(954, 1);
         item.itemOptions.add(new Item.ItemOption(77, new Random().nextInt(5) + 5));
@@ -846,9 +890,9 @@ public class ItemService {
         if (Util.isTrue(1, 100)) {
             item.itemOptions.get(Util.nextInt(item.itemOptions.size() - 1)).param = 10;
         }
-        item.itemOptions.add(new Item.ItemOption(30, 1));//ko the gd
+        item.itemOptions.add(new Item.ItemOption(30, 1));// ko the gd
         if (Util.isTrue(995, 1000) && rating) {// tỉ lệ ra hsd
-            item.itemOptions.add(new Item.ItemOption(93, new Random().nextInt(3) + 1));//hsd
+            item.itemOptions.add(new Item.ItemOption(93, new Random().nextInt(3) + 1));// hsd
         }
         return item;
     }
@@ -861,9 +905,9 @@ public class ItemService {
         if (Util.isTrue(1, 100)) {
             item.itemOptions.get(Util.nextInt(item.itemOptions.size() - 1)).param = 10;
         }
-        item.itemOptions.add(new Item.ItemOption(30, 1));//ko the gd
+        item.itemOptions.add(new Item.ItemOption(30, 1));// ko the gd
         if (Util.isTrue(999, 1000) && rating) {// tỉ lệ ra hsd
-            item.itemOptions.add(new Item.ItemOption(93, new Random().nextInt(3) + 1));//hsd
+            item.itemOptions.add(new Item.ItemOption(93, new Random().nextInt(3) + 1));// hsd
         }
         return item;
     }
@@ -871,21 +915,21 @@ public class ItemService {
     public Item vanBay2011(boolean rating) {
         Item item = createItemSetKichHoat(795, 1);
         item.itemOptions.add(new Item.ItemOption(89, 1));
-        item.itemOptions.add(new Item.ItemOption(30, 1));//ko the gd
+        item.itemOptions.add(new Item.ItemOption(30, 1));// ko the gd
         if (Util.isTrue(950, 1000) && rating) {// tỉ lệ ra hsd
-            item.itemOptions.add(new Item.ItemOption(93, new Random().nextInt(7) + 1));//hsd
+            item.itemOptions.add(new Item.ItemOption(93, new Random().nextInt(7) + 1));// hsd
         }
         return item;
     }
 
     public Item daBaoVe() {
         Item item = createItemSetKichHoat(987, 1);
-        item.itemOptions.add(new Item.ItemOption(30, 1));//ko the gd
+        item.itemOptions.add(new Item.ItemOption(30, 1));// ko the gd
         return item;
     }
 
     public Item randomRac() {
-        short[] racs = {20, 19, 18, 17};
+        short[] racs = { 20, 19, 18, 17 };
         Item item = createItemSetKichHoat(racs[Util.nextInt(racs.length - 1)], 1);
         if (optionRac(item.template.id) != 0) {
             item.itemOptions.add(new Item.ItemOption(optionRac(item.template.id), 1));
@@ -894,7 +938,8 @@ public class ItemService {
     }
 
     public Item randomRac2() {
-        short[] racs = {649, 384, 385, 381, 828, 829, 830, 831, 832, 833, 834, 835, 836, 837, 838, 839, 840, 841, 842};
+        short[] racs = { 649, 384, 385, 381, 828, 829, 830, 831, 832, 833, 834, 835, 836, 837, 838, 839, 840, 841,
+                842 };
         int idItem = racs[Util.nextInt(racs.length - 1)];
         if (Util.isTrue(1, 100)) {
             idItem = 956;
@@ -909,9 +954,9 @@ public class ItemService {
     public Item vanBayChrimas(boolean rating) {
         Item item = createItemSetKichHoat(746, 1);
         item.itemOptions.add(new Item.ItemOption(89, 1));
-        item.itemOptions.add(new Item.ItemOption(30, 1));//ko the gd
+        item.itemOptions.add(new Item.ItemOption(30, 1));// ko the gd
         if (Util.isTrue(950, 1000) && rating) {// tỉ lệ ra hsd
-            item.itemOptions.add(new Item.ItemOption(93, new Random().nextInt(3) + 1));//hsd
+            item.itemOptions.add(new Item.ItemOption(93, new Random().nextInt(3) + 1));// hsd
         }
         return item;
     }
@@ -934,9 +979,9 @@ public class ItemService {
     }
 
     public Item vatphamsk(boolean hsd) {
-        int[] itemId = {954, 955, 822, 795, 744};
-        byte[] option = {77, 80, 81, 103, 50, 94, 5};
-        byte[] option_v2 = {14, 16, 17, 19, 27, 28, 47, 87}; //77 %hp // 80 //81 //103 //50 //94 //5 % sdcm
+        int[] itemId = { 954, 955, 822, 795, 744 };
+        byte[] option = { 77, 80, 81, 103, 50, 94, 5 };
+        byte[] option_v2 = { 14, 16, 17, 19, 27, 28, 47, 87 }; // 77 %hp // 80 //81 //103 //50 //94 //5 % sdcm
         byte optionid = 0;
         byte optionid_v2 = 0;
         byte param = 0;
@@ -960,14 +1005,18 @@ public class ItemService {
         List<Item.ItemOption> list = new ArrayList<>();
         Manager.SHOPS.forEach(shop -> shop.tabShops.forEach(tabShop -> tabShop.itemShops.forEach(itemShop -> {
             if (itemShop.temp.id == id && list.isEmpty()) {
-                list.addAll(itemShop.options);
+                for (Item.ItemOption io : itemShop.options) {
+                    list.add(new Item.ItemOption(io));
+                }
             }
         })));
         return list;
     }
 
     public int randTempItemKichHoat(int gender) {
-        int[][][] items = {{{0, 33}, {1, 41}, {2, 49}}, {{6, 35}, {7, 43}, {8, 51}}, {{27, 30}, {28, 47}, {29, 55}}, {{21, 24}, {22, 46}, {23, 53}}, {{12, 57}, {12, 57}, {12, 57}}};
+        int[][][] items = { { { 0, 33 }, { 1, 41 }, { 2, 49 } }, { { 6, 35 }, { 7, 43 }, { 8, 51 } },
+                { { 27, 30 }, { 28, 47 }, { 29, 55 } }, { { 21, 24 }, { 22, 46 }, { 23, 53 } },
+                { { 12, 57 }, { 12, 57 }, { 12, 57 } } };
         // a w j g rd
         int type;
         if (Util.isTrue(30, 100)) {
@@ -982,7 +1031,7 @@ public class ItemService {
             type = 2; // giay
         }
 
-        return items[type][gender][Util.nextInt(1)];
+        return items[type][gender][Util.nextInt(items[type][gender].length)];
     }
 
     public int[] randOptionItemKichHoat(int gender) {
@@ -1029,41 +1078,41 @@ public class ItemService {
                 }
             }
         }
-        return new int[]{op1, op2};
+        return new int[] { op1, op2 };
     }
 
-//    public int randDoSao(int gender) {
-//        int[][][] items = {
-//            {{0, 33}, {1, 41}, {2, 49}},
-//            {{6, 35}, {7, 43}, {8, 51}},
-//            {{27, 30}, {28, 47}, {29, 55}},
-//            {{21, 24}, {22, 46}, {23, 53}},
-//            {{12, 57}, {12, 57}, {12, 57}}
-//        };
-//
-//        int rand = Util.nextInt(100);
-//
-//        int type;
-//        if (rand < 10) {
-//            type = 4; // rada (10%)
-//        } else if (rand < 32) {
-//            type = 0; // ao (22.5%)
-//        } else if (rand < 55) {
-//            type = 1; // quan (22.5%)
-//        } else if (rand < 77) {
-//            type = 2; // giày (22.5%)
-//        } else {
-//            type = 3; // găng (22.5%)
-//        }
-//
-//        return items[type][gender][Util.nextInt(2)];
-//    }
+    // public int randDoSao(int gender) {
+    // int[][][] items = {
+    // {{0, 33}, {1, 41}, {2, 49}},
+    // {{6, 35}, {7, 43}, {8, 51}},
+    // {{27, 30}, {28, 47}, {29, 55}},
+    // {{21, 24}, {22, 46}, {23, 53}},
+    // {{12, 57}, {12, 57}, {12, 57}}
+    // };
+    //
+    // int rand = Util.nextInt(100);
+    //
+    // int type;
+    // if (rand < 10) {
+    // type = 4; // rada (10%)
+    // } else if (rand < 32) {
+    // type = 0; // ao (22.5%)
+    // } else if (rand < 55) {
+    // type = 1; // quan (22.5%)
+    // } else if (rand < 77) {
+    // type = 2; // giày (22.5%)
+    // } else {
+    // type = 3; // găng (22.5%)
+    // }
+    //
+    // return items[type][gender][Util.nextInt(2)];
+    // }
 
     private int getItemLevel(short itemId) {
         // Áo (230-241): level 9,10,11,12,9,10,11,12,9,10,11,12
         if (itemId >= 230 && itemId <= 241) {
             return 9 + (itemId - 230) % 4;
-        } // Quần (242-253): level 9,10,11,12,9,10,11,12,9,10,11,12  
+        } // Quần (242-253): level 9,10,11,12,9,10,11,12,9,10,11,12
         else if (itemId >= 242 && itemId <= 253) {
             return 9 + (itemId - 242) % 4;
         } // Găng tay (254-265): level 9,10,11,12,9,10,11,12,9,10,11,12
@@ -1079,7 +1128,7 @@ public class ItemService {
         return 9; // Default level
     }
 
-// Hàm lấy chỉ số random cho từng vật phẩm cụ thể
+    // Hàm lấy chỉ số random cho từng vật phẩm cụ thể
     private int getRandomStats(short itemId) {
         switch (itemId) {
             // Quần - HP
@@ -1201,124 +1250,128 @@ public class ItemService {
         }
     }
 
-//    public ItemMap randtest(Zone zone, int quantity, int x, int y, long id) {
-//        short idTempTL;
-//        // Áo - Giúp bạn giảm sát thương
-//        short[] ao = {230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241};
-//        // Quần - Giúp bạn tăng HP
-//        short[] quan = {242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253};
-//        // Găng tay - Giúp bạn tăng sức đánh
-//        short[] gang = {254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265};
-//        // Giày - Giúp bạn tăng MP
-//        short[] giay = {266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277};
-//        // Rada - Giúp bạn tăng Chí Mạng
-//        short[] rada = {278, 279, 280, 281};
-//        short[] options = {86, 87};
-//
-//        if (Util.isTrue(10, 100)) {  // Rada (10%)
-//            idTempTL = rada[Util.nextInt(rada.length)];
-//        } else if (Util.isTrue(25, 100)) {  // Găng tay (15%)
-//            idTempTL = gang[Util.nextInt(gang.length)];
-//        } else if (Util.isTrue(45, 100)) {  // Quần (20%)
-//            idTempTL = quan[Util.nextInt(quan.length)];
-//        } else if (Util.isTrue(75, 100)) {  // Áo (30%)
-//            idTempTL = ao[Util.nextInt(ao.length)];
-//        } else {  // Giày (25%)
-//            idTempTL = giay[Util.nextInt(giay.length)];
-//        }
-//
-//        int tiLe = Util.nextInt(100, 115);
-//        List<ItemOption> itemoptions = new ArrayList<>();
-//
-//        // Lấy level của vật phẩm để tính chỉ số
-//        int level = getItemLevel(idTempTL);
-//
-//        // Xử lý thuộc tính theo từng loại trang bị với chỉ số random mới
-//        if (idTempTL >= 230 && idTempTL <= 241) { // Áo - Giảm sát thương
-//            int defense = getRandomStats(idTempTL);
-//            if (defense > 0) {
-//                itemoptions.add(new ItemOption(47, defense));
-//            } else {
-//                // Fallback to old logic if item not in custom list
-//                defense = (600 + (level - 9) * 200) / 2;
-//                itemoptions.add(new ItemOption(47, defense * tiLe / 100));
-//            }
-//            if (tiLe > 100) {
-//                itemoptions.add(new ItemOption(206, tiLe - 100));
-//            }
-//        } else if (idTempTL >= 242 && idTempTL <= 253) { // Quần - Tăng HP
-//            int customHp = getRandomStats(idTempTL);
-//            if (customHp > 0) {
-//                itemoptions.add(new ItemOption(22, customHp / 1000));
-//                itemoptions.add(new ItemOption(27, customHp / 20));
-//            } else {
-//                // Fallback to old logic if item not in custom list
-//                int baseHp = (40000 + (level - 9) * 8000) / 2;
-//                int chiso = baseHp * tiLe / 100;
-//                itemoptions.add(new ItemOption(22, chiso / 1000));
-//                itemoptions.add(new ItemOption(27, chiso / 20));
-//            }
-//            if (tiLe > 100) {
-//                itemoptions.add(new ItemOption(206, tiLe - 100));
-//            }
-//        } else if (idTempTL >= 254 && idTempTL <= 265) { // Găng tay - Tăng sức đánh
-//            int customDamage = getRandomStats(idTempTL);
-//            if (customDamage > 0) {
-//                itemoptions.add(new ItemOption(0, customDamage));
-//            } else {
-//                // Fallback to old logic if item not in custom list
-//                int damage = (3500 + (level - 9) * 500) * 10 / 25;
-//                itemoptions.add(new ItemOption(0, damage * tiLe / 100));
-//            }
-//            if (tiLe > 100) {
-//                itemoptions.add(new ItemOption(206, tiLe - 100));
-//            }
-//        } else if (idTempTL >= 266 && idTempTL <= 277) { // Giày - Tăng MP
-//            int customMp = getRandomStats(idTempTL);
-//            if (customMp > 0) {
-//                itemoptions.add(new ItemOption(23, customMp / 1000));
-//                itemoptions.add(new ItemOption(28, customMp / 20));
-//            } else {
-//                // Fallback to old logic if item not in custom list
-//                int baseMp = (35000 + (level - 9) * 7000) / 2;
-//                int chiso = baseMp * tiLe / 100;
-//                itemoptions.add(new ItemOption(23, chiso / 1000));
-//                itemoptions.add(new ItemOption(28, chiso / 20));
-//            }
-//            if (tiLe > 100) {
-//                itemoptions.add(new ItemOption(206, tiLe - 100));
-//            }
-//        } else if (idTempTL >= 278 && idTempTL <= 281) { // Rada - Tăng Chí Mạng
-//            int customCritical = getRandomStats(idTempTL);
-//            if (customCritical > 0) {
-//                itemoptions.add(new ItemOption(14, customCritical));
-//            } else {
-//                // Fallback to old logic if item not in custom list
-//                int criticalRate = 10 + (level - 9) * 3;
-//                itemoptions.add(new ItemOption(14, criticalRate * tiLe / 100));
-//            }
-//        }
-//
-//        if (Util.isTrue(30, 100)) {
-//            if (Util.isTrue(70, 100)) {
-//                itemoptions.add(new ItemOption(options[Util.nextInt(options.length)], 0));
-//            }
-//        }
-//
-//        // itemoptions.add(new ItemOption(21, Util.nextInt(15, 17)));
-//        ItemMap it = new ItemMap(zone, idTempTL, quantity, x, y, id);
-//        it.options.clear();
-//        it.options.addAll(itemoptions);
-//        return it;
-//    }
+    // public ItemMap randtest(Zone zone, int quantity, int x, int y, long id) {
+    // short idTempTL;
+    // // Áo - Giúp bạn giảm sát thương
+    // short[] ao = {230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241};
+    // // Quần - Giúp bạn tăng HP
+    // short[] quan = {242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253};
+    // // Găng tay - Giúp bạn tăng sức đánh
+    // short[] gang = {254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265};
+    // // Giày - Giúp bạn tăng MP
+    // short[] giay = {266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277};
+    // // Rada - Giúp bạn tăng Chí Mạng
+    // short[] rada = {278, 279, 280, 281};
+    // short[] options = {86, 87};
+    //
+    // if (Util.isTrue(10, 100)) { // Rada (10%)
+    // idTempTL = rada[Util.nextInt(rada.length)];
+    // } else if (Util.isTrue(25, 100)) { // Găng tay (15%)
+    // idTempTL = gang[Util.nextInt(gang.length)];
+    // } else if (Util.isTrue(45, 100)) { // Quần (20%)
+    // idTempTL = quan[Util.nextInt(quan.length)];
+    // } else if (Util.isTrue(75, 100)) { // Áo (30%)
+    // idTempTL = ao[Util.nextInt(ao.length)];
+    // } else { // Giày (25%)
+    // idTempTL = giay[Util.nextInt(giay.length)];
+    // }
+    //
+    // int tiLe = Util.nextInt(100, 115);
+    // List<ItemOption> itemoptions = new ArrayList<>();
+    //
+    // // Lấy level của vật phẩm để tính chỉ số
+    // int level = getItemLevel(idTempTL);
+    //
+    // // Xử lý thuộc tính theo từng loại trang bị với chỉ số random mới
+    // if (idTempTL >= 230 && idTempTL <= 241) { // Áo - Giảm sát thương
+    // int defense = getRandomStats(idTempTL);
+    // if (defense > 0) {
+    // itemoptions.add(new ItemOption(47, defense));
+    // } else {
+    // // Fallback to old logic if item not in custom list
+    // defense = (600 + (level - 9) * 200) / 2;
+    // itemoptions.add(new ItemOption(47, defense * tiLe / 100));
+    // }
+    // if (tiLe > 100) {
+    // itemoptions.add(new ItemOption(206, tiLe - 100));
+    // }
+    // } else if (idTempTL >= 242 && idTempTL <= 253) { // Quần - Tăng HP
+    // int customHp = getRandomStats(idTempTL);
+    // if (customHp > 0) {
+    // itemoptions.add(new ItemOption(22, customHp / 1000));
+    // itemoptions.add(new ItemOption(27, customHp / 20));
+    // } else {
+    // // Fallback to old logic if item not in custom list
+    // int baseHp = (40000 + (level - 9) * 8000) / 2;
+    // int chiso = baseHp * tiLe / 100;
+    // itemoptions.add(new ItemOption(22, chiso / 1000));
+    // itemoptions.add(new ItemOption(27, chiso / 20));
+    // }
+    // if (tiLe > 100) {
+    // itemoptions.add(new ItemOption(206, tiLe - 100));
+    // }
+    // } else if (idTempTL >= 254 && idTempTL <= 265) { // Găng tay - Tăng sức đánh
+    // int customDamage = getRandomStats(idTempTL);
+    // if (customDamage > 0) {
+    // itemoptions.add(new ItemOption(0, customDamage));
+    // } else {
+    // // Fallback to old logic if item not in custom list
+    // int damage = (3500 + (level - 9) * 500) * 10 / 25;
+    // itemoptions.add(new ItemOption(0, damage * tiLe / 100));
+    // }
+    // if (tiLe > 100) {
+    // itemoptions.add(new ItemOption(206, tiLe - 100));
+    // }
+    // } else if (idTempTL >= 266 && idTempTL <= 277) { // Giày - Tăng MP
+    // int customMp = getRandomStats(idTempTL);
+    // if (customMp > 0) {
+    // itemoptions.add(new ItemOption(23, customMp / 1000));
+    // itemoptions.add(new ItemOption(28, customMp / 20));
+    // } else {
+    // // Fallback to old logic if item not in custom list
+    // int baseMp = (35000 + (level - 9) * 7000) / 2;
+    // int chiso = baseMp * tiLe / 100;
+    // itemoptions.add(new ItemOption(23, chiso / 1000));
+    // itemoptions.add(new ItemOption(28, chiso / 20));
+    // }
+    // if (tiLe > 100) {
+    // itemoptions.add(new ItemOption(206, tiLe - 100));
+    // }
+    // } else if (idTempTL >= 278 && idTempTL <= 281) { // Rada - Tăng Chí Mạng
+    // int customCritical = getRandomStats(idTempTL);
+    // if (customCritical > 0) {
+    // itemoptions.add(new ItemOption(14, customCritical));
+    // } else {
+    // // Fallback to old logic if item not in custom list
+    // int criticalRate = 10 + (level - 9) * 3;
+    // itemoptions.add(new ItemOption(14, criticalRate * tiLe / 100));
+    // }
+    // }
+    //
+    // if (Util.isTrue(30, 100)) {
+    // if (Util.isTrue(70, 100)) {
+    // itemoptions.add(new ItemOption(options[Util.nextInt(options.length)], 0));
+    // }
+    // }
+    //
+    // // itemoptions.add(new ItemOption(21, Util.nextInt(15, 17)));
+    // ItemMap it = new ItemMap(zone, idTempTL, quantity, x, y, id);
+    // it.options.clear();
+    // it.options.addAll(itemoptions);
+    // return it;
+    // }
 
     public int randTempItemDoSao(int gender) {
-        int[][] ao = {{3, 34, 136, 137, 138, 139}, {4, 42, 152, 153, 154, 155}, {5, 50, 168, 169, 170, 171}};
-        int[][] quan = {{9, 36, 140, 141, 142, 143}, {10, 44, 156, 157, 158, 159}, {11, 52, 172, 173, 174, 175}};
-        int[][] gang = {{37, 38, 144, 145, 146, 147}, {25, 45, 160, 161, 162, 163}, {26, 54, 176, 177, 178, 179}};
-        int[][] giay = {{39, 40, 148, 149, 150, 151}, {31, 48, 164, 165, 166, 167}, {32, 56, 180, 181, 182, 183}};
-        int[][] rada = {{58, 59, 184, 185, 186, 187}, {58, 59, 184, 185, 186, 187}, {58, 59, 184, 185, 186, 187}};
-        int[][][] item = {ao, gang, quan, giay, rada};
+        int[][] ao = { { 3, 34, 136, 137, 138, 139 }, { 4, 42, 152, 153, 154, 155 }, { 5, 50, 168, 169, 170, 171 } };
+        int[][] quan = { { 9, 36, 140, 141, 142, 143 }, { 10, 44, 156, 157, 158, 159 },
+                { 11, 52, 172, 173, 174, 175 } };
+        int[][] gang = { { 37, 38, 144, 145, 146, 147 }, { 25, 45, 160, 161, 162, 163 },
+                { 26, 54, 176, 177, 178, 179 } };
+        int[][] giay = { { 39, 40, 148, 149, 150, 151 }, { 31, 48, 164, 165, 166, 167 },
+                { 32, 56, 180, 181, 182, 183 } };
+        int[][] rada = { { 58, 59, 184, 185, 186, 187 }, { 58, 59, 184, 185, 186, 187 },
+                { 58, 59, 184, 185, 186, 187 } };
+        int[][][] item = { ao, gang, quan, giay, rada };
 
         Random random = new Random();
 
@@ -1342,12 +1395,12 @@ public class ItemService {
 
     public ItemMap randDoTL(Zone zone, int quantity, int x, int y, long id) {
         short idTempTL, type;
-        short[] ao = {555, 557, 559};
-        short[] quan = {556, 558, 560};
-        short[] gang = {562, 564, 566};
-        short[] giay = {563, 565, 567};
-        short[] nhan = {561};
-        short[] options = { 86, 87, 208};
+        short[] ao = { 555, 557, 559 };
+        short[] quan = { 556, 558, 560 };
+        short[] gang = { 562, 564, 566 };
+        short[] giay = { 563, 565, 567 };
+        short[] nhan = { 561 };
+        short[] options = { 86, 87, 208 };
         if (Util.isTrue(10, 100)) {
             idTempTL = nhan[0];
             type = 4; // rada
@@ -1396,12 +1449,12 @@ public class ItemService {
 
     public ItemMap randDoKaio(Zone zone, int quantity, int x, int y, long id) {
         short idTempTL, type;
-        short[] ao = {232, 236, 240};
-        short[] quan = {244, 248, 252};
-        short[] gang = {256, 260, 264};
-        short[] giay = {268, 272, 276};
-        short[] nhan = {280};
-        short[] options = {86, 87, 208};
+        short[] ao = { 232, 236, 240 };
+        short[] quan = { 244, 248, 252 };
+        short[] gang = { 256, 260, 264 };
+        short[] giay = { 268, 272, 276 };
+        short[] nhan = { 280 };
+        short[] options = { 86, 87, 208 };
         if (Util.isTrue(10, 100)) {
             idTempTL = nhan[0];
             type = 4; // rada
@@ -1441,10 +1494,9 @@ public class ItemService {
         if (Util.isTrue(1, 100)) {
             itemoptions.add(new ItemOption(options[Util.nextInt(options.length)], 0));
         }
-        //   itemoptions.add(new ItemOption(21, 170000000));
+        // itemoptions.add(new ItemOption(21, 170000000));
         itemoptions.add(new ItemOption(107, Util.nextInt(0, 2)));
-                   
-        
+
         ItemMap it = new ItemMap(zone, idTempTL, quantity, x, y, id);
         it.options.clear();
         it.options.addAll(itemoptions);
@@ -1453,12 +1505,12 @@ public class ItemService {
 
     public ItemMap randDoLuongLong(Zone zone, int quantity, int x, int y, long id) {
         short idTempTL, type;
-        short[] ao = {233, 237, 241};
-        short[] quan = {245, 249, 253};
-        short[] gang = {257, 261, 265};
-        short[] giay = {269, 273, 277};
-        short[] nhan = {281};
-        short[] options = {86, 87, 208};
+        short[] ao = { 233, 237, 241 };
+        short[] quan = { 245, 249, 253 };
+        short[] gang = { 257, 261, 265 };
+        short[] giay = { 269, 273, 277 };
+        short[] nhan = { 281 };
+        short[] options = { 86, 87, 208 };
         if (Util.isTrue(10, 100)) {
             idTempTL = nhan[0];
             type = 4; // rada
@@ -1498,7 +1550,7 @@ public class ItemService {
         if (Util.isTrue(1, 100)) {
             itemoptions.add(new ItemOption(options[Util.nextInt(options.length)], 0));
         }
-        //   itemoptions.add(new ItemOption(21, 1500000000));
+        // itemoptions.add(new ItemOption(21, 1500000000));
         itemoptions.add(new ItemOption(107, Util.nextInt(0, 2)));
         ItemMap it = new ItemMap(zone, idTempTL, quantity, x, y, id);
         it.options.clear();
@@ -1506,23 +1558,24 @@ public class ItemService {
         return it;
     }
 
-//    public boolean itemHasOption(Item item, int optionId) {
-//        return item.itemOptions.stream().anyMatch(io -> io.optionTemplate.id == optionId);
-//    }
+    // public boolean itemHasOption(Item item, int optionId) {
+    // return item.itemOptions.stream().anyMatch(io -> io.optionTemplate.id ==
+    // optionId);
+    // }
 
     public void OpenSKH(Player player, int itemUseId, int select) throws Exception {
         if (select < 0 || select > 4) {
             return;
         }
         Item itemUse = InventoryService.gI().findItem(player.inventory.itemsBag, itemUseId);
-        int[][] items = {{0, 6, 21, 27, 12}, {1, 7, 22, 28, 12}, {2, 8, 23, 29, 12}};
-        int[][] options = {{128, 129, 246}, {130, 131, 132}, {133, 135, 134}};
-        int[][] optionsNEWTD = {{243, 244, 245}};
-        int[][] optionsNEWNM = {{235, 236, 237}};
-        int[][] optionsNEWXD = {{239, 240, 241}};
+        int[][] items = { { 0, 6, 21, 27, 12 }, { 1, 7, 22, 28, 12 }, { 2, 8, 23, 29, 12 } };
+        int[][] options = { { 128, 129, 246 }, { 130, 131, 132 }, { 133, 135, 134 } };
+        int[][] optionsNEWTD = { { 243, 244, 245 } };
+        int[][] optionsNEWNM = { { 235, 236, 237 } };
+        int[][] optionsNEWXD = { { 239, 240, 241 } };
         int skhv1 = 25;// ti le
-        int skhv2 = 35;//ti le
-        int skhc = 40;//ti le
+        int skhv2 = 35;// ti le
+        int skhc = 40;// ti le
         int skhId = -1;
 
         int rd = Util.nextInt(1, 100);
@@ -1561,13 +1614,20 @@ public class ItemService {
             return;
         }
         Item itemUse = InventoryService.gI().findItem(player.inventory.itemsBag, itemUseId);
-        int[][] items = {{Manager.aotdVip[Util.nextInt(0, 5)], Manager.quantdVip[Util.nextInt(0, 5)], Manager.gangtdVip[Util.nextInt(0, 5)], Manager.giaytdVip[Util.nextInt(0, 5)], Manager.radaSKHVipVip[Util.nextInt(0, 5)]},
-        {Manager.aonmVip[Util.nextInt(0, 5)], Manager.quannmVip[Util.nextInt(0, 5)], Manager.gangnmVip[Util.nextInt(0, 5)], Manager.giaynmVip[Util.nextInt(0, 5)], Manager.radaSKHVipVip[Util.nextInt(0, 5)]},
-        {Manager.aoxdVip[Util.nextInt(0, 5)], Manager.quanxdVip[Util.nextInt(0, 5)], Manager.gangxdVip[Util.nextInt(0, 5)], Manager.giayxdVip[Util.nextInt(0, 5)], Manager.radaSKHVipVip[Util.nextInt(0, 5)]}};
-        int[][] options = {{128, 129, 214}, {130, 131, 132}, {133, 135, 134}};
+        int[][] items = {
+                { Manager.aotdVip[Util.nextInt(0, 5)], Manager.quantdVip[Util.nextInt(0, 5)],
+                        Manager.gangtdVip[Util.nextInt(0, 5)], Manager.giaytdVip[Util.nextInt(0, 5)],
+                        Manager.radaSKHVipVip[Util.nextInt(0, 5)] },
+                { Manager.aonmVip[Util.nextInt(0, 5)], Manager.quannmVip[Util.nextInt(0, 5)],
+                        Manager.gangnmVip[Util.nextInt(0, 5)], Manager.giaynmVip[Util.nextInt(0, 5)],
+                        Manager.radaSKHVipVip[Util.nextInt(0, 5)] },
+                { Manager.aoxdVip[Util.nextInt(0, 5)], Manager.quanxdVip[Util.nextInt(0, 5)],
+                        Manager.gangxdVip[Util.nextInt(0, 5)], Manager.giayxdVip[Util.nextInt(0, 5)],
+                        Manager.radaSKHVipVip[Util.nextInt(0, 5)] } };
+        int[][] options = { { 128, 129, 214 }, { 130, 131, 132 }, { 133, 135, 134 } };
         int skhv1 = 25;// ti le
-        int skhv2 = 35;//ti le
-        int skhc = 40;//ti le
+        int skhv2 = 35;// ti le
+        int skhc = 40;// ti le
         int skhId = -1;
 
         int rd = Util.nextInt(1, 100);
@@ -1615,9 +1675,9 @@ public class ItemService {
 
         // Array with different SKH options based on gender
         int[][] options = {
-            {128, 129, 246}, // For gender 0
-            {130, 131, 132}, // For gender 1
-            {133, 135, 134} // For gender 2
+                { 128, 129, 246 }, // For gender 0
+                { 130, 131, 132 }, // For gender 1
+                { 133, 135, 134 } // For gender 2
         };
 
         // Skew values for determining the random skhId
@@ -1737,7 +1797,7 @@ public class ItemService {
             InventoryService.gI().subQuantityItemsBag(player, itemUse, 1);
             InventoryService.gI().addItemBag(player, item);
             InventoryService.gI().sendItemBags(player);
-            //  player.lixi += 1;
+            // player.lixi += 1;
             Service.gI().sendThongBao(player, "Bạn đã nhận được " + item.template.name);
             CombineService.gI().sendEffectOpenItem(player, icon[0], icon[1]);
         } catch (Exception e) {
@@ -2063,134 +2123,98 @@ public class ItemService {
         return item;
     }
 
-//    public int[] randOptionItemKichHoatNew(int gender) {
-//        int op1;
-//        int op2;
-//        int op3;
-//        int op4;
-//        switch (gender) {
-//            case 0 -> {
-//
-//                op1 = 242;
-//                op2 = 243;
-//                op3 = 244;
-//                op4 = 245;
-//
-//            }
-//            case 1 -> {
-//
-//                op1 = 234;
-//                op2 = 235;
-//                op3 = 236;
-//                op4 = 237;
-//
-//            }
-//            case 2 -> {
-//
-//                op1 = 238;
-//                op2 = 239;
-//                op3 = 240;
-//                op4 = 241;
-//
-//            }
-//            default -> {
-//
-//                op1 = -1;
-//                op2 = -1;
-//                op3 = -1;
-//                op4 = -1;
-//
-//            }
-//        }
-//        int[] options = {op1, op2, op3, op4};
-//        return options;
-//    }
+    // public int[] randOptionItemKichHoatNew(int gender) {
+    // int op1;
+    // int op2;
+    // int op3;
+    // int op4;
+    // switch (gender) {
+    // case 0 -> {
+    //
+    // op1 = 242;
+    // op2 = 243;
+    // op3 = 244;
+    // op4 = 245;
+    //
+    // }
+    // case 1 -> {
+    //
+    // op1 = 234;
+    // op2 = 235;
+    // op3 = 236;
+    // op4 = 237;
+    //
+    // }
+    // case 2 -> {
+    //
+    // op1 = 238;
+    // op2 = 239;
+    // op3 = 240;
+    // op4 = 241;
+    //
+    // }
+    // default -> {
+    //
+    // op1 = -1;
+    // op2 = -1;
+    // op3 = -1;
+    // op4 = -1;
+    //
+    // }
+    // }
+    // int[] options = {op1, op2, op3, op4};
+    // return options;
+    // }
 
-    public void settltd(Player player) throws Exception {
-        for (int i = 0; i < 1; i++) {
-            Item hq = InventoryService.gI().findItem(player.inventory.itemsBag, 1324);
-            Item ao = ItemService.gI().otpThanLinh((short) 555);
-            Item quan = ItemService.gI().otpThanLinh((short) 556);
-            Item gang = ItemService.gI().otpThanLinh((short) 562);
-            Item giay = ItemService.gI().otpThanLinh((short) 563);
-            Item nhan = ItemService.gI().otpThanLinh((short) 561);
-            ao.itemOptions.add(new Item.ItemOption(87, 0));
-            quan.itemOptions.add(new Item.ItemOption(87, 0));
-            gang.itemOptions.add(new Item.ItemOption(87, 0));
-            giay.itemOptions.add(new Item.ItemOption(87, 0));
-            nhan.itemOptions.add(new Item.ItemOption(87, 0));
-            if (InventoryService.gI().getCountEmptyBag(player) > 4) {
-                InventoryService.gI().addItemBag(player, ao);
-                InventoryService.gI().addItemBag(player, quan);
-                InventoryService.gI().addItemBag(player, gang);
-                InventoryService.gI().addItemBag(player, giay);
-                InventoryService.gI().addItemBag(player, nhan);
-                InventoryService.gI().sendItemBags(player);
-                Service.gI().sendThongBao(player, "Bạn đã nhận được set thần linh kích hoạt ");
-                InventoryService.gI().subQuantityItemsBag(player, hq, 1);
-                InventoryService.gI().sendItemBags(player);
-            } else {
-                Service.gI().sendThongBao(player, "Bạn phải có ít nhất 5 ô trống hành trang");
-            }
-        }
+    public void settltd(Player player) {
+        giveSetThanLinh(player, new int[]{555, 556, 562, 563, 561}, new int[]{128, 129, 246});
     }
 
-    public void settlnm(Player player) throws Exception {
-        for (int i = 0; i < 1; i++) {
-            Item hq = InventoryService.gI().findItem(player.inventory.itemsBag, 1324);
-            Item ao = ItemService.gI().otpThanLinh((short) 557);
-            Item quan = ItemService.gI().otpThanLinh((short) 558);
-            Item gang = ItemService.gI().otpThanLinh((short) 564);
-            Item giay = ItemService.gI().otpThanLinh((short) 565);
-            Item nhan = ItemService.gI().otpThanLinh((short) 561);
-            ao.itemOptions.add(new Item.ItemOption(87, 0));
-            quan.itemOptions.add(new Item.ItemOption(87, 0));
-            gang.itemOptions.add(new Item.ItemOption(87, 0));
-            giay.itemOptions.add(new Item.ItemOption(87, 0));
-            nhan.itemOptions.add(new Item.ItemOption(87, 0));
-            if (InventoryService.gI().getCountEmptyBag(player) > 4) {
-                InventoryService.gI().addItemBag(player, ao);
-                InventoryService.gI().addItemBag(player, quan);
-                InventoryService.gI().addItemBag(player, gang);
-                InventoryService.gI().addItemBag(player, giay);
-                InventoryService.gI().addItemBag(player, nhan);
-                InventoryService.gI().sendItemBags(player);
-                Service.gI().sendThongBao(player, "Bạn đã nhận được set thần linh kích hoạt ");
-                InventoryService.gI().subQuantityItemsBag(player, hq, 1);
-                InventoryService.gI().sendItemBags(player);
-            } else {
-                Service.gI().sendThongBao(player, "Bạn phải có ít nhất 5 ô trống hành trang");
-            }
-        }
+    public void settlnm(Player player) {
+        giveSetThanLinh(player, new int[]{557, 558, 564, 565, 561}, new int[]{130, 131, 132});
     }
 
-    public void settlxd(Player player) throws Exception {
-        for (int i = 0; i < 1; i++) {
-            Item hq = InventoryService.gI().findItem(player.inventory.itemsBag, 1324);
-            Item ao = ItemService.gI().otpThanLinh((short) 559);
-            Item quan = ItemService.gI().otpThanLinh((short) 560);
-            Item gang = ItemService.gI().otpThanLinh((short) 566);
-            Item giay = ItemService.gI().otpThanLinh((short) 567);
-            Item nhan = ItemService.gI().otpThanLinh((short) 561);
-            ao.itemOptions.add(new Item.ItemOption(87, 0));
-            quan.itemOptions.add(new Item.ItemOption(87, 0));
-            gang.itemOptions.add(new Item.ItemOption(87, 0));
-            giay.itemOptions.add(new Item.ItemOption(87, 0));
-            nhan.itemOptions.add(new Item.ItemOption(87, 0));
-            if (InventoryService.gI().getCountEmptyBag(player) > 4) {
-                InventoryService.gI().addItemBag(player, ao);
-                InventoryService.gI().addItemBag(player, quan);
-                InventoryService.gI().addItemBag(player, gang);
-                InventoryService.gI().addItemBag(player, giay);
-                InventoryService.gI().addItemBag(player, nhan);
-                InventoryService.gI().sendItemBags(player);
-                Service.gI().sendThongBao(player, "Bạn đã nhận được set thần linh kích hoạt ");
-                InventoryService.gI().subQuantityItemsBag(player, hq, 1);
-                InventoryService.gI().sendItemBags(player);
-            } else {
-                Service.gI().sendThongBao(player, "Bạn phải có ít nhất 5 ô trống hành trang");
+    public void settlxd(Player player) {
+        giveSetThanLinh(player, new int[]{559, 560, 566, 567, 561}, new int[]{133, 134, 135});
+    }
+
+    private void giveSetThanLinh(Player player, int[] itemIds, int[] skhPool) {
+        if (player == null || player.inventory == null) {
+            return;
+        }
+        Item hq = InventoryService.gI().findItem(player.inventory.itemsBag, 1324);
+        if (hq == null || hq.quantity < 1) {
+            Service.gI().sendThongBao(player, "Bạn không có Hộp thần linh");
+            return;
+        }
+        if (InventoryService.gI().getCountEmptyBag(player) < itemIds.length) {
+            Service.gI().sendThongBao(player, "Bạn phải có ít nhất " + itemIds.length + " ô trống hành trang");
+            return;
+        }
+
+        // Chọn ngẫu nhiên 1 loại SKH đồng nhất cho cả bộ
+        int skhId = skhPool[Util.nextInt(0, skhPool.length - 1)];
+        int skhOpt2 = optionIdSKH(skhId);
+
+        // Trừ hộp trước khi thêm vật phẩm
+        InventoryService.gI().subQuantityItemsBag(player, hq, 1);
+
+        for (int itemId : itemIds) {
+            Item item = otpThanLinh((short) itemId);
+            if (item != null) {
+                item.itemOptions.add(new Item.ItemOption(skhId, 1));
+                if (skhOpt2 > 0) {
+                    item.itemOptions.add(new Item.ItemOption(skhOpt2, 1));
+                }
+                item.itemOptions.add(new Item.ItemOption(30, 1));
+                item.itemOptions.add(new Item.ItemOption(87, 0));
+                item.content = item.getContent();
+                item.info = item.getInfo();
+                InventoryService.gI().addItemBag(player, item);
             }
         }
+        InventoryService.gI().sendItemBags(player);
+        Service.gI().sendThongBao(player, "Bạn đã nhận được set Thần Linh kích hoạt!");
     }
 
     public Item otpThanLinh(short tempId) {
@@ -2200,25 +2224,24 @@ public class ItemService {
     public Item otpTL(short tempId, int quantity) {
         Item item = new Item();
         item.template = getTemplate(tempId);
+        if (item.template == null) {
+            return null;
+        }
         item.quantity = quantity;
         item.createTime = System.currentTimeMillis();
         if (item.template.type == 0) {
             item.itemOptions.add(new ItemOption(21, 15));
             item.itemOptions.add(new ItemOption(47, Util.nextInt(1000, 1500)));
-        }
-        if (item.template.type == 1) {
+        } else if (item.template.type == 1) {
             item.itemOptions.add(new ItemOption(21, 15));
             item.itemOptions.add(new ItemOption(22, Util.nextInt(45, 70)));
-        }
-        if (item.template.type == 2) {
+        } else if (item.template.type == 2) {
             item.itemOptions.add(new ItemOption(21, 15));
             item.itemOptions.add(new ItemOption(0, Util.nextInt(3500, 4500)));
-        }
-        if (item.template.type == 3) {
+        } else if (item.template.type == 3) {
             item.itemOptions.add(new ItemOption(21, 15));
             item.itemOptions.add(new ItemOption(23, Util.nextInt(45, 70)));
-        }
-        if (item.template.type == 4) {
+        } else if (item.template.type == 4) {
             item.itemOptions.add(new ItemOption(21, 15));
             item.itemOptions.add(new ItemOption(14, Util.nextInt(13, 15)));
         }

@@ -44,7 +44,7 @@ public final class WorldMartialArtsTournament implements Runnable {
         ChangeMapService.gI().changeMap(player_2, zone, 443, 262);
         npc = zone.getNpc();
         Service.gI().setPos(npc, npc.location.x, 312);
-        new Thread(this).start();
+        Thread.ofVirtual().name("WMAT-Match").start(this);
     }
 
     @Override
@@ -107,7 +107,6 @@ public final class WorldMartialArtsTournament implements Runnable {
                 }
             }
             timeUp++;
-            leaveMap();
         } else if (timeDown > 0) {
             timeDown--;
             fallOut();
@@ -219,11 +218,11 @@ public final class WorldMartialArtsTournament implements Runnable {
                 int gem = WorldMartialArtsTournamentManager.gI().gem;
                 int gold = WorldMartialArtsTournamentManager.gI().gold;
                 if (gold > 0) {
-                    plWin.inventory.gold++;
-                    Service.gI().sendThongBao(plWin, "Bạn vừa nhận thưởng " + gold + " vàng");
+                    plWin.inventory.addGold(gold);
+                    Service.gI().sendThongBao(plWin, "Bạn vừa nhận thưởng " + Util.powerToString(gold) + " vàng");
                 } else {
-                    plWin.inventory.gem++;
-                    Service.gI().sendThongBao(plWin, "Bạn vừa nhận thưởng " + gem + "ngọc xanh");
+                    plWin.inventory.addGem(gem);
+                    Service.gI().sendThongBao(plWin, "Bạn vừa nhận thưởng " + gem + " ngọc xanh");
                 }
                 Service.gI().sendMoney(plWin);
                 Service.gI().dropAndPickItem(plWin, 224, 5);

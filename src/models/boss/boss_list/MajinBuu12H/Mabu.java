@@ -42,9 +42,15 @@ public class Mabu extends Boss {
 
     @Override
     public void reward(Player plKill) {
-        if (plKill.isPl()) {
-            plKill.goHome = true;
-            plKill.timeGohome = 30;
+        if (this.zone != null) {
+            List<Player> players = this.zone.getNotBosses();
+            for (Player pl : players) {
+                if (pl != null && pl.isPl()) {
+                    pl.goHome = true;
+                    pl.timeGohome = 30;
+                    Service.gI().sendThongBao(pl, "Mabư đã bị tiêu diệt! Bạn sẽ rời khỏi đây sau 30 giây.");
+                }
+            }
         }
 
         // Rơi vật phẩm 521 (Vé/Huy hiệu)
@@ -211,7 +217,11 @@ public class Mabu extends Boss {
             damage = 1;
         }
 
-        int skillID = plAtt.playerSkill.skillSelect.template.id;
+        int skillID = -1;
+        if (plAtt != null && plAtt.playerSkill != null && plAtt.playerSkill.skillSelect != null
+                && plAtt.playerSkill.skillSelect.template != null) {
+            skillID = plAtt.playerSkill.skillSelect.template.id;
+        }
 
         // Danh sách các skill được phép phá giới hạn damage
         boolean isSpecialSkill = (skillID == Skill.TU_SAT ||

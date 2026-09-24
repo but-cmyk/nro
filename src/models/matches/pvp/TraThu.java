@@ -18,10 +18,15 @@ public class TraThu extends PVP {
 
     @Override
     public void start() {
+        if (p1 == null || p2 == null || p1.zone == null || p2.zone == null) {
+            this.dispose();
+            return;
+        }
         if (!p1.zone.equals(p2.zone)) {
             int mapId = p2.zone.map.mapId;
             if (MapService.gI().isMapPhoBan(mapId) || ChangeMapService.gI().checkMapCanJoin(p1, p2.zone) == null || ChangeMapService.gI().checkMapCanJoinByYardart(p1, p2.zone) == null) {
                 Service.gI().sendThongBao(p1, "Không thể thực hiện.");
+                this.dispose();
                 return;
             }
             p1.changeMapVIP = false;

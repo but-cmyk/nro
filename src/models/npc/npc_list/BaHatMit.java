@@ -2,7 +2,6 @@ package models.npc.npc_list;
 
 import consts.ConstNpc;
 import java.util.ArrayList;
-import lombok.extern.java.Log;
 import models.item.Item;
 import models.tournament.DeathOrAliveArena;
 import managers.tournament.DeathOrAliveArenaManager;
@@ -102,38 +101,18 @@ public class BaHatMit extends Npc {
                     Item nguoituyetbanggia = InventoryService.gI().findItemBag(player, 1211);
                     String nangcapbt = InventoryService.gI().findItemBongTaiCap2(player) ? "Mở chỉ số\nBông tai\nPorata cấp\n2" : "Nâng cấp\nBông tai\nPorata";
 
-                    if (player.luotNhanBuaMienPhi == 1) {
-                        if (nguoituyet != null && nguoituyetbanggia != null) {
-                            this.createOtherMenu(player, ConstNpc.BASE_MENU, "Ngươi tìm ta có việc gì?",
-                                    "Thưởng\nBùa 1h\nngẫu nhiên", "Sách\nTuyệt kỹ", "Cửa hàng\nBùa", "Nâng cấp\nVật phẩm",
-                                    nangcapbt, "Làm phép\nNhập đá", "Nhập\nNgọc Rồng", "Giao\nNgười Tuyết", "Giao\nNgười Tuyết\nBăng Giá");
-                        } else if (nguoituyet != null) {
-                            this.createOtherMenu(player, ConstNpc.BASE_MENU, "Ngươi tìm ta có việc gì?",
-                                    "Thưởng\nBùa 1h\nngẫu nhiên", "Sách\nTuyệt kỹ", "Cửa hàng\nBùa", "Nâng cấp\nVật phẩm",
-                                    nangcapbt, "Làm phép\nNhập đá", "Nhập\nNgọc Rồng", "Giao\nNgười Tuyết");
-                        } else if (nguoituyetbanggia != null) {
-                            this.createOtherMenu(player, ConstNpc.BASE_MENU, "Ngươi tìm ta có việc gì?",
-                                    "Thưởng\nBùa 1h\nngẫu nhiên", "Sách\nTuyệt kỹ", "Cửa hàng\nBùa", "Nâng cấp\nVật phẩm",
-                                    nangcapbt, "Làm phép\nNhập đá", "Nhập\nNgọc Rồng", "Giao\nNgười Tuyết\nBăng Giá");
-                        } else {
-                            this.createOtherMenu(player, ConstNpc.BASE_MENU, "Ngươi tìm ta có việc gì?",
-                                    "Thưởng\nBùa 1h\nngẫu nhiên", "Sách\nTuyệt kỹ", "Cửa hàng\nBùa", "Nâng cấp\nVật phẩm",
-                                    nangcapbt, "Làm phép\nNhập đá", "Nhập\nNgọc Rồng");
-                        }
+                    if (nguoituyet != null && nguoituyetbanggia != null) {
+                        this.createOtherMenu(player, ConstNpc.BASE_MENU, "Ngươi tìm ta có việc gì?",
+                                "Sách\nTuyệt kỹ", "Cửa hàng\nBùa", "Nâng cấp\nVật phẩm", nangcapbt, "Làm phép\nNhập đá", "Nhập\nNgọc Rồng", "Giao\nNgười Tuyết", "Giao\nNgười Tuyết\nBăng Giá");
+                    } else if (nguoituyet != null) {
+                        this.createOtherMenu(player, ConstNpc.BASE_MENU, "Ngươi tìm ta có việc gì?",
+                                "Sách\nTuyệt kỹ", "Cửa hàng\nBùa", "Nâng cấp\nVật phẩm", nangcapbt, "Làm phép\nNhập đá", "Nhập\nNgọc Rồng", "Giao\nNgười Tuyết");
+                    } else if (nguoituyetbanggia != null) {
+                        this.createOtherMenu(player, ConstNpc.BASE_MENU, "Ngươi tìm ta có việc gì?",
+                                "Sách\nTuyệt kỹ", "Cửa hàng\nBùa", "Nâng cấp\nVật phẩm", nangcapbt, "Làm phép\nNhập đá", "Nhập\nNgọc Rồng", "Giao\nNgười Tuyết\nBăng Giá");
                     } else {
-                        if (nguoituyet != null && nguoituyetbanggia != null) {
-                            this.createOtherMenu(player, ConstNpc.BASE_MENU, "Ngươi tìm ta có việc gì?",
-                                    "Sách\nTuyệt kỹ", "Cửa hàng\nBùa", "Nâng cấp\nVật phẩm", nangcapbt, "Làm phép\nNhập đá", "Nhập\nNgọc Rồng", "Giao\nNgười Tuyết", "Giao\nNgười Tuyết\nBăng Giá");
-                        } else if (nguoituyet != null) {
-                            this.createOtherMenu(player, ConstNpc.BASE_MENU, "Ngươi tìm ta có việc gì?",
-                                    "Sách\nTuyệt kỹ", "Cửa hàng\nBùa", "Nâng cấp\nVật phẩm", nangcapbt, "Làm phép\nNhập đá", "Nhập\nNgọc Rồng", "Giao\nNgười Tuyết");
-                        } else if (nguoituyetbanggia != null) {
-                            this.createOtherMenu(player, ConstNpc.BASE_MENU, "Ngươi tìm ta có việc gì?",
-                                    "Sách\nTuyệt kỹ", "Cửa hàng\nBùa", "Nâng cấp\nVật phẩm", nangcapbt, "Làm phép\nNhập đá", "Nhập\nNgọc Rồng", "Giao\nNgười Tuyết\nBăng Giá");
-                        } else {
-                            this.createOtherMenu(player, ConstNpc.BASE_MENU, "Ngươi tìm ta có việc gì?",
-                                    "Sách\nTuyệt kỹ", "Cửa hàng\nBùa", "Nâng cấp\nVật phẩm", nangcapbt, "Làm phép\nNhập đá", "Nhập\nNgọc Rồng");
-                        }
+                        this.createOtherMenu(player, ConstNpc.BASE_MENU, "Ngươi tìm ta có việc gì?",
+                                "Sách\nTuyệt kỹ", "Cửa hàng\nBùa", "Nâng cấp\nVật phẩm", nangcapbt, "Làm phép\nNhập đá", "Nhập\nNgọc Rồng");
                     }
                 }
             }
@@ -371,125 +350,57 @@ public class BaHatMit extends Npc {
                 }
                 case 42, 43, 44, 84 -> {
                     if (player.idMark.isBaseMenu()) {
-                        if (player.luotNhanBuaMienPhi == 1) {
-                            switch (select) {
-                                case 0 -> {
-                                    if (player.luotNhanBuaMienPhi == 1) {
-                                        int idItem = Util.nextInt(213, 219);
-                                        player.charms.addTimeCharms(idItem, 60);
-                                        Item bua = ItemService.gI().createNewItem((short) idItem);
-                                        player.luotNhanBuaMienPhi = 0;
-                                        Service.gI().sendThongBao(player, "Bạn vừa nhận thưởng " + bua.getName());
-                                    } else {
-                                        Service.gI().sendThongBao(player, "Hôm nay bạn đã nhận bùa miễn phí rồi!!!");
-                                    }
+                        switch (select) {
+                            case 0 ->
+                                createOtherMenu(player, ConstNpc.SACH_TUYET_KY, "Ta có thể giúp gì cho ngươi ?",
+                                        "Đóng thành\nSách cũ",
+                                        "Đổi Sách\nTuyệt kỹ",
+                                        "Giám định\nSách",
+                                        "Tẩy\nSách",
+                                        "Nâng cấp\nSách\nTuyệt kỹ",
+                                        "Hồi phục\nSách",
+                                        "Phân rã\nSách");
+                            case 1 -> // shop bùa
+                                createOtherMenu(player, ConstNpc.MENU_OPTION_SHOP_BUA,
+                                        "Bùa của ta rất lợi hại, nhìn ngươi yếu đuối thế này, chắc muốn mua bùa để "
+                                        + "mạnh mẽ à, mua không ta bán cho, xài rồi lại thích cho mà xem.",
+                                        "Bùa\n1 giờ", "Bùa\n8 giờ", "Bùa\n1 tháng", "Đóng");
+                            case 2 ->
+                                CombineService.gI().openTabCombine(player,
+                                        CombineService.NANG_CAP_VAT_PHAM);
+                            case 3 -> {
+                                if (InventoryService.gI().findItemBongTaiCap2(player)) {
+                                    CombineService.gI().openTabCombine(player, CombineService.NANG_CHI_SO_BONG_TAI);
+                                } else {
+                                    CombineService.gI().openTabCombine(player, CombineService.NANG_CAP_BONG_TAI);
                                 }
-                                case 1 ->
-                                    createOtherMenu(player, ConstNpc.SACH_TUYET_KY, "Ta có thể giúp gì cho ngươi ?",
-                                            "Đóng thành\nSách cũ",
-                                            "Đổi Sách\nTuyệt kỹ",
-                                            "Giám định\nSách",
-                                            "Tẩy\nSách",
-                                            "Nâng cấp\nSách\nTuyệt kỹ",
-                                            "Hồi phục\nSách",
-                                            "Phân rã\nSách");
-                                case 2 -> // shop bùa
-                                    createOtherMenu(player, ConstNpc.MENU_OPTION_SHOP_BUA,
-                                            "Bùa của ta rất lợi hại, nhìn ngươi yếu đuối thế này, chắc muốn mua bùa để "
-                                            + "mạnh mẽ à, mua không ta bán cho, xài rồi lại thích cho mà xem.",
-                                            "Bùa\n1 giờ", "Bùa\n8 giờ", "Bùa\n1 tháng", "Đóng");
-                                case 3 ->
-                                    CombineService.gI().openTabCombine(player, CombineService.NANG_CAP_VAT_PHAM);
-                                case 4 -> {
-                                    if (InventoryService.gI().findItemBongTaiCap2(player)) {
-                                        CombineService.gI().openTabCombine(player, CombineService.NANG_CHI_SO_BONG_TAI);
-                                    } else {
-                                        CombineService.gI().openTabCombine(player, CombineService.NANG_CAP_BONG_TAI);
+                            }
+                            case 4 -> // làm phép nhập đá
+                                CombineService.gI().openTabCombine(player, CombineService.LAM_PHEP_NHAP_DA);
+                            case 5 -> // nhập ngọc rồng
+                                CombineService.gI().openTabCombine(player, CombineService.NHAP_NGOC_RONG);
+                            case 6 -> {
+                                if (InventoryService.gI().findItemNguoituyet(player)) {
+                                    Item item = InventoryService.gI().findItemBag(player, 1210);
+                                    if (item != null && item.quantity >= 1) {
+                                        RewardService.gI().rewardNguoiTuyet(player);
+                                        InventoryService.gI().subQuantityItemsBag(player, item, 1);
                                     }
-                                }
-                                case 5 -> // làm phép nhập đá
-                                    CombineService.gI().openTabCombine(player, CombineService.LAM_PHEP_NHAP_DA);
-                                case 6 -> // nhập ngọc rồng
-                                    CombineService.gI().openTabCombine(player, CombineService.NHAP_NGOC_RONG);
-                                case 7 -> {
-                                    if (InventoryService.gI().findItemNguoituyet(player)) {
-                                        Item item = InventoryService.gI().findItemBag(player, 1210);
-                                        if (item != null && item.quantity >= 1) {
-                                            RewardService.gI().rewardNguoiTuyet(player);
-                                            InventoryService.gI().subQuantityItemsBag(player, item, 1);
-                                        }
-                                    } else if (InventoryService.gI().findItemNguoituyetbanggia(player)) {
-                                        Item item = InventoryService.gI().findItemBag(player, 1211);
-                                        if (item != null && item.quantity >= 1) {
-                                            RewardService.gI().rewardNguoiTuyetBangGia(player);
-                                            InventoryService.gI().subQuantityItemsBag(player, item, 1);
-                                        }
-                                    }
-                                }
-                                case 8 -> {
-                                    if (InventoryService.gI().findItemNguoituyetbanggia(player)) {
-                                        Item item = InventoryService.gI().findItemBag(player, 1211);
-                                        if (item != null && item.quantity >= 1) {
-                                            RewardService.gI().rewardNguoiTuyetBangGia(player);
-                                            InventoryService.gI().sendItemBags(player);
-                                            InventoryService.gI().subQuantityItemsBag(player, item, 1);
-                                        }
+                                } else if (InventoryService.gI().findItemNguoituyetbanggia(player)) {
+                                    Item item = InventoryService.gI().findItemBag(player, 1211);
+                                    if (item != null && item.quantity >= 1) {
+                                        RewardService.gI().rewardNguoiTuyetBangGia(player);
+                                        InventoryService.gI().subQuantityItemsBag(player, item, 1);
                                     }
                                 }
                             }
-                        } else {
-                            switch (select) {
-                                case 0 ->
-                                    createOtherMenu(player, ConstNpc.SACH_TUYET_KY, "Ta có thể giúp gì cho ngươi ?",
-                                            "Đóng thành\nSách cũ",
-                                            "Đổi Sách\nTuyệt kỹ",
-                                            "Giám định\nSách",
-                                            "Tẩy\nSách",
-                                            "Nâng cấp\nSách\nTuyệt kỹ",
-                                            "Hồi phục\nSách",
-                                            "Phân rã\nSách");
-                                case 1 -> // shop bùa
-                                    createOtherMenu(player, ConstNpc.MENU_OPTION_SHOP_BUA,
-                                            "Bùa của ta rất lợi hại, nhìn ngươi yếu đuối thế này, chắc muốn mua bùa để "
-                                            + "mạnh mẽ à, mua không ta bán cho, xài rồi lại thích cho mà xem.",
-                                            "Bùa\n1 giờ", "Bùa\n8 giờ", "Bùa\n1 tháng", "Đóng");
-                                case 2 ->
-                                    CombineService.gI().openTabCombine(player,
-                                            CombineService.NANG_CAP_VAT_PHAM);
-                                case 3 -> {
-                                    if (InventoryService.gI().findItemBongTaiCap2(player)) {
-                                        CombineService.gI().openTabCombine(player, CombineService.NANG_CHI_SO_BONG_TAI);
-                                    } else {
-                                        CombineService.gI().openTabCombine(player, CombineService.NANG_CAP_BONG_TAI);
-                                    }
-                                }
-                                case 4 -> // làm phép nhập đá
-                                    CombineService.gI().openTabCombine(player, CombineService.LAM_PHEP_NHAP_DA);
-                                case 5 -> // nhập ngọc rồng
-                                    CombineService.gI().openTabCombine(player, CombineService.NHAP_NGOC_RONG);
-                                case 6 -> {
-                                    if (InventoryService.gI().findItemNguoituyet(player)) {
-                                        Item item = InventoryService.gI().findItemBag(player, 1210);
-                                        if (item != null && item.quantity >= 1) {
-                                            RewardService.gI().rewardNguoiTuyet(player);
-                                            InventoryService.gI().subQuantityItemsBag(player, item, 1);
-                                        }
-                                    } else if (InventoryService.gI().findItemNguoituyetbanggia(player)) {
-                                        Item item = InventoryService.gI().findItemBag(player, 1211);
-                                        if (item != null && item.quantity >= 1) {
-                                            RewardService.gI().rewardNguoiTuyetBangGia(player);
-                                            InventoryService.gI().subQuantityItemsBag(player, item, 1);
-                                        }
-                                    }
-                                }
-                                case 7 -> {
-                                    if (InventoryService.gI().findItemNguoituyetbanggia(player)) {
-                                        Item item = InventoryService.gI().findItemBag(player, 1211);
-                                        if (item != null && item.quantity >= 1) {
-                                            RewardService.gI().rewardNguoiTuyetBangGia(player);
-                                            InventoryService.gI().sendItemBags(player);
-                                            InventoryService.gI().subQuantityItemsBag(player, item, 1);
-                                        }
+                            case 7 -> {
+                                if (InventoryService.gI().findItemNguoituyetbanggia(player)) {
+                                    Item item = InventoryService.gI().findItemBag(player, 1211);
+                                    if (item != null && item.quantity >= 1) {
+                                        RewardService.gI().rewardNguoiTuyetBangGia(player);
+                                        InventoryService.gI().sendItemBags(player);
+                                        InventoryService.gI().subQuantityItemsBag(player, item, 1);
                                     }
                                 }
                             }

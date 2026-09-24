@@ -135,28 +135,50 @@ public class InventoryService {
     }
 
     public void throwItem(Player player, int where, int index) {
+        if (player == null || player.inventory == null) {
+            return;
+        }
+        if (player.isTrade || services.func.TransactionService.gI().check(player)) {
+            Service.gI().sendThongBao(player, "Không thể vứt vật phẩm khi đang giao dịch!");
+            return;
+        }
         Item itemThrow = null;
         if (where == 0) {
-            itemThrow = player.inventory.itemsBody.get(index);
-            removeItemBody(player, index);
-            sendItemBody(player);
-            Service.gI().Send_Caitrang(player);
+            Service.gI().sendThongBao(player, "Hãy tháo trang bị vào hành trang trước khi vứt bỏ!");
+            return;
         } else if (where == 1) {
+            if (index < 0 || index >= player.inventory.itemsBag.size()) {
+                return;
+            }
             itemThrow = player.inventory.itemsBag.get(index);
+            if (itemThrow == null || !itemThrow.isNotNullItem()) {
+                return;
+            }
             if (itemThrow.template != null && itemThrow.template.id == 673) {
                 Service.gI().sendThongBao(player, "Không thể bỏ vật phẩm này.");
                 return;
             }
-            if (itemThrow.template != null && itemThrow.template.id != 457) {
-                removeItemBag(player, index);
-                sortItems(player.inventory.itemsBag);
-                sendItemBags(player);
-            } else {
+            if (itemThrow.template != null && itemThrow.template.id == 457) {
                 Service.gI().sendThongBao(player, "Không thể bỏ ra thỏi vàng.");
+                return;
             }
-        }
-        if (itemThrow == null) {
-            return;
+            if (itemThrow.isHaveOption(30)) {
+                Service.gI().sendThongBao(player, "Vật phẩm khóa, không thể vứt bỏ.");
+                return;
+            }
+            Item itemDropped = ItemService.gI().copyItem(itemThrow);
+            removeItemBag(player, index);
+            sortItems(player.inventory.itemsBag);
+            sendItemBags(player);
+
+            if (player.zone != null) {
+                int dropY = player.zone.map != null ? player.zone.map.yPhysicInTop(player.location.x, player.location.y - 24) : player.location.y;
+                models.map.ItemMap itemMap = new models.map.ItemMap(player.zone, itemDropped.template, itemDropped.quantity, player.location.x, dropY, player.id);
+                if (itemDropped.itemOptions != null) {
+                    itemMap.options.addAll(itemDropped.itemOptions);
+                }
+                Service.gI().dropItemMap(player.zone, itemMap);
+            }
         }
     }
 
@@ -165,6 +187,9 @@ public class InventoryService {
     }
 
     public void removeItem(List<Item> items, int index) {
+        if (items == null || index < 0 || index >= items.size()) {
+            return;
+        }
         Item item = ItemService.gI().createItemNull();
         items.set(index, item);
     }
@@ -234,28 +259,25 @@ public class InventoryService {
     }
 
     public void sortItems(List<Item> list) {
-        int first = -1;
-        int last = -1;
-        Item tempFirst = null;
-        Item tempLast = null;
-        for (int i = 0; i < list.size(); i++) {
-            if (!list.get(i).isNotNullItem()) {
-                first = i;
-                tempFirst = list.get(i);
-                break;
-            }
+        if (list == null || list.isEmpty()) {
+            return;
         }
-        for (int i = list.size() - 1; i >= 0; i--) {
-            if (list.get(i).isNotNullItem()) {
-                last = i;
-                tempLast = list.get(i);
-                break;
+        int first = 0;
+        int last = list.size() - 1;
+        while (first < last) {
+            while (first < last && list.get(first).isNotNullItem()) {
+                first++;
             }
-        }
-        if (first != -1 && last != -1 && first < last) {
-            list.set(first, tempLast);
-            list.set(last, tempFirst);
-            sortItems(list);
+            while (first < last && !list.get(last).isNotNullItem()) {
+                last--;
+            }
+            if (first < last) {
+                Item tempFirst = list.get(first);
+                list.set(first, list.get(last));
+                list.set(last, tempFirst);
+                first++;
+                last--;
+            }
         }
     }
 
@@ -383,6 +405,9 @@ public class InventoryService {
 //                index = 11;
 //                break;
         }
+        if (index < 0 || index >= player.inventory.itemsBody.size()) {
+            return sItem;
+        }
         sItem = player.inventory.itemsBody.get(index);
         if (index == 8 || index == 10) {
             if (sItem.isNotNullItem()) {
@@ -394,8 +419,12 @@ public class InventoryService {
     }
 
     public void itemBagToBody(Player player, int index) {
-        if (index < 0) {
+        if (player == null || player.inventory == null || index < 0 || index >= player.inventory.itemsBag.size()) {
             Service.gI().sendThongBao(player, "Không thể thực hiện");
+            return;
+        }
+        if (player.isTrade || services.func.TransactionService.gI().check(player)) {
+            Service.gI().sendThongBao(player, "Không thể đổi trang bị khi đang giao dịch!");
             return;
         }
         Item item = player.inventory.itemsBag.get(index);
@@ -409,6 +438,13 @@ public class InventoryService {
     }
 
     public void itemBodyToBag(Player player, int index) {
+        if (player == null || player.inventory == null || index < 0 || index >= player.inventory.itemsBody.size()) {
+            return;
+        }
+        if (player.isTrade || services.func.TransactionService.gI().check(player)) {
+            Service.gI().sendThongBao(player, "Không thể tháo trang bị khi đang giao dịch!");
+            return;
+        }
         Item item = player.inventory.itemsBody.get(index);
         if (item.isNotNullItem()) {
             if (index == 10) {
@@ -435,6 +471,14 @@ public class InventoryService {
     }
 
     public void itemBagToPetBody(Player player, int index) {
+        if (player == null || player.inventory == null || index < 0 || index >= player.inventory.itemsBag.size()) {
+            Service.gI().sendThongBao(player, "Không thể thực hiện");
+            return;
+        }
+        if (player.isTrade || services.func.TransactionService.gI().check(player)) {
+            Service.gI().sendThongBao(player, "Không thể thao tác trang bị đệ tử khi đang giao dịch!");
+            return;
+        }
         try {
             if (player.pet != null && player.pet.nPoint.power >= 1500000) {
                 Item item = player.inventory.itemsBag.get(index);
@@ -459,6 +503,13 @@ public class InventoryService {
     }
 
     public void itemPetBodyToBag(Player player, int index) {
+        if (player == null || player.pet == null || player.pet.inventory == null || index < 0 || index >= player.pet.inventory.itemsBody.size()) {
+            return;
+        }
+        if (player.isTrade || services.func.TransactionService.gI().check(player)) {
+            Service.gI().sendThongBao(player, "Không thể tháo trang bị đệ tử khi đang giao dịch!");
+            return;
+        }
         Item item = player.pet.inventory.itemsBody.get(index);
         if (item.isNotNullItem()) {
             player.pet.inventory.itemsBody.set(index, putItemBag(player, item));
@@ -472,8 +523,12 @@ public class InventoryService {
     }
 
     public void itemBoxToBodyOrBag(Player player, int index) {
-        if (index < 0) {
+        if (player == null || player.inventory == null || index < 0 || index >= player.inventory.itemsBox.size()) {
             Service.gI().sendThongBao(player, "Không thể thực hiện");
+            return;
+        }
+        if (player.isTrade || services.func.TransactionService.gI().check(player)) {
+            Service.gI().sendThongBao(player, "Không thể thao tác rương khi đang giao dịch!");
             return;
         }
         Item item = player.inventory.itemsBox.get(index);
@@ -517,7 +572,11 @@ public class InventoryService {
     }
 
     public void itemBagToBox(Player player, int index) {
-        if (index < 0) {
+        if (player.isTrade || services.func.TransactionService.gI().check(player)) {
+            Service.gI().sendThongBao(player, "Không thể thao tác rương khi đang giao dịch!");
+            return;
+        }
+        if (player == null || player.inventory == null || index < 0 || index >= player.inventory.itemsBag.size()) {
             Service.gI().sendThongBao(player, "Không thể thực hiện");
             return;
         }
@@ -540,6 +599,9 @@ public class InventoryService {
     }
 
     public void itemBodyToBox(Player player, int index) {
+        if (player == null || player.inventory == null || index < 0 || index >= player.inventory.itemsBody.size()) {
+            return;
+        }
         Item item = player.inventory.itemsBody.get(index);
         if (item.isNotNullItem()) {
             player.inventory.itemsBody.set(index, putItemBox(player, item));
@@ -709,11 +771,11 @@ public class InventoryService {
         //gold, gem, ruby
         switch (item.template.type) {
             case 9:
-                if (player.inventory.gold + item.quantity <= Inventory.LIMIT_GOLD) {
+                if (player.inventory.gold + item.quantity <= player.inventory.getGoldLimit()) {
                     if (player.effectSkill.isChibi && player.typeChibi == 0) {
-                        player.inventory.gold += item.quantity;
+                        player.inventory.addGold(item.quantity);
                     }
-                    player.inventory.gold += item.quantity;
+                    player.inventory.addGold(item.quantity);
                     Service.gI().sendMoney(player);
                     return true;
                 } else {
@@ -800,9 +862,15 @@ public class InventoryService {
                 //========================ITEM TĂNG SỐ LƯỢNG========================
                 if ((itemAdd.template.id >= 1066 && itemAdd.template.id <= 1070) || itemAdd.template.id == 457
                         || itemAdd.template.id == 610 || itemAdd.template.type == 14 || itemAdd.template.id == 821) {
-                    it.quantity += itemAdd.quantity;
-                    itemAdd.quantity = 0;
-                    return true;
+                    long total = (long) it.quantity + itemAdd.quantity;
+                    if (total > 2_000_000_000L) {
+                        it.quantity = 2_000_000_000;
+                        itemAdd.quantity = (int) (total - 2_000_000_000L);
+                    } else {
+                        it.quantity = (int) total;
+                        itemAdd.quantity = 0;
+                        return true;
+                    }
                 }
 
                 if (it.quantity < 99999) {
@@ -833,17 +901,35 @@ public class InventoryService {
     }
 
     public static boolean checkListsEqual(List<ItemOption> list1, List<ItemOption> list2) {
+        if (list1 == list2) {
+            return true;
+        }
+        if (list1 == null || list2 == null) {
+            return false;
+        }
         if (list1.size() != list2.size()) {
             return false;
         }
 
-        for (int i = 0; i < list1.size(); i++) {
-            if (list1.get(i).optionTemplate.id != list2.get(i).optionTemplate.id || list1.get(i).param != list2.get(i).param) {
+        List<ItemOption> copy2 = new ArrayList<>(list2);
+        for (ItemOption io1 : list1) {
+            if (io1 == null || io1.optionTemplate == null) {
+                continue;
+            }
+            boolean found = false;
+            for (int j = 0; j < copy2.size(); j++) {
+                ItemOption io2 = copy2.get(j);
+                if (io2 != null && io2.optionTemplate != null && io1.optionTemplate.id == io2.optionTemplate.id && io1.param == io2.param) {
+                    copy2.remove(j);
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
                 return false;
             }
         }
-
-        return true;
+        return copy2.isEmpty();
     }
 
     private void __________________Kiểm_tra_điều_kiện_vật_phẩm______________() {
@@ -873,9 +959,12 @@ public class InventoryService {
     }
 
     
-//=============CHECK FULL HÀNH TRANG================================
     public byte getCountEmptyBag(Player player) {
         return getCountEmptyListItem(player.inventory.itemsBag);
+    }
+
+    public byte getCountEmptyBox(Player player) {
+        return getCountEmptyListItem(player.inventory.itemsBox);
     }
 
     public byte getCountEmptyListItem(List<Item> list) {
@@ -1115,30 +1204,33 @@ public int countItemBag(Player player, short itemId) {
 }
 
 public void removeItemQuantity(Player player, short itemId, int quantity) {
+    if (player == null || player.inventory == null || player.inventory.itemsBag == null || quantity <= 0) {
+        return;
+    }
+    int totalAvailable = countItemBag(player, itemId);
+    if (totalAvailable < quantity) {
+        Logger.error("Không đủ số lượng item " + itemId + " để xóa. Có: " + totalAvailable + ", Cần: " + quantity);
+        return;
+    }
+
     int remaining = quantity;
-    List<Item> toRemove = new ArrayList<>();
-    
-    for (Item item : player.inventory.itemsBag) {
+    for (int i = 0; i < player.inventory.itemsBag.size(); i++) {
+        Item item = player.inventory.itemsBag.get(i);
         if (item != null && item.isNotNullItem() && item.template != null && item.template.id == itemId) {
             if (item.quantity <= remaining) {
                 remaining -= item.quantity;
-                toRemove.add(item);
+                player.inventory.itemsBag.set(i, ItemService.gI().createItemNull());
             } else {
-                subQuantityItemsBag(player, item, remaining);
+                item.quantity -= remaining;
                 remaining = 0;
+                break;
+            }
+            if (remaining <= 0) {
                 break;
             }
         }
     }
-    
-    // Remove items that need to be fully removed
-    for (Item item : toRemove) {
-        player.inventory.itemsBag.remove(item);
-    }
-    
-    if (remaining > 0) {
-        Logger.error("Không đủ số lượng item " + itemId + " để xóa");
-    }
+    sendItemBags(player);
 }
 
 }

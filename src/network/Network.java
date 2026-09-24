@@ -169,7 +169,9 @@ public class Network implements INetwork, Runnable {
 
                             final ISession session = SessionFactory.gI().cloneSession(this.sessionClone, socket);
                             this.acceptHandler.sessionInit(session);
-                            SessionManager.gI().putSession(session);
+                            if (session.isConnected()) {
+                                SessionManager.gI().putSession(session);
+                            }
 
                         } catch (Exception ex) {
                             Logger.errorln("Error accepting connection: " + ex.getMessage());

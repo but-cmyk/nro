@@ -74,30 +74,13 @@ public class ClanService {
         return instance;
     }
 
-    public Clan getClanById(int id) throws Exception {
-        return getClanById(0, Manager.getNumClan(), id);
-    }
-
-    private Clan getClanById(int l, int r, int id) throws Exception {
-        if (l <= r) {
-            int m = (l + r) / 2;
-            Clan clan = null;
-            try {
-                clan = Manager.CLANS.get(m);
-            } catch (Exception e) {
-                throw new Exception("Không tìm thấy clan id: " + id);
-            }
-            if (clan.id == id) {
+    public Clan getClanById(int id) {
+        for (Clan clan : Manager.CLANS) {
+            if (clan != null && clan.id == id) {
                 return clan;
-            } else if (clan.id > id) {
-                r = m - 1;
-            } else {
-                l = m + 1;
             }
-            return getClanById(l, r, id);
-        } else {
-            throw new Exception("Không tìm thấy clan id: " + id);
         }
+        return null;
     }
 
     public List<Clan> getClans(String name) {
@@ -190,6 +173,10 @@ public class ClanService {
                     if (cmg.receiveDonate < cmg.maxDonate) {
                         Player plReceive = clan.getPlayerOnline(cmg.playerId);
                         if (plReceive != null) {
+                            if (InventoryService.gI().getCountEmptyBag(plReceive) <= 0) {
+                                Service.gI().sendThongBao(plGive, "Hành trang của " + plReceive.name + " đã đầy, không thể nhận thêm đậu.");
+                                return;
+                            }
                             Item pea = null;
                             for (Item item : plGive.inventory.itemsBox) {
                                 if (item.isNotNullItem() && item.template.type == 6) {
@@ -203,6 +190,7 @@ public class ClanService {
                                 peaCopy.itemOptions = pea.itemOptions;
                                 InventoryService.gI().addItemBag(plReceive, peaCopy);
                                 InventoryService.gI().sendItemBags(plReceive);
+                                InventoryService.gI().sendItemBox(plGive);
                                 Service.gI().sendThongBao(plReceive, plGive.name + " đã cho bạn " + peaCopy.template.name);
                                 cmg.receiveDonate++;
                                 clan.sendMessageClan(cmg);
@@ -211,7 +199,7 @@ public class ClanService {
                                 //Cho đậu player offline
                                 if (plReceive.isOffline) {
                                     plReceive.notify = plGive.name + " đã cho bạn " + peaCopy.template.name;
-                                    PlayerDAO.updatePlayer(plReceive);
+                                    PlayerDAO.updatePlayerAsync(plReceive);
                                 }
                             } else {
                                 Service.gI().sendThongBao(plGive, "Không tìm thấy đậu trong rương");
@@ -222,6 +210,7 @@ public class ClanService {
                     }
                 }
             } catch (Exception e) {
+                Logger.logException(ClanService.class, e, "Error in donate pea");
             }
         }
 
@@ -289,34 +278,44 @@ public class ClanService {
      */
     private void sendInviteClan(Player player, int playerId) {
         Player pl = Client.gI().getPlayer(playerId);
-        if (pl != null && player.clan != null && (player.clan.isLeader(player) || player.clan.isDeputy(player))) {
-            if (player.clan.getCurrMembers() < player.clan.maxMember) {
-                if (TaskService.gI().getIdTask(pl) < ConstTask.TASK_12_0) {
-                    Service.gI().sendThongBao(player, pl.name + " chưa thể vào bang lúc này");
-                    return;
-                }
-                if (pl.clan != null) {
-                    Service.gI().sendThongBao(player, pl.name + " đang ở trong bang nào đó, không thể mời");
-                    return;
-                }
-                if (pl.idMark.isHoldBlackBall()) {
-                    Service.gI().sendThongBao(player, pl.name + " đang giữ ngọc rồng sao đen, không thể mời");
-                    return;
-                }
-                Service.gI().sendThongBao(player, "Đã gửi lời mời đến " + pl.name);
-                Message msg;
-                try {
-                    msg = new Message(-57);
-                    msg.writer().writeUTF(player.name + " mời bạn vào bang " + player.clan.name);
-                    msg.writer().writeInt(player.clan.id);
-                    msg.writer().writeInt(758435); //code
-                    pl.sendMessage(msg);
-                    msg.cleanup();
-                } catch (Exception e) {
-                }
-            } else {
-                Service.gI().sendThongBao(player, "Bang đã đủ thành viên, không thể mời thêm.");
+        if (player.clan == null) {
+            Service.gI().sendThongBao(player, "Bạn chưa có bang hội!");
+            return;
+        }
+        if (!player.clan.isLeader(player) && !player.clan.isDeputy(player)) {
+            Service.gI().sendThongBao(player, "Bạn không có quyền mời thành viên vào bang!");
+            return;
+        }
+        if (pl == null) {
+            Service.gI().sendThongBao(player, "Người chơi không online hoặc không tồn tại!");
+            return;
+        }
+        if (player.clan.getCurrMembers() < player.clan.maxMember) {
+            if (TaskService.gI().getIdTask(pl) < ConstTask.TASK_12_0) {
+                Service.gI().sendThongBao(player, pl.name + " chưa thể vào bang lúc này");
+                return;
             }
+            if (pl.clan != null) {
+                Service.gI().sendThongBao(player, pl.name + " đang ở trong bang nào đó, không thể mời");
+                return;
+            }
+            if (pl.idMark.isHoldBlackBall()) {
+                Service.gI().sendThongBao(player, pl.name + " đang giữ ngọc rồng sao đen, không thể mời");
+                return;
+            }
+            Service.gI().sendThongBao(player, "Đã gửi lời mời đến " + pl.name);
+            Message msg;
+            try {
+                msg = new Message(-57);
+                msg.writer().writeUTF(player.name + " mời bạn vào bang " + player.clan.name);
+                msg.writer().writeInt(player.clan.id);
+                msg.writer().writeInt(758435); //code
+                pl.sendMessage(msg);
+                msg.cleanup();
+            } catch (Exception e) {
+            }
+        } else {
+            Service.gI().sendThongBao(player, "Bang đã đủ thành viên, không thể mời thêm.");
         }
     }
 
@@ -372,14 +371,18 @@ public class ClanService {
         Clan clan = player.clan;
         if (clan != null && clan.isLeader(player)) {
             ClanMessage cmg = clan.getClanMessage(clanMessageId);
+            if (cmg == null) {
+                Service.gI().sendThongBao(player, "Yêu cầu gia nhập không còn tồn tại.");
+                return;
+            }
             boolean existInClan = false;
             for (ClanMember cm : clan.members) {
-                if (cm.id == cmg.playerId) {
+                if (cm != null && cm.id == cmg.playerId) {
                     existInClan = true;
                     break;
                 }
             }
-            if (cmg != null && !existInClan) {
+            if (!existInClan) {
                 int plxinvao = cmg.playerId;
                 Player pl = Client.gI().getPlayer(plxinvao);
                 cmg.type = 0;
@@ -394,9 +397,9 @@ public class ClanService {
                     pl = NDVSqlFetcher.loadById(plxinvao);
                 }
                 if (pl != null) {
-                    if (!Util.canDoWithTime(pl.lastTimeLeaveClan, 600000)) {//sửa
-                        long diff = player.lastTimeRemoveClan + (1000 * 60 * 60) - System.currentTimeMillis();
-                        Service.gI().sendThongBao(player, "Sau khi rời bang, " + Util.msToTime(diff) + " sau mới được phép gia nhập.");
+                    if (!Util.canDoWithTime(pl.lastTimeLeaveClan, 600000)) {
+                        long diff = pl.lastTimeLeaveClan + 600000 - System.currentTimeMillis();
+                        Service.gI().sendThongBao(player, pl.name + " mới rời bang, vui lòng chờ " + Util.msToTime(diff) + " nữa mới có thể duyệt.");
                         return;
                     }
                     if (pl.idMark.isHoldBlackBall()) {
@@ -421,7 +424,7 @@ public class ClanService {
                             //update thông tin khi player offline
                             if (pl.isOffline) {
                                 pl.notify = "Bạn đã gia nhập bang: " + clan.name;
-                                PlayerDAO.updatePlayer(pl);
+                                PlayerDAO.updatePlayerAsync(pl);
                             }
                         } else {
                             Service.gI().sendThongBao(player, "Bang đã đủ thành viên.");
@@ -499,8 +502,8 @@ public class ClanService {
     private void askForJoinClan(Player player, int clanId) {
         try {
             if (!Util.canDoWithTime(player.lastTimeLeaveClan, 600000)) {
-                long diff = player.lastTimeRemoveClan + (1000 * 60 * 60) - System.currentTimeMillis();
-                Service.gI().sendThongBao(player, "Sau khi rời bang, " + Util.msToTime(diff) + " sau mới được phép gia nhập.");
+                long diff = player.lastTimeLeaveClan + 600000 - System.currentTimeMillis();
+                Service.gI().sendThongBao(player, "Sau khi rời bang, vui lòng chờ " + Util.msToTime(diff) + " nữa mới được phép xin gia nhập bang khác.");
                 return;
             }
             if (player.clan == null) {
@@ -603,6 +606,7 @@ public class ClanService {
                 Service.gI().sendFlagBag(player);
                 sendMyClan(player);
                 Service.gI().sendThongBao(player, "Chúc mừng bạn đã tạo bang thành công.");
+                checkDoneTaskJoinClan(clan);
             }
         }
     }
@@ -819,7 +823,12 @@ public class ClanService {
             ClanMember cm = clan.getClanMember((int) player.id);
             if (cm != null) {
                 if (clan.isLeader(player)) {
-                    Service.gI().sendThongBao(player, "Phải nhường chức bang chủ trước khi rời.");
+                    if (clan.getMembers().size() > 1) {
+                        Service.gI().sendThongBao(player, "Bang hội còn thành viên khác, bạn phải nhường chức bang chủ trước khi rời.");
+                        return;
+                    }
+                    // Nếu bang chỉ còn 1 mình bang chủ -> Tiến hành giải tán bang
+                    disbandClan(player, clan);
                     return;
                 }
                 ClanMessage cmg = new ClanMessage(clan);
@@ -843,10 +852,52 @@ public class ClanService {
                 clan.addClanMessage(cmg);
                 clan.sendMessageClan(cmg);
                 player.lastTimeLeaveClan = System.currentTimeMillis();
-                PlayerDAO.updatePlayer(player);
+                PlayerDAO.updatePlayerAsync(player);
                 clan.update();
             }
         }
+    }
+
+    public void disbandClan(Player leader, Clan clan) {
+        if (leader == null || clan == null) {
+            return;
+        }
+        // Dọn dẹp các phó bản nếu đang chạy
+        if (clan.doanhTrai != null) {
+            clan.doanhTrai.dispose();
+            clan.doanhTrai = null;
+        }
+        if (clan.BanDoKhoBau != null) {
+            clan.BanDoKhoBau.dispose();
+            clan.BanDoKhoBau = null;
+        }
+        if (clan.KhiGasHuyDiet != null) {
+            clan.KhiGasHuyDiet.dispose();
+            clan.KhiGasHuyDiet = null;
+        }
+        if (clan.ConDuongRanDoc != null) {
+            clan.ConDuongRanDoc.dispose();
+            clan.ConDuongRanDoc = null;
+        }
+
+        // Xóa khỏi danh sách bang
+        Manager.CLANS.remove(clan);
+
+        // Reset thông tin bang của leader
+        leader.clan = null;
+        leader.clanMember = null;
+        leader.lastTimeLeaveClan = System.currentTimeMillis();
+
+        // Gửi cập nhật về client
+        sendMyClan(leader);
+        sendClanId(leader);
+        Service.gI().sendFlagBag(leader);
+        ItemTimeService.gI().removeTextDoanhTrai(leader);
+        Service.gI().sendThongBao(leader, "Bang hội đã được giải tán thành công.");
+
+        // Cập nhật CSDL
+        PlayerDAO.updatePlayerAsync(leader);
+        clan.deleteDB(clan.id);
     }
 
     //Cắt chức
@@ -894,14 +945,16 @@ public class ClanService {
             clan.removeMemberOnline(cm, plKicked);
             cm.clan = null;
             cm = null;
-            if (plKicked != null) {
+            if (plKicked != null && !plKicked.isOffline) {
                 plKicked.clan = null;
                 plKicked.clanMember = null;
+                plKicked.lastTimeLeaveClan = System.currentTimeMillis();
                 ClanService.gI().sendMyClan(plKicked);
                 ClanService.gI().sendClanId(plKicked);
                 Service.gI().sendFlagBag(plKicked);
-//                Service.gI().sendThongBao(plKicked, "Bạn đã bị đuổi khỏi bang");
+                Service.gI().sendThongBao(plKicked, "Bạn đã bị đuổi khỏi bang");
                 ItemTimeService.gI().removeTextDoanhTrai(plKicked);
+                PlayerDAO.updatePlayerAsync(plKicked);
             } else {
                 removeClanPlayer(memberId);
             }
@@ -912,18 +965,17 @@ public class ClanService {
         }
     }
 
-    private void removeClanPlayer(int plId) {
-        PreparedStatement ps = null;
-        try (Connection con = AlyraManager.getConnection();) {
-            ps = con.prepareStatement("update player set clan_id = -1 where id = " + plId);
-            ps.executeUpdate();
-            ps.close();
-        } catch (Exception ex) {
-            removeClanPlayer(plId);
-        } finally {
-            try {
-                ps.close();
-            } catch (Exception e) {
+    public void removeClanPlayer(int plId) {
+        int retries = 0;
+        while (retries < 3) {
+            try (Connection con = AlyraManager.getConnection();
+                 PreparedStatement ps = con.prepareStatement("update player set clan_id = -1 where id = ? limit 1")) {
+                ps.setInt(1, plId);
+                ps.executeUpdate();
+                return;
+            } catch (Exception ex) {
+                retries++;
+                Logger.error("Lỗi khi update clan_id = -1 cho player " + plId + " (Lần " + retries + "): " + ex.getMessage());
             }
         }
     }
@@ -1000,8 +1052,8 @@ public class ClanService {
         }
     }
 
-    private void checkDoneTaskJoinClan(Clan clan) {
-        if (clan.getMembers().size() >= 2) {
+    public void checkDoneTaskJoinClan(Clan clan) {
+        if (clan != null && clan.getMembers().size() >= 1) {
             for (Player player : clan.membersInGame) {
                 TaskService.gI().checkDoneTaskJoinClan(player);
             }
@@ -1044,7 +1096,7 @@ public class ClanService {
                 ps.setInt(6, clan.level);
                 ps.setString(7, member);
                 ps.setString(8, clan.name2);
-                ps.setString(9, "cc");
+                ps.setString(9, "[]");
                 ps.setInt(10, clan.id);
                 ps.addBatch();
             }

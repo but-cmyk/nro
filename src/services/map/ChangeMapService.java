@@ -79,6 +79,7 @@ public class ChangeMapService {
                         }
                         msg.writer().writeUTF(zone.map.planetName);
                     }
+                    break;
                 case ConstMap.CHANGE_BLACK_BALL:
                     list = (pl.mapBlackBall != null ? pl.mapBlackBall
                             : (pl.mapBlackBall = MapService.gI().getMapBlackBall()));
@@ -186,7 +187,7 @@ public class ChangeMapService {
                 return;
             }
         }
-        if (true) {
+        if (pl.isAdmin() || pl.isBoss || Util.canDoWithTime(pl.idMark.getLastTimeChangeZone(), 5000)) {
             pl.idMark.setLastTimeChangeZone(System.currentTimeMillis());
             Map map = pl.zone.map;
             if (zoneId >= 0 && zoneId <= map.zones.size() - 1) {
@@ -323,20 +324,6 @@ public class ChangeMapService {
             Service.gI().sendThongBao(pl, "Không thể chuyển map quá nhanh khi đeo Ngọc Rồng Namếc");
             return;
         }
-        if (pl.idNRNM != -1 && zoneJoin != null) {
-            int idNRNM = pl.idNRNM;
-            NgocRongNamecService.gI().mapNrNamec[idNRNM - 353] = zoneJoin.map.mapId;
-            NgocRongNamecService.gI().nameNrNamec[idNRNM - 353] = zoneJoin.map.mapName;
-            NgocRongNamecService.gI().zoneNrNamec[idNRNM - 353] = (byte) zoneJoin.zoneId;
-            NgocRongNamecService.gI().pNrNamec[idNRNM - 353] = pl.name;
-            NgocRongNamecService.gI().idpNrNamec[idNRNM - 353] = (int) pl.id;
-            pl.lastTimePickNRNM = System.currentTimeMillis();
-        }
-
-        if (pl.idNRNM != -1 && !NgocRongNamecService.gI().isMapNRNM(zoneJoin.map.mapId)) {
-            NgocRongNamecService.gI().dropNamekBall(pl);
-        }
-
         TransactionService.gI().cancelTrade(pl);
         if (zoneJoin == null) {
             if (mapId != -1) {
@@ -347,17 +334,31 @@ public class ChangeMapService {
             Service.gI().sendThongBao(pl, "Không thể chuyển đến khu vực này. Khu vực không tồn tại.");
             return;
         }
+        if (pl.idNRNM != -1) {
+            int idNRNM = pl.idNRNM;
+            NgocRongNamecService.gI().mapNrNamec[idNRNM - 353] = zoneJoin.map.mapId;
+            NgocRongNamecService.gI().nameNrNamec[idNRNM - 353] = zoneJoin.map.mapName;
+            NgocRongNamecService.gI().zoneNrNamec[idNRNM - 353] = (byte) zoneJoin.zoneId;
+            NgocRongNamecService.gI().pNrNamec[idNRNM - 353] = pl.name;
+            NgocRongNamecService.gI().idpNrNamec[idNRNM - 353] = (int) pl.id;
+            pl.lastTimePickNRNM = System.currentTimeMillis();
+            if (!NgocRongNamecService.gI().isMapNRNM(zoneJoin.map.mapId)) {
+                NgocRongNamecService.gI().dropNamekBall(pl);
+            }
+        }
         if (typeSpace == TELEPORT_YARDRAT) {
             zoneJoin = checkMapCanJoinByYardart(pl, zoneJoin);
         }
         zoneJoin = checkMapCanJoin(pl, zoneJoin);
         if (zoneJoin != null) {
-            boolean currMapIsCold = MapService.gI().isMapCold(pl.zone.map);
-            boolean nextMapIsCold = MapService.gI().isMapCold(zoneJoin.map);
-            boolean nextMapIsMabu = MapService.gI().isMapMaBu(zoneJoin.map.mapId);
-            boolean sameZone = pl.zone.map.mapId == zoneJoin.map.mapId;
+            boolean currMapIsCold = pl.zone != null && MapService.gI().isMapCold(pl.zone.map);
+            boolean nextMapIsCold = zoneJoin.map != null && MapService.gI().isMapCold(zoneJoin.map);
+            boolean nextMapIsMabu = zoneJoin.map != null && MapService.gI().isMapMaBu(zoneJoin.map.mapId);
+            boolean sameZone = pl.zone != null && pl.zone.map.mapId == zoneJoin.map.mapId;
             if (typeSpace == AUTO_SPACE_SHIP) {
-                spaceShipArrive(pl, (byte) 0, pl.haveTennisSpaceShip ? TENNIS_SPACE_SHIP : DEFAULT_SPACE_SHIP);
+                if (pl.zone != null) {
+                    spaceShipArrive(pl, (byte) 0, pl.haveTennisSpaceShip ? TENNIS_SPACE_SHIP : DEFAULT_SPACE_SHIP);
+                }
                 pl.idMark.setIdSpaceShip(pl.haveTennisSpaceShip ? TENNIS_SPACE_SHIP : DEFAULT_SPACE_SHIP);
             } else {
                 pl.idMark.setIdSpaceShip(typeSpace);
@@ -377,8 +378,15 @@ public class ChangeMapService {
                     pl.location.x = 100;
                 }
             }
-            if (y != -1) {
-                pl.location.y = zoneJoin.map.yPhysicInTop(pl.location.x, Math.max(0, y - 24));
+            if (zoneJoin.map.mapWidth > 48) {
+                pl.location.x = Math.max(24, Math.min(zoneJoin.map.mapWidth - 24, pl.location.x));
+            }
+            if (typeSpace == AUTO_SPACE_SHIP) {
+                // The client uses Y <= 10 to start the spaceship landing animation.
+                // Snapping Y to the ground here prevents (or can deadlock) that animation.
+                pl.location.y = 5;
+            } else if (y != -1) {
+                pl.location.y = y;
             } else {
                 pl.location.y = zoneJoin.map.yPhysicInTop(pl.location.x, 100);
             }
@@ -386,15 +394,18 @@ public class ChangeMapService {
             if (pl.pet != null) {
                 pl.pet.joinMapMaster();
             }
+            if (pl.newPet != null) {
+                pl.newPet.joinMapMaster();
+            }
             Service.gI().clearMap(pl);
             // Fix Lỗi Load Map 15/09/2023
             if (!pl.isPl()) {
                 pl.zone.load_Me_To_Another(pl);
+                pl.idMark.setIdSpaceShip(NON_SPACE_SHIP);
             } else {
                 zoneJoin.mapInfo(pl); //-24
                 pl.timeChangeZone = System.currentTimeMillis();
             }
-            pl.idMark.setIdSpaceShip(NON_SPACE_SHIP);
             if (pl.isPl() && nextMapIsMabu) {
                 if (zoneJoin.map.mapId == 117) {
                     Service.gI().sendThongBao(pl, "Đây là không gian cao trọng lực, hãy cẩn thận");
@@ -414,8 +425,9 @@ public class ChangeMapService {
                     }
                 }
             }
-            if (zoneJoin.map.mapId == 47) {
-                if (TaskService.gI().getIdTask(pl) > ConstTask.TASK_9_0 && TaskService.gI().getIdTask(pl) < ConstTask.TASK_10_2) {
+            if (zoneJoin.map.mapId == 47 && pl.isPl()) {
+                int idTask = TaskService.gI().getIdTask(pl);
+                if (idTask == ConstTask.TASK_9_1 || idTask == ConstTask.TASK_10_1) {
                     TrainingService.gI().callBoss(pl, BossID.TAUPAYPAY, false);
                 }
             }
@@ -458,8 +470,7 @@ public class ChangeMapService {
     }
 
     public void changeMapWaypoint(Player player) {
-        if (!Util.canDoWithTime(player.timeChangeZone, 1000)) {
-            Service.gI().resetPoint(player, player.location.x, player.location.y);
+        if (!Util.canDoWithTime(player.timeChangeZone, 400)) {
             return;
         }
         Zone zoneJoin = null;
@@ -482,15 +493,19 @@ public class ChangeMapService {
                 if (zoneJoin != null) {
                     xGo = wp.goX;
                     yGo = wp.goY;
-                    // Tránh việc người chơi spawn đè lên waypoint của map mới, gây văng ngược lại
+                    // Tránh việc người chơi spawn đè lên waypoint của map mới (chỉ áp dụng cho waypoint tự động chạm là chuyển !isEnter)
                     if (zoneJoin.map != null && zoneJoin.map.wayPoints != null) {
                         for (WayPoint targetWp : zoneJoin.map.wayPoints) {
-                            if (xGo >= targetWp.minX && xGo <= targetWp.maxX 
+                            if (!targetWp.isEnter && xGo >= targetWp.minX && xGo <= targetWp.maxX 
                                     && yGo >= targetWp.minY && yGo <= targetWp.maxY) {
                                 if (xGo < zoneJoin.map.mapWidth / 2) {
-                                    xGo = (short) (targetWp.maxX + 100);
+                                    xGo = (short) (targetWp.maxX + 30);
                                 } else {
-                                    xGo = (short) (targetWp.minX - 100);
+                                    xGo = (short) (targetWp.minX - 30);
+                                }
+                                int groundY = zoneJoin.map.yPhysicInTop(xGo, Math.max(0, yGo - 24));
+                                if (groundY > 0) {
+                                    yGo = groundY;
                                 }
                                 break;
                             }
@@ -525,13 +540,17 @@ public class ChangeMapService {
             return;
 
         } else {
-            resetPoint(player);
+            if (player.zone != null && player.zone.map != null) {
+                int minBorder = 24;
+                int maxBorder = player.zone.map.mapWidth - 24;
+                if (player.location.x < minBorder || player.location.x > maxBorder) {
+                    resetPoint(player);
+                }
+            }
             if (MapService.gI().isMapPhoBan(player.zone.map.mapId)) {
                 Service.gI().sendThongBao(player, "Chưa hạ hết đối thủ");
                 return;
             }
-          //  Service.gI().sendThongBao(player, "Bạn chưa thể đến khu vực này");
-
         }
 
     }
@@ -553,6 +572,10 @@ public class ChangeMapService {
             player.zone.load_Me_To_Another(player);
             player.zone.load_Another_To_Me(player);
         } catch (Exception e) {
+        }
+        player.idMark.setIdSpaceShip(NON_SPACE_SHIP);
+        if (player.location.y <= 10 && player.zone != null && player.zone.map != null) {
+            player.location.y = player.zone.map.yPhysicInTop(player.location.x, 100);
         }
         TaskService.gI().checkDoneTaskGoToMap(player, player.zone);
         Service.gI().sendEffAllPlayerMapToMe(player);
@@ -853,8 +876,9 @@ public class ChangeMapService {
     public void goToDBKB(Player player) {
         if (!player.idMark.isGoToBDKB()) {
             if (Util.isAfterMidnight(player.lastTimeJoinBDKB)) {
+                player.lastTimeJoinBDKB = (player.clan != null && player.clan.lastTimeOpenBanDoKhoBau > 0) ? player.clan.lastTimeOpenBanDoKhoBau : System.currentTimeMillis();
                 player.timesPerDayBDKB = 1;
-            } else if (player.lastTimeJoinBDKB != player.clan.lastTimeOpenBanDoKhoBau) {
+            } else if (player.clan != null && player.lastTimeJoinBDKB != player.clan.lastTimeOpenBanDoKhoBau) {
                 player.lastTimeJoinBDKB = player.clan.lastTimeOpenBanDoKhoBau;
                 player.timesPerDayBDKB++;
                 if (player.timesPerDayBDKB > 3) {
@@ -1078,6 +1102,28 @@ public class ChangeMapService {
                 case 111:
                     if (player.nPoint.power > 1500000L) {
                         Service.gI().sendThongBao(player, "Sức mạnh phải dưới 1,5 triệu mới vào được");
+                        return null;
+                    }
+                    break;
+                case 148: // Bản đồ trung tâm Khí Gas
+                    if (player.clan == null || player.clan.KhiGasHuyDiet == null) {
+                        return null;
+                    }
+                    break;
+                case 160: // Hành tinh thực vật
+                case 161:
+                case 162:
+                case 163:
+                    if (TaskService.gI().getIdTask(player) < ConstTask.TASK_23_0 || player.nPoint.power < 1500000L) {
+                        Service.gI().sendThongBao(player, "Yêu cầu sức mạnh trên 1,5 triệu và hoàn thành nhiệm vụ tương ứng");
+                        return null;
+                    }
+                    break;
+                case 169: // Map Thần Kaio / Hủy Diệt
+                case 170:
+                case 171:
+                    if (TaskService.gI().getIdTask(player) < ConstTask.TASK_25_0 || player.nPoint.power < 1500000L) {
+                        Service.gI().sendThongBao(player, "Bạn chưa đủ điều kiện bước vào thánh địa Thần Kaio");
                         return null;
                     }
                     break;

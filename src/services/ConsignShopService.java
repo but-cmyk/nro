@@ -33,162 +33,138 @@ public class ConsignShopService {
         return instance;
     }
 
-    private List<ConsignItem> getItemKyGui2(Player pl, byte tab, byte to, byte max) {
-        List<ConsignItem> its = new ArrayList<>();
-        List<ConsignItem> listSort = new ArrayList<>();
-        List<ConsignItem> listSort2 = new ArrayList<>();
-        ConsignShopManager.gI().listItem.stream().filter((it) -> (it != null && it.tab == tab && !it.isBuy)).forEachOrdered((it) -> {
-            its.add(it);
-        });
-        its.stream().filter(i -> i != null).sorted(Comparator.comparing(i -> i.isUpTop, Comparator.reverseOrder())).forEach(i -> listSort.add(i));
-        for (int i = to; i <= max && i < listSort.size(); i++) {
-            listSort2.add(listSort.get(i));
+    public static class ConsignPage {
+        public final int totalPages;
+        public final List<ConsignItem> itemsSend;
+
+        public ConsignPage(int totalPages, List<ConsignItem> itemsSend) {
+            this.totalPages = totalPages;
+            this.itemsSend = itemsSend;
         }
-        return listSort2;
     }
 
-    private List<ConsignItem> getItemKyGui(Player pl, byte tab, byte... max) {
-        List<ConsignItem> its = new ArrayList<>();
-        List<ConsignItem> listSort = new ArrayList<>();
-        List<ConsignItem> listSort2 = new ArrayList<>();
-        ConsignShopManager.gI().listItem.stream().filter((it) -> (it != null && it.tab == tab && !it.isBuy && it.player_sell != pl.id)).forEachOrdered((it) -> {
-            its.add(it);
-        });
-        its.stream().filter(i -> i != null).sorted(Comparator.comparing(i -> i.isUpTop, Comparator.reverseOrder())).forEach(i -> listSort.add(i));
-        if (max.length == 2) {
-            if (listSort.size() > max[1]) {
-                for (int i = max[0]; i < max[1]; i++) {
-                    if (listSort.get(i) != null) {
-                        listSort2.add(listSort.get(i));
-                    }
-                }
-            } else {
-                for (int i = max[0]; i <= max[0]; i++) {
-                    if (listSort.get(i) != null) {
-                        listSort2.add(listSort.get(i));
-                    }
-                }
+    public ConsignPage getConsignPage(byte tab, int page, int pageSize) {
+        List<ConsignItem> filtered = new ArrayList<>();
+        List<ConsignItem> snapshot = ConsignShopManager.gI().getItemsSnapshot();
+        for (ConsignItem it : snapshot) {
+            if (it != null && it.tab == tab && !it.isBuy) {
+                filtered.add(it);
             }
-            return listSort2;
         }
-        if (max.length == 1 && listSort.size() > max[0]) {
-            for (int i = 0; i < max[0]; i++) {
-                if (listSort.get(i) != null) {
-                    listSort2.add(listSort.get(i));
-                }
-            }
-            return listSort2;
+        filtered.sort((a, b) -> Byte.compare(b.isUpTop, a.isUpTop));
+
+        int totalItems = filtered.size();
+        int totalPages = Math.max(1, (totalItems + pageSize - 1) / pageSize);
+
+        int fromIndex = page * pageSize;
+        if (fromIndex >= totalItems) {
+            return new ConsignPage(totalPages, Collections.emptyList());
         }
-        return listSort;
+        int toIndex = Math.min(fromIndex + pageSize, totalItems);
+        return new ConsignPage(totalPages, filtered.subList(fromIndex, toIndex));
     }
-
-    private List<ConsignItem> getItemKyGui() {
-        List<ConsignItem> its = new ArrayList<>();
-        List<ConsignItem> listSort = new ArrayList<>();
-        ConsignShopManager.gI().listItem.stream().filter((it) -> (it != null && !it.isBuy)).forEachOrdered((it) -> {
-            its.add(it);
-        });
-        its.stream().filter(i -> i != null).sorted(Comparator.comparing(i -> i.isUpTop, Comparator.reverseOrder())).forEach(i -> listSort.add(i));
-        return listSort;
-    }
-
-//    private boolean isKyGui(Item item) {
-//        switch (item.template.type) {
-//            case 27:
-//                switch (item.template.id) {
-//                    case 921:
-//                    case 1155:
-//                    case 1156:
-//                    case 568:
-//                        return true;
-//                }
-//                return false;
-//            case 21:
-//            case 72:
-//                return true;
-//        }
-//        for (int i = 0; i < item.itemOptions.size(); i++) {
-//            if (item.itemOptions.get(i).optionTemplate.id == 86) {
-//                return true;
-//            }
-//        }
-//        return false;
-//    }
 
     private boolean SubThoiVang(Player pl, int quatity) {
-        for (Item item : pl.inventory.itemsBag) {
-            if (item.isNotNullItem() && item.template.id == 457 && item.quantity >= quatity) {
-                services.player.InventoryService.gI().subQuantityItemsBag(pl, item, quatity);
-                return true;
-            }
+        if (pl == null || pl.inventory == null || pl.inventory.itemsBag == null) {
+            return false;
+        }
+        int totalGoldBars = InventoryService.gI().countItemBag(pl, (short) 457);
+        if (totalGoldBars >= quatity) {
+            InventoryService.gI().removeItemQuantity(pl, (short) 457, quatity);
+            return true;
         }
         return false;
     }
 
     public void buyItem(Player pl, int id) {
-        if (pl.nPoint.power < 1700L) {
+        if (pl == null) {
+            return;
+        }
+        if (pl.isTrade || services.func.TransactionService.gI().check(pl)) {
+            Service.gI().sendThongBao(pl, "Không thể thực hiện khi đang giao dịch");
+            return;
+        }
+        if (pl.nPoint.power < 17_000_000_000L) {
             Service.gI().sendThongBao(pl, "Yêu cầu sức mạnh lớn hơn 17 tỷ");
             openShopKyGui(pl);
             return;
         }
-
-        ConsignItem it = getItemBuy(id);
-        if (it == null || it.isBuy) {
-            Service.gI().sendThongBao(pl, "Vật phẩm không tồn tại hoặc đã được bán");
-            return;
-        }
-        if (it.player_sell == pl.id) {
-            Service.gI().sendThongBao(pl, "Không thể mua vật phẩm bản thân đăng bán");
-            openShopKyGui(pl);
-            return;
-        }
-
-        boolean isBuy = false;
-        if (it.goldSell > 0) {
-            // Kiểm tra và trừ thỏi vàng
-            int requiredGoldBars = it.goldSell;
-            int goldBarsCount = InventoryService.gI().countItemBag(pl, (short) 457);
-
-            if (goldBarsCount >= requiredGoldBars) {
-                // Trừ thỏi vàng từ inventory
-                InventoryService.gI().removeItemQuantity(pl, (short) 457, requiredGoldBars);
-                isBuy = true;
-            } else {
-                Service.gI().sendThongBao(pl, "Bạn không đủ thỏi vàng để mua vật phẩm");
-                isBuy = false;
+        ConsignShopManager manager = ConsignShopManager.gI();
+        manager.lockItems();
+        try {
+            ConsignItem it = manager.getItemById(id);
+            if (it == null || it.isBuy) {
+                Service.gI().sendThongBao(pl, "Vật phẩm không tồn tại hoặc đã được bán");
+                return;
             }
-        } else if (it.gemSell > 0) {
-            if (pl.inventory.gem >= it.gemSell) {
-                pl.inventory.gem -= it.gemSell;
-                isBuy = true;
-            } else {
-                Service.gI().sendThongBao(pl, "Bạn không đủ Ngọc Xanh để mua vật phẩm này!");
-                isBuy = false;
+            if (it.player_sell == pl.id) {
+                Service.gI().sendThongBao(pl, "Không thể mua vật phẩm bản thân đăng bán");
+                openShopKyGui(pl);
+                return;
             }
-        }
 
-        Service.gI().sendMoney(pl);
-        if (isBuy) {
             Item item = ItemService.gI().createNewItem(it.itemId);
             item.quantity = it.quantity;
             item.itemOptions.addAll(it.options);
-            it.isBuy = true;
+            List<Item> previewBag = InventoryService.gI().copyItemsBag(pl);
+            if (!InventoryService.gI().addItemList(previewBag, ItemService.gI().copyItem(item))) {
+                Service.gI().sendThongBao(pl, "Hành trang không đủ chỗ trống");
+                return;
+            }
 
-            InventoryService.gI().addItemBag(pl, item);
+            boolean paid = false;
+            if (it.goldSell > 0) {
+                int goldBarsCount = InventoryService.gI().countItemBag(pl, (short) 457);
+                if (goldBarsCount < it.goldSell) {
+                    Service.gI().sendThongBao(pl, "Bạn không đủ thỏi vàng để mua vật phẩm");
+                    return;
+                }
+                InventoryService.gI().removeItemQuantity(pl, (short) 457, it.goldSell);
+                paid = true;
+            } else if (it.gemSell > 0) {
+                if (pl.inventory.gem < it.gemSell) {
+                    Service.gI().sendThongBao(pl, "Bạn không đủ Ngọc Xanh để mua vật phẩm này!");
+                    return;
+                }
+                pl.inventory.gem -= it.gemSell;
+                paid = true;
+            }
+
+            if (!paid) {
+                Service.gI().sendThongBao(pl, "Giá bán không hợp lệ");
+                return;
+            }
+
+            if (!InventoryService.gI().addItemBag(pl, item)) {
+                if (it.goldSell > 0) {
+                    Item refund = ItemService.gI().createNewItem((short) 457);
+                    refund.quantity = it.goldSell;
+                    InventoryService.gI().addItemBag(pl, refund);
+                } else {
+                    pl.inventory.gem += it.gemSell;
+                }
+                Service.gI().sendThongBao(pl, "Không thể nhận vật phẩm, giao dịch đã được hoàn lại");
+                return;
+            }
+
+            it.isBuy = true;
+            manager.updateItemBoughtAsync(it.id);
+            database.daos.PlayerDAO.updatePlayerAsync(pl);
+            Player seller = server.Client.gI().getPlayer(it.player_sell);
+            if (seller != null) {
+                database.daos.PlayerDAO.updatePlayerAsync(seller);
+            }
+            Service.gI().sendMoney(pl);
             InventoryService.gI().sendItemBags(pl);
             Service.gI().sendThongBao(pl, "Bạn đã nhận được " + item.template.name);
-            ConsignShopManager.gI().save();
             openShopKyGui(pl);
+        } finally {
+            manager.unlockItems();
         }
     }
 
     public ConsignItem getItemBuy(int id) {
-        for (ConsignItem it : getItemKyGui()) {
-            if (it != null && it.id == id) {
-                return it;
-            }
-        }
-        return null;
+        return ConsignShopManager.gI().getItemById(id);
     }
 
     public ConsignItem getItemBuy(Player pl, int id) {
@@ -201,29 +177,21 @@ public class ConsignShopService {
     }
 
     public void openShopKyGui(Player pl, byte index, int page) {
-        if (page > getItemKyGui(pl, index).size()) {
+        ConsignPage pageResult = getConsignPage(index, page, 20);
+        if (page >= pageResult.totalPages && page > 0) {
             return;
         }
         Message msg = null;
         try {
             msg = new Message(-100);
             msg.writer().writeByte(index);
-            List<ConsignItem> items = getItemKyGui(pl, index);
-            List<ConsignItem> itemsSend = getItemKyGui2(pl, index, (byte) (page * 20), (byte) (page * 20 + 20));
-            byte tab = (byte) (items.size() / 20 > 0 ? (items.size() / 20) + 1 : 1);
-            msg.writer().writeByte(tab); // max page
+            msg.writer().writeByte((byte) pageResult.totalPages); // max page
             msg.writer().writeByte(page);
-            msg.writer().writeByte(itemsSend.size());
-            for (int j = 0; j < itemsSend.size(); j++) {
-                ConsignItem itk = itemsSend.get(j);
-                Item it = ItemService.gI().createNewItem(itk.itemId);
-                it.itemOptions.clear();
-                if (itk.options.isEmpty()) {
-                    it.itemOptions.add(new ItemOption(73, 0));
-                } else {
-                    it.itemOptions.addAll(itk.options);
-                }
-                msg.writer().writeShort(it.template.id);
+            msg.writer().writeByte(pageResult.itemsSend.size());
+            for (int j = 0; j < pageResult.itemsSend.size(); j++) {
+                ConsignItem itk = pageResult.itemsSend.get(j);
+                if (itk == null) continue;
+                msg.writer().writeShort(itk.itemId);
                 msg.writer().writeShort(itk.id);
                 msg.writer().writeInt(itk.goldSell);
                 msg.writer().writeInt(itk.gemSell);
@@ -234,12 +202,23 @@ public class ConsignShopService {
                     msg.writer().writeByte(itk.quantity);
                 }
                 msg.writer().writeByte(itk.player_sell == pl.id ? 1 : 0); // isMe
-                msg.writer().writeByte(it.itemOptions.size());
-                for (int a = 0; a < it.itemOptions.size(); a++) {
-                    msg.writer().writeByte(it.itemOptions.get(a).optionTemplate.id);
-                    msg.writer().writeShort(it.itemOptions.get(a).param);
+
+                if (itk.options == null || itk.options.isEmpty()) {
+                    msg.writer().writeByte(1);
+                    msg.writer().writeByte(73);
+                    msg.writer().writeShort(0);
+                } else {
+                    msg.writer().writeByte(itk.options.size());
+                    for (int a = 0; a < itk.options.size(); a++) {
+                        Item.ItemOption opt = itk.options.get(a);
+                        msg.writer().writeByte(opt.optionTemplate != null ? opt.optionTemplate.id : 73);
+                        msg.writer().writeShort(opt.param);
+                    }
                 }
-                msg.writer().writeByte(0);
+                msg.writer().writeByte(0); // partTemp (b3)
+                if (pl.getSession().version >= 237) {
+                    msg.writer().writeUTF(itk.playerName != null ? itk.playerName : "");
+                }
             }
             pl.sendMessage(msg);
         } catch (IOException e) {
@@ -263,8 +242,9 @@ public class ConsignShopService {
             openShopKyGui(pl);
             return;
         }
-        pl.idMark.setIdItemUpTop(id);
-        NpcService.gI().createMenuConMeo(pl, ConstNpc.UP_TOP_ITEM, -1, "Bạn có muốn đưa vật phẩm ['" + ItemService.gI().createNewItem(it.itemId).template.name + "'] của bản thân lên trang đầu?\nYêu cầu 5 Ngọc Xanh.", "Đồng ý", "Từ Chối");
+        models.Template.ItemTemplate temp = ItemService.gI().getTemplate(it.itemId);
+        String itemName = temp != null ? temp.name : "Vật phẩm";
+        NpcService.gI().createMenuConMeo(pl, ConstNpc.UP_TOP_ITEM, -1, "Bạn có muốn đưa vật phẩm ['" + itemName + "'] của bản thân lên trang đầu?\nYêu cầu 5 Ngọc Xanh.", "Đồng ý", "Từ Chối");
     }
 
 //    public void StartupItemToTop(Player pl) {
@@ -286,8 +266,18 @@ public class ConsignShopService {
 //    }
 
     public void claimOrDel(Player pl, byte action, int id) {
-        ConsignItem it = getItemBuy(pl, id);
-        switch (action) {
+        if (pl == null) {
+            return;
+        }
+        if (pl.isTrade || services.func.TransactionService.gI().check(pl)) {
+            Service.gI().sendThongBao(pl, "Không thể thực hiện khi đang giao dịch");
+            return;
+        }
+        ConsignShopManager manager = ConsignShopManager.gI();
+        manager.lockItems();
+        try {
+            ConsignItem it = getItemBuy(pl, id);
+            switch (action) {
             case 1: // hủy vật phẩm
                 if (it == null || it.isBuy) {
                     Service.gI().sendThongBao(pl, "Vật phẩm không tồn tại hoặc đã được bán");
@@ -301,11 +291,21 @@ public class ConsignShopService {
                 Item item = ItemService.gI().createNewItem(it.itemId);
                 item.quantity = it.quantity;
                 item.itemOptions.addAll(it.options);
-                if (ConsignShopManager.gI().listItem.remove(it)) {
-                    InventoryService.gI().addItemBag(pl, item);
+                List<Item> previewBag = InventoryService.gI().copyItemsBag(pl);
+                if (!InventoryService.gI().addItemList(previewBag, ItemService.gI().copyItem(item))) {
+                    Service.gI().sendThongBao(pl, "Hành trang không đủ chỗ trống");
+                    return;
+                }
+                if (manager.listItem.remove(it)) {
+                    if (!InventoryService.gI().addItemBag(pl, item)) {
+                        manager.listItem.add(it);
+                        Service.gI().sendThongBao(pl, "Không thể nhận lại vật phẩm");
+                        return;
+                    }
                     InventoryService.gI().sendItemBags(pl);
                     Service.gI().sendMoney(pl);
-                    ConsignShopManager.gI().save();
+                    manager.deleteItemAsync(it.id);
+                    database.daos.PlayerDAO.updatePlayerAsync(pl);
                     Service.gI().sendThongBao(pl, "Hủy bán vật phẩm thành công");
                     openShopKyGui(pl);
                 }
@@ -333,23 +333,42 @@ public class ConsignShopService {
                     // Thêm thỏi vàng vào inventory
                     Item goldBar = ItemService.gI().createNewItem((short) 457);
                     goldBar.quantity = receivedAmount;
-                    InventoryService.gI().addItemBag(pl, goldBar);
+                    List<Item> previewGoldBag = InventoryService.gI().copyItemsBag(pl);
+                    if (!InventoryService.gI().addItemList(previewGoldBag, ItemService.gI().copyItem(goldBar))) {
+                        Service.gI().sendThongBao(pl, "Hành trang không đủ chỗ nhận thỏi vàng");
+                        return;
+                    }
 
                 } else if (it.gemSell > 0) {
                     // Calculate fee and round it to the nearest whole number
                     fee = (int) Math.round(it.gemSell * 0.1);
                     receivedAmount = it.gemSell - fee;
-                    pl.inventory.gem += receivedAmount;
                 }
 
-                if (ConsignShopManager.gI().listItem.remove(it)) {
+                if (manager.listItem.remove(it)) {
+                    if (it.goldSell > 0) {
+                        Item goldBar = ItemService.gI().createNewItem((short) 457);
+                        goldBar.quantity = receivedAmount;
+                        if (!InventoryService.gI().addItemBag(pl, goldBar)) {
+                            manager.listItem.add(it);
+                            Service.gI().sendThongBao(pl, "Không thể nhận tiền bán vật phẩm");
+                            return;
+                        }
+                    } else {
+                        long newGem = (long) pl.inventory.gem + receivedAmount;
+                        pl.inventory.gem = (int) Math.min(Integer.MAX_VALUE, newGem);
+                    }
                     Service.gI().sendMoney(pl);
                     InventoryService.gI().sendItemBags(pl); // Send updated inventory to player
-                    ConsignShopManager.gI().save();
+                    manager.deleteItemAsync(it.id);
+                    database.daos.PlayerDAO.updatePlayerAsync(pl);
                     Service.gI().sendThongBao(pl, String.format("Bạn đã nhận được %d (đã trừ %d phí)", receivedAmount, fee));
                     openShopKyGui(pl);
                 }
                 break;
+            }
+        } finally {
+            manager.unlockItems();
         }
     }
 
@@ -361,7 +380,7 @@ public class ConsignShopService {
         pl.inventory.itemsBag.stream().filter((it) -> (itemCanConsign(it))).forEachOrdered((it) -> {
             // Note: When adding to this list, the 'id' field of ConsignItem is used as index in bag.
             // This is only for display in the "can consign" tab, not for actual consignment.
-            its.add(new ConsignItem(InventoryService.gI().getIndexBag(pl, it), it.template.id, (int) pl.id, (byte) 4, -1, -1, it.quantity, (byte) -1, new ArrayList<>(it.itemOptions), false));
+            its.add(new ConsignItem(InventoryService.gI().getIndexBag(pl, it), it.template.id, (int) pl.id, (byte) 4, -1, -1, it.quantity, (byte) -1, new ArrayList<>(it.itemOptions), false, pl.name));
         });
         return its;
     }
@@ -380,93 +399,31 @@ public class ConsignShopService {
         return false;
     }
 
-//    // Sửa phương thức getMaxId()
-//    public int getMaxId() {
-//        try (Connection con = AlyraManager.getConnection();
-//             // Use java.sql.Statement directly, not com.mysql.jdbc.Statement, for better portability
-//             java.sql.Statement s = con.createStatement();
-//             ResultSet rs = s.executeQuery("SELECT MAX(id) FROM shop_ky_gui")) {
-//
-//            if (rs.next()) {
-//                return rs.getInt(1);
-//            }
-//            return 0;
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//            Logger.logException(ConsignShopService.class, e, "Error getting max ID from shop_ky_gui");
-//            return 0;
-//        }
-//    }
-public int getMaxId() {
-    Connection con = null;
-    java.sql.PreparedStatement ps = null;  // Changed to java.sql interface
-    ResultSet rs = null;
-    
-    try {
-        con = AlyraManager.getConnection();
-        if (con == null) {
-            Logger.logException(ConsignShopService.class, 
-                new Exception("Database connection is null"), 
-                "Failed to get database connection for getMaxId");
+    public int getMaxId() {
+        try (Connection con = AlyraManager.getConnection();
+             PreparedStatement ps = con.prepareStatement("SELECT COALESCE(MAX(id), 0) as max_id FROM shop_ky_gui");
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                return rs.getInt("max_id");
+            }
+            return 0;
+        } catch (Exception e) {
+            Logger.logException(ConsignShopService.class, e, "Error getting max ID from shop_ky_gui");
             return 0;
         }
-        
-        // Using standard JDBC PreparedStatement interface
-        ps = con.prepareStatement("SELECT COALESCE(MAX(id), 0) as max_id FROM shop_ky_gui FOR UPDATE");
-        rs = ps.executeQuery();
-        
-        if (rs.next()) {
-            return rs.getInt("max_id");
-        }
-        return 0;
-        
-    } catch (Exception e) {
-        Logger.logException(ConsignShopService.class, e, "Error getting max ID from shop_ky_gui");
-        return 0;
-    } finally {
-        if (rs != null) {
-            try { rs.close(); } catch (Exception e) {
-                Logger.logException(ConsignShopService.class, e, "Error closing ResultSet in getMaxId");
-            }
-        }
-        if (ps != null) {
-            try { ps.close(); } catch (Exception e) {
-                Logger.logException(ConsignShopService.class, e, "Error closing PreparedStatement in getMaxId");
-            }
-        }
-        if (con != null) {
-            try { con.close(); } catch (Exception e) {
-                Logger.logException(ConsignShopService.class, e, "Error closing Connection in getMaxId");
-            }
-        }
     }
-}
-@SuppressWarnings("unchecked")
-public int insertConsignItemAndGetId(ConsignItem item) {
-    Connection con = null;
-    PreparedStatement ps = null;
-    ResultSet generatedKeys = null;
-    
-    try {
-        con = AlyraManager.getConnection();
-        if (con == null) {
-            Logger.logException(ConsignShopService.class, new Exception("Database connection is null"), "Failed to get database connection for insertConsignItem");
-            return -1;
-        }
-        
-        con.setAutoCommit(false);
-        
-        String sql = "INSERT INTO `shop_ky_gui`(`player_id`, `tab`, `item_id`, `gold`, `gem`, `quantity`, `itemOption`, `isUpTop`, `isBuy`) " +
-                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        
-        ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
-        
+
+    @SuppressWarnings("unchecked")
+    public int insertConsignItemAndGetId(ConsignItem item) {
         // Validate dữ liệu
-        if (item.player_sell <= 0 || item.itemId <= 0 || item.quantity <= 0) {
+        if (item == null || item.player_sell <= 0 || item.itemId <= 0 || item.quantity <= 0) {
             Logger.log("ConsignShopService", "Invalid item data for insertion");
             return -1;
         }
-        
+
+        String sql = "INSERT INTO `shop_ky_gui`(`player_id`, `tab`, `item_id`, `gold`, `gem`, `quantity`, `itemOption`, `isUpTop`, `isBuy`) " +
+                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
         // Xử lý JSON options an toàn
         String optionsJson = "[]";
         if (item.options != null && !item.options.isEmpty()) {
@@ -486,69 +443,51 @@ public int insertConsignItemAndGetId(ConsignItem item) {
                 optionsJson = "[]";
             }
         }
-        
-        ps.setInt(1, item.player_sell);
-        ps.setByte(2, item.tab);
-        ps.setInt(3, item.itemId);
-        ps.setInt(4, item.goldSell);
-        ps.setInt(5, item.gemSell);
-        ps.setInt(6, item.quantity);
-        ps.setString(7, optionsJson);
-        ps.setByte(8, item.isUpTop);
-        ps.setBoolean(9, item.isBuy);
-        
-        int affectedRows = ps.executeUpdate();
-        
-        if (affectedRows == 0) {
-            con.rollback();
-            return -1;
-        }
-        
-        generatedKeys = ps.getGeneratedKeys();
-        if (generatedKeys.next()) {
-            int newId = generatedKeys.getInt(1);
-            con.commit();
-            return newId;
-        } else {
-            con.rollback();
-            return -1;
-        }
-        
-    } catch (Exception e) {
-        Logger.logException(ConsignShopService.class, e, "Error inserting consign item");
-        if (con != null) {
-            try {
-                con.rollback();
+
+        try (Connection con = AlyraManager.getConnection()) {
+            if (con == null) {
+                Logger.logException(ConsignShopService.class, new Exception("Database connection is null"), "Failed to get database connection for insertConsignItem");
+                return -1;
+            }
+            con.setAutoCommit(false);
+            try (PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+                ps.setInt(1, item.player_sell);
+                ps.setByte(2, item.tab);
+                ps.setInt(3, item.itemId);
+                ps.setInt(4, item.goldSell);
+                ps.setInt(5, item.gemSell);
+                ps.setInt(6, item.quantity);
+                ps.setString(7, optionsJson);
+                ps.setByte(8, item.isUpTop);
+                ps.setBoolean(9, item.isBuy);
+
+                int affectedRows = ps.executeUpdate();
+                if (affectedRows == 0) {
+                    con.rollback();
+                    return -1;
+                }
+
+                try (ResultSet generatedKeys = ps.getGeneratedKeys()) {
+                    if (generatedKeys.next()) {
+                        int newId = generatedKeys.getInt(1);
+                        con.commit();
+                        return newId;
+                    } else {
+                        con.rollback();
+                        return -1;
+                    }
+                }
             } catch (Exception ex) {
-                Logger.logException(ConsignShopService.class, ex, "Error rolling back transaction in insertConsignItem");
-            }
-        }
-        return -1;
-    } finally {
-        if (generatedKeys != null) {
-            try { 
-                generatedKeys.close(); 
-            } catch (Exception e) {
-                Logger.logException(ConsignShopService.class, e, "Error closing generated keys ResultSet");
-            }
-        }
-        if (ps != null) {
-            try { 
-                ps.close(); 
-            } catch (Exception e) {
-                Logger.logException(ConsignShopService.class, e, "Error closing PreparedStatement in insertConsignItem");
-            }
-        }
-        if (con != null) {
-            try { 
+                con.rollback();
+                throw ex;
+            } finally {
                 con.setAutoCommit(true);
-                con.close(); 
-            } catch (Exception e) {
-                Logger.logException(ConsignShopService.class, e, "Error closing Connection in insertConsignItem");
             }
+        } catch (Exception e) {
+            Logger.logException(ConsignShopService.class, e, "Error inserting consign item");
+            return -1;
         }
     }
-}
     public byte getTabKiGui(Item it) {
         if (it.template.type >= 0 && it.template.type <= 2) {
             return 0;
@@ -562,16 +501,24 @@ public int insertConsignItemAndGetId(ConsignItem item) {
     }
 
     public void KiGui(Player pl, int id, int money, byte moneyType, int quantity) {
+        if (pl == null) {
+            return;
+        }
+        if (pl.isTrade || services.func.TransactionService.gI().check(pl)) {
+            Service.gI().sendThongBao(pl, "Không thể thực hiện khi đang giao dịch");
+            return;
+        }
+        ConsignShopManager manager = ConsignShopManager.gI();
+        boolean feeCharged = false;
         try {
-            // Kiểm tra phí đăng bán
-            if (!SubThoiVang(pl, 1)) {
-                Service.gI().sendThongBao(pl, "Bạn cần có ít nhất 1 thỏi vàng để làm phí đăng bán");
+            if (id < 0 || id >= pl.inventory.itemsBag.size()) {
+                Service.gI().sendThongBao(pl, "Vật phẩm không tồn tại");
+                openShopKyGui(pl);
                 return;
             }
 
-            // Kiểm tra item có tồn tại không
-            if (id < 0 || id >= pl.inventory.itemsBag.size()) {
-                Service.gI().sendThongBao(pl, "Vật phẩm không tồn tại");
+            if ((moneyType != 0 && moneyType != 1) || money <= 0) {
+                Service.gI().sendThongBao(pl, "Giá bán hoặc loại tiền không hợp lệ");
                 openShopKyGui(pl);
                 return;
             }
@@ -597,59 +544,79 @@ public int insertConsignItemAndGetId(ConsignItem item) {
                 return;
             }
 
-            // Check if item is already being consigned by this player
-            if (ConsignShopManager.gI().listItem.stream().anyMatch(consignIt
-                    -> consignIt.player_sell == pl.id
-                    && consignIt.itemId == it.template.id
-                    && consignIt.quantity == quantity
-                    && consignIt.options.equals(it.itemOptions)
-                    && !consignIt.isBuy
-            )) {
-                Service.gI().sendThongBao(pl, "Bạn đã có vật phẩm tương tự đang ký gửi.");
+            manager.lockItems();
+            boolean lockHeld = true;
+            try {
+                if (manager.listItem.stream().anyMatch(consignIt
+                        -> consignIt.player_sell == pl.id
+                        && consignIt.itemId == it.template.id
+                        && consignIt.quantity == quantity
+                        && consignIt.options.equals(it.itemOptions)
+                        && !consignIt.isBuy
+                )) {
+                    Service.gI().sendThongBao(pl, "Bạn đã có vật phẩm tương tự đang ký gửi.");
+                    openShopKyGui(pl);
+                    return;
+                }
+
+                // Check maximum consignment items per player (optional, but good practice)
+                long consignedCount = manager.listItem.stream().filter(consignIt -> consignIt.player_sell == pl.id && !consignIt.isBuy).count();
+                if (consignedCount >= 20) { // Example limit: 10 items per player
+                    Service.gI().sendThongBao(pl, "Bạn chỉ có thể ký gửi tối đa 20 vật phẩm.");
+                    openShopKyGui(pl);
+                    return;
+                }
+                
+                if (!SubThoiVang(pl, 1)) {
+                    Service.gI().sendThongBao(pl, "Bạn cần có ít nhất 1 thỏi vàng để làm phí đăng bán");
+                    return;
+                }
+                feeCharged = true;
+
+                // Lấy ID nguyên tử và tạo consign item
+                int newId = manager.nextItemId();
+                ConsignItem newConsignItem = new ConsignItem(
+                        newId,
+                        it.template.id,
+                        (int) pl.id,
+                        getTabKiGui(it),
+                        moneyType == 0 ? money : -1,
+                        moneyType == 1 ? money : -1,
+                        quantity,
+                        (byte) 0,
+                        new ArrayList<>(it.itemOptions), // Create a copy to avoid reference issues
+                        false,
+                        pl.name
+                );
+
+                manager.addItem(newConsignItem);
+
+                // Subtract item from player's inventory
+                InventoryService.gI().subQuantityItemsBag(pl, it, quantity);
+                InventoryService.gI().sendItemBags(pl);
+                database.daos.PlayerDAO.updatePlayerAsync(pl);
+
+                // GIẢI PHÓNG GLOBAL LOCK NGAY LẬP TỨC để các người chơi khác không bị chặn
+                manager.unlockItems();
+                lockHeld = false;
+
+                // Đẩy ghi DB bất đồng bộ qua Virtual Thread (không block Netty)
+                manager.insertItemAsync(newConsignItem);
+
+                Service.gI().sendThongBao(pl, "Ký gửi vật phẩm thành công!");
                 openShopKyGui(pl);
-                return;
+            } finally {
+                if (lockHeld) {
+                    manager.unlockItems();
+                }
             }
-
-
-            // Check maximum consignment items per player (optional, but good practice)
-            long consignedCount = ConsignShopManager.gI().listItem.stream().filter(consignIt -> consignIt.player_sell == pl.id && !consignIt.isBuy).count();
-            if (consignedCount >= 20) { // Example limit: 10 items per player
-                Service.gI().sendThongBao(pl, "Bạn chỉ có thể ký gửi tối đa 20 vật phẩm.");
-                openShopKyGui(pl);
-                return;
-            }
-            
-            // Lấy ID mới từ database
-            // WARNING: Using MAX(id) + 1 for ID generation in a concurrent environment
-            // can lead to race conditions and duplicate IDs. It's highly recommended
-            // to use AUTO_INCREMENT primary keys in the database for ID generation.
-            int newId = getMaxId() + 1;
-
-            // Tạo consign item
-            ConsignItem newConsignItem = new ConsignItem(
-                    newId,
-                    it.template.id,
-                    (int) pl.id,
-                    getTabKiGui(it),
-                    moneyType == 0 ? money : -1,
-                    moneyType == 1 ? money : -1,
-                    quantity,
-                    (byte) 0,
-                    new ArrayList<>(it.itemOptions), // Create a copy to avoid reference issues
-                    false
-            );
-
-            // Add the item to the consignment list
-            ConsignShopManager.gI().listItem.add(newConsignItem);
-
-            // Subtract item from player's inventory
-            InventoryService.gI().subQuantityItemsBag(pl, it, quantity);
-            InventoryService.gI().sendItemBags(pl);
-            ConsignShopManager.gI().save(); // Save the updated consignment list
-            Service.gI().sendThongBao(pl, "Ký gửi vật phẩm thành công!");
-            openShopKyGui(pl);
 
         } catch (Exception e) {
+            if (feeCharged) {
+                Item refund = ItemService.gI().createNewItem((short) 457);
+                refund.quantity = 1;
+                InventoryService.gI().addItemBag(pl, refund);
+            }
             Service.gI().sendThongBao(pl, "Có lỗi xảy ra khi xử lý yêu cầu");
             Logger.logException(ConsignShopService.class, e, "Error in KiGui method");
             openShopKyGui(pl);
@@ -664,22 +631,16 @@ public int insertConsignItemAndGetId(ConsignItem item) {
             msg.writer().writeByte(5);
             for (byte i = 0; i < 5; i++) {
                 if (i == 4) {
+                    List<ConsignItem> canKiGui = getItemCanKiGui(pl);
                     msg.writer().writeUTF(ConsignShopManager.gI().tabName[i]);
                     msg.writer().writeByte(0);
-                    msg.writer().writeByte(getItemCanKiGui(pl).size());
-                    for (int j = 0; j < getItemCanKiGui(pl).size(); j++) {
-                        ConsignItem itk = getItemCanKiGui(pl).get(j);
+                    msg.writer().writeByte(canKiGui.size());
+                    for (int j = 0; j < canKiGui.size(); j++) {
+                        ConsignItem itk = canKiGui.get(j);
                         if (itk == null) {
                             continue;
                         }
-                        Item it = ItemService.gI().createNewItem(itk.itemId);
-                        it.itemOptions.clear();
-                        if (itk.options.isEmpty()) {
-                            it.itemOptions.add(new ItemOption(73, 0));
-                        } else {
-                            it.itemOptions.addAll(itk.options);
-                        }
-                        msg.writer().writeShort(it.template.id);
+                        msg.writer().writeShort(itk.itemId);
                         msg.writer().writeShort(itk.id);
                         msg.writer().writeInt(itk.goldSell);
                         msg.writer().writeInt(itk.gemSell);
@@ -692,44 +653,56 @@ public int insertConsignItemAndGetId(ConsignItem item) {
                         }
                         msg.writer().writeInt(itk.quantity);
                         msg.writer().writeByte(1); // isMe
-                        msg.writer().writeByte(it.itemOptions.size());
-                        for (int a = 0; a < it.itemOptions.size(); a++) {
-                            msg.writer().writeByte(it.itemOptions.get(a).optionTemplate.id);
-                            msg.writer().writeShort(it.itemOptions.get(a).param);
+                        if (itk.options == null || itk.options.isEmpty()) {
+                            msg.writer().writeByte(1);
+                            msg.writer().writeByte(73);
+                            msg.writer().writeShort(0);
+                        } else {
+                            msg.writer().writeByte(itk.options.size());
+                            for (int a = 0; a < itk.options.size(); a++) {
+                                Item.ItemOption opt = itk.options.get(a);
+                                msg.writer().writeByte(opt.optionTemplate != null ? opt.optionTemplate.id : 73);
+                                msg.writer().writeShort(opt.param);
+                            }
                         }
-                        msg.writer().writeByte(0);
-                        msg.writer().writeByte(0);
+                        msg.writer().writeByte(0); // newItem (b34)
+                        msg.writer().writeByte(0); // partTemp (b35)
+                        if (pl.getSession().version >= 237) {
+                            msg.writer().writeUTF(pl.name);
+                        }
                     }
                 } else {
-                    List<ConsignItem> items = getItemKyGui(pl, i);
-                    List<ConsignItem> itemsSend = getItemKyGui2(pl, i, (byte) 0, (byte) 20);
+                    ConsignPage pageResult = getConsignPage(i, 0, 20);
                     msg.writer().writeUTF(ConsignShopManager.gI().tabName[i]);
-                    byte tab = (byte) (items.size() / 20 > 0 ? (items.size() / 20) + 1 : 1);
-                    msg.writer().writeByte(tab); // max page
-                    msg.writer().writeByte(itemsSend.size());
-                    for (int j = 0; j < itemsSend.size(); j++) {
-                        ConsignItem itk = itemsSend.get(j);
-                        Item it = ItemService.gI().createNewItem(itk.itemId);
-                        it.itemOptions.clear();
-                        if (itk.options.isEmpty()) {
-                            it.itemOptions.add(new ItemOption(73, 0));
-                        } else {
-                            it.itemOptions.addAll(itk.options);
-                        }
-                        msg.writer().writeShort(it.template.id);
+                    msg.writer().writeByte((byte) pageResult.totalPages); // max page
+                    msg.writer().writeByte(pageResult.itemsSend.size());
+                    for (int j = 0; j < pageResult.itemsSend.size(); j++) {
+                        ConsignItem itk = pageResult.itemsSend.get(j);
+                        if (itk == null) continue;
+                        msg.writer().writeShort(itk.itemId);
                         msg.writer().writeShort(itk.id);
                         msg.writer().writeInt(itk.goldSell);
                         msg.writer().writeInt(itk.gemSell);
                         msg.writer().writeByte(0); // buy type
                         msg.writer().writeInt(itk.quantity);
                         msg.writer().writeByte(itk.player_sell == pl.id ? 1 : 0); // isMe
-                        msg.writer().writeByte(it.itemOptions.size());
-                        for (int a = 0; a < it.itemOptions.size(); a++) {
-                            msg.writer().writeByte(it.itemOptions.get(a).optionTemplate.id);
-                            msg.writer().writeShort(it.itemOptions.get(a).param);
+                        if (itk.options == null || itk.options.isEmpty()) {
+                            msg.writer().writeByte(1);
+                            msg.writer().writeByte(73);
+                            msg.writer().writeShort(0);
+                        } else {
+                            msg.writer().writeByte(itk.options.size());
+                            for (int a = 0; a < itk.options.size(); a++) {
+                                Item.ItemOption opt = itk.options.get(a);
+                                msg.writer().writeByte(opt.optionTemplate != null ? opt.optionTemplate.id : 73);
+                                msg.writer().writeShort(opt.param);
+                            }
                         }
-                        msg.writer().writeByte(0);
-                        msg.writer().writeByte(0);
+                        msg.writer().writeByte(0); // newItem (b34)
+                        msg.writer().writeByte(0); // partTemp (b35)
+                        if (pl.getSession().version >= 237) {
+                            msg.writer().writeUTF(itk.playerName != null ? itk.playerName : "");
+                        }
                     }
                 }
             }

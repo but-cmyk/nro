@@ -20,6 +20,7 @@ import models.map.ItemMap;
 import models.map.Zone;
 import models.mob.Mob;
 import models.npc.Npc;
+import models.task.SideTask;
 import models.task.SideTaskTemplate;
 import models.task.SubTaskMain;
 import models.task.TaskMain;
@@ -29,8 +30,10 @@ import services.map.NpcService;
 import services.player.ClanService;
 import services.player.InventoryService;
 import utils.Logger;
+import utils.PlayerAuditLogger;
 import utils.Util;
 import server.Client;
+import models.task.ClanTask;
 import models.task.ClanTaskTemplate;
 import services.phoban.TrainingService;
 import services.player.PlayerService;
@@ -143,20 +146,39 @@ public class TaskService {
     public void sendTaskMain(Player player) {
         Message msg = null;
         try {
+            if (player == null || player.playerTask == null || player.playerTask.taskMain == null
+                    || player.playerTask.taskMain.subTasks == null || player.playerTask.taskMain.subTasks.isEmpty()) {
+                return;
+            }
+            if (player.playerTask.taskMain.id > 3) {
+                Item duaBe = InventoryService.gI().findItemBagByTemp(player, ConstItem.DUA_BE);
+                if (duaBe != null) {
+                    InventoryService.gI().subQuantityItemsBag(player, duaBe, duaBe.quantity);
+                    InventoryService.gI().sendItemBags(player);
+                    Service.gI().sendFlagBag(player);
+                }
+            }
+            TaskMain tm = player.playerTask.taskMain;
+            if (tm.index < 0) {
+                tm.index = 0;
+            }
+            if (tm.index >= tm.subTasks.size()) {
+                tm.index = tm.subTasks.size() - 1;
+            }
             msg = new Message(40);
-            msg.writer().writeShort(player.playerTask.taskMain.id);
-            msg.writer().writeByte(player.playerTask.taskMain.index);
-            msg.writer().writeUTF(player.playerTask.taskMain.name + "[" + player.playerTask.taskMain.id + "]");
-            msg.writer().writeUTF(player.playerTask.taskMain.detail);
-            msg.writer().writeByte(player.playerTask.taskMain.subTasks.size());
-            for (SubTaskMain stm : player.playerTask.taskMain.subTasks) {
-                msg.writer().writeUTF(stm.name);
+            msg.writer().writeShort(tm.id);
+            msg.writer().writeByte(tm.index);
+            msg.writer().writeUTF(tm.name + "[" + tm.id + "]");
+            msg.writer().writeUTF(tm.detail != null ? tm.detail.replace("\\r\\n", "\n").replace("\\n", "\n") : "");
+            msg.writer().writeByte(tm.subTasks.size());
+            for (SubTaskMain stm : tm.subTasks) {
+                msg.writer().writeUTF(stm.name != null ? stm.name : "");
                 msg.writer().writeByte(stm.npcId);
                 msg.writer().writeShort(stm.mapId);
                 msg.writer().writeUTF(stm.notify != null ? stm.notify : "");
             }
-            msg.writer().writeShort(player.playerTask.taskMain.subTasks.get(player.playerTask.taskMain.index).count);
-            for (SubTaskMain stm : player.playerTask.taskMain.subTasks) {
+            msg.writer().writeShort(tm.subTasks.get(tm.index).count);
+            for (SubTaskMain stm : tm.subTasks) {
                 msg.writer().writeShort(stm.maxCount);
             }
             player.sendMessage(msg);
@@ -171,59 +193,87 @@ public class TaskService {
 
     //chuyển sang task mới
     public void sendNextTaskMain(Player player) {
-        rewardDoneTask(player);
-        switch (player.playerTask.taskMain.id) {
-            case 3:
-                player.playerTask.taskMain = TaskService.gI().getTaskMainById(player, player.gender + 4);
-                break;
-            case 4:
-            case 5:
-            case 6:
-                player.playerTask.taskMain = TaskService.gI().getTaskMainById(player, 7);
-                break;
-            default:
-                player.playerTask.taskMain = TaskService.gI().getTaskMainById(player, player.playerTask.taskMain.id + 1);
-                break;
+        if (player == null || player.playerTask == null || player.playerTask.taskMain == null) {
+            return;
         }
-        sendTaskMain(player);
-        Service.gI().sendThongBao(player, "Nhiệm vụ tiếp theo của bạn là "
-                + player.playerTask.taskMain.subTasks.get(player.playerTask.taskMain.index).name);
+        rewardDoneTask(player);
+        int nextTaskId = switch (player.playerTask.taskMain.id) {
+            case 3 -> player.gender + 4;
+            case 4, 5, 6 -> 7;
+            default -> player.playerTask.taskMain.id + 1;
+        };
+        TaskMain nextTask = getTaskMainById(player, nextTaskId);
+        if (nextTask != null && nextTask != player.playerTask.taskMain && nextTask.id == nextTaskId) {
+            player.playerTask.taskMain = nextTask;
+            sendTaskMain(player);
+            if (player.playerTask.taskMain.subTasks != null && !player.playerTask.taskMain.subTasks.isEmpty()
+                    && player.playerTask.taskMain.index >= 0 && player.playerTask.taskMain.index < player.playerTask.taskMain.subTasks.size()) {
+                Service.gI().sendThongBao(player, "Nhiệm vụ tiếp theo của bạn là "
+                        + player.playerTask.taskMain.subTasks.get(player.playerTask.taskMain.index).name);
+            }
+            if (player.nPoint != null) {
+                checkDoneTaskPower(player, player.nPoint.power);
+            }
+            Service.gI().point(player);
+        } else {
+            // Đã đạt mốc nhiệm vụ tối đa của server
+            if (player.playerTask.taskMain.subTasks != null && !player.playerTask.taskMain.subTasks.isEmpty()) {
+                player.playerTask.taskMain.index = player.playerTask.taskMain.subTasks.size() - 1;
+                SubTaskMain lastSub = player.playerTask.taskMain.subTasks.get(player.playerTask.taskMain.index);
+                lastSub.count = lastSub.maxCount;
+            }
+            sendTaskMain(player);
+            Service.gI().sendThongBao(player, "Chúc mừng bạn đã hoàn thành tất cả nhiệm vụ chính tuyến hiện tại!");
+        }
     }
 
     //số lượng đã hoàn thành
     public void sendUpdateCountSubTask(Player player) {
         Message msg = null;
         try {
+            if (player == null || player.playerTask == null || player.playerTask.taskMain == null
+                    || player.playerTask.taskMain.subTasks == null || player.playerTask.taskMain.subTasks.isEmpty()) {
+                return;
+            }
+            TaskMain tm = player.playerTask.taskMain;
+            if (tm.index < 0) {
+                tm.index = 0;
+            }
+            if (tm.index >= tm.subTasks.size()) {
+                tm.index = tm.subTasks.size() - 1;
+            }
             msg = new Message(43);
-            SubTaskMain stm = player.playerTask.taskMain.subTasks.get(player.playerTask.taskMain.index);
+            SubTaskMain stm = tm.subTasks.get(tm.index);
             msg.writer().writeShort(stm.count);
             
             short x_hint = 0;
             short y_hint = 0;
-            if (stm.mapId == player.zone.map.mapId) {
-                if (stm.npcId != -1) {
-                    for (Npc npc : Manager.NPCS) {
-                        if (npc.mapId == stm.mapId && npc.tempId == stm.npcId) {
-                            x_hint = (short) npc.cx;
-                            y_hint = (short) npc.cy;
-                            break;
+            if (player != null && player.zone != null && player.zone.map != null) {
+                if (stm.mapId == player.zone.map.mapId) {
+                    if (stm.npcId != -1) {
+                        for (Npc npc : Manager.NPCS) {
+                            if (npc.mapId == stm.mapId && npc.tempId == stm.npcId) {
+                                x_hint = (short) npc.cx;
+                                y_hint = (short) npc.cy;
+                                break;
+                            }
+                        }
+                    } else if (player.zone.mobs != null) {
+                        for (models.mob.Mob mob : player.zone.mobs) {
+                            if (mob != null && !mob.isDie() && mob.location != null) {
+                                x_hint = (short) mob.location.x;
+                                y_hint = (short) mob.location.y;
+                                break;
+                            }
                         }
                     }
-                } else {
-                    for (models.mob.Mob mob : player.zone.mobs) {
-                        if (!mob.isDie()) {
-                            x_hint = (short) mob.location.x;
-                            y_hint = (short) mob.location.y;
+                } else if (player.zone.map.wayPoints != null) {
+                    for (models.map.WayPoint wp : player.zone.map.wayPoints) {
+                        if (wp != null && wp.goMap == stm.mapId) {
+                            x_hint = (short) ((wp.minX + wp.maxX) / 2);
+                            y_hint = (short) wp.maxY;
                             break;
                         }
-                    }
-                }
-            } else {
-                for (models.map.WayPoint wp : player.zone.map.wayPoints) {
-                    if (wp.goMap == stm.mapId) {
-                        x_hint = (short) ((wp.minX + wp.maxX) / 2);
-                        y_hint = (short) wp.maxY;
-                        break;
                     }
                 }
             }
@@ -266,8 +316,8 @@ public class TaskService {
     public boolean checkDoneTaskTalkNpc(Player player, Npc npc) {
         return switch (npc.tempId) {
             case ConstNpc.QUY_LAO_KAME ->
-                (doneTask(player, ConstTask.TASK_11_0)
-                || doneTask(player, ConstTask.TASK_12_0)
+                player.gender == ConstPlayer.TRAI_DAT && (doneTask(player, ConstTask.TASK_11_0)
+                || (player.clan != null && player.clan.getMembers().size() >= 1 && doneTask(player, ConstTask.TASK_12_0))
                 || doneTask(player, ConstTask.TASK_12_1)
                 || doneTask(player, ConstTask.TASK_13_3)
                 || doneTask(player, ConstTask.TASK_14_2)
@@ -283,7 +333,7 @@ public class TaskService {
                 || doneTask(player, ConstTask.TASK_19_2));
             case ConstNpc.TRUONG_LAO_GURU ->
                 player.gender == ConstPlayer.NAMEC && (doneTask(player, ConstTask.TASK_11_0)
-                || doneTask(player, ConstTask.TASK_12_0)
+                || (player.clan != null && player.clan.getMembers().size() >= 1 && doneTask(player, ConstTask.TASK_12_0))
                 || doneTask(player, ConstTask.TASK_12_1)
                 || doneTask(player, ConstTask.TASK_13_3)
                 || doneTask(player, ConstTask.TASK_14_2)
@@ -298,7 +348,7 @@ public class TaskService {
                 || doneTask(player, ConstTask.TASK_19_2));
             case ConstNpc.VUA_VEGETA ->
                 player.gender == ConstPlayer.XAYDA && (doneTask(player, ConstTask.TASK_11_0)
-                || doneTask(player, ConstTask.TASK_12_0)
+                || (player.clan != null && player.clan.getMembers().size() >= 1 && doneTask(player, ConstTask.TASK_12_0))
                 || doneTask(player, ConstTask.TASK_12_1)
                 || doneTask(player, ConstTask.TASK_13_3)
                 || doneTask(player, ConstTask.TASK_15_4)
@@ -311,8 +361,27 @@ public class TaskService {
                 || doneTask(player, ConstTask.TASK_22_4)
                 || doneTask(player, ConstTask.TASK_23_3)
                 || doneTask(player, ConstTask.TASK_19_2));
-            case ConstNpc.ONG_GOHAN, ConstNpc.ONG_MOORI, ConstNpc.ONG_PARAGUS ->
-                (doneTask(player, ConstTask.TASK_0_2)
+            case ConstNpc.ONG_GOHAN, ConstNpc.ONG_MOORI, ConstNpc.ONG_PARAGUS -> {
+                if (player.playerTask != null && player.playerTask.taskMain != null
+                        && player.playerTask.taskMain.id == 2 && player.playerTask.taskMain.index == 0) {
+                    Item chickenLeg = InventoryService.gI().findItemBagByTemp(player, ConstItem.DUI_GA);
+                    if (chickenLeg != null && chickenLeg.quantity >= 10) {
+                        int cur = player.playerTask.taskMain.subTasks.get(0).count;
+                        for (int i = cur; i < 10; i++) {
+                            doneTask(player, ConstTask.TASK_2_0);
+                        }
+                    }
+                }
+                if (player.playerTask != null && player.playerTask.taskMain != null
+                        && player.playerTask.taskMain.id > 3) {
+                    Item duaBe = InventoryService.gI().findItemBagByTemp(player, ConstItem.DUA_BE);
+                    if (duaBe != null) {
+                        InventoryService.gI().subQuantityItemsBag(player, duaBe, duaBe.quantity);
+                        InventoryService.gI().sendItemBags(player);
+                        Service.gI().sendFlagBag(player);
+                    }
+                }
+                yield (doneTask(player, ConstTask.TASK_0_2)
                 || doneTask(player, ConstTask.TASK_0_5)
                 || doneTask(player, ConstTask.TASK_1_1)
                 || doneTask(player, ConstTask.TASK_2_1)
@@ -326,6 +395,7 @@ public class TaskService {
                 || doneTask(player, ConstTask.TASK_10_3)
                 || doneTask(player, ConstTask.TASK_11_1)
                 || doneTask(player, ConstTask.TASK_24_0));
+            }
             case ConstNpc.BO_MONG ->
                 (doneTask(player, ConstTask.TASK_9_0)
                 || doneTask(player, ConstTask.TASK_10_2));
@@ -337,9 +407,7 @@ public class TaskService {
                 (doneTask(player, ConstTask.TASK_31_5)
                 || doneTask(player, ConstTask.TASK_32_1));
             case ConstNpc.DR_DRIEF, ConstNpc.CARGO, ConstNpc.CUI ->
-                (player.zone.map.mapId == 19 && doneTask(player, ConstTask.TASK_19_3)
-                || player.zone.map.mapId == 19 && doneTask(player, ConstTask.TASK_20_6)
-                || player.zone.map.mapId == 19 && doneTask(player, ConstTask.TASK_21_4));
+                false;
             case ConstNpc.BUNMA, ConstNpc.DENDE, ConstNpc.APPULE ->
                 doneTask(player, ConstTask.TASK_7_2);
             case ConstNpc.BUNMA_TL ->
@@ -356,6 +424,9 @@ public class TaskService {
                 if (player.playerTask.taskMain.id == 29) {
                     if (player.nPoint.dameg >= 10000) {
                         yield doneTask(player, ConstTask.TASK_29_0);
+                    } else {
+                        Service.gI().sendThongBao(player, "Sức đánh gốc của con chưa đạt 10.000! Hãy luyện tập nâng thêm rồi quay lại gặp ta.");
+                        yield false;
                     }
                 }
                 yield doneTask(player, ConstTask.TASK_9_3);
@@ -371,7 +442,9 @@ public class TaskService {
     //kiểm tra hoàn thành nhiệm vụ gia nhập bang hội
     public void checkDoneTaskJoinClan(Player player) {
         if (!player.isBoss && !player.isPet) {
-            doneTask(player, ConstTask.TASK_12_0);
+            if (player.clan != null && player.clan.getMembers().size() >= 1) {
+                doneTask(player, ConstTask.TASK_12_0);
+            }
         }
     }
 
@@ -431,6 +504,9 @@ public class TaskService {
     //kiểm tra hoàn thành nhiệm vụ khi vào map nào đó
     public void checkDoneTaskGoToMap(Player player, Zone zoneJoin) {
         if (!player.isBoss && !player.isPet) {
+            if (player.clan != null && player.clan.getMembers().size() >= 1) {
+                checkDoneTaskJoinClan(player);
+            }
             if (zoneJoin != null) {
                 switch (zoneJoin.map.mapId) {
                     case 39:
@@ -453,6 +529,7 @@ public class TaskService {
                         break;
                     case 59:
                         doneTask(player, ConstTask.TASK_19_1);
+                        break;
                     case 93:
                         doneTask(player, ConstTask.TASK_25_0);
                         break;
@@ -470,6 +547,7 @@ public class TaskService {
                         break;
                     case 103:
                         doneTask(player, ConstTask.TASK_29_2);
+                        break;
                     case 114:
                         doneTask(player, ConstTask.TASK_30_0);
                         break;
@@ -483,10 +561,23 @@ public class TaskService {
 
     //kiểm tra hoàn thành nhiệm vụ khi nhặt item
     public void checkDoneTaskPickItem(Player player, ItemMap item) {
-        if (!player.isBoss && !player.isPet && item != null) {
+        if (!player.isBoss && !player.isPet && item != null && item.itemTemplate != null) {
             switch (item.itemTemplate.id) {
                 case ConstItem.DUI_GA:
-                    doneTask(player, ConstTask.TASK_2_0);
+                case ConstItem.DUI_GA_NUONG:
+                    if (TaskService.gI().isCurrentTask(player, ConstTask.TASK_2_0)) {
+                        Item chickenLeg = InventoryService.gI().findItemBagByTemp(player, ConstItem.DUI_GA);
+                        int bagCount = chickenLeg != null ? chickenLeg.quantity : 0;
+                        int currentCount = player.playerTask.taskMain.subTasks.get(player.playerTask.taskMain.index).count;
+                        int targetCount = Math.max(currentCount + 1, bagCount);
+                        int toAdd = Math.min(targetCount, 10) - currentCount;
+                        if (toAdd <= 0) {
+                            toAdd = 1;
+                        }
+                        for (int i = 0; i < toAdd; i++) {
+                            doneTask(player, ConstTask.TASK_2_0);
+                        }
+                    }
                     break;
                 case ConstItem.DUA_BE:
                     doneTask(player, ConstTask.TASK_3_1);
@@ -503,6 +594,9 @@ public class TaskService {
                     break;
                 case ConstItem.GIO_THUC_AN:
                     doneTask(player, ConstTask.TASK_31_6);
+                    break;
+                case ConstItem.NHAN_THOI_KHONG_SAI_LECH:
+                    doneTask(player, ConstTask.TASK_31_0);
                     break;
             }
         }
@@ -624,6 +718,9 @@ public class TaskService {
                         case 1 ->
                             doneTask(player, ConstTask.TASK_32_4);
                     }
+                    break;
+                case BossID.BLACK_GOKU:
+                    doneTask(player, ConstTask.TASK_31_0);
                     break;
             }
         }
@@ -752,6 +849,11 @@ public class TaskService {
                         npcSay(player, ConstTask.NPC_NHA, "Con nhặt được rất nhiều đùi gà rồi đấy! Mau về báo cáo với ta nào.");
                         break;
                     case ConstTask.TASK_2_1:
+                        Item chickenLeg = InventoryService.gI().findItemBagByTemp(player, ConstItem.DUI_GA);
+                        if (chickenLeg != null) {
+                            InventoryService.gI().subQuantityItemsBag(player, chickenLeg, 10);
+                            InventoryService.gI().sendItemBags(player);
+                        }
                         npcSay(player, ConstTask.NPC_NHA, "Tuyệt vời, ta đã dạy con kỹ năng bay lượn! Vừa có một vật thể lạ rơi xuống hành tinh chúng ta, con hãy sử dụng tiềm năng nâng cao sức mạnh rồi đi khám phá vật thể lạ đó nhé!");
                         break;
                     case ConstTask.TASK_3_0:
@@ -761,6 +863,12 @@ public class TaskService {
                         npcSay(player, ConstTask.NPC_NHA, "Con đã thấy vật thể lạ chưa? Hãy mau chóng kiểm tra nó rồi quay về báo cáo với ta.");
                         break;
                     case ConstTask.TASK_3_2:
+                        Item duaBe = InventoryService.gI().findItemBagByTemp(player, ConstItem.DUA_BE);
+                        if (duaBe != null) {
+                            InventoryService.gI().subQuantityItemsBag(player, duaBe, duaBe.quantity);
+                            InventoryService.gI().sendItemBags(player);
+                        }
+                        Service.gI().sendFlagBag(player);
                         npcSay(player, ConstTask.NPC_NHA, "Vật thể lạ đó chính là phi thuyền của người Saiyan! Sẽ có nhiều thử thách lớn phía trước. Bây giờ, con hãy di chuyển đến trạm tàu vũ trụ để đi sang các hành tinh khác thách đấu nhé!");
                         break;
                     case ConstTask.TASK_7_2:
@@ -773,10 +881,27 @@ public class TaskService {
                         npcSay(player, ConstTask.NPC_NHA, "Con đã tìm thấy ngọc rồng 7 sao! Hãy đem về báo cáo cho ta.");
                         break;
                     case ConstTask.TASK_8_2:
+                        Item nr7 = InventoryService.gI().findItemBagByTemp(player, ConstItem.NGOC_RONG_7_SAO);
+                        if (nr7 != null) {
+                            InventoryService.gI().subQuantityItemsBag(player, nr7, 1);
+                            InventoryService.gI().sendItemBags(player);
+                        }
                         npcSay(player, ConstTask.NPC_NHA, "Tốt lắm! Bây giờ con hãy đi tìm Bò Mộng ở rừng Karin để hỏi thêm tin tức về các viên ngọc rồng khác.");
+                        break;
+                    case ConstTask.TASK_14_2:
+                        Item truyenTranh = InventoryService.gI().findItemBagByTemp(player, ConstItem.TRUYEN_TRANH);
+                        if (truyenTranh != null) {
+                            InventoryService.gI().subQuantityItemsBag(player, truyenTranh, truyenTranh.quantity);
+                            InventoryService.gI().sendItemBags(player);
+                        }
+                        npcSay(player, ConstTask.NPC_QUY_LAO, "Con đã tìm được truyện tranh! Rất tốt, giờ hãy tiếp tục luyện tập nhé.");
                         break;
                     case ConstTask.TASK_9_0:
                         npcSay(player, ConstNpc.BO_MONG, "Cẩn thận! Tàu Pảy Pảy đang ở đây và hắn rất nguy hiểm!");
+                        TrainingService.gI().callBoss(player, BossID.TAUPAYPAY, false);
+                        break;
+                    case ConstTask.TASK_9_1:
+                        Service.gI().sendThongBao(player, "Hắn quá mạnh! Mau bỏ chạy lên tháp Karin!");
                         break;
                     case ConstTask.TASK_9_3:
                         npcSay(player, ConstNpc.THAN_MEO_KARIN, "Ta là Thần Mèo Karin. Nếu con muốn đánh bại Tàu Pảy Pảy, con phải vượt qua thử thách tập luyện của ta!");
@@ -811,29 +936,143 @@ public class TaskService {
         NpcService.gI().createTutorial(player, avatar, text);
     }
 
+    public long getRewardSMTNByTaskId(int taskId) {
+        return switch (taskId) {
+            case 1 -> 500L;
+            case 2 -> 1_000L;
+            case 3 -> 2_000L;
+            case 4, 5, 6 -> 4_000L;
+            case 7 -> 8_000L;
+            case 8, 10 -> 15_000L;
+            case 12 -> 20_000L;
+            case 14 -> 80_000L;
+            case 15, 16 -> 150_000L;
+            case 17 -> 200_000L;
+            case 18 -> 500_000L;
+            case 19 -> 5_000_000L;
+            case 20 -> 50_000_000L;
+            case 21, 22, 23 -> 20_000_000L;
+            case 24, 25, 26, 27, 28, 29 -> 1_000_000L;
+            case 31 -> 10_000_000L;
+            default -> 0L;
+        };
+    }
+
     private void rewardDoneTask(Player player) {
-        if (player != null && player.nPoint != null) {
-            long reward = Math.max(10000L, player.nPoint.power / 5);
-            player.nPoint.tiemNangUp(reward);
-            Service.gI().sendThongBao(player, "Chúc mừng bạn nhận được " + utils.Util.formatNumber(reward) + " tiềm năng!");
+        if (player != null && player.nPoint != null && player.playerTask != null && player.playerTask.taskMain != null) {
+            int taskId = player.playerTask.taskMain.id;
+            if (taskId == 3) {
+                Item duaBe = InventoryService.gI().findItemBagByTemp(player, ConstItem.DUA_BE);
+                if (duaBe != null) {
+                    InventoryService.gI().subQuantityItemsBag(player, duaBe, duaBe.quantity);
+                    InventoryService.gI().sendItemBags(player);
+                }
+                Service.gI().sendFlagBag(player);
+            } else if (taskId == 14) {
+                Item truyenTranh = InventoryService.gI().findItemBagByTemp(player, ConstItem.TRUYEN_TRANH);
+                if (truyenTranh != null) {
+                    InventoryService.gI().subQuantityItemsBag(player, truyenTranh, truyenTranh.quantity);
+                    InventoryService.gI().sendItemBags(player);
+                }
+            }
+            // 1. Thưởng Sức Mạnh & Tiềm Năng đúng chuẩn hiển thị trong giao diện nhiệm vụ
+            long rewardSMTN = getRewardSMTNByTaskId(taskId);
+            if (rewardSMTN > 0) {
+                Service.gI().addSMTN(player, (byte) 2, rewardSMTN, false);
+            }
+
+            // 2. Thưởng vàng hợp lý theo mốc nhiệm vụ (nhiệm vụ tân thủ 0-3 không lạm phát vàng)
+            int goldReward = switch (taskId) {
+                case 0, 1, 2, 3 -> 0;
+                case 4, 5, 6 -> 1_000;
+                case 7 -> 5_000;
+                case 8, 10 -> 10_000;
+                case 12 -> 20_000;
+                case 14 -> 50_000;
+                case 15, 16 -> 100_000;
+                case 17 -> 200_000;
+                case 18 -> 500_000;
+                case 19 -> 1_000_000;
+                case 20 -> 5_000_000;
+                case 21, 22, 23 -> 2_000_000;
+                case 24, 25, 26, 27, 28, 29 -> 1_000_000;
+                case 31 -> 2_000_000;
+                default -> 0;
+            };
+            if (goldReward > 0) {
+                player.inventory.addGold(goldReward);
+            }
+
+            // 3. Thưởng mốc lớn (Milestone Cột Mốc)
+            switch (taskId) {
+                case 7 -> {
+                    player.inventory.gem += 20;
+                    Service.gI().sendThongBao(player, "Thưởng cột mốc: 20 Ngọc Xanh!");
+                }
+                case 11 -> {
+                    Item capsule = ItemService.gI().createNewItem((short) 193, 10);
+                    InventoryService.gI().addItemBag(player, capsule);
+                    Service.gI().sendThongBao(player, "Sư phụ thưởng: 10 Capsule Vàng!");
+                }
+                case 23 -> {
+                    player.inventory.gem += 100;
+                    Item thoiVang = ItemService.gI().createNewItem((short) 457, 5);
+                    InventoryService.gI().addItemBag(player, thoiVang);
+                    Service.gI().sendThongBao(player, "Chiến thắng Fide: Thưởng 100 Ngọc & 5 Thỏi Vàng!");
+                }
+                case 29 -> {
+                    player.inventory.ruby += 50;
+                    Item daNangCap = ItemService.gI().createNewItem((short) 223, 10);
+                    InventoryService.gI().addItemBag(player, daNangCap);
+                    Service.gI().sendThongBao(player, "Chinh phục Siêu Bọ Hung: Thưởng 50 Hồng Ngọc & 10 Đá May Mắn!");
+                }
+            }
+
+            InventoryService.gI().sendItemBags(player);
+            PlayerService.gI().sendInfoHpMpMoney(player);
+            if (rewardSMTN > 0 && goldReward > 0) {
+                Service.gI().sendThongBao(player, "Chúc mừng bạn nhận được " + Util.formatNumber(rewardSMTN) + " sức mạnh, "
+                        + Util.formatNumber(rewardSMTN) + " tiềm năng và " + Util.formatNumber(goldReward) + " vàng!");
+            } else if (rewardSMTN > 0) {
+                Service.gI().sendThongBao(player, "Chúc mừng bạn nhận được " + Util.formatNumber(rewardSMTN) + " sức mạnh và "
+                        + Util.formatNumber(rewardSMTN) + " tiềm năng!");
+            }
             Service.gI().point(player);
+            PlayerAuditLogger.logAction(player, "TASK_REWARD", "Completed Task " + taskId + " -> SMTN: +" + rewardSMTN + ", Gold: +" + goldReward);
         }
     }
 
     private boolean addDoneSubTask(Player player) {
-        player.playerTask.taskMain.subTasks.get(player.playerTask.taskMain.index).count += 1;
-        if (player.playerTask.taskMain.subTasks.get(player.playerTask.taskMain.index).count
-                >= player.playerTask.taskMain.subTasks.get(player.playerTask.taskMain.index).maxCount) {
-            player.playerTask.taskMain.index++;
-            if (player.playerTask.taskMain.index >= player.playerTask.taskMain.subTasks.size()) {
-                this.sendNextTaskMain(player);
-            } else {
-                this.sendNextSubTask(player);
-            }
-            return true;
-        } else {
-            this.sendUpdateCountSubTask(player);
+        if (player == null || player.playerTask == null || player.playerTask.taskMain == null) {
             return false;
+        }
+        synchronized (player.playerTask) {
+            TaskMain tm = player.playerTask.taskMain;
+            if (tm.subTasks == null || tm.subTasks.isEmpty()) {
+                return false;
+            }
+            if (tm.index < 0) {
+                tm.index = 0;
+            }
+            if (tm.index >= tm.subTasks.size()) {
+                tm.index = tm.subTasks.size() - 1;
+                return false;
+            }
+            SubTaskMain currentStm = tm.subTasks.get(tm.index);
+            currentStm.count += 1;
+            PlayerAuditLogger.logAction(player, "TASK_PROGRESS", "Task ID " + tm.id + " SubTask " + tm.index + ": count=" + currentStm.count + "/" + currentStm.maxCount);
+            if (currentStm.count >= currentStm.maxCount) {
+                tm.index++;
+                if (tm.index >= tm.subTasks.size()) {
+                    this.sendNextTaskMain(player);
+                } else {
+                    this.sendNextSubTask(player);
+                }
+                return true;
+            } else {
+                this.sendUpdateCountSubTask(player);
+                return false;
+            }
         }
     }
 
@@ -848,7 +1087,7 @@ public class TaskService {
             return player.gender == ConstPlayer.TRAI_DAT
                     ? 39 : (player.gender == ConstPlayer.NAMEC
                             ? 40 : 41);
-        } else if (id == ConstTask.MAP_200) {
+        } else if (id == ConstTask.MAP_500) {
             return player.gender == ConstPlayer.TRAI_DAT
                     ? 2 : (player.gender == ConstPlayer.NAMEC
                             ? 9 : 16);
@@ -898,6 +1137,7 @@ public class TaskService {
         if (text == null) {
             return "";
         }
+        text = text.replace("\\r\\n", "\n").replace("\\n", "\n");
         switch (player.gender) {
             case ConstPlayer.TRAI_DAT:
                 text = text.replaceAll(ConstTask.TEN_QUAI_1000, "phi long mẹ");
@@ -970,179 +1210,335 @@ public class TaskService {
         return null;
     }
 
-    // -------------------------------------------------------------------------
-    // Hàm nhận nhiệm vụ: Giữ nguyên logic chọn độ khó, chỉ thay đổi cách lấy danh sách nhiệm vụ
-    // -------------------------------------------------------------------------
-    public void changeSideTask(Player player, byte level) {
-        player.playerTask.sideTask.renew();
-        if (player.playerTask.sideTask.leftTask > 0) {
-            player.playerTask.sideTask.reset();
-
-            // 1. Lọc nhiệm vụ theo Map (Code cũ đã làm ở bước trước)
-            List<SideTaskTemplate> suitableTasks = getSideTaskTemplatesByLevel(player);
-            if (suitableTasks.isEmpty()) {
-                suitableTasks.add(Manager.SIDE_TASKS_TEMPLATE.get(0));
-            }
-
-            // 2. Chọn nhiệm vụ
-            SideTaskTemplate temp = suitableTasks.get(Util.nextInt(0, suitableTasks.size() - 1));
-            player.playerTask.sideTask.template = temp;
-
-            // --- 3. TĂNG SỐ LƯỢNG QUÁI TẠI ĐÂY ---
-            // Code cũ:
-            // player.playerTask.sideTask.maxCount = Util.nextInt(temp.count[level][0], temp.count[level][1]);
-            // Code MỚI (Nhân 100):
-            int baseCount = Util.nextInt(temp.count[level][0], temp.count[level][1]);
-            player.playerTask.sideTask.maxCount = baseCount * 100;
-            // -------------------------------------
-
-            player.playerTask.sideTask.leftTask--;
-            player.playerTask.sideTask.level = level;
-            player.playerTask.sideTask.receivedTime = System.currentTimeMillis();
-            Service.gI().sendThongBao(player, "Bạn nhận được nhiệm vụ: " + player.playerTask.sideTask.getName());
-        } else {
-            Service.gI().sendThongBao(player,
-                    "Bạn đã nhận hết nhiệm vụ hôm nay. Hãy chờ tới ngày mai rồi nhận tiếp");
+    public boolean checkConditionSideTask(Player player, byte level) {
+        if (player.playerTask.sideTask.leftTask <= 0) {
+            Service.gI().sendThongBao(player, "Hôm nay bạn đã hoàn thành tối đa 20/20 nhiệm vụ rồi. Hãy quay lại vào ngày mai nhé!");
+            return false;
         }
+
+        if (player.playerTask.sideTask.cancelCount > 3) {
+            int remainSeconds = player.playerTask.sideTask.getRemainingCooldownSeconds();
+            if (remainSeconds > 0) {
+                int minutes = remainSeconds / 60;
+                int seconds = remainSeconds % 60;
+                String timeStr = (minutes > 0 ? minutes + " phút " : "") + seconds + " giây";
+                Service.gI().sendThongBao(player, "Bạn đã hủy nhiệm vụ quá 3 lần hôm nay! Cần chờ " + timeStr + " mới có thể nhận lại (hoặc dùng 1 Ngọc Xanh để đổi ngay).");
+                return false;
+            }
+        }
+
+        long power = player.nPoint.power;
+        int taskMainId = player.playerTask.taskMain.id;
+
+        switch (level) {
+            case ConstTask.EASY:
+                if (power < 1000) {
+                    Service.gI().sendThongBao(player, "Sức mạnh của bạn cần đạt tối thiểu 1.000 để nhận nhiệm vụ Dễ!");
+                    return false;
+                }
+                break;
+            case ConstTask.NORMAL:
+                if (power < 1_500_000) {
+                    Service.gI().sendThongBao(player, "Sức mạnh của bạn chưa đủ! Cần đạt tối thiểu 1.500.000 sức mạnh để nhận nhiệm vụ Bình thường!");
+                    return false;
+                }
+                if (taskMainId < 8) {
+                    Service.gI().sendThongBao(player, "Bạn cần hoàn thành nhiệm vụ Tàu vũ trụ (Nhiệm vụ chính cấp 8) mới có thể đi tới bản đồ của cấp độ này!");
+                    return false;
+                }
+                break;
+            case ConstTask.HARD:
+                if (power < 15_000_000) {
+                    Service.gI().sendThongBao(player, "Sức mạnh của bạn chưa đủ! Cần đạt tối thiểu 15.000.000 sức mạnh để nhận nhiệm vụ Khó!");
+                    return false;
+                }
+                if (taskMainId < 16) {
+                    Service.gI().sendThongBao(player, "Bạn cần hoàn thành nhiệm vụ chính tuyến đến Fide (Nhiệm vụ chính cấp 16) mới có thể tới được các bản đồ này!");
+                    return false;
+                }
+                break;
+            case ConstTask.VERY_HARD:
+                if (power < 150_000_000) {
+                    Service.gI().sendThongBao(player, "Sức mạnh của bạn chưa đủ! Cần đạt tối thiểu 150.000.000 sức mạnh để nhận nhiệm vụ Siêu khó!");
+                    return false;
+                }
+                if (taskMainId < 22) {
+                    Service.gI().sendThongBao(player, "Bạn cần hoàn thành nhiệm vụ đến Tương Lai / Xên Bọ Hung (Nhiệm vụ chính cấp 22) mới có thể gặp được quái cấp độ này!");
+                    return false;
+                }
+                break;
+            case ConstTask.HELL:
+                if (power < 1_500_000_000L) {
+                    Service.gI().sendThongBao(player, "Sức mạnh của bạn chưa đủ! Cần đạt tối thiểu 1.5 Tỷ sức mạnh để nhận nhiệm vụ Địa ngục!");
+                    return false;
+                }
+                if (taskMainId < 25) {
+                    Service.gI().sendThongBao(player, "Bạn cần hoàn thành nhiệm vụ chính tuyến cấp 25 mới có thể diện kiến và săn lùng quái vật Địa ngục!");
+                    return false;
+                }
+                break;
+        }
+
+        return true;
     }
 
-    // -------------------------------------------------------------------------
-    // HÀM LỌC NHIỆM VỤ ĐÃ SỬA LỖI LOGIC SO SÁNH
-    // -------------------------------------------------------------------------
-    private List<SideTaskTemplate> getSideTaskTemplatesByLevel(Player player) {
-        List<SideTaskTemplate> list = new ArrayList<>();
+    public void changeSideTask(Player player, byte level) {
+        player.playerTask.sideTask.renew();
+        if (!checkConditionSideTask(player, level)) {
+            return;
+        }
 
-        // Lấy ID nhiệm vụ chính (VD: 27 là nhiệm vụ Cell)
+        player.playerTask.sideTask.reset();
+
+        List<SideTaskTemplate> suitableTasks = getSideTaskTemplatesByLevel(player, level);
+        if (suitableTasks.isEmpty()) {
+            suitableTasks.add(Manager.SIDE_TASKS_TEMPLATE.get(0));
+        }
+
+        SideTaskTemplate temp = suitableTasks.get(Util.nextInt(0, suitableTasks.size() - 1));
+        player.playerTask.sideTask.template = temp;
+
+        int baseCount = Util.nextInt(temp.count[level][0], temp.count[level][1]);
+        if (baseCount <= 0) {
+            baseCount = 10;
+        }
+        player.playerTask.sideTask.maxCount = baseCount;
+        player.playerTask.sideTask.level = level;
+        player.playerTask.sideTask.receivedTime = System.currentTimeMillis();
+        Service.gI().sendThongBao(player, "Bạn nhận được nhiệm vụ: " + player.playerTask.sideTask.getName()
+                + " (" + player.playerTask.sideTask.getLevel() + ")");
+    }
+
+    private List<SideTaskTemplate> getSideTaskTemplatesByLevel(Player player, byte level) {
+        List<SideTaskTemplate> list = new ArrayList<>();
         int currentTaskID = player.playerTask.taskMain.id;
 
-        // Xác định ID Mob bắt đầu và kết thúc
-        int minMobId = 0;
-        int maxMobId = 999;
-
-        // --- SỬA LỖI TẠI ĐÂY: SO SÁNH TRỰC TIẾP VỚI SỐ 20 VÀ 25 ---
-        if (currentTaskID < 20) {
-            // Giai đoạn 1: Trước khi đến Cold (NV < 20)
-            // Nhận nhiệm vụ quái: Khủng long (0) -> Quỷ (27)
-            minMobId = 0;
-            maxMobId = 27;
-        } else if (currentTaskID < 25) {
-            // Giai đoạn 2: Map Cold/Fide (NV từ 20 đến 24)
-            // Nhận nhiệm vụ quái: Lính Fide (28) -> Quỷ chim/Khỉ (khoảng 45)
-            minMobId = 28;
-            maxMobId = 45;
-        } else {
-            // Giai đoạn 3: Map Tương Lai/Cell (NV >= 25)
-            // Nhận nhiệm vụ quái: Cell con (46) -> Trở lên
-            minMobId = 46;
-            maxMobId = 999;
+        switch (level) {
+            case ConstTask.EASY: {
+                List<Integer> allowedTaskIds = new ArrayList<>();
+                if (currentTaskID < 7) {
+                    if (player.gender == ConstPlayer.TRAI_DAT) {
+                        allowedTaskIds.addAll(Arrays.asList(0, 3, 6, 9, 12));
+                    } else if (player.gender == ConstPlayer.NAMEC) {
+                        allowedTaskIds.addAll(Arrays.asList(1, 4, 7, 10, 13));
+                    } else {
+                        allowedTaskIds.addAll(Arrays.asList(2, 5, 8, 11, 14));
+                    }
+                } else {
+                    for (int i = 0; i <= 14; i++) {
+                        allowedTaskIds.add(i);
+                    }
+                }
+                allowedTaskIds.add(58); // Nhặt vàng
+                for (int tId : allowedTaskIds) {
+                    SideTaskTemplate t = getSideTaskTemplateById(tId);
+                    if (t != null) {
+                        list.add(t);
+                    }
+                }
+                break;
+            }
+            case ConstTask.NORMAL: {
+                for (int i = 15; i <= 23; i++) {
+                    SideTaskTemplate t = getSideTaskTemplateById(i);
+                    if (t != null) {
+                        list.add(t);
+                    }
+                }
+                SideTaskTemplate goldTask = getSideTaskTemplateById(58);
+                if (goldTask != null) {
+                    list.add(goldTask);
+                }
+                break;
+            }
+            case ConstTask.HARD: {
+                for (int i = 24; i <= 45; i++) {
+                    SideTaskTemplate t = getSideTaskTemplateById(i);
+                    if (t != null) {
+                        list.add(t);
+                    }
+                }
+                break;
+            }
+            case ConstTask.VERY_HARD: {
+                for (int i = 46; i <= 53; i++) {
+                    SideTaskTemplate t = getSideTaskTemplateById(i);
+                    if (t != null) {
+                        list.add(t);
+                    }
+                }
+                break;
+            }
+            case ConstTask.HELL: {
+                for (int i = 52; i <= 57; i++) {
+                    SideTaskTemplate t = getSideTaskTemplateById(i);
+                    if (t != null) {
+                        list.add(t);
+                    }
+                }
+                break;
+            }
         }
 
-        // --- Debug log: In ra console để kiểm tra nếu vẫn lỗi ---
-        // System.out.println("Player Task: " + currentTaskID + " | Range Mob: " + minMobId + " - " + maxMobId);
-        for (SideTaskTemplate template : Manager.SIDE_TASKS_TEMPLATE) {
-            List<Integer> mobs = SIDE_TASK_MOB_MAP.get(template.id);
-            if (mobs == null || mobs.isEmpty()) {
-                continue;
-            }
-
-            int mobIdInTask = mobs.get(0); // Lấy ID quái đại diện
-
-            // Lọc: Chỉ lấy nhiệm vụ có quái nằm trong khoảng cho phép
-            if (mobIdInTask >= minMobId && mobIdInTask <= maxMobId) {
-                list.add(template);
-            }
+        if (list.isEmpty()) {
+            list.add(Manager.SIDE_TASKS_TEMPLATE.get(0));
         }
-
         return list;
     }
 
     public void removeSideTask(Player player) {
-        Service.gI().sendThongBao(player, "Bạn vừa hủy bỏ nhiệm vụ " + player.playerTask.sideTask.getName());
-        player.playerTask.sideTask.reset();
+        if (player.playerTask.sideTask.template != null) {
+            Service.gI().sendThongBao(player, "Bạn vừa hủy bỏ nhiệm vụ: " + player.playerTask.sideTask.getName());
+            player.playerTask.sideTask.lastTimeCancel = System.currentTimeMillis();
+            player.playerTask.sideTask.cancelCount++;
+            player.playerTask.sideTask.reset();
+
+            if (player.playerTask.sideTask.cancelCount <= 3) {
+                int leftFree = 3 - player.playerTask.sideTask.cancelCount;
+                Service.gI().sendThongBao(player, "Bạn còn " + leftFree + " lần đổi nhiệm vụ miễn phí hôm nay.");
+            } else {
+                Service.gI().sendThongBao(player, "Bạn đã hết lượt đổi miễn phí! Lần sau cần chờ hồi chiêu 5 phút (hoặc dùng 1 Ngọc Xanh để đổi ngay).");
+            }
+        }
     }
 
-    // FIX: Xóa biến canNhanCayThong static, xử lý logic quà local
+    public void quickResetSideTaskWithGem(Player player, Npc npc) {
+        if (player.inventory.gem < 1) {
+            Service.gI().sendThongBao(player, "Bạn không đủ Ngọc Xanh để đổi nhiệm vụ ngay!");
+            return;
+        }
+        player.inventory.subGem(1);
+        Service.gI().sendMoney(player);
+        player.playerTask.sideTask.lastTimeCancel = 0; // Xóa thời gian chờ
+        Service.gI().sendThongBao(player, "Đã xóa thời gian chờ thành công! Bạn có thể chọn nhiệm vụ mới ngay bây giờ.");
+        if (npc != null) {
+            npc.createOtherMenu(player, ConstNpc.MENU_OPTION_LEVEL_SIDE_TASK,
+                    "Tôi có vài nhiệm vụ theo cấp bậc, sức cậu có thể làm được cái nào?\n(Lưu ý: Cần đủ Sức mạnh và đã mở bản đồ tương ứng)",
+                    "Dễ\n(Tân thủ)",
+                    "Bình thường\n(>= 1.5M SM)",
+                    "Khó\n(>= 15M SM)",
+                    "Siêu khó\n(>= 150M SM)",
+                    "Địa ngục\n(>= 1.5 Tỷ SM)",
+                    "Từ chối");
+        }
+    }
+
     public void paySideTask(Player player) {
         if (player.playerTask.sideTask.template != null) {
             if (player.playerTask.sideTask.isDone()) {
-                int gemReward = 0;
-                int ngocrong = ConstItem.NGOC_RONG_BANG_5_SAO; // 929
-                int khanchoang = 1312;
-                int cayThong = -1;
+                if (InventoryService.gI().getCountEmptyBag(player) < 2) {
+                    Service.gI().sendThongBao(player, "Hành trang cần tối thiểu 2 ô trống để nhận thưởng!");
+                    return;
+                }
 
-                // Logic thưởng theo cấp độ
-                switch (player.playerTask.sideTask.level) {
+                int level = player.playerTask.sideTask.level;
+                long tnsmReward = 0;
+                int goldReward = 0;
+                int gemReward = 0;
+                int thoiVangQty = 0;
+                Item luckyReward = null;
+
+                switch (level) {
                     case ConstTask.EASY:
-                        gemReward = 1;
-                        ngocrong = ConstItem.NGOC_RONG_BANG_5_SAO;
-                        khanchoang = 1209;
+                        tnsmReward = Util.nextInt(100_000, 300_000);
+                        goldReward = 50_000;
+                        gemReward = 2;
+                        if (Util.isTrue(1, 10)) { // 10% Capsule 1 lần
+                            luckyReward = ItemService.gI().createNewItem((short) 193, 1);
+                        }
                         break;
                     case ConstTask.NORMAL:
-                        gemReward = 1;
-                        ngocrong = ConstItem.NGOC_RONG_BANG_5_SAO;
-                        khanchoang = 1312;
+                        tnsmReward = Util.nextInt(1_000_000, 3_000_000);
+                        goldReward = 200_000;
+                        gemReward = 5;
+                        if (Util.isTrue(2, 10)) { // 20% Đá nâng cấp cấp 1 (Lục bảo, Saphia)
+                            luckyReward = ItemService.gI().createNewItem((short) Util.nextInt(220, 221), 1);
+                        }
                         break;
                     case ConstTask.HARD:
-                        gemReward = 1;
-                        ngocrong = ConstItem.NGOC_RONG_BANG_5_SAO;
-                        khanchoang = 1312;
+                        tnsmReward = Util.nextInt(5_000_000, 15_000_000);
+                        goldReward = 1_000_000;
+                        gemReward = 10;
+                        thoiVangQty = 1;
+                        if (Util.isTrue(3, 10)) { // 30% Đá Ruby, Titan, Thạch anh tím (222-224)
+                            luckyReward = ItemService.gI().createNewItem((short) Util.nextInt(222, 224), 1);
+                        }
                         break;
                     case ConstTask.VERY_HARD:
-                        gemReward = 1;
-                        ngocrong = ConstItem.NGOC_RONG_BANG_5_SAO;
-                        khanchoang = 1312;
+                        tnsmReward = Util.nextInt(25_000_000, 60_000_000);
+                        goldReward = 3_000_000;
+                        gemReward = 20;
+                        thoiVangQty = 2;
                         if (player.playerTask.taskdh.TaskBoMong < 10) {
                             player.playerTask.taskdh.TaskBoMong++;
                             player.playerTask.taskdh.ResetTime = System.currentTimeMillis();
                         }
+                        if (Util.isTrue(5, 10)) { // 50% Ngọc rồng 4-7 sao
+                            luckyReward = ItemService.gI().createNewItem((short) Util.nextInt(17, 20), 1);
+                        }
                         break;
                     case ConstTask.HELL:
-                        gemReward = 1;
-                        ngocrong = ConstItem.NGOC_RONG_BANG_5_SAO;
-                        khanchoang = 1312;
-                        if (player.playerTask.sideTask.leftTask < 15) {
-                            cayThong = ConstItem.CAY_THONG; // 822
+                        tnsmReward = Util.nextInt(100_000_000, 250_000_000);
+                        goldReward = 10_000_000;
+                        gemReward = 50;
+                        thoiVangQty = 5;
+                        if (player.playerTask.taskdh.TaskBoMong < 10) {
+                            player.playerTask.taskdh.TaskBoMong++;
+                            player.playerTask.taskdh.ResetTime = System.currentTimeMillis();
                         }
+                        luckyReward = ItemService.gI().createNewItem((short) Util.nextInt(222, 224), Util.nextInt(1, 3));
                         break;
                 }
 
-                if (InventoryService.gI().getCountEmptyBag(player) > 1) {
-                    // Logic nhận cây thông:
-                    // Ở đây bạn cần quyết định xem người chơi có được nhận cây thông không dựa trên điều kiện của người chơi
-                    // Chứ không dùng biến static canNhanCayThong.
-                    // Ví dụ: tỉ lệ ngẫu nhiên hoặc giới hạn ngày. Ở đây mình để logic nhận luôn nếu có slot
-                    if (cayThong != -1) {
-                        Item cT = ItemService.gI().createNewItem((short) cayThong);
-                        if (Util.isTrue(1, 2)) {
-                            cT.itemOptions.add(new Item.ItemOption(Util.nextInt(11, 13), 100));
-                        }
-                        cT.itemOptions.add(new Item.ItemOption(24, 0));
-                        cT.itemOptions.add(new Item.ItemOption(110, Util.nextInt(118, 126)));
-                        cT.itemOptions.add(new Item.ItemOption(110, Util.nextInt(110, 113)));
-                        cT.itemOptions.add(new Item.ItemOption(93, 30));
-                        InventoryService.gI().addItemBag(player, cT);
-                        Service.gI().sendThongBao(player, "Bạn nhận được " + cT.template.name);
-                    } else {
-                        Item rong = ItemService.gI().createNewItem((short) ngocrong);
-                        Item khan = ItemService.gI().createNewItem((short) khanchoang);
-                        rong.itemOptions.add(new Item.ItemOption(87, 1));
-                        InventoryService.gI().addItemBag(player, rong);
-                        InventoryService.gI().addItemBag(player, khan);
-                        Service.gI().sendThongBao(player, "Bạn nhận được " + rong.template.name);
-                        Service.gI().sendThongBao(player, "Bạn nhận được " + khan.template.name);
-                    }
-                    Item ngocxanh = ItemService.gI().createNewItem((short) 77, (short) Util.nextInt(1, 10));
-                    ngocxanh.quantity = gemReward;
-                    InventoryService.gI().sendItemBags(player);
-                    InventoryService.gI().addItemBag(player, ngocxanh);
-                    Service.gI().sendMoney(player);
-                    Service.gI().sendThongBao(player, "Bạn nhận được "
-                            + Util.powerToString(gemReward) + "ngọc xanh");
+                // Trừ 1 lượt hoàn thành trong ngày
+                player.playerTask.sideTask.leftTask--;
 
-                    player.playerTask.sideTask.reset();
-                } else {
-                    Service.gI().sendThongBao(player, "Hành trang không đủ chỗ trống.");
+                // Trao Tiềm năng & Sức mạnh
+                if (tnsmReward > 0) {
+                    Service.gI().addSMTN(player, (byte) 2, tnsmReward, true);
                 }
+
+                // Trao Vàng
+                if (goldReward > 0) {
+                    player.inventory.gold += goldReward;
+                    if (player.inventory.gold > models.player.Inventory.LIMIT_GOLD) {
+                        player.inventory.gold = models.player.Inventory.LIMIT_GOLD;
+                    }
+                }
+
+                // Trao Ngọc xanh
+                if (gemReward > 0) {
+                    player.inventory.addGem(gemReward);
+                }
+
+                // Trao Thỏi Vàng
+                if (thoiVangQty > 0) {
+                    Item thoiVang = ItemService.gI().createNewItem((short) ConstItem.THOI_VANG, thoiVangQty);
+                    InventoryService.gI().addItemBag(player, thoiVang);
+                }
+
+                // Trao Quà may mắn
+                if (luckyReward != null) {
+                    InventoryService.gI().addItemBag(player, luckyReward);
+                }
+
+                InventoryService.gI().sendItemBags(player);
+                Service.gI().sendMoney(player);
+
+                // Thông báo chi tiết
+                StringBuilder sb = new StringBuilder("Chúc mừng! Bạn nhận được:\n");
+                sb.append("- ").append(Util.powerToString(tnsmReward)).append(" Tiềm năng & Sức mạnh\n");
+                sb.append("- ").append(Util.powerToString(goldReward)).append(" Vàng\n");
+                sb.append("- ").append(gemReward).append(" Ngọc Xanh");
+                if (thoiVangQty > 0) {
+                    sb.append("\n- ").append(thoiVangQty).append(" Thỏi Vàng");
+                }
+                if (luckyReward != null) {
+                    sb.append("\n- ").append(luckyReward.template.name);
+                }
+                Service.gI().sendThongBao(player, sb.toString());
+
+                player.playerTask.sideTask.reset();
             } else {
                 Service.gI().sendThongBao(player, "Bạn chưa hoàn thành nhiệm vụ");
             }
@@ -1168,7 +1564,7 @@ public class TaskService {
     }
 
     public void checkDoneSideTaskPickItem(Player player, ItemMap item) {
-        if (player.playerTask != null && player.playerTask.sideTask != null && player.playerTask.sideTask.template != null) {
+        if (player.playerTask != null && player.playerTask.sideTask != null && player.playerTask.sideTask.template != null && item != null && item.itemTemplate != null) {
             if ((player.playerTask.sideTask.template.id == 58 && item.itemTemplate.type == 9)) {
                 player.playerTask.sideTask.count += item.quantity;
                 notifyProcessSideTask(player);
@@ -1178,53 +1574,57 @@ public class TaskService {
 
     // Refactor: Tách logic kiểm tra % ra để tái sử dụng hoặc cho gọn code
     private void notifyProcessSideTask(Player player) {
-        int percentDone = player.playerTask.sideTask.getPercentProcess();
+        SideTask st = player.playerTask.sideTask;
+        if (st.count > st.maxCount) {
+            st.count = st.maxCount;
+        }
+        int percentDone = st.getPercentProcess();
         boolean notify = false;
-        if (percentDone != 100) {
-            // Logic kiểm tra ngưỡng phần trăm để thông báo
-            // Có thể tối ưu bằng cách lưu lastNotifyPercent vào object task để tránh if nhiều
-            // Nhưng giữ nguyên logic cũ cho an toàn với structure hiện tại
-            if (!player.playerTask.sideTask.notify90 && percentDone >= 90) {
-                player.playerTask.sideTask.notify90 = true;
+        if (percentDone < 100) {
+            if (!st.notify90 && percentDone >= 90) {
+                st.notify90 = true;
                 notify = true;
-            } else if (!player.playerTask.sideTask.notify80 && percentDone >= 80) {
-                player.playerTask.sideTask.notify80 = true;
+            } else if (!st.notify80 && percentDone >= 80) {
+                st.notify80 = true;
                 notify = true;
-            } else if (!player.playerTask.sideTask.notify70 && percentDone >= 70) {
-                player.playerTask.sideTask.notify70 = true;
+            } else if (!st.notify70 && percentDone >= 70) {
+                st.notify70 = true;
                 notify = true;
-            } else if (!player.playerTask.sideTask.notify60 && percentDone >= 60) {
-                player.playerTask.sideTask.notify60 = true;
+            } else if (!st.notify60 && percentDone >= 60) {
+                st.notify60 = true;
                 notify = true;
-            } else if (!player.playerTask.sideTask.notify50 && percentDone >= 50) {
-                player.playerTask.sideTask.notify50 = true;
+            } else if (!st.notify50 && percentDone >= 50) {
+                st.notify50 = true;
                 notify = true;
-            } else if (!player.playerTask.sideTask.notify40 && percentDone >= 40) {
-                player.playerTask.sideTask.notify40 = true;
+            } else if (!st.notify40 && percentDone >= 40) {
+                st.notify40 = true;
                 notify = true;
-            } else if (!player.playerTask.sideTask.notify30 && percentDone >= 30) {
-                player.playerTask.sideTask.notify30 = true;
+            } else if (!st.notify30 && percentDone >= 30) {
+                st.notify30 = true;
                 notify = true;
-            } else if (!player.playerTask.sideTask.notify20 && percentDone >= 20) {
-                player.playerTask.sideTask.notify20 = true;
+            } else if (!st.notify20 && percentDone >= 20) {
+                st.notify20 = true;
                 notify = true;
-            } else if (!player.playerTask.sideTask.notify10 && percentDone >= 10) {
-                player.playerTask.sideTask.notify10 = true;
+            } else if (!st.notify10 && percentDone >= 10) {
+                st.notify10 = true;
                 notify = true;
-            } else if (!player.playerTask.sideTask.notify0 && percentDone >= 0) {
-                player.playerTask.sideTask.notify0 = true;
+            } else if (!st.notify0 && percentDone >= 0) {
+                st.notify0 = true;
                 notify = true;
             }
 
             if (notify) {
                 Service.gI().sendThongBao(player, "Nhiệm vụ: "
-                        + player.playerTask.sideTask.getName() + " đã hoàn thành: "
-                        + player.playerTask.sideTask.count + "/" + player.playerTask.sideTask.maxCount + " ("
+                        + st.getName() + " đã hoàn thành: "
+                        + st.count + "/" + st.maxCount + " ("
                         + percentDone + "%)");
             }
         } else {
-            Service.gI().sendThongBao(player, "Chúc mừng bạn đã hoàn thành nhiệm vụ, "
-                    + "bây giờ hãy quay về Bò Mộng trả nhiệm vụ.");
+            if (!st.notify100) {
+                st.notify100 = true;
+                Service.gI().sendThongBao(player, "Chúc mừng bạn đã hoàn thành nhiệm vụ, "
+                        + "bây giờ hãy quay về Bò Mộng trả nhiệm vụ.");
+            }
         }
     }
 
@@ -1245,6 +1645,7 @@ public class TaskService {
             player.playerTask.clanTask.maxCount = Util.nextInt(temp.count[level][0], temp.count[level][1]);
             player.playerTask.clanTask.level = level;
             player.playerTask.clanTask.receivedTime = System.currentTimeMillis();
+            player.playerTask.clanTask.leftTask--;
             npc.createOtherMenu(player, ConstNpc.MENU_CLAN_TASK, "Nhiệm vụ hiện tại: " + player.playerTask.clanTask.getName() + ". Đã hạ được " + player.playerTask.clanTask.count, "OK", "Hủy bỏ\nNhiệm vụ\nnày");
         } else {
             npc.createOtherMenu(player, ConstNpc.MENU_CLAN_TASK, "Đã hết nhiệm vụ cho hôm nay, hãy chờ đến ngày mai", "OK", "Từ chối");
@@ -1253,7 +1654,6 @@ public class TaskService {
 
     public void removeClanTask(Player player) {
         Service.gI().sendThongBao(player, "Đã hủy nhiệm vụ bang.");
-        player.playerTask.clanTask.leftTask--;
         player.playerTask.clanTask.reset();
     }
 
@@ -1261,7 +1661,6 @@ public class TaskService {
         if (player.playerTask.clanTask.template != null) {
             if (player.playerTask.clanTask.isDone()) {
                 int capsuleClan = (player.playerTask.clanTask.level + 1) * 10;
-                player.playerTask.clanTask.leftTask--;
                 player.playerTask.clanTask.reset();
                 Service.gI().sendThongBao(player, "Bạn vừa nhận được "
                         + Util.powerToString(capsuleClan) + " capsule bang.");
@@ -1274,12 +1673,8 @@ public class TaskService {
                             break;
                         }
                     }
-                    for (ClanMember cm : player.clan.getMembers()) {
-                        Player pl = Client.gI().getPlayer(cm.id);
-                        if (pl != null) {
-                            ClanService.gI().sendMyClan(player);
-                        }
-                    }
+                    player.clan.sendMyClanForAllMember();
+                    player.clan.update();
                 }
             } else {
                 Service.gI().sendThongBao(player, "Bạn chưa hoàn thành nhiệm vụ");
@@ -1310,48 +1705,55 @@ public class TaskService {
     }
 
     private void notifyProcessClanTask(Player player) {
-        int percentDone = player.playerTask.clanTask.getPercentProcess();
+        ClanTask ct = player.playerTask.clanTask;
+        if (ct.count > ct.maxCount) {
+            ct.count = ct.maxCount;
+        }
+        int percentDone = ct.getPercentProcess();
         boolean notify = false;
-        if (percentDone != 100) {
-            if (!player.playerTask.clanTask.notify90 && percentDone >= 90) {
-                player.playerTask.clanTask.notify90 = true;
+        if (percentDone < 100) {
+            if (!ct.notify90 && percentDone >= 90) {
+                ct.notify90 = true;
                 notify = true;
-            } else if (!player.playerTask.clanTask.notify80 && percentDone >= 80) {
-                player.playerTask.clanTask.notify80 = true;
+            } else if (!ct.notify80 && percentDone >= 80) {
+                ct.notify80 = true;
                 notify = true;
-            } else if (!player.playerTask.clanTask.notify70 && percentDone >= 70) {
-                player.playerTask.clanTask.notify70 = true;
+            } else if (!ct.notify70 && percentDone >= 70) {
+                ct.notify70 = true;
                 notify = true;
-            } else if (!player.playerTask.clanTask.notify60 && percentDone >= 60) {
-                player.playerTask.clanTask.notify60 = true;
+            } else if (!ct.notify60 && percentDone >= 60) {
+                ct.notify60 = true;
                 notify = true;
-            } else if (!player.playerTask.clanTask.notify50 && percentDone >= 50) {
-                player.playerTask.clanTask.notify50 = true;
+            } else if (!ct.notify50 && percentDone >= 50) {
+                ct.notify50 = true;
                 notify = true;
-            } else if (!player.playerTask.clanTask.notify40 && percentDone >= 40) {
-                player.playerTask.clanTask.notify40 = true;
+            } else if (!ct.notify40 && percentDone >= 40) {
+                ct.notify40 = true;
                 notify = true;
-            } else if (!player.playerTask.clanTask.notify30 && percentDone >= 30) {
-                player.playerTask.clanTask.notify30 = true;
+            } else if (!ct.notify30 && percentDone >= 30) {
+                ct.notify30 = true;
                 notify = true;
-            } else if (!player.playerTask.clanTask.notify20 && percentDone >= 20) {
-                player.playerTask.clanTask.notify20 = true;
+            } else if (!ct.notify20 && percentDone >= 20) {
+                ct.notify20 = true;
                 notify = true;
-            } else if (!player.playerTask.clanTask.notify10 && percentDone >= 10) {
-                player.playerTask.clanTask.notify10 = true;
+            } else if (!ct.notify10 && percentDone >= 10) {
+                ct.notify10 = true;
                 notify = true;
-            } else if (!player.playerTask.clanTask.notify0 && percentDone >= 0) {
-                player.playerTask.clanTask.notify0 = true;
+            } else if (!ct.notify0 && percentDone >= 0) {
+                ct.notify0 = true;
                 notify = true;
             }
             if (notify) {
                 Service.gI().sendThongBao(player, "Nhiệm vụ: "
-                        + player.playerTask.clanTask.getName() + " đã hoàn thành: "
-                        + player.playerTask.clanTask.count + "/" + player.playerTask.clanTask.maxCount + " ("
+                        + ct.getName() + " đã hoàn thành: "
+                        + ct.count + "/" + ct.maxCount + " ("
                         + percentDone + "%)");
             }
         } else {
-            Service.gI().sendThongBao(player, "Tiếp theo hãy về Bang hội báo cáo.");
+            if (!ct.notify100) {
+                ct.notify100 = true;
+                Service.gI().sendThongBao(player, "Tiếp theo hãy về Bang hội báo cáo.");
+            }
         }
     }
 }

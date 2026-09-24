@@ -8,6 +8,7 @@ import static consts.BossType.BROLY;
 import consts.ConstPlayer;
 import models.map.Zone;
 import models.player.Player;
+import managers.boss.BrolyManager;
 import services.map.ChangeMapService;
 import models.skill.Skill;
 import utils.Util;
@@ -110,8 +111,16 @@ public class DetuBroly extends Boss {
         // ------------------------------------
 
         ChangeMapService.gI().exitMap(this);
+        BrolyManager.gI().removeBoss(this);
         this.lastZone = null;
         this.lastTimeRest = System.currentTimeMillis();
         this.changeStatus(BossStatus.REST);
+        this.dispose();
+    }
+
+    @Override
+    public void rest() {
+        // Đệ tử không bao giờ tự hồi sinh từ trạng thái REST
+        // Chỉ được sinh ra khi SuperBroly xuất hiện
     }
 }

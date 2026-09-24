@@ -18,4 +18,14 @@ public class ODo extends The23rdMartialArtCongress {
         super(PHOBAN, BossID.O_DO, BossesData.O_DO);
         this.playerAtt = player;
     }
+
+    @Override
+    public void die(Player plKill) {
+        if (plKill != null && plKill.playerTask != null && plKill.playerTask.taskdh != null) {
+            if (plKill.playerTask.taskdh.ODo < 30) {
+                plKill.playerTask.taskdh.ODo++;
+            }
+        }
+        super.die(plKill);
+    }
 }

@@ -1,113 +1,87 @@
 @echo off
-title Ngoc Rong Server - Optimized RAM
 chcp 65001 > nul
+set DOCKER_CONTEXT=default
+title NRO GAME SERVER (2026)
+
+echo ===================================================================
+echo               NRO GAME SERVER LAUNCHER - AUTO DOCKER
+echo ===================================================================
+
+where docker >nul 2>&1
+if %errorlevel% neq 0 goto RUN_NATIVE
+
+docker info >nul 2>&1
+if %errorlevel% neq 0 goto RUN_NATIVE
+
+echo [OK] Da phat hien Docker dang hoat dong san sang!
 echo.
-echo ============================================
-echo      NGOC RONG SERVER - STARTING...
-echo ============================================
+echo Vui long chon che do khoi chay:
+echo   [1] KHOI DONG SIEU TOC (Native Java + Auto Docker MySQL 3308 va Redis) - [MUC DINH: 1.5 giay]
+echo   [2] Chay toan bo cum trong Docker (MySQL + Redis + Server)
+echo   [3] Chi bat Redis Cache trong Docker
+echo   [4] Dung (Down) toan bo cum Docker
 echo.
+echo Tu dong khoi dong Sieu Toc [1] sau 2 giay...
+echo -------------------------------------------------------------------
+choice /c 1234 /t 2 /d 1 /n /m "Nhap lua chon [1, 2, 3, 4] (Mac dinh: 1): "
 
-:: =============================================
-:: CẤU HÌNH RAM
-:: Xms thấp = JVM chỉ xin RAM khi thực sự cần
-:: (giống cách NetBeans chạy → RAM ban đầu thấp)
-:: Xmx là giới hạn tối đa, không đổi
-:: =============================================
-set XMS=64m
-set XMX=2048m
+if errorlevel 4 goto DOCKER_DOWN
+if errorlevel 3 goto RUN_REDIS_ONLY
+if errorlevel 2 goto RUN_DOCKER_COMPOSE
+if errorlevel 1 goto RUN_NATIVE_REDIS
 
-:: =============================================
-:: TỰ ĐỘNG TÌM JAVA
-:: =============================================
-set JAVA_EXEC=""
+:RUN_NATIVE_REDIS
+echo.
+echo [DOCKER] Kich hoat nhanh MySQL (3308) va Redis Cache trong Docker...
+docker start nro_mysql nro_redis >nul 2>&1 || docker compose up -d mysql redis >nul 2>&1
+timeout /t 2 /nobreak >nul 2>&1
+goto RUN_NATIVE
 
-where java >nul 2>&1
-if %errorlevel% == 0 (
-    set JAVA_EXEC=java
-    goto :found_java
+:RUN_DOCKER_COMPOSE
+echo.
+echo ===================================================================
+echo [DOCKER] Dang khoi dong toan bo cum Server qua Docker Compose...
+echo ===================================================================
+docker compose up -d
+if %errorlevel% neq 0 (
+    echo [LOI] Khoi dong Docker Compose that bai! Chuyen ve Native Java...
+    goto RUN_NATIVE
 )
-
-for /d %%i in (
-    "C:\Program Files\Java\jdk*"
-    "C:\Program Files\Java\jre*"
-    "C:\Program Files\Eclipse Adoptium\jdk*"
-    "C:\Program Files\Microsoft\jdk*"
-    "C:\Program Files\Amazon Corretto\*"
-) do (
-    if exist "%%i\bin\java.exe" (
-        set JAVA_EXEC="%%i\bin\java.exe"
-        goto :found_java
-    )
-)
-
-echo [LOI] Khong tim thay Java!
-echo Download: https://adoptium.net
 echo.
+echo [THANH CONG] Toan bo cum Server da chay trong Docker!
+echo Dang mo nhat ky hoat dong (Logs)...
+echo (Nhan Ctrl+C de thoat xem logs, Server van tiep tuc chay ngam).
+echo.
+docker compose logs -f nro_server
+goto END
+
+:RUN_REDIS_ONLY
+echo.
+echo [DOCKER] Dang bat Redis Cache trong Docker...
+docker compose up -d redis
+echo [OK] Redis Cache da hoat dong tai localhost:6379!
 pause
-exit /b 1
+goto END
 
-:found_java
-echo [OK] Java: %JAVA_EXEC%
+:DOCKER_DOWN
+echo.
+echo [DOCKER] Dang dung toan bo cum containers Docker...
+docker compose down
+echo [OK] Da dung toan bo dich vu Docker.
+pause
+goto END
 
-:: =============================================
-:: KIỂM TRA FILE JAR
-:: =============================================
-if not exist "dist\NROK.jar" (
-    echo [LOI] Khong tim thay dist\NROK.jar
+:RUN_NATIVE
+echo.
+echo ===================================================================
+echo           KHOI DONG NRO GAME SERVER (NATIVE JAVA 22)
+echo ===================================================================
+java -server -Xms128M -Xmx1024M -XX:+UseG1GC --add-opens java.base/jdk.internal.misc=ALL-UNNAMED --add-opens java.base/java.lang=ALL-UNNAMED "-Dio.netty.tryReflectionSetAccessible=true" "-Dfile.encoding=UTF-8" -cp "build\classes;dist\NROK.jar;lib\*" server.ServerManager
+
+if %errorlevel% neq 0 (
+    echo.
+    echo [LOI] Server dung voi ma loi %errorlevel%
     pause
-    exit /b 1
 )
 
-echo [OK] dist\NROK.jar
-echo [OK] RAM: %XMS% (khoi dau) ~ %XMX% (toi da)
-echo [OK] Thread stack: 256k (giam tu 512k mac dinh)
-echo.
-echo Server dang khoi dong...
-echo ============================================
-echo.
-
-:: =============================================
-:: CHẠY SERVER
-:: Ghi chú từng flag:
-::   -Xms64m                     → khởi đầu 64MB như NetBeans, tăng dần khi cần
-::   -Xmx2048m                   → giới hạn tối đa 2GB
-::   -Xss256k                    → giảm stack mỗi thread: 512k→256k (~18MB tiết kiệm với 75 threads)
-::   -XX:+UseG1GC                 → GC tốt cho game server
-::   -XX:MaxGCPauseMillis=200     → GC không giữ server quá 200ms
-::   -XX:+ParallelRefProcEnabled  → GC song song
-::   -XX:+DisableExplicitGC       → chặn gọi System.gc() từ code
-::   -XX:+UseStringDeduplication  → gộp String trùng → tiết kiệm RAM đáng kể
-::   -XX:G1HeapRegionSize=16m     → vùng heap lớn hơn, ít phân mảnh
-::   -XX:InitiatingHeapOccupancyPercent=35 → GC chạy sớm, giải phóng RAM thường xuyên
-::   -XX:+UnlockExperimentalVMOptions      → mở khóa tính năng thực nghiệm
-::   -XX:G1NewSizePercent=20      → 20% heap cho vùng new gen
-::   -XX:G1MaxNewSizePercent=40   → tối đa 40% heap cho new gen
-:: =============================================
-%JAVA_EXEC% ^
-    -Xms%XMS% ^
-    -Xmx%XMX% ^
-    -Xss256k ^
-    -XX:+UseG1GC ^
-    -XX:MaxGCPauseMillis=200 ^
-    -XX:+ParallelRefProcEnabled ^
-    -XX:+DisableExplicitGC ^
-    -XX:+UseStringDeduplication ^
-    -XX:G1HeapRegionSize=16m ^
-    -XX:InitiatingHeapOccupancyPercent=35 ^
-    -XX:+UnlockExperimentalVMOptions ^
-    -XX:G1NewSizePercent=20 ^
-    -XX:G1MaxNewSizePercent=40 ^
-    -Dfile.encoding=UTF-8 ^
-    -jar dist\NROK.jar
-
-:: =============================================
-:: KHI SERVER TẮT
-:: =============================================
-echo.
-if %errorlevel% == 0 (
-    echo [OK] Server da tat binh thuong.
-) else (
-    echo [LOI] Server tat voi ma loi: %errorlevel%
-)
-echo.
-pause
+:END

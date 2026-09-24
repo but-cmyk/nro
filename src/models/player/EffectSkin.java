@@ -10,7 +10,6 @@ import services.map.MapService;
 import utils.Util;
 import java.util.ArrayList;
 import java.util.List;
-import lombok.Setter;
 import services.EffectSkillService;
 import models.skill.Skill;
 import utils.Logger;
@@ -35,8 +34,11 @@ public class EffectSkin {
         "Trùm Server Đây Rồi!"
     };
 
-    @Setter
     private Player player;
+
+    public void setPlayer(Player player) {
+        this.player = player;
+    }
 
     public EffectSkin(Player player) {
         this.player = player;

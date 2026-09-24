@@ -32,6 +32,12 @@ public class MenuController {
             npc = player.zone.map.getNpc(player, idnpc);
         }
         if (npc != null) {
+            if (idnpc != ConstNpc.CALICK && idnpc != ConstNpc.LY_TIEU_NUONG && player.location != null
+                    && utils.Util.getDistance(player.location.x, player.location.y, npc.cx, npc.cy) > 200) {
+                Service.gI().sendThongBao(player, "Bạn ở quá xa NPC!");
+                Service.gI().hideWaitDialog(player);
+                return;
+            }
             npc.openBaseMenu(player);
         } else {
             Service.gI().hideWaitDialog(player);
@@ -39,26 +45,40 @@ public class MenuController {
     }
 
     public void doSelectMenu(Player player, int npcId, int select) throws IOException {
-        TransactionService.gI().cancelTrade(player);
-        switch (npcId) {
-            case ConstNpc.RONG_THIENG, ConstNpc.CON_MEO ->
-                Objects.requireNonNull(NpcManager.getNpc((byte) npcId)).confirmMenu(player, select);
-            default -> {
-                Npc npc = null;
-                if (npcId == ConstNpc.CALICK && player.zone.map.mapId != 102) {
-                    npc = NpcManager.getNpc(ConstNpc.CALICK);
-                } else if (npcId == ConstNpc.LY_TIEU_NUONG) {
-                    npc = NpcManager.getNpc(ConstNpc.LY_TIEU_NUONG);
-                } else if (player.zone != null) {
-                    npc = player.zone.map.getNpc(player, npcId);
-                }
-                if (npc != null) {
-                    npc.confirmMenu(player, select);
-                } else {
-                    Service.gI().hideWaitDialog(player);
+        if (player == null) return;
+        synchronized (player) {
+            long now = System.currentTimeMillis();
+            if (now - player.lastTimeSelectMenu < 250) {
+                return;
+            }
+            player.lastTimeSelectMenu = now;
+
+            TransactionService.gI().cancelTrade(player);
+            switch (npcId) {
+                case ConstNpc.RONG_THIENG, ConstNpc.CON_MEO ->
+                    Objects.requireNonNull(NpcManager.getNpc((byte) npcId)).confirmMenu(player, select);
+                default -> {
+                    Npc npc = null;
+                    if (npcId == ConstNpc.CALICK && player.zone.map.mapId != 102) {
+                        npc = NpcManager.getNpc(ConstNpc.CALICK);
+                    } else if (npcId == ConstNpc.LY_TIEU_NUONG) {
+                        npc = NpcManager.getNpc(ConstNpc.LY_TIEU_NUONG);
+                    } else if (player.zone != null) {
+                        npc = player.zone.map.getNpc(player, npcId);
+                    }
+                    if (npc != null) {
+                        if (npcId != ConstNpc.CALICK && npcId != ConstNpc.LY_TIEU_NUONG && player.location != null
+                                && utils.Util.getDistance(player.location.x, player.location.y, npc.cx, npc.cy) > 200) {
+                            Service.gI().sendThongBao(player, "Bạn ở quá xa NPC!");
+                            Service.gI().hideWaitDialog(player);
+                            return;
+                        }
+                        npc.confirmMenu(player, select);
+                    } else {
+                        Service.gI().hideWaitDialog(player);
+                    }
                 }
             }
         }
-
     }
 }

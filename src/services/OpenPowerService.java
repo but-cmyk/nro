@@ -41,15 +41,7 @@ public class OpenPowerService {
     }
 
     public boolean openPowerSpeed(Player player) {
-        if (player.nPoint.limitPower < NPoint.MAX_LIMIT) {
-            player.nPoint.limitPower++;
-            if (!player.isPet) {
-                Service.gI().sendThongBao(player, "Giới hạn sức mạnh của bạn đã được tăng lên 1 bậc");
-            } else {
-                Service.gI().sendThongBao(((Pet) player).master, "Giới hạn sức mạnh của đệ tử đã được tăng lên 1 bậc");
-            }
-            return true;
-        } else {
+        if (player.nPoint.limitPower >= NPoint.MAX_LIMIT) {
             if (!player.isPet) {
                 Service.gI().sendThongBao(player, "Sức mạnh của bạn đã đạt tới mức tối đa");
             } else {
@@ -57,6 +49,21 @@ public class OpenPowerService {
             }
             return false;
         }
+        if (!player.nPoint.canOpenPower()) {
+            if (!player.isPet) {
+                Service.gI().sendThongBao(player, "Sức mạnh của bạn chưa đạt mức tối đa của giới hạn hiện tại");
+            } else {
+                Service.gI().sendThongBao(((Pet) player).master, "Sức mạnh của đệ tử chưa đạt mức tối đa của giới hạn hiện tại");
+            }
+            return false;
+        }
+        player.nPoint.limitPower++;
+        if (!player.isPet) {
+            Service.gI().sendThongBao(player, "Giới hạn sức mạnh của bạn đã được tăng lên 1 bậc");
+        } else {
+            Service.gI().sendThongBao(((Pet) player).master, "Giới hạn sức mạnh của đệ tử đã được tăng lên 1 bậc");
+        }
+        return true;
     }
 
 }

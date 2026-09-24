@@ -32,6 +32,11 @@ public class Cumber extends Boss {
     public void reward(Player plKill) {
         plKill.effect.addPointTrumSanBoss();
         TaskService.gI().checkDoneTaskKillBoss(plKill, this);
+        if (plKill != null && plKill.playerTask != null && plKill.playerTask.taskdh != null) {
+            if (plKill.playerTask.taskdh.Hagucboss < 30) {
+                plKill.playerTask.taskdh.Hagucboss++;
+            }
+        }
         byte randomDo = (byte) new Random().nextInt(Manager.itemIds_tl_GN.length - 1);
         byte randomDo1 = (byte) new Random().nextInt(Manager.itemIds_tl_AWJ.length - 1);
         if (Util.isTrue(1, 3)) {
@@ -44,11 +49,13 @@ public class Cumber extends Boss {
             ItemMap item = new ItemMap(zone, 16, 1, this.location.x, this.zone.map.yPhysicInTop(this.location.x,
                     this.location.y - 24), -1);
             item.options.add(new Item.ItemOption(73, 0));
+            Service.gI().dropItemMap(this.zone, item);
         }
         if (Util.isTrue(1, 10)) {
             ItemMap item2 = new ItemMap(zone, 926, 1, this.location.x + Util.nextInt(50), this.zone.map.yPhysicInTop(this.location.x,
                     this.location.y - 24), -1);
             item2.options.add(new Item.ItemOption(87, 0));
+            Service.gI().dropItemMap(this.zone, item2);
         }
     }
 

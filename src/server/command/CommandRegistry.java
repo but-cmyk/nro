@@ -34,9 +34,16 @@ public class CommandRegistry {
             Logger.error("CLIENTS map size: " + ServerManager.CLIENTS.size() + "\n");
         });
         
+        commands.put("latency", args -> server.network.PacketProfiler.gI().printReport());
+        commands.put("prof", args -> server.network.PacketProfiler.gI().printReport());
+        
         commands.put("gc", args -> {
-            System.gc();
-            Logger.success("Garbage collection triggered manually\n");
+            Runtime rt = Runtime.getRuntime();
+            long freeMB = rt.freeMemory() / (1024 * 1024);
+            long totalMB = rt.totalMemory() / (1024 * 1024);
+            long maxMB = rt.maxMemory() / (1024 * 1024);
+            Logger.warning("Manual JVM Garbage Collection is bypassed in production to prevent Stop-The-World latency spikes. Memory: "
+                    + (totalMB - freeMB) + "/" + maxMB + " MB (Free: " + freeMB + " MB)\n");
         });
         
         commands.put("admin", args -> {

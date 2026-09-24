@@ -60,25 +60,26 @@ public class SuperRank {
 //            }
 //        }
 //    }
-    public void reward() {// code new có thể cập nhật gem player ngay sau khi nhận quà
+    public void reward() {
+        if (player == null || player.inventory == null) {
+            return;
+        }
+        if (Util.isAfterMidnight(lastRewardTime)) {
+            nhanGiai = false;
+        }
         int rw = SuperRankService.gI().reward(rank);
-        if (rw != -1 && nhanGiai == false) {
-            NpcService.gI().createTutorial(player, -1, "Bạn đang ở TOP " + rank + " võ đài Siêu Hạng và nhận được " + rw + " ngọc");
-            player.inventory.gem += rw;
-
-            Service.gI().sendMoney(player);// cline update sever
-
+        if (rw != -1 && !nhanGiai) {
             nhanGiai = true;
             lastRewardTime = System.currentTimeMillis();
+            player.inventory.addGem(rw);
+            Service.gI().sendMoney(player);
+            NpcService.gI().createTutorial(player, -1, "Bạn đang ở TOP " + rank + " võ đài Siêu Hạng và nhận được " + rw + " ngọc");
             SuperRankDAO.updatePlayer(player);
         }
-        if (rank == 1) {
+        if (rank == 1 && player.playerTask != null && player.playerTask.taskdh != null) {
             if (player.playerTask.taskdh.SieuHang < 1) {
-                int required = 1;
-                int percentDone = (int) ((double) player.playerTask.taskdh.SieuHang / required * 100);
                 player.playerTask.taskdh.SieuHang++;
                 player.playerTask.taskdh.ResetTime = System.currentTimeMillis();
-               // Service.gI().sendThongBao(player, "Tiến độ hiện tại:  " + percentDone + "%");
             }
         }
     }
