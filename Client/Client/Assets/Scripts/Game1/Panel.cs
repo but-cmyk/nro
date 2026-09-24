@@ -1865,12 +1865,14 @@ namespace Game1
                 }
                 if (item.template.strRequire > 1)
                 {
-                    string text3 = mResources.pow_request + ": " + item.template.strRequire;
-                    if (item.template.strRequire > Char.myCharz().cPower)
+                    long currentPower = (type == 21 && Char.myPetz() != null) ? Char.myPetz().cPower : Char.myCharz().cPower;
+                    string powLabel = (type == 21) ? "Sức mạnh đệ tử" : mResources.your_pow;
+                    string text3 = mResources.pow_request + ": " + Res.formatNumber(item.template.strRequire);
+                    if (item.template.strRequire > currentPower)
                     {
                         text = text + "\n|3|1|" + text3;
                         string text4 = text;
-                        text = text4 + "\n|3|1|" + mResources.your_pow + ": " + Char.myCharz().cPower;
+                        text = text4 + "\n|3|1|" + powLabel + ": " + Res.formatNumber(currentPower);
                     }
                     else
                     {
@@ -4446,22 +4448,34 @@ namespace Game1
                             }
                         }
                     }
-                    if (Char.myCharz().arrItemShop[currentTabIndex].Length == 0 && type != 17)
+                    if (Char.myCharz().arrItemShop == null || Char.myCharz().arrItemShop[currentTabIndex] == null || (Char.myCharz().arrItemShop[currentTabIndex].Length == 0 && type != 17))
                     {
                         mFont.tahoma_7_grey.drawString(g, mResources.notYetSell, xScroll + wScroll / 2, yScroll + hScroll / 2 - 10, 2);
                         return;
                     }
                 }
                 g.translate(0, -cmy);
-                Item[] array = Char.myCharz().arrItemShop[currentTabIndex];
+                if (Char.myCharz().arrItemShop == null)
+                {
+                    return;
+                }
+                Item[] array = (currentTabIndex >= 0 && currentTabIndex < Char.myCharz().arrItemShop.Length) ? Char.myCharz().arrItemShop[currentTabIndex] : null;
                 if (typeShop == 2 && (currentTabIndex == 4 || type == 17))
                 {
-                    array = Char.myCharz().arrItemShop[4];
-                    if (array.Length == 0)
+                    if (Char.myCharz().arrItemShop.Length > 4)
+                    {
+                        array = Char.myCharz().arrItemShop[4];
+                    }
+                    if (array == null || array.Length == 0)
                     {
                         mFont.tahoma_7_grey.drawString(g, mResources.notYetSell, xScroll + wScroll / 2, yScroll + hScroll / 2 - 10, 2);
                         return;
                     }
+                }
+                if (array == null || array.Length == 0)
+                {
+                    mFont.tahoma_7_grey.drawString(g, "Hiện tại chưa có vật phẩm trong mục này", xScroll + wScroll / 2, yScroll + hScroll / 2 - 10, 2);
+                    return;
                 }
                 int num = array.Length;
                 if (num == 0)
@@ -4633,12 +4647,11 @@ namespace Game1
                                     }
                                     try
                                     {
-                                        mFont2 = mFont.tahoma_7b_green;
-                                        if (!Char.myCharz().cName.Equals(item.nameNguoiKyGui))
+                                        if (!string.IsNullOrEmpty(item.nameNguoiKyGui))
                                         {
                                             mFont2 = mFont.tahoma_7b_green;
+                                            mFont2.drawString(g, item.nameNguoiKyGui, num2 + num4, num3 + 1 + mFont.tahoma_7b_red.getHeight(), mFont.RIGHT);
                                         }
-                                        mFont2.drawString(g, item.nameNguoiKyGui, num2 + num4, num3 + 1 + mFont.tahoma_7b_red.getHeight(), mFont.RIGHT);
                                     }
                                     catch (Exception)
                                     {
@@ -6062,8 +6075,6 @@ namespace Game1
         }
         private void paintItemStar(mGraphics g, string opt, int x, int y)
         {
-            g.drawImage(imgStar, x, y);
-            mFont.tahoma_7b_red.drawString(g, opt, x - imgStar.getWidth() / 2 - mFont.tahoma_7b_red.getWidth(opt) / 2 + 1, y - 1, 0);
         }
     
     
@@ -6940,11 +6951,12 @@ namespace Game1
             }
             else
             {
-                if (currentTabIndex < 0 || currentTabIndex > Char.myCharz().arrItemShop.Length - 1 || selected < 0 || selected > Char.myCharz().arrItemShop[currentTabIndex].Length - 1)
+                int tabIdx = (type == 17 || (typeShop == 2 && currentTabIndex == 4)) ? 4 : currentTabIndex;
+                if (Char.myCharz().arrItemShop == null || tabIdx < 0 || tabIdx >= Char.myCharz().arrItemShop.Length || Char.myCharz().arrItemShop[tabIdx] == null || selected < 0 || selected >= Char.myCharz().arrItemShop[tabIdx].Length)
                 {
                     return;
                 }
-                Item item = Char.myCharz().arrItemShop[currentTabIndex][selected];
+                Item item = Char.myCharz().arrItemShop[tabIdx][selected];
                 if (item != null)
                 {
                     if (Equals(GameCanvas.panel) && currentTabIndex <= 3 && typeShop == 2)
@@ -6953,7 +6965,8 @@ namespace Game1
                     }
                     mFont.tahoma_7b_white.drawString(g, item.template.name, X + 55, 24, 0);
                     string st = mResources.pow_request + " " + Res.formatNumber(item.template.strRequire);
-                    if (item.template.strRequire > Char.myCharz().cPower)
+                    long currentPower = (type == 21 && Char.myPetz() != null) ? Char.myPetz().cPower : Char.myCharz().cPower;
+                    if (item.template.strRequire > currentPower)
                     {
                         mFont.tahoma_7_yellow.drawString(g, st, X + 55, 35, 0);
                     }

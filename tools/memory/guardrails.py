@@ -128,6 +128,49 @@ def check_all():
         print("[SUCCESS] Tất cả 8/8 memory modules đạt chuẩn 100% Guardrails!")
     else:
         print("[WARNING] Có module vi phạm schema hoặc vượt giới hạn dung lượng!")
+
+    # Phase 2: Violation scan (nếu violation_scanner.py tồn tại)
+    print("\n" + "=" * 60)
+    print("KIỂM TRA VI PHẠM INVARIANT TRONG CODE THỰC TẾ")
+    print("=" * 60)
+    try:
+        from violation_scanner import run_scan
+        scan_ok = run_scan(update_counts=False)
+        if not scan_ok:
+            all_passed = False
+    except ImportError:
+        print("[SKIP] violation_scanner.py chưa được tạo")
+    except Exception as e:
+        print(f"[ERROR] Lỗi khi chạy violation scanner: {e}")
+
+    # Phase 3: Performance Alerts Check
+    print("\n" + "=" * 60)
+    print("KIỂM TRA SỰ CỐ HIỆU NĂNG SERVER (PERFORMANCE ALERTS)")
+    print("=" * 60)
+    alert_file = ROUTING_FILE.parent / "PERFORMANCE_ALERTS.json"
+    if alert_file.exists():
+        try:
+            with open(alert_file, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            open_alerts = [a for a in data.get("alerts", []) if a.get("status") == "OPEN"]
+            if open_alerts:
+                print(f"🔴 [CẢNH BÁO] Phát hiện {len(open_alerts)} chức năng đang bị nghẽn hiệu năng:")
+                for a in open_alerts:
+                    cmd = a.get("cmd")
+                    name = a.get("command_name", f"CMD_{cmd}")
+                    max_ms = a.get("max_latency_ms", 0)
+                    avg_ms = a.get("avg_latency_ms", 0)
+                    ctx = a.get("slowest_context", "")
+                    print(f"  * CMD {cmd} ({name}) | Max: {max_ms}ms, Avg: {avg_ms}ms | Context: {ctx}")
+                print("\n→ [YÊU CẦU AI AGENT]: Bóc tách rõ nguyên nhân & lập kế hoạch fix trình User phê duyệt!")
+                all_passed = False
+            else:
+                print("✅ Không có cảnh báo nghẽn hiệu năng đang mở (All clear).")
+        except Exception as e:
+            print(f"⚠️ Không đọc được PERFORMANCE_ALERTS.json: {e}")
+    else:
+        print("✅ Chưa có file PERFORMANCE_ALERTS.json (Hệ thống hoạt động bình thường).")
+
     return all_passed
 
 

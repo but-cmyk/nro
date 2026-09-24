@@ -888,6 +888,14 @@ public class TaskService {
                         }
                         npcSay(player, ConstTask.NPC_NHA, "Tốt lắm! Bây giờ con hãy đi tìm Bò Mộng ở rừng Karin để hỏi thêm tin tức về các viên ngọc rồng khác.");
                         break;
+                    case ConstTask.TASK_14_2:
+                        Item truyenTranh = InventoryService.gI().findItemBagByTemp(player, ConstItem.TRUYEN_TRANH);
+                        if (truyenTranh != null) {
+                            InventoryService.gI().subQuantityItemsBag(player, truyenTranh, truyenTranh.quantity);
+                            InventoryService.gI().sendItemBags(player);
+                        }
+                        npcSay(player, ConstTask.NPC_QUY_LAO, "Con đã tìm được truyện tranh! Rất tốt, giờ hãy tiếp tục luyện tập nhé.");
+                        break;
                     case ConstTask.TASK_9_0:
                         npcSay(player, ConstNpc.BO_MONG, "Cẩn thận! Tàu Pảy Pảy đang ở đây và hắn rất nguy hiểm!");
                         TrainingService.gI().callBoss(player, BossID.TAUPAYPAY, false);
@@ -960,6 +968,12 @@ public class TaskService {
                     InventoryService.gI().sendItemBags(player);
                 }
                 Service.gI().sendFlagBag(player);
+            } else if (taskId == 14) {
+                Item truyenTranh = InventoryService.gI().findItemBagByTemp(player, ConstItem.TRUYEN_TRANH);
+                if (truyenTranh != null) {
+                    InventoryService.gI().subQuantityItemsBag(player, truyenTranh, truyenTranh.quantity);
+                    InventoryService.gI().sendItemBags(player);
+                }
             }
             // 1. Thưởng Sức Mạnh & Tiềm Năng đúng chuẩn hiển thị trong giao diện nhiệm vụ
             long rewardSMTN = getRewardSMTNByTaskId(taskId);

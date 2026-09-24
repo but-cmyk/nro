@@ -34,6 +34,9 @@ public class CommandRegistry {
             Logger.error("CLIENTS map size: " + ServerManager.CLIENTS.size() + "\n");
         });
         
+        commands.put("latency", args -> server.network.PacketProfiler.gI().printReport());
+        commands.put("prof", args -> server.network.PacketProfiler.gI().printReport());
+        
         commands.put("gc", args -> {
             Runtime rt = Runtime.getRuntime();
             long freeMB = rt.freeMemory() / (1024 * 1024);

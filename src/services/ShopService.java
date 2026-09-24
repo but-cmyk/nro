@@ -57,6 +57,7 @@ public class ShopService {
             Service.gI().sendThongBao(player, "Không thể thực hiện khi đang giao dịch");
             return;
         }
+        Service.gI().point(player);
         if (tagName.equals("ITEMS_LUCKY_ROUND")) {
             openShopType4(player, tagName, player.inventory.itemsBoxCrackBall);
             return;

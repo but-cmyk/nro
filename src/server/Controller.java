@@ -76,7 +76,7 @@ public class Controller implements IMessageHandler {
 
     @Override
     public void onMessage(ISession s, Message _msg) {
-        long st = System.currentTimeMillis();
+        long startNs = System.nanoTime();
         MySession _session = (MySession) s;
         Player player = null;
         try {
@@ -848,11 +848,12 @@ public class Controller implements IMessageHandler {
                 Logger.warning("Lỗi controller message command: " + _msg.command + "\n");
             }
         } finally {
-            _msg.cleanup();
-            _msg.dispose();
-            long timeDo = System.currentTimeMillis() - st;
-            if (timeDo > 1000) {
-                Logger.warning(_msg.command + " - TimeOut: " + timeDo + " ms\n");
+            long elapsedNs = System.nanoTime() - startNs;
+            if (_msg != null) {
+                byte cmd = _msg.command;
+                _msg.cleanup();
+                _msg.dispose();
+                server.network.PacketProfiler.gI().record(cmd, elapsedNs, player, getCommandName(cmd));
             }
         }
     }

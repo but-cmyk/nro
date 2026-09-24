@@ -25,6 +25,7 @@ nbdist/
 **/[Uu]ser[Ss]ettings/
 **/*.log
 **/*.txt
+*.class
 TestConnection.class
 data/DataGame.class
 data/wal/

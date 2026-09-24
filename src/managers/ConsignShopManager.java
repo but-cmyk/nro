@@ -130,7 +130,11 @@ public class ConsignShopManager {
 
     public void load() {
         try (Connection con = AlyraManager.getConnection();
-             PreparedStatement ps = con.prepareStatement("SELECT * FROM shop_ky_gui ORDER BY created_at ASC");
+             PreparedStatement ps = con.prepareStatement(
+                     "SELECT shop_ky_gui.*, player.name AS player_name " +
+                     "FROM shop_ky_gui " +
+                     "LEFT JOIN player ON shop_ky_gui.player_id = player.id " +
+                     "ORDER BY shop_ky_gui.created_at ASC");
              ResultSet rs = ps.executeQuery()) {
 
             listLock.lock();
@@ -151,6 +155,10 @@ public class ConsignShopManager {
                         int quantity = rs.getInt("quantity");
                         byte isUp = rs.getByte("isUpTop");
                         boolean isBuy = rs.getByte("isBuy") == 1;
+                        String plName = rs.getString("player_name");
+                        if (plName == null) {
+                            plName = "";
+                        }
 
                         if (idPl <= 0 || itemId <= 0 || quantity <= 0) {
                             errorCount++;
@@ -189,7 +197,7 @@ public class ConsignShopManager {
                             }
                         }
 
-                        ConsignItem consignItem = new ConsignItem(id, itemId, idPl, tab, gold, gem, quantity, isUp, options, isBuy);
+                        ConsignItem consignItem = new ConsignItem(id, itemId, idPl, tab, gold, gem, quantity, isUp, options, isBuy, plName);
                         this.listItem.add(consignItem);
                         loadedCount++;
 
@@ -295,6 +303,50 @@ public class ConsignShopManager {
                 ps.executeUpdate();
             } catch (Exception e) {
                 Logger.logException(ConsignShopManager.class, e, "Lỗi updateItemUpTopAsync ID: " + itemId);
+            }
+        });
+    }
+
+    // Atomic Async DB operation - Chèn item mới vào database ngầm qua Virtual Thread (không block Netty)
+    @SuppressWarnings("unchecked")
+    public void insertItemAsync(ConsignItem item) {
+        if (item == null || item.player_sell <= 0 || item.itemId <= 0 || item.quantity <= 0) {
+            return;
+        }
+        Thread.ofVirtual().name("db-consign-insert").start(() -> {
+            String sql = "INSERT INTO `shop_ky_gui`(`id`, `player_id`, `tab`, `item_id`, `gold`, `gem`, `quantity`, `itemOption`, `isUpTop`, `isBuy`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            String optionsJson = "[]";
+            if (item.options != null && !item.options.isEmpty()) {
+                try {
+                    JSONArray jsonArray = new JSONArray();
+                    for (Item.ItemOption option : item.options) {
+                        if (option != null && option.optionTemplate != null) {
+                            JSONObject jsonObj = new JSONObject();
+                            jsonObj.put("id", option.optionTemplate.id);
+                            jsonObj.put("param", option.param);
+                            jsonArray.add(jsonObj);
+                        }
+                    }
+                    optionsJson = JSONValue.toJSONString(jsonArray);
+                } catch (Exception ignored) {
+                    optionsJson = "[]";
+                }
+            }
+            try (Connection con = AlyraManager.getConnection();
+                 PreparedStatement ps = con.prepareStatement(sql)) {
+                ps.setInt(1, item.id);
+                ps.setInt(2, item.player_sell);
+                ps.setByte(3, item.tab);
+                ps.setInt(4, item.itemId);
+                ps.setInt(5, item.goldSell);
+                ps.setInt(6, item.gemSell);
+                ps.setInt(7, item.quantity);
+                ps.setString(8, optionsJson);
+                ps.setByte(9, item.isUpTop);
+                ps.setBoolean(10, item.isBuy);
+                ps.executeUpdate();
+            } catch (Exception e) {
+                Logger.logException(ConsignShopManager.class, e, "Lỗi insertItemAsync ID: " + item.id);
             }
         });
     }
