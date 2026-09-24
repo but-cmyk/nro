@@ -1,0 +1,18 @@
+{
+  "version": "1.0.0",
+  "updated_at": "2026-09-24 15:42:34.994",
+  "alerts": [
+    {
+      "cmd": -29,
+      "command_name": "CMD_-29",
+      "max_latency_ms": 858,
+      "avg_latency_ms": 425,
+      "call_count": 4,
+      "slow_count": 2,
+      "severity": "CRITICAL",
+      "status": "OPEN",
+      "slowest_context": "Non-login session",
+      "detected_at": "2026-09-24 15:42:34.993"
+    }
+  ]
+}

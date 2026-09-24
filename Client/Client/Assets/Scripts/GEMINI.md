@@ -27,6 +27,9 @@
 - Tối Ưu GC Paint UI: Cấm gọi Substring hoặc nối chuỗi trong paintMultiLine/paint 60 FPS; phải pre-parse màu trước khi render
 - Tach biet Target HUD va Player Info: Khong tai su dung vi tri Target Bar cho Suc Manh ban than de tranh mat so khi target quai
 - Quy tắc Option Hiển Thị: Dummy option (ID 73, 206) và template rỗng/placeholder phải trả về string.Empty trong getOptionString(); tuyệt đối không fallback in chuỗi debug thô Option <id> cho người chơi.
+- Khóa Đồng Bộ Luồng: Luôn đảm bảo lock trạng thái khi thao tác đa luồng hoặc spam packet để chống bug dupe. `[2026-09-24]`
+- Kiểm tra quantity > 0 trước khi trừ, không bao giờ để quantity âm. `[2026-09-24]`
+- Đồng Bộ Trạng Thái GUIStyle IMGUI: Khi vẽ text bằng GUIStyle/GUI.Label, phải gán đồng bộ textColor cho toàn bộ trạng thái (hover, active, focused, on*) bằng color1 để tránh text đổi màu trắng khi rê chuột hoặc click. `[2026-09-24]`
 
 ## 4. Lỗi Thường Gặp Cần Tránh
 - Treo đơ UI (Freeze) khi Server phản hồi chậm hoặc disconnect nhưng Client vẫn chờ trong `InfoDlg.showWait()`.

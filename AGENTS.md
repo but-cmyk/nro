@@ -56,6 +56,7 @@ Trước khi chạm vào bất kỳ file nguồn nào, hãy nạp bất biến t
 - **Đóng Tài Nguyên DB**: 100% truy vấn JDBC dùng cú pháp `try-with-resources`. Bọc dấu backtick `` `name` `` cho tên cột MySQL 8.x.
 - **Đồng Bộ Stream 1:1**: Thứ tự write byte/int/UTF ở Server Java phải khớp tuyệt đối từng byte với Controller Client Unity C#.
 - **Zero-GC Trong Vòng Lặp Vẽ**: Cấm cấp phát `new` đối tượng trong `paint()` và `update()` của Client Unity.
+- **Cổng Phê Duyệt Hiệu Năng (Human-in-the-Loop Approval Gate)**: Khi phát hiện bất kỳ chức năng nào bị chậm (qua `PERFORMANCE_ALERTS.json` hoặc log), AI Agent bắt buộc phải: (1) Bóc tách rõ nguyên nhân gốc rễ, (2) Lập kế hoạch fix chi tiết trình User. **Chỉ khi User phê duyệt mới được bắt đầu sửa code.**
 
 ---
 

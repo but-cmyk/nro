@@ -63,7 +63,7 @@
       "core_files": [
         "src/models/map/Map.java",
         "src/models/map/Zone.java",
-        "src/models/map/Mob.java",
+        "src/models/mob/Mob.java",
         "src/models/map/TileMap.java",
         "src/services/MapService.java"
       ],
@@ -196,6 +196,97 @@
         "Đồng bộ thứ tự đọc stream 1:1 với Server Service.java",
         "Reset toàn bộ popup và cờ chuyển màn hình khi vào game tránh đơ UI",
         "Không cấp phát bộ nhớ rác (GC alloc: new string, new byte[]) trong paint() và update() 60 FPS"
+      ]
+    },
+    {
+      "domain": "clan_guild",
+      "keywords": ["clan", "bang_hoi", "clan_member", "clan_task", "boss_clan", "donate", "truong_bang", "pho_bang"],
+      "doc_module": "src/services/GEMINI.md",
+      "core_files": [
+        "src/services/ClanService.java",
+        "src/models/clan/Clan.java",
+        "src/models/clan/ClanMember.java"
+      ],
+      "key_methods": [
+        "ClanService.createClan",
+        "ClanService.addMember",
+        "ClanService.removeMember",
+        "ClanService.donateClan"
+      ],
+      "invariants": [
+        "Kiểm tra quyền trưởng/phó bang trước khi thao tác quản lý",
+        "Đồng bộ lock khi thay đổi danh sách thành viên clan tránh race condition"
+      ]
+    },
+    {
+      "domain": "pho_ban_training",
+      "keywords": ["pho_ban", "training", "instance", "dungeon", "tower", "challenge", "thu_thach"],
+      "doc_module": "src/services/GEMINI.md",
+      "core_files": [
+        "src/services/phoban/TrainingService.java"
+      ],
+      "key_methods": [
+        "TrainingService.startTraining",
+        "TrainingService.endTraining",
+        "TrainingService.checkComplete"
+      ],
+      "invariants": [
+        "Reset trạng thái phó bản khi player disconnect giữa chừng",
+        "Không cho phép vào phó bản mới khi đang trong phó bản cũ"
+      ]
+    },
+    {
+      "domain": "consign_shop",
+      "keywords": ["ky_gui", "consign", "ban_do_ky_gui", "mua_do", "market", "auction", "consign_shop"],
+      "doc_module": "src/services/GEMINI.md",
+      "core_files": [
+        "src/services/ConsignShopService.java"
+      ],
+      "key_methods": [
+        "ConsignShopService.addItem",
+        "ConsignShopService.buyItem",
+        "ConsignShopService.removeItem"
+      ],
+      "invariants": [
+        "Lock item khi thao tác ký gửi, kiểm tra quantity trước khi trừ",
+        "Kiểm tra tồn tại item trong shop trước khi cho phép mua"
+      ]
+    },
+    {
+      "domain": "event_system",
+      "keywords": ["event", "su_kien", "noel", "tet", "reward_event", "event_manager", "halloween", "trung_thu"],
+      "doc_module": "src/services/GEMINI.md",
+      "core_files": [
+        "src/event/EventManager.java"
+      ],
+      "key_methods": [
+        "EventManager.isEventActive",
+        "EventManager.getEventReward",
+        "EventManager.startEvent"
+      ],
+      "invariants": [
+        "Kiểm tra event active trước khi trao thưởng, tránh exploit sau event kết thúc",
+        "Event reward phải đi qua ItemService.addItemBag, không trực tiếp thao tác inventory"
+      ]
+    },
+    {
+      "domain": "performance_monitoring",
+      "keywords": ["latency", "do_tre", "hieu_nang", "lag", "profiler", "packet_latency", "bottleneck", "slow_packet", "performance_alert"],
+      "doc_module": "src/network/GEMINI.md",
+      "core_files": [
+        "src/server/network/PacketProfiler.java",
+        "src/server/Controller.java",
+        "tools/monitor/analyze_latency.py"
+      ],
+      "key_methods": [
+        "PacketProfiler.record",
+        "PacketProfiler.printReport",
+        "PacketProfiler.getTopLagReport"
+      ],
+      "invariants": [
+        "Zero-allocation trong hot path, chỉ dùng LongAdder/AtomicLong",
+        "Ghi log disk bất đồng bộ qua BlockingQueue, tuyệt đối không block Netty IO thread",
+        "Cổng phê duyệt: AI Agent bắt buộc phải trình User kế hoạch fix trước khi sửa code khi phát hiện nghẽn"
       ]
     }
   ]

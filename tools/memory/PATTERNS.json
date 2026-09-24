@@ -1,0 +1,102 @@
+{
+  "version": "1.0.0",
+  "description": "Dynamic Heuristic Pattern Registry - thêm/bỏ pattern mà không cần sửa Python code",
+  "patterns": [
+    {
+      "id": "concurrency_lock",
+      "regex": "(synchronized|Lock|ReentrantLock)",
+      "section": "## 3. Các Bất Biến Bắt Buộc",
+      "category": "Concurrency & Anti-Dupe Lock",
+      "template": "- Khóa Đồng Bộ Luồng: Luôn đảm bảo lock trạng thái khi thao tác đa luồng hoặc spam packet để chống bug dupe.",
+      "severity": "CRITICAL",
+      "enabled": true,
+      "violation_count": 0,
+      "last_violated": null,
+      "confirmed_useful": true
+    },
+    {
+      "id": "numeric_overflow",
+      "regex": "\\b(long)\\b\\s+(hp|damage|dame|point|tiemNang|sucManh|exp|money|xu|vang)",
+      "section": "## 3. Các Bất Biến Bắt Buộc",
+      "category": "Numeric Overflow Guard",
+      "template": "- Phòng Ngừa Tràn Số: Luôn sử dụng kiểu `long` cho các trường tích lũy (HP, sức mạnh, tiền, kinh nghiệm) để tránh tràn mốc 2 tỷ.",
+      "severity": "CRITICAL",
+      "enabled": true,
+      "violation_count": 0,
+      "last_violated": null,
+      "confirmed_useful": true
+    },
+    {
+      "id": "db_autoclose",
+      "regex": "try\\s*\\(\\s*Connection\\s+",
+      "section": "## 3. Các Bất Biến Bắt Buộc",
+      "category": "Database Auto-Close Resource",
+      "template": "- Đóng Tài Nguyên DB Tự Động: 100% truy vấn DB phải bọc trong try-with-resources để giải phóng connection về HikariCP pool.",
+      "severity": "CRITICAL",
+      "enabled": true,
+      "violation_count": 0,
+      "last_violated": null,
+      "confirmed_useful": true
+    },
+    {
+      "id": "binary_protocol",
+      "regex": "writeByte|readByte|writeShort|readShort|writeInt|readInt|writeUTF",
+      "section": "## 3. Các Bất Biến Bắt Buộc",
+      "category": "Binary Protocol Alignment 1:1",
+      "template": "- Đồng Bộ Gói Tin Nhị Phân 1:1: Mọi thứ tự write/read packet giữa Server Java và Client Unity C# phải hoàn toàn tương ứng.",
+      "severity": "CRITICAL",
+      "enabled": true,
+      "violation_count": 0,
+      "last_violated": null,
+      "confirmed_useful": true
+    },
+    {
+      "id": "null_check_player",
+      "regex": "player\\s*==\\s*null|player\\s*!=\\s*null|if\\s*\\(\\s*player\\s*==",
+      "section": "## 4. Lỗi Thường Gặp Cần Tránh",
+      "category": "Null-Check Player/Zone",
+      "template": "- Luôn null-check Player và Zone trước khi thao tác, đặc biệt trong callback async.",
+      "severity": "HIGH",
+      "enabled": true,
+      "violation_count": 0,
+      "last_violated": null,
+      "confirmed_useful": true
+    },
+    {
+      "id": "concurrent_modification",
+      "regex": "CopyOnWriteArrayList|ConcurrentHashMap|Collections\\.synchronizedList",
+      "section": "## 3. Các Bất Biến Bắt Buộc",
+      "category": "Thread-Safe Collection Guard",
+      "template": "- Dùng CopyOnWriteArrayList/ConcurrentHashMap cho collection duyệt trong vòng lặp Zone update.",
+      "severity": "HIGH",
+      "enabled": true,
+      "violation_count": 0,
+      "last_violated": null,
+      "confirmed_useful": true
+    },
+    {
+      "id": "item_quantity_check",
+      "regex": "quantity\\s*[<>=]+\\s*0|item\\.quantity|subQuantity",
+      "section": "## 3. Các Bất Biến Bắt Buộc",
+      "category": "Item Quantity Bounds",
+      "template": "- Kiểm tra quantity > 0 trước khi trừ, không bao giờ để quantity âm.",
+      "severity": "HIGH",
+      "enabled": true,
+      "violation_count": 0,
+      "last_violated": null,
+      "confirmed_useful": true
+    },
+    {
+      "id": "array_bounds",
+      "regex": "IndexOutOfBoundsException|ArrayIndexOutOfBounds|\\[\\s*index\\s*\\]",
+      "section": "## 4. Lỗi Thường Gặp Cần Tránh",
+      "category": "Array Index Bounds Check",
+      "template": "- Kiểm tra array bounds trước khi truy cập bằng index, đặc biệt skill[], item[], task[].",
+      "severity": "MEDIUM",
+      "enabled": true,
+      "violation_count": 0,
+      "last_violated": null,
+      "confirmed_useful": true
+    }
+  ]
+}

@@ -24,6 +24,9 @@
 - **Clone Item An Toàn**:
   - Khi chuyển item từ Shop hoặc Template vào túi người chơi, luôn dùng `ItemService.gI().createNewItem(...)` hoặc deep-copy, cấm gán tham chiếu trực tiếp từ Template tĩnh.
 - Bảo Vệ Giao Dịch ACID: Lưu DB đồng bộ trong Trade; nếu DB lưu thất bại bắt buộc phải rollback RAM về bagBefore để chống bug dupe qua ngắt kết nối
+- Khóa Đồng Bộ Luồng: Luôn đảm bảo lock trạng thái khi thao tác đa luồng hoặc spam packet để chống bug dupe. `[2026-09-24]`
+- Kiểm tra quantity > 0 trước khi trừ, không bao giờ để quantity âm. `[2026-09-24]`
+- Đồng bộ Stream Shop Ký Gửi: Gói -44 và -100 phải ghi writeUTF(sellerName) khi version >= 237 để khớp với Controller Client tránh lệch byte stream. `[2026-09-24]`
 
 ## 4. Lỗi Thường Gặp Cần Tránh
 - Dupe đồ qua ngắt kết nối mạng ngay thời điểm xác nhận giao dịch.
