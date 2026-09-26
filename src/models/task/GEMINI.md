@@ -20,6 +20,7 @@
   - Khi người chơi hoàn thành một mốc nhiệm vụ hoặc danh hiệu, phải đồng thời ghi nhận vào memory người chơi và gọi `PlayerDAO.updatePlayer(player)` để tránh mất tiến trình khi server crash hoặc ngắt kết nối.
 - **Tránh Spam Packet Task**:
   - Chỉ gửi packet `Service.gI().sendTask(player)` khi chỉ số `count` thay đổi thực sự hoặc chuyển mốc sub-task mới.
+- Loc nhiem vu hang ngay (Side Task / Clan Task): Bat buoc kiem tra quyen tiep can map cua nguoi choi dua tren tien trinh nhiem vu chinh (taskMain.id) va quyen di lien hanh tinh (taskMain.id >= 8) truoc khi giao nhiem vu quai. `[2026-09-24]`
 
 ## 4. Lỗi Thường Gặp Cần Tránh
 - Không kiểm tra index mảng nhiệm vụ dẫn tới `ArrayIndexOutOfBoundsException` khi người chơi đạt nhiệm vụ cuối cùng.

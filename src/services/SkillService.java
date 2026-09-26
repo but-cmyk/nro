@@ -28,6 +28,7 @@ import models.item.Item;
 import models.npc.NonInteractiveNPC;
 import server.ServerNotify;
 import services.func.EffectMapService;
+import models.player.NPoint;
 
 public class SkillService {
 
@@ -838,7 +839,7 @@ public class SkillService {
         }
         player.playerSkill.prepareTuSat = false;
         int rangeBom = SkillUtil.getRangeBom(player.playerSkill.skillSelect.point);
-        int dame = player.nPoint.hpMax;
+        long dame = player.nPoint.hpMax;
         if (player.setClothes.cadicM == 2) {
             rangeBom = SkillUtil.getRangeBom(player.playerSkill.skillSelect.point) + 200;
         }
@@ -852,14 +853,14 @@ public class SkillService {
             if (TrangBi != null && TrangBi.isNotNullItem() && TrangBi.itemOptions != null) {
                 for (Item.ItemOption io : TrangBi.itemOptions) {
                     if (io.optionTemplate.id == 231) {
-                        dame = (int) ((long) dame * 130L / 100L);
+                        dame = dame * 130L / 100L;
                         break;
                     }
                 }
             }
         }
-        if (dame > 2_000_000_000 || dame < 0) {
-            dame = 2_000_000_000;
+        if (dame < 0) {
+            dame = 0;
         }
         if (!player.isBoss) {
             for (Mob mob : player.zone.mobs) {
@@ -877,7 +878,7 @@ public class SkillService {
         if (!MapService.gI().isMapOffline(player.zone.map.mapId)) {
             for (Player pl : playersMap) {
                 if (!player.equals(pl) && canAttackPlayer(player, pl) && Util.getDistance(player, pl) <= rangeBom) {
-                    int originalDame = dame;
+                    long originalDame = dame;
                     originalDame = pl.isBoss ? player.effectSkill.isMonkey ? originalDame / 3 : originalDame / 2 : originalDame;
                     pl.injured(player, originalDame, MapService.gI().isMapYardart(player.zone.map.mapId), false);
                     PlayerService.gI().sendInfoHpMpMoney(pl);
@@ -979,7 +980,7 @@ public class SkillService {
             }
             int percentPST = plTarget.nPoint.tlPST;
             if (percentPST != 0) {
-                int damePST = (int) (dame * percentPST / 100L);
+                long damePST = (long) dame * percentPST / 100L;
                 Message msg = null;
                 try {
                     msg = new Message(56);
@@ -989,16 +990,17 @@ public class SkillService {
                     }
                     if (plAtt.isBoss && !(plAtt instanceof Broly || plAtt instanceof SuperBroly)) {
                         if (damePST > plAtt.nPoint.hpMax / 100) {
-                            int giamdame = 0;
-                            if (plAtt.nPoint.hpMax / 200 > 1) {
-                                giamdame = Util.nextInt(plAtt.nPoint.hpMax / 200);
+                            long giamdame = 0;
+                            long maxBound = plAtt.nPoint.hpMax / 200;
+                            if (maxBound > 1) {
+                                giamdame = Util.nextInt(NPoint.safeInt(maxBound));
                             }
                             damePST = plAtt.nPoint.hpMax / 100 - giamdame;
                         }
                     }
-                    damePST = plAtt.injured(plAtt, damePST, true, false);
-                    msg.writer().writeInt(plAtt.nPoint.hp);
-                    msg.writer().writeInt(damePST);
+                    int dameInflicted = plAtt.injured(plAtt, damePST, true, false);
+                    msg.writer().writeInt(NPoint.safeInt(plAtt.nPoint.hp));
+                    msg.writer().writeInt(dameInflicted);
                     msg.writer().writeBoolean(false);
                     msg.writer().writeByte(36);
                     Service.gI().sendMessAllPlayerInMap(plAtt, msg);
@@ -1077,7 +1079,7 @@ public class SkillService {
         // 8. Fix lỗi Boss Yardart
         if (plInjure instanceof Yardart) {
             if (plInjure.nPoint.hp < dameHit) {
-                dameHit = plInjure.nPoint.hp - 1;
+                dameHit = (int) Math.max(0, plInjure.nPoint.hp - 1);
                 if (dameHit == 0) return;
             } else if (plInjure.nPoint.hp <= plInjure.nPoint.hpMax / 10) {
                 return;
@@ -1208,7 +1210,7 @@ public class SkillService {
                     return player.nPoint.mp >= player.playerSkill.skillSelect.manaUse;
                 }
                 case 1 -> {
-                    int mpUse = (player.nPoint.mpMax * player.playerSkill.skillSelect.manaUse / 100);
+                    long mpUse = (player.nPoint.mpMax * player.playerSkill.skillSelect.manaUse / 100);
                     return player.nPoint.mp >= mpUse;
                 }
                 case 2 -> {
@@ -1265,7 +1267,7 @@ public class SkillService {
                     }
                 }
                 case 1 -> {
-                    int mpUse = player.nPoint.mpMax * player.playerSkill.skillSelect.manaUse / 100;
+                    long mpUse = player.nPoint.mpMax * player.playerSkill.skillSelect.manaUse / 100;
                     if (player.nPoint.mp >= mpUse) {
                         player.nPoint.setMp(player.nPoint.mp - mpUse);
                     }

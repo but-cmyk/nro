@@ -274,14 +274,23 @@ namespace Game1
     
     	public void paintFrame(mGraphics g, int f, int x, int y, int trans, int layer)
     	{
-    		if (this.frame == null || this.frame.Length == 0)
+    		if (this.frame == null || this.frame.Length == 0 || f < 0 || f >= this.frame.Length || this.frame[f] == null)
     		{
     			return;
     		}
     		Frame frame = this.frame[f];
+    		if (frame.dx == null || frame.idImg == null)
+    		{
+    			return;
+    		}
     		for (int i = 0; i < frame.dx.Length; i++)
     		{
+    			if (i >= frame.idImg.Length) break;
     			ImageInfo imageInfo = getImageInfo(frame.idImg[i]);
+    			if (imageInfo == null || img == null)
+    			{
+    				continue;
+    			}
     			try
     			{
     				switch (trans)

@@ -297,12 +297,12 @@ namespace Game1
     
     	public void rain()
     	{
-    		Sound.playMus(RAIN, 0.3f, true);
+    		Sound.playRainSound(0.45f);
     	}
 
     	public void stopRain()
     	{
-    		Sound.stopMusic(RAIN);
+    		Sound.stopRainSound();
     	}
     
     	public void gongName()
@@ -619,7 +619,7 @@ namespace Game1
     	{
     		try
     		{
-    			return Sound.isPlayingSound();
+    			return Sound.isPlayingRain();
     		}
     		catch (Exception)
     		{

@@ -30,6 +30,11 @@
 - Khóa Đồng Bộ Luồng: Luôn đảm bảo lock trạng thái khi thao tác đa luồng hoặc spam packet để chống bug dupe. `[2026-09-24]`
 - Kiểm tra quantity > 0 trước khi trừ, không bao giờ để quantity âm. `[2026-09-24]`
 - Đồng Bộ Trạng Thái GUIStyle IMGUI: Khi vẽ text bằng GUIStyle/GUI.Label, phải gán đồng bộ textColor cho toàn bộ trạng thái (hover, active, focused, on*) bằng color1 để tránh text đổi màu trắng khi rê chuột hoặc click. `[2026-09-24]`
+- myReader trong Unity tra ve 0 khi EOF (khong nem Exception). Do do khi doc subCommand 62 (nang cap skill), neu khong kiem tra available() > 0 truoc khi readSByte(), bien b bi gan 0 khien client nham sang cap nhat exp chieu dac biet thay vi cap nhat level skill vSkill. `[2026-09-24]`
+- Phòng Ngừa Tràn Số: Luôn sử dụng kiểu `long` cho các trường tích lũy (HP, sức mạnh, tiền, kinh nghiệm) để tránh tràn mốc 2 tỷ. `[2026-09-24]`
+- Đồng Bộ Gói Tin Nhị Phân 1:1: Mọi thứ tự write/read packet giữa Server Java và Client Unity C# phải hoàn toàn tương ứng. `[2026-09-24]`
+- Dùng CopyOnWriteArrayList/ConcurrentHashMap cho collection duyệt trong vòng lặp Zone update. `[2026-09-24]`
+- **Kiến Trúc Audio Môi Trường & SFX**: Phân tách rõ các AudioSource (`SoundBGLoop` cho nhạc nền, `SoundWater` cho âm thanh môi trường như mưa rơi/nước chảy, `SoundRun` cho di chuyển, `PlayOneShot` cho SFX). Không trừ volume khiến âm lượng bị triệt tiêu (về 0.01f), luôn kiểm tra trạng thái rain active trong updateEff() để tự động bật/tắt loop âm thanh môi trường theo map. `[2026-09-26]`
 
 ## 4. Lỗi Thường Gặp Cần Tránh
 - Treo đơ UI (Freeze) khi Server phản hồi chậm hoặc disconnect nhưng Client vẫn chờ trong `InfoDlg.showWait()`.

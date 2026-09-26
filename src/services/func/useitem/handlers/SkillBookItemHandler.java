@@ -67,6 +67,7 @@ public class SkillBookItemHandler implements ItemActionHandler {
                             InventoryService.gI().subQuantityItemsBag(pl, item, 1);
                             msg = Service.gI().messageSubCommand((byte) 62);
                             msg.writer().writeShort(curSkill.skillId);
+                            msg.writer().writeByte(-1);
                             pl.sendMessage(msg);
                             msg.cleanup();
                             pl.BoughtSkills.add((int) item.template.id);
@@ -102,6 +103,7 @@ public class SkillBookItemHandler implements ItemActionHandler {
                 Service.gI().chatJustForMe(pl, pl.pet, "Cám ơn sư phụ");
                 InventoryService.gI().subQuantityItemsBag(pl, item, 1);
                 InventoryService.gI().sendItemBags(pl);
+                Service.gI().showInfoPet(pl);
             } else {
                 Service.gI().sendThongBao(pl, "Không thể thực hiện");
             }

@@ -24,7 +24,7 @@ import java.util.List;
 public class ThoDaiKa extends Boss {
 
     // Constants
-    private static final long TIME_CHANGE_MAP = 180000;
+    private static final long TIME_CHANGE_MAP = 600000; // Tăng từ 3p lên 10p
     private static final long TIME_MOVE_AWAY = 1500;
     private static final long TIME_RETURN = 5000;
     private static final long CHAT_COOLDOWN = 5000;
@@ -61,7 +61,7 @@ public class ThoDaiKa extends Boss {
                 new String[]{"|-1|Carrot-chan! Ta đến để tìm người mạnh!", "|-1|Các ngươi có phải là những chiến binh mạnh mẽ không?"},
                 new String[]{"|-1|Haha! Thật thú vị! Chiến đấu thôi!", "|-1|Ta muốn xem sức mạnh thực sự của các ngươi!", "|-2|Đây là lúc để thể hiện bản lĩnh chiến binh!", "|-2|Hãy cho ta thấy các ngươi mạnh đến đâu!"},
                 new String[]{"|-1|Tuyệt vời! Các ngươi thật sự rất mạnh!", "|-2|Ta sẽ còn mạnh hơn nữa! Hẹn gặp lại!"},
-                300
+                900 // Tăng thời gian hồi sinh từ 300s (5 phút) lên 900s (15 phút)
         ));
         initializeVariables();
     }
@@ -114,7 +114,7 @@ public class ThoDaiKa extends Boss {
     public void caRot(Player player) {
         if (player.effectSkill != null && !player.effectSkill.isCaRot) {
             chatWithCooldown("|-1|Carrot Magic! Biến thành cà rót đi!");
-            EffectSkillService.gI().setIsCaRot(player, 2, 300000);
+            EffectSkillService.gI().setIsCaRot(player, 2, 30000); // Giảm từ 5 phút xuống 30 giây
         }
     }
 

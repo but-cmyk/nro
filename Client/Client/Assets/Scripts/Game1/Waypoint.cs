@@ -102,7 +102,9 @@ namespace Game1
     				Service.gI().requestChangeMap();
     				Char.isLockKey = true;
     				Char.ischangingMap = true;
+    				GameCanvas.clearKeyHold();
     				GameCanvas.clearKeyPressed();
+    				InfoDlg.showWait();
     			}
     			else
     			{

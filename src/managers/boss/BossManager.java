@@ -250,10 +250,10 @@ public class BossManager {
         this.createBoss(BossID.RONG_5_SAO);
         this.createBoss(BossID.RONG_6_SAO);
         this.createBoss(BossID.RONG_7_SAO);
-        this.createBoss(BossID.AN_TROM, 2);
-        this.createBoss(BossID.THO_DAI_KA, 5);
+        this.createBoss(BossID.AN_TROM, 1);
+        this.createBoss(BossID.THO_DAI_KA, 1);
 
-        for (int i = 20; i != -1; i--) {//20: số lượng boss
+        for (int i = 2; i >= 0; i--) {// Giảm số lượng boss lang thang sự kiện từ 21 xuống 3 mỗi loại
             try {
                 new ChoRach().zoneFinal = Util.randomAllMap();
                 new Raiti().zoneFinal = Util.randomAllMap();

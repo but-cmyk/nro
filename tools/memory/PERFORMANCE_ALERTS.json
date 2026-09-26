@@ -1,18 +1,30 @@
 {
   "version": "1.0.0",
-  "updated_at": "2026-09-24 15:42:34.994",
+  "updated_at": "2026-09-26 07:28:56.669",
   "alerts": [
+    {
+      "cmd": 54,
+      "command_name": "ATTACK_MOB",
+      "max_latency_ms": 133,
+      "avg_latency_ms": 2,
+      "call_count": 298,
+      "slow_count": 1,
+      "severity": "HIGH",
+      "status": "OPEN",
+      "slowest_context": "Player admin (ID: 1023302, Map 27)",
+      "detected_at": "2026-09-26 07:28:56.661"
+    },
     {
       "cmd": -29,
       "command_name": "CMD_-29",
-      "max_latency_ms": 858,
-      "avg_latency_ms": 425,
-      "call_count": 4,
-      "slow_count": 2,
+      "max_latency_ms": 1135,
+      "avg_latency_ms": 568,
+      "call_count": 2,
+      "slow_count": 1,
       "severity": "CRITICAL",
       "status": "OPEN",
       "slowest_context": "Non-login session",
-      "detected_at": "2026-09-24 15:42:34.993"
+      "detected_at": "2026-09-26 07:22:52.164"
     }
   ]
 }

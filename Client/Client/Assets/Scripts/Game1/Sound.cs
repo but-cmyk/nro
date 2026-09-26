@@ -127,19 +127,22 @@ namespace Game1
 
         public static void init()
         {
-
-            if (GameObject.Find("Audio Player 1") != null)
-                return;
-
-            GameObject gameObject = new GameObject();
-            gameObject.name = "Audio Player 1";
-            gameObject.transform.position = Vector3.zero;
-            if (UnityEngine.Object.FindObjectOfType<AudioListener>() == null)
+            GameObject gameObject = GameObject.Find("Audio Player 1");
+            if (gameObject == null)
             {
-                gameObject.AddComponent<AudioListener>();
+                gameObject = new GameObject();
+                gameObject.name = "Audio Player 1";
+                gameObject.transform.position = Vector3.zero;
+                if (UnityEngine.Object.FindObjectOfType<AudioListener>() == null)
+                {
+                    gameObject.AddComponent<AudioListener>();
+                }
+                MonoBehaviour.DontDestroyOnLoad(gameObject);
             }
-            SoundBGLoop = gameObject.AddComponent<AudioSource>();
-            MonoBehaviour.DontDestroyOnLoad(gameObject);
+            AudioSource[] sources = gameObject.GetComponents<AudioSource>();
+            SoundBGLoop = sources.Length > 0 ? sources[0] : gameObject.AddComponent<AudioSource>();
+            SoundWater = sources.Length > 1 ? sources[1] : gameObject.AddComponent<AudioSource>();
+            SoundRun = sources.Length > 2 ? sources[2] : gameObject.AddComponent<AudioSource>();
         }
 
         public static void init(int[] musicID, int[] sID)
@@ -176,6 +179,7 @@ namespace Game1
 
         public static void stopAllz()
         {
+            stopRainSound();
             for (int i = 0; i < music.Length; i++)
             {
                 stop(i);
@@ -188,6 +192,7 @@ namespace Game1
 
         public static void stopAllBg()
         {
+            stopRainSound();
             for (int i = 0; i < music.Length; i++)
             {
                 stop(i);
@@ -203,6 +208,11 @@ namespace Game1
 
         public static void stopMusic(int x)
         {
+            if (x == SoundMn.RAIN)
+            {
+                stopRainSound();
+                return;
+            }
             if (GameCanvas.isPlaySound)
             {
                 stop(x);
@@ -267,16 +277,53 @@ namespace Game1
             return SoundWater.GetComponent<AudioSource>().isPlaying;
         }
 
+        public static void playRainSound(float volume = 0.45f)
+        {
+            if (!GameCanvas.isPlaySound) return;
+            if (SoundWater == null)
+            {
+                init();
+            }
+            if (music == null || music.Length <= SoundMn.RAIN || music[SoundMn.RAIN] == null)
+            {
+                SoundMn.gI().loadSound(TileMap.mapID);
+            }
+            if (SoundWater != null && music != null && music.Length > SoundMn.RAIN && music[SoundMn.RAIN] != null)
+            {
+                if (!SoundWater.isPlaying || SoundWater.clip != music[SoundMn.RAIN])
+                {
+                    SoundWater.loop = true;
+                    SoundWater.clip = music[SoundMn.RAIN];
+                    SoundWater.volume = volume;
+                    SoundWater.Play();
+                }
+            }
+        }
+
+        public static void stopRainSound()
+        {
+            if (SoundWater != null && SoundWater.isPlaying && music != null && music.Length > SoundMn.RAIN && SoundWater.clip == music[SoundMn.RAIN])
+            {
+                SoundWater.Stop();
+            }
+        }
+
+        public static bool isPlayingRain()
+        {
+            if (SoundWater == null) return false;
+            return SoundWater.isPlaying && music != null && music.Length > SoundMn.RAIN && SoundWater.clip == music[SoundMn.RAIN];
+        }
+
         public static void playMus(int type, float vl, bool loop)
         {
             if (!isNotPlay)
             {
-                vl -= 0.3f;
-                if (vl <= 0f)
+                if (type == SoundMn.RAIN)
                 {
-                    vl = 0.01f;
+                    playRainSound(Mathf.Clamp(vl, 0.2f, 0.8f));
+                    return;
                 }
-                playSoundBGLoop(type, vl);
+                playSoundBGLoop(type, Mathf.Clamp01(vl));
             }
         }
 

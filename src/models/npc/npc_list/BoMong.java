@@ -68,12 +68,18 @@ public class BoMong extends Npc {
                                         "Đổi ngay\n(1 Ngọc)", "Chờ đợi");
                             } else {
                                 this.createOtherMenu(player, ConstNpc.MENU_OPTION_LEVEL_SIDE_TASK,
-                                        "Tôi có vài nhiệm vụ theo cấp bậc, sức cậu có thể làm được cái nào?\n(Lưu ý: Cần đủ Sức mạnh và đã mở bản đồ tương ứng)",
-                                        "Dễ\n(Tân thủ)",
-                                        "Bình thường\n(>= 1.5M SM)",
-                                        "Khó\n(>= 15M SM)",
-                                        "Siêu khó\n(>= 150M SM)",
-                                        "Địa ngục\n(>= 1.5 Tỷ SM)",
+                                        "Chào cậu, tôi có các nhiệm vụ phân theo từng cấp bậc sức mạnh:\n"
+                                        + "• Dễ: Dành cho tân thủ\n"
+                                        + "• Bình thường: Yêu cầu từ 1.5M sức mạnh\n"
+                                        + "• Khó: Yêu cầu từ 15M sức mạnh\n"
+                                        + "• Siêu khó: Yêu cầu từ 150M sức mạnh\n"
+                                        + "• Địa ngục: Yêu cầu từ 1.5 Tỷ sức mạnh\n"
+                                        + "(Lưu ý: Cần mở các bản đồ tương ứng để gặp quái)",
+                                        "Dễ",
+                                        "Bình thường",
+                                        "Khó",
+                                        "Siêu khó",
+                                        "Địa ngục",
                                         "Từ chối");
                             }
                         }

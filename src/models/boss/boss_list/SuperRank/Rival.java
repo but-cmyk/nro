@@ -5,6 +5,7 @@ import static consts.BossType.PHOBAN;
 import java.util.ArrayList;
 import java.util.List;
 import models.player.Player;
+import models.player.NPoint;
 import models.skill.Skill;
 
 public class Rival extends SuperRank {
@@ -32,8 +33,8 @@ public class Rival extends SuperRank {
                 skillTemp[i][2] = skill.coolDown;
             }
         }
-        int dame = player.nPoint.dame > 0 ? player.nPoint.dame : player.nPoint.dameg;
-        int hpMax = player.nPoint.hpMax > 0 ? player.nPoint.hpMax : player.nPoint.hpg;
+        int dame = NPoint.safeInt(player.nPoint.dame > 0 ? player.nPoint.dame : player.nPoint.dameg);
+        int hpMax = NPoint.safeInt(player.nPoint.hpMax > 0 ? player.nPoint.hpMax : player.nPoint.hpg);
         return new BossData(
                 player.name,
                 player.gender,

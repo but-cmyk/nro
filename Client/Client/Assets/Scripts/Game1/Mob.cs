@@ -247,6 +247,8 @@ namespace Game1
     	};
     
     	private bool isGetFr = true;
+
+    	private long lastRequestTemplateTime;
     
     	public Mob()
     	{
@@ -387,6 +389,20 @@ namespace Game1
 			}
 		}
 
+		public static bool isMobTemplateInMap(int templateId)
+		{
+			if (GameScr.vMob == null) return false;
+			for (int i = 0; i < GameScr.vMob.size(); i++)
+			{
+				Mob mob = (Mob)GameScr.vMob.elementAt(i);
+				if (mob != null && mob.templateId == templateId)
+				{
+					return true;
+				}
+			}
+			return false;
+		}
+
 		public void getData()
 		{
 			EnsureMobTemplateCapacity(templateId);
@@ -399,9 +415,12 @@ namespace Game1
 				arrMobTemplate[templateId] = new MobTemplate();
 				arrMobTemplate[templateId].mobTemplateId = (sbyte)templateId;
 			}
-			if (arrMobTemplate[templateId].data == null)
+			if (arrMobTemplate[templateId].data == null || arrMobTemplate[templateId].data.img == null)
 			{
-				arrMobTemplate[templateId].data = new EffectData();
+				if (arrMobTemplate[templateId].data == null)
+				{
+					arrMobTemplate[templateId].data = new EffectData();
+				}
 				string text = "/Mob/" + templateId;
 				DataInputStream dataInputStream = MyStream.readFile(text);
 				if (dataInputStream != null)
@@ -418,7 +437,7 @@ namespace Game1
 					try
 					{
 						int oldId = int.Parse((string)lastMob.elementAt(0));
-						if (oldId >= 0 && oldId < arrMobTemplate.Length && arrMobTemplate[oldId] != null)
+						if (oldId >= 0 && oldId < arrMobTemplate.Length && arrMobTemplate[oldId] != null && !isMobTemplateInMap(oldId))
 						{
 							arrMobTemplate[oldId].data = null;
 						}
@@ -480,8 +499,11 @@ namespace Game1
     		{
     			if (arrMobTemplate[j] != null && arrMobTemplate[j].data != null && num > 5)
     			{
-    				arrMobTemplate[j].data = null;
-    				num--;
+    				if (!isMobTemplateInMap(j))
+    				{
+    					arrMobTemplate[j].data = null;
+    					num--;
+    				}
     			}
     		}
     	}
@@ -576,6 +598,16 @@ namespace Game1
     			return;
     		}
     		GetFrame();
+    		MobTemplate mobT = getTemplate();
+    		if (status != 0 && (mobT == null || mobT.data == null || mobT.data.img == null))
+    		{
+    			long now = mSystem.currentTimeMillis();
+    			if (now - lastRequestTemplateTime > 3000)
+    			{
+    				lastRequestTemplateTime = now;
+    				getData();
+    			}
+    		}
     		if (blindEff && GameCanvas.gameTick % 5 == 0)
     		{
     			ServerEffect.addServerEffect(113, x, y, 1);

@@ -1,9 +1,10 @@
 package services.func.minigame;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import models.player.Player;
 import server.Client;
@@ -24,7 +25,7 @@ public class CSMM implements Runnable {
 
     public long lastTimeRollCSMM = System.currentTimeMillis();
     public int NumRANDOM = -1;
-    public HashMap<Player, List<Integer>> listRegNumber = new HashMap<>();
+    public final ConcurrentHashMap<Player, List<Integer>> listRegNumber = new ConcurrentHashMap<>();
     public int totalRuby;
     public int SecondsTarget = 300;
     public int Size_Num = 999;
@@ -44,7 +45,7 @@ public class CSMM implements Runnable {
         }
     }
 
-    void HandleCSMM() {
+    synchronized void HandleCSMM() {
         int ranNum = Util.nextInt(1, Size_Num);
         NumRANDOM = ranNum;
 
@@ -89,12 +90,8 @@ public class CSMM implements Runnable {
         Service.gI().sendMoney(pl);
     }
 
-    public void Register(Player player, int numReg) {
-        if (!listRegNumber.containsKey(player)) {
-            listRegNumber.put(player, new ArrayList<>());
-        }
-
-        List<Integer> list = listRegNumber.get(player);
+    public synchronized void Register(Player player, int numReg) {
+        List<Integer> list = listRegNumber.computeIfAbsent(player, k -> new CopyOnWriteArrayList<>());
 
         if (list.contains(numReg)) {
             Service.gI().sendThongBao(player, "Bạn đã đăng ký số " + numReg + " rồi!");

@@ -19,6 +19,10 @@
   - Danh sách người chơi và quái vật trong Zone được truy cập liên tục bởi cả luồng mạng (Netty Worker) và luồng update nội tại. Bắt buộc dùng `ConcurrentHashMap`, `CopyOnWriteArrayList` hoặc synchronize danh sách khi duyệt qua để tránh `ConcurrentModificationException`.
 - **Giới Hạn Tọa Độ & Chuyển Zone**:
   - Khi player di chuyển hoặc dịch chuyển, tọa độ X, Y phải được kiểm tra trong biên của `map.mapWidth` và `map.mapHeight`.
+- Khóa Đồng Bộ Luồng: Luôn đảm bảo lock trạng thái khi thao tác đa luồng hoặc spam packet để chống bug dupe. `[2026-09-24]`
+- Phòng Ngừa Tràn Số: Luôn sử dụng kiểu `long` cho các trường tích lũy (HP, sức mạnh, tiền, kinh nghiệm) để tránh tràn mốc 2 tỷ. `[2026-09-24]`
+- Đồng Bộ Gói Tin Nhị Phân 1:1: Mọi thứ tự write/read packet giữa Server Java và Client Unity C# phải hoàn toàn tương ứng. `[2026-09-24]`
+- Dùng CopyOnWriteArrayList/ConcurrentHashMap cho collection duyệt trong vòng lặp Zone update. `[2026-09-24]`
 
 ## 4. Lỗi Thường Gặp Cần Tránh
 - Crash cả Zone khi 1 Player out map đột ngột trong lúc Server đang duyệt danh sách gửi packet khu vực.
