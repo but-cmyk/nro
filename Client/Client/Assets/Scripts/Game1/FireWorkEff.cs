@@ -53,6 +53,10 @@ namespace Game1
     			st = false;
     			mg.removeAllElements();
     			mg.addElement(new FireWorkMn(Res.random(50, GameCanvas.w - 50), Res.random(GameCanvas.h - 100, GameCanvas.h), 5, 72));
+    			if (GameCanvas.isPlaySound)
+    			{
+    				Sound.playSound(SoundMn.FIREWORK, 0.5f);
+    			}
     		}
     	}
     

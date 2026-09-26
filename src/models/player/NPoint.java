@@ -29,6 +29,16 @@ public class NPoint {
 
     public static final byte MAX_LIMIT = 9;
 
+    /**
+     * Chuyển long → int an toàn cho giao thức mạng (writeInt).
+     * Clamp tại Integer.MAX_VALUE để tránh tràn số âm khi gửi Client.
+     */
+    public static int safeInt(long value) {
+        if (value > Integer.MAX_VALUE) return Integer.MAX_VALUE;
+        if (value < Integer.MIN_VALUE) return Integer.MIN_VALUE;
+        return (int) value;
+    }
+
     private Player player;
 
     public void setPlayer(Player player) {
@@ -63,9 +73,9 @@ public class NPoint {
     public long power;
     public long tiemNang;
 
-    public int hp, hpMax, hpg;
-    public int mp, mpMax, mpg;
-    public int dame, dameg;
+    public long hp, hpMax, hpg;
+    public long mp, mpMax, mpg;
+    public long dame, dameg;
     public int def, defg;
     public int crit, critg;
     public byte speed = 8;
@@ -77,7 +87,9 @@ public class NPoint {
     /**
      * Chỉ số cộng thêm
      */
-    public int hpAdd, mpAdd, dameAdd, defAdd, critAdd, hpHoiAdd, mpHoiAdd;
+    public long hpAdd, mpAdd, dameAdd;
+    public int defAdd, critAdd;
+    public long hpHoiAdd, mpHoiAdd;
 
     /**
      * //+#% sức đánh chí mạng
@@ -103,7 +115,7 @@ public class NPoint {
     /**
      * Lượng hp, mp hồi mỗi 30s, mp hồi cho người khác
      */
-    public int hpHoi, mpHoi, mpHoiCute;
+    public long hpHoi, mpHoi, mpHoiCute;
 
     /**
      * Tỉ lệ hp, mp hồi cộng thêm
@@ -937,28 +949,32 @@ public class NPoint {
         this.mp = Math.min(this.mp, this.mpMax);
     }
 
-    public int getHP() {
+    public long getHP() {
         return Math.min(this.hp, this.hpMax);
     }
 
     public void setHP(long hp) {
         if (hp > 0) {
-            this.hp = (int) (hp <= this.hpMax ? hp : this.hpMax);
+            this.hp = hp <= this.hpMax ? hp : this.hpMax;
         } else {
             player.setDie();
         }
     }
 
-    public int getMP() {
+    public long getMP() {
         return Math.min(this.mp, this.mpMax);
     }
 
     public void setMP(long mp) {
         if (mp > 0) {
-            this.mp = (int) (mp <= this.mpMax ? mp : this.mpMax);
+            this.mp = mp <= this.mpMax ? mp : this.mpMax;
         } else {
             this.mp = 0;
         }
+    }
+
+    public static long calPercent(long param, int percent) {
+        return param * percent / 150;
     }
 
     public static int calPercent(int param, int percent) {
@@ -1190,7 +1206,7 @@ public class NPoint {
         if (hp < 0) {
             this.hp = 0;
         } else {
-            this.hp = (int) Math.min(hp, 2_000_000_000);
+            this.hp = hp;
         }
     }
 
@@ -1198,7 +1214,7 @@ public class NPoint {
         if (mp < 0) {
             this.mp = 0;
         } else {
-            this.mp = (int) Math.min(mp, 2_000_000_000);
+            this.mp = mp;
         }
     }
 

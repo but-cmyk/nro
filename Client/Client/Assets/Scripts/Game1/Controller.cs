@@ -2660,30 +2660,63 @@ namespace Game1
                     case 11:
                         {
                             GameCanvas.debug("SA9", 2);
-                            int num9 = msg.reader().readByte();
+                            int num9 = msg.reader().readUnsignedByte();
                             sbyte b6 = msg.reader().readByte();
-                            if (b6 != 0)
+                            sbyte[] dataBytes = NinjaUtil.readByteArray(msg);
+                            Mob.EnsureMobTemplateCapacity(num9);
+                            if (Mob.arrMobTemplate != null && num9 >= 0 && num9 < Mob.arrMobTemplate.Length)
                             {
-                                Mob.arrMobTemplate[num9].data.readDataNewBoss(NinjaUtil.readByteArray(msg), b6);
-                            }
-                            else
-                            {
-                                Mob.arrMobTemplate[num9].data.readData(NinjaUtil.readByteArray(msg));
-                            }
-                            for (int i = 0; i < GameScr.vMob.size(); i++)
-                            {
-                                mob = (Mob)GameScr.vMob.elementAt(i);
-                                if (mob.templateId == num9)
+                                if (Mob.arrMobTemplate[num9] == null)
                                 {
-                                    mob.w = Mob.arrMobTemplate[num9].data.width;
-                                    mob.h = Mob.arrMobTemplate[num9].data.height;
+                                    Mob.arrMobTemplate[num9] = new MobTemplate();
+                                    Mob.arrMobTemplate[num9].mobTemplateId = (sbyte)num9;
+                                }
+                                if (Mob.arrMobTemplate[num9].data == null)
+                                {
+                                    Mob.arrMobTemplate[num9].data = new EffectData();
+                                }
+                                if (dataBytes != null)
+                                {
+                                    if (b6 != 0)
+                                    {
+                                        Mob.arrMobTemplate[num9].data.readDataNewBoss(dataBytes, b6);
+                                    }
+                                    else
+                                    {
+                                        Mob.arrMobTemplate[num9].data.readData(dataBytes);
+                                    }
+                                }
+                                for (int i = 0; i < GameScr.vMob.size(); i++)
+                                {
+                                    mob = (Mob)GameScr.vMob.elementAt(i);
+                                    if (mob != null && mob.templateId == num9 && Mob.arrMobTemplate[num9].data != null)
+                                    {
+                                        mob.w = Mob.arrMobTemplate[num9].data.width;
+                                        mob.h = Mob.arrMobTemplate[num9].data.height;
+                                    }
                                 }
                             }
                             sbyte[] array2 = NinjaUtil.readByteArray(msg);
-                            Image img = Image.createImage(array2, 0, array2.Length);
-                            Mob.arrMobTemplate[num9].data.img = img;
+                            if (array2 != null && array2.Length > 0 && Mob.arrMobTemplate != null && num9 >= 0 && num9 < Mob.arrMobTemplate.Length && Mob.arrMobTemplate[num9] != null && Mob.arrMobTemplate[num9].data != null)
+                            {
+                                try
+                                {
+                                    Image img = Image.createImage(array2, 0, array2.Length);
+                                    if (img != null)
+                                    {
+                                        Mob.arrMobTemplate[num9].data.img = img;
+                                    }
+                                }
+                                catch (Exception exImg)
+                                {
+                                    Cout.LogError("Loi load anh MobTemplate " + num9 + ": " + exImg.ToString());
+                                }
+                            }
                             int num10 = msg.reader().readByte();
-                            Mob.arrMobTemplate[num9].data.typeData = num10;
+                            if (Mob.arrMobTemplate != null && num9 >= 0 && num9 < Mob.arrMobTemplate.Length && Mob.arrMobTemplate[num9] != null && Mob.arrMobTemplate[num9].data != null)
+                            {
+                                Mob.arrMobTemplate[num9].data.typeData = num10;
+                            }
                             if (num10 == 1 || num10 == 2)
                             {
                                 readFrameBoss(msg, num9);
@@ -6781,12 +6814,9 @@ namespace Game1
             {
                 short num = msg.reader().readShort();
                 sbyte b = -1;
-                try
+                if (msg.reader().available() > 0)
                 {
                     b = msg.reader().readSByte();
-                }
-                catch (Exception)
-                {
                 }
                 if (b == 0)
                 {
@@ -6794,7 +6824,7 @@ namespace Game1
                     for (int i = 0; i < Char.myCharz().vSkill.size(); i++)
                     {
                         Skill skill = (Skill)Char.myCharz().vSkill.elementAt(i);
-                        if (skill.skillId == num)
+                        if (skill != null && skill.skillId == num)
                         {
                             skill.curExp = curExp;
                             break;
@@ -6807,7 +6837,7 @@ namespace Game1
                     for (int j = 0; j < Char.myCharz().vSkill.size(); j++)
                     {
                         Skill skill2 = (Skill)Char.myCharz().vSkill.elementAt(j);
-                        if (skill2.skillId == num)
+                        if (skill2 != null && skill2.skillId == num)
                         {
                             for (int k = 0; k < 20; k++)
                             {
@@ -6825,19 +6855,29 @@ namespace Game1
                         return;
                     }
                     Skill skill3 = Skills.get(num);
+                    if (skill3 == null)
+                    {
+                        return;
+                    }
+                    bool found = false;
                     for (int l = 0; l < Char.myCharz().vSkill.size(); l++)
                     {
                         Skill skill4 = (Skill)Char.myCharz().vSkill.elementAt(l);
-                        if (skill4.template.id == skill3.template.id)
+                        if (skill4 != null && skill4.template != null && skill4.template.id == skill3.template.id)
                         {
                             Char.myCharz().vSkill.setElementAt(skill3, l);
+                            found = true;
                             break;
                         }
+                    }
+                    if (!found)
+                    {
+                        useSkill(skill3);
                     }
                     for (int m = 0; m < Char.myCharz().vSkillFight.size(); m++)
                     {
                         Skill skill5 = (Skill)Char.myCharz().vSkillFight.elementAt(m);
-                        if (skill5.template.id == skill3.template.id)
+                        if (skill5 != null && skill5.template != null && skill5.template.id == skill3.template.id)
                         {
                             Char.myCharz().vSkillFight.setElementAt(skill3, m);
                             break;
@@ -6845,7 +6885,7 @@ namespace Game1
                     }
                     for (int n = 0; n < GameScr.onScreenSkill.Length; n++)
                     {
-                        if (GameScr.onScreenSkill[n] != null && GameScr.onScreenSkill[n].template.id == skill3.template.id)
+                        if (GameScr.onScreenSkill[n] != null && GameScr.onScreenSkill[n].template != null && GameScr.onScreenSkill[n].template.id == skill3.template.id)
                         {
                             GameScr.onScreenSkill[n] = skill3;
                             break;
@@ -6853,22 +6893,27 @@ namespace Game1
                     }
                     for (int num2 = 0; num2 < GameScr.keySkill.Length; num2++)
                     {
-                        if (GameScr.keySkill[num2] != null && GameScr.keySkill[num2].template.id == skill3.template.id)
+                        if (GameScr.keySkill[num2] != null && GameScr.keySkill[num2].template != null && GameScr.keySkill[num2].template.id == skill3.template.id)
                         {
                             GameScr.keySkill[num2] = skill3;
                             break;
                         }
                     }
-                    if (Char.myCharz().myskill.template.id == skill3.template.id)
+                    if (Char.myCharz().myskill != null && Char.myCharz().myskill.template != null && Char.myCharz().myskill.template.id == skill3.template.id)
                     {
                         Char.myCharz().myskill = skill3;
                     }
-                    GameScr.info1.addInfo(mResources.hasJustUpgrade1 + skill3.template.name + mResources.hasJustUpgrade2 + skill3.point, 0);
+                    if (skill3.template != null)
+                    {
+                        GameScr.info1.addInfo(mResources.hasJustUpgrade1 + skill3.template.name + mResources.hasJustUpgrade2 + skill3.point, 0);
+                    }
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                Cout.LogError("read_UpdateSkill error: " + ex.ToString());
             }
         }
     }
 }
+

@@ -1168,13 +1168,13 @@ public class NDVSqlFetcher {
                     pet.nPoint.tiemNang = getLongSafe(dataArray, 2, 1500L);
                     pet.nPoint.stamina = getShortSafe(dataArray, 3, (short) 1000);
                     pet.nPoint.maxStamina = getShortSafe(dataArray, 4, (short) 1000);
-                    pet.nPoint.hpg = getIntSafe(dataArray, 5, 2000);
-                    pet.nPoint.mpg = getIntSafe(dataArray, 6, 2000);
-                    pet.nPoint.dameg = getIntSafe(dataArray, 7, 100);
+                    pet.nPoint.hpg = getLongSafe(dataArray, 5, 2000L);
+                    pet.nPoint.mpg = getLongSafe(dataArray, 6, 2000L);
+                    pet.nPoint.dameg = getLongSafe(dataArray, 7, 100L);
                     pet.nPoint.defg = getIntSafe(dataArray, 8, 10);
                     pet.nPoint.critg = getIntSafe(dataArray, 9, 0);
-                    int hp = getIntSafe(dataArray, 10, pet.nPoint.hpg);
-                    int mp = getIntSafe(dataArray, 11, pet.nPoint.mpg);
+                    long hp = getLongSafe(dataArray, 10, pet.nPoint.hpg);
+                    long mp = getLongSafe(dataArray, 11, pet.nPoint.mpg);
 
                     //data body
                     dataArray = parseJSONArraySafe(String.valueOf(petData.get(2)));

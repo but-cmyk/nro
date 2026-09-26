@@ -21,6 +21,11 @@
   - Trước khi gán `this.zone = null`, bắt buộc gọi `this.zone.removePlayer(this)` và gửi packet biến mất tới tất cả người chơi trong khu vực.
 - **Phòng Ngừa Bất Tử / Mắc Kẹt Phase**:
   - Khi Boss chuyển trạng thái (phase change) hoặc hồi sinh, chỉ số máu phải được reset an toàn: `this.nPoint.hp = this.nPoint.hpMax`. Tránh bug Boss còn 0 HP nhưng không chết.
+- Giam ty le xuat hien sieu quai (lvMob) tu 10% xuong 2% trong Mob.java. Giam so luong boss lang thang trong BossManager: AnTrom tu 2 xuong 1, ThoDaiKa tu 5 xuong 1, ChoRach/Raiti/Xibachao/BaDo tu 21 xuong 3 con moi loai. Tang thoi gian nghi sau khi chet tu 5p len 15p va thoi gian doi map tu 3-5p len 10p. `[2026-09-24]`
+- Khóa Đồng Bộ Luồng: Luôn đảm bảo lock trạng thái khi thao tác đa luồng hoặc spam packet để chống bug dupe. `[2026-09-24]`
+- Phòng Ngừa Tràn Số: Luôn sử dụng kiểu `long` cho các trường tích lũy (HP, sức mạnh, tiền, kinh nghiệm) để tránh tràn mốc 2 tỷ. `[2026-09-24]`
+- Đồng Bộ Gói Tin Nhị Phân 1:1: Mọi thứ tự write/read packet giữa Server Java và Client Unity C# phải hoàn toàn tương ứng. `[2026-09-24]`
+- Dùng CopyOnWriteArrayList/ConcurrentHashMap cho collection duyệt trong vòng lặp Zone update. `[2026-09-24]`
 
 ## 4. Lỗi Thường Gặp Cần Tránh
 - NullPointerException khi Boss tìm mục tiêu tấn công nhưng người chơi vừa out map hoặc đổi khu.

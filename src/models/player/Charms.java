@@ -2,6 +2,12 @@ package models.player;
 
 public class Charms {
 
+    /**
+     * Thời gian tối đa mà bùa có thể được stack: 72 giờ.
+     * Ngăn chặn player whale stack bùa vô hạn, thu hẹp khoảng cách balance.
+     */
+    public static final long MAX_CHARM_DURATION = 72 * 60 * 60 * 1000L; // 72 giờ
+
     public long tdTriTue;
     public long tdManhMe;
     public long tdDaTrau;
@@ -15,67 +21,54 @@ public class Charms {
 
     public long lastTimeSubMinTriTueX4;
 
+    /**
+     * Helper: Reset nếu hết hạn, cộng thêm thời gian, rồi clamp tối đa MAX_CHARM_DURATION.
+     */
+    private long clampCharm(long currentExpiry, int min) {
+        long now = System.currentTimeMillis();
+        if (currentExpiry < now) {
+            currentExpiry = now;
+        }
+        currentExpiry += min * 60 * 1000L;
+        // Clamp: không được vượt quá now + MAX_CHARM_DURATION
+        long maxExpiry = now + MAX_CHARM_DURATION;
+        if (currentExpiry > maxExpiry) {
+            currentExpiry = maxExpiry;
+        }
+        return currentExpiry;
+    }
+
     public void addTimeCharms(int itemId, int min) {
         switch (itemId) {
             case 213:
-                if (tdTriTue < System.currentTimeMillis()) {
-                    tdTriTue = System.currentTimeMillis();
-                }
-                tdTriTue += min * 60 * 1000L;
+                tdTriTue = clampCharm(tdTriTue, min);
                 break;
             case 214:
-                if (tdManhMe < System.currentTimeMillis()) {
-                    tdManhMe = System.currentTimeMillis();
-                }
-                tdManhMe += min * 60 * 1000L;
+                tdManhMe = clampCharm(tdManhMe, min);
                 break;
             case 215:
-                if (tdDaTrau < System.currentTimeMillis()) {
-                    tdDaTrau = System.currentTimeMillis();
-                }
-                tdDaTrau += min * 60 * 1000L;
+                tdDaTrau = clampCharm(tdDaTrau, min);
                 break;
             case 216:
-                if (tdOaiHung < System.currentTimeMillis()) {
-                    tdOaiHung = System.currentTimeMillis();
-                }
-                tdOaiHung += min * 60 * 1000L;
+                tdOaiHung = clampCharm(tdOaiHung, min);
                 break;
             case 217:
-                if (tdBatTu < System.currentTimeMillis()) {
-                    tdBatTu = System.currentTimeMillis();
-                }
-                tdBatTu += min * 60 * 1000L;
+                tdBatTu = clampCharm(tdBatTu, min);
                 break;
             case 218:
-                if (tdDeoDai < System.currentTimeMillis()) {
-                    tdDeoDai = System.currentTimeMillis();
-                }
-                tdDeoDai += min * 60 * 1000L;
+                tdDeoDai = clampCharm(tdDeoDai, min);
                 break;
             case 219:
-                if (tdThuHut < System.currentTimeMillis()) {
-                    tdThuHut = System.currentTimeMillis();
-                }
-                tdThuHut += min * 60 * 1000L;
+                tdThuHut = clampCharm(tdThuHut, min);
                 break;
             case 522:
-                if (tdDeTu < System.currentTimeMillis()) {
-                    tdDeTu = System.currentTimeMillis();
-                }
-                tdDeTu += min * 60 * 1000L;
+                tdDeTu = clampCharm(tdDeTu, min);
                 break;
             case 671:
-                if (tdTriTue3 < System.currentTimeMillis()) {
-                    tdTriTue3 = System.currentTimeMillis();
-                }
-                tdTriTue3 += min * 60 * 1000L;
+                tdTriTue3 = clampCharm(tdTriTue3, min);
                 break;
             case 672:
-                if (tdTriTue4 < System.currentTimeMillis()) {
-                    tdTriTue4 = System.currentTimeMillis();
-                }
-                tdTriTue4 += min * 60 * 1000L;
+                tdTriTue4 = clampCharm(tdTriTue4, min);
                 break;
         }
     }

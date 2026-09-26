@@ -22,6 +22,10 @@
   - Từ khóa hệ thống như `rank`, `order`, `group` bắt buộc phải được bọc trong dấu backtick: `` `rank` `` để tránh crash cú pháp trên MySQL 8.x.
 - **Serialize JSON Nhất Quán**:
   - Dữ liệu túi đồ, chỉ số được chuyển thành chuỗi JSON trước khi ghi vào MySQL. Nếu xảy ra lỗi phân tích cú pháp JSON khi load, phải có cơ chế fallback an toàn, không được để crash thread login.
+- Khóa Đồng Bộ Luồng: Luôn đảm bảo lock trạng thái khi thao tác đa luồng hoặc spam packet để chống bug dupe. `[2026-09-24]`
+- Phòng Ngừa Tràn Số: Luôn sử dụng kiểu `long` cho các trường tích lũy (HP, sức mạnh, tiền, kinh nghiệm) để tránh tràn mốc 2 tỷ. `[2026-09-24]`
+- Đồng Bộ Gói Tin Nhị Phân 1:1: Mọi thứ tự write/read packet giữa Server Java và Client Unity C# phải hoàn toàn tương ứng. `[2026-09-24]`
+- Dùng CopyOnWriteArrayList/ConcurrentHashMap cho collection duyệt trong vòng lặp Zone update. `[2026-09-24]`
 
 ## 4. Lỗi Thường Gặp Cần Tránh
 - Rò rỉ kết nối HikariCP dẫn tới lỗi `Timeout: Connection is not available, request timed out after 30000ms`.

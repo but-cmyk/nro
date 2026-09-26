@@ -418,7 +418,7 @@ public class Player extends Character {
                         lastTimeChibi = System.currentTimeMillis();
                     }
                     if (this.isPl() && !this.isDie() && this.effectSkill != null && this.effectSkill.isChibi && Util.canDoWithTime(lastTimeUpdateChibi, 1000)) {
-                        int amount;
+                        long amount;
                         if (this.typeChibi == 1 && this.nPoint.mp < this.nPoint.mpMax) {
                             amount = this.nPoint.mpMax / 10;
                             if (this.nPoint.mpMax - this.nPoint.mp < amount) this.nPoint.mp = this.nPoint.mpMax;
@@ -456,7 +456,7 @@ public class Player extends Character {
 
                     if (!this.isDie() && Util.canDoWithTime(lastTimeVeTinhTriLuc, ConstMap.TIME_HOI_VE_TINH)
                             && ItemMap.isInVeTinhRange(this, ConstItem.VE_TINH_TRI_LUC, this.location.x, this.location.y)) {
-                        int mpTriLuc = NPoint.calPercent(this.nPoint.mpMax, ConstMap.PERCENT_VE_TINH_TRI_LUC);
+                        long mpTriLuc = NPoint.calPercent(this.nPoint.mpMax, ConstMap.PERCENT_VE_TINH_TRI_LUC);
                         this.nPoint.addMp(mpTriLuc);
                         PlayerService.gI().hoiPhuc(this, 0, mpTriLuc);
                         lastTimeVeTinhTriLuc = System.currentTimeMillis();
@@ -464,7 +464,7 @@ public class Player extends Character {
 
                     if (!this.isDie() && Util.canDoWithTime(lastTimeVeTinhSinhLuc, ConstMap.TIME_HOI_VE_TINH)
                             && ItemMap.isInVeTinhRange(this, ConstItem.VE_TINH_SINH_LUC, this.location.x, this.location.y)) {
-                        int hpSinhLuc = NPoint.calPercent(this.nPoint.hpMax, ConstMap.PERCENT_VE_TINH_SINH_LUC);
+                        long hpSinhLuc = NPoint.calPercent(this.nPoint.hpMax, ConstMap.PERCENT_VE_TINH_SINH_LUC);
                         this.nPoint.addHp(hpSinhLuc);
                         PlayerService.gI().hoiPhuc(this, hpSinhLuc, 0);
                         lastTimeVeTinhSinhLuc = System.currentTimeMillis();
@@ -991,18 +991,18 @@ public class Player extends Character {
         if (this.isPl()) {
             long vangtru = this.nPoint.power / 1000000;
             if (vangtru > 32000) vangtru = 32000;
-            int vang = (int) vangtru - Util.nextInt(10, 100);
+            long vang = vangtru - Util.nextInt(10, 100);
 
             if (this.inventory.gold >= vang && vang >= 1) {
                 this.inventory.gold -= vang;
                 Service.gI().sendMoney(this);
                 vang = vang * 95 / 100;
                 if (vang < 10000) {
-                    Service.gI().dropItemMap(this.zone, new ItemMap(zone, 189, vang, this.location.x, this.location.y, this.id));
+                    Service.gI().dropItemMap(this.zone, new ItemMap(zone, 189, (int) vang, this.location.x, this.location.y, this.id));
                 } else if (vang < 20000) {
-                    Service.gI().dropItemMap(this.zone, new ItemMap(zone, 188, vang, this.location.x, this.location.y, this.id));
+                    Service.gI().dropItemMap(this.zone, new ItemMap(zone, 188, (int) vang, this.location.x, this.location.y, this.id));
                 } else {
-                    Service.gI().dropItemMap(this.zone, new ItemMap(zone, 190, vang, this.location.x, this.location.y, this.id));
+                    Service.gI().dropItemMap(this.zone, new ItemMap(zone, 190, (int) vang, this.location.x, this.location.y, this.id));
                 }
             }
         }
@@ -1310,7 +1310,7 @@ public class Player extends Character {
         Item muoiTieu = InventoryService.gI().findItemBag(this, 1438);
         Item chaLua = InventoryService.gI().findItemBag(this, 1437);
         Item banhDay = ItemService.gI().createNewItem((short) 1435);
-        int vang = 1000000;
+        long vang = 1000000L;
         if ((comNep != null && comNep.quantity >= 99)
                 && (botGao != null && botGao.quantity >= 5)
                 && (muoiTieu != null && muoiTieu.quantity >= 2)
@@ -1339,7 +1339,7 @@ public class Player extends Character {
         Item dauXanh = InventoryService.gI().findItemBag(this, 1441);
         Item thitTuoi = InventoryService.gI().findItemBag(this, 1442);
         Item banhChung = ItemService.gI().createNewItem((short) 1436);
-        int vang = 5000000;
+        long vang = 5000000L;
         if ((comNepNe != null && comNepNe.quantity >= 99)
                 && (dauXanh != null && dauXanh.quantity >= 2)
                 && (thitTuoi != null && thitTuoi.quantity >= 2)

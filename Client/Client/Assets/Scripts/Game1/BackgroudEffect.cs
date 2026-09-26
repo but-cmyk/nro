@@ -255,8 +255,8 @@ namespace Game1
     				y[k] = Res.random(-10, GameCanvas.h + 100) + GameScr.cmy;
     				x[k] = Res.random(-10, GameCanvas.w + 300) + GameScr.cmx;
     				t[k] = Res.random(0, 1);
-    				vx[k] = -5;
-    				vy[k] = 5;
+    				vx[k] = -3;
+    				vy[k] = 3;
     				type[k] = Res.random(1, 3);
     				isRainEffect[k] = false;
     				if (type[k] == 2 && k % 2 == 0)
@@ -332,19 +332,19 @@ namespace Game1
     				y[j] = Res.random(0, TileMap.pxh);
     				frame[j] = Res.random(0, 1);
     				t[j] = Res.random(0, 1);
-    				vx[j] = Res.random(-3, 3);
-    				vy[j] = Res.random(1, 4);
+    				vx[j] = Res.random(-2, 3);
+    				vy[j] = Res.random(1, 3);
     				if (typeEff == 11)
     				{
     					frame[j] = Res.random(0, 2);
-    					vx[j] = Res.abs(Res.random(1, 3));
-    					vy[j] = Res.abs(Res.random(1, 3));
+    					vx[j] = Res.abs(Res.random(1, 2));
+    					vy[j] = Res.abs(Res.random(1, 2));
     				}
     				if (typeEff == 15)
     				{
     					frame[j] = Res.random(0, 2);
-    					vx[j] = Res.abs(Res.random(1, 3));
-    					vy[j] = Res.abs(Res.random(1, 3));
+    					vx[j] = Res.abs(Res.random(1, 2));
+    					vy[j] = Res.abs(Res.random(1, 2));
     				}
     			}
     			break;
@@ -459,8 +459,8 @@ namespace Game1
     			{
     				x[i] = Res.random(0, GameCanvas.w + 100) + GameScr.cmx;
     				y[i] = Res.random(-50, GameCanvas.h + 50) + GameScr.cmy;
-    				vx[i] = -Res.random(10, 18);
-    				vy[i] = Res.random(1, 3);
+    				vx[i] = -Res.random(6, 12);
+    				vy[i] = Res.random(1, 2);
     				t[i] = Res.random(15, 30);
     			}
     			break;
@@ -530,14 +530,17 @@ namespace Game1
     		{
     			return;
     		}
-    		int num = ((GameCanvas.currentScreen != GameScr.gI()) ? (GameScr.cmx + GameCanvas.w) : TileMap.pxw);
-    		for (int i = 0; i < nCloud; i++)
+    		if (GameCanvas.gameTick % 2 == 0)
     		{
-    			int num2 = i + 1;
-    			GameCanvas.cloudX[i] -= num2;
-    			if (GameCanvas.cloudX[i] < -cloudw)
+    			int num = ((GameCanvas.currentScreen != GameScr.gI()) ? (GameScr.cmx + GameCanvas.w) : TileMap.pxw);
+    			for (int i = 0; i < nCloud; i++)
     			{
-    				GameCanvas.cloudX[i] = num + 100;
+    				int num2 = (i < 2) ? 1 : 2;
+    				GameCanvas.cloudX[i] -= num2;
+    				if (GameCanvas.cloudX[i] < -cloudw)
+    				{
+    					GameCanvas.cloudX[i] = num + 100;
+    				}
     			}
     		}
     	}
@@ -547,10 +550,13 @@ namespace Game1
             if (ListChars.getInstance().HideMap) return;
             if (mSystem.clientType != 1 && !GameCanvas.lowGraphic && isFog)
     		{
-    			xfog--;
-    			if (xfog < -fogw)
+    			if (GameCanvas.gameTick % 2 == 0)
     			{
-    				xfog = 0;
+    				xfog--;
+    				if (xfog < -fogw)
+    				{
+    					xfog = 0;
+    				}
     			}
     		}
     	}
@@ -751,7 +757,7 @@ namespace Game1
     						continue;
     					}
     					t[l]++;
-    					if (t[l] > 2)
+    					if (t[l] > 4)
     					{
     						frame[l]++;
     						t[l] = 0;
@@ -806,12 +812,19 @@ namespace Game1
     								x[j] += ((x[j] >= teleport.x) ? 10 : (-10));
     							}
     						}
-    						y[j] += vy[j];
-    						x[j] += vx[j];
+    						if (GameCanvas.gameTick % 2 == 0)
+    						{
+    							y[j] += vy[j];
+    							x[j] += vx[j];
+    						}
+    						else if (vy[j] > 1)
+    						{
+    							y[j] += 1;
+    						}
     						t[j]++;
     						int num = ((typeEff != 11) ? 4 : 3);
     						num = ((typeEff != 15) ? 4 : 4);
-    						if (t[j] > ((typeEff == 2) ? 4 : 2))
+    						if (t[j] > ((typeEff == 2) ? 7 : 5))
     						{
     							if (typeEff != 11 && typeEff != 15)
     							{
@@ -870,6 +883,10 @@ namespace Game1
     				if (GameCanvas.gameTick % tStart == 0)
     				{
     					isFly = true;
+    					if (GameCanvas.isPlaySound)
+    					{
+    						SoundMn.gI().airShip();
+    					}
     				}
     				if (!isFly)
     				{
@@ -917,8 +934,11 @@ namespace Game1
     			case 16:
     				for (int i = 0; i < sum; i++)
     				{
-    					x[i] += vx[i];
-    					y[i] += vy[i];
+    					if (GameCanvas.gameTick % 2 == 0)
+    					{
+    						x[i] += vx[i];
+    						y[i] += vy[i];
+    					}
     					if (GameCanvas.gameTick % 15 == 0 && Res.random(0, 4) == 0)
     					{
     						vx[i] = Res.random(-1, 2);
@@ -945,8 +965,8 @@ namespace Game1
     					{
     						x[i] = GameScr.cmx + GameCanvas.w + Res.random(10, 100);
     						y[i] = GameScr.cmy + Res.random(-50, GameCanvas.h + 50);
-    						vx[i] = -Res.random(10, 18);
-    						vy[i] = Res.random(1, 3);
+    						vx[i] = -Res.random(6, 12);
+    						vy[i] = Res.random(1, 2);
     						t[i] = Res.random(15, 30);
     					}
     				}
@@ -1169,6 +1189,10 @@ namespace Game1
     		{
     			BackgroudEffect o = new BackgroudEffect(id);
     			vBgEffect.addElement(o);
+    			if (id == 0 || id == 12)
+    			{
+    				SoundMn.gI().rain();
+    			}
     		}
     	}
     
@@ -1235,7 +1259,7 @@ namespace Game1
     				vBgEffect.removeElementAt(i);
     			}
     		}
-    		Sound.stopMusic(SoundMn.RAIN);
+    		SoundMn.gI().stopRain();
     	}
 
     	public static void clearWeatherEffects()
@@ -1252,25 +1276,37 @@ namespace Game1
     		}
     		if (!isHaveRain())
     		{
-    			Sound.stopMusic(SoundMn.RAIN);
+    			SoundMn.gI().stopRain();
     		}
     	}
 
     	public static void updateEff()
         {
             if (ListChars.getInstance().HideMap) return;
+            bool hasRain = false;
             for (int i = vBgEffect.size() - 1; i >= 0; i--)
     		{
     			BackgroudEffect eff = (BackgroudEffect)vBgEffect.elementAt(i);
     			eff.update();
+    			if (eff.typeEff == 0 || eff.typeEff == 12)
+    			{
+    				hasRain = true;
+    			}
     			if (eff.isFinished)
     			{
     				vBgEffect.removeElementAt(i);
-    				if (!isHaveRain())
-    				{
-    					Sound.stopMusic(SoundMn.RAIN);
-    				}
     			}
+    		}
+    		if (hasRain)
+    		{
+    			if (!SoundMn.gI().isPlayRain())
+    			{
+    				SoundMn.gI().rain();
+    			}
+    		}
+    		else if (SoundMn.gI().isPlayRain())
+    		{
+    			SoundMn.gI().stopRain();
     		}
     	}
     }

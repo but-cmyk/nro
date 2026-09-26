@@ -31,6 +31,7 @@ import models.skill.Skill;
 import services.ChatGlobalService;
 import services.RewardService;
 import utils.TimeUtil;
+import models.player.NPoint;
 
 public class Mob {
 
@@ -410,7 +411,7 @@ public class Mob {
             msg = new Message(-10);
             msg.writer().writeByte(this.id);
             msg.writer().writeInt((int) player.id);
-            msg.writer().writeInt(player.nPoint.hp);
+            msg.writer().writeInt(NPoint.safeInt(player.nPoint.hp));
             Service.gI().sendMessAnotherNotMeInMap(player, msg);
             msg.cleanup();
         } catch (Exception e) {
@@ -432,7 +433,8 @@ public class Mob {
                 return 0;
             }
         }
-        this.lvMob = (byte) (this.tempId > 18 && !isBigBoss() ? Util.isTrue(10, 100) ? 1 : 0 : 0);
+        // Giảm tần suất xuất hiện siêu quái xuống 2% (mặc định cũ 10% quá dày)
+        this.lvMob = (byte) (this.tempId > 18 && !isBigBoss() ? Util.isTrue(2, 100) ? 1 : 0 : 0);
         this.point.hp = this.lvMob > 0 ? this.point.maxHp <= 20000000 ? this.point.maxHp * 10 : 2000000000 : this.point.maxHp;
         return this.lvMob;
     }

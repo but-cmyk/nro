@@ -800,6 +800,7 @@ public class NpcFactory {
                                             SkillUtil.setSkill(player, curSkill);
                                             msg = Service.gI().messageSubCommand((byte) 62);
                                             msg.writer().writeShort(curSkill.skillId);
+                                            msg.writer().writeByte(-1);
                                             player.sendMessage(msg);
                                             msg.cleanup();
                                             player.BoughtSkills.add((int) player.hocKyNang.ItemTemplateSkillId);

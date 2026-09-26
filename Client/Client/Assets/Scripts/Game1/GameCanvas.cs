@@ -1254,6 +1254,10 @@ namespace Game1
     		if (gameTick % 200 == 0)
     		{
     			boltActive = true;
+    			if (isPlaySound)
+    			{
+    				Sound.playSound(SoundMn.EXPLODE_2, 0.45f);
+    			}
     		}
     		if (boltActive)
     		{

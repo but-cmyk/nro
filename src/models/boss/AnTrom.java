@@ -23,7 +23,7 @@ public class AnTrom extends Boss {
     private long lastTimeJoinMap;
     private long goldAnTrom;
     private int stealsInCurrentMap = 0;
-    private static final long TIME_CHANGE_MAP = 300000;
+    private static final long TIME_CHANGE_MAP = 600000; // Tăng từ 5p lên 10p
     private List<Item> ITEM;
     private long lastTimeAttack;
     private long lastTimeTargetPlayer;
@@ -54,7 +54,7 @@ public class AnTrom extends Boss {
                 new String[]{"|-1|Ái chà vàng vàng", "|-1|Không làm vẫn có ăn hẹ hẹ", "|-2|Giám ăn trộm giữa ban ngày thế à", "|-2|Cút ngay không là ăn đòn"},
                 new String[]{"|-1|Híc lần sau ta sẽ cho ngươi phá sản",
                     "|-2|Chừa thói ăn trộm nghe chưa"},
-                300
+                900 // Tăng thời gian hồi sinh từ 300s (5 phút) lên 900s (15 phút)
         ));
         this.ITEM = new ArrayList<>();
         lastTimeJoinMap = System.currentTimeMillis() + TIME_CHANGE_MAP;
@@ -107,7 +107,7 @@ public class AnTrom extends Boss {
                     return;
                 }
                 if (Util.getDistance(this, pl) <= 40) {
-                    if (!Util.canDoWithTime(this.lastTimeAnTrom, 15000) || goldAnTrom > 10_000_000_000L) {
+                    if (!Util.canDoWithTime(this.lastTimeAnTrom, 30000) || goldAnTrom > 10_000_000_000L) {
                         return;
                     }
 
@@ -126,7 +126,10 @@ public class AnTrom extends Boss {
                     moveAwayFromPlayer(pl);
                     stealsInCurrentMap++;
                     if (stealsInCurrentMap >= 3) {
-                        lastTimeJoinMap = 0; // Đổi map sau khi trộm đủ 3 lần
+                        // Cho Ăn trộm ở lại map ít nhất 3 phút nữa rồi mới đổi map thay vì nhảy ngay lập tức
+                        if (lastTimeJoinMap - System.currentTimeMillis() > 180000) {
+                            lastTimeJoinMap = System.currentTimeMillis() + 180000;
+                        }
                     }
                 } else {
                     if (this.movedAway && System.currentTimeMillis() - moveAwayTime > TIME_RETURN) {
@@ -227,8 +230,8 @@ public class AnTrom extends Boss {
             Zone targetZone = null;
             List<Player> players = Client.gI().getPlayers();
             int playerCount = players.size();
-            // 25% cơ hội tìm đến map dã ngoại của một player, 75% đi ngẫu nhiên map dã ngoại
-            if (Util.isTrue(1, 4) && playerCount > 0) {
+            // 10% cơ hội tìm đến map dã ngoại của một player, 90% đi ngẫu nhiên map dã ngoại
+            if (Util.isTrue(1, 10) && playerCount > 0) {
                 Player randomPlayer = players.get(Util.nextInt(playerCount));
                 if (randomPlayer != null && randomPlayer.zone != null 
                         && randomPlayer.zone.isKhongCoTrongTaiTrongKhu() 

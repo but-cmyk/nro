@@ -4,8 +4,10 @@ import models.map.Zone;
 import models.player.Player;
 import utils.SkillUtil;
 import services.Service;
+import services.EffectSkillService;
 import utils.Util;
 import network.io.Message;
+import models.player.NPoint;
 
 public final class MobMe extends Mob {
 
@@ -41,14 +43,36 @@ public final class MobMe extends Mob {
         try {
             if (pl != null) {
                 int dame = !miss ? this.point.dame : 0;
-                if ((pl.nPoint.hp > dame && pl.nPoint.hp > pl.nPoint.hpMax * 0.05) || this.player.setClothes.pikkoroDaimao == 5) {
+                boolean isTargetShielding = pl.effectSkill != null && pl.effectSkill.isShielding;
+                boolean hasPikkoro = this.player != null && this.player.setClothes != null && this.player.setClothes.pikkoroDaimao == 5;
+
+                // Điều kiện tấn công:
+                // 1. Có set Pikkoro Daimao 5 món (được phép kết liễu)
+                // 2. Mục tiêu đang bật khiên năng lượng (cho phép pem xuống dưới 2% HP để phá khiên)
+                // 3. Cơ chế gốc: máu hiện tại > dame và máu hiện tại > 5% HP tối đa
+                boolean canAttack = hasPikkoro
+                        || (isTargetShielding && pl.nPoint.hp > 1)
+                        || (pl.nPoint.hp > dame && pl.nPoint.hp > pl.nPoint.hpMax * 5 / 100);
+
+                if (canAttack) {
+                    // Nếu không có set Pikkoro: giữ lại ít nhất 1 HP để không kết liễu người chơi
+                    if (!hasPikkoro && dame >= pl.nPoint.hp) {
+                        dame = (int) Math.max(1, pl.nPoint.hp - 1);
+                    }
+
                     int dameHit = pl.injured(this.player, dame, true, true);
+
+                    // Phá vỡ khiên năng lượng nếu mục tiêu dùng khiên bị pem xuống dưới 2% HP tối đa
+                    if (isTargetShielding && !pl.isDie() && pl.nPoint.hp <= pl.nPoint.hpMax * 2 / 100) {
+                        EffectSkillService.gI().breakShield(pl);
+                    }
+
                     msg = new Message(-95);
                     msg.writer().writeByte(2);
                     msg.writer().writeInt(this.id);
                     msg.writer().writeInt((int) pl.id);
                     msg.writer().writeInt(dameHit);
-                    msg.writer().writeInt(pl.nPoint.hp);
+                    msg.writer().writeInt(NPoint.safeInt(pl.nPoint.hp));
                     Service.gI().sendMessAllPlayerInMap(this.player, msg);
                     msg.cleanup();
                 }

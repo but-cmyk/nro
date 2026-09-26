@@ -10,6 +10,7 @@ import models.clan.Clan;
 import models.map.ItemMap;
 import models.map.Zone;
 import models.player.Player;
+import models.player.NPoint;
 import models.skill.Skill;
 import services.EffectSkillService;
 import services.Service;
@@ -90,13 +91,15 @@ public class NinjaAoTim extends Boss {
             if (this.nPoint.hp <= this.nPoint.hpMax / 2 && !this.calledNinja) {
                 if (Util.isTrue(4, 5)) {
                     try {
-                        clan.doanhTrai.bosses.add(new NinjaClone(this.zone, this, this.nPoint.dame / 10, this.nPoint.hpMax / 10, BossID.NINJA_AO_TIM1));
-                        clan.doanhTrai.bosses.add(new NinjaClone(this.zone, this, this.nPoint.dame / 10, this.nPoint.hpMax / 10, BossID.NINJA_AO_TIM2));
-                        clan.doanhTrai.bosses.add(new NinjaClone(this.zone, this, this.nPoint.dame / 10, this.nPoint.hpMax / 10, BossID.NINJA_AO_TIM3));
-                        clan.doanhTrai.bosses.add(new NinjaClone(this.zone, this, this.nPoint.dame / 10, this.nPoint.hpMax / 10, BossID.NINJA_AO_TIM4));
+                        int cloneDame = NPoint.safeInt(this.nPoint.dame / 10);
+                        int cloneHp = NPoint.safeInt(this.nPoint.hpMax / 10);
+                        clan.doanhTrai.bosses.add(new NinjaClone(this.zone, this, cloneDame, cloneHp, BossID.NINJA_AO_TIM1));
+                        clan.doanhTrai.bosses.add(new NinjaClone(this.zone, this, cloneDame, cloneHp, BossID.NINJA_AO_TIM2));
+                        clan.doanhTrai.bosses.add(new NinjaClone(this.zone, this, cloneDame, cloneHp, BossID.NINJA_AO_TIM3));
+                        clan.doanhTrai.bosses.add(new NinjaClone(this.zone, this, cloneDame, cloneHp, BossID.NINJA_AO_TIM4));
                         if (Util.isTrue(1, 2)) {
-                            clan.doanhTrai.bosses.add(new NinjaClone(this.zone, this, this.nPoint.dame / 10, this.nPoint.hpMax / 10, BossID.NINJA_AO_TIM5));
-                            clan.doanhTrai.bosses.add(new NinjaClone(this.zone, this, this.nPoint.dame / 10, this.nPoint.hpMax / 10, BossID.NINJA_AO_TIM6));
+                            clan.doanhTrai.bosses.add(new NinjaClone(this.zone, this, cloneDame, cloneHp, BossID.NINJA_AO_TIM5));
+                            clan.doanhTrai.bosses.add(new NinjaClone(this.zone, this, cloneDame, cloneHp, BossID.NINJA_AO_TIM6));
                         }
                     } catch (Exception ex) {
                     }

@@ -5,9 +5,9 @@ import network.io.Message;
 import utils.Logger;
 import utils.TimeUtil;
 import utils.Util;
-import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.CopyOnWriteArrayList;
 import server.Maintenance;
 
 public class ChatGlobalService implements Runnable {
@@ -16,12 +16,12 @@ public class ChatGlobalService implements Runnable {
     private static final int COUNT_WAIT = 100;
     private static ChatGlobalService i;
 
-    private List<ChatGlobal> listChatting;
-    private List<ChatGlobal> waitingChat;
+    private final CopyOnWriteArrayList<ChatGlobal> listChatting;
+    private final ConcurrentLinkedQueue<ChatGlobal> waitingChat;
 
     private ChatGlobalService() {
-        this.listChatting = new ArrayList<>();
-        this.waitingChat = new LinkedList<>();
+        this.listChatting = new CopyOnWriteArrayList<>();
+        this.waitingChat = new ConcurrentLinkedQueue<>();
         this.start();
     }
 
@@ -36,11 +36,8 @@ public class ChatGlobalService implements Runnable {
         return i;
     }
     public void sendThongBaoTheGioi(Player player, String message) {
-//        if (!player.getSession().actived) {
-//            return;
-//        }
         ChatGlobal chat = new ChatGlobal(player, message.length() > 100 ? message.substring(0, 100) : message);
-        waitingChat.add(chat);
+        waitingChat.offer(chat);
     }
 //    public void chat1(Player player, String text) {
 //         player.idMark.setLastTimeChatGlobal(System.currentTimeMillis());
@@ -51,24 +48,18 @@ public class ChatGlobalService implements Runnable {
 //    }
 
     public void chatVip(Player player, String text) {
-        waitingChat.add(new ChatGlobal(player, text.length() > 100 ? text.substring(0, 100) : text));
+        waitingChat.offer(new ChatGlobal(player, text.length() > 100 ? text.substring(0, 100) : text));
     }
 
     public void chat(Player player, String text) {
-    if (waitingChat == null) {
-        waitingChat = new ArrayList<>();
-    }
-    if (listChatting == null) {
-        listChatting = new ArrayList<>();
-    }
     if (waitingChat.size() >= COUNT_WAIT) {
         Service.gI().sendThongBao(player, "Kênh thế giới hiện đang quá tải, không thể chat lúc này");
         return;
     }
 
     boolean haveInChatting = false;
-    for (ChatGlobal chat : listChatting) {
-        if (chat.text.equals(text)) {
+    for (ChatGlobal chat1 : listChatting) {
+        if (chat1.text.equals(text)) {
             haveInChatting = true;
             break;
         }
@@ -84,7 +75,7 @@ public class ChatGlobalService implements Runnable {
                 Service.gI().sendMoney(player);
                 player.idMark.setLastTimeChatGlobal(System.currentTimeMillis());
                 String chatText = text.length() > 100 ? text.substring(0, 100) : text;
-                waitingChat.add(new ChatGlobal(player, chatText));
+                waitingChat.offer(new ChatGlobal(player, chatText));
             } else {
                 Service.gI().sendThongBao(player, "Sức mạnh phải ít nhất 2 tỷ mới có thể chat thế giới");
             }
@@ -105,18 +96,16 @@ public class ChatGlobalService implements Runnable {
                 if (!listChatting.isEmpty()) {
                     ChatGlobal chat = listChatting.get(0);
                     if (Util.canDoWithTime(chat.timeSendToPlayer, 5000)) {
-                        listChatting.remove(0).dispose();
+                        listChatting.remove(0);
+                        chat.dispose();
                     }
                 }
 
-                if (!waitingChat.isEmpty()) {
-                    ChatGlobal chat = waitingChat.get(0);
-                    if (listChatting.size() < COUNT_CHAT) {
-                        waitingChat.remove(0);
-                        chat.timeSendToPlayer = System.currentTimeMillis();
-                        listChatting.add(chat);
-                        chatGlobal(chat);
-                    }
+                ChatGlobal nextChat = waitingChat.poll();
+                if (nextChat != null && listChatting.size() < COUNT_CHAT) {
+                    nextChat.timeSendToPlayer = System.currentTimeMillis();
+                    listChatting.add(nextChat);
+                    chatGlobal(nextChat);
                 }
                 Thread.sleep(1000);
             } catch (Exception e) {

@@ -27,6 +27,9 @@
 - Khóa Đồng Bộ Luồng: Luôn đảm bảo lock trạng thái khi thao tác đa luồng hoặc spam packet để chống bug dupe. `[2026-09-24]`
 - Kiểm tra quantity > 0 trước khi trừ, không bao giờ để quantity âm. `[2026-09-24]`
 - Đồng bộ Stream Shop Ký Gửi: Gói -44 và -100 phải ghi writeUTF(sellerName) khi version >= 237 để khớp với Controller Client tránh lệch byte stream. `[2026-09-24]`
+- Phòng Ngừa Tràn Số: Luôn sử dụng kiểu `long` cho các trường tích lũy (HP, sức mạnh, tiền, kinh nghiệm) để tránh tràn mốc 2 tỷ. `[2026-09-24]`
+- Đồng Bộ Gói Tin Nhị Phân 1:1: Mọi thứ tự write/read packet giữa Server Java và Client Unity C# phải hoàn toàn tương ứng. `[2026-09-24]`
+- Dùng CopyOnWriteArrayList/ConcurrentHashMap cho collection duyệt trong vòng lặp Zone update. `[2026-09-24]`
 
 ## 4. Lỗi Thường Gặp Cần Tránh
 - Dupe đồ qua ngắt kết nối mạng ngay thời điểm xác nhận giao dịch.
