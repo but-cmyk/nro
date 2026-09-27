@@ -117,42 +117,55 @@ public class IntrinsicService {
         sendInfoIntrinsic(player);
     }
 
-    // Thay thế hàm cũ, giữ nguyên logic chia dải số, thay đổi logic tỉ lệ
+    // Phân tầng dải giá trị và tỉ lệ mở nội tại:
+    // - Cực khó ra (2%): rơi vào Top 25% dải chỉ số cao nhất [thresholdVip, max] (ví dụ đấm: 20-25%)
+    // - Khó ra (13%): rơi vào 25% dải kế tiếp [thresholdMedium, thresholdVip - 1] (ví dụ đấm: 15-19%)
+    // - Bình thường (85%): rơi vào 50% dải còn lại [min, thresholdMedium - 1] (ví dụ đấm: 5-14%)
     private short getParamThreeTiers(int min, int max) {
-        if (min >= max) return (short) min;
+        if (min >= max) {
+            return (short) min;
+        }
 
         int range = max - min;
 
-        // --- BƯỚC 1: GIỮ NGUYÊN CÁCH CHIA DẢI GIÁ TRỊ ---
-        // VIP: Top 20% cuối
-        int thresholdVip = min + (int)(range * 0.8);
-        // Khá: 20% kế tiếp
-        int thresholdMedium = min + (int)(range * 0.6);
+        // Phân tầng dải giá trị:
+        // Top 25% cuối (VIP - Cực khó)
+        int thresholdVip = min + (int) Math.round(range * 0.75);
+        // 25% kế tiếp (Khá - Khó)
+        int thresholdMedium = min + (int) Math.round(range * 0.50);
 
-        // Xử lý an toàn
-        if (thresholdVip >= max) thresholdVip = max - 1;
-        if (thresholdMedium >= thresholdVip) thresholdMedium = thresholdVip - 1;
-        if (thresholdMedium < min) thresholdMedium = min;
+        // Xử lý an toàn tránh tràn dải
+        if (thresholdVip > max) {
+            thresholdVip = max;
+        }
+        if (thresholdMedium >= thresholdVip) {
+            thresholdMedium = thresholdVip - 1;
+        }
+        if (thresholdMedium < min) {
+            thresholdMedium = min;
+        }
 
+        // Tỉ lệ xác suất mở ra (hệ 1000):
+        // 2% Cực khó ra (0..19), 13% Khó ra (20..149), 85% Bình thường (150..999)
+        int chance = Util.nextInt(1000); // 0 đến 999
 
-        // --- BƯỚC 2: TỈ LỆ SIÊU KHÓ (HỆ 1000) ---
-        // Thay vì nextInt(100), ta dùng nextInt(1000) để chia nhỏ tỉ lệ
-        int chance = Util.nextInt(1000); // Ra số từ 0 đến 999
-
-        if (chance < 5) {
-            // [0.5% Tỉ lệ VIP] (chance là 0,1,2,3,4)
-            // Cực hiếm: Ra số trong dải Top 20%
-            return (short) Util.nextInt(thresholdVip, max + 1);
-
-        } else if (chance < 55) { // 5 + 50 = 55
-            // [5% Tỉ lệ Khá] (chance từ 5 đến 54 -> 50 số)
-            // Hiếm: Ra số trong dải Khá
-            return (short) Util.nextInt(thresholdMedium, thresholdVip + 1);
-
+        if (chance < 20) {
+            // [2% Tỉ lệ VIP - Cực khó ra]
+            return (short) Util.nextInt(thresholdVip, max);
+        } else if (chance < 150) { // 20 + 130 = 150 -> 13%
+            // [13% Tỉ lệ Khá - Khó ra]
+            int upper = thresholdVip - 1;
+            if (upper < thresholdMedium) {
+                upper = thresholdMedium;
+            }
+            return (short) Util.nextInt(thresholdMedium, upper);
         } else {
-            // [94.5% Tỉ lệ Thường]
-            // Rất phổ biến: Ra số cùi bắp
-            return (short) Util.nextInt(min, thresholdMedium + 1);
+            // [85% Tỉ lệ Thường - Bình thường]
+            int upper = thresholdMedium - 1;
+            if (upper < min) {
+                upper = min;
+            }
+            return (short) Util.nextInt(min, upper);
         }
     }
 

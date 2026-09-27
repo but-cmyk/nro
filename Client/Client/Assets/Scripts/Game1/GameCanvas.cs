@@ -389,6 +389,10 @@ namespace Game1
     	public int[] dustY;
     
     	public int[] dustState;
+
+    	public int[] dustDir;
+
+    	public const int MAX_DUST = 10;
     
     	public static int[] wsX;
     
@@ -3048,15 +3052,27 @@ namespace Game1
     		{
     			return false;
     		}
-    		int num = ((dir != 1) ? 1 : 0);
-    		if (dustState[num] != -1)
+    		if (imgDust == null || dustState == null)
+    		{
+    			loadDust();
+    		}
+    		if (dustState == null)
     		{
     			return false;
     		}
-    		dustState[num] = 0;
-    		dustX[num] = x;
-    		dustY[num] = y;
-    		return true;
+    		int d = ((dir != 1) ? 1 : 0);
+    		for (int i = 0; i < MAX_DUST; i++)
+    		{
+    			if (dustState[i] == -1)
+    			{
+    				dustState[i] = 0;
+    				dustDir[i] = d;
+    				dustX[i] = x;
+    				dustY[i] = y;
+    				return true;
+    			}
+    		}
+    		return false;
     	}
     
     	public void loadWaterSplash()
@@ -3123,11 +3139,11 @@ namespace Game1
     
     	public void updateDust()
     	{
-    		if (lowGraphic)
+    		if (lowGraphic || dustState == null)
     		{
     			return;
     		}
-    		for (int i = 0; i < 2; i++)
+    		for (int i = 0; i < MAX_DUST; i++)
     		{
     			if (dustState[i] != -1)
     			{
@@ -3136,19 +3152,22 @@ namespace Game1
     				{
     					dustState[i] = -1;
     				}
-    				if (i == 0)
-    				{
-    					dustX[i]--;
-    				}
     				else
     				{
-    					dustX[i]++;
+    					if (dustDir[i] == 0)
+    					{
+    						dustX[i]--;
+    					}
+    					else
+    					{
+    						dustX[i]++;
+    					}
+    					dustY[i]--;
     				}
-    				dustY[i]--;
     			}
     		}
     	}
-    
+
     	public static bool isPaint(int x, int y)
     	{
     		if (x < GameScr.cmx)
@@ -3169,28 +3188,33 @@ namespace Game1
     		}
     		return true;
     	}
-    
+
     	public void paintDust(mGraphics g)
     	{
-    		if (lowGraphic)
+    		if (lowGraphic || dustState == null || imgDust == null)
     		{
     			return;
     		}
-    		for (int i = 0; i < 2; i++)
+    		for (int i = 0; i < MAX_DUST; i++)
     		{
-    			if (dustState[i] != -1 && isPaint(dustX[i], dustY[i]))
+    			if (dustState[i] >= 0 && dustState[i] < 5)
     			{
-    				g.drawImage(imgDust[i][dustState[i]], dustX[i], dustY[i], 3);
+    				int dx = dustX[i];
+    				int dy = dustY[i];
+    				if (dx >= GameScr.cmx - 20 && dx <= GameScr.cmx + GameScr.gW + 20 && dy >= GameScr.cmy - 20 && dy <= GameScr.cmy + GameScr.gH + 40)
+    				{
+    					int d = dustDir[i];
+    					if (d >= 0 && d < imgDust.Length && imgDust[d] != null && imgDust[d][dustState[i]] != null)
+    					{
+    						g.drawImage(imgDust[d][dustState[i]], dx, dy, 3);
+    					}
+    				}
     			}
     		}
     	}
-    
+
     	public void loadDust()
     	{
-    		if (lowGraphic)
-    		{
-    			return;
-    		}
     		if (imgDust == null)
     		{
     			imgDust = new Image[2][];
@@ -3206,10 +3230,17 @@ namespace Game1
     				}
     			}
     		}
-    		dustX = new int[2];
-    		dustY = new int[2];
-    		dustState = new int[2];
-    		dustState[0] = (dustState[1] = -1);
+    		if (dustState == null || dustState.Length != MAX_DUST)
+    		{
+    			dustX = new int[MAX_DUST];
+    			dustY = new int[MAX_DUST];
+    			dustState = new int[MAX_DUST];
+    			dustDir = new int[MAX_DUST];
+    		}
+    		for (int i = 0; i < MAX_DUST; i++)
+    		{
+    			dustState[i] = -1;
+    		}
     	}
     
     	public static void paintShukiren(int x, int y, mGraphics g)

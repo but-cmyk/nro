@@ -30,6 +30,7 @@
 - Phòng Ngừa Tràn Số: Luôn sử dụng kiểu `long` cho các trường tích lũy (HP, sức mạnh, tiền, kinh nghiệm) để tránh tràn mốc 2 tỷ. `[2026-09-24]`
 - Đồng Bộ Gói Tin Nhị Phân 1:1: Mọi thứ tự write/read packet giữa Server Java và Client Unity C# phải hoàn toàn tương ứng. `[2026-09-24]`
 - Dùng CopyOnWriteArrayList/ConcurrentHashMap cho collection duyệt trong vòng lặp Zone update. `[2026-09-24]`
+- Cơ Chế Mở Nội Tại 3 Phân Tầng: Top 25% dải chỉ số cao nhất là Cực khó ra (2%), 25% dải kế tiếp là Khó ra (13%), 50% dải còn lại là Bình thường (85%); dùng Util.nextInt(from, to) inclusive chuẩn xác `[2026-09-27]`
 
 ## 4. Lỗi Thường Gặp Cần Tránh
 - Dupe đồ qua ngắt kết nối mạng ngay thời điểm xác nhận giao dịch.

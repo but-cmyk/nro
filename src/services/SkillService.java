@@ -172,9 +172,10 @@ public class SkillService {
         } else {
             if (player.playerSkill.skillSelect.template.type == 1) {
                 long nowAttack = System.currentTimeMillis();
-                if (nowAttack - player.lastTimeAttack < 300) {
+                long minInterval = (player.itemTime != null && player.itemTime.isUseTDLT) ? 200 : 300;
+                if (nowAttack - player.lastTimeAttack < minInterval) {
                     if (player.isPl()) {
-                        PlayerAuditLogger.logSkillUsage(player, curSkillName, curSkillTemplateId, targetDesc, false, "Spam attack rate limit (<300ms, diff=" + (nowAttack - player.lastTimeAttack) + "ms)");
+                        PlayerAuditLogger.logSkillUsage(player, curSkillName, curSkillTemplateId, targetDesc, false, "Spam attack rate limit (<" + minInterval + "ms, diff=" + (nowAttack - player.lastTimeAttack) + "ms)");
                     }
                     return false;
                 }
@@ -1226,8 +1227,13 @@ public class SkillService {
     }
 
     public boolean canUseSkillWithCooldown(Player player) {
-        return Util.canDoWithTime(player.playerSkill.skillSelect.lastTimeUseThisSkill,
-                player.playerSkill.skillSelect.coolDown - 50);
+        int tolerance = 150;
+        if (player.itemTime != null && player.itemTime.isUseTDLT) {
+            tolerance = 200;
+        }
+        int cd = player.playerSkill.skillSelect.coolDown;
+        long requiredTime = Math.max(0, cd - tolerance);
+        return Util.canDoWithTime(player.playerSkill.skillSelect.lastTimeUseThisSkill, requiredTime);
     }
 
     public void affterUseSkill(Player player, int skillId) {

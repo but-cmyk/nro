@@ -35,6 +35,7 @@
 - Đồng Bộ Gói Tin Nhị Phân 1:1: Mọi thứ tự write/read packet giữa Server Java và Client Unity C# phải hoàn toàn tương ứng. `[2026-09-24]`
 - Dùng CopyOnWriteArrayList/ConcurrentHashMap cho collection duyệt trong vòng lặp Zone update. `[2026-09-24]`
 - **Kiến Trúc Audio Môi Trường & SFX**: Phân tách rõ các AudioSource (`SoundBGLoop` cho nhạc nền, `SoundWater` cho âm thanh môi trường như mưa rơi/nước chảy, `SoundRun` cho di chuyển, `PlayOneShot` cho SFX). Không trừ volume khiến âm lượng bị triệt tiêu (về 0.01f), luôn kiểm tra trạng thái rain active trong updateEff() để tự động bật/tắt loop âm thanh môi trường theo map. `[2026-09-26]`
+- Quản lý Hiệu Ứng Bụi Bước Chân: Pre-allocate mảng hạt bụi MAX_DUST trong GameCanvas đảm bảo Zero-GC 60 FPS; đồng bộ nhịp bước chân cp1 == 1 || cp1 == 6 và vẽ tại GameScr.paint() sau paintSplash `[2026-09-27]`
 
 ## 4. Lỗi Thường Gặp Cần Tránh
 - Treo đơ UI (Freeze) khi Server phản hồi chậm hoặc disconnect nhưng Client vẫn chờ trong `InfoDlg.showWait()`.

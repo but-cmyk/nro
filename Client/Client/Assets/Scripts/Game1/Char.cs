@@ -3959,7 +3959,10 @@ namespace Game1
     				stop();
     			}
     		}
-    		GameCanvas.gI().startDust(cdir, cx - (cdir << 3), cy);
+    		if (statusMe == 2 && !isMount && (TileMap.tileTypeAtPixel(cx, cy) & 2) == 2 && (cp1 == 1 || cp1 == 6))
+    		{
+    			GameCanvas.gI().startDust(cdir, cx - (cdir << 3), cy);
+    		}
     		updateCharInBridge();
     		addDustEff(2);
     	}
