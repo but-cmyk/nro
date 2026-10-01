@@ -832,6 +832,8 @@ public class NDVSqlFetcher {
             int timehoadao = 0;
             int timehoamai = 0;
             int timeBuaTnSm = 0;
+            int timeCaChua = 0;
+            int timeCaRot = 0;
             int timeBoHuyet = getIntSafe(dataArray, 0, 0);
             int timeBoHuyet2 = getIntSafe(dataArray, 1, 0);
             int timeBoKhi = getIntSafe(dataArray, 2, 0);
@@ -904,6 +906,12 @@ public class NDVSqlFetcher {
             if (dataArray.size() > 31) {
                 timeBuaTnSm = Integer.parseInt(String.valueOf(dataArray.get(31)));
             }
+            if (dataArray.size() > 32) {
+                timeCaChua = Integer.parseInt(String.valueOf(dataArray.get(32)));
+            }
+            if (dataArray.size() > 33) {
+                timeCaRot = Integer.parseInt(String.valueOf(dataArray.get(33)));
+            }
             player.itemTime.lastTimeBoHuyet = System.currentTimeMillis() - (ItemTime.TIME_ITEM - timeBoHuyet);
             player.itemTime.lastTimeBoKhi = System.currentTimeMillis() - (ItemTime.TIME_ITEM - timeBoKhi);
             player.itemTime.lastTimeGiapXen = System.currentTimeMillis() - (ItemTime.TIME_ITEM - timeGiapXen);
@@ -933,6 +941,8 @@ public class NDVSqlFetcher {
             player.itemTime.lastTimeXimuoihoadao = System.currentTimeMillis() - (ItemTime.TIME_ITEM - timehoadao);
             player.itemTime.lastTimeXimuoihoamai = System.currentTimeMillis() - (ItemTime.TIME_ITEM - timehoamai);
             player.itemTime.lastTimeBuaTNSM = System.currentTimeMillis() - (ItemTime.TIME_ITEM - timeBuaTnSm);
+            player.itemTime.lastTimeCaChua = System.currentTimeMillis() - (ItemTime.TIME_ITEM - timeCaChua);
+            player.itemTime.lastTimeCaRot = System.currentTimeMillis() - (ItemTime.TIME_ITEM - timeCaRot);
 
             player.itemTime.iconMeal = iconMeal;
             player.itemTime.isEatMeal = timeMeal != 0;
@@ -962,6 +972,8 @@ public class NDVSqlFetcher {
             player.itemTime.isXimuoihoadao = timehoadao != 0;
             player.itemTime.isXimuoihoamai = timehoamai != 0;
             player.itemTime.isBuaTNSM = timeBuaTnSm != 0;
+            player.itemTime.isUseCaChua = timeCaChua != 0;
+            player.itemTime.isUseCaRot = timeCaRot != 0;
             dataArray.clear();
 
             //data nhiệm vụ
@@ -1012,8 +1024,10 @@ public class NDVSqlFetcher {
             if (TimeUtil.formatTime(date, format).equals(TimeUtil.formatTime(new Date(), format))) {
                 player.playerTask.sideTask.leftTask = Integer.parseInt(String.valueOf(dataArray.get(4)));
             } else {
+                player.playerTask.sideTask.reset();
                 player.playerTask.sideTask.leftTask = ConstTask.MAX_SIDE_TASK;
                 player.playerTask.sideTask.cancelCount = 0;
+                player.playerTask.sideTask.receivedTime = System.currentTimeMillis();
             }
 
             //data trứng bư
@@ -1404,6 +1418,13 @@ public class NDVSqlFetcher {
                         
                         // Index 4: Last Reward Time
                         player.traning.setLastRewardTime(Long.parseLong(String.valueOf(dataTraining.get(4))));
+
+                        // Index 5: Tiến trình vòng đấu Giải U6-7 Whis Arena
+                        if (dataTraining.size() > 5) {
+                            player.whisArenaU6Round = Integer.parseInt(String.valueOf(dataTraining.get(5)));
+                        } else {
+                            player.whisArenaU6Round = 0;
+                        }
                     }
                 } else {
                     // Nếu database chưa có dữ liệu (null), set mặc định level 1

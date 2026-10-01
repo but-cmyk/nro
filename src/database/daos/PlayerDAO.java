@@ -711,6 +711,8 @@ public class PlayerDAO {
                 dataArray.add((player.itemTime.isXimuoihoadao ? (ItemTime.TIME_ITEM - (System.currentTimeMillis() - player.itemTime.lastTimeXimuoihoadao)) : 0));
                 dataArray.add((player.itemTime.isXimuoihoamai ? (ItemTime.TIME_ITEM - (System.currentTimeMillis() - player.itemTime.lastTimeXimuoihoamai)) : 0));
                 dataArray.add((player.itemTime.isBuaTNSM ? (ItemTime.TIME_ITEM - (System.currentTimeMillis() - player.itemTime.lastTimeBuaTNSM)) : 0));
+                dataArray.add((player.itemTime.isUseCaChua ? (ItemTime.TIME_ITEM - (System.currentTimeMillis() - player.itemTime.lastTimeCaChua)) : 0));
+                dataArray.add((player.itemTime.isUseCaRot ? (ItemTime.TIME_ITEM - (System.currentTimeMillis() - player.itemTime.lastTimeCaRot)) : 0));
                 String itemTime = dataArray.toJSONString();
                 dataArray.clear();
 
@@ -953,8 +955,10 @@ public class PlayerDAO {
                     dataArray.add(player.traning.getLastTime());
                     dataArray.add(player.traning.getLastTop());
                     dataArray.add(player.traning.getLastRewardTime());
+                    dataArray.add(player.whisArenaU6Round);
                 } else {
                     dataArray.add(1); dataArray.add(0); dataArray.add(0); dataArray.add(0); dataArray.add(0);
+                    dataArray.add(player.whisArenaU6Round);
                 }
                 String dataTrainingWhis = dataArray.toJSONString();
                 dataArray.clear();

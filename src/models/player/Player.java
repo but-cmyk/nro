@@ -98,6 +98,7 @@ public class Player extends Character {
     public int lixi;
     public int account_id;
     public int arenaWins;
+    public int whisArenaU6Round;
     public boolean isConfirmingChangePet;
     public Item itemToConfirmChangePet;
     public long lastTimeChallengeCommeson;
@@ -234,6 +235,7 @@ public class Player extends Character {
 
     public boolean lostByDeath;
     public boolean isPKDHVT;
+    public boolean isWaitingMatch;
 
     public int xSend;
     public int ySend;
@@ -706,7 +708,7 @@ public class Player extends Character {
             }  else if (fusion.typeFusion == ConstPlayer.HOP_THE_PORATA3) {
             return idOutfitFusion[6 + this.gender][0];
         }
-        } else if (inventory != null && inventory.itemsBody.get(5).isNotNullItem()) {
+        } else if (inventory != null && inventory.itemsBody != null && inventory.itemsBody.size() > 5 && inventory.itemsBody.get(5).isNotNullItem()) {
             int headId = inventory.itemsBody.get(5).template.head;
             if (headId != -1) return (short) headId;
         }
@@ -746,11 +748,11 @@ public class Player extends Character {
             }else if (fusion.typeFusion == ConstPlayer.HOP_THE_PORATA3) {
                 return idOutfitFusion[6 + this.gender][1];
             }
-        } else if (inventory != null && inventory.itemsBody.get(5).isNotNullItem()) {
+        } else if (inventory != null && inventory.itemsBody != null && inventory.itemsBody.size() > 5 && inventory.itemsBody.get(5).isNotNullItem()) {
             int body = inventory.itemsBody.get(5).template.body;
             if (body != -1) return (short) body;
         }
-        if (inventory != null && inventory.itemsBody.get(0).isNotNullItem()) {
+        if (inventory != null && inventory.itemsBody != null && inventory.itemsBody.size() > 0 && inventory.itemsBody.get(0).isNotNullItem()) {
             return inventory.itemsBody.get(0).template.part;
         }
         return (short) (gender == ConstPlayer.NAMEC ? 59 : 57);
@@ -779,11 +781,11 @@ public class Player extends Character {
             }else if (fusion.typeFusion == ConstPlayer.HOP_THE_PORATA3) {
                 return idOutfitFusion[6 + this.gender][2];
             }
-        } else if (inventory != null && inventory.itemsBody.get(5).isNotNullItem()) {
+        } else if (inventory != null && inventory.itemsBody != null && inventory.itemsBody.size() > 5 && inventory.itemsBody.get(5).isNotNullItem()) {
             int leg = inventory.itemsBody.get(5).template.leg;
             if (leg != -1) return (short) leg;
         }
-        if (inventory != null && inventory.itemsBody.get(1).isNotNullItem()) {
+        if (inventory != null && inventory.itemsBody != null && inventory.itemsBody.size() > 1 && inventory.itemsBody.get(1).isNotNullItem()) {
             return inventory.itemsBody.get(1).template.part;
         }
         return (short) (gender == 1 ? 60 : 58);

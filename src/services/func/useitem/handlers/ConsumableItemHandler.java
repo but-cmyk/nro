@@ -54,7 +54,7 @@ public class ConsumableItemHandler implements ItemActionHandler {
 
     private static boolean isItemTimeId(int id) {
         return switch (id) {
-            case 379, 381, 382, 383, 384, 385, 579, 638, 663, 664, 665, 666, 667,
+            case 191, 192, 379, 381, 382, 383, 384, 385, 579, 638, 663, 664, 665, 666, 667,
                  752, 753, 764, 880, 881, 882, 1045, 1099, 1100, 1101, 1102, 1103,
                  1109, 1136, 1137, 1261, 1262, 1397, 2160 -> true;
             default -> false;
@@ -181,6 +181,8 @@ public class ConsumableItemHandler implements ItemActionHandler {
     private void useItemTime(Player pl, Item item) {
         long now = System.currentTimeMillis();
         switch (item.template.id) {
+            case 191 -> { pl.itemTime.lastTimeCaChua = now; pl.itemTime.isUseCaChua = true; }
+            case 192 -> { pl.itemTime.lastTimeCaRot = now; pl.itemTime.isUseCaRot = true; }
             case 1397 -> { pl.itemTime.lastTimeBuaTNSM = now; pl.itemTime.isBuaTNSM = true; }
             case 382 -> { pl.itemTime.lastTimeBoHuyet = now; pl.itemTime.isUseBoHuyet = true; }
             case 383 -> { pl.itemTime.lastTimeBoKhi = now; pl.itemTime.isUseBoKhi = true; }

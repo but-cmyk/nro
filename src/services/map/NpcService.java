@@ -4,6 +4,7 @@ import models.npc.Npc;
 import models.npc.NpcFactory;
 import models.player.Player;
 import server.Manager;
+import services.Service;
 import network.io.Message;
 import utils.Logger;
 
@@ -95,6 +96,22 @@ public class NpcService {
             msg.writer().writeShort(npcTempId);
             msg.writer().writeUTF(text);
             player.sendMessage(msg);
+            msg.cleanup();
+        } catch (Exception e) {
+            Logger.logException(NpcService.class, e);
+        }
+    }
+
+    public void npcChat(models.map.Zone zone, int npcTempId, String text) {
+        if (zone == null) {
+            return;
+        }
+        Message msg;
+        try {
+            msg = new Message(124);
+            msg.writer().writeShort(npcTempId);
+            msg.writer().writeUTF(text);
+            Service.gI().sendMessAllPlayerInMap(zone, msg);
             msg.cleanup();
         } catch (Exception e) {
             Logger.logException(NpcService.class, e);

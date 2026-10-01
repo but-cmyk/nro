@@ -89,7 +89,10 @@ public class EffectSkillService {
     }
 
     public void removeUseTroi(Player player) {
-        if (player.effectSkill.mobAnTroi != null) {
+        if (player == null || player.effectSkill == null) {
+            return;
+        }
+        if (player.effectSkill.mobAnTroi != null && player.effectSkill.mobAnTroi.effectSkill != null) {
             player.effectSkill.mobAnTroi.effectSkill.removeAnTroi();
         }
         if (player.effectSkill.plAnTroi != null) {
@@ -127,32 +130,42 @@ public class EffectSkillService {
     }
 
     public void removeThoiMien(Player player) {
-        player.effectSkill.isThoiMien = false;
-        sendEffectPlayer(player, player, TURN_OFF_EFFECT, SLEEP_EFFECT);
+        if (player != null && player.effectSkill != null) {
+            player.effectSkill.isThoiMien = false;
+            sendEffectPlayer(player, player, TURN_OFF_EFFECT, SLEEP_EFFECT);
+        }
     }
 
     public void startStun(Player player, long lastTimeStartBlind, int timeBlind) {
-        player.effectSkill.lastTimeStartStun = lastTimeStartBlind;
-        player.effectSkill.timeStun = timeBlind;
-        player.effectSkill.isStun = true;
-        sendEffectPlayer(player, player, TURN_ON_EFFECT, BLIND_EFFECT);
+        if (player != null && player.effectSkill != null) {
+            player.effectSkill.lastTimeStartStun = lastTimeStartBlind;
+            player.effectSkill.timeStun = timeBlind;
+            player.effectSkill.isStun = true;
+            sendEffectPlayer(player, player, TURN_ON_EFFECT, BLIND_EFFECT);
+        }
     }
 
     public void removeStun(Player player) {
-        player.effectSkill.isStun = false;
-        sendEffectPlayer(player, player, TURN_OFF_EFFECT, BLIND_EFFECT);
+        if (player != null && player.effectSkill != null) {
+            player.effectSkill.isStun = false;
+            sendEffectPlayer(player, player, TURN_OFF_EFFECT, BLIND_EFFECT);
+        }
     }
 
     public void setSocola(Player player, long lastTimeSocola, int timeSocola) {
-        player.effectSkill.lastTimeSocola = lastTimeSocola;
-        player.effectSkill.timeSocola = timeSocola;
-        player.effectSkill.isSocola = true;
-        player.effectSkill.countPem1hp = 0;
+        if (player != null && player.effectSkill != null) {
+            player.effectSkill.lastTimeSocola = lastTimeSocola;
+            player.effectSkill.timeSocola = timeSocola;
+            player.effectSkill.isSocola = true;
+            player.effectSkill.countPem1hp = 0;
+        }
     }
 
     public void removeSocola(Player player) {
-        player.effectSkill.isSocola = false;
-        Service.gI().Send_Caitrang(player);
+        if (player != null && player.effectSkill != null) {
+            player.effectSkill.isSocola = false;
+            Service.gI().Send_Caitrang(player);
+        }
     }
 
     public void sendMobToSocola(Player player, Mob mob, int timeSocola) {
@@ -177,20 +190,26 @@ public class EffectSkillService {
     }
 
     public void removeBlindDCTT(Player player) {
-        player.effectSkill.isBlindDCTT = false;
-        sendEffectPlayer(player, player, TURN_OFF_EFFECT, BLIND_EFFECT);
+        if (player != null && player.effectSkill != null) {
+            player.effectSkill.isBlindDCTT = false;
+            sendEffectPlayer(player, player, TURN_OFF_EFFECT, BLIND_EFFECT);
+        }
     }
 
     public void setStartHuytSao(Player player, int tiLeHP) {
-        player.effectSkill.tiLeHPHuytSao = tiLeHP;
-        player.effectSkill.lastTimeHuytSao = System.currentTimeMillis();
+        if (player != null && player.effectSkill != null) {
+            player.effectSkill.tiLeHPHuytSao = tiLeHP;
+            player.effectSkill.lastTimeHuytSao = System.currentTimeMillis();
+        }
     }
 
     public void removeHuytSao(Player player) {
-        player.effectSkill.tiLeHPHuytSao = 0;
-        sendEffectPlayer(player, player, TURN_OFF_EFFECT, HUYT_SAO_EFFECT);
-        Service.gI().point(player);
-        Service.gI().Send_Info_NV(player);
+        if (player != null && player.effectSkill != null) {
+            player.effectSkill.tiLeHPHuytSao = 0;
+            sendEffectPlayer(player, player, TURN_OFF_EFFECT, HUYT_SAO_EFFECT);
+            Service.gI().point(player);
+            Service.gI().Send_Info_NV(player);
+        }
     }
 
     public void startUseSkillMonkey(Player player) {
@@ -327,9 +346,10 @@ public class EffectSkillService {
     }
 
     public void removeSocola2(Player player) {
-        player.effectSkill.isSocola2 = false;
-        Service.gI().Send_Caitrang(player);
-        
+        if (player != null && player.effectSkill != null) {
+            player.effectSkill.isSocola2 = false;
+            Service.gI().Send_Caitrang(player);
+        }
     }
 
     public void removeHalloween(Player player) {
@@ -392,67 +412,85 @@ public class EffectSkillService {
     }
 
     public void removeStone(Player player) {
-        player.effectSkill.isStone = false;
-        Service.gI().Send_Caitrang(player);
-        sendEffectPlayer(player, player, TURN_OFF_EFFECT, STONE_EFFECT);
+        if (player != null && player.effectSkill != null) {
+            player.effectSkill.isStone = false;
+            Service.gI().Send_Caitrang(player);
+            sendEffectPlayer(player, player, TURN_OFF_EFFECT, STONE_EFFECT);
+        }
     }
 
     public void setIsLamCham(Player player, int time) {
-        player.nPoint.speed = 1;
-        Service.gI().point(player);
-        Service.gI().sendSpeedPlayer(player, -1);
-        player.effectSkill.isLamCham = true;
-        player.effectSkill.timeLamCham = time;
-        player.effectSkill.lastTimeLamCham = System.currentTimeMillis();
+        if (player != null && player.effectSkill != null) {
+            player.nPoint.speed = 1;
+            Service.gI().point(player);
+            Service.gI().sendSpeedPlayer(player, -1);
+            player.effectSkill.isLamCham = true;
+            player.effectSkill.timeLamCham = time;
+            player.effectSkill.lastTimeLamCham = System.currentTimeMillis();
+        }
     }
 
     public void removeLamCham(Player player) {
-        player.nPoint.speed = 8;
-        Service.gI().point(player);
-        Service.gI().sendSpeedPlayer(player, -1);
-        Service.gI().chat(player, "Nhẹ lại rồi!");
-        player.effectSkill.isLamCham = false;
+        if (player != null && player.effectSkill != null) {
+            player.nPoint.speed = 8;
+            Service.gI().point(player);
+            Service.gI().sendSpeedPlayer(player, -1);
+            Service.gI().chat(player, "Nhẹ lại rồi!");
+            player.effectSkill.isLamCham = false;
+        }
     }
 
     public void setIsTanHinh(Player player, int time) {
-        Service.gI().setPos2(player, player.location.x, 10000);
-        player.effectSkill.isTanHinh = true;
-        player.effectSkill.timeTanHinh = time;
-        player.effectSkill.lastTimeTanHinh = System.currentTimeMillis();
+        if (player != null && player.effectSkill != null) {
+            Service.gI().setPos2(player, player.location.x, 10000);
+            player.effectSkill.isTanHinh = true;
+            player.effectSkill.timeTanHinh = time;
+            player.effectSkill.lastTimeTanHinh = System.currentTimeMillis();
+        }
     }
 
     public void removeTanHinh(Player player) {
-        Service.gI().setPos2(player, player.location.x, player.location.y);
-        player.effectSkill.isTanHinh = false;
+        if (player != null && player.effectSkill != null) {
+            Service.gI().setPos2(player, player.location.x, player.location.y);
+            player.effectSkill.isTanHinh = false;
+        }
     }
 
     public void setDameBuff(Player player, int time, int tiLe) {
-        player.effectSkill.isDameBuff = true;
-        player.effectSkill.timeDameBuff = time;
-        player.effectSkill.tileDameBuff = tiLe;
-        player.effectSkill.lastTimeDameBuff = System.currentTimeMillis();
+        if (player != null && player.effectSkill != null) {
+            player.effectSkill.isDameBuff = true;
+            player.effectSkill.timeDameBuff = time;
+            player.effectSkill.tileDameBuff = tiLe;
+            player.effectSkill.lastTimeDameBuff = System.currentTimeMillis();
+        }
     }
 
     public void removeDameBuff(Player player) {
-        player.effectSkill.isDameBuff = false;
+        if (player != null && player.effectSkill != null) {
+            player.effectSkill.isDameBuff = false;
+        }
     }
 
     public void setMabuHold(Player player, MaBuHold MabuHold) {
-        short x = (short) MabuHold.x;
-        short y = (short) MabuHold.y;
-        player.maBuHold = MabuHold;
-        player.precentMabuHold = 0;
-        PlayerService.gI().changeAndSendTypePK(player, ConstPlayer.PK_ALL);
-        Service.gI().sendMabuHold(player, 1, x, y);
-        player.effectSkill.isMabuHold = true;
+        if (player != null && player.effectSkill != null) {
+            short x = (short) MabuHold.x;
+            short y = (short) MabuHold.y;
+            player.maBuHold = MabuHold;
+            player.precentMabuHold = 0;
+            PlayerService.gI().changeAndSendTypePK(player, ConstPlayer.PK_ALL);
+            Service.gI().sendMabuHold(player, 1, x, y);
+            player.effectSkill.isMabuHold = true;
+        }
     }
 
     public void removeMabuHold(Player player) {
-        player.maBuHold = null;
-        player.precentMabuHold = 0;
-        PlayerService.gI().changeAndSendTypePK(player, ConstPlayer.NON_PK);
-        Service.gI().sendMabuHold(player, 0, (short) player.location.x, (short) 312);
-        player.effectSkill.isMabuHold = false;
+        if (player != null && player.effectSkill != null) {
+            player.maBuHold = null;
+            player.precentMabuHold = 0;
+            PlayerService.gI().changeAndSendTypePK(player, ConstPlayer.NON_PK);
+            Service.gI().sendMabuHold(player, 0, (short) player.location.x, (short) 312);
+            player.effectSkill.isMabuHold = false;
+        }
     }
 
     public void setPKCommeson(Player player, int time) {
@@ -526,8 +564,10 @@ public class EffectSkillService {
     }
 
     public void removeShield(Player player) {
-        player.effectSkill.isShielding = false;
-        sendEffectPlayer(player, player, TURN_OFF_EFFECT, SHIELD_EFFECT);
+        if (player != null && player.effectSkill != null) {
+            player.effectSkill.isShielding = false;
+            sendEffectPlayer(player, player, TURN_OFF_EFFECT, SHIELD_EFFECT);
+        }
     }
 
     public void breakShield(Player player) {

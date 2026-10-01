@@ -168,7 +168,7 @@ public class TimeUtil {
     public static boolean isMabu14HOpen() {
         Calendar calendar = Calendar.getInstance();
         int hour = calendar.get(Calendar.HOUR_OF_DAY);  // lấy giờ hiện tại
-        return hour == 14;  // Chỉ trả về true khi giờ là 14
+        return hour == 19;  // Đổi sang 19h (19:00 - 20:00) tránh trùng Ngọc Rồng Sao Đen (20h)
     }
 
     public static boolean is21H() {

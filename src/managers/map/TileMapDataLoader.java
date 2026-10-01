@@ -61,8 +61,54 @@ public class TileMapDataLoader {
             map.initMob(mapTemp.mobTemp, mapTemp.mobLevel, mapTemp.mobHp, mapTemp.mobX, mapTemp.mobY);
             map.initNpc(mapTemp.npcId, mapTemp.npcX, mapTemp.npcY);
         }
+        models.map.Map map186 = services.map.MapService.gI().getMapById(186);
+        if (map186 != null) {
+            initWhisArenaMap(map186, 186);
+        }
+        models.map.Map map187 = services.map.MapService.gI().getMapById(187);
+        if (map187 == null && map186 != null) {
+            // Dynamic fallback: Clone map 187 from map 186 if not loaded from DB
+            int maxPl = (!map186.zones.isEmpty()) ? map186.zones.get(0).maxPlayer : 15;
+            map187 = new models.map.Map(187,
+                    "Võ Đài Liên Vũ Trụ 6-7", map186.planetId, map186.tileId, map186.bgId,
+                    map186.bgType, map186.type, map186.tileMap, map186.tileTop,
+                    map186.zones.size(),
+                    maxPl, map186.wayPoints, map186.effMap);
+            Manager.MAPS.add(map187);
+        }
+        if (map187 != null) {
+            initWhisArenaMap(map187, 187);
+        }
         new NonInteractiveNPC().initNonInteractiveNPC();
         Logger.log(Logger.GREEN, "Init map successful! (" + Manager.MAPS.size() + " maps)\n");
+    }
+
+    private static void initWhisArenaMap(models.map.Map map, int mapId) {
+        if (map == null) return;
+        map.npcs.clear();
+        map.npcs.add(models.npc.NpcFactory.createNPC(mapId, 1, 205, 360, consts.ConstNpc.WHIS));
+        map.npcs.add(models.npc.NpcFactory.createNPC(mapId, 1, 255, 360, consts.ConstNpc.BILL));
+        map.npcs.add(models.npc.NpcFactory.createNPC(mapId, 1, 520, 360, consts.ConstNpc.CHAMPA));
+        map.npcs.add(models.npc.NpcFactory.createNPC(mapId, 1, 570, 360, consts.ConstNpc.VADOS));
+
+        if (map.bgItemData == null || map.bgItemData.length == 0) {
+            map.bgItemData = managers.map.MapDataManager.gI().getBgItemData(mapId);
+            if ((map.bgItemData == null || map.bgItemData.length == 0) && mapId == 187) {
+                map.bgItemData = managers.map.MapDataManager.gI().getBgItemData(186);
+            }
+        }
+
+        if (map.effMap == null) {
+            map.effMap = new java.util.ArrayList<>();
+        }
+        map.effMap.clear();
+        map.effMap.add(new models.map.EffectMap("eff", "45.2.86.230"));
+        map.effMap.add(new models.map.EffectMap("eff", "46.2.644.230"));
+        map.effMap.add(new models.map.EffectMap("eff", "44.2.517.220"));
+        map.effMap.add(new models.map.EffectMap("eff", "42.2.201.203"));
+        map.effMap.add(new models.map.EffectMap("eff", "43.2.190.222"));
+        map.effMap.add(new models.map.EffectMap("eff", "42.2.304.180"));
+        map.effMap.add(new models.map.EffectMap("eff", "43.2.412.187"));
     }
 
     /**

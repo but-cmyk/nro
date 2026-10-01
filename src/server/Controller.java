@@ -799,6 +799,10 @@ public class Controller implements IMessageHandler {
                     if (player != null) {
                         int _id = _msg.reader().readInt();
                         int menuType = player.idMark.getMenuType();
+                        if (menuType == 186 || (player.zone != null && (player.zone.map.mapId == 186 || player.zone.map.mapId == 187))) {
+                            models.tournament.whis_arena.WhisArenaService.gI().competing(player, _id);
+                            break;
+                        }
                         switch (menuType) {
                             case 0, 1, 2 -> {
                                 SuperRankService.gI().competing(player, _id);

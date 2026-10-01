@@ -81,6 +81,12 @@ public class ItemTimeService {
             sendItemTime(player, 10904,
                     (int) ((TIME_ITEM - (System.currentTimeMillis() - player.itemTime.lastTimeXimuoihoamai)) / 1000));
         }
+        if (player.itemTime.isUseCaChua) {
+            sendItemTime(player, 931, (int) ((TIME_ITEM - (System.currentTimeMillis() - player.itemTime.lastTimeCaChua)) / 1000));
+        }
+        if (player.itemTime.isUseCaRot) {
+            sendItemTime(player, 933, (int) ((TIME_ITEM - (System.currentTimeMillis() - player.itemTime.lastTimeCaRot)) / 1000));
+        }
         if (player.itemTime.isUseAnDanh2) {
             sendItemTime(player, 10717, (int) ((TIME_ITEM - (System.currentTimeMillis() - player.itemTime.lastTimeAnDanh2)) / 1000));
         }

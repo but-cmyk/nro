@@ -920,6 +920,23 @@ public class Mob {
         }
 
 
+        //========================CÀ CHUA & CÀ RỐT========================
+        Player plOwner = player.isPet ? ((Pet) player).master : player;
+        if (plOwner != null && plOwner.nPoint != null) {
+            boolean isOver1B5 = plOwner.nPoint.power > 1_500_000_000L;
+            if (player.isPet && player.nPoint != null && player.nPoint.power > 1_500_000_000L) {
+                isOver1B5 = true;
+            } else if (plOwner.pet != null && plOwner.pet.nPoint != null && plOwner.pet.nPoint.power > 1_500_000_000L) {
+                isOver1B5 = true;
+            }
+
+            boolean isDrop = isOver1B5 ? Util.isTrue(1, 1000) : Util.isTrue(1, 100); // 0.1% nếu > 1.5 tỷ, 1% nếu <= 1.5 tỷ
+            if (isDrop) {
+                int itemDropId = Util.isTrue(50, 100) ? 191 : 192; // 50% Cà chua, 50% Cà rốt
+                list.add(new ItemMap(zone, itemDropId, 1, x, yEnd, plOwner.id));
+            }
+        }
+
         return list;
     }
 

@@ -250,7 +250,51 @@ public class NonInteractiveNPC extends Player {
                         z.setNpc(pl);
                     }
                 }
+                case 186, 187 -> {
+                    for (Zone z : m.zones) {
+                        NonInteractiveNPC pl = new NonInteractiveNPC();
+                        pl.name = "Trọng Tài";
+                        pl.gender = 0;
+                        pl.id = -533;
+                        pl.head = 533;
+                        pl.body = 534;
+                        pl.leg = 535;
+                        pl.nPoint.hpMax = 500;
+                        pl.nPoint.hpg = 500;
+                        pl.nPoint.hp = 500;
+                        pl.nPoint.setFullHpMp();
+                        pl.location.x = 385;
+                        pl.location.y = 264;
+                        joinMap(z, pl);
+                        z.setNpc(pl);
+                    }
+                }
             }
         }
+    }
+
+    public static Player getReferee(Zone zone) {
+        if (zone == null) return null;
+        Player npc = zone.getNpc();
+        if (npc == null) {
+            NonInteractiveNPC pl = new NonInteractiveNPC();
+            pl.name = "Trọng Tài";
+            pl.gender = 0;
+            boolean isWhisArena = (zone.map != null && (zone.map.mapId == 186 || zone.map.mapId == 187));
+            pl.id = isWhisArena ? -533 : -114;
+            pl.head = (short) (isWhisArena ? 533 : 114);
+            pl.body = (short) (isWhisArena ? 534 : 115);
+            pl.leg = (short) (isWhisArena ? 535 : 116);
+            pl.nPoint.hpMax = 500;
+            pl.nPoint.hpg = 500;
+            pl.nPoint.hp = 500;
+            pl.nPoint.setFullHpMp();
+            pl.location.x = 385;
+            pl.location.y = 264;
+            pl.joinMap(zone, pl);
+            zone.setNpc(pl);
+            return pl;
+        }
+        return npc;
     }
 }

@@ -162,8 +162,11 @@ public class InventoryService {
                 Service.gI().sendThongBao(player, "Không thể bỏ ra thỏi vàng.");
                 return;
             }
-            if (itemThrow.isHaveOption(30)) {
-                Service.gI().sendThongBao(player, "Vật phẩm khóa, không thể vứt bỏ.");
+            if (itemThrow.isHaveOption(30) || services.func.Trade.isItemCannotTran(itemThrow)) {
+                removeItemBag(player, index);
+                sortItems(player.inventory.itemsBag);
+                sendItemBags(player);
+                Service.gI().sendThongBao(player, "Vật phẩm không thể giao dịch đã biến mất.");
                 return;
             }
             Item itemDropped = ItemService.gI().copyItem(itemThrow);

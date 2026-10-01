@@ -89,6 +89,8 @@ namespace Game1
     
     	private static Image imgReplay;
     
+    	private static Thread autoThread;
+    
     	public static bool isAutoCrackBall;
     
     	public static bool isCallStop;
@@ -772,8 +774,14 @@ namespace Game1
     
     	public void startAutoCrackBall()
     	{
-    		Thread thread = new Thread(AutoCrackBall);
-    		thread.Start();
+    		if (autoThread != null && autoThread.IsAlive)
+    		{
+    			return;
+    		}
+    		isAutoCrackBall = true;
+    		autoThread = new Thread(AutoCrackBall);
+    		autoThread.IsBackground = true;
+    		autoThread.Start();
     	}
     
     	public void stopAutoCrackBall()
@@ -782,6 +790,7 @@ namespace Game1
     		indexSkillSelect = -1;
     		isCallStop = false;
     		isContinue = false;
+    		autoThread = null;
     	}
     
     	public void AutoCrackBall()

@@ -83,17 +83,27 @@ public class The23rdMartialArtCongress {
                     PlayerService.gI().playerMove(npc, 335, 264);
                     Service.gI().chat(npc, "Trận đấu giữa " + player.name + " vs " + boss.name + " sắp diễn ra"); // 7 STUN
                     break;
-                case 7:
-                    Service.gI().chat(npc, "Xin quý vị khán giả cho 1 tràng pháo tay cổ vũ cho 2 đấu thủ nào"); // 3 STUN
+                case 8:
+                    Service.gI().chat(npc, "Xin quý vị khán giả cho 1 tràng pháo tay cổ vũ cho 2 đấu thủ nào");
+                    break;
+                case 6:
+                    Service.gI().chat(npc, "Mọi người hãy ổn định chỗ ngồi, trận đấu sẽ bắt đầu sau 3 giây nữa");
+                    break;
+                case 5:
+                    Service.gI().chat(npc, "3");
                     break;
                 case 4:
-                    Service.gI().chat(npc, "Mọi người hãy ổn định chỗ ngồi, trận đấu sẽ bắt đầu sau 3 giây nữa"); // 0 STUN
+                    Service.gI().chat(npc, "2");
                     break;
                 case 3:
-                    Service.gI().chat(npc, "Trận đấu bắt đầu"); // -1 STUN
+                    Service.gI().chat(npc, "1");
                     break;
                 case 2:
+                    Service.gI().chat(npc, "Trận đấu bắt đầu");
                     PlayerService.gI().playerMove(npc, npc.location.x, 360);
+                    EffectSkillService.gI().removeStun(player);
+                    EffectSkillService.gI().removeStun(boss);
+                    ItemTimeService.gI().removeItemTime(player, 3779);
                     Service.gI().chat(player, "OK");
                     Service.gI().chat(boss, "OK");
                     break;

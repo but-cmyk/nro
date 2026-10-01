@@ -55,6 +55,7 @@ public class SideTask {
 
     public void renew() {
         if (Util.isAfterMidnight(receivedTime)) {
+            this.reset();
             this.leftTask = ConstTask.MAX_SIDE_TASK;
             this.cancelCount = 0;
             this.receivedTime = System.currentTimeMillis();

@@ -195,7 +195,7 @@ public class Trade {
         }
     }
 
-    private boolean isItemCannotTran(Item item) {
+    public static boolean isItemCannotTran(Item item) {
         if (item == null) {
             return true;
         }

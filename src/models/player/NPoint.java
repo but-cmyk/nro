@@ -130,7 +130,7 @@ public class NPoint {
     /**
      * Tỉ lệ hút hp, mp khi đánh, hp khi đánh quái
      */
-    public short tlHutHp, tlHutMp, tlHutHpMob;
+    public short tlHutHp, tlHutMp, tlHutHpMob, tlHutMpMob;
 
     /**
      * Tỉ lệ hút hp, mp xung quanh mỗi 5s
@@ -446,6 +446,12 @@ public class NPoint {
                     addOption(io);
                 }
             }
+        }
+        if (this.player.itemTime != null && this.player.itemTime.isUseCaChua) {
+            this.tlHutHpMob += 5;
+        }
+        if (this.player.itemTime != null && this.player.itemTime.isUseCaRot) {
+            this.tlHutMpMob += 5;
         }
         setDameTrainArmor();
         setBasePoint();
@@ -1144,6 +1150,7 @@ public class NPoint {
         this.tlHutHp = 0;
         this.tlHutMp = 0;
         this.tlHutHpMob = 0;
+        this.tlHutMpMob = 0;
         this.tlHutHpMpXQ = 0;
         this.tlPST = 0;
         this.tlTNSM.clear();
@@ -1570,8 +1577,16 @@ public class NPoint {
         }
     }
 
+    public short getTiLeHutMp(boolean isMob) {
+        if (isMob) {
+            return (short) (this.tlHutMp + this.tlHutMpMob);
+        } else {
+            return this.tlHutMp;
+        }
+    }
+
     public short getTiLeHutMp() {
-        return this.tlHutMp;
+        return getTiLeHutMp(false);
     }
 
     public int subDameInjureWithDeff(long dame) {

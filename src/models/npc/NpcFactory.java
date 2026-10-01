@@ -106,6 +106,9 @@ public class NpcFactory {
                 case ConstNpc.DAI_THIEN_SU -> new DaiThienSu(mapId, status, cx, cy, tempId, avatar);
                 case ConstNpc.WHIS -> new Whis(mapId, status, cx, cy, tempId, avatar);
                 case ConstNpc.BILL -> new Bill(mapId, status, cx, cy, tempId, avatar);
+                case ConstNpc.CHAMPA -> new Champa(mapId, status, cx, cy, tempId, avatar);
+                case ConstNpc.VADOS -> new Vados(mapId, status, cx, cy, tempId, avatar);
+                case ConstNpc.TRONG_TAI_2 -> new TrongTai2(mapId, status, cx, cy, tempId, avatar);
                 case ConstNpc.BO_MONG -> new BoMong(mapId, status, cx, cy, tempId, avatar);
                 case ConstNpc.THAN_MEO_KARIN -> new Karin(mapId, status, cx, cy, tempId, avatar);
                 case ConstNpc.GOKU_SSJ -> new GokuSSJ(mapId, status, cx, cy, tempId, avatar);

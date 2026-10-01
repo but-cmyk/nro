@@ -955,9 +955,9 @@ public class SkillService {
 
     private void hutHPMP(Player player, long dame, Player pl, Mob mob) {
         int tiLeHutHp = player.nPoint.getTileHutHp(mob != null);
-        int tiLeHutMp = player.nPoint.getTiLeHutMp();
-        int hpHoi = (int) (dame * tiLeHutHp / 100);
-        int mpHoi = (int) (dame * tiLeHutMp / 100);
+        int tiLeHutMp = player.nPoint.getTiLeHutMp(mob != null);
+        long hpHoi = (dame * tiLeHutHp / 100);
+        long mpHoi = (dame * tiLeHutMp / 100);
         if (hpHoi > 0 || mpHoi > 0) {
             int x = -1;
             int y = -1;
@@ -1439,6 +1439,13 @@ public class SkillService {
 
         if (p1.isNewPet || p2.isNewPet || (p1 instanceof NonInteractiveNPC) || (p2 instanceof NonInteractiveNPC)) {
             return false;
+        }
+
+        // Đấu trường Võ Đài Whis (PKDHVT): Cho phép đấu thủ đánh nhau nếu cả 2 mang cờ võ đài và cùng zone
+        if (p1.isPKDHVT && p2.isPKDHVT && p1.zone != null && p2.zone != null && p1.zone.equals(p2.zone)) {
+            if (p1.typePk == ConstPlayer.PK_PVP && p2.typePk == ConstPlayer.PK_PVP) {
+                return true;
+            }
         }
 
         if (p1.typePk == ConstPlayer.PK_ALL || p2.typePk == ConstPlayer.PK_ALL) {

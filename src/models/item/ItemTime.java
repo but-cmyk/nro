@@ -112,6 +112,12 @@ public class ItemTime {
     public boolean isBuaTNSM;
     public long lastTimeBuaTNSM;
 
+    public boolean isUseCaChua;
+    public long lastTimeCaChua;
+
+    public boolean isUseCaRot;
+    public long lastTimeCaRot;
+
     // Nhận bùa
     public long lastTimeSendTextTime;
 
@@ -120,6 +126,18 @@ public class ItemTime {
     }
 
     public void update() {
+        if (isUseCaChua) {
+            if (Util.canDoWithTime(lastTimeCaChua, TIME_ITEM)) {
+                isUseCaChua = false;
+                Service.gI().point(player);
+            }
+        }
+        if (isUseCaRot) {
+            if (Util.canDoWithTime(lastTimeCaRot, TIME_ITEM)) {
+                isUseCaRot = false;
+                Service.gI().point(player);
+            }
+        }
         if(isBuaTNSM) {
             if (Util.canDoWithTime(lastTimeBuaTNSM, TIME_ITEM)) {
                 isBuaTNSM = false;

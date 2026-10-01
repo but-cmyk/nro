@@ -257,6 +257,14 @@ public class ItemService {
         item.quantity = quantity;
         item.createTime = System.currentTimeMillis();
 
+        if (tempId == 191) {
+            item.itemOptions.add(new ItemOption(104, 5));
+            item.itemOptions.add(new ItemOption(30, 0));
+        } else if (tempId == 192) {
+            item.itemOptions.add(new ItemOption(96, 5));
+            item.itemOptions.add(new ItemOption(30, 0));
+        }
+
         if (item.template != null) {
             item.content = item.getContent();
             item.info = item.getInfo();

@@ -19,6 +19,9 @@ public class MountPetItemHandler implements ItemActionHandler {
             return false;
         }
         int type = item.template.type;
+        if (type == 27 && (item.template.head != -1 || item.template.name.toLowerCase().contains("pet"))) {
+            return true;
+        }
         return type == 23 || type == 24 || type == 11 || type == 21 || type == 72 || type == 36 || type == 35;
     }
 
@@ -30,7 +33,7 @@ public class MountPetItemHandler implements ItemActionHandler {
                 InventoryService.gI().itemBagToBody(player, bagIndex);
                 Service.gI().sendFlagBag(player);
             }
-            case 21 -> {
+            case 21, 27 -> {
                 InventoryService.gI().itemBagToBody(player, bagIndex);
                 PetService.Pet2(player, player.getHeadThuCung(), player.getBodyThuCung(), player.getLegThuCung());
                 Service.gI().point(player);

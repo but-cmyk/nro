@@ -4,7 +4,7 @@
   "routes": [
     {
       "domain": "economy_items",
-      "keywords": ["item", "vat_pham", "tui_do", "ruong_do", "inventory", "dupe", "giao_dich", "trade", "dap_do", "combine", "ba_hat_mit", "nang_cap", "pha_le_hoa", "shop", "ky_gui", "consign"],
+      "keywords": ["item", "vat_pham", "tui_do", "ruong_do", "inventory", "dupe", "giao_dich", "trade", "dap_do", "combine", "ba_hat_mit", "nang_cap", "pha_le_hoa", "shop", "ky_gui", "consign", "vong_quay", "thuong_de", "crackball", "lucky_round"],
       "doc_module": "src/services/GEMINI.md",
       "core_files": [
         "src/services/ItemService.java",
@@ -12,6 +12,7 @@
         "src/services/func/Trade.java",
         "src/services/ShopService.java",
         "src/services/ConsignShopService.java",
+        "src/services/func/LuckyRound.java",
         "src/models/player/Inventory.java"
       ],
       "key_methods": [
@@ -21,7 +22,8 @@
         "CombineService.combine",
         "CombineService.showInfoCombine",
         "Trade.tradeItem",
-        "Inventory.addItemSpecial"
+        "Inventory.addItemSpecial",
+        "LuckyRound.readOpenBall"
       ],
       "invariants": [
         "Check quantityRequired <= item.quantity trước khi trừ",
@@ -287,6 +289,31 @@
         "Zero-allocation trong hot path, chỉ dùng LongAdder/AtomicLong",
         "Ghi log disk bất đồng bộ qua BlockingQueue, tuyệt đối không block Netty IO thread",
         "Cổng phê duyệt: AI Agent bắt buộc phải trình User kế hoạch fix trước khi sửa code khi phát hiện nghẽn"
+      ]
+    },
+    {
+      "domain": "whis_arena",
+      "keywords": ["vodai", "vo_dai", "whis_arena", "loi_dai", "capsule_vang", "dau_truong", "bot_player", "whis", "kaio", "top_5"],
+      "doc_module": "src/services/GEMINI.md",
+      "core_files": [
+        "src/models/tournament/whis_arena/WhisArenaService.java",
+        "src/models/tournament/whis_arena/WhisArenaMatch.java",
+        "src/models/tournament/whis_arena/WhisArenaBotManager.java",
+        "src/models/tournament/whis_arena/WhisArenaBot.java",
+        "src/models/tournament/whis_arena/WhisArenaRival.java"
+      ],
+      "key_methods": [
+        "WhisArenaService.openMenuAtKaio",
+        "WhisArenaService.openMenuAtArena",
+        "WhisArenaService.findMatch",
+        "WhisArenaService.exchangeCapsuleVang",
+        "WhisArenaBotManager.getPlayerRank"
+      ],
+      "invariants": [
+        "Khung giờ 21h-22h hàng ngày (TEST_MODE_24_7 mở test 24/24)",
+        "Sảnh chờ Y=360, Sàn lôi đài Y=264",
+        "Chỉ Top 1-5 BXH tuần mới được đổi Capsule Vàng Kì Bí (ID 574)",
+        "Chu kỳ tuần chốt 22h CN, reset điểm 23h59 CN"
       ]
     }
   ]

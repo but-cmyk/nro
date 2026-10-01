@@ -99,15 +99,14 @@ public class ThuongDe extends Npc {
                             case 4 -> // Quay ngọc May mắn
                             this.createOtherMenu(player, ConstNpc.MENU_CHOOSE_LUCKY_ROUND,
                                     "Con muốn làm gì nào?",
-                                    "Quay bằng\nvàng",
-                                    "Quay bằng\nngọc", // <<-- THÊM LỰA CHỌN MỚI TẠI ĐÂY
-                                    "Vòng quay\nđặc biệt",
+                                    "Quay bằng\nngọc (4 ngọc)",
+                                    "Vòng quay\nvé (Cày Free)",
                                     "Rương phụ\n("
                                     + (player.inventory.itemsBoxCrackBall.size()
                                     - InventoryService.gI().getCountEmptyListItem(player.inventory.itemsBoxCrackBall))
                                     + " món)",
                                     "Xóa hết\ntrong rương",
-                                    "BXH Quay Số", // Tên BXH mới của chúng ta
+                                    "BXH Quay Số",
                                     "Đóng");
                         }
                     } else if (player.idMark.getIndexMenu() == 2001) {
@@ -139,29 +138,25 @@ public class ThuongDe extends Npc {
                         }
                     } else if (player.idMark.getIndexMenu() == ConstNpc.MENU_CHOOSE_LUCKY_ROUND) {
                         switch (select) {
-                            case 0: // Quay bằng vàng
-                                LuckyRound.gI().openCrackBallUI(player, LuckyRound.USING_GOLD);
-                                break;
-                            case 1: // Quay bằng ngọc <-- LỰA CHỌN MỚI
+                            case 0: // Quay bằng ngọc
                                 LuckyRound.gI().openCrackBallUI(player, LuckyRound.USING_GEM);
                                 break;
-                            case 2: // Vòng quay đặc biệt
+                            case 1: // Vòng quay vé (Cày Free)
                                 LuckyRound.gI().openCrackBallVipUI(player, LuckyRound.USING_TICKET);
                                 break;
-                            case 3: // Rương phụ
+                            case 2: // Rương phụ
                                 ShopService.gI().opendShop(player, "ITEMS_LUCKY_ROUND", true);
                                 break;
-                            case 4: // Xóa hết trong rương
+                            case 3: // Xóa hết trong rương
                                 NpcService.gI().createMenuConMeo(player,
                                         ConstNpc.CONFIRM_REMOVE_ALL_ITEM_LUCKY_ROUND, this.avartar,
                                         "Con có chắc muốn xóa hết vật phẩm trong rương phụ? Sau khi xóa "
                                         + "sẽ không thể khôi phục!",
                                         "Đồng ý", "Hủy bỏ");
                                 break;
-                            case 5: // BXH Quay Số
+                            case 4: // BXH Quay Số
                                 Service.gI().showListTop(player, Manager.topLuckySpins);
                                 break;
-
                         }
                     }
                 }

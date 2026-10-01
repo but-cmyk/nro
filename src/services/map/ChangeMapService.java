@@ -141,9 +141,9 @@ public class ChangeMapService {
                 msg.writer().writeByte(zone.maxPlayer);
                 if (zone.isCompeting) {
                     msg.writer().writeByte(1);
-                    msg.writer().writeUTF(zone.rankName1);
+                    msg.writer().writeUTF(zone.rankName1 != null ? zone.rankName1 : "Đang thi đấu");
                     msg.writer().writeInt(zone.rank1);
-                    msg.writer().writeUTF(zone.rankName2);
+                    msg.writer().writeUTF(zone.rankName2 != null ? zone.rankName2 : "Đang thi đấu");
                     msg.writer().writeInt(zone.rank2);
                 } else {
                     msg.writer().writeByte(0);
@@ -151,6 +151,7 @@ public class ChangeMapService {
             }
             pl.sendMessage(msg);
         } catch (Exception e) {
+            utils.Logger.logException(ChangeMapService.class, e, "Lỗi openZoneUI cho player " + pl.name);
         } finally {
             if (msg != null) {
                 msg.cleanup();
@@ -167,6 +168,10 @@ public class ChangeMapService {
     public void changeZone(Player pl, int zoneId) {
         if (pl.zone == null) {
             NpcService.gI().createTutorial(pl, -1, "Không thể đến khu vực này");
+            return;
+        }
+        if (pl.isPKDHVT) {
+            Service.gI().sendThongBao(pl, "Không thể đổi khu khi đang trong trận đấu!");
             return;
         }
         if (!pl.isAdmin() && !pl.isBoss) {
@@ -197,7 +202,8 @@ public class ChangeMapService {
                     return;
                 }
                 if (zoneJoin != null) {
-                    changeMap(pl, zoneJoin, -1, -1, pl.location.x, pl.location.y, NON_SPACE_SHIP);
+                    int targetY = (pl.zone != null && (pl.zone.map.mapId == 186 || pl.zone.map.mapId == 187)) ? 360 : pl.location.y;
+                    changeMap(pl, zoneJoin, -1, -1, pl.location.x, targetY, NON_SPACE_SHIP);
                 }
             } else {
                 Service.gI().sendThongBao(pl, "Không thể thực hiện");
@@ -827,6 +833,9 @@ public class ChangeMapService {
             }
             if (player.isPl() && player.zone != null && player.isPKDHVT) {
                 player.isPKDHVT = false;
+            }
+            if (player.isPl()) {
+                models.tournament.whis_arena.WhisArenaService.gI().getReadyPlayerIds().remove(player.id);
             }
             if (player.isPl() && player.clan != null && player.clan.ConDuongRanDoc != null
                     && player.joinCDRD && player.clan.ConDuongRanDoc.allMobsDead && player.talkToThanMeo) {

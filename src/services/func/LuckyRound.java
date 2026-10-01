@@ -19,7 +19,6 @@ public class LuckyRound {
     public static final byte USING_TICKET = 1;
 
     private static final byte PRICE_GEM = 4;
-    private static final int PRICE_GOLD = 10000000;
     private static final int PRICE_TICKET = 1;
     private static final int TICKET = 821;
 
@@ -33,7 +32,7 @@ public class LuckyRound {
     }
 
     public void openCrackBallUI(Player pl, byte type) {
-        pl.idMark.setTypeLuckyRound(type);
+        pl.idMark.setTypeLuckyRound(USING_GEM);
         Message msg = null;
         try {
             msg = new Message(-127);
@@ -42,8 +41,8 @@ public class LuckyRound {
             for (int i = 0; i < 7; i++) {
                 msg.writer().writeShort(419 + i);
             }
-            msg.writer().writeByte(type); //type price
-            msg.writer().writeInt(type == USING_GEM ? PRICE_GEM : PRICE_GOLD); //price
+            msg.writer().writeByte(USING_GEM); //type price
+            msg.writer().writeInt(PRICE_GEM); //price
             msg.writer().writeShort(-1); //id ticket
             pl.sendMessage(msg);
         } catch (IOException e) {
@@ -102,8 +101,8 @@ public class LuckyRound {
             }
             switch (player.idMark.getTypeLuckyRound()) {
                 case USING_GEM -> openBallByGem(player, count);
-                case USING_GOLD -> openBallByGold(player, count);
                 case USING_TICKET -> openBallByTicket(player, count);
+                default -> Service.gI().sendThongBao(player, "Chế độ quay vàng đã đóng, hãy chọn quay bằng Ngọc hoặc cày Vé!");
             }
         } catch (Exception e) {
             reopenUI(player);
@@ -115,70 +114,54 @@ public class LuckyRound {
             return;
         }
         switch (player.idMark.getTypeLuckyRound()) {
-            case USING_TICKET -> openCrackBallVipUI(player, player.idMark.getTypeLuckyRound());
-            default -> openCrackBallUI(player, player.idMark.getTypeLuckyRound());
+            case USING_TICKET -> openCrackBallVipUI(player, USING_TICKET);
+            default -> openCrackBallUI(player, USING_GEM);
         }
     }
 
     private void openBallByGem(Player player, byte count) {
-        int gemNeed = count * PRICE_GEM;
-        if (player.inventory.gem < gemNeed) {
-            Service.gI().sendThongBao(player, "Bạn không đủ ngọc để mở");
-            return;
-        }
-        synchronized (player.inventory.itemsBoxCrackBall) {
-            if (count + player.inventory.itemsBoxCrackBall.size() > MAX_ITEM_IN_BOX) {
-                Service.gI().sendThongBao(player, "Rương phụ đã đầy (tối đa " + MAX_ITEM_IN_BOX + " món)");
+        synchronized (player) {
+            int gemNeed = count * PRICE_GEM;
+            if (player.inventory.gem < gemNeed) {
+                Service.gI().sendThongBao(player, "Bạn không đủ ngọc để mở");
                 return;
             }
-            player.inventory.gem -= gemNeed;
-            player.luckySpins += count;
-            List<Item> list = RewardService.gI().getListItemLuckyRound(player, count, USING_GEM);
-            addItemToBox(player, list);
-            sendReward(player, list);
-            Service.gI().sendMoney(player);
-        }
-    }
-
-    private void openBallByGold(Player player, byte count) {
-        long goldNeed = (long) count * PRICE_GOLD;
-        if (player.inventory.gold < goldNeed) {
-            Service.gI().sendThongBao(player, "Bạn không đủ vàng để mở");
-            return;
-        }
-        synchronized (player.inventory.itemsBoxCrackBall) {
-            if (count + player.inventory.itemsBoxCrackBall.size() > MAX_ITEM_IN_BOX) {
-                Service.gI().sendThongBao(player, "Rương phụ đã đầy (tối đa " + MAX_ITEM_IN_BOX + " món)");
-                return;
+            synchronized (player.inventory.itemsBoxCrackBall) {
+                if (count + player.inventory.itemsBoxCrackBall.size() > MAX_ITEM_IN_BOX) {
+                    Service.gI().sendThongBao(player, "Rương phụ đã đầy (tối đa " + MAX_ITEM_IN_BOX + " món)");
+                    return;
+                }
+                player.inventory.subGem(gemNeed);
+                player.luckySpins += count;
+                List<Item> list = RewardService.gI().getListItemLuckyRound(player, count, USING_GEM);
+                addItemToBox(player, list);
+                sendReward(player, list);
+                Service.gI().sendMoney(player);
             }
-            player.inventory.gold -= (int) goldNeed;
-            player.luckySpins += count;
-            List<Item> list = RewardService.gI().getListItemLuckyRound(player, count, USING_GOLD);
-            addItemToBox(player, list);
-            sendReward(player, list);
-            Service.gI().sendMoney(player);
         }
     }
 
     private void openBallByTicket(Player player, byte count) {
-        int ticketNeed = count * PRICE_TICKET;
-        Item ticket = InventoryService.gI().findItemBag(player, TICKET);
-        if (ticket == null || ticket.quantity < ticketNeed) {
-            Service.gI().sendThongBao(player, "Bạn không đủ " + ItemService.gI().createNewItem((short) TICKET).template.name + " để quay");
-            return;
-        }
-        synchronized (player.inventory.itemsBoxCrackBall) {
-            if (count + player.inventory.itemsBoxCrackBall.size() > MAX_ITEM_IN_BOX) {
-                Service.gI().sendThongBao(player, "Rương phụ đã đầy (tối đa " + MAX_ITEM_IN_BOX + " món)");
+        synchronized (player) {
+            int ticketNeed = count * PRICE_TICKET;
+            Item ticket = InventoryService.gI().findItemBag(player, TICKET);
+            if (ticket == null || ticket.quantity < ticketNeed) {
+                Service.gI().sendThongBao(player, "Bạn không đủ " + ItemService.gI().createNewItem((short) TICKET).template.name + " để quay");
                 return;
             }
-            InventoryService.gI().subQuantityItemsBag(player, ticket, ticketNeed);
-            InventoryService.gI().sendItemBags(player);
-            player.luckySpins += count;
-            List<Item> list = RewardService.gI().getListItemLuckyRound(player, count, USING_TICKET);
-            addItemToBox(player, list);
-            sendReward(player, list);
-            Service.gI().sendMoney(player);
+            synchronized (player.inventory.itemsBoxCrackBall) {
+                if (count + player.inventory.itemsBoxCrackBall.size() > MAX_ITEM_IN_BOX) {
+                    Service.gI().sendThongBao(player, "Rương phụ đã đầy (tối đa " + MAX_ITEM_IN_BOX + " món)");
+                    return;
+                }
+                InventoryService.gI().subQuantityItemsBag(player, ticket, ticketNeed);
+                InventoryService.gI().sendItemBags(player);
+                player.luckySpins += count;
+                List<Item> list = RewardService.gI().getListItemLuckyRound(player, count, USING_TICKET);
+                addItemToBox(player, list);
+                sendReward(player, list);
+                Service.gI().sendMoney(player);
+            }
         }
     }
 

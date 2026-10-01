@@ -99,6 +99,7 @@ public class GameLoopManager implements Runnable {
             safeUpdateBoss(ChristmasEventManager.gI()::update, "ChristmasEventManager");
             safeUpdateBoss(HungVuongEventManager.gI()::update, "HungVuongEventManager");
             safeUpdateBoss(LunarNewYearEventManager.gI()::update, "LunarNewYearEventManager");
+            safeUpdateBoss(models.tournament.whis_arena.WhisArenaBotManager.gI()::update, "WhisArenaBotManager");
         }
     }
 

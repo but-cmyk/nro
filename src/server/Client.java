@@ -225,6 +225,9 @@ public class Client implements Runnable {
 
                 // Dọn dẹp context menu tạm thời chống rò rỉ RAM (GC Memory Leak)
                 models.npc.NpcFactory.PLAYERID_OBJECT.remove(player.id);
+
+                // Dọn dẹp hàng đợi Võ Đài Liên Server Whis Arena nếu có
+                models.tournament.whis_arena.WhisArenaService.gI().getReadyPlayerIds().remove(player.id);
             }
         } catch (Exception e) {
             Logger.logException(Client.class, e, "Error in player disconnect cleanup: " + player.name);

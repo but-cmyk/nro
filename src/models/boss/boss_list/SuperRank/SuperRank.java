@@ -24,9 +24,13 @@ public abstract class SuperRank extends Boss {
     protected Player player;
     protected long timeJoinMap;
     private long lastTimeEatPea;
+    protected long lastTimeAttack;
+    protected long lastTimeMove;
 
     public SuperRank(BossType NgocRongBlackGoku, int id, BossData data) throws Exception {
         super(NgocRongBlackGoku, id, data);
+        this.currentLevel = 0;
+        this.initBase();
         this.bossStatus = BossStatus.RESPAWN;
     }
 
@@ -45,8 +49,12 @@ public abstract class SuperRank extends Boss {
     protected void goToXY(int x, int y, boolean isTeleport) {
         if (!isTeleport) {
             byte dir = (byte) (this.location.x - x < 0 ? 1 : -1);
-            byte move = (byte) Util.nextInt(50, 100);
-            PlayerService.gI().playerMove(this, this.location.x + (dir == 1 ? move : -move), y);
+            byte move = (byte) Util.nextInt(25, 45);
+            int targetX = this.location.x + (dir == 1 ? move : -move);
+            if (this.zone != null && this.zone.map != null) {
+                targetX = Math.max(30, Math.min(this.zone.map.mapWidth - 30, targetX));
+            }
+            PlayerService.gI().playerMove(this, targetX, y);
         } else {
             ChangeMapService.gI().changeMapYardrat(this, this.zone, x, y);
         }
@@ -59,14 +67,17 @@ public abstract class SuperRank extends Boss {
                 if (this.isDie() || playerAtt.lostByDeath) {
                     return;
                 }
-                if (Util.isTrue(1, 20)) {
-                    goToPlayer(playerAtt, false);
-                }
                 this.nPoint.mp = this.nPoint.mpMax;
                 if (Util.canDoWithTime(lastTimeEatPea, 5000) && this.nPoint.hp < this.nPoint.hpMax) {
                     UseItem.gI().eatPea(this);
                     lastTimeEatPea = System.currentTimeMillis();
                 }
+
+                // Giới hạn nhịp độ hành động hợp lý (mỗi 900ms - 1200ms), tránh spam chạy nhảy tấn công liên tục mỗi 150ms
+                if (!Util.canDoWithTime(lastTimeAttack, 1000)) {
+                    return;
+                }
+
                 this.playerSkill.skillSelect = this.playerSkill.skills.get(Util.nextInt(0, this.playerSkill.skills.size() - 1));
                 if (playerAtt.effectSkill.isHaveEffectSkill()) {
                     switch (this.playerSkill.skillSelect.template.id) {
@@ -80,15 +91,19 @@ public abstract class SuperRank extends Boss {
                             this.playerSkill.skillSelect = this.playerSkill.skills.get(0);
                     }
                 }
-                if (Util.getDistance(this, playerAtt) <= this.getRangeCanAttackWithSkillSelect()) {
-                    if (Util.isTrue(15, ConstRatio.PER100) && SkillUtil.isUseSkillChuong(this)) {
-                        goToXY(playerAtt.location.x + (Util.getOne(-1, 1) * Util.nextInt(20, 80)), Util.nextInt(10) % 2 == 0 ? playerAtt.location.y : playerAtt.location.y - Util.nextInt(0, 50), false);
-                    }
+
+                int distance = Util.getDistance(this, playerAtt);
+                int attackRange = this.getRangeCanAttackWithSkillSelect();
+
+                if (distance <= attackRange) {
                     SkillService.gI().useSkill(this, playerAtt, null, -1, null);
                     checkPlayerDie(playerAtt);
+                    lastTimeAttack = System.currentTimeMillis() + Util.nextInt(100, 300);
                 } else {
-                    SkillService.gI().useSkill(this, playerAtt, null, -1, null);
-                    goToPlayer(playerAtt, false);
+                    if (Util.canDoWithTime(lastTimeMove, 500)) {
+                        goToPlayer(playerAtt, false);
+                        lastTimeMove = System.currentTimeMillis();
+                    }
                 }
             } else {
                 this.leaveMap();
@@ -99,7 +114,8 @@ public abstract class SuperRank extends Boss {
     }
 
     protected void goToPlayer(Player pl, boolean isTeleport) {
-        goToXY(pl.location.x, pl.location.y, isTeleport);
+        int targetY = (this.location != null) ? this.location.y : pl.location.y;
+        goToXY(pl.location.x, targetY, isTeleport);
     }
 
     @Override
@@ -295,6 +311,7 @@ public abstract class SuperRank extends Boss {
             this.nPoint.subHP(damage);
             if (plAtt != null && isDie()) {
                 setDie(plAtt);
+                die(plAtt);
             }
 
             return (int) damage;

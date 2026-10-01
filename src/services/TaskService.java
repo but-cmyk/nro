@@ -1143,6 +1143,14 @@ public class TaskService {
                 }
             }
 
+            // 4. Thưởng Cà chua & Cà rốt hoàn thành nhiệm vụ chính
+            int vegQuantity = taskId <= 10 ? 2 : (taskId <= 20 ? 5 : 10);
+            Item caChua = ItemService.gI().createNewItem((short) 191, vegQuantity);
+            Item caRot = ItemService.gI().createNewItem((short) 192, vegQuantity);
+            InventoryService.gI().addItemBag(player, caChua);
+            InventoryService.gI().addItemBag(player, caRot);
+            Service.gI().sendThongBao(player, "Thưởng hoàn thành nhiệm vụ: " + vegQuantity + " Cà chua & " + vegQuantity + " Cà rốt!");
+
             InventoryService.gI().sendItemBags(player);
             PlayerService.gI().sendInfoHpMpMoney(player);
             if (rewardSMTN > 0 && goldReward > 0) {
@@ -1415,7 +1423,7 @@ public class TaskService {
 
         int baseCount = Util.nextInt(temp.count[level][0], temp.count[level][1]);
         if (baseCount <= 0) {
-            baseCount = 10;
+            baseCount = 100;
         }
         player.playerTask.sideTask.maxCount = baseCount;
         player.playerTask.sideTask.level = level;
@@ -1536,8 +1544,8 @@ public class TaskService {
     public void paySideTask(Player player) {
         if (player.playerTask.sideTask.template != null) {
             if (player.playerTask.sideTask.isDone()) {
-                if (InventoryService.gI().getCountEmptyBag(player) < 2) {
-                    Service.gI().sendThongBao(player, "Hành trang cần tối thiểu 2 ô trống để nhận thưởng!");
+                if (InventoryService.gI().getCountEmptyBag(player) < 3) {
+                    Service.gI().sendThongBao(player, "Hành trang cần tối thiểu 3 ô trống để nhận thưởng!");
                     return;
                 }
 
@@ -1632,6 +1640,45 @@ public class TaskService {
                     InventoryService.gI().addItemBag(player, luckyReward);
                 }
 
+                // Trao Vé quay Thượng Đế (Cày Free)
+                int veQuayQty = switch (level) {
+                    case ConstTask.EASY -> Util.isTrue(1, 2) ? 1 : 0; // 50% ra 1 vé
+                    case ConstTask.NORMAL -> 1;
+                    case ConstTask.HARD -> 2;
+                    case ConstTask.VERY_HARD -> 3;
+                    case ConstTask.HELL -> 5;
+                    default -> 1;
+                };
+                if (veQuayQty > 0) {
+                    Item veQuay = ItemService.gI().createNewItem((short) ConstItem.VE_QUAY_NGOC_VANG, veQuayQty);
+                    InventoryService.gI().addItemBag(player, veQuay);
+                }
+
+                // Trao Cà chua & Cà rốt theo độ khó
+                int vegSideQty = switch (level) {
+                    case ConstTask.EASY -> 2;
+                    case ConstTask.NORMAL -> 3;
+                    case ConstTask.HARD -> 5;
+                    case ConstTask.VERY_HARD -> 7;
+                    case ConstTask.HELL -> 10;
+                    default -> 2;
+                };
+                Item caChuaSide = ItemService.gI().createNewItem((short) 191, vegSideQty);
+                Item caRotSide = ItemService.gI().createNewItem((short) 192, vegSideQty);
+                InventoryService.gI().addItemBag(player, caChuaSide);
+                InventoryService.gI().addItemBag(player, caRotSide);
+
+                // Trao Bùa 1h ngẫu nhiên (Trí Tuệ, Mạnh Mẽ, Da Trâu, Oai Hùng, Bất Tử, Dẻo Dai, Thu Hút)
+                int[] randomCharmIds = {213, 214, 215, 216, 217, 218, 219};
+                String[] randomCharmNames = {
+                    "Bùa Trí Tuệ (1h)", "Bùa Mạnh Mẽ (1h)", "Bùa Da Trâu (1h)",
+                    "Bùa Oai Hùng (1h)", "Bùa Bất Tử (1h)", "Bùa Dẻo Dai (1h)", "Bùa Thu Hút (1h)"
+                };
+                int charmIdx = Util.nextInt(0, randomCharmIds.length - 1);
+                int charmId = randomCharmIds[charmIdx];
+                String charmName = randomCharmNames[charmIdx];
+                player.charms.addTimeCharms(charmId, 60);
+
                 InventoryService.gI().sendItemBags(player);
                 Service.gI().sendMoney(player);
 
@@ -1639,9 +1686,14 @@ public class TaskService {
                 StringBuilder sb = new StringBuilder("Chúc mừng! Bạn nhận được:\n");
                 sb.append("- ").append(Util.powerToString(tnsmReward)).append(" Tiềm năng & Sức mạnh\n");
                 sb.append("- ").append(Util.powerToString(goldReward)).append(" Vàng\n");
-                sb.append("- ").append(gemReward).append(" Ngọc Xanh");
+                sb.append("- ").append(gemReward).append(" Ngọc Xanh\n");
+                sb.append("- ").append(vegSideQty).append(" Cà chua & ").append(vegSideQty).append(" Cà rốt\n");
+                sb.append("- ").append(charmName);
                 if (thoiVangQty > 0) {
                     sb.append("\n- ").append(thoiVangQty).append(" Thỏi Vàng");
+                }
+                if (veQuayQty > 0) {
+                    sb.append("\n- ").append(veQuayQty).append(" Vé quay Thượng Đế");
                 }
                 if (luckyReward != null) {
                     sb.append("\n- ").append(luckyReward.template.name);

@@ -488,9 +488,9 @@ namespace Game1
     		{
     			mainImage = ImgByName.getImagePath(nameImg, ImgByName.hashImagePath);
     		}
-    		if (mainImage.img != null)
+    		if (mainImage != null && mainImage.img != null)
     		{
-    			int num = mainImage.img.getHeight() / mainImage.nFrame;
+    			int num = mainImage.nFrame > 0 ? mainImage.img.getHeight() / mainImage.nFrame : mainImage.img.getHeight();
     			if (num < 1)
     			{
     				num = 1;

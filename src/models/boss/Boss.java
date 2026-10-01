@@ -188,12 +188,17 @@ public class Boss extends Player implements IBoss {
     // ================= BASE METHODS =================
     @Override
     public void initBase() {
-        BossData data = this.data[this.currentLevel];
+        BossData data = getCurrentBossData();
+        if (data == null) {
+            return;
+        }
         this.name = String.format(data.getName(), Util.nextInt(0, 100));
         this.gender = data.getGender();
         this.nPoint.mpg = 31_07_2002; // Magic number, nên đưa vào constant nếu cần
         this.nPoint.dameg = data.getDame();
-        this.nPoint.hpg = data.getHp()[Util.nextInt(0, data.getHp().length - 1)];
+        if (data.getHp() != null && data.getHp().length > 0) {
+            this.nPoint.hpg = data.getHp()[Util.nextInt(0, data.getHp().length - 1)];
+        }
         this.nPoint.hp = nPoint.hpg;
         this.nPoint.calPoint();
         this.initSkill();
@@ -206,13 +211,19 @@ public class Boss extends Player implements IBoss {
         }
         this.playerSkill.skills.clear();
         this.playerSkill.skillSelect = null;
-        int[][] skillTemps = data[this.currentLevel].getSkillTemp();
+        BossData bData = getCurrentBossData();
+        if (bData == null || bData.getSkillTemp() == null) {
+            return;
+        }
+        int[][] skillTemps = bData.getSkillTemp();
         for (int[] skillTemp : skillTemps) {
             Skill skill = SkillUtil.createSkill(skillTemp[0], skillTemp[1]);
-            if (skillTemp.length == 3) {
-                skill.coolDown = skillTemp[2];
+            if (skill != null) {
+                if (skillTemp.length == 3) {
+                    skill.coolDown = skillTemp[2];
+                }
+                this.playerSkill.skills.add(skill);
             }
-            this.playerSkill.skills.add(skill);
         }
     }
 
@@ -226,7 +237,15 @@ public class Boss extends Player implements IBoss {
         this.prepareBom = false; // Reset bom state
     }
 
-    // ... (Các hàm getHead, getBody, getLeg giữ nguyên) ...
+    // ================= SAFE OUTFIT & DATA GETTERS =================
+    public BossData getCurrentBossData() {
+        if (this.data == null || this.data.length == 0) {
+            return null;
+        }
+        int level = (this.currentLevel >= 0 && this.currentLevel < this.data.length) ? this.currentLevel : 0;
+        return this.data[level];
+    }
+
     @Override
     public short getHead() {
         if (effectSkill != null && effectSkill.isBinh) {
@@ -235,7 +254,8 @@ public class Boss extends Player implements IBoss {
         if (effectSkill != null && effectSkill.isMonkey) {
             return (short) ConstPlayer.HEADMONKEY[effectSkill.levelMonkey - 1];
         }
-        return this.data[this.currentLevel].getOutfit()[0];
+        BossData bData = getCurrentBossData();
+        return (bData != null && bData.getOutfit() != null && bData.getOutfit().length > 0) ? bData.getOutfit()[0] : -1;
     }
 
     @Override
@@ -246,7 +266,8 @@ public class Boss extends Player implements IBoss {
         if (effectSkill != null && effectSkill.isMonkey) {
             return 193;
         }
-        return this.data[this.currentLevel].getOutfit()[1];
+        BossData bData = getCurrentBossData();
+        return (bData != null && bData.getOutfit() != null && bData.getOutfit().length > 1) ? bData.getOutfit()[1] : -1;
     }
 
     @Override
@@ -257,26 +278,34 @@ public class Boss extends Player implements IBoss {
         if (effectSkill != null && effectSkill.isMonkey) {
             return 194;
         }
-        return this.data[this.currentLevel].getOutfit()[2];
+        BossData bData = getCurrentBossData();
+        return (bData != null && bData.getOutfit() != null && bData.getOutfit().length > 2) ? bData.getOutfit()[2] : -1;
     }
 
     @Override
     public short getFlagBag() {
-        return this.data[this.currentLevel].getOutfit()[3];
+        BossData bData = getCurrentBossData();
+        return (bData != null && bData.getOutfit() != null && bData.getOutfit().length > 3) ? bData.getOutfit()[3] : -1;
     }
 
     @Override
     public byte getAura() {
-        return (byte) this.data[this.currentLevel].getOutfit()[4];
+        BossData bData = getCurrentBossData();
+        return (byte) ((bData != null && bData.getOutfit() != null && bData.getOutfit().length > 4) ? bData.getOutfit()[4] : -1);
     }
 
     @Override
     public byte getEffFront() {
-        return (byte) this.data[this.currentLevel].getOutfit()[5];
+        BossData bData = getCurrentBossData();
+        return (byte) ((bData != null && bData.getOutfit() != null && bData.getOutfit().length > 5) ? bData.getOutfit()[5] : -1);
     }
 
     public Zone getMapJoin() {
-        int mapId = this.data[this.currentLevel].getMapJoin()[Util.nextInt(0, this.data[this.currentLevel].getMapJoin().length - 1)];
+        BossData bData = getCurrentBossData();
+        if (bData == null || bData.getMapJoin() == null || bData.getMapJoin().length == 0) {
+            return null;
+        }
+        int mapId = bData.getMapJoin()[Util.nextInt(0, bData.getMapJoin().length - 1)];
         return MapService.gI().getMapWithRandZone(mapId);
     }
 
@@ -827,9 +856,23 @@ public class Boss extends Player implements IBoss {
         this.prepareBom = false;
         if (plKill != null) {
             reward(plKill);
+            dropVeQuayLuckyRound(plKill);
             ServerNotify.gI().notify(plKill.name + ": Đã tiêu diệt được " + this.name + " mọi người đều ngưỡng mộ.");
         }
         this.changeStatus(BossStatus.DIE);
+    }
+
+    protected void dropVeQuayLuckyRound(Player plKill) {
+        if (plKill != null && this.zone != null && !MapService.gI().isMapOffline(this.zone.map.mapId)) {
+            // 40% rơi 1-2 Vé quay Thượng Đế (ID 821) khi hạ gục Boss thế giới
+            if (Util.isTrue(40, 100)) {
+                ItemMap it = new ItemMap(this.zone, consts.ConstItem.VE_QUAY_NGOC_VANG, Util.nextInt(1, 2),
+                        this.location.x,
+                        this.zone.map.yPhysicInTop(this.location.x, this.location.y - 24),
+                        plKill.id);
+                Service.gI().dropItemMap(this.zone, it);
+            }
+        }
     }
 
     @Override

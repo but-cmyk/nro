@@ -60,8 +60,9 @@ public class Whis extends Npc {
                 case 169 -> {
                     this.createOtherMenu(player, ConstNpc.BASE_MENU, "Cậu không chịu nổi khi ở đây sao?\nCậu sẽ khó mà mạnh lên được", "Trốn về", "Ở lại");
                 }
-                case 48 ->
-                    this.createOtherMenu(player, ConstNpc.BASE_MENU, "Đã tìm đủ nguyên liệu cho tôi chưa?\n Tôi sẽ giúp cậu mạnh lên kha khá đấy!", "Từ Chối");
+                case 48 -> models.tournament.whis_arena.WhisArenaService.gI().openMenuAtKaio(this, player);
+                case 186 -> models.tournament.whis_arena.WhisArenaService.gI().openMenuAtArena(this, player);
+                case 187 -> models.tournament.whis_arena.WhisArenaService.gI().openMenuAtU6Tournament(this, player);
             }
         }
     }
@@ -69,6 +70,16 @@ public class Whis extends Npc {
     @Override
     public void confirmMenu(Player player, int select) {
         if (canOpenNpc(player)) {
+            if (player.idMark.getIndexMenu() == 100 || player.idMark.getIndexMenu() == 103) {
+                models.tournament.whis_arena.WhisArenaService.gI().confirmMenuAtKaio(this, player, select);
+                return;
+            } else if (player.idMark.getIndexMenu() == 101) {
+                models.tournament.whis_arena.WhisArenaService.gI().confirmMenuAtArena(this, player, select);
+                return;
+            } else if (player.idMark.getIndexMenu() == 102) {
+                models.tournament.whis_arena.WhisArenaService.gI().confirmMenuAtU6Tournament(this, player, select);
+                return;
+            }
             if (player.idMark.isBaseMenu() && this.mapId == 154) {
                 Item BiKiepTuyetKy = InventoryService.gI().findItem(player.inventory.itemsBag, 1191);
                 

@@ -353,16 +353,17 @@ public class DatabaseTemplateLoader {
                 String[] mc3 = rs.getString("max_count_lv3").split("-");
                 String[] mc4 = rs.getString("max_count_lv4").split("-");
                 String[] mc5 = rs.getString("max_count_lv5").split("-");
-                sideTask.count[0][0] = Integer.parseInt(mc1[0]);
-                sideTask.count[0][1] = Integer.parseInt(mc1[1]);
-                sideTask.count[1][0] = Integer.parseInt(mc2[0]);
-                sideTask.count[1][1] = Integer.parseInt(mc2[1]);
-                sideTask.count[2][0] = Integer.parseInt(mc3[0]);
-                sideTask.count[2][1] = Integer.parseInt(mc3[1]);
-                sideTask.count[3][0] = Integer.parseInt(mc4[0]);
-                sideTask.count[3][1] = Integer.parseInt(mc4[1]);
-                sideTask.count[4][0] = Integer.parseInt(mc5[0]);
-                sideTask.count[4][1] = Integer.parseInt(mc5[1]);
+                int multiplier = 1; // Số lượng quái tiêu diệt chuẩn gameplay NRO (giảm 10 lần)
+                sideTask.count[0][0] = Integer.parseInt(mc1[0]) * multiplier;
+                sideTask.count[0][1] = Integer.parseInt(mc1[1]) * multiplier;
+                sideTask.count[1][0] = Integer.parseInt(mc2[0]) * multiplier;
+                sideTask.count[1][1] = Integer.parseInt(mc2[1]) * multiplier;
+                sideTask.count[2][0] = Integer.parseInt(mc3[0]) * multiplier;
+                sideTask.count[2][1] = Integer.parseInt(mc3[1]) * multiplier;
+                sideTask.count[3][0] = Integer.parseInt(mc4[0]) * multiplier;
+                sideTask.count[3][1] = Integer.parseInt(mc4[1]) * multiplier;
+                sideTask.count[4][0] = Integer.parseInt(mc5[0]) * multiplier;
+                sideTask.count[4][1] = Integer.parseInt(mc5[1]) * multiplier;
                 Manager.SIDE_TASKS_TEMPLATE.add(sideTask);
             }
             Manager.logLoaded("Successfully loaded side task (" + Manager.SIDE_TASKS_TEMPLATE.size() + ")\n");

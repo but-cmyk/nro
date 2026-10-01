@@ -58,6 +58,7 @@ public class ServerManager {
 
     // Auto-save task
     private ScheduledFuture<?> autoSaveTask;
+    private ScheduledFuture<?> dailyResetTask;
 
     public void init() {
         Manager.gI();
@@ -129,6 +130,7 @@ public class ServerManager {
         BossManager.gI().loadBoss();
         Manager.MAPS.forEach(models.map.Map::initBoss);
         EventManager.gI().init();
+        models.tournament.whis_arena.WhisArenaBotManager.gI().initLobbyBotsOnStartup();
         ServerManager.isReloading = false;
 
         new Thread(TopService.gI(), "Top Service Thread").start();
@@ -143,8 +145,9 @@ public class ServerManager {
         // 4. Memory optimizer
         tools.MemoryOptimizer.gI(450, true);
 
-        // 5. Start Auto Save & Game Loop
+        // 5. Start Auto Save, Daily Reset & Game Loop
         startAutoSaveTask();
+        startDailyResetTask();
         GameLoopManager.gI().start();
 
         // 6. Mở Port kết nối Netty 4.x & CLI
@@ -195,6 +198,39 @@ public class ServerManager {
                 e.printStackTrace();
             }
         }, 60, 60, TimeUnit.SECONDS);
+    }
+
+    private void startDailyResetTask() {
+        java.time.ZonedDateTime now = java.time.ZonedDateTime.now();
+        java.time.ZonedDateTime nextMidnight = now.toLocalDate().plusDays(1).atStartOfDay(now.getZone());
+        long initialDelaySeconds = java.time.Duration.between(now, nextMidnight).getSeconds();
+        long periodSeconds = 24 * 60 * 60; // Lặp lại mỗi 24 giờ
+
+        dailyResetTask = scheduledExecutorService.scheduleAtFixedRate(() -> {
+            try {
+                if (!isRunning) {
+                    return;
+                }
+                Logger.log("=== THỰC HIỆN RESET NHIỆM VỤ HÀNG NGÀY LÚC 00:00:00 ===");
+                List<Player> players = new ArrayList<>(Client.gI().getPlayers());
+                for (Player player : players) {
+                    if (player != null && player.isPl() && player.playerTask != null && player.playerTask.sideTask != null) {
+                        try {
+                            player.playerTask.sideTask.reset();
+                            player.playerTask.sideTask.leftTask = consts.ConstTask.MAX_SIDE_TASK;
+                            player.playerTask.sideTask.cancelCount = 0;
+                            player.playerTask.sideTask.receivedTime = System.currentTimeMillis();
+                            services.Service.gI().sendThongBao(player, "Nhiệm vụ hàng ngày đã được làm mới!");
+                        } catch (Exception ex) {
+                            Logger.error("Lỗi reset task cho player " + player.name + ": " + ex.getMessage());
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                Logger.error("Lỗi Daily Reset Task: " + e.getMessage());
+            }
+        }, initialDelaySeconds, periodSeconds, TimeUnit.SECONDS);
+        Logger.log("DailyResetTask đã lên lịch: Reset lần tới sau " + (initialDelaySeconds / 60) + " phút (00:00:00)");
     }
 
     private void activeServerSocket() {

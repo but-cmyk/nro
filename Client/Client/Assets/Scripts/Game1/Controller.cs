@@ -5185,7 +5185,7 @@ namespace Game1
                     BgItem.clearHashTable();
                 }
                 BgItem.vKeysNew.removeAllElements();
-                if (!GameCanvas.lowGraphic || (GameCanvas.lowGraphic && TileMap.isVoDaiMap()) || TileMap.mapID == 45 || TileMap.mapID == 46 || TileMap.mapID == 47 || TileMap.mapID == 48 || TileMap.mapID == 120 || TileMap.mapID == 128 || TileMap.mapID == 170 || TileMap.mapID == 49)
+                if (!GameCanvas.lowGraphic || (GameCanvas.lowGraphic && TileMap.isVoDaiMap()) || TileMap.mapID == 45 || TileMap.mapID == 46 || TileMap.mapID == 47 || TileMap.mapID == 48 || TileMap.mapID == 120 || TileMap.mapID == 128 || TileMap.mapID == 170 || TileMap.mapID == 49 || TileMap.mapID == 186 || TileMap.mapID == 187)
                 {
                     short num6 = msg.reader().readShort();
                     empty = "item high graphic: ";
@@ -5357,7 +5357,7 @@ namespace Game1
         {
             if (key.Equals("eff"))
             {
-                if (Panel.graphics > 0)
+                if (Panel.graphics > 0 && TileMap.mapID != 186 && TileMap.mapID != 187 && !TileMap.isVoDaiMap())
                 {
                     return;
                 }

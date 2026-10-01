@@ -19,7 +19,11 @@ public class Bill extends Npc {
     public void openBaseMenu(Player player) {
         if (canOpenNpc(player)) {
             TaskService.gI().checkDoneTaskTalkNpc(player, this);
-            if (mapId == 154) {
+            if (mapId == 187) {
+                models.tournament.whis_arena.WhisArenaService.gI().openMenuAtU6Tournament(this, player);
+            } else if (mapId == 186) {
+                models.tournament.whis_arena.WhisArenaService.gI().openMenuAtArena(this, player);
+            } else if (mapId == 154) {
                 createOtherMenu(player, ConstNpc.BASE_MENU,
                         "Ngươi muốn bỏ chạy ư",
                         "Về\nthánh địa\nKaio", "Từ chối");
@@ -35,6 +39,8 @@ public class Bill extends Npc {
     public void confirmMenu(Player player, int select) {
         if (canOpenNpc(player)) {
             switch (this.mapId) {
+                case 187 -> models.tournament.whis_arena.WhisArenaService.gI().confirmMenuAtU6Tournament(this, player, select);
+                case 186 -> models.tournament.whis_arena.WhisArenaService.gI().confirmMenuAtArena(this, player, select);
                 case 48 -> {
                     switch (player.idMark.getIndexMenu()) {
                         case ConstNpc.BASE_MENU -> {

@@ -36,7 +36,7 @@ public class ChestBoxItemHandler implements ItemActionHandler {
         int id = item.template.id;
         return id == 570 || id == 380 || id == 1426 || id == 1427 || id == 1428 || id == 1429
                 || id == 648 || id == 1143 || id == 1198 || id == 1199 || id == 1200 || id == 736
-                || id == 1318 || id == 1319 || id == 2000 || id == 1324;
+                || id == 1318 || id == 1319 || id == 2000 || id == 1324 || id == 574;
     }
 
     @Override
@@ -51,6 +51,7 @@ public class ChestBoxItemHandler implements ItemActionHandler {
                 }
             }
             case 380 -> openCSKB(player, item);
+            case 574 -> openCapsuleVang(player, item);
             case 1426 -> open1426(player, item);
             case 1427 -> open1427(player, item);
             case 1428 -> open1428(player, item);
@@ -65,6 +66,50 @@ public class ChestBoxItemHandler implements ItemActionHandler {
             case 2000 -> itemSKH(player, item);
             case 1324 -> useHopQuaThanLinh(player, item);
         }
+    }
+
+    public static void openCapsuleVang(Player pl, Item item) {
+        if (InventoryService.gI().getCountEmptyBag(pl) <= 0) {
+            Service.gI().sendThongBao(pl, "Hành trang của bạn đã đầy!");
+            return;
+        }
+        InventoryService.gI().subQuantityItemsBag(pl, item, 1);
+        InventoryService.gI().sendItemBags(pl);
+
+        int roll = Util.nextInt(1, 100);
+        if (roll <= 15) { // 15% Thỏi vàng
+            Item thoiVang = ItemService.gI().createNewItem((short) ConstItem.THOI_VANG);
+            thoiVang.quantity = Util.nextInt(10, 30);
+            InventoryService.gI().addItemBag(pl, thoiVang);
+            Service.gI().sendThongBao(pl, "|1|Bạn mở Capsule Vàng Kì Bí nhận được " + thoiVang.quantity + " Thỏi Vàng!");
+        } else if (roll <= 35) { // 20% Ngọc xanh
+            int gemReward = Util.nextInt(100, 300);
+            pl.inventory.addGem(gemReward);
+            PlayerService.gI().sendInfoHpMpMoney(pl);
+            Service.gI().sendThongBao(pl, "|1|Bạn mở Capsule Vàng Kì Bí nhận được " + gemReward + " Ngọc Xanh!");
+        } else if (roll <= 55) { // 20% Trang bị Thần Linh
+            int gender = pl.gender;
+            int randType = Util.nextInt(0, 4);
+            int clothesId = ConstItem.LIST_ITEM_CLOTHES[gender][randType][12];
+            Item eq = ItemService.gI().createNewItem((short) clothesId);
+            RewardService.gI().initBaseOptionClothes(eq.template.id, eq.template.type, eq.itemOptions);
+            InventoryService.gI().addItemBag(pl, eq);
+            Service.gI().sendThongBao(pl, "|1|Bạn mở Capsule Vàng Kì Bí nhận được " + eq.template.name + "!");
+        } else if (roll <= 75) { // 20% Cà chua / Cà rốt buff
+            short itemId = (short) (Util.isTrue(50, 100) ? ConstItem.CA_CHUA : ConstItem.CA_ROT);
+            Item food = ItemService.gI().createNewItem(itemId);
+            food.quantity = Util.nextInt(3, 5);
+            food.itemOptions.add(new ItemOption(30, 0));
+            food.itemOptions.add(new ItemOption(86, 0));
+            InventoryService.gI().addItemBag(pl, food);
+            Service.gI().sendThongBao(pl, "|1|Bạn mở Capsule Vàng Kì Bí nhận được " + food.quantity + " " + food.template.name + "!");
+        } else { // 25% Vàng trực tiếp
+            int gold = Util.nextInt(50_000_000, 150_000_000);
+            pl.inventory.addGold(gold);
+            PlayerService.gI().sendInfoHpMpMoney(pl);
+            Service.gI().sendThongBao(pl, "|1|Bạn mở Capsule Vàng Kì Bí nhận được " + Util.powerToString(gold) + " Vàng!");
+        }
+        InventoryService.gI().sendItemBags(pl);
     }
 
     public static void openWoodChest(Player pl, Item item) {

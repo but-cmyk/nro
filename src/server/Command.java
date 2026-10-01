@@ -61,6 +61,10 @@ public class Command {
         adminCommands.put("bu2", player -> Input.gI().createFormSenditem1(player));
         adminCommands.put("lbcdrd", player -> SnakeWayManager.gI().showListBoss(player));
         adminCommands.put("lbkghd", player -> GasDestroyManager.gI().showListBoss(player));
+        adminCommands.put("thuongvodai", player -> {
+            models.tournament.whis_arena.WhisArenaService.gI().addDemoRewards(player);
+            Service.gI().sendThongBao(player, "Đã nạp 15 phần thưởng Võ Đài demo (như ảnh)! Hãy gặp Whis tại Kaio để nhận.");
+        });
           adminCommands.put("adm", player -> {
             // Gọi bảng hiển thị lên Server
             AdminToolFrame.showFrame(); 

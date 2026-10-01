@@ -54,7 +54,7 @@ public class Osin extends Npc {
                         } else {
                            // System.out.println("Mabu is not open yet, opening at " + MajinBuuService.HOUR_OPEN_MAP_MABU + "h");
                             this.createOtherMenu(player, ConstNpc.MENU_NOT_OPEN_MMB,
-                                    "Vào lúc " + MajinBuuService.HOUR_OPEN_MAP_MABU + "h tôi sẽ bí mật...\nđuổi theo 2 tên đồ tể...\nQuý vị nào muốn đi theo thì xin mời !",
+                                    "Vào lúc " + MajinBuuService.HOUR_OPEN_MAP_MABU + "h (Trưa) và 19h (Tối) tôi sẽ bí mật...\nđuổi theo 2 tên đồ tể...\nQuý vị nào muốn đi theo thì xin mời !",
                                     "OK", "Từ chối");
                         }
                     }

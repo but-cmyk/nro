@@ -835,7 +835,7 @@ public class Service {
                 ((Pet) pl).lastTimeDie = System.currentTimeMillis();
             }
             msg = new Message(-8);
-            msg.writer().writeShort((int) pl.id);
+            msg.writer().writeInt((int) pl.id);
             int cPk = 0;
             msg.writer().writeByte(cPk); //cpk
             msg.writer().writeShort(pl.location.x);
