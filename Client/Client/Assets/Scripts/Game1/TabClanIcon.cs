@@ -69,8 +69,8 @@ namespace Game1
     		}
     		else
     		{
-    			w = 170;
-    			h = 170;
+    			w = 270;
+    			h = 175;
     			x = GameCanvas.w / 2 - w / 2;
     			y = GameCanvas.h / 2 - h / 2;
     			if (GameCanvas.h < 240)
@@ -97,6 +97,21 @@ namespace Game1
     		}
     		scrMain = new Scroll();
     		scrMain.setStyle(nItem, WIDTH, x, y + disStart, w, h - disStart, true, 1);
+    		if (!isGetName && Char.myCharz().clan != null)
+    		{
+    			int myClanImgId = Char.myCharz().clan.imgID;
+    			for (int i = 0; i < ClanImage.vClanImage.size(); i++)
+    			{
+    				ClanImage cm = (ClanImage)ClanImage.vClanImage.elementAt(i);
+    				if (cm != null && cm.ID == myClanImgId)
+    				{
+    					lastSelect = i;
+    					select = i;
+    					scrMain.moveTo(lastSelect * WIDTH);
+    					break;
+    				}
+    			}
+    		}
     	}
     
     	public void show(bool isGetName)
@@ -133,6 +148,7 @@ namespace Game1
     		g.translate(-cmx, 0);
     		PopUp.paintPopUp(g, x, y - 17, w, h + 17, -1, true);
     		mFont.tahoma_7b_dark.drawString(g, mResources.select_clan_icon, x + w / 2, y - 7, 2);
+    		mFont.tahoma_7_yellow.drawString(g, "Cùng bang trong khu: +5% ~ 10% TNSM", x + w / 2, y + 6, 2);
     		if (lastSelect >= 0 && lastSelect <= ClanImage.vClanImage.size() - 1)
     		{
     			ClanImage clanImage = (ClanImage)ClanImage.vClanImage.elementAt(lastSelect);
@@ -158,6 +174,10 @@ namespace Game1
     				if (i == lastSelect)
     				{
     					mFont2 = mFont.tahoma_7_blue;
+    				}
+    				else if (Char.myCharz().clan != null && clanImage2.ID == Char.myCharz().clan.imgID)
+    				{
+    					mFont2 = mFont.tahoma_7_green2;
     				}
     				if (clanImage2.name != null)
     				{

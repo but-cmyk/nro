@@ -45,7 +45,7 @@ namespace Game1.God
             {
                 return;
             }
-            if (Mobs.HpBuff > 0 && GameScr.hpPotion >= 1 && (@char.cHP <= @char.cHPFull * Mobs.HpBuff / 100 || @char.cMP <= @char.cMPFull * Mobs.HpBuff / 100))
+            if (Mobs.HpBuff > 0 && GameScr.hpPotion >= 1 && (@char.cHP <= @char.cHPFull * Mobs.HpBuff / 100 || @char.cMP <= @char.cMPFull * Mobs.MpBuff / 100))
             {
                 GameScr.gI().doUseHP();
             }

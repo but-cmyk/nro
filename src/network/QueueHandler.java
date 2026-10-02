@@ -44,7 +44,7 @@ public class QueueHandler implements Runnable {
         } catch (InterruptedException e) {
             // Luồng bị ngắt (thường do dispose hoặc shutdown), không cần in stack trace
         } catch (Exception e) {
-            e.printStackTrace();
+            utils.Logger.error("QueueHandler processing error", e);
         }
     }
 

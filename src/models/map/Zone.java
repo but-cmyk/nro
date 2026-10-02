@@ -89,6 +89,25 @@ public class Zone {
         return this.players.size() >= this.maxPlayer;
     }
 
+    public int getClanMembersCount(int clanId) {
+        if (clanId <= 0 || this.players.isEmpty()) {
+            return 0;
+        }
+        int count = 0;
+        for (int i = this.players.size() - 1; i >= 0; i--) {
+            try {
+                if (i < this.players.size()) {
+                    Player pl = this.players.get(i);
+                    if (pl != null && pl.clan != null && pl.clan.id == clanId && !pl.isDie()) {
+                        count++;
+                    }
+                }
+            } catch (Exception ignored) {
+            }
+        }
+        return count;
+    }
+
     // Phương thức lấy danh sách các item trong zone
     public List<ItemMap> getItemsInZone() {
         return this.items;
@@ -239,6 +258,9 @@ public class Zone {
 
             if (!player.isBoss && !player.isNewPet && !player.isPet && !this.players.contains(player) && !(player instanceof NonInteractiveNPC)) {
                 this.players.add(player);
+                if (player.clan != null) {
+                    updateClanPartyBuff(player.clan.id);
+                }
             }
 
             if (player.isBoss) {
@@ -258,6 +280,31 @@ public class Zone {
         this.players.remove(player);
         this.bosses.remove(player);
         this.pets.remove(player);
+        if (player != null && player.clan != null) {
+            services.ItemTimeService.gI().removeTextTime(player, (byte) 5);
+            updateClanPartyBuff(player.clan.id);
+        }
+    }
+
+    public void updateClanPartyBuff(int clanId) {
+        if (clanId <= 0) return;
+        int count = getClanMembersCount(clanId);
+        int percent = count >= 2 ? Math.min(10, 5 + (count - 2)) : 0;
+        for (int i = this.players.size() - 1; i >= 0; i--) {
+            try {
+                if (i < this.players.size()) {
+                    Player pl = this.players.get(i);
+                    if (pl != null && pl.clan != null && pl.clan.id == clanId && !pl.isDie()) {
+                        if (count >= 2) {
+                            services.ItemTimeService.gI().sendTextTime(pl, (byte) 5, "Tổ đội bang (" + count + " người): +" + percent + "% TNSM", -1);
+                        } else {
+                            services.ItemTimeService.gI().removeTextTime(pl, (byte) 5);
+                        }
+                    }
+                }
+            } catch (Exception ignored) {
+            }
+        }
     }
 
     public List<ItemMap> getSatellites() {

@@ -99,8 +99,7 @@ public class NroChannelHandler extends SimpleChannelInboundHandler<Message> {
             // Ngắt kết nối socket thông thường (đóng app, mất mạng)
             ctx.close();
         } else {
-            Logger.error("Netty Exception trên " + ctx.channel().remoteAddress() + ": " + cause.getMessage());
-            cause.printStackTrace();
+            Logger.error("Netty Exception trên " + ctx.channel().remoteAddress(), cause);
             ctx.close();
         }
     }

@@ -976,6 +976,8 @@ namespace Game1
         public bool isPet;
     
     	public bool isMiniPet;
+
+	public bool isPetFollower;
     
     	private int iiii;
     
@@ -6032,8 +6034,28 @@ namespace Game1
     		{
     			return;
     		}
+    		if (cHPFull <= 0)
+    		{
+    			cHPFull = 1;
+    		}
     		len = (int)((long)cHP * 100L / cHPFull * w_hp_bar) / 100;
+    		if (len > w_hp_bar)
+    		{
+    			len = w_hp_bar;
+    		}
+    		else if (len < 0)
+    		{
+    			len = 0;
+    		}
     		num = (int)((long)cHP * 100L / cHPFull);
+    		if (num > 100)
+    		{
+    			num = 100;
+    		}
+    		else if (num < 0)
+    		{
+    			num = 0;
+    		}
     		if (num < 30)
     		{
     			imgHPtem = GameScr.imgHP_tm_do;
@@ -6049,6 +6071,14 @@ namespace Game1
     		int imageWidth = mGraphics.getImageWidth(GameScr.imgHP_tm_xam);
     		int imageHeight = mGraphics.getImageHeight(GameScr.imgHP_tm_xam);
     		int w = imageWidth * num / 100;
+    		if (w > imageWidth)
+    		{
+    			w = imageWidth;
+    		}
+    		else if (w < 0)
+    		{
+    			w = 0;
+    		}
     		g.drawImage(GameScr.imgHP_tm_xam, x - (imageWidth >> 1), y - 1, mGraphics.TOP | mGraphics.LEFT);
     		if (len < 5)
     		{
@@ -6142,6 +6172,17 @@ namespace Game1
 			bool flag = myChar.clan != null && clanID == myChar.clan.ID;
 			bool flag2 = cTypePk == 3 || cTypePk == 5;
 			bool flag3 = cTypePk == 4;
+			if (!isPetFollower && (charID <= -310720000 || cName == "$" || (isPet && string.IsNullOrEmpty(cName))))
+			{
+				isPetFollower = true;
+				isPet = true;
+				cName = string.Empty;
+				paintName = false;
+			}
+			if (isPetFollower || string.IsNullOrEmpty(cName))
+			{
+				return;
+			}
 			if (!isPet && cName != null && cName.Length > 1 && cName.StartsWith("$"))
 			{
 				cName = cName.Substring(1);
@@ -7285,7 +7326,7 @@ namespace Game1
     		for (int i = 0; i < GameScr.vCharInMap.size(); i++)
     		{
     			Char @char = (Char)GameScr.vCharInMap.elementAt(i);
-    			if (@char.statusMe != 15 && !@char.isInvisiblez && num2 <= @char.cx && @char.cx <= num3 && num4 <= @char.cy && @char.cy <= num5 && @char.charID != -114 && (TileMap.mapID != 129 || (TileMap.mapID == 129 && myCharz().cy > 264)))
+    			if (@char.statusMe != 15 && !@char.isInvisiblez && !@char.isPetFollower && @char.charID > -310720000 && @char.cName != "$" && num2 <= @char.cx && @char.cx <= num3 && num4 <= @char.cy && @char.cy <= num5 && @char.charID != -114 && (TileMap.mapID != 129 || (TileMap.mapID == 129 && myCharz().cy > 264)))
     			{
     				focus.addElement(@char);
     				if (charFocus != null && @char.Equals(charFocus))
@@ -7694,9 +7735,14 @@ namespace Game1
     		}
     		else if (objectz is Char)
     		{
+    			Char @char = (Char)objectz;
+    			if (@char.isPetFollower || @char.charID <= -310720000 || @char.cName == "$" || (@char.isPet && string.IsNullOrEmpty(@char.cName)))
+    			{
+    				return;
+    			}
     			myCharz().mobFocus = null;
     			myCharz().deFocusNPC();
-    			myCharz().charFocus = (Char)objectz;
+    			myCharz().charFocus = @char;
     			myCharz().itemFocus = null;
     		}
     		else if (objectz is ItemMap)

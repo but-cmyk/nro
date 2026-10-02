@@ -1,6 +1,7 @@
 package models.mob;
 import consts.ConstItem;
 import services.player.InventoryService;
+import services.player.ClanService;
 import services.Service;
 import services.TaskService;
 import services.map.ItemMapService;
@@ -112,6 +113,15 @@ public class Mob {
 
     public synchronized void injured(Player plAtt, long damage, boolean dieWhenHpFull) {
         if (!this.isDie()) {
+            if (plAtt != null) {
+                Player plCheck = (plAtt.isPet && ((Pet) plAtt).master != null) ? ((Pet) plAtt).master : plAtt;
+                if (plCheck.clan != null) {
+                    int percentDameMob = ClanService.getPercentDameMobByClanFlag(plCheck.clan.imgId);
+                    if (percentDameMob > 0) {
+                        damage += damage * percentDameMob / 100;
+                    }
+                }
+            }
             if (damage >= this.point.hp) {
                 damage = this.point.hp;
             }
@@ -366,14 +376,14 @@ public class Mob {
 
     private void mobAttackPlayer(Player player) {
         int dameMob = this.point.getDameAttack();
-        if (player.charms != null && player.charms.tdDaTrau > System.currentTimeMillis()) {
-            dameMob /= 2;
-        }
-        if (player.isPet && ((Pet) player).master.charms != null && ((Pet) player).master.charms.tdDeTu > System.currentTimeMillis()) {
-            dameMob /= 2;
-        }
         if (this.lvMob > 0 && !MapService.gI().isMapPhoBan(this.zone.map.mapId)) {
             dameMob = (int) (player.nPoint.hpMax * (10.0 / 100));
+        }
+        if (player.charms != null && player.charms.tdDaTrau > System.currentTimeMillis()) {
+            dameMob -= (dameMob * 30 / 100);
+        }
+        if (player.isPet && ((Pet) player).master != null && ((Pet) player).master.charms != null && ((Pet) player).master.charms.tdDeTu > System.currentTimeMillis()) {
+            dameMob /= 2;
         }
         if (player.satellite != null && player.satellite.isDefend) {
             dameMob -= dameMob / 5;
@@ -381,7 +391,7 @@ public class Mob {
         if (player.itemTime != null && player.itemTime.isUseCMS) {
             dameMob = (int) Math.round(dameMob * 0.1);
         }
-        if (this.lvMob > 0 && player.charms.tdOaiHung > System.currentTimeMillis()) {
+        if (this.lvMob > 0 && player.charms != null && player.charms.tdOaiHung > System.currentTimeMillis()) {
             dameMob = 0;
         }
         int dame = player.injured(null, dameMob, false, true);
@@ -435,7 +445,7 @@ public class Mob {
         }
         // Giảm tần suất xuất hiện siêu quái xuống 2% (mặc định cũ 10% quá dày)
         this.lvMob = (byte) (this.tempId > 18 && !isBigBoss() ? Util.isTrue(2, 100) ? 1 : 0 : 0);
-        this.point.hp = this.lvMob > 0 ? this.point.maxHp <= 20000000 ? this.point.maxHp * 10 : 2000000000 : this.point.maxHp;
+        this.point.hp = this.point.getHpFull();
         return this.lvMob;
     }
 
@@ -933,7 +943,15 @@ public class Mob {
             boolean isDrop = isOver1B5 ? Util.isTrue(1, 1000) : Util.isTrue(1, 100); // 0.1% nếu > 1.5 tỷ, 1% nếu <= 1.5 tỷ
             if (isDrop) {
                 int itemDropId = Util.isTrue(50, 100) ? 191 : 192; // 50% Cà chua, 50% Cà rốt
-                list.add(new ItemMap(zone, itemDropId, 1, x, yEnd, plOwner.id));
+                ItemMap it = new ItemMap(zone, itemDropId, 1, x, yEnd, plOwner.id);
+                if (itemDropId == 191) {
+                    it.options.add(new Item.ItemOption(104, 5));
+                    it.options.add(new Item.ItemOption(30, 0));
+                } else {
+                    it.options.add(new Item.ItemOption(96, 5));
+                    it.options.add(new Item.ItemOption(30, 0));
+                }
+                list.add(it);
             }
         }
 

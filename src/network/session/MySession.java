@@ -160,7 +160,7 @@ public class MySession extends Session {
                             }
                         }
                     } catch (Exception e) {
-                        e.printStackTrace();
+                        Logger.error(pl, "Player login initialization failed for account: " + username, e);
                         if (pl != null) {
                             pl.dispose();
                         }

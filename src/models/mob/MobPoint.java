@@ -14,6 +14,9 @@ public class MobPoint {
     }
 
     public int getHpFull() {
+        if (mob != null && mob.lvMob > 0) {
+            return maxHp <= 20000000 ? maxHp * 10 : 2000000000;
+        }
         return maxHp;
     }
 
@@ -29,7 +32,8 @@ public class MobPoint {
         if (hp < 0) {
             this.hp = 0;
         } else {
-            this.hp = (this.maxHp > 0) ? Math.min(hp, this.maxHp) : hp;
+            int hpFull = this.getHpFull();
+            this.hp = (hpFull > 0) ? Math.min(hp, hpFull) : hp;
         }
     }
 

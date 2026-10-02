@@ -9,7 +9,8 @@ namespace Game1.God
         public bool buyCoin;
         public long lastTimeUse;
         public long delayMs;
-        public ItemGroup(int id, int indexUI, bool buyGold, bool buyCoin)
+        public int quantityUse;
+        public ItemGroup(int id, int indexUI, bool buyGold, bool buyCoin, int quantityUse = 0)
         {
             this.id = id;
             this.indexUI = indexUI;
@@ -17,6 +18,7 @@ namespace Game1.God
             this.buyCoin = buyCoin;
             this.lastTimeUse = 0;
             this.delayMs = 0;
+            this.quantityUse = quantityUse;
         }
     }
 }

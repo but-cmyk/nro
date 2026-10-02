@@ -13,6 +13,7 @@ import models.player.Player;
 import server.Manager;
 import network.io.Message;
 import java.util.ArrayList;
+import services.player.ClanService;
 
 public class FlagBagService {
 
@@ -72,7 +73,15 @@ public class FlagBagService {
             msg.writer().writeByte(list.size());
             for (FlagBag fb : list) {
                 msg.writer().writeByte(fb.id);
-                msg.writer().writeUTF(fb.name);
+                String buff = ClanService.getClanFlagBuffDescription(fb.id);
+                String displayName = fb.name;
+                if (pl.clan != null && pl.clan.imgId == fb.id) {
+                    displayName += " [Hiện tại]";
+                }
+                if (!buff.isEmpty()) {
+                    displayName += " (" + buff + ")";
+                }
+                msg.writer().writeUTF(displayName);
                 msg.writer().writeInt(fb.gold);
                 msg.writer().writeInt(fb.gem);
             }

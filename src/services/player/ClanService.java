@@ -1146,4 +1146,57 @@ public class ClanService {
         }
         return 999999;
     }
+
+    public static int getPercentTNSMByClanFlag(int flagId) {
+        switch (flagId) {
+            case 32, 33, 34, 35, 36 -> {
+                return 3;
+            }
+            case 19 -> {
+                return 5;
+            }
+            case 22 -> {
+                return 7;
+            }
+            case 20, 21 -> {
+                return 10;
+            }
+            case 29 -> {
+                return 12;
+            }
+            default -> {
+                return 0;
+            }
+        }
+    }
+
+    public static int getPercentDameMobByClanFlag(int flagId) {
+        if (flagId == 29) {
+            return 3;
+        }
+        return 0;
+    }
+
+    public static String getClanFlagBuffDescription(int flagId) {
+        switch (flagId) {
+            case 32, 33, 34, 35, 36 -> {
+                return "+3% TNSM";
+            }
+            case 19 -> {
+                return "+5% TNSM";
+            }
+            case 22 -> {
+                return "+7% TNSM";
+            }
+            case 20, 21 -> {
+                return "+10% TNSM";
+            }
+            case 29 -> {
+                return "+12% TNSM, +3% Dame quái";
+            }
+            default -> {
+                return "+5%~10% TNSM khi đi chung";
+            }
+        }
+    }
 }

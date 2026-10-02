@@ -130,8 +130,7 @@ public class Service {
 
             rs.dispose();
         } catch (Exception e) {
-            Logger.error("Error regisAccount: " + e.getMessage());
-            e.printStackTrace();
+            Logger.error("Error regisAccount: " + e.getMessage(), e);
         }
     }
 
@@ -1630,7 +1629,7 @@ public class Service {
             plReceive.sendMessage(msg);
             msg.cleanup();
         } catch (Exception e) {
-            e.printStackTrace();
+            Logger.error("sendItemToPlayer error", e);
         }
     }
 
@@ -1648,7 +1647,7 @@ public class Service {
             sendMessAllPlayerInMap(pl.zone, msg);
             msg.cleanup();
         } catch (Exception e) {
-            e.printStackTrace();
+            Logger.error("sendEffAllPlayer (layer, loop) error", e);
         }
     }
 
@@ -1666,7 +1665,7 @@ public class Service {
             sendMessAllPlayerInMap(pl.zone, msg);
             msg.cleanup();
         } catch (Exception e) {
-            e.printStackTrace();
+            Logger.error("sendEffAllPlayer error", e);
         }
     }
 
@@ -1693,7 +1692,7 @@ public class Service {
             sendMessAllPlayerInMap(pl.zone, msg);
             msg.cleanup();
         } catch (Exception e) {
-            e.printStackTrace();
+            Logger.error("removeEffPlayer error", e);
         }
     }
 
@@ -1720,7 +1719,7 @@ public class Service {
             msg.writer().writeByte(stand);
             sendMessAllPlayerInMap(pl.zone, msg);
         } catch (IOException e) {
-            e.printStackTrace();
+            Logger.error("addEffectChar error", e);
         }
     }
 
@@ -2072,11 +2071,11 @@ public class Service {
                                     }, 1500);
                                 }
                             } catch (Exception ex) {
-                                ex.printStackTrace();
+                                Logger.error("unFusion scheduled task error", ex);
                             }
                         }, 500);
                     } catch (Exception e) {
-                        e.printStackTrace();
+                        Logger.error("fusion scheduled task error", e);
                     }
                 }, 3000);
             }
@@ -2313,7 +2312,7 @@ public class Service {
             player.sendMessage(msg);
             msg.cleanup();
         } catch (Exception e) {
-            e.printStackTrace();
+            Logger.error("showTop error", e);
         }
     }
 

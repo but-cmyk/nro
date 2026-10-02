@@ -11,6 +11,7 @@ namespace Game1.God
             chatTextField.strChat = name;
             chatTextField.tfChat.name = text;
             chatTextField.tfChat.setIputType(typeInput);
+            chatTextField.initChatTextField();
             chatTextField.left.caption = "OK";
             chatTextField.right.caption = "Đóng";
             chatTextField.startChat2(chatable, string.Empty);

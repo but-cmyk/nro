@@ -24,6 +24,8 @@ import java.util.List;
 import database.daos.EventDAO;
 import models.mob.Mob;
 import utils.TimeUtil;
+import models.map.Zone;
+import services.player.ClanService;
 
 public class NPoint {
 
@@ -1405,9 +1407,6 @@ public class NPoint {
             if (this.player.itemTime != null && this.player.itemTime.isKhauTrang) {
                 dameAttack += (dameAttack * 10 / 100);
             }
-            if (this.player.isPet && ((Pet) this.player).master.charms.tdDeTu > System.currentTimeMillis()) {
-                dameAttack *= 2;
-            }
         }
 
         dameAfter = 0;
@@ -1488,13 +1487,13 @@ public class NPoint {
                 }
             }
             long tn = tiemNang;
-            if (this.player.charms.tdTriTue > System.currentTimeMillis()) {
-                tiemNang += tn;
+            if (this.player.charms != null && this.player.charms.tdTriTue > System.currentTimeMillis()) {
+                tiemNang += (long) tn * 30 / 100;
             }
-            if (this.player.charms.tdTriTue3 > System.currentTimeMillis()) {
+            if (this.player.charms != null && this.player.charms.tdTriTue3 > System.currentTimeMillis()) {
                 tiemNang += tn * 2;
             }
-            if (this.player.charms.tdTriTue4 > System.currentTimeMillis()) {
+            if (this.player.charms != null && this.player.charms.tdTriTue4 > System.currentTimeMillis()) {
                 tiemNang += tn * 3;
             }
             if (this.player.effectSkill.isChibi && this.player.typeChibi == 2) {
@@ -1516,6 +1515,23 @@ public class NPoint {
             if (this.intrinsic != null && this.intrinsic.id == 24) {
                 tiemNang += ((long) tiemNang * this.intrinsic.param1 / 100);
             }
+            // Buff biểu tượng bang & Party cùng bang trong cùng khu (Phương án 1, không yêu cầu SM tối thiểu)
+            Player clanOwner = (this.player.isPet && ((Pet) this.player).master != null) ? ((Pet) this.player).master : this.player;
+            if (clanOwner != null && clanOwner.clan != null) {
+                int percentClanFlag = ClanService.getPercentTNSMByClanFlag(clanOwner.clan.imgId);
+                int percentParty = 0;
+                Zone currentZone = (clanOwner.zone != null) ? clanOwner.zone : this.player.zone;
+                if (currentZone != null) {
+                    int clanMembers = currentZone.getClanMembersCount(clanOwner.clan.id);
+                    if (clanMembers >= 2) {
+                        percentParty = Math.min(10, 5 + (clanMembers - 2));
+                    }
+                }
+                int totalClanPercent = percentClanFlag + percentParty;
+                if (totalClanPercent > 0) {
+                    tiemNang += (long) tn * totalClanPercent / 100;
+                }
+            }
 //            if (this.power >= 60_000_000_000L) {
 //                tiemNang -= ((long) tiemNang * 99 / 100);
 //            }
@@ -1523,7 +1539,7 @@ public class NPoint {
                 Player master = ((Pet) this.player).master;
                 if (master != null) {
                     if (master.charms != null && master.charms.tdDeTu > System.currentTimeMillis()) {
-                        tiemNang += tn * 2;
+                        tiemNang += (long) tn * 30 / 100;
                     }
                     if (master.nPoint != null && master.nPoint.tlTNSMPet > 0) {
                         tiemNang += (long) tn * master.nPoint.tlTNSMPet / 100;

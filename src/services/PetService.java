@@ -259,7 +259,7 @@ public class PetService {
             pl.newPet.dispose();
         }
         pl.newPet = new NewPet(pl, (short) h, (short) b, (short) l);
-        pl.newPet.name = "$";
+        pl.newPet.name = "";
         pl.newPet.gender = pl.gender;
         pl.newPet.nPoint.tiemNang = 1;
         pl.newPet.nPoint.power = 1;

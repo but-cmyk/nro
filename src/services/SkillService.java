@@ -1141,12 +1141,12 @@ public class SkillService {
 //                }
 //            }
             if (plAtt.charms != null && plAtt.charms.tdManhMe > System.currentTimeMillis()) {
-                dameHit += (dameHit * 150 / 100);
+                dameHit += (dameHit * 30 / 100);
             }
             if (plAtt.isPet) {
                 if (((Pet) plAtt).master != null && ((Pet) plAtt).master.charms != null
                         && ((Pet) plAtt).master.charms.tdDeTu > System.currentTimeMillis()) {
-                    dameHit *= 2;
+                    dameHit += (dameHit * 30 / 100);
                 }
             }
             if (miss) {

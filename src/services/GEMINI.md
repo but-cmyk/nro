@@ -41,6 +41,7 @@
 - Quy chuan ngoai trang Bot: Bo ba (head, body, leg) phai dung loai Part (head=type 0, body=type 1, leg=type 2). Tuyet doi khong dung part type 0 lam body hoac leg vi se gay loi ghep dau than chan bi loi tach roi. `[2026-10-01]`
 - Chuan hoa font chu va mau sac: Tuyet doi khong lam dung cac ma mau ky tu so doc (|0|, |1|, |2|, |7|) trong chuoi thong bao, chat va bang xep hang vi se ep client chuyen sang font mau toi kho nhin hoac loi render. Hay su dung van ban tieng Viet chuan khong gan tag mau de client hien thi font mac dinh trang vien den (tahoma_7b_white) ro net giong Dai hoi vo thuat 23 va Sieu hang. `[2026-10-01]`
 - Co che Len/Xuong san dau Vo Dai Lien Server: Tuyet doi khong dung changeMap de dua player sang zone khac hoac tro ve zone 0 sau tran dau vi se gay giat lag, den man hinh va reload map dot ngot. Hay giu nguyen zone hien tai cua player (uu tien player.zone), chi su dung playerMove va setPos0 de dua 2 player len san (Y=264) sau khi doi 3 giay tai sanh cho (Y=360), va xuong san (Y=360) sau tran dau. Dong thoi bo sung tuy chon Doi khu vuc trong menu NPC va khac phuc NPE trong openZoneUI khi zone dang isCompeting. `[2026-10-01]`
+- Khi nạp options từ DB trong parseItemSafe, bắt buộc clear itemOptions mặc định trước khi duyệt nạp options để tránh nhân bản trùng lặp options sau mỗi lần lưu/tải (đặc biệt với vật phẩm có default option như Cà chua 191, Cà rốt 192). `[2026-10-02]`
 
 ## 4. Lỗi Thường Gặp Cần Tránh
 - Dupe đồ qua ngắt kết nối mạng ngay thời điểm xác nhận giao dịch.

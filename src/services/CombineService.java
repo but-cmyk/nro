@@ -514,7 +514,7 @@ public class CombineService {
             player.sendMessage(msg);
             msg.cleanup();
         } catch (Exception e) {
-            e.printStackTrace();
+            Logger.error(player, "sendEffectCombineDA_VUN error", e);
         }
     }
 

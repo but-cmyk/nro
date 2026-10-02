@@ -279,9 +279,13 @@ namespace Game1
     			newMob.addElement(templateId + string.Empty);
     		}
     		maxHp = maxp;
+    		if (maxHp < hp)
+    		{
+    			maxHp = hp;
+    		}
     		this.levelBoss = levelBoss;
     		updateHp_bar();
-    		per_tem = (int)((long)hp * 100L / maxHp);
+    		per_tem = per;
     		isDie = false;
     		xSd = pointx;
     		ySd = pointy;
@@ -1454,8 +1458,32 @@ namespace Game1
     
     	public void updateHp_bar()
     	{
-    		len = (int)((long)hp * 100L / maxHp * w_hp_bar) / 100;
+    		if (maxHp <= 0)
+    		{
+    			maxHp = 1;
+    		}
+    		if (hp > maxHp)
+    		{
+    			maxHp = hp;
+    		}
     		per = (int)((long)hp * 100L / maxHp);
+    		if (per > 100)
+    		{
+    			per = 100;
+    		}
+    		else if (per < 0)
+    		{
+    			per = 0;
+    		}
+    		len = (int)((long)hp * 100L / maxHp * w_hp_bar) / 100;
+    		if (len > w_hp_bar)
+    		{
+    			len = w_hp_bar;
+    		}
+    		else if (len < 0)
+    		{
+    			len = 0;
+    		}
     		if (per == 100)
     		{
     			per_tem = per;
@@ -1531,6 +1559,14 @@ namespace Game1
     		int imageWidth = mGraphics.getImageWidth(imgHPtem);
     		int imageHeight = mGraphics.getImageHeight(imgHPtem);
     		int num = imageWidth * per / 100;
+    		if (num > imageWidth)
+    		{
+    			num = imageWidth;
+    		}
+    		else if (num < 0)
+    		{
+    			num = 0;
+    		}
     		int num2 = num;
     		if (per_tem >= per)
     		{
@@ -1547,6 +1583,14 @@ namespace Game1
     			{
     				offset = 3;
     			}
+    		}
+    		if (num2 > imageWidth)
+    		{
+    			num2 = imageWidth;
+    		}
+    		else if (num2 < 0)
+    		{
+    			num2 = 0;
     		}
     		g.drawImage(GameScr.imgHP_tm_xam, x - (imageWidth >> 1), y - h - 5, mGraphics.TOP | mGraphics.LEFT);
     		g.setColor(16777215);

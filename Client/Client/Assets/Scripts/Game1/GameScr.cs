@@ -3718,6 +3718,14 @@ namespace Game1
     						continue;
     					}
     				}
+    				if (mapObject2 is Char)
+    				{
+    					Char c = (Char)mapObject2;
+    					if (c.isPetFollower || c.charID <= -310720000 || c.cName == "$" || (c.isPet && string.IsNullOrEmpty(c.cName)))
+    					{
+    						continue;
+    					}
+    				}
     				int x = mapObject2.getX();
     				int y = mapObject2.getY();
     				int w = mapObject2.getW();
@@ -4329,7 +4337,7 @@ namespace Game1
     				return;
     			}
     			Char.myCharz().cvx = (Char.myCharz().cvy = 0);
-    			if (Char.myCharz().isSelectingSkillUseAlone())
+    			if (Char.myCharz().isSelectingSkillUseAlone() && Char.myCharz().focusToAttack())
     			{
     				if (checkSkillValid())
     				{
@@ -4450,38 +4458,24 @@ namespace Game1
     
     	public void doSelectSkill(Skill skill, bool isShortcut)
     	{
-    		if (Char.myCharz().isCreateDark || isCharging())
+    		if (Char.myCharz().isCreateDark || isCharging() || Char.myCharz().taskMaint.taskId <= 1)
     		{
-    			Res.outz("[CLIENT_DO_SELECT_SKILL_BLOCKED] isCreateDark or isCharging is true");
     			return;
     		}
-    		if (skill == null)
+    		if (skill != null && skill.paintCanNotUseSkill)
     		{
-    			Res.outz("[CLIENT_DO_SELECT_SKILL_BLOCKED] skill is NULL");
-    			return;
-    		}
-    		long now = mSystem.currentTimeMillis();
-    		if (skill.paintCanNotUseSkill)
-    		{
-    			long diff = now - skill.lastTimeUseThisSkill;
-    			if (diff >= skill.coolDown || diff < 0)
-    			{
-    				skill.paintCanNotUseSkill = false;
-    			}
-    			else
-    			{
-    				info1.addInfo("Chiêu thức đang hồi phục!", 0);
-    				Res.outz("[CLIENT_DO_SELECT_SKILL_BLOCKED] Cooldown not ready: diff=" + diff + " < cd=" + skill.coolDown);
-    				return;
-    			}
+    			info1.addInfo("Chiêu thức đang hồi phục!", 0);
     		}
     		Char.myCharz().myskill = skill;
-    		if (lastSkill != skill)
+    		if (lastSkill != skill && lastSkill != null)
     		{
-    			Res.outz("[CLIENT_SELECT_SKILL_SEND] Sending selectSkill packet to server for skillId=" + skill.template.id + " (" + skill.template.name + ")");
     			Service.gI().selectSkill(skill.template.id);
     			saveRMSCurrentSkill(skill.template.id);
     			resetButton();
+    			lastSkill = skill;
+    			selectedIndexSkill = -1;
+    			gI().auto = 0;
+    			return;
     		}
     		if (Char.myCharz().isUseSkillSpec())
     		{
@@ -4496,44 +4490,32 @@ namespace Game1
     		}
     		if (Char.myCharz().isSelectingSkillUseAlone())
     		{
-    			Res.outz("[CLIENT_SKILL_ALONE] Use skill alone: " + skill.template.name + " id=" + skill.template.id);
+    			Res.outz("use skill not focus");
     			doUseSkillNotFocus(skill);
     			lastSkill = skill;
     			return;
     		}
     		selectedIndexSkill = -1;
-    		// Nếu chưa chọn mục tiêu và đang ở map thường, tự động quét tìm quái gần nhất
-    		if (Char.myCharz().mobFocus == null && Char.myCharz().charFocus == null)
+    		if (skill == null)
     		{
-    			Mob nearestMob = null;
-    			int minDistance = int.MaxValue;
-    			for (int i = 0; i < vMob.size(); i++)
-    			{
-    				Mob m = (Mob)vMob.elementAt(i);
-    				if (m != null && m.status != 0 && m.status != 1 && !m.isMobMe)
-    				{
-    					int dist = Res.abs(Char.myCharz().cx - m.x) + Res.abs(Char.myCharz().cy - m.y);
-    					if (dist < minDistance && dist < 350)
-    					{
-    						minDistance = dist;
-    						nearestMob = m;
-    					}
-    				}
-    			}
-    			if (nearestMob != null)
-    			{
-    				Char.myCharz().mobFocus = nearestMob;
-    				Res.outz("[CLIENT_AUTO_TARGET] Auto focused nearest mob: " + (nearestMob.mobName != null ? nearestMob.mobName : "Mob") + " (id:" + nearestMob.mobId + ", templateId:" + nearestMob.templateId + ")");
-    			}
-    			else
-    			{
-    				Res.outz("[CLIENT_NO_TARGET] No mob or player in range 350 to target for attack skill!");
-    			}
+    			return;
     		}
-    		Res.outz("[CLIENT_DO_FIRE] Calling doFire, isAttack=" + isAttack() + ", mobFocus=" + (Char.myCharz().mobFocus != null) + ", charFocus=" + (Char.myCharz().charFocus != null));
-    		doFire(isShortcut, true);
-    		doSeleckSkillFlag = true;
-    		lastSkill = skill;
+    		Res.outz("only select skill");
+    		if (lastSkill != skill)
+    		{
+    			Service.gI().selectSkill(skill.template.id);
+    			saveRMSCurrentSkill(skill.template.id);
+    			resetButton();
+    		}
+    		if (Char.myCharz().charFocus != null || !Char.myCharz().isSelectingSkillBuffToPlayer())
+    		{
+    			if (Char.myCharz().focusToAttack())
+    			{
+    				doFire(isShortcut, true);
+    				doSeleckSkillFlag = true;
+    			}
+    			lastSkill = skill;
+    		}
     	}
     
     	public void doUseSkill(Skill skill, bool isShortcut)
@@ -4561,10 +4543,6 @@ namespace Game1
     
     	public void doUseSkillNotFocus(Skill skill)
     	{
-    		if (skill != null)
-    		{
-    			Char.myCharz().myskill = skill;
-    		}
     		if (((TileMap.mapID != 112 && TileMap.mapID != 113) || Char.myCharz().cTypePk != 0) && checkSkillValid())
     		{
     			selectedIndexSkill = -1;
@@ -4573,6 +4551,7 @@ namespace Game1
     				Service.gI().selectSkill(skill.template.id);
     				saveRMSCurrentSkill(skill.template.id);
     				resetButton();
+    				Char.myCharz().myskill = skill;
     				Char.myCharz().useSkillNotFocus();
     				Char.myCharz().currentFireByShortcut = true;
     				auto = 0;
@@ -5906,6 +5885,41 @@ namespace Game1
     			{
     				((ItemTime)Char.vItemTime.elementAt(i)).paint(g, cmdMenu.x + 32 + i * 24, 55);
     			}
+    			if (Char.myCharz().clan != null)
+    			{
+    				int totalClanInMap = 1;
+    				for (int j = 0; j < vCharInMap.size(); j++)
+    				{
+    					Char ch = (Char)vCharInMap.elementAt(j);
+    					if (ch != null && ch.clanID != -1 && ch.clanID == Char.myCharz().clan.ID && ch.statusMe != 14 && ch.statusMe != 5)
+    					{
+    						totalClanInMap++;
+    					}
+    				}
+    				if (totalClanInMap >= 2 || ItemTime.isExistMessage(5))
+    				{
+    					int members = (totalClanInMap < 2) ? 2 : totalClanInMap;
+    					int percentPT = (5 + (members - 2) > 10) ? 10 : (5 + (members - 2));
+    					int ptX = cmdMenu.x + 32 + Char.vItemTime.size() * 24;
+    					int ptY = 55;
+    					ClanImage cm = ClanImage.getClanImage((short)Char.myCharz().clan.imgID);
+    					if (cm != null && cm.idImage != null && cm.idImage.Length > 0)
+    					{
+    						SmallImage.drawSmallImage(g, cm.idImage[0], ptX, ptY, 0, 3);
+    					}
+    					else
+    					{
+    						SmallImage.drawSmallImage(g, 1025, ptX, ptY, 0, 3);
+    					}
+    					mFont.tahoma_7_green.drawString(g, "PT", ptX + 7, ptY - 6, 2, mFont.tahoma_7b_dark);
+    					mFont.tahoma_7_yellow.drawString(g, "+" + percentPT + "%", ptX + 7, ptY + 15, 2, mFont.tahoma_7b_dark);
+    					if (GameCanvas.isPointerJustRelease && GameCanvas.isPointerHoldIn(ptX - 4, ptY - 6, 24, 30))
+    					{
+    						GameCanvas.isPointerJustRelease = false;
+    						info1.addInfo("Tổ đội bang (" + members + " người): Đứng gần nhau cùng khu tăng +" + percentPT + "% TNSM!", 0);
+    					}
+    				}
+    			}
     			for (int i = 0; i < textTime.size(); i++)
     			{
     				((ItemTime)textTime.elementAt(i)).paintText(g, cmdMenu.x + ((Char.vItemTime.size() == 0) ? 25 : 5), ((Char.vItemTime.size() == 0) ? 45 : 90) + i * 12);
@@ -6474,7 +6488,7 @@ namespace Game1
     					mFont.tahoma_7b_green2.drawString(g, gI().magicTree.currPeas + "/" + gI().magicTree.maxPeas, imgScrW / 2, 22 + mGraphics.addYWhenOpenKeyBoard, mFont.CENTER);
     				}
     			}
-    			else if (Char.myCharz().charFocus != null)
+    			else if (Char.myCharz().charFocus != null && !Char.myCharz().charFocus.isPetFollower && Char.myCharz().charFocus.charID > -310720000 && !string.IsNullOrEmpty(Char.myCharz().charFocus.cName) && Char.myCharz().charFocus.cName != "$")
     			{
     				mFont.tahoma_7b_green2.drawString(g, Char.myCharz().charFocus.cName, imgScrW / 2, 9 + mGraphics.addYWhenOpenKeyBoard, mFont.CENTER);
     				mFont.tahoma_7b_green2.drawString(g, NinjaUtil.getMoneys(Char.myCharz().charFocus.cHP), imgScrW / 2, 22 + mGraphics.addYWhenOpenKeyBoard, mFont.CENTER);

@@ -151,7 +151,8 @@ public class NDVSqlFetcher {
                         if (options == null || options.isEmpty()) {
                             options = parseJSONArraySafe(rawOptions.replaceAll("\"", ""));
                         }
-                        if (options != null) {
+                        if (options != null && !options.isEmpty()) {
+                            item.itemOptions.clear();
                             for (int j = 0; j < options.size(); j++) {
                                 Object optObj = options.get(j);
                                 if (optObj instanceof JSONObject) {
@@ -175,6 +176,8 @@ public class NDVSqlFetcher {
                         Logger.logException(NDVSqlFetcher.class, e, "Lỗi parse options item: " + tempId);
                     }
                 }
+                // Chuẩn hóa và làm sạch options cho cà chua và cà rốt (tránh nhân bản lặp option)
+                ItemService.gI().normalizeVeggiesOptions(item);
                 // Defensive Fallback: Nếu là trang bị (áo, quần, găng, giày, rada) mà không có options do lỗi CSDL cũ
                 if (item.itemOptions.isEmpty() && item.template != null && item.template.type >= 0 && item.template.type <= 4) {
                     RewardService.gI().initBaseOptionClothes(tempId, item.template.type, item.itemOptions);

@@ -10,6 +10,7 @@ import server.Manager;
 import services.player.InventoryService;
 import utils.TimeUtil;
 import utils.Util;
+import utils.Logger;
 import models.item.Item.ItemOption;
 
 import java.util.*;
@@ -353,8 +354,29 @@ public class ItemService {
 
     public Item createItemFromItemMap(ItemMap itemMap) {
         Item item = createNewItem(itemMap.itemTemplate.id, itemMap.quantity);
-        item.itemOptions = itemMap.options;
+        if (itemMap.options != null && !itemMap.options.isEmpty()) {
+            item.itemOptions.clear();
+            for (Item.ItemOption io : itemMap.options) {
+                item.itemOptions.add(new Item.ItemOption(io));
+            }
+        }
+        normalizeVeggiesOptions(item);
         return item;
+    }
+
+    public void normalizeVeggiesOptions(Item item) {
+        if (item == null || item.template == null) {
+            return;
+        }
+        if (item.template.id == 191) {
+            item.itemOptions.clear();
+            item.itemOptions.add(new ItemOption(104, 5));
+            item.itemOptions.add(new ItemOption(30, 0));
+        } else if (item.template.id == 192) {
+            item.itemOptions.clear();
+            item.itemOptions.add(new ItemOption(96, 5));
+            item.itemOptions.add(new ItemOption(30, 0));
+        }
     }
 
     public ItemOptionTemplate getItemOptionTemplate(int id) {
@@ -488,7 +510,7 @@ public class ItemService {
             Service.gI().sendThongBao(player, "Bạn đã nhận được " + item.template.name);
             CombineService.gI().sendEffectOpenItem(player, icon[0], icon[1]);
         } catch (Exception e) {
-            e.printStackTrace();
+            Logger.error(player, "OpenItem648 error", e);
         }
     }
 
@@ -532,7 +554,7 @@ public class ItemService {
             Service.gI().sendThongBao(player, "Bạn đã nhận được " + item.template.name);
             CombineService.gI().sendEffectOpenItem(player, icon[0], icon[1]);
         } catch (Exception e) {
-            e.printStackTrace();
+            Logger.error(player, "OpenItem1143 error", e);
         }
     }
 
@@ -569,7 +591,7 @@ public class ItemService {
             Service.gI().sendThongBao(player, "Bạn đã nhận được " + item.template.name);
             CombineService.gI().sendEffectOpenItem(player, icon[0], icon[1]);
         } catch (Exception e) {
-            e.printStackTrace();
+            Logger.error(player, "OpenItem1144 error", e);
         }
     }
 
@@ -602,7 +624,7 @@ public class ItemService {
             Service.gI().sendThongBao(player, "Bạn đã nhận được " + item.template.name);
             CombineService.gI().sendEffectOpenItem(player, icon[0], icon[1]);
         } catch (Exception e) {
-            e.printStackTrace();
+            Logger.error(player, "OpenItem1145 error", e);
         }
     }
 
@@ -635,7 +657,7 @@ public class ItemService {
             Service.gI().sendThongBao(player, "Bạn đã nhận được " + item.template.name);
             CombineService.gI().sendEffectOpenItem(player, icon[0], icon[1]);
         } catch (Exception e) {
-            e.printStackTrace();
+            Logger.error(player, "OpenItem1146 error", e);
         }
     }
 
@@ -668,7 +690,7 @@ public class ItemService {
             Service.gI().sendThongBao(player, "Bạn đã nhận được " + item.template.name);
             CombineService.gI().sendEffectOpenItem(player, icon[0], icon[1]);
         } catch (Exception e) {
-            e.printStackTrace();
+            Logger.error(player, "OpenItem1147 error", e);
         }
     }
 
@@ -1740,7 +1762,7 @@ public class ItemService {
             Service.gI().sendThongBao(player, "Bạn đã nhận được " + item.template.name);
             CombineService.gI().sendEffectOpenItem(player, icon[0], icon[1]);
         } catch (Exception e) {
-            e.printStackTrace();
+            Logger.error(player, "OpenItem1245 error", e);
         }
     }
 
@@ -1775,7 +1797,7 @@ public class ItemService {
             Service.gI().sendThongBao(player, "Bạn đã nhận được " + item.template.name);
             CombineService.gI().sendEffectOpenItem(player, icon[0], icon[1]);
         } catch (Exception e) {
-            e.printStackTrace();
+            Logger.error(player, "OpenItem1246 error", e);
         }
     }
 
@@ -1809,7 +1831,7 @@ public class ItemService {
             Service.gI().sendThongBao(player, "Bạn đã nhận được " + item.template.name);
             CombineService.gI().sendEffectOpenItem(player, icon[0], icon[1]);
         } catch (Exception e) {
-            e.printStackTrace();
+            Logger.error(player, "OpenItem1247 error", e);
         }
     }
 
@@ -1843,7 +1865,7 @@ public class ItemService {
             Service.gI().sendThongBao(player, "Bạn đã nhận được " + item.template.name);
             CombineService.gI().sendEffectOpenItem(player, icon[0], icon[1]);
         } catch (Exception e) {
-            e.printStackTrace();
+            Logger.error(player, "OpenItem1248 error", e);
         }
     }
 
@@ -1879,7 +1901,7 @@ public class ItemService {
             Service.gI().sendThongBao(player, "Bạn đã nhận được " + item.template.name);
             CombineService.gI().sendEffectOpenItem(player, icon[0], icon[1]);
         } catch (Exception e) {
-            e.printStackTrace();
+            Logger.error(player, "OpenItem1249 error", e);
         }
     }
 
@@ -1914,7 +1936,7 @@ public class ItemService {
             Service.gI().sendThongBao(player, "Bạn đã nhận được " + item.template.name);
             CombineService.gI().sendEffectOpenItem(player, icon[0], icon[1]);
         } catch (Exception e) {
-            e.printStackTrace();
+            Logger.error(player, "OpenItem1250 error", e);
         }
     }
 

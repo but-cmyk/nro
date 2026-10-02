@@ -6441,6 +6441,13 @@ namespace Game1
                 c.cgender = msg.reader().readByte();
                 c.head = msg.reader().readShort();
                 c.cName = msg.reader().readUTF();
+                if (c.charID <= -310720000 || c.cName == "$" || (c.cName != null && c.cName.StartsWith("$") && c.cName.Length == 1))
+                {
+                    c.isPetFollower = true;
+                    c.isPet = true;
+                    c.cName = string.Empty;
+                    c.paintName = false;
+                }
                 c.cHP = msg.readInt3Byte();
                 c.dHP = c.cHP;
                 if (c.cHP == 0)

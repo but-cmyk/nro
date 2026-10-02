@@ -8456,7 +8456,7 @@ namespace Game1
                         else
                         {
                             myVector.addElement(new Command(mResources.USE, this, 2001, currItem));
-                            if ((currItem.template.type == 27 || currItem.template.type == 29) && currItem.template.id != 457)
+                            if ((currItem.template.type == 29 || Items.isItemTimeBuff(currItem.template.id)) && currItem.template.id != 457)
                             {
                                 if (!Items.getInstance().checkContains(currItem.template.id))
                                 {

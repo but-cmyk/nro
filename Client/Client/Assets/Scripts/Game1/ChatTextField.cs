@@ -74,21 +74,24 @@ namespace Game1
     		left = new Command(mResources.OK, this, 8000, null, 1, GameCanvas.h - mScreen.cmdH + 1);
     		right = new Command(mResources.DELETE, this, 8001, null, GameCanvas.w - 70, GameCanvas.h - mScreen.cmdH + 1);
     		center = null;
-    		w = tfChat.width + 20;
-    		h = tfChat.height + 26;
-    		x = GameCanvas.w / 2 - w / 2;
-    		y = tfChat.y - 18;
-    		if (Main.isPC && w > 320)
+    		w = 270;
+    		if (w > GameCanvas.w - 20)
     		{
-    			w = 320;
+    			w = GameCanvas.w - 20;
     		}
+    		x = (GameCanvas.w - w) / 2;
+    		tfChat.width = w - 20;
+    		tfChat.x = x + 10;
+    		tfChat.y = GameCanvas.h - 35 - tfChat.height;
+    		h = tfChat.height + 26;
+    		y = tfChat.y - 18;
     		left.x = x;
     		right.x = x + w - 68;
     		if (GameCanvas.isTouch)
     		{
-    			tfChat.y -= 5;
-    			y -= 20;
-    			h += 30;
+    			tfChat.y = GameCanvas.h - 40 - tfChat.height;
+    			y = tfChat.y - 38;
+    			h = tfChat.height + 56;
     			left.x = GameCanvas.w / 2 - 68 - 5;
     			right.x = GameCanvas.w / 2 + 5;
     			left.y = GameCanvas.h - 30;
@@ -207,6 +210,7 @@ namespace Game1
     
     	public void startChat2(IChatable parentScreen, string to)
     	{
+    		initChatTextField();
     		tfChat.setFocusWithKb(true);
     		this.to = to;
     		this.parentScreen = parentScreen;
@@ -287,6 +291,30 @@ namespace Game1
     	{
     		if (isShow && !Main.isIPhone)
     		{
+    			w = 270;
+    			if (w > GameCanvas.w - 20)
+    			{
+    				w = GameCanvas.w - 20;
+    			}
+    			x = (GameCanvas.w - w) / 2;
+    			tfChat.width = w - 20;
+    			tfChat.x = x + 10;
+    			if (GameCanvas.isTouch)
+    			{
+    				tfChat.y = GameCanvas.h - 40 - tfChat.height;
+    				y = tfChat.y - 38;
+    				h = tfChat.height + 56;
+    				if (left != null)
+    				{
+    					left.x = GameCanvas.w / 2 - 68 - 5;
+    					left.y = GameCanvas.h - 30;
+    				}
+    				if (right != null)
+    				{
+    					right.x = GameCanvas.w / 2 + 5;
+    					right.y = GameCanvas.h - 30;
+    				}
+    			}
     			int num = ((!Main.isWindowsPhone) ? (y - KC) : (tfChat.y - 5));
     			int num2 = ((!Main.isWindowsPhone) ? x : 0);
     			int num3 = ((!Main.isWindowsPhone) ? w : GameCanvas.w);

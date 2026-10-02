@@ -632,6 +632,7 @@ public class InventoryService {
                 if (!item.isNotNullItem()) {
                     msg.writer().writeShort(-1);
                 } else {
+                    ItemService.gI().normalizeVeggiesOptions(item);
                     msg.writer().writeShort(item.template.id);
                     msg.writer().writeInt(item.quantity);
                     msg.writer().writeUTF(item.getInfo());
@@ -646,7 +647,7 @@ public class InventoryService {
             player.sendMessage(msg);
             msg.cleanup();
         } catch (Exception e) {
-            e.printStackTrace();
+            Logger.error(player, "sendItemBag error", e);
         }
         Service.gI().sendFlagBag(player);
         Service.gI().Send_Caitrang(player);
@@ -678,7 +679,7 @@ public class InventoryService {
             player.sendMessage(msg);
             msg.cleanup();
         } catch (Exception e) {
-            e.printStackTrace();
+            Logger.error(player, "sendItemBody error", e);
         }
         Service.gI().sendFlagBag(player);
         Service.gI().Send_Caitrang(player);
@@ -693,6 +694,7 @@ public class InventoryService {
             for (Item it : player.inventory.itemsBox) {
                 msg.writer().writeShort(it.isNotNullItem() ? it.template.id : -1);
                 if (it.isNotNullItem()) {
+                    ItemService.gI().normalizeVeggiesOptions(it);
                     msg.writer().writeInt(it.quantity);
                     msg.writer().writeUTF(it.getInfo());
                     msg.writer().writeUTF(it.getContent());
@@ -706,7 +708,7 @@ public class InventoryService {
             player.sendMessage(msg);
             msg.cleanup();
         } catch (Exception e) {
-            e.printStackTrace();
+            Logger.error(player, "sendItemBox error", e);
         }
         this.openBox(player);
     }
@@ -831,6 +833,8 @@ public class InventoryService {
     }
 
     public boolean addItemList(List<Item> items, Item itemAdd) {
+        // Chuẩn hóa trước đối với cà chua & cà rốt (tránh lỗi lặp option hoặc không gộp được ô)
+        ItemService.gI().normalizeVeggiesOptions(itemAdd);
         //nếu item ko có option, add option rỗng vào
         if (itemAdd.itemOptions.isEmpty()) {
             itemAdd.itemOptions.add(new Item.ItemOption(73, 0));
@@ -858,6 +862,9 @@ public class InventoryService {
         //item tăng số lượng
         if (itemAdd.template.isUpToUp) {
             for (Item it : items) {
+                if (it.isNotNullItem() && (it.template.id == 191 || it.template.id == 192)) {
+                    ItemService.gI().normalizeVeggiesOptions(it);
+                }
                 if (!it.isNotNullItem() || it.template.id != itemAdd.template.id || (!checkListsEqual(it.itemOptions, itemAdd.itemOptions) && itemAdd.template.id != 2074 && !itemAdd.isDaNangCap() && !itemAdd.isManhTS()) || it.quantity >= 100_000_000) {
                     continue;
                 }
