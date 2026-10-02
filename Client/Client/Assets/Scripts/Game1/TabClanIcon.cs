@@ -148,16 +148,17 @@ namespace Game1
     		g.translate(-cmx, 0);
     		PopUp.paintPopUp(g, x, y - 17, w, h + 17, -1, true);
     		mFont.tahoma_7b_dark.drawString(g, mResources.select_clan_icon, x + w / 2, y - 7, 2);
-    		mFont.tahoma_7_yellow.drawString(g, "Cùng bang trong khu: +5% ~ 10% TNSM", x + w / 2, y + 6, 2);
     		if (lastSelect >= 0 && lastSelect <= ClanImage.vClanImage.size() - 1)
     		{
     			ClanImage clanImage = (ClanImage)ClanImage.vClanImage.elementAt(lastSelect);
     			if (clanImage.idImage != null)
     			{
-    				Char.myCharz().paintBag(g, clanImage.idImage, GameCanvas.w / 2, y + 45, 1, false);
+    				Char.myCharz().paintBag(g, clanImage.idImage, x + 45, y + 45, 1, false);
     			}
     		}
-    		Char.myCharz().paintCharBody(g, GameCanvas.w / 2, y + 45, 1, Char.myCharz().cf, false);
+    		Char.myCharz().paintCharBody(g, x + 45, y + 45, 1, Char.myCharz().cf, false);
+    		mFont.tahoma_7_red.drawString(g, "Cùng bang trong khu:", x + 85, y + 14, 0);
+    		mFont.tahoma_7_blue.drawString(g, "+5% ~ 10% TNSM khi đánh quái", x + 85, y + 27, 0);
     		g.setClip(x, y + disStart, w, h - disStart - 10);
     		if (scrMain != null)
     		{
