@@ -278,11 +278,11 @@ namespace Game1
     		InfoItem infoItem = new InfoItem(s);
     		if (type == 0)
     		{
-    			infoItem.speed = s.Length;
-    		}
-    		if (infoItem.speed < 70)
-    		{
-    			infoItem.speed = 70;
+    			infoItem.speed = s.Length * 3 + 120;
+    			if (infoItem.speed < 180)
+    			{
+    				infoItem.speed = 180;
+    			}
     		}
     		if (type == 1)
     		{
@@ -293,9 +293,9 @@ namespace Game1
     			infoItem.speed = 300;
     			infoItem.last = mSystem.currentTimeMillis();
     			infoItem.timeCount = s.Length;
-    			if (infoItem.timeCount < 15)
+    			if (infoItem.timeCount < 35)
     			{
-    				infoItem.timeCount = 15;
+    				infoItem.timeCount = 35;
     			}
     			if (infoItem.timeCount > 100)
     			{

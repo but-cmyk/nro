@@ -620,7 +620,6 @@ namespace Game1
     				mGraphics.addYWhenOpenKeyBoard = 0;
     				timeOpenKeyBoard = 0;
     			}
-    			debugUpdate.removeAllElements();
     			long num = mSystem.currentTimeMillis();
     			if (num - timeTickEff1 >= 780 && !isEff1)
     			{
@@ -2106,6 +2105,36 @@ namespace Game1
     
     	public static long lastRainTime = 0;
 
+    	public static bool isOutdoorRainMap()
+    	{
+    		if (lowGraphic || ListChars.getInstance().HideMap)
+    		{
+    			return false;
+    		}
+    		int mapId = TileMap.mapID;
+    		if (TileMap.isOfflineMap() || mapId == 21 || mapId == 22 || mapId == 23 || mapId == 39 || mapId == 40 || mapId == 41 || mapId == 102)
+    		{
+    			return false;
+    		}
+    		if ((mapId >= 45 && mapId <= 50) || TileMap.bgType == TileMap.KAMISAMA || TileMap.bgType == TileMap.TIME_ROOM || TileMap.bgType == TileMap.BEERUS)
+    		{
+    			return false;
+    		}
+    		if (TileMap.isVoDaiMap() || TileMap.isMapCold())
+    		{
+    			return false;
+    		}
+    		if (mapId == 5 || TileMap.bgType == TileMap.TRAIDAT_DAORUA)
+    		{
+    			return false;
+    		}
+    		if (TileMap.bgType == TileMap.HELL || TileMap.bgType == TileMap.THE_HELL)
+    		{
+    			return false;
+    		}
+    		return true;
+    	}
+
     	private static void applyMapWeatherEffect(int typeBG)
     	{
     		try
@@ -2174,11 +2203,9 @@ namespace Game1
     				{
     					BackgroudEffect.addEffect(13);
     				}
-    				return;
     			}
-
     			// 10. Hành tinh Xayda (planetID == 2 hoặc bgType thuộc Sayai)
-    			if (TileMap.planetID == 2 || TileMap.bgType == TileMap.SAYAI_DOINUI || TileMap.bgType == TileMap.SAYAI_RUNG || TileMap.bgType == TileMap.SAYAI_CITY || TileMap.bgType == TileMap.SAYAI_NIGHT)
+    			else if (TileMap.planetID == 2 || TileMap.bgType == TileMap.SAYAI_DOINUI || TileMap.bgType == TileMap.SAYAI_RUNG || TileMap.bgType == TileMap.SAYAI_CITY || TileMap.bgType == TileMap.SAYAI_NIGHT)
     			{
     				if (TileMap.bgType == TileMap.SAYAI_NIGHT)
     				{
@@ -2189,16 +2216,17 @@ namespace Game1
     				{
     					BackgroudEffect.addEffect(6);  // Tàn tro / lá đỏ Xayda
     				}
-    				return;
+    			}
+    			else
+    			{
+    				// 11. Hành tinh Trái Đất (planetID == 0 hoặc map tự nhiên ngoài trời)
+    				int leafEarth = (Res.random(0, 2) == 0) ? 1 : 2;
+    				BackgroudEffect.addEffect(leafEarth);
     			}
 
-    			// 11. Hành tinh Trái Đất (planetID == 0 hoặc map tự nhiên ngoài trời)
-    			int leafEarth = (Res.random(0, 2) == 0) ? 1 : 2;
-    			BackgroudEffect.addEffect(leafEarth);
-
-    			// Mưa Động: Chỉ có xác suất 20%, cách cơn mưa trước ít nhất 3 phút (180.000 ms)
+    			// Mưa Động: Tần suất cao, cách cơn mưa trước 45 giây, xác suất 60%
     			long now = mSystem.currentTimeMillis();
-    			if (BackgroudEffect.isEnableRain && (now - lastRainTime > 180000) && Res.random(0, 100) < 20)
+    			if (BackgroudEffect.isEnableRain && isOutdoorRainMap() && (now - lastRainTime > 45000) && Res.random(0, 100) < 60)
     			{
     				lastRainTime = now;
     				BackgroudEffect.addEffect(0);
@@ -2672,8 +2700,6 @@ namespace Game1
     			GUI.color = Color.white;
     			GUI.backgroundColor = Color.white;
     			g.reset();
-    			debugPaint.removeAllElements();
-    			debug("PA", 1);
     			if (currentScreen != null)
     			{
     				currentScreen.paint(g);

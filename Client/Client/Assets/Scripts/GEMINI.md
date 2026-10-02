@@ -36,7 +36,10 @@
 - Dùng CopyOnWriteArrayList/ConcurrentHashMap cho collection duyệt trong vòng lặp Zone update. `[2026-09-24]`
 - **Kiến Trúc Audio Môi Trường & SFX**: Phân tách rõ các AudioSource (`SoundBGLoop` cho nhạc nền, `SoundWater` cho âm thanh môi trường như mưa rơi/nước chảy, `SoundRun` cho di chuyển, `PlayOneShot` cho SFX). Không trừ volume khiến âm lượng bị triệt tiêu (về 0.01f), luôn kiểm tra trạng thái rain active trong updateEff() để tự động bật/tắt loop âm thanh môi trường theo map. `[2026-09-26]`
 - Quản lý Hiệu Ứng Bụi Bước Chân: Pre-allocate mảng hạt bụi MAX_DUST trong GameCanvas đảm bảo Zero-GC 60 FPS; đồng bộ nhịp bước chân cp1 == 1 || cp1 == 6 và vẽ tại GameScr.paint() sau paintSplash `[2026-09-27]`
+- **Kiến Trúc Logging Client Bất Đồng Bộ & Bộ Lọc Spam**: Bắt buộc dùng Async Buffered Logger (`ConcurrentQueue` + Background Worker Thread) cho Client; cấm mở/đóng FileStream đồng bộ từng dòng log; loại bỏ 100% log chu kỳ ngắn (SEND ATTACK, Cooldown blocked, [READ] cmd thô) trong vòng lặp điều khiển và render để bảo toàn quy chuẩn Zero-GC và ngăn ngừa sụt giảm FPS. Giới hạn log tối đa 3MB có xoay vòng tệp (Log Rotation). `[2026-10-02]`
+- Cổng Kiểm Thử Trước Báo Cáo: Khi can thiệp logic nạp asset hoặc log, bắt buộc kiểm tra tệp tin thực tế trên đĩa (.wav, .png, .meta); không tự ý nâng warning thành LogError gây cờ đỏ Console. `[2026-10-02]`
 
 ## 4. Lỗi Thường Gặp Cần Tránh
 - Treo đơ UI (Freeze) khi Server phản hồi chậm hoặc disconnect nhưng Client vẫn chờ trong `InfoDlg.showWait()`.
 - Rò rỉ GC Allocations do tạo mới chuỗi string và mảng trong hàm `paint()` hoặc `update()` chạy 60 FPS.
+- Disk I/O Thrashing do mở đóng FileStream đồng bộ liên tục khi ghi log Client.

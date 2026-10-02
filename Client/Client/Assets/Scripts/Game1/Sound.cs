@@ -401,7 +401,10 @@ namespace Game1
         private static void __load(string filename, int pos)
         {
             music[pos] = (AudioClip)Resources.Load(filename, typeof(AudioClip));
-            Debug.Log("Loaded sound: " + filename + " -> " + (music[pos] != null ? "SUCCESS" : "FAILED"));
+            if (music[pos] == null)
+            {
+                Debug.LogWarning("[ASSET] Sound asset not found: " + filename);
+            }
             GameObject.Find("Audio Player 1").AddComponent<AudioSource>();
             player[pos] = GameObject.Find("Audio Player 1");
         }

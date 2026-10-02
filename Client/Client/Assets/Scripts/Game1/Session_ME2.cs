@@ -366,7 +366,6 @@ namespace Game1
     
     	public void sendMessage(Message message)
     	{
-    		Res.outz("SEND MSG: " + message.command);
     		sender.AddMessage(message);
     	}
     

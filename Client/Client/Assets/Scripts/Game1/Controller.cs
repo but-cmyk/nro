@@ -119,14 +119,8 @@ namespace Game1
     
         public void onMessage(Message msg)
         {
-            GameCanvas.debugSession.removeAllElements();
-            GameCanvas.debug("SA1", 2);
             try
             {
-                if (msg.command != -74)
-                {
-                    Res.outz("=========> [READ] cmd= " + msg.command);
-                }
                 Char @char = null;
                 Mob mob = null;
                 MyVector myVector = new MyVector();
@@ -5334,13 +5328,8 @@ namespace Game1
             }
             catch (Exception ex)
             {
-                Res.err(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Loadmap khong thanh cong: " + ex.ToString());
+                Debug.LogError("[MAP] LoadMap failed: mapID=" + TileMap.mapID + ", error=" + ex.Message);
                 Debug.LogException(ex);
-                try
-                {
-                    System.IO.File.AppendAllText("game_error.log", "\n[" + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + "] " + ex.ToString() + "\n");
-                }
-                catch (Exception) {}
                 Char.isLoadingMap = false;
                 LoginScr.isContinueToLogin = false;
                 ServerListScreen.waitToLogin = false;
@@ -5350,7 +5339,7 @@ namespace Game1
                 return;
             }
             GameCanvas.isLoading = false;
-            Res.err(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Loadmap thanh cong");
+            Debug.Log("[MAP] LoadMap success: mapID=" + TileMap.mapID + ", zoneID=" + TileMap.zoneID + ", tileID=" + TileMap.tileID);
         }
     
         public void keyValueAction(string key, string value)

@@ -1567,7 +1567,6 @@ namespace Game1
     	{
     		try
     		{
-    			Res.outz(">>SEND ATTACT  vMob=" + vMob.size() + "  vChar=" + vChar.size());
     			Message message = null;
     			if (type == 0)
     			{

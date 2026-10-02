@@ -1280,6 +1280,8 @@ namespace Game1
     		}
     	}
 
+    	public static long lastCheckRain = 0;
+
     	public static void updateEff()
         {
             if (ListChars.getInstance().HideMap) return;
@@ -1308,6 +1310,21 @@ namespace Game1
     		{
     			SoundMn.gI().stopRain();
     		}
+
+            // Realtime dynamic rain check: Kích hoạt mưa khi người chơi ở lâu trong map ngoài trời
+            if (isEnableRain && !hasRain && GameCanvas.isOutdoorRainMap())
+            {
+                long now = mSystem.currentTimeMillis();
+                if (now - GameCanvas.lastRainTime > 45000 && now - lastCheckRain > 8000)
+                {
+                    lastCheckRain = now;
+                    if (Res.random(0, 100) < 50)
+                    {
+                        GameCanvas.lastRainTime = now;
+                        addEffect(0);
+                    }
+                }
+            }
     	}
     }
 }

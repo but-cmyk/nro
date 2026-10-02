@@ -1119,27 +1119,28 @@ public class TaskService {
             }
 
             // 3. Thưởng mốc lớn (Milestone Cột Mốc)
+            String milestoneRewardStr = null;
             switch (taskId) {
                 case 7 -> {
                     player.inventory.gem += 20;
-                    Service.gI().sendThongBao(player, "Thưởng cột mốc: 20 Ngọc Xanh!");
+                    milestoneRewardStr = "Thưởng cột mốc: 20 Ngọc Xanh";
                 }
                 case 11 -> {
                     Item capsule = ItemService.gI().createNewItem((short) 193, 10);
                     InventoryService.gI().addItemBag(player, capsule);
-                    Service.gI().sendThongBao(player, "Sư phụ thưởng: 10 Capsule Vàng!");
+                    milestoneRewardStr = "Sư phụ thưởng: 10 Capsule Vàng";
                 }
                 case 23 -> {
                     player.inventory.gem += 100;
                     Item thoiVang = ItemService.gI().createNewItem((short) 457, 5);
                     InventoryService.gI().addItemBag(player, thoiVang);
-                    Service.gI().sendThongBao(player, "Chiến thắng Fide: Thưởng 100 Ngọc & 5 Thỏi Vàng!");
+                    milestoneRewardStr = "Chiến thắng Fide: 100 Ngọc & 5 Thỏi Vàng";
                 }
                 case 29 -> {
                     player.inventory.ruby += 50;
                     Item daNangCap = ItemService.gI().createNewItem((short) 223, 10);
                     InventoryService.gI().addItemBag(player, daNangCap);
-                    Service.gI().sendThongBao(player, "Chinh phục Siêu Bọ Hung: Thưởng 50 Hồng Ngọc & 10 Đá May Mắn!");
+                    milestoneRewardStr = "Chinh phục Siêu Bọ Hung: 50 Hồng Ngọc & 10 Đá May Mắn";
                 }
             }
 
@@ -1149,17 +1150,24 @@ public class TaskService {
             Item caRot = ItemService.gI().createNewItem((short) 192, vegQuantity);
             InventoryService.gI().addItemBag(player, caChua);
             InventoryService.gI().addItemBag(player, caRot);
-            Service.gI().sendThongBao(player, "Thưởng hoàn thành nhiệm vụ: " + vegQuantity + " Cà chua & " + vegQuantity + " Cà rốt!");
 
             InventoryService.gI().sendItemBags(player);
             PlayerService.gI().sendInfoHpMpMoney(player);
-            if (rewardSMTN > 0 && goldReward > 0) {
-                Service.gI().sendThongBao(player, "Chúc mừng bạn nhận được " + Util.formatNumber(rewardSMTN) + " sức mạnh, "
-                        + Util.formatNumber(rewardSMTN) + " tiềm năng và " + Util.formatNumber(goldReward) + " vàng!");
-            } else if (rewardSMTN > 0) {
-                Service.gI().sendThongBao(player, "Chúc mừng bạn nhận được " + Util.formatNumber(rewardSMTN) + " sức mạnh và "
-                        + Util.formatNumber(rewardSMTN) + " tiềm năng!");
+
+            // Bảng thông báo tổng hợp toàn bộ phần thưởng hoàn thành nhiệm vụ
+            StringBuilder sbReward = new StringBuilder("Chúc mừng hoàn thành nhiệm vụ!\nPhần thưởng nhận được:\n");
+            if (rewardSMTN > 0) {
+                sbReward.append("- ").append(Util.formatNumber(rewardSMTN)).append(" Sức mạnh & Tiềm năng\n");
             }
+            if (goldReward > 0) {
+                sbReward.append("- ").append(Util.formatNumber(goldReward)).append(" Vàng\n");
+            }
+            sbReward.append("- ").append(vegQuantity).append(" Cà chua & ").append(vegQuantity).append(" Cà rốt");
+            if (milestoneRewardStr != null) {
+                sbReward.append("\n- ").append(milestoneRewardStr);
+            }
+            Service.gI().sendThongBaoOK(player, sbReward.toString());
+
             Service.gI().point(player);
             PlayerAuditLogger.logAction(player, "TASK_REWARD", "Completed Task " + taskId + " -> SMTN: +" + rewardSMTN + ", Gold: +" + goldReward);
         }
@@ -1698,7 +1706,7 @@ public class TaskService {
                 if (luckyReward != null) {
                     sb.append("\n- ").append(luckyReward.template.name);
                 }
-                Service.gI().sendThongBao(player, sb.toString());
+                Service.gI().sendThongBaoOK(player, sb.toString());
 
                 player.playerTask.sideTask.reset();
             } else {
@@ -1833,7 +1841,7 @@ public class TaskService {
             if (player.playerTask.clanTask.isDone()) {
                 int capsuleClan = (player.playerTask.clanTask.level + 1) * 10;
                 player.playerTask.clanTask.reset();
-                Service.gI().sendThongBao(player, "Bạn vừa nhận được "
+                Service.gI().sendThongBaoOK(player, "Chúc mừng! Bạn nhận được "
                         + Util.powerToString(capsuleClan) + " capsule bang.");
                 if (player.clan != null) {
                     player.clan.capsuleClan += capsuleClan;

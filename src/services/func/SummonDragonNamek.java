@@ -158,7 +158,7 @@ public class SummonDragonNamek {
                                 playerSummonShenron.charms.addTimeCharms(213, 10080);
                                 ItemTimeService.gI().sendCanAutoPlay(playerSummonShenron);
                                 Service.gI().point(playerSummonShenron);
-                                Service.gI().sendThongBao(playerSummonShenron, "Bạn nhận được 7 ngày Bùa Trí Tuệ (x2 TNSM)!");
+                                Service.gI().sendThongBaoOK(playerSummonShenron, "Chúc mừng! Bạn nhận được 7 ngày Bùa Trí Tuệ (x2 TNSM) từ Rồng Thần Namek!");
                             }
                             break;
                         case 1: // 5 Thỏi vàng + 3 Đá bảo vệ (Khóa)
@@ -173,9 +173,9 @@ public class SummonDragonNamek {
                                             InventoryService.gI().addItemBag(p, thoiVang);
                                             InventoryService.gI().addItemBag(p, daBaoVe);
                                             InventoryService.gI().sendItemBags(p);
-                                            Service.gI().sendThongBao(p, "Nhận được 5 Thỏi Vàng và 3 Đá Bảo Vệ từ Rồng Thần Namek!");
+                                            Service.gI().sendThongBaoOK(p, "Chúc mừng! Nhận được 5 Thỏi Vàng và 3 Đá Bảo Vệ từ Rồng Thần Namek!");
                                         } else {
-                                            Service.gI().sendThongBao(p, "Hành trang đầy, không thể nhận quà Rồng Namek!");
+                                            Service.gI().sendThongBaoOK(p, "Hành trang đầy, không thể nhận quà Rồng Namek!");
                                         }
                                     } else {
                                         Player pOff = NDVSqlFetcher.loadById(m.id);
@@ -197,9 +197,9 @@ public class SummonDragonNamek {
                                     InventoryService.gI().addItemBag(playerSummonShenron, thoiVang);
                                     InventoryService.gI().addItemBag(playerSummonShenron, daBaoVe);
                                     InventoryService.gI().sendItemBags(playerSummonShenron);
-                                    Service.gI().sendThongBao(playerSummonShenron, "Nhận được 5 Thỏi Vàng và 3 Đá Bảo Vệ!");
+                                    Service.gI().sendThongBaoOK(playerSummonShenron, "Chúc mừng! Nhận được 5 Thỏi Vàng và 3 Đá Bảo Vệ từ Rồng Thần Namek!");
                                 } else {
-                                    Service.gI().sendThongBao(playerSummonShenron, "Hành trang đầy (cần ít nhất 2 ô trống)!");
+                                    Service.gI().sendThongBaoOK(playerSummonShenron, "Hành trang đầy (cần ít nhất 2 ô trống)!");
                                 }
                             }
                             break;
@@ -251,9 +251,9 @@ public class SummonDragonNamek {
                                     pet.itemOptions.add(new Item.ItemOption(30, 0));
                                     InventoryService.gI().addItemBag(playerSummonShenron, pet);
                                     InventoryService.gI().sendItemBags(playerSummonShenron);
-                                    Service.gI().sendThongBao(playerSummonShenron, "Nhận được Pet Chiến Binh Namek (7 ngày)!");
+                                    Service.gI().sendThongBaoOK(playerSummonShenron, "Chúc mừng! Nhận được Pet Chiến Binh Namek (7 ngày)!");
                                 } else {
-                                    Service.gI().sendThongBao(playerSummonShenron, "Hành trang đầy (cần ít nhất 1 ô trống)!");
+                                    Service.gI().sendThongBaoOK(playerSummonShenron, "Hành trang đầy (cần ít nhất 1 ô trống)!");
                                 }
                             }
                             break;

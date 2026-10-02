@@ -233,7 +233,12 @@ namespace Game1
     			if (info.info.timeCount == 0)
     			{
     				info.time++;
-    				if (info.time >= info.info.speed)
+    				int targetSpeed = info.info.speed;
+    				if (info.infoWaitToShow.size() > 3 && targetSpeed > 140)
+    				{
+    					targetSpeed = 140;
+    				}
+    				if (info.time >= targetSpeed)
     				{
     					info.time = 0;
     					info.infoWaitToShow.removeElementAt(0);

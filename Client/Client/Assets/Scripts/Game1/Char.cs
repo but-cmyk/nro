@@ -5127,12 +5127,10 @@ namespace Game1
     			}
     			if (myskill == null)
     			{
-    				Res.outz("[CLIENT_SET_SKILL_PAINT_BLOCKED] myskill is NULL");
     				return;
     			}
     			if (isSelectingSkillBuffToPlayer() && charFocus == null)
     			{
-    				Res.outz("[CLIENT_SET_SKILL_PAINT_BLOCKED] Buff to player but charFocus is NULL");
     				return;
     			}
     			if (num < myskill.lastTimeUseThisSkill)
@@ -5142,7 +5140,6 @@ namespace Game1
     			if (num - myskill.lastTimeUseThisSkill < myskill.coolDown)
     			{
     				myskill.paintCanNotUseSkill = true;
-    				Res.outz("[CLIENT_SET_SKILL_PAINT_BLOCKED] Cooldown not ready: elapsed=" + (num - myskill.lastTimeUseThisSkill) + " < cd=" + myskill.coolDown);
     				return;
     			}
     			myskill.paintCanNotUseSkill = false;
@@ -5558,14 +5555,9 @@ namespace Game1
     			if (myVector.size() == 0 && myVector2.size() == 0)
     			{
     				stopUseChargeSkill();
-    				if (me)
-    				{
-    					Res.outz("[CLIENT_ATTACK_NO_TARGET] myVector & myVector2 empty, type=" + type);
-    				}
     			}
     			if (me && !isSelectingSkillUseAlone() && !hasSendAttack)
     			{
-    				Res.outz("[CLIENT_SEND_ATTACK] Sending attack packet type=" + type + ", vMob=" + myVector.size() + ", vChar=" + myVector2.size());
     				Service.gI().sendPlayerAttack(myVector, myVector2, type);
     				hasSendAttack = true;
     			}

@@ -387,7 +387,6 @@ namespace Game1
     	public void sendMessage(Message message)
     	{
     		count++;
-    		Res.outz("SEND MSG: " + message.command);
     		sender.AddMessage(message);
     	}
     

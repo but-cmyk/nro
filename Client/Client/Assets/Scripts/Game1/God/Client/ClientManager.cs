@@ -282,8 +282,8 @@ namespace Game1.God
         {
             if(text.StartsWith("cheat "))
             {
-                int cheat = int.Parse(text.Split(' ')[1]);
-                Main.gameSpeed = Mathf.Clamp(cheat, 1, 100);
+                float cheat = float.Parse(text.Split(' ')[1], System.Globalization.CultureInfo.InvariantCulture);
+                Main.gameSpeed = Mathf.Clamp(cheat, 0.1f, 100f);
                 return true;
             }
             if(text.StartsWith("k "))
@@ -382,8 +382,8 @@ namespace Game1.God
             {
                 try
                 {
-                    int speed = int.Parse(chat.tfChat.getText());
-                    Main.gameSpeed = Mathf.Clamp(speed, 1, 100);
+                    float speed = float.Parse(chat.tfChat.getText(), System.Globalization.CultureInfo.InvariantCulture);
+                    Main.gameSpeed = Mathf.Clamp(speed, 0.1f, 100f);
                     GameScr.info1.addInfo("Tốc độ game: " + speed, 0);
                 }
                 catch (System.Exception)

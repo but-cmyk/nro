@@ -144,10 +144,17 @@ namespace Game1.God
                 PlayerInfo.getInstance().canLogin = item.isEnabled;
             }));
 
-            // 14. Tốc độ Game (1x -> 10x)
+            // 14. Tốc độ Game (0.85x -> 10x)
             items.Add(new AutoSettingItem("speed", "Tốc Độ Game", 1, false, 1, 1, 10, 1, (item) =>
             {
-                Main.gameSpeed = Mathf.Clamp(item.value, item.minVal, item.maxVal);
+                if (item.value <= 1)
+                {
+                    Main.gameSpeed = 0.85f;
+                }
+                else
+                {
+                    Main.gameSpeed = Mathf.Clamp(item.value, item.minVal, item.maxVal);
+                }
             }));
 
             // 15. Tốc độ di chuyển (4 -> 30)
@@ -217,6 +224,10 @@ namespace Game1.God
             if (it.key.Equals("autobean"))
             {
                 return (it.value == 0) ? "Tắt" : (it.value + "%");
+            }
+            if (it.key.Equals("speed"))
+            {
+                return (it.value <= 1) ? "0.85x" : (it.value + "x");
             }
             if (it.maxVal <= 10)
             {

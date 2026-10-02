@@ -347,9 +347,9 @@ public class WhisArenaBossMatch implements Runnable {
                         capsule.itemOptions.add(new ItemOption(30, 0));
                         InventoryService.gI().addItemBag(player, capsule);
                         InventoryService.gI().sendItemBags(player);
-                        Service.gI().sendThongBao(player, "Chúc mừng bạn đã vô địch Giải Đấu Liên Vũ Trụ 6-7! Nhận được +20 Điểm và 1 Capsule Vàng Kì Bí (Hiện có: " + player.arenaWins + " điểm).");
+                        Service.gI().sendThongBaoOK(player, "Chúc mừng bạn đã vô địch Giải Đấu Liên Vũ Trụ 6-7! Nhận được +20 Điểm và 1 Capsule Vàng Kì Bí (Hiện có: " + player.arenaWins + " điểm).");
                     } else {
-                        Service.gI().sendThongBao(player, "Chúc mừng bạn đã vô địch Giải Đấu Liên Vũ Trụ 6-7! Nhận được +20 Điểm Võ Đài (Phần thưởng Capsule đã gửi vào Whis).");
+                        Service.gI().sendThongBaoOK(player, "Chúc mừng bạn đã vô địch Giải Đấu Liên Vũ Trụ 6-7! Nhận được +20 Điểm Võ Đài (Phần thưởng Capsule đã gửi vào Whis).");
                     }
                 }
             } catch (Exception e) {

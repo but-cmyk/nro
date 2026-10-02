@@ -25,7 +25,8 @@ Nắm vững các Bất Biến Bắt Buộc và Landmark Index
       ↓
 [Bước 3: Targeted Edit & Verification]
 Chỉ mở đúng class và method then chốt (dưới 100 dòng).
-Biên dịch & kiểm thử (build.bat / test scripts)
+Biên dịch & kiểm thử (build.bat / test scripts / rà soát asset đĩa).
+Tự vấn Checklist lỗi nghiêm ngặt trước khi báo cáo hoàn thành!
       ↓
 [Bước 4: Dreaming & Memory Consolidation]
 Đúc kết bài học sau phiên:
@@ -57,6 +58,15 @@ Trước khi chạm vào bất kỳ file nguồn nào, hãy nạp bất biến t
 - **Đồng Bộ Stream 1:1**: Thứ tự write byte/int/UTF ở Server Java phải khớp tuyệt đối từng byte với Controller Client Unity C#.
 - **Zero-GC Trong Vòng Lặp Vẽ**: Cấm cấp phát `new` đối tượng trong `paint()` và `update()` của Client Unity.
 - **Cổng Phê Duyệt Hiệu Năng (Human-in-the-Loop Approval Gate)**: Khi phát hiện bất kỳ chức năng nào bị chậm (qua `PERFORMANCE_ALERTS.json` hoặc log), AI Agent bắt buộc phải: (1) Bóc tách rõ nguyên nhân gốc rễ, (2) Lập kế hoạch fix chi tiết trình User. **Chỉ khi User phê duyệt mới được bắt đầu sửa code.**
+- **Cổng Kiểm Thử & Tự Soát Lỗi Nghiêm Ngặt Trước Khi Báo Cáo (Pre-Completion Verification Gate)**:
+  - **Tuyệt đối cấm báo cáo hoàn thành khi chưa kiểm tra thực tế**: AI Agent không được tuyên bố "đã hoàn thành" hoặc "đã fix xong" nếu chưa chủ động rà soát toàn diện tác động phụ (side effects), trạng thái runtime và log phát sinh.
+  - **Xác minh tài nguyên thực tế trên đĩa (Asset Reality Check)**: Khi can thiệp vào logic nạp tài nguyên (âm thanh, ảnh, animation, template), bắt buộc kiểm tra sự tồn tại thực tế của tệp tin trên ổ cứng (`.wav`, `.png`, `.meta`). Tuyệt đối không giả định hay suy đoán tài nguyên tồn tại.
+  - **Ngăn chặn cảnh báo giả làm đỏ Console (No False Error Badges)**: Cân nhắc kỹ lưỡng phân cấp log (`LogWarning` vs `LogError`). Không nâng các cảnh báo tài nguyên tùy chọn (optional assets) thành `LogError`, tránh gây hoang mang hoặc làm vọt icon chấm than đỏ trên Unity Console.
+  - **Checklist tự vấn trước khi phản hồi User**:
+    1. Code có lỗi biên dịch (compile error) hoặc crash ngầm không?
+    2. Tệp tài nguyên liên quan có thực sự tồn tại trên đĩa không?
+    3. Thay đổi có làm xuất hiện icon lỗi đỏ trên Console Client không?
+    4. Đã chạy guardrails (`python tools/memory/guardrails.py --check-all`) để bảo toàn bất biến chưa?
 
 ---
 
