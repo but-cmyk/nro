@@ -8060,7 +8060,7 @@ namespace Game1
                     return;
                 }
                 MyVector myVector = new MyVector(string.Empty);
-                myVector.addElement(new Command(mResources.CHAR_ORDER[0], this, 9999, (TopInfo)vTop.elementAt(selected)));
+                myVector.addElement(new Command("Đóng", this, 9999, (TopInfo)vTop.elementAt(selected)));
                 GameCanvas.menu.startAt(myVector, X, (selected + 1) * ITEM_HEIGHT - cmy + yScroll);
                 addThachDauDetail((TopInfo)vTop.elementAt(selected));
             }
@@ -9659,8 +9659,9 @@ namespace Game1
         {
             if (idAction == 9999)
             {
-                TopInfo topInfo = (TopInfo)p;
-                Service.gI().sendThachDau(topInfo.pId);
+                cp = null;
+                GameCanvas.menu.doCloseMenu();
+                return;
             }
             if (idAction == 170391)
             {

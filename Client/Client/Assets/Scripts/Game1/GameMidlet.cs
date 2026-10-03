@@ -45,7 +45,35 @@ namespace Game1
     		gameCanvas.start();
     		SplashScr.loadImg();
     		SplashScr.loadSplashScr();
-    		GameCanvas.currentScreen = new SplashScr();
+    		
+    		if (Rms.loadRMSInt("serverchat") != -1)
+    		{
+    			GameScr.isPaintChatVip = Rms.loadRMSInt("serverchat") == 0;
+    		}
+    		if (Rms.loadRMSInt("isPlaySound") != -1)
+    		{
+    			GameCanvas.isPlaySound = Rms.loadRMSInt("isPlaySound") == 1;
+    		}
+    		if (GameCanvas.isPlaySound)
+    		{
+    			SoundMn.gI().loadSound(TileMap.mapID);
+    		}
+    		SoundMn.gI().getStrOption();
+
+    		if (GameCanvas.serverScreen == null)
+    		{
+    			GameCanvas.serverScreen = new ServerListScreen();
+    		}
+    		if (Rms.loadRMSInt("svselect") == -1)
+    		{
+    			ServerListScreen.getServerList(ServerListScreen.linkDefault);
+    		}
+    		ServerListScreen.loadIP();
+    		ServerListScreen.loadScreen = true;
+    		ServerListScreen.createDeleteRMS();
+
+    		GameCanvas.currentScreen = GameCanvas.serverScreen;
+    		GameCanvas.serverScreen.switchToMe();
     	}
     
     	public void exit()

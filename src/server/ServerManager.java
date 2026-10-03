@@ -148,6 +148,7 @@ public class ServerManager {
         // 5. Start Auto Save, Daily Reset & Game Loop
         startAutoSaveTask();
         startDailyResetTask();
+        services.tournament.DeathOrAliveArenaWeeklyService.gI().init();
         GameLoopManager.gI().start();
 
         // 6. Mở Port kết nối Netty 4.x & CLI
@@ -226,6 +227,8 @@ public class ServerManager {
                         }
                     }
                 }
+                // Chốt giải và trao thưởng tuần Võ Đài Sinh Tử nếu vào 0h Chủ Nhật
+                services.tournament.DeathOrAliveArenaWeeklyService.gI().checkAndResetWeekly();
             } catch (Exception e) {
                 Logger.error("Lỗi Daily Reset Task: " + e.getMessage());
             }

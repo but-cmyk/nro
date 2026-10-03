@@ -42,7 +42,7 @@ namespace Game1
     		mResources.cauhinhthap = "Grafis kurang";
     		mResources.cauhinhcao = "Grafik tinggi";
     		mResources.taidulieu = "Download";
-    		mResources.xoadulieu = "Hapus data";
+    		mResources.xoadulieu = "Muat ulang data";
     		mResources.deletaDataNote = "Kamu harus manghapus data ketika data game error. Setelah selesai manghapus, kamu harus download data lagi untuk bermain.";
     		mResources.huy = "Batal";
     		mResources.choigame = "Main game";

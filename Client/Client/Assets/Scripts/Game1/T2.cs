@@ -43,7 +43,7 @@ namespace Game1
     		mResources.cauhinhthap = "Low graphics";
     		mResources.cauhinhcao = "High graphics";
     		mResources.taidulieu = "Download";
-    		mResources.xoadulieu = "Clear data";
+    		mResources.xoadulieu = "Reload data";
     		mResources.deletaDataNote = "When game have data errors, you should delete data. After delete data, you have to download data to play game.";
     		mResources.huy = "Cancel";
     		mResources.choigame = "Play game";

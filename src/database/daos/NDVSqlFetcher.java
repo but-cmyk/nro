@@ -1205,6 +1205,9 @@ public class NDVSqlFetcher {
                         JSONArray skillTemp = parseJSONArraySafe(String.valueOf(dataArray.get(i)));
                         int tempId = getIntSafe(skillTemp, 0, -1);
                         byte point = getByteSafe(skillTemp, 1, (byte) 0);
+                        if (i == 2 && tempId == Skill.KAIOKEN) {
+                            tempId = Skill.TRI_THUONG;
+                        }
                         Skill skill;
                         if (point != 0) {
                             skill = SkillUtil.createSkill(tempId, point);

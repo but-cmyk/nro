@@ -190,7 +190,7 @@ namespace Game1
     				GameCanvas.serverScreen = new ServerListScreen();
     			}
     			cmdDeleteRMS = new Command(string.Empty, GameCanvas.serverScreen, 14, null);
-    			cmdDeleteRMS.w = 92;
+    			cmdDeleteRMS.w = 104;
     			cmdDeleteRMS.h = 22;
     			cmdDeleteRMS.x = GameCanvas.w - 98;
     			cmdDeleteRMS.y = GameCanvas.h - 28;
@@ -386,7 +386,7 @@ namespace Game1
 		int num3 = ((GameCanvas.w < 200) ? 160 : 180);
 		if (cmdDeleteRMS != null)
 		{
-			int btnW = 96;
+			int btnW = 104;
 			int btnH = 24;
 			int btnX = GameCanvas.w - btnW - 6;
 			int btnY = GameCanvas.h - btnH - 6;
@@ -829,12 +829,7 @@ namespace Game1
 		initCommand();
 		isWait = false;
 		GameCanvas.loginScr = null;
-		string text = Rms.loadRMSString("ResVersion");
-		int num = ((text == null || !(text != string.Empty)) ? (-1) : int.Parse(text));
-		if (num > 0)
-		{
-			loadScreen = true;
-		}
+		loadScreen = true;
 		TileMap.lastBgID = -1;
 		TileMap.lastType = -1;
 		GameCanvas.loadBG(0);
@@ -1110,7 +1105,7 @@ namespace Game1
     		{
     			Command cmdYes = new Command(mResources.YES, this, 15, null);
     			Command cmdNo = new Command(mResources.NO, this, 16, null);
-    			GameCanvas.startYesNoDlg("Bạn có muốn xóa dữ liệu cũ và tải lại phiên bản mới nhất từ máy chủ ngay bây giờ?", cmdYes, cmdNo);
+    			GameCanvas.startYesNoDlg("Bạn có muốn tải lại toàn bộ dữ liệu mới nhất từ máy chủ ngay bây giờ?", cmdYes, cmdNo);
     		}
     		if (idAction == 15)
     		{
@@ -1120,16 +1115,7 @@ namespace Game1
     			SmallImage.imgNew = null;
     			BgItem.clearHashTable();
     			TileMap.vItemBg.removeAllElements();
-    			show2();
-    			stopDownload = false;
-    			cmdDownload = new Command(mResources.huy, this, 4, null);
-    			cmdDownload.x = GameCanvas.w / 2 - mScreen.cmdW / 2;
-    			cmdDownload.y = GameCanvas.hh + 65;
-    			isGetData = true;
-    			demPercent = 0;
-    			percent = 0;
-    			GameCanvas.connect();
-    			Service.gI().getResource(1, null);
+    			startDownloadData();
     		}
     		if (idAction == 16)
     		{
@@ -1190,7 +1176,7 @@ namespace Game1
     		}
     	}
     
-    	public void show2()
+    	public void startDownloadData()
 	{
 		GameScr.loadCamera(true, -1, -1);
 		GameScr.cmx = 100;
@@ -1199,17 +1185,26 @@ namespace Game1
 		loadScreen = false;
 		percent = 0;
 		bigOk = false;
-		isGetData = false;
-		mSystem.println(">>>>>isGetData: " + isGetData);
+		isGetData = true;
+		stopDownload = false;
 		p = 0;
 		demPercent = 0;
-		strWait = mResources.PLEASEWAIT;
+		strWait = mResources.downloading_data;
 		Char.isLoadingMap = false;
 		TileMap.lastBgID = -1;
 		TileMap.lastType = -1;
 		GameCanvas.loadBG(0);
-		init();
+		cmdDownload = new Command(mResources.huy, this, 4, null);
+		cmdDownload.x = GameCanvas.w / 2 - mScreen.cmdW / 2;
+		cmdDownload.y = GameCanvas.hh + 65;
 		base.switchToMe();
+		GameCanvas.connect();
+		Service.gI().getResource(1, null);
+	}
+
+    	public void show2()
+	{
+		startDownloadData();
 	}
     
     	public void setLinkDefault(sbyte language)

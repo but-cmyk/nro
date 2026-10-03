@@ -275,6 +275,10 @@ public class UseItem {
         SpecialItemHandler.usePorata3(pl);
     }
 
+    public void useMayDoBoss(Player pl, Item item) {
+        SpecialItemHandler.useMayDoBoss(pl, item);
+    }
+
     public void ItemSKH(Player pl, Item item) {
         ChestBoxItemHandler.itemSKH(pl, item);
     }

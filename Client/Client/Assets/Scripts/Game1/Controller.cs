@@ -5450,6 +5450,10 @@ namespace Game1
                             {
                                 Rms.saveRMSString("userAo" + ServerListScreen.ipSelect, string.Empty);
                             }
+                            if (GameScr.vsData != GameScr.vcData || GameScr.vsMap != GameScr.vcMap || GameScr.vsSkill != GameScr.vcSkill || GameScr.vsItem != GameScr.vcItem)
+                            {
+                                GameCanvas.startWaitDlg("Đang cập nhật dữ liệu...");
+                            }
                             if (GameScr.vsData != GameScr.vcData)
                             {
                                 GameScr.isLoadAllData = false;
@@ -5551,6 +5555,7 @@ namespace Game1
                             }
                             if (GameScr.vsData == GameScr.vcData && GameScr.vsMap == GameScr.vcMap && GameScr.vsSkill == GameScr.vcSkill && GameScr.vsItem == GameScr.vcItem)
                             {
+                                GameCanvas.endDlg();
                                 try
                                 {
                                     if (!GameScr.isLoadAllData)

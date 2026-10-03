@@ -17,6 +17,8 @@ import server.Manager;
 import services.player.InventoryService;
 import services.ItemService;
 import services.Service;
+import services.map.NpcService;
+import services.tournament.DeathOrAliveArenaWeeklyService;
 import services.map.ChangeMapService;
 import services.CombineService;
 import services.RewardService;
@@ -70,8 +72,9 @@ public class BaHatMit extends Npc {
                                     "Ngươi muốn hủy đăng ký thi đấu võ đài?",
                                     "Hủy Đăng Ký",
                                     "Nhận 3 bình\nmiễn phí",
-                                    "Mua bình\nnước phép",
                                     "Bảng Xếp\nHạng",
+                                    "Thưởng Top\nTuần",
+                                    "Hướng dẫn",
                                     "Về\nđảo rùa");
                         } else {
                             this.createOtherMenu(player, ConstNpc.BASE_MENU,
@@ -79,8 +82,9 @@ public class BaHatMit extends Npc {
                                     "Bình chọn",
                                     "Vào sàn khác",
                                     "Nhận 3 bình\nmiễn phí",
-                                    "Mua bình\nnước phép",
                                     "Bảng Xếp\nHạng",
+                                    "Thưởng Top\nTuần",
+                                    "Hướng dẫn",
                                     "Về\nđảo rùa");
                         }
                     } else {
@@ -88,8 +92,9 @@ public class BaHatMit extends Npc {
                                 "Ngươi muốn đăng ký thi đấu võ đài?\nnhiều phần thưởng giá trị đang đợi ngươi đó",
                                 "Đăng ký\n" + (player.thoiVangVoDaiSinhTu + 1) + " bình nước",
                                 "Nhận 3 bình\nmiễn phí",
-                                "Mua bình\nnước phép",
                                 "Bảng Xếp\nHạng",
+                                "Thưởng Top\nTuần",
+                                "Hướng dẫn",
                                 "Về\nđảo rùa");
                     }
                     break;
@@ -367,13 +372,16 @@ public class BaHatMit extends Npc {
                                     case 1: // Nhận 3 bình miễn phí
                                         nhanBinhNuocFree(player);
                                         break;
-                                    case 2: // Mua bình nước phép
-                                        menuMuaBinhNuoc(player);
-                                        break;
-                                    case 3: // Bảng Xếp Hạng
+                                    case 2: // Bảng Xếp Hạng
                                         Service.gI().showListTop(player, Manager.topArena);
                                         break;
-                                    case 4: // Về đảo rùa
+                                    case 3: // Thưởng Top Tuần
+                                        DeathOrAliveArenaWeeklyService.gI().claimReward(player);
+                                        break;
+                                    case 4: // Hướng dẫn
+                                        showHuongDanVDST(player);
+                                        break;
+                                    case 5: // Về đảo rùa
                                         ChangeMapService.gI().changeMapBySpaceShip(player, 5, -1, 1156);
                                         break;
                                 }
@@ -391,13 +399,16 @@ public class BaHatMit extends Npc {
                                     case 2: // Nhận 3 bình miễn phí
                                         nhanBinhNuocFree(player);
                                         break;
-                                    case 3: // Mua bình nước phép
-                                        menuMuaBinhNuoc(player);
-                                        break;
-                                    case 4: // Bảng Xếp Hạng
+                                    case 3: // Bảng Xếp Hạng
                                         Service.gI().showListTop(player, Manager.topArena);
                                         break;
-                                    case 5: // Về đảo rùa
+                                    case 4: // Thưởng Top Tuần
+                                        DeathOrAliveArenaWeeklyService.gI().claimReward(player);
+                                        break;
+                                    case 5: // Hướng dẫn
+                                        showHuongDanVDST(player);
+                                        break;
+                                    case 6: // Về đảo rùa
                                         ChangeMapService.gI().changeMapBySpaceShip(player, 5, -1, 1156);
                                         break;
                                 }
@@ -410,13 +421,16 @@ public class BaHatMit extends Npc {
                                 case 1: // Nhận 3 bình miễn phí
                                     nhanBinhNuocFree(player);
                                     break;
-                                case 2: // Mua bình nước phép
-                                    menuMuaBinhNuoc(player);
-                                    break;
-                                case 3: // Bảng Xếp Hạng
+                                case 2: // Bảng Xếp Hạng
                                     Service.gI().showListTop(player, Manager.topArena);
                                     break;
-                                case 4: // Về đảo rùa
+                                case 3: // Thưởng Top Tuần
+                                    DeathOrAliveArenaWeeklyService.gI().claimReward(player);
+                                    break;
+                                case 4: // Hướng dẫn
+                                    showHuongDanVDST(player);
+                                    break;
+                                case 5: // Về đảo rùa
                                     ChangeMapService.gI().changeMapBySpaceShip(player, 5, -1, 1156);
                                     break;
                             }
@@ -452,13 +466,6 @@ public class BaHatMit extends Npc {
                                     }
                                 }
                             }
-                        }
-                    } else if (player.idMark.getIndexMenu() == ConstNpc.MENU_MUA_BINH_NUOC_VDST) {
-                        switch (select) {
-                            case 0 -> buyBinhNuoc(player, 1, 1L);
-                            case 1 -> buyBinhNuoc(player, 5, 5L);
-                            case 2 -> buyBinhNuoc(player, 10, 10L);
-                            case 3 -> buyBinhNuoc(player, 20, 20L);
                         }
                     }
                 }
@@ -836,5 +843,38 @@ public class BaHatMit extends Npc {
         InventoryService.gI().addItemBag(player, waterBottle);
         InventoryService.gI().sendItemBags(player);
         Service.gI().sendThongBao(player, "Con đã mua thành công " + quantity + " Bình nước phép!");
+    }
+
+    private void showHuongDanVDST(Player player) {
+        String text = "1. THỂ THỨC THI ĐẤU\b"
+                + "Võ Đài Sinh Tử gồm 5 Hiệp đấu với 5 Đại Cao Thủ:\b"
+                + "Dracula, Người Vô Hình, Bông Băng, Sa Tăng, Thỏ Đầu Bạc\b"
+                + "Mỗi hiệp tối đa 3 phút, có 5 giây nghỉ ngơi chuẩn bị\b"
+                + "Hạ gục cả 5 Boss để Vô Địch! Hết HP, hết giờ là Thua\n"
+                + "2. VÉ THI ĐẤU (BÌNH NƯỚC PHÉP)\b"
+                + "Vé vào cửa Võ Đài Sinh Tử là Bình Nước Phép\b"
+                + "Mỗi ngày gặp ta nhận MIỄN PHÍ 3 bình (reset lúc 0h đêm)\b"
+                + "Lượt 1: 1 bình, Lượt 2: 2 bình, tăng dần mỗi lượt (reset sau 0h)\b"
+                + "Nếu hết, mua thêm tại NPC Santa tab Đặc Biệt (1 Ngọc / 1 bình)\n"
+                + "3. CƠ CHẾ BÌNH CHỌN CHO KHÁN GIẢ\b"
+                + "Khán giả có thể cược 1.000.000 Vàng cho Người Chơi hoặc Bà Hạt Mít\b"
+                + "Cược Người Chơi: Thắng khi võ sĩ vô địch cả 5 hiệp\b"
+                + "Cược Hạt Mít: Thắng khi võ sĩ thất bại\b"
+                + "Phe thắng chia đều toàn bộ tiền cược của phe thua!\b"
+                + "Hoàn trả 100% tiền cược nếu chỉ có 1 bên cược\n"
+                + "4. PHẦN THƯỞNG MỖI TRẬN THẮNG\b"
+                + "Chiến thắng cả 5 Hiệp đấu sẽ nhận được:\b"
+                + "300.000 đến 500.000 Vàng, Tiềm Năng & Sức Mạnh khủng\b"
+                + "1 Vệ Tinh ngẫu nhiên + 1 đến 3 Đá Nâng Cấp trang bị\b"
+                + "May mắn nhận: Bùa 1h (30%), Thỏi Vàng (3%), Cải Trang (15%)\b"
+                + "ĐẶC BIỆT: Cơ hội nhận CẢI TRANG BOSS VĨNH VIỄN!\n"
+                + "5. ĐUA TOP TUẦN (0H CHỦ NHẬT)\b"
+                + "Giải đấu diễn ra liên tục theo chu kỳ 1 tuần\b"
+                + "Chốt giải và reset điểm all player về 0 lúc 0h Chủ Nhật hàng tuần\b"
+                + "CƠ CẤU PHẦN THƯỞNG TOP NGỌC:\b"
+                + "Top 1: 200 Ngọc  |  Top 2: 100 Ngọc\b"
+                + "Top 3: 50 Ngọc   |  Top 4: 30 Ngọc   |  Top 5: 20 Ngọc\b"
+                + "Quà tự động phát lúc 0h CN hoặc nhận tại 'Thưởng Top Tuần' của ta!";
+        NpcService.gI().createTutorial(player, this.tempId, this.avartar, text);
     }
 }

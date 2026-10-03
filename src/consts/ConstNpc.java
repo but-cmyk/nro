@@ -253,6 +253,7 @@ public class ConstNpc {
     public static final int MENU_SIEU_THAN_THUY = 2006;
     public static final int MENU_XUONG_TANG_DUOI = 2007;
     public static final int MENU_MUA_BINH_NUOC_VDST = 2008;
+    public static final int MENU_HUONG_DAN_VDST = 2009;
 
     //index menu rong thieng
     public static final int SHENRON_CONFIRM = 501;

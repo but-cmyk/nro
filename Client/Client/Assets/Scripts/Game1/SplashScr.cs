@@ -2,7 +2,7 @@ namespace Game1
 {
     public class SplashScr : mScreen
     {
-    	public const int MIN_SPLASH_TICKS = 45;
+    	public const int MIN_SPLASH_TICKS = 0;
 
     	public static mScreen pendingScreen;
 
@@ -37,7 +37,7 @@ namespace Game1
     
     	public override void update()
     	{
-    		if (splashScrStat == 20 && !isCheckConnect)
+    		if (!isCheckConnect)
     		{
     			isCheckConnect = true;
     			if (Rms.loadRMSInt("serverchat") != -1)
@@ -56,37 +56,34 @@ namespace Game1
     			if (Rms.loadRMSInt("svselect") == -1)
     			{
     				ServerListScreen.getServerList(ServerListScreen.linkDefault);
-    				GameCanvas.serverScr.switchToMe();
     			}
-    			else
+    			ServerListScreen.loadIP();
+    			ServerListScreen.loadScreen = true;
+    			if (GameCanvas.serverScreen == null)
     			{
-    				ServerListScreen.loadIP();
+    				GameCanvas.serverScreen = new ServerListScreen();
+    			}
+    			if (nData == -1)
+    			{
+    				GameCanvas.serverScreen.switchToMe();
+    				return;
     			}
     		}
     		splashScrStat++;
     		ServerListScreen.updateDeleteData();
-    		if (pendingScreen != null && splashScrStat >= MIN_SPLASH_TICKS && nData == -1)
+    		if (nData == -1 && GameCanvas.serverScreen != null)
+    		{
+    			GameCanvas.serverScreen.switchToMe();
+    			return;
+    		}
+    		if (pendingScreen != null && nData == -1)
     		{
     			mScreen next = pendingScreen;
     			pendingScreen = null;
     			next.switchToMe();
     			return;
     		}
-    		if (splashScrStat >= 150)
-    		{
-    			Res.outz("cho man hinh nay qa lau");
-    			if (Session_ME.gI().isConnected())
-    			{
-    				ServerListScreen.loadScreen = true;
-    				GameCanvas.serverScreen.switchToMe();
-    			}
-    			else
-    			{
-    				mSystem.onDisconnected();
-    			}
-    		}
     	}
-    
     	public static void loadIP()
     	{
     		if (Rms.loadRMSInt("svselect") == -1)

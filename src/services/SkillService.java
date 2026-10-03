@@ -924,6 +924,7 @@ public class SkillService {
                         Service.gI().sendMessAllPlayerInMap(pl, msg);
                         boolean isDie = pl.isDie();
                         player.nPoint.setHP(player.nPoint.getHP() + ((long) player.nPoint.hpMax * percentTriThuong / 100));
+                        player.nPoint.setMP(player.nPoint.getMP() + ((long) player.nPoint.mpMax * percentTriThuong / 100));
                         pl.nPoint.setHP(pl.nPoint.getHP() + ((long) pl.nPoint.hpMax * percentTriThuong / 100));
                         pl.nPoint.setMP(pl.nPoint.getMP() + ((long) pl.nPoint.mpMax * percentTriThuong / 100));
                         if (isDie) {
@@ -934,7 +935,9 @@ public class SkillService {
                             PlayerService.gI().sendInfoHpMpMoney(pl);
                             PlayerService.gI().sendInfoHpMp(player);
                         } else {
-                            Service.gI().chat(pl, "Cảm ơn " + player.name + " đã cứu mình");
+                            if (!player.isPet) {
+                                Service.gI().chat(pl, "Cảm ơn " + player.name + " đã cứu mình");
+                            }
                             Service.gI().Send_Info_NV(player);
                             PlayerService.gI().sendInfoHpMp(pl);
                             PlayerService.gI().sendInfoHpMp(player);
@@ -1410,6 +1413,12 @@ public class SkillService {
     private boolean canHsPlayer(Player player, Player plTarget) {
         if (plTarget == null) {
             return false;
+        }
+        if (player.isPet && ((Pet) player).master != null && ((Pet) player).master.equals(plTarget)) {
+            return true;
+        }
+        if (plTarget.isPet && ((Pet) plTarget).master != null && ((Pet) plTarget).master.equals(player)) {
+            return true;
         }
         if (plTarget.isBoss) {
             return false;

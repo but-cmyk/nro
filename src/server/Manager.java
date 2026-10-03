@@ -5,6 +5,7 @@ import services.RadarService;
 import models.radar.RadarCard;
 import database.AlyraManager;
 import database.loaders.DatabaseTemplateLoader;
+import services.tournament.DeathOrAliveArenaWeeklyService;
 import managers.map.TileMapDataLoader;
 import consts.ConstPlayer;
 import consts.ConstMap;
@@ -421,8 +422,16 @@ public static final String queryTopWhis = "SELECT id, CAST(JSON_UNQUOTE(JSON_EXT
                         top.setInfo2(rs.getInt("lixi") + " điểm");
                         break;
                     case queryTopArena:
-                        top.setInfo1("Thắng: " + rs.getInt("arena_wins") + " trận");
-                        top.setInfo2("Số lần thắng Võ Đài");
+                        int rankArena = tops.size() + 1;
+                        int winsArena = rs.getInt("arena_wins");
+                        int gemArena = DeathOrAliveArenaWeeklyService.getGemRewardByRank(rankArena);
+                        if (gemArena > 0) {
+                            top.setInfo1("+" + gemArena + " ngọc/ tuần");
+                            top.setInfo2("Thắng: " + winsArena + " trận\n0h Chủ Nhật nhận " + gemArena + " ngọc");
+                        } else {
+                            top.setInfo1("Thắng: " + winsArena + " trận");
+                            top.setInfo2("Số lần thắng Võ Đài Sinh Tử: " + winsArena + " trận");
+                        }
                         break;                       
                      case queryTopLuckySpins:
                         top.setInfo1("Đã quay: " + rs.getInt("lucky_spins") + " lần");

@@ -308,6 +308,9 @@ public class Pet extends Player {
                 moveIdle();
                 switch (status) {
                     case FOLLOW:
+                        if (useSkill3() || useSkill4()) {
+                            break;
+                        }
                         followMaster(60);
                         break;
                     case PROTECT:
@@ -590,38 +593,35 @@ public class Pet extends Player {
                         return true;
                     }
                     return false;
+                case Skill.TRI_THUONG:
+                    if (this.master != null && !this.master.isDie()
+                            && this.zone != null && this.master.zone != null && this.zone.equals(this.master.zone)
+                            && SkillService.gI().canUseSkillWithCooldown(this)
+                            && SkillService.gI().canUseSkillWithMana(this)) {
+                        boolean masterNeedHeal = this.master.nPoint.getCurrPercentHP() <= 85 || this.master.nPoint.getCurrPercentMP() <= 75;
+                        boolean petNeedHeal = this.nPoint.getCurrPercentHP() <= 70 || this.nPoint.getCurrPercentMP() <= 60;
+                        if (masterNeedHeal || petNeedHeal) {
+                            // Dùng Trị Thương từ xa trực tiếp lên Sư Phụ mà không cần bay lại
+                            SkillService.gI().useSkill(this, this.master, null, -1, null);
+                            if (masterNeedHeal) {
+                                Service.gI().chatJustForMe(this.master, this, "Con trị thương từ xa cho sư phụ nè!");
+                            } else {
+                                Service.gI().chatJustForMe(this.master, this, "Con trị thương hồi phục nha sư phụ!");
+                            }
+                            return true;
+                        }
+                    }
+                    return false;
                 case Skill.KAIOKEN:
-                    if (SkillService.gI().canUseSkillWithCooldown(this) && SkillService.gI().canUseSkillWithMana(this)) {
-
-                        mobAttack = this.findMobAttack();
-                        playerAttack = this.findPlayerAttack();
-                        if (playerAttack != null) {
-                            mobAttack = null;
-                            int dis = Util.getDistance(this, playerAttack);
-                            if (dis > ARANGE_ATT_SKILL1) {
-                                PlayerService.gI().playerMove(this, playerAttack.location.x, playerAttack.location.y);
-                            } else {
-                                if (SkillService.gI().canUseSkillWithCooldown(this) && SkillService.gI().canUseSkillWithMana(this)) {
-                                    PlayerService.gI().playerMove(this, playerAttack.location.x + Util.nextInt(-20, 20), playerAttack.location.y);
-                                }
-                            }
-                        } else if (mobAttack == null) {
-                            return false;
+                    // Tự động chuyển đổi kỹ năng Kaioken cũ sang Trị Thương cùng cấp độ
+                    int curPoint = this.playerSkill.skillSelect.point;
+                    Skill newTriThuong = SkillUtil.createSkill(Skill.TRI_THUONG, curPoint > 0 ? curPoint : 1);
+                    if (newTriThuong != null) {
+                        this.playerSkill.skills.set(2, newTriThuong);
+                        this.playerSkill.skillSelect = newTriThuong;
+                        if (this.master != null) {
+                            Service.gI().showInfoPet(this.master);
                         }
-                        if (mobAttack != null) {
-                            int dis = Util.getDistance(this, mobAttack);
-                            if (dis > ARANGE_ATT_SKILL1) {
-                                PlayerService.gI().playerMove(this, mobAttack.location.x, mobAttack.location.y);
-                            } else {
-                                if (SkillService.gI().canUseSkillWithCooldown(this) && SkillService.gI().canUseSkillWithMana(this)) {
-                                    PlayerService.gI().playerMove(this, mobAttack.location.x + Util.nextInt(-20, 20), mobAttack.location.y);
-                                }
-                            }
-                        }
-
-                        SkillService.gI().useSkill(this, playerAttack, mobAttack, -1, null);
-                        getSkill(1).lastTimeUseThisSkill = System.currentTimeMillis();
-                        return true;
                     }
                     return false;
                 default:
@@ -930,17 +930,17 @@ public class Pet extends Player {
 
     public void openSkill3() {
         Skill skill = null;
-        int tiLeTDHS = 30;
-        int tiLeTTNL = 30;
-        int tiLeKOK = 40;
+        int tiLeTDHS = 33;
+        int tiLeTTNL = 33;
+        int tiLeTriThuong = 34;
 
         int rd = Util.nextInt(1, 100);
         if (rd <= tiLeTDHS) {
             skill = SkillUtil.createSkill(Skill.THAI_DUONG_HA_SAN, 1);
         } else if (rd <= tiLeTDHS + tiLeTTNL) {
             skill = SkillUtil.createSkill(Skill.TAI_TAO_NANG_LUONG, 1);
-        } else if (rd <= tiLeTDHS + tiLeTTNL + tiLeKOK) {
-            skill = SkillUtil.createSkill(Skill.KAIOKEN, 1);
+        } else {
+            skill = SkillUtil.createSkill(Skill.TRI_THUONG, 1);
         }
         this.playerSkill.skills.set(2, skill);
     }

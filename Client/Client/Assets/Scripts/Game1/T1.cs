@@ -43,7 +43,7 @@ namespace Game1
     		mResources.cauhinhthap = "Cấu hình thấp";
     		mResources.cauhinhcao = "Cấu hình cao";
     		mResources.taidulieu = "Tải dữ liệu";
-    		mResources.xoadulieu = "Xóa dữ liệu";
+    		mResources.xoadulieu = "Tải lại dữ liệu";
     		mResources.deletaDataNote = "Bạn cần xóa trong trường hợp có lỗi tải dữ liệu. Khi xóa xong, bạn phải tải lại toàn bộ để có thể chơi.";
     		mResources.huy = "Hủy";
     		mResources.choigame = "Chơi game";

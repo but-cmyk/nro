@@ -16,10 +16,12 @@ import services.func.useitem.ItemActionHandler;
 import services.map.NpcService;
 import services.player.InventoryService;
 import utils.Util;
+import managers.boss.BossManager;
 
 /**
  * Xử lý các vật phẩm đặc biệt: Bông tai Porata (454, 921, 1346), Gọi Rồng Thần (Type 12),
- * Thẻ Radar Card (Type 33), Đổi Đệ Tử (401), Mảnh giấy vụn (726), Siêu thần thủy (727, 728).
+ * Thẻ Radar Card (Type 33), Đổi Đệ Tử (401), Mảnh giấy vụn (726), Siêu thần thủy (727, 728),
+ * Máy dò Boss (1109).
  */
 public class SpecialItemHandler implements ItemActionHandler {
 
@@ -32,7 +34,8 @@ public class SpecialItemHandler implements ItemActionHandler {
             return true;
         }
         int id = item.template.id;
-        return id == 454 || id == 921 || id == 1346 || id == 401 || id == 726 || id == 727 || id == 728;
+        return id == 454 || id == 921 || id == 1346 || id == 401 || id == 726 || id == 727 || id == 728
+                || id == ConstItem.MAY_DO_BOSS;
     }
 
     @Override
@@ -53,7 +56,12 @@ public class SpecialItemHandler implements ItemActionHandler {
             case 401 -> changePet(player, item);
             case 726 -> itemManhGiay(player, item);
             case 727, 728 -> itemSieuThanThuy(player, item);
+            case ConstItem.MAY_DO_BOSS -> useMayDoBoss(player, item);
         }
+    }
+
+    public static void useMayDoBoss(Player player, Item item) {
+        BossManager.gI().showListBoss(player);
     }
 
     public static void usePorata(Player pl) {

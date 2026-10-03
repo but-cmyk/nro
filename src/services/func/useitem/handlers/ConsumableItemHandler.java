@@ -56,7 +56,7 @@ public class ConsumableItemHandler implements ItemActionHandler {
         return switch (id) {
             case 191, 192, 379, 381, 382, 383, 384, 385, 579, 638, 663, 664, 665, 666, 667,
                  752, 753, 764, 880, 881, 882, 1045, 1099, 1100, 1101, 1102, 1103,
-                 1109, 1136, 1137, 1261, 1262, 1397, 2160 -> true;
+                 1136, 1137, 1261, 1262, 1397, 2160 -> true;
             default -> false;
         };
     }
@@ -212,7 +212,6 @@ public class ConsumableItemHandler implements ItemActionHandler {
                 ItemTimeService.gI().removeItemTime(pl, pl.itemTime.iconMeal2);
                 pl.itemTime.iconMeal2 = item.template.iconID;
             }
-            case 1109 -> { pl.itemTime.lastTimeUseMayDo2 = now; pl.itemTime.isUseMayDo2 = true; }
             case 1137 -> { pl.itemTime.lastTimeUseCo4La = now; pl.itemTime.isUseCo4La = true; }
             case 753 -> { pl.itemTime.banhchunglastTime = now; pl.itemTime.banhchung = true; }
             case 752 -> { pl.itemTime.banhtetlastTime = now; pl.itemTime.banhtet = true; }

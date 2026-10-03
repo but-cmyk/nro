@@ -1112,6 +1112,7 @@ public class ConstItem {
     public static final int PET_BI_MA_VUONG = 1107;
     public static final int DINH_BA_SATAN = 1108;
     public static final int CHOI_PHU_THUY = 1109;
+    public static final int MAY_DO_BOSS = 1109;
     public static final int CANH_THIEN_THAN = 1110;
     public static final int CANH_THIEN_THAN_2 = 1111;
     public static final int CAY_NAP_AM = 1112;

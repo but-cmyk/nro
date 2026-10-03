@@ -92,10 +92,12 @@ import models.boss.boss_list.NewBoss.*;
 import models.boss.boss_list.ThoDaiKa.ThoDaiKa;
 import models.boss.boss_list.huydiet.Cumber;
 import models.map.Zone;
-import server.Maintenance;
-import server.ServerManager;
 import utils.Logger;
 import utils.Util;
+import consts.BossStatus;
+import consts.ConstItem;
+import services.Service;
+import services.player.InventoryService;
 
 public class BossManager {
 
@@ -221,9 +223,9 @@ public class BossManager {
     }
 
     public void loadBoss() {
-        this.createBoss(BossID.KUKU, 10);
-        this.createBoss(BossID.MAP_DAU_DINH, 10);
-        this.createBoss(BossID.RAMBO, 10);
+        this.createBoss(BossID.KUKU);
+        this.createBoss(BossID.MAP_DAU_DINH);
+        this.createBoss(BossID.RAMBO);
         this.createBoss(BossID.TIEU_DOI_TRUONG);
         this.createBoss(BossID.FIDE);
         this.createBoss(BossID.DR_KORE);
@@ -302,46 +304,28 @@ public class BossManager {
     }
 
     public void showListBoss(Player player) {
-        if (!player.isAdmin()) {
+        if (!player.isAdmin() && InventoryService.gI().findItemBag(player, ConstItem.MAY_DO_BOSS) == null) {
+            Service.gI().sendThongBao(player, "Bạn cần có Máy dò boss để sử dụng chức năng này!");
             return;
         }
         player.idMark.setMenuType(3);
         Message msg;
         try {
             List<Boss> allBosses = new java.util.ArrayList<>(this.bosses);
-            if (this != BrolyManager.gI()) {
-                allBosses.addAll(BrolyManager.gI().bosses);
-            }
-
-            int count = 0;
+            List<Boss> validBosses = new java.util.ArrayList<>();
             for (Boss boss : allBosses) {
-                if (boss != null && boss.data != null && boss.data.length > 0
-                        && boss.data[0].getMapJoin() != null && boss.data[0].getMapJoin().length > 0) {
-                    int mapJoinId = boss.data[0].getMapJoin()[0];
-                    if (!MapService.gI().isMapBossFinal(mapJoinId) && !MapService.gI().isMapHuyDiet(mapJoinId)
-                            && !MapService.gI().isMapYardart(mapJoinId) && !MapService.gI().isMapMaBu(mapJoinId)
-                            && !MapService.gI().isMapBlackBallWar(mapJoinId)) {
-                        count++;
-                    }
+                if (boss != null && boss.data != null && boss.data.length > 0 && isBossTaskMain(boss)) {
+                    validBosses.add(boss);
                 }
             }
 
+            int count = Math.min(validBosses.size(), 100);
             msg = new Message(-96);
             msg.writer().writeByte(0);
-            msg.writer().writeUTF("Boss");
+            msg.writer().writeUTF("Máy Dò Boss");
             msg.writer().writeByte(count);
-            for (int i = 0; i < allBosses.size(); i++) {
-                Boss boss = allBosses.get(i);
-                if (boss == null || boss.data == null || boss.data.length == 0
-                        || boss.data[0].getMapJoin() == null || boss.data[0].getMapJoin().length == 0) {
-                    continue;
-                }
-                int mapJoinId = boss.data[0].getMapJoin()[0];
-                if (MapService.gI().isMapBossFinal(mapJoinId) || MapService.gI().isMapYardart(mapJoinId)
-                        || MapService.gI().isMapHuyDiet(mapJoinId) || MapService.gI().isMapMaBu(mapJoinId)
-                        || MapService.gI().isMapBlackBallWar(mapJoinId)) {
-                    continue;
-                }
+            for (int i = 0; i < count; i++) {
+                Boss boss = validBosses.get(i);
                 msg.writer().writeInt(i);
                 msg.writer().writeInt(i);
                 msg.writer().writeShort(boss.data[0].getOutfit()[0]);
@@ -351,18 +335,69 @@ public class BossManager {
                 msg.writer().writeShort(boss.data[0].getOutfit()[1]);
                 msg.writer().writeShort(boss.data[0].getOutfit()[2]);
                 msg.writer().writeUTF(boss.data[0].getName());
-                if (boss.zone != null) {
-                    msg.writer().writeUTF(boss.bossStatus.toString());
-                    msg.writer().writeUTF(boss.zone.map.mapName + "(" + boss.zone.map.mapId + ") khu " + boss.zone.zoneId + "");
+                if (boss.zone != null && (boss.bossStatus == BossStatus.ACTIVE || boss.bossStatus == BossStatus.CHAT_S)) {
+                    msg.writer().writeUTF("Đang xuất hiện");
+                    msg.writer().writeUTF(boss.zone.map.mapName + " Khu " + boss.zone.zoneId);
+                } else if (boss.bossStatus == BossStatus.DIE || boss.bossStatus == BossStatus.LEAVE_MAP) {
+                    msg.writer().writeUTF("Đã bị hạ");
+                    msg.writer().writeUTF("---");
+                } else if (boss.bossStatus == BossStatus.RESPAWN || boss.bossStatus == BossStatus.JOIN_MAP) {
+                    msg.writer().writeUTF("Sắp xuất hiện");
+                    msg.writer().writeUTF("---");
                 } else {
-                    msg.writer().writeUTF(boss.bossStatus.toString());
-                    msg.writer().writeUTF("=))");
+                    msg.writer().writeUTF("Chưa xuất hiện");
+                    msg.writer().writeUTF("---");
                 }
             }
             player.sendMessage(msg);
             msg.cleanup();
         } catch (Exception e) {
+            Logger.logException(BossManager.class, e, "Lỗi showListBoss");
         }
+    }
+
+    public static boolean isBossTaskMain(Boss boss) {
+        if (boss == null) {
+            return false;
+        }
+        int id = (int) boss.id;
+        // 1. Kuku, Mập Đầu Đinh, Rambo (Nhiệm vụ 21)
+        if (id == BossID.KUKU || id == BossID.MAP_DAU_DINH || id == BossID.RAMBO) {
+            return true;
+        }
+        // 2. Tiểu Đội Sát Thủ (Nhiệm vụ 22)
+        if (id == BossID.SO_4 || id == BossID.SO_3 || id == BossID.SO_2 || id == BossID.SO_1 
+                || id == BossID.TIEU_DOI_TRUONG || id == BossID.TDST
+                || id == BossID.SO_4_NM || id == BossID.SO_3_NM || id == BossID.SO_2_NM 
+                || id == BossID.SO_1_NM || id == BossID.TIEU_DOI_TRUONG_NM) {
+            return true;
+        }
+        // 3. Fide Đại Ca (Nhiệm vụ 23)
+        if (id == BossID.FIDE) {
+            return true;
+        }
+        // 4. Sát Thủ Android (Nhiệm vụ 25, 26, 27)
+        if (id == BossID.ANDROID_19 || id == BossID.DR_KORE 
+                || id == BossID.ANDROID_13 || id == BossID.ANDROID_14 || id == BossID.ANDROID_15 
+                || id == BossID.PIC || id == BossID.POC || id == BossID.KING_KONG) {
+            return true;
+        }
+        // 5. Xên Bọ Hung & Xên Con (Nhiệm vụ 28, 29)
+        if (id == BossID.XEN_BO_HUNG || id == BossID.SIEU_BO_HUNG 
+                || (id >= BossID.XEN_CON_7 && id <= BossID.XEN_CON_1)) {
+            return true;
+        }
+        // 6. Ma Bư 12h & Đệ tử Babidi (Nhiệm vụ 30)
+        if (id == BossID.DRABURA || id == BossID.DRABURA_2 || id == BossID.DRABURA_3 
+                || id == BossID.BUI_BUI || id == BossID.BUI_BUI_2 
+                || id == BossID.YA_CON || id == BossID.MABU_12H) {
+            return true;
+        }
+        // 7. Black Goku & Chiller (Nhiệm vụ 31, 32)
+        if (id == BossID.BLACK_GOKU || id == BossID.CHILLER || id == BossID.CHILL_1 || id == BossID.CHILL_2) {
+            return true;
+        }
+        return false;
     }
 
     public Boss getBossById(int bossId) {
