@@ -24,7 +24,6 @@ namespace Game1
                                 Char myChar = Char.myCharz();
                                 myChar.cHP = msg.readInt3Byte();
                                 int damage = msg.readInt3Byte();
-                                Res.outz("dame hit = " + damage);
                                 if (damage != 0)
                                 {
                                     myChar.doInjure();
@@ -35,7 +34,6 @@ namespace Game1
                                     sbyte effId = msg.reader().readByte();
                                     if (effId != -1)
                                     {
-                                        Res.outz("hit eff= " + effId);
                                         EffecMn.addEff(new Effect(effId, myChar.cx, myChar.cy, 3, 1, -1));
                                     }
                                 }
@@ -74,7 +72,6 @@ namespace Game1
                                 sbyte effIdOther = msg.reader().readByte();
                                 if (effIdOther != -1)
                                 {
-                                    Res.outz("hit eff= " + effIdOther);
                                     EffecMn.addEff(new Effect(effIdOther, other.cx, other.cy, 3, 1, -1));
                                 }
                             }

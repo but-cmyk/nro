@@ -922,6 +922,7 @@ public class PlayerDAO {
                 dataArray.add(player.thoiVangVoDaiSinhTu);
                 dataArray.add(player.lastTimePKVoDaiSinhTu);
                 dataArray.add(player.timePKVDST);
+                dataArray.add(player.lastTimeNhanBinhNuocFree);
                 String dataVoDaiSinhTu = dataArray.toJSONString();
                 dataArray.clear();
 

@@ -149,6 +149,14 @@ public class Input {
                     break;
 
                 case TANG_THOI_VANG: { // Tận dụng case này để làm Tặng Thỏi Vàng
+                    if (player.isTrade || services.func.TransactionService.gI().check(player)) {
+                        Service.gI().sendThongBao(player, "Không thể thực hiện khi đang giao dịch!");
+                        return;
+                    }
+                    if (player.getSession() == null || !player.getSession().actived) {
+                        Service.gI().sendThongBao(player, "Vui lòng kích hoạt thành viên!");
+                        return;
+                    }
                     String name = text[0];
                     if (name.equalsIgnoreCase(player.name)) {
                         Service.gI().sendThongBao(player, "Không thể tự tặng cho chính mình.");
@@ -266,12 +274,30 @@ public class Input {
                 }
 
                 case TANG_NGOC_XANH: {
+                    if (player.isTrade || services.func.TransactionService.gI().check(player)) {
+                        Service.gI().sendThongBao(player, "Không thể thực hiện khi đang giao dịch!");
+                        return;
+                    }
+                    if (player.getSession() == null || !player.getSession().actived) {
+                        Service.gI().sendThongBao(player, "Vui lòng kích hoạt thành viên!");
+                        return;
+                    }
                     String name = text[0];
-                    int numGem = Integer.parseInt(text[1]);
+                    if (name.equalsIgnoreCase(player.name)) {
+                        Service.gI().sendThongBao(player, "Không thể tự tặng cho chính mình.");
+                        return;
+                    }
+                    int numGem;
+                    try {
+                        numGem = Integer.parseInt(text[1]);
+                    } catch (Exception e) {
+                        Service.gI().sendThongBao(player, "Số lượng không hợp lệ.");
+                        return;
+                    }
 
                     // 1. Kiểm tra tính hợp lệ của số lượng
                     if (numGem < 10 || numGem > 100000) {
-                        Service.gI().sendThongBao(player, "Số lượng ngọc xanh tặng phải từ 10 đến 1000.");
+                        Service.gI().sendThongBao(player, "Số lượng ngọc xanh tặng phải từ 10 đến 100.000.");
                         return;
                     }
                     if (player.inventory.gem < numGem) {
@@ -282,16 +308,18 @@ public class Input {
                     // 2. Tìm vé tặng ngọc xanh để trừ lượt (Option 31)
                     Item item = InventoryService.gI().findVeTangNgocxanh(player);
                     ItemOption option = null;
-                    if (item != null) {
+                    if (item != null && item.itemOptions != null) {
                         option = item.itemOptions.stream().filter(io -> io.optionTemplate.id == 31 && io.param > 0).findAny().orElse(null);
                     }
-
-
+                    if (option == null || option.param < numGem) {
+                        Service.gI().sendThongBao(player, "Bạn không đủ lượt tặng ngọc xanh trên vé");
+                        return;
+                    }
 
                     // 3. Xử lý tặng ngọc
                     Player plTarget = Client.gI().getPlayer(name);
                     boolean isSuccess = false;
-                    int gemReceived = numGem ; // Người nhận được 90% (phí 10%)
+                    int gemReceived = numGem;
 
                     if (plTarget != null) {
                         // --- TRƯỜNG HỢP ONLINE ---
@@ -300,8 +328,7 @@ public class Input {
                         Service.gI().sendThongBao(plTarget, "Bạn được " + player.name + " tặng " + gemReceived + " Ngọc xanh");
                         isSuccess = true;
                     } else {
-                        // --- TRƯỜNG HỢP OFFLINE (SỬA LỖI Ở ĐÂY) ---
-                        // Thay vì dùng SQL Update trực tiếp (gây lỗi), ta load nhân vật lên để xử lý
+                        // --- TRƯỜNG HỢP OFFLINE ---
                         Player plOffline = NDVSqlFetcher.loadPlayerByName(name);
 
                         if (plOffline != null) {
@@ -322,11 +349,9 @@ public class Input {
                     // 4. Nếu thành công thì trừ tiền người gửi và lượt dùng của item
                     if (isSuccess) {
                         player.inventory.subGem(numGem); // Trừ ngọc xanh người gửi
+                        option.param -= numGem;
                         PlayerService.gI().sendInfoHpMpMoney(player);
-
-
                         InventoryService.gI().sendItemBags(player); // Cập nhật hành trang
-
                         Service.gI().sendThongBao(player, "Tặng Ngọc xanh thành công cho " + name);
                     }
                     break;

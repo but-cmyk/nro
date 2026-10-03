@@ -243,7 +243,7 @@ namespace Game1
                                 {
                                     ClanImage clanImage3 = new ClanImage();
                                     clanImage3.ID = msg.reader().readUnsignedByte();
-                                    clanImage3.name = msg.reader().readUTF();
+                                    clanImage3.name = TabClanIcon.CleanClanIconName(msg.reader().readUTF());
                                     clanImage3.xu = msg.reader().readInt();
                                     clanImage3.luong = msg.reader().readInt();
                                     if (!ClanImage.isExistClanImage(clanImage3.ID))

@@ -1,5 +1,6 @@
 package models.npc.npc_list;
 
+import database.daos.PlayerDAO;
 import consts.ConstNpc;
 import java.util.ArrayList;
 import models.item.Item;
@@ -54,40 +55,45 @@ public class BaHatMit extends Npc {
                 }
                 case 112 -> {
                     if (Util.isAfterMidnight(player.lastTimePKVoDaiSinhTu)) {
-                        player.haveRewardVDST = false;
                         player.thoiVangVoDaiSinhTu = 0;
                     }
                     if (player.haveRewardVDST) {
                         this.createOtherMenu(player, ConstNpc.BASE_MENU,
-                                "Đây là phần thưởng cho con.",
-                                "vệ tinh\nbất kì", "từ chối");
+                                "Chúc mừng con đã xuất sắc vô địch Võ Đài Sinh Tử!\nTa có phần thưởng giá trị gồm Vàng, Tiềm năng, Vệ tinh, Đá nâng cấp và cơ hội nhận Cải trang Boss Võ Đài quý hiếm!",
+                                "Nhận thưởng", "Từ chối");
                         return;
                     }
                     DeathOrAliveArena vdst = DeathOrAliveArenaManager.gI().getVDST(player.zone);
-    if (vdst != null) {
-        if (vdst.getPlayer().equals(player)) {
-            this.createOtherMenu(player, ConstNpc.BASE_MENU,
-                    "Ngươi muốn hủy đăng ký thi đấu võ đài?",
-                    "Bảng Xếp\nHạng", // Thêm vào
-                    "Hủy Đăng Ký", // Đổi tên cho rõ ràng
-                    "Về\nđảo rùa");
-        } else {
-            this.createOtherMenu(player, ConstNpc.BASE_MENU,
-                    "Ngươi muốn đăng ký thi đấu võ đài?\nnhiều phần thưởng giá trị đang đợi ngươi đó",
-                    "Bảng Xếp\nHạng", // Thêm vào
-                    "Bình chọn",
-                    "Thách Đấu", // Đổi tên cho rõ ràng
-                    "Về\nđảo rùa");
-        }
-    } else {
-        this.createOtherMenu(player, ConstNpc.BASE_MENU,
-                "Ngươi muốn đăng ký thi đấu võ đài?\nnhiều phần thưởng giá trị đang đợi ngươi đó",
-                "Bảng Xếp\nHạng", // Thêm vào
-                "Đăng ký\n" + (player.thoiVangVoDaiSinhTu + 1) + " bình nước", // Sửa lại logic hiển thị chi phí
-                "Về\nđảo rùa");
-    }
-    // ================== KẾT THÚC SỬA ĐỔI ==================
-    break;}
+                    if (vdst != null) {
+                        if (vdst.getPlayer().equals(player)) {
+                            this.createOtherMenu(player, ConstNpc.BASE_MENU,
+                                    "Ngươi muốn hủy đăng ký thi đấu võ đài?",
+                                    "Hủy Đăng Ký",
+                                    "Nhận 3 bình\nmiễn phí",
+                                    "Mua bình\nnước phép",
+                                    "Bảng Xếp\nHạng",
+                                    "Về\nđảo rùa");
+                        } else {
+                            this.createOtherMenu(player, ConstNpc.BASE_MENU,
+                                    "Ngươi muốn đăng ký thi đấu võ đài?\nnhiều phần thưởng giá trị đang đợi ngươi đó",
+                                    "Bình chọn",
+                                    "Vào sàn khác",
+                                    "Nhận 3 bình\nmiễn phí",
+                                    "Mua bình\nnước phép",
+                                    "Bảng Xếp\nHạng",
+                                    "Về\nđảo rùa");
+                        }
+                    } else {
+                        this.createOtherMenu(player, ConstNpc.BASE_MENU,
+                                "Ngươi muốn đăng ký thi đấu võ đài?\nnhiều phần thưởng giá trị đang đợi ngươi đó",
+                                "Đăng ký\n" + (player.thoiVangVoDaiSinhTu + 1) + " bình nước",
+                                "Nhận 3 bình\nmiễn phí",
+                                "Mua bình\nnước phép",
+                                "Bảng Xếp\nHạng",
+                                "Về\nđảo rùa");
+                    }
+                    break;
+                }
                 case 174 ->
                     this.createOtherMenu(player, ConstNpc.BASE_MENU,
                             "Ngươi tìm ta có việc gì?",
@@ -207,97 +213,214 @@ public class BaHatMit extends Npc {
                 }
                 case 112 -> {
                     if (Util.isAfterMidnight(player.lastTimePKVoDaiSinhTu)) {
-                        player.haveRewardVDST = false;
                         player.thoiVangVoDaiSinhTu = 0;
                     }
 
                     if (player.idMark.isBaseMenu()) {
                         if (player.haveRewardVDST) {
                             switch (select) {
-                                case 0 -> { // nhận vệ tinh
-                                    if (InventoryService.gI().getCountEmptyBag(player) > 0) {
-                                        short itemId = (short) Util.nextInt(342, 345); // bao gồm cả 345
-                                        Item item = ItemService.gI().createNewItem(itemId);
-
-                                        // đảm bảo itemOptions đã khởi tạo
-                                        if (item.itemOptions == null) {
-                                            item.itemOptions = new ArrayList<>();
-                                        }
-
-                                        // add option tùy itemId
-                                        switch (itemId) {
-                                            case 342 -> item.itemOptions.add(new Item.ItemOption(81, 5));
-                                            case 343 -> item.itemOptions.add(new Item.ItemOption(83, 20));
-                                            case 344 -> item.itemOptions.add(new Item.ItemOption(82, 1));
-                                            case 345 -> item.itemOptions.add(new Item.ItemOption(80, 5));
-                                        }
-
-                                        InventoryService.gI().addItemBag(player, item);
-                                        InventoryService.gI().sendItemBags(player);
-                                        Service.gI().sendThongBao(player, "Bạn nhận được " + item.template.name);
-
-                                        player.haveRewardVDST = false;
-                                        return; // tránh chạy tiếp
-                                    } else {
-                                        Service.gI().sendThongBao(player, "Hành trang không còn chỗ trống, không thể nhặt thêm");
+                                case 0 -> { // Nhận phần thưởng
+                                    if (InventoryService.gI().getCountEmptyBag(player) < 3) {
+                                        Service.gI().sendThongBao(player, "Hành trang cần tối thiểu 3 ô trống để nhận toàn bộ phần thưởng!");
                                         return;
                                     }
+
+                                    StringBuilder thongBao = new StringBuilder("Bạn nhận được:\n");
+
+                                    // 1. Vàng (300k - 500k: Kiểm soát lạm phát, hoàn vốn tiền mua bình nước phép + có lời)
+                                    long goldReward = Util.nextInt(300_000, 500_000);
+                                    player.inventory.gold = Math.min(player.inventory.gold + goldReward, 2_000_000_000L);
+                                    Service.gI().sendMoney(player);
+                                    thongBao.append("- ").append(Util.format(goldReward)).append(" vàng\n");
+
+                                    // 2. Tiềm năng / Sức mạnh: Phương Án 1 - Phân đoạn theo từng cột mốc sức mạnh (Tier Pacing)
+                                    long power = player.nPoint.power;
+                                    long tnsm = 0;
+                                    if (power < 1_500_000L) {
+                                        // Dưới 1.5 triệu SM (Ví dụ 550k): Thưởng 2% - 3% sức mạnh (550k nhận ~11k - 16k)
+                                        tnsm = (long) (power * Util.nextInt(20, 30) / 1000.0);
+                                        if (tnsm < 5_000L) {
+                                            tnsm = 5_000L;
+                                        }
+                                    } else if (power < 50_000_000L) {
+                                        // 1.5 triệu - 50 triệu SM: Thưởng 0.3% - 0.5% sức mạnh (10tr nhận 30k - 50k, 40tr nhận 120k - 200k)
+                                        tnsm = (long) (power * Util.nextInt(3, 5) / 1000.0);
+                                    } else if (power < 1_500_000_000L) {
+                                        // 50 triệu - 1.5 tỷ SM: Thưởng 0.05% sức mạnh (500tr nhận 250k, 1 tỷ nhận 500k)
+                                        tnsm = power * 5 / 10000;
+                                    } else if (power < 40_000_000_000L) {
+                                        // 1.5 tỷ - 40 tỷ SM: Thưởng 300.000 - 500.000 TNSM cố định
+                                        tnsm = Util.nextInt(300_000, 500_000);
+                                    } else if (power < 90_000_000_000L) {
+                                        // 40 tỷ - 80 tỷ SM: Thưởng 50.000 - 100.000 TNSM cố định (tương đương 20 - 50 hit đấm quái)
+                                        tnsm = Util.nextInt(50_000, 100_000);
+                                    } else {
+                                        // Trên 90 tỷ SM (chạm max cap): Tượng trưng 1.000 TNSM
+                                        tnsm = 1_000L;
+                                    }
+
+                                    if (tnsm > 0) {
+                                        Service.gI().addSMTN(player, (byte) 2, tnsm, false);
+                                        thongBao.append("- ").append(Util.format(tnsm)).append(" tiềm năng\n");
+                                    }
+
+                                    // 3. Vệ tinh ngẫu nhiên (342-345)
+                                    short veTinhId = (short) Util.nextInt(342, 345);
+                                    Item veTinh = ItemService.gI().createNewItem(veTinhId);
+                                    if (veTinh.itemOptions == null) {
+                                        veTinh.itemOptions = new ArrayList<>();
+                                    }
+                                    switch (veTinhId) {
+                                        case 342 -> veTinh.itemOptions.add(new Item.ItemOption(81, 5));
+                                        case 343 -> veTinh.itemOptions.add(new Item.ItemOption(83, 20));
+                                        case 344 -> veTinh.itemOptions.add(new Item.ItemOption(82, 1));
+                                        case 345 -> veTinh.itemOptions.add(new Item.ItemOption(80, 5));
+                                    }
+                                    InventoryService.gI().addItemBag(player, veTinh);
+                                    thongBao.append("- ").append(veTinh.template.name).append("\n");
+
+                                    // 4. Đá nâng cấp trang bị (220-224: Ruby, Lam Ngọc, Ngọc Bích, Thạch Anh Tím, Titan)
+                                    short daId = (short) Util.nextInt(220, 224);
+                                    int slDa = Util.nextInt(1, 3);
+                                    Item daNangCap = ItemService.gI().createNewItem(daId, slDa);
+                                    InventoryService.gI().addItemBag(player, daNangCap);
+                                    thongBao.append("- x").append(slDa).append(" ").append(daNangCap.template.name).append("\n");
+
+                                    // 5. Gacha may mắn: Bùa 1h (tỷ lệ 30%)
+                                    if (Util.isTrue(30, 100)) {
+                                        short buaId = (short) Util.nextInt(213, 218);
+                                        Item bua = ItemService.gI().createNewItem(buaId);
+                                        if (bua.itemOptions == null) {
+                                            bua.itemOptions = new ArrayList<>();
+                                        }
+                                        bua.itemOptions.add(new Item.ItemOption(66, 0)); // Bùa 1h
+                                        InventoryService.gI().addItemBag(player, bua);
+                                        thongBao.append("- [May mắn] 1 ").append(bua.template.name).append("\n");
+                                    }
+
+                                    // 6. Gacha may mắn: Thỏi vàng (tỷ lệ 3%)
+                                    if (Util.isTrue(3, 100)) {
+                                        Item thoiVang = ItemService.gI().createNewItem((short) 457);
+                                        InventoryService.gI().addItemBag(player, thoiVang);
+                                        thongBao.append("- [May mắn] 1 Thỏi vàng\n");
+                                    }
+
+                                    // 7. Gacha may mắn: Cải trang Boss Võ Đài Sinh Tử (Chỉ số chuẩn 100% theo Shop Santa)
+                                    // 448: Dracula (opt 104, param 50)
+                                    // 449: Người Vô Hình (opt 105, param 0)
+                                    // 450: Bông Băng (opt 106, param 0)
+                                    // 451: Vua Quỷ Sa Tăng (opt 100, param 20)
+                                    // 452: Thỏ Đầu Bạc (opt 101, param 20)
+                                    if (Util.isTrue(15, 100)) {
+                                        short[] ctIds = {448, 449, 450, 451, 452};
+                                        short ctId = ctIds[Util.nextInt(0, ctIds.length - 1)];
+                                        Item caiTrang = ItemService.gI().createNewItem(ctId);
+                                        if (caiTrang.itemOptions == null) {
+                                            caiTrang.itemOptions = new ArrayList<>();
+                                        }
+
+                                        // Áp dụng đúng chỉ số chuẩn từ Shop Santa
+                                        switch (ctId) {
+                                            case 448 -> caiTrang.itemOptions.add(new Item.ItemOption(104, 50));
+                                            case 449 -> caiTrang.itemOptions.add(new Item.ItemOption(105, 0));
+                                            case 450 -> caiTrang.itemOptions.add(new Item.ItemOption(106, 0));
+                                            case 451 -> caiTrang.itemOptions.add(new Item.ItemOption(100, 20));
+                                            case 452 -> caiTrang.itemOptions.add(new Item.ItemOption(101, 20));
+                                        }
+
+                                        // Tỷ lệ Vĩnh Viễn: ~1% tổng thể (7% trong 15% trúng)
+                                        if (Util.isTrue(7, 100)) {
+                                            InventoryService.gI().addItemBag(player, caiTrang);
+                                            thongBao.append("- [SIÊU PHẨM] ").append(caiTrang.template.name).append(" (VĨNH VIỄN)!\n");
+                                            Service.gI().sendThongBaoAllPlayer(player.name + " vừa xuất sắc vô địch Võ Đài Sinh Tử và nhận được " + caiTrang.template.name + " VĨNH VIỄN!");
+                                        } else {
+                                            int days = Util.nextInt(3, 7);
+                                            caiTrang.itemOptions.add(new Item.ItemOption(93, days));
+                                            InventoryService.gI().addItemBag(player, caiTrang);
+                                            thongBao.append("- [Đặc biệt] ").append(caiTrang.template.name).append(" (HSD: ").append(days).append(" ngày)\n");
+                                        }
+                                    }
+
+                                    InventoryService.gI().sendItemBags(player);
+                                    Service.gI().sendThongBao(player, thongBao.toString());
+
+                                    player.haveRewardVDST = false;
+                                    PlayerDAO.updatePlayer(player);
+                                    return;
                                 }
                                 case 1 -> {
-                                    // từ chối nhận phần thưởng
+                                    // Từ chối nhận phần thưởng
                                     return;
                                 }
                             }
-                            return; // thoát sau khi xử lý reward
+                            return; // Thoát sau khi xử lý reward
                         }
 
                         // Xử lý đăng ký hoặc hủy tham gia VDST
                         DeathOrAliveArena vdst = DeathOrAliveArenaManager.gI().getVDST(player.zone);
-        if (vdst != null) {
-            if (vdst.getPlayer().equals(player)) { // Người chơi là chủ phòng
-                switch (select) {
-                    case 0: // Bảng Xếp Hạng
-                        Service.gI().showListTop(player, Manager.topArena);
-                        break;
-                    case 1: // Hủy đăng ký
-                        DeathOrAliveArenaService.gI().cancelChallenge(player);
-                        break;
-                    case 2: // Về đảo rùa
-                        ChangeMapService.gI().changeMapBySpaceShip(player, 5, -1, 1156);
-                        break;
-                }
-            } else { // Người chơi là khán giả
-                switch (select) {
-                    case 0: // Bảng Xếp Hạng
-                        Service.gI().showListTop(player, Manager.topArena);
-                        break;
-                    case 1: // Bình chọn
-                        this.createOtherMenu(player, ConstNpc.DAT_CUOC_HAT_MIT,
-                                "Phí bình chọn là 1 triệu vàng...",
-                                "Bình chọn cho " + vdst.getPlayer().name,
-                                "Bình chọn cho hạt mít");
-                        break;
-                    case 2: // Thách đấu
-                        DeathOrAliveArenaService.gI().startChallenge(player);
-                        break;
-                    case 3: // Về đảo rùa
-                        ChangeMapService.gI().changeMapBySpaceShip(player, 5, -1, 1156);
-                        break;
-                }
-            }
-        } else { // Chưa có ai đăng ký
-            switch (select) {
-                case 0: // Bảng Xếp Hạng
-                    Service.gI().showListTop(player, Manager.topArena);
-                    break;
-                case 1: // Đăng ký
-                    DeathOrAliveArenaService.gI().startChallenge(player);
-                    break;
-                case 2: // Về đảo rùa
-                    ChangeMapService.gI().changeMapBySpaceShip(player, 5, -1, 1156);
-                    break;
-            }
-        }
+                        if (vdst != null) {
+                            if (vdst.getPlayer().equals(player)) { // Người chơi là chủ phòng
+                                switch (select) {
+                                    case 0: // Hủy đăng ký
+                                        DeathOrAliveArenaService.gI().cancelChallenge(player);
+                                        break;
+                                    case 1: // Nhận 3 bình miễn phí
+                                        nhanBinhNuocFree(player);
+                                        break;
+                                    case 2: // Mua bình nước phép
+                                        menuMuaBinhNuoc(player);
+                                        break;
+                                    case 3: // Bảng Xếp Hạng
+                                        Service.gI().showListTop(player, Manager.topArena);
+                                        break;
+                                    case 4: // Về đảo rùa
+                                        ChangeMapService.gI().changeMapBySpaceShip(player, 5, -1, 1156);
+                                        break;
+                                }
+                            } else { // Người chơi là khán giả
+                                switch (select) {
+                                    case 0: // Bình chọn
+                                        this.createOtherMenu(player, ConstNpc.DAT_CUOC_HAT_MIT,
+                                                "Phí bình chọn là 1 triệu vàng...",
+                                                "Bình chọn cho " + vdst.getPlayer().name,
+                                                "Bình chọn cho hạt mít");
+                                        break;
+                                    case 1: // Thách đấu
+                                        DeathOrAliveArenaService.gI().startChallenge(player);
+                                        break;
+                                    case 2: // Nhận 3 bình miễn phí
+                                        nhanBinhNuocFree(player);
+                                        break;
+                                    case 3: // Mua bình nước phép
+                                        menuMuaBinhNuoc(player);
+                                        break;
+                                    case 4: // Bảng Xếp Hạng
+                                        Service.gI().showListTop(player, Manager.topArena);
+                                        break;
+                                    case 5: // Về đảo rùa
+                                        ChangeMapService.gI().changeMapBySpaceShip(player, 5, -1, 1156);
+                                        break;
+                                }
+                            }
+                        } else { // Chưa có ai đăng ký
+                            switch (select) {
+                                case 0: // Đăng ký
+                                    DeathOrAliveArenaService.gI().startChallenge(player);
+                                    break;
+                                case 1: // Nhận 3 bình miễn phí
+                                    nhanBinhNuocFree(player);
+                                    break;
+                                case 2: // Mua bình nước phép
+                                    menuMuaBinhNuoc(player);
+                                    break;
+                                case 3: // Bảng Xếp Hạng
+                                    Service.gI().showListTop(player, Manager.topArena);
+                                    break;
+                                case 4: // Về đảo rùa
+                                    ChangeMapService.gI().changeMapBySpaceShip(player, 5, -1, 1156);
+                                    break;
+                            }
+                        }
                     } else if (player.idMark.getIndexMenu() == ConstNpc.DAT_CUOC_HAT_MIT) {
                         DeathOrAliveArena vdst = DeathOrAliveArenaManager.gI().getVDST(player.zone);
                         if (vdst != null) {
@@ -329,6 +452,13 @@ public class BaHatMit extends Npc {
                                     }
                                 }
                             }
+                        }
+                    } else if (player.idMark.getIndexMenu() == ConstNpc.MENU_MUA_BINH_NUOC_VDST) {
+                        switch (select) {
+                            case 0 -> buyBinhNuoc(player, 1, 1L);
+                            case 1 -> buyBinhNuoc(player, 5, 5L);
+                            case 2 -> buyBinhNuoc(player, 10, 10L);
+                            case 3 -> buyBinhNuoc(player, 20, 20L);
                         }
                     }
                 }
@@ -659,5 +789,52 @@ public class BaHatMit extends Npc {
                 }
             }
         }
+    }
+
+    private void nhanBinhNuocFree(Player player) {
+        if (Util.isAfterMidnight(player.lastTimeNhanBinhNuocFree)) {
+            if (InventoryService.gI().getCountEmptyBag(player) == 0 && InventoryService.gI().findItemBagByTemp(player, 456) == null) {
+                Service.gI().sendThongBao(player, "Hành trang của con đã đầy, hãy dọn bớt ô trống nhé!");
+                return;
+            }
+            Item waterBottle = ItemService.gI().createNewItem((short) 456, 3);
+            InventoryService.gI().addItemBag(player, waterBottle);
+            InventoryService.gI().sendItemBags(player);
+            player.lastTimeNhanBinhNuocFree = System.currentTimeMillis();
+            Service.gI().sendThongBao(player, "Bà tặng con 3 Bình nước phép miễn phí hôm nay! Chúc con thi đấu may mắn!");
+        } else {
+            Service.gI().sendThongBao(player, "Hôm nay con đã nhận 3 Bình nước phép rồi. Hãy quay lại sau 0h nhé!");
+        }
+    }
+
+    private void menuMuaBinhNuoc(Player player) {
+        this.createOtherMenu(player, ConstNpc.MENU_MUA_BINH_NUOC_VDST,
+                "Bà bán nước phép với giá hữu nghị 1 Ngọc / 1 bình.\n(Ưu tiên trừ hồng ngọc trước, nếu thiếu bù bằng ngọc xanh)\nCon muốn mua bao nhiêu bình?",
+                "Mua 1 bình\n(1 ngọc)",
+                "Mua 5 bình\n(5 ngọc)",
+                "Mua 10 bình\n(10 ngọc)",
+                "Mua 20 bình\n(20 ngọc)",
+                "Từ chối");
+    }
+
+    private void buyBinhNuoc(Player player, int quantity, long gemCost) {
+        if (player.inventory.getGemAndRuby() < gemCost) {
+            Service.gI().sendThongBao(player, "Con không đủ ngọc, còn thiếu " + (gemCost - player.inventory.getGemAndRuby()) + " ngọc nữa!");
+            return;
+        }
+        if (InventoryService.gI().getCountEmptyBag(player) == 0 && InventoryService.gI().findItemBagByTemp(player, 456) == null) {
+            Service.gI().sendThongBao(player, "Hành trang của con đã đầy, hãy dọn bớt ô trống nhé!");
+            return;
+        }
+        if (!player.inventory.subGemAndRuby(gemCost)) {
+            Service.gI().sendThongBao(player, "Con không đủ ngọc!");
+            return;
+        }
+        Service.gI().sendMoney(player);
+        PlayerDAO.updatePlayer(player);
+        Item waterBottle = ItemService.gI().createNewItem((short) 456, quantity);
+        InventoryService.gI().addItemBag(player, waterBottle);
+        InventoryService.gI().sendItemBags(player);
+        Service.gI().sendThongBao(player, "Con đã mua thành công " + quantity + " Bình nước phép!");
     }
 }

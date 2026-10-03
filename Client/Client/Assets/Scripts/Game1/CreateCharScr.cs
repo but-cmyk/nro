@@ -136,9 +136,7 @@ namespace Game1
     			dataInputStream = MyStream.readFile("/mymap/" + mapID[i]);
     			MapTemplate.tmw[i] = (ushort)dataInputStream.read();
     			MapTemplate.tmh[i] = (ushort)dataInputStream.read();
-    			Cout.LogError("Thong TIn : " + MapTemplate.tmw[i] + "::" + MapTemplate.tmh[i]);
     			MapTemplate.maps[i] = new int[dataInputStream.available()];
-    			Cout.LogError("lent= " + MapTemplate.maps[i].Length);
     			for (int j = 0; j < MapTemplate.tmw[i] * MapTemplate.tmh[i]; j++)
     			{
     				MapTemplate.maps[i][j] = dataInputStream.read();
@@ -159,7 +157,6 @@ namespace Game1
     			for (int i = 0; i < mapID.Length; i++)
     			{
     				dataInputStream = MyStream.readFile("/mymap/mapTable" + mapID[i]);
-    				Cout.LogError("mapTable : " + mapID[i]);
     				short num = dataInputStream.readShort();
     				MapTemplate.vCurrItem[i] = new MyVector();
     				Res.outz("nItem= " + num);

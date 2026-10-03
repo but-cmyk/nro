@@ -56,9 +56,9 @@ public class AchievementService {
 
         int money = Manager.ACHIEVEMENT_TEMPLATE.get(select).money;
         player.achievement.reward(select);
-        player.inventory.addGem(money);
+        player.inventory.addRuby(money);
         Service.gI().sendMoney(player);
-        Service.gI().sendThongBao(player, "Bạn vừa nhận được " + money + " Ngọc Xanh");
+        Service.gI().sendThongBao(player, "Bạn vừa nhận được " + money + " Hồng Ngọc");
 
     Message msg = null;
     try {
@@ -85,12 +85,12 @@ public class AchievementService {
     }
 
     public void checkDoneTask(Player player, int aId) {
-        if (player.isPl() && player.achievement != null) {
-            switch (aId) {
-                case ConstAchievement.LAN_DAU_NAP_NGOC ->
-                    player.achievement.doneNotAdd(aId, player.getSession().danap);
-                default ->
-                    player.achievement.done(aId, 1);
+        if (player != null) {
+            if (player.isPet && player instanceof models.player.Pet && ((models.player.Pet) player).master != null) {
+                player = ((models.player.Pet) player).master;
+            }
+            if (player.isPl() && player.achievement != null) {
+                player.achievement.done(aId, 1);
             }
         }
     }
@@ -130,6 +130,12 @@ public class AchievementService {
             if (length < 10) {
                 player.achievement.done(ConstAchievement.KHINH_CONG_THANH_THAO, length);
             }
+        }
+    }
+
+    public void checkDoneTaskPickGem(Player player, int quantity) {
+        if (player != null && player.isPl() && player.achievement != null) {
+            player.achievement.done(ConstAchievement.TRUM_NHAT_NGOC, Math.max(1, quantity));
         }
     }
 

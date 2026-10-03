@@ -98,7 +98,6 @@ namespace Game1
                                 }
                                 else if (text.Length == 1)
                                 {
-                                    Cout.LogError3("strInf.Length =1:  " + text);
                                 }
                                 else
                                 {

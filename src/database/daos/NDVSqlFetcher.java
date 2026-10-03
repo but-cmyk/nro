@@ -1350,6 +1350,9 @@ public class NDVSqlFetcher {
                 player.thoiVangVoDaiSinhTu = Integer.parseInt(dataArray.get(1).toString());
                 player.lastTimePKVoDaiSinhTu = Long.parseLong(dataArray.get(2).toString());
                 player.timePKVDST = Long.parseLong(dataArray.get(3).toString());
+                if (dataArray.size() >= 5) {
+                    player.lastTimeNhanBinhNuocFree = Long.parseLong(dataArray.get(4).toString());
+                }
             } catch (Exception e) {
             }
 

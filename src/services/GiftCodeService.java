@@ -58,15 +58,10 @@ public class GiftCodeService {
                             }
                             Item itemGift = new Item((short) idItem);
                             
-                            if (itemGift.template.type == 0 || itemGift.template.type == 1 || itemGift.template.type == 2 || itemGift.template.type == 3
-                                    || itemGift.template.type == 4 || itemGift.template.type == 5) {
-                                if (itemGift.template.id == 457) {
-                                    itemGift.itemOptions.add(new Item.ItemOption(30, 0));
-                                } else {
-                                    itemGift.itemOptions = giftcode.option.get(key);
-                                    itemGift.quantity = quantity;
-                                    InventoryService.gI().addItemBag(player, itemGift);
-                                }
+                            if (itemGift.template.id == 457) {
+                                itemGift.itemOptions.add(new Item.ItemOption(30, 0));
+                                itemGift.quantity = quantity;
+                                InventoryService.gI().addItemBag(player, itemGift);
                             } else {
                                 itemGift.itemOptions = giftcode.option.get(key);
                                 itemGift.quantity = quantity;

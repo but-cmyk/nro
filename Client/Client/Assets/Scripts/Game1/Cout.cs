@@ -8,7 +8,7 @@ namespace Game1
     
     	public static void println(string s)
     	{
-    		if (mSystem.isTest)
+    		if (mSystem.isTest && !string.IsNullOrEmpty(s) && UnityLogger.ShouldLog(s, LogType.Log))
     		{
     			Debug.Log(((count % 2 != 0) ? "***--- " : ">>>--- ") + s);
     			count++;
@@ -17,7 +17,7 @@ namespace Game1
     
     	public static void Log(string str)
     	{
-    		if (mSystem.isTest)
+    		if (mSystem.isTest && !string.IsNullOrEmpty(str) && UnityLogger.ShouldLog(str, LogType.Log))
     		{
     			Debug.Log(str);
     		}
@@ -25,30 +25,63 @@ namespace Game1
     
     	public static void LogError(string str)
     	{
-    		if (mSystem.isTest)
+    		if (string.IsNullOrEmpty(str))
     		{
-    			Debug.Log(str);
+    			return;
+    		}
+    		if (str.IndexOf("error", System.StringComparison.OrdinalIgnoreCase) >= 0 ||
+    		    str.IndexOf("loi", System.StringComparison.OrdinalIgnoreCase) >= 0 ||
+    		    str.IndexOf("fail", System.StringComparison.OrdinalIgnoreCase) >= 0 ||
+    		    str.IndexOf("exception", System.StringComparison.OrdinalIgnoreCase) >= 0 ||
+    		    str.IndexOf("cannot", System.StringComparison.OrdinalIgnoreCase) >= 0 ||
+    		    str.IndexOf("err:", System.StringComparison.OrdinalIgnoreCase) >= 0 ||
+    		    str.IndexOf("err ", System.StringComparison.OrdinalIgnoreCase) >= 0 ||
+    		    str.StartsWith("err", System.StringComparison.OrdinalIgnoreCase))
+    		{
+    			if (UnityLogger.ShouldLog(str, LogType.Error))
+    			{
+    				Debug.LogError(str);
+    			}
+    		}
+    		else
+    		{
+    			Log(str);
     		}
     	}
     
     	public static void LogError2(string str)
     	{
-    		if (!mSystem.isTest)
-    		{
-    		}
     	}
     
     	public static void LogError3(string str)
     	{
-    		if (mSystem.isTest)
+    		if (string.IsNullOrEmpty(str))
     		{
-    			Debug.Log(str);
+    			return;
+    		}
+    		if (str.IndexOf("error", System.StringComparison.OrdinalIgnoreCase) >= 0 ||
+    		    str.IndexOf("loi", System.StringComparison.OrdinalIgnoreCase) >= 0 ||
+    		    str.IndexOf("fail", System.StringComparison.OrdinalIgnoreCase) >= 0 ||
+    		    str.IndexOf("exception", System.StringComparison.OrdinalIgnoreCase) >= 0 ||
+    		    str.IndexOf("cannot", System.StringComparison.OrdinalIgnoreCase) >= 0 ||
+    		    str.IndexOf("err:", System.StringComparison.OrdinalIgnoreCase) >= 0 ||
+    		    str.IndexOf("err ", System.StringComparison.OrdinalIgnoreCase) >= 0 ||
+    		    str.StartsWith("err", System.StringComparison.OrdinalIgnoreCase))
+    		{
+    			if (UnityLogger.ShouldLog(str, LogType.Error))
+    			{
+    				Debug.LogError(str);
+    			}
+    		}
+    		else
+    		{
+    			Log(str);
     		}
     	}
     
     	public static void LogWarning(string str)
     	{
-    		if (mSystem.isTest)
+    		if (!string.IsNullOrEmpty(str) && UnityLogger.ShouldLog(str, LogType.Warning))
     		{
     			Debug.LogWarning(str);
     		}

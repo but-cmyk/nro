@@ -26,7 +26,6 @@ namespace Game1
         }
         public override void setSkillPaint(SkillPaint skillPaint, int sType)
         {
-            Res.outz("skill id= " + skillPaint.id);
             if (isMonkey == 1 && skillPaint.id >= 35 && skillPaint.id <= 41)
             {
                 skillPaint = GameScr.sks[106];

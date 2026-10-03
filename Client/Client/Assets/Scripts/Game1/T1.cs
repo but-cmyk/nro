@@ -503,7 +503,7 @@ namespace Game1
     		mResources.quest_place = "Địa điểm nhiệm vụ";
     		mResources.no_mission = "Không có nhiệm vụ";
     		mResources.reward_mission = "Hoàn thành, thưởng ";
-    		mResources.achievement_mission = "Nhiệm vụ thành tích";
+    		mResources.achievement_mission = "Nhiệm vụ tích lũy";
     		mResources.trangbi = "Trang bị";
     		mResources.wat_do_u_want = "Bạn muốn làm gì";
     		mResources.select_map = "Chọn nơi muốn đến";

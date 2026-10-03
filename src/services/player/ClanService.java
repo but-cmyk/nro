@@ -1158,11 +1158,14 @@ public class ClanService {
             case 22 -> {
                 return 7;
             }
-            case 20, 21 -> {
-                return 10;
+            case 21 -> {
+                return 9; // Gậy: +9% TNSM
+            }
+            case 20 -> {
+                return 11; // Đao: +11% TNSM
             }
             case 29 -> {
-                return 12;
+                return 13; // Gậy phép: +13% TNSM
             }
             default -> {
                 return 0;
@@ -1188,14 +1191,17 @@ public class ClanService {
             case 22 -> {
                 return "+7% TNSM";
             }
-            case 20, 21 -> {
-                return "+10% TNSM";
+            case 21 -> {
+                return "+9% TNSM";
+            }
+            case 20 -> {
+                return "+11% TNSM";
             }
             case 29 -> {
-                return "+12% TNSM, +3% Dame quái";
+                return "+13% TNSM, +3% Dame quái";
             }
             default -> {
-                return "+5%~10% TNSM khi đi chung";
+                return "";
             }
         }
     }

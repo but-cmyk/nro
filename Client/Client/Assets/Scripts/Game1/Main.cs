@@ -87,7 +87,7 @@ namespace Game1
     
         public static string pasteText;
 
-        public static float gameSpeed = 0.85f;
+        public static float gameSpeed = 0.8f;
 
         private float gameSpeedAccumulator;
 

@@ -103,15 +103,57 @@ namespace Game1
     			for (int i = 0; i < ClanImage.vClanImage.size(); i++)
     			{
     				ClanImage cm = (ClanImage)ClanImage.vClanImage.elementAt(i);
-    				if (cm != null && cm.ID == myClanImgId)
+    				if (cm != null)
     				{
-    					lastSelect = i;
-    					select = i;
-    					scrMain.moveTo(lastSelect * WIDTH);
-    					break;
+    					if (cm.name != null)
+    					{
+    						cm.name = CleanClanIconName(cm.name);
+    					}
+    					if (cm.ID == myClanImgId)
+    					{
+    						lastSelect = i;
+    						select = i;
+    						scrMain.moveTo(lastSelect * WIDTH);
+    					}
     				}
     			}
     		}
+    		else
+    		{
+    			for (int j = 0; j < ClanImage.vClanImage.size(); j++)
+    			{
+    				ClanImage cm2 = (ClanImage)ClanImage.vClanImage.elementAt(j);
+    				if (cm2 != null && cm2.name != null)
+    				{
+    					cm2.name = CleanClanIconName(cm2.name);
+    				}
+    			}
+    		}
+    	}
+
+    	public static string CleanClanIconName(string name)
+    	{
+    		if (string.IsNullOrEmpty(name))
+    		{
+    			return name;
+    		}
+    		if (name.Contains("(+5%~10% TNSM khi đi chung)"))
+    		{
+    			return name.Replace("(+5%~10% TNSM khi đi chung)", string.Empty).Trim();
+    		}
+    		if (name.Contains("khi đi chung"))
+    		{
+    			int start = name.IndexOf('(');
+    			if (start >= 0 && name.IndexOf("khi đi chung", start) > start)
+    			{
+    				int end = name.IndexOf(')', start);
+    				if (end > start)
+    				{
+    					return (name.Substring(0, start) + name.Substring(end + 1)).Trim();
+    				}
+    			}
+    		}
+    		return name;
     	}
     
     	public void show(bool isGetName)
@@ -157,7 +199,7 @@ namespace Game1
     			}
     		}
     		Char.myCharz().paintCharBody(g, x + 45, y + 45, 1, Char.myCharz().cf, false);
-    		mFont.tahoma_7_red.drawString(g, "Cùng bang trong khu:", x + 85, y + 14, 0);
+    		mFont.tahoma_7_red.drawString(g, "Thành viên cùng bang trong khu:", x + 85, y + 14, 0);
     		mFont.tahoma_7_blue.drawString(g, "+5% ~ 10% TNSM khi đánh quái", x + 85, y + 27, 0);
     		g.setClip(x, y + disStart, w, h - disStart - 10);
     		if (scrMain != null)
@@ -182,7 +224,7 @@ namespace Game1
     				}
     				if (clanImage2.name != null)
     				{
-    					mFont2.drawString(g, clanImage2.name, num + 20, num2, 0);
+    					mFont2.drawString(g, CleanClanIconName(clanImage2.name), num + 20, num2, 0);
     				}
     				if (clanImage2.xu > 0)
     				{

@@ -13,13 +13,17 @@ public class ConstAchievement {
     public static final int HOAT_DONG_CHAM_CHI = 8;
     public static final int HO_TRO_DONG_DOI = 9;
     public static final int TRUM_NHAT_VE_CHAI = 10;
-    public static final int LAN_DAU_NAP_NGOC = 11;
+    public static final int DAT_70_TRIEU_SUC_MANH = 11;
+    public static final int LAN_DAU_NAP_NGOC = 11; // alias tương thích
     public static final int DANH_BAI_SIEU_QUAI = 12;
     public static final int THANH_HOI_SINH = 13;
     public static final int KY_NANG_THANH_THAO = 14;
     public static final int TRUM_NHAT_NGOC = 15;
     public static final int DAT_15_TRIEU_SUC_MANH = 16;
-    public static final int TUYET_KY_THANH_THAO = 17;
-    public static final int CHAM_SOC_DAC_BIET = 18;
-    public static final int TRUM_KET_LIEU_BOSS = 19;
+    public static final int DAT_600_TRIEU_SUC_MANH = 17;
+    public static final int TUYET_KY_THANH_THAO = 17; // alias tương thích
+    public static final int DAT_1_TI_5_SUC_MANH = 18;
+    public static final int CHAM_SOC_DAC_BIET = 18; // alias tương thích
+    public static final int DAT_3_TI_SUC_MANH = 19;
+    public static final int TRUM_KET_LIEU_BOSS = 19; // alias tương thích
 }

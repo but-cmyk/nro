@@ -74,6 +74,13 @@ public class ItemService {
             removeAndAddOptionTemplate(item.itemOptions, new Item.ItemOption(io).optionTemplate.id);
 
         }
+        // Tất cả vật phẩm mua bằng Ngọc Xanh hoặc Hồng Ngọc đều không thể giao dịch (chống farm clone)
+        if (itemShop.typeSell == ShopService.COST_GEM || itemShop.typeSell == ShopService.COST_RUBY) {
+            item.itemOptions.removeIf(io -> io != null && io.optionTemplate != null && io.optionTemplate.id == 86);
+            if (!item.isHaveOption(30)) {
+                item.itemOptions.add(new Item.ItemOption(30, 0));
+            }
+        }
         return item;
     }
 

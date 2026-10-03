@@ -1,5 +1,6 @@
 package models.player;
 
+import models.boss.boss_list.DeathOrAliveArena.DeathOrAliveArena;
 import utils.Functions;
 import models.npc.NonInteractiveNPC;
 import models.radar.Card;
@@ -191,6 +192,7 @@ public class Player extends Character {
     public TaskPlayer playerTask;
     public ItemTime itemTime;
     public Fusion fusion;
+    public boolean isDisplayCaiTrangHapThe = false;
     public MagicTree magicTree;
     public IntrinsicPlayer playerIntrinsic;
     public Inventory inventory;
@@ -249,6 +251,7 @@ public class Player extends Character {
     public boolean haveRewardVDST;
     public int thoiVangVoDaiSinhTu;
     public long timePKVDST;
+    public long lastTimeNhanBinhNuocFree;
 
     public int binhChonHatMit;
     public int binhChonPlayer;
@@ -698,6 +701,10 @@ public class Player extends Character {
             return (short) ConstPlayer.HEADMONKEY[effectSkill.levelMonkey - 1];
         } else if (effectSkill != null && effectSkill.isSocola) {
             return 412;
+        } else if (isDisplayCaiTrangHapThe && inventory != null && inventory.itemsBody != null && inventory.itemsBody.size() > 5 && inventory.itemsBody.get(5).isNotNullItem()) {
+            int headId = inventory.itemsBody.get(5).template.head;
+            if (headId != -1) return (short) headId;
+            return this.head;
         } else if (fusion != null && fusion.typeFusion != ConstPlayer.NON_FUSION) {
             if (fusion.typeFusion == ConstPlayer.LUONG_LONG_NHAT_THE) {
                 return idOutfitFusion[this.gender == ConstPlayer.NAMEC ? 2 : 0][0];
@@ -738,6 +745,13 @@ public class Player extends Character {
             return 413;
         } else if (isPhuHoMapMabu && fusion != null && fusion.typeFusion == ConstPlayer.NON_FUSION) {
             return idOutfitGod[this.gender][1];
+        } else if (isDisplayCaiTrangHapThe && inventory != null && inventory.itemsBody != null && inventory.itemsBody.size() > 5 && inventory.itemsBody.get(5).isNotNullItem()) {
+            int body = inventory.itemsBody.get(5).template.body;
+            if (body != -1) return (short) body;
+            if (inventory.itemsBody.size() > 0 && inventory.itemsBody.get(0).isNotNullItem()) {
+                return inventory.itemsBody.get(0).template.part;
+            }
+            return (short) (gender == ConstPlayer.NAMEC ? 59 : 57);
         } else if (fusion != null && fusion.typeFusion != ConstPlayer.NON_FUSION) {
             if (fusion.typeFusion == ConstPlayer.LUONG_LONG_NHAT_THE) {
                 return idOutfitFusion[this.gender == ConstPlayer.NAMEC ? 2 : 0][1];
@@ -771,6 +785,13 @@ public class Player extends Character {
             return 414;
         } else if (isPhuHoMapMabu && fusion != null && fusion.typeFusion == ConstPlayer.NON_FUSION) {
             return idOutfitGod[this.gender][2];
+        } else if (isDisplayCaiTrangHapThe && inventory != null && inventory.itemsBody != null && inventory.itemsBody.size() > 5 && inventory.itemsBody.get(5).isNotNullItem()) {
+            int leg = inventory.itemsBody.get(5).template.leg;
+            if (leg != -1) return (short) leg;
+            if (inventory.itemsBody.size() > 1 && inventory.itemsBody.get(1).isNotNullItem()) {
+                return inventory.itemsBody.get(1).template.part;
+            }
+            return (short) (gender == 1 ? 60 : 58);
         } else if (fusion != null && fusion.typeFusion != ConstPlayer.NON_FUSION) {
             if (fusion.typeFusion == ConstPlayer.LUONG_LONG_NHAT_THE) {
                 return idOutfitFusion[this.gender == ConstPlayer.NAMEC ? 2 : 0][2];
@@ -843,6 +864,14 @@ public class Player extends Character {
         if (!this.isDie()) {
             if (plAtt != null && !plAtt.equals(this)) {
                 setTemporaryEnemies(plAtt);
+            }
+            if (plAtt instanceof DeathOrAliveArena) {
+                damage = Math.max(1, (long) this.nPoint.hpMax / 100);
+                this.nPoint.subHP(damage);
+                if (isDie()) {
+                    setDie(plAtt);
+                }
+                return (int) damage;
             }
             if (this.isPl() && this.effectSkill != null && this.effectSkill.isMabuHold && this.zone != null && this.zone.map.mapId == 128) {
                 this.precentMabuHold++;
@@ -955,6 +984,11 @@ public class Player extends Character {
             }
 
             this.nPoint.subHP(damage);
+
+            // Smart TTNL Cancel: Nếu là Đệ tử đang gồng Tái tạo năng lượng mà bị tấn công mất máu, tự ngắt gồng để phản ứng chiến đấu
+            if (this.isPet && damage > 0 && this.effectSkill != null && this.effectSkill.isCharging) {
+                services.EffectSkillService.gI().stopCharge(this);
+            }
 
             if ((plAtt != null || isMobAttack) && isDie() && !isBoss && !isNewPet && !isNewPet1) {
                 if (plAtt != null && this.isPl()) {

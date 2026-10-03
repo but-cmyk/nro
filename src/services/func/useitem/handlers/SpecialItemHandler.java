@@ -63,7 +63,7 @@ public class SpecialItemHandler implements ItemActionHandler {
             if (pl.fusion.typeFusion == ConstPlayer.NON_FUSION) {
                 pl.pet.fusion(true);
             } else {
-                pl.pet.unFusion();
+                openMenuPorata(pl);
             }
         }
     }
@@ -75,7 +75,7 @@ public class SpecialItemHandler implements ItemActionHandler {
             if (pl.fusion.typeFusion == ConstPlayer.NON_FUSION) {
                 pl.pet.fusion2(true);
             } else {
-                pl.pet.unFusion();
+                openMenuPorata(pl);
             }
         }
     }
@@ -87,9 +87,17 @@ public class SpecialItemHandler implements ItemActionHandler {
             if (pl.fusion.typeFusion == ConstPlayer.NON_FUSION) {
                 pl.pet.fusion3(true);
             } else {
-                pl.pet.unFusion();
+                openMenuPorata(pl);
             }
         }
+    }
+
+    public static void openMenuPorata(Player pl) {
+        String optionCaiTrang = pl.isDisplayCaiTrangHapThe ? "Hiện dáng\nHợp thể" : "Hiện\nCải trang";
+        String statusText = pl.isDisplayCaiTrangHapThe ? "|1|Trạng thái: Hiển thị Cải trang" : "|2|Trạng thái: Hiển thị dáng Hợp thể";
+        NpcService.gI().createMenuConMeo(pl, ConstNpc.MENU_PORATA, -1,
+                "|8|HỢP THỂ BÔNG TAI PORATA\n" + statusText + "\n|0|Bạn muốn thực hiện thao tác nào?",
+                "Tách\nhợp thể", optionCaiTrang, "Đóng");
     }
 
     private void controllerCallRongThan(Player pl, Item item) {

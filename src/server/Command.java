@@ -201,6 +201,27 @@ public class Command {
                     player.pet.transform();
             }
         }
+
+        switch (text) {
+            case "ct", "caitrang" -> {
+                if (player.fusion != null && player.fusion.typeFusion != consts.ConstPlayer.NON_FUSION) {
+                    player.isDisplayCaiTrangHapThe = !player.isDisplayCaiTrangHapThe;
+                    Service.gI().Send_Caitrang(player);
+                    if (player.isDisplayCaiTrangHapThe) {
+                        boolean hasCaiTrang = player.inventory != null && player.inventory.itemsBody != null
+                                && player.inventory.itemsBody.size() > 5 && player.inventory.itemsBody.get(5).isNotNullItem();
+                        if (hasCaiTrang) {
+                            Service.gI().sendThongBao(player, "Đã bật hiển thị Cải trang khi hợp thể");
+                        } else {
+                            Service.gI().sendThongBao(player, "Đã bật hiển thị Cải trang (Hãy mặc Cải trang để hiển thị)");
+                        }
+                    } else {
+                        Service.gI().sendThongBao(player, "Đã bật hiển thị hình dạng Hợp thể");
+                    }
+                    return true;
+                }
+            }
+        }
         return false;
     }
 

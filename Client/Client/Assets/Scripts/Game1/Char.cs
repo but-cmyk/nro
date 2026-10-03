@@ -3181,7 +3181,6 @@ namespace Game1
     				cp3 = 0;
     			}
     			indexSkill = 0;
-    			Res.outz("remove 2");
     			skillPaint = null;
     			skillPaintRandomPaint = null;
     			eff0 = (eff1 = (eff2 = null));
@@ -5113,7 +5112,6 @@ namespace Game1
     				skillPaint.id = 0;
     			}
     		}
-    		Res.outz("skill id= " + skillPaint.id);
     		if ((me && dart != null) || (TileMap.isOfflineMap() && mobFocus == null))
     		{
     			return;
@@ -5404,7 +5402,6 @@ namespace Game1
     			}
     		}
     		this.skillPaint = skillPaint;
-    		Res.outz("set auto skill " + ((skillPaint == null) ? "null" : "ko null"));
     		if (skillPaint.id >= 0 && skillPaint.id <= 6)
     		{
     			int num = Res.random(0, skillPaint.id + 4) - 1;

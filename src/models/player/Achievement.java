@@ -33,7 +33,7 @@ public class Achievement {
         AchievementQuest aq = get(index);
         if (aq != null) {
             switch (index) {
-                case 0, 1, 16 -> {
+                case 0, 1, 11, 16, 17, 18, 19 -> {
                     aq.completed = player.nPoint.power;
                 }
                 case 2 -> {

@@ -568,8 +568,13 @@ public class Pet extends Player {
             switch (this.playerSkill.skillSelect.template.id) {
                 case Skill.THAI_DUONG_HA_SAN:
                     if (SkillService.gI().canUseSkillWithCooldown(this) && SkillService.gI().canUseSkillWithMana(this)) {
+                        boolean isRescueMaster = master != null && master.effectSkill != null && (master.effectSkill.isStun || master.effectSkill.isThoiMien || master.effectSkill.useTroi);
                         SkillService.gI().useSkill(this, null, null, -1, null);
-                        Service.gI().chatJustForMe(master, this, "Thái dương hạ san");
+                        if (isRescueMaster) {
+                            Service.gI().chatJustForMe(master, this, "Sư phụ đừng sợ, con cứu sư phụ!");
+                        } else {
+                            Service.gI().chatJustForMe(master, this, "Thái dương hạ san");
+                        }
                         return true;
                     }
                     return false;
@@ -836,6 +841,10 @@ public class Pet extends Player {
         for (int i = playersMap.size() - 1; i >= 0; i--) {
             Player pl = playersMap.get(i);
             if (!cantAttack(pl)) {
+                // Focus Fire: Khóa chặt mục tiêu mà Sư phụ đang giao chiến
+                if (master != null && master.temporaryEnemies != null && master.temporaryEnemies.contains(pl)) {
+                    return pl;
+                }
                 int d = Util.getDistance(this, pl);
                 if (d <= dis) {
                     dis = d;
@@ -860,6 +869,14 @@ public class Pet extends Player {
         for (Mob mob : zone.mobs) {
             if (mob.isDie()) {
                 continue;
+            }
+            // Focus Fire: Ưu tiên giải vây quái đang áp sát Sư phụ (< 250px)
+            if (master != null && master.location != null) {
+                int dMaster = Util.getDistance(master, mob);
+                int dPet = Util.getDistance(this, mob);
+                if (dMaster <= 250 && dPet <= ARANGE_CAN_ATTACK) {
+                    return mob;
+                }
             }
             int d = Util.getDistance(this, mob);
             if (d <= dis) {

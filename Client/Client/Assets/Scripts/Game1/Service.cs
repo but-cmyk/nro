@@ -768,7 +768,6 @@ namespace Game1
     				{
     					message.writer().writeShort(data.Length);
     					message.writer().write(data);
-    					Res.err("write " + data.Length + "|" + GameMidlet.VERSION);
     				}
     			}
     			session.sendMessage(message);
@@ -809,7 +808,6 @@ namespace Game1
     				{
     					message.writer().writeShort(data.Length);
     					message.writer().write(data);
-    					Res.err("write " + data.Length + "|" + GameMidlet.VERSION);
     				}
     			}
     			session = Session_ME2.gI();
@@ -2276,7 +2274,6 @@ namespace Game1
     		Message message = null;
     		try
     		{
-    			Res.outz("REQUEST ICON " + id);
     			message = new Message((sbyte)(-67));
     			message.writer().writeInt(id);
     			if (Session_ME2.gI().isConnected() && !Session_ME2.connecting)

@@ -18,6 +18,23 @@ public static class UnityLogger
     private static volatile bool isRunning;
     private static bool isInitialized;
 
+    public enum LogLevel
+    {
+        None = 0,
+        Error = 1,
+        Warning = 2,
+        Info = 3,
+        Debug = 4,
+        Verbose = 5
+    }
+
+    /// <summary>
+    /// Cấp độ log hiện tại của Client.
+    /// Mặc định là Info: Chỉ in thông tin sự kiện quan trọng ([NET], [MAP], [AUTH], [TRADE]), Warning và Error.
+    /// Chặn sạch toàn bộ log debug vết, đòn đánh và packet chu kỳ cao.
+    /// </summary>
+    public static LogLevel CurrentLogLevel = LogLevel.Info;
+
     // Danh sách các từ khóa rác chu kỳ cao gây nghẽn I/O & sụt giảm FPS
     private static readonly string[] SpamBlacklist = new string[]
     {
@@ -31,10 +48,21 @@ public static class UnityLogger
         "---messageSubCommand",
         "modbHoldID=",
         "only select skill",
-        "set auto skill ko null",
+        "set auto skill",
+        "skill id=",
         "remove 2",
         "Load Audio ",
-        ">>>--- PERFORM WITH ID"
+        ">>>--- PERFORM WITH ID",
+        "REQUEST ICON ",
+        "dame hit =",
+        "dame hit=",
+        "hit eff=",
+        "my cflag:",
+        "TOI DAY",
+        "can not attack",
+        "toi day",
+        "HERE",
+        "CAP CHAAAA"
     };
 
     // Danh sách thẻ thông tin có giá trị nghiệp vụ cần lưu vết
@@ -58,6 +86,111 @@ public static class UnityLogger
         "Session_ME",
         "Loi "
     };
+
+    /// <summary>
+    /// Kiểm tra chuỗi có thuộc danh sách log rác chu kỳ cao hay không.
+    /// </summary>
+    public static bool IsSpam(string message)
+    {
+        if (string.IsNullOrEmpty(message))
+        {
+            return true;
+        }
+        for (int i = 0; i < SpamBlacklist.Length; i++)
+        {
+            if (message.IndexOf(SpamBlacklist[i], StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// Kiểm tra chuỗi có thuộc danh sách thông tin nghiệp vụ giá trị hay không.
+    /// </summary>
+    public static bool IsValuable(string message)
+    {
+        if (string.IsNullOrEmpty(message))
+        {
+            return false;
+        }
+        for (int i = 0; i < ValueWhitelist.Length; i++)
+        {
+            if (message.IndexOf(ValueWhitelist[i], StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// Bộ lọc cổng trước (Gatekeeper) kiểm tra trước khi gọi UnityEngine.Debug.Log.
+    /// Ngăn chặn cấp phát GC bộ nhớ và dội bom Console Unity.
+    /// </summary>
+    public static bool ShouldLog(string message, LogType type)
+    {
+        if (CurrentLogLevel == LogLevel.None || string.IsNullOrEmpty(message))
+        {
+            return false;
+        }
+
+        if (type == LogType.Exception || type == LogType.Error || type == LogType.Assert)
+        {
+            return CurrentLogLevel >= LogLevel.Error;
+        }
+
+        if (type == LogType.Warning)
+        {
+            return CurrentLogLevel >= LogLevel.Warning;
+        }
+
+        // Với Log thông thường (LogType.Log)
+        if (IsSpam(message))
+        {
+            return false; // Chặn triệt để log rác
+        }
+
+        if (IsValuable(message))
+        {
+            return CurrentLogLevel >= LogLevel.Info;
+        }
+
+        // Log debug vết thông thường: chỉ cho phép khi bật mức Debug hoặc Verbose
+        return CurrentLogLevel >= LogLevel.Debug;
+    }
+
+    public static void LogInfo(string tag, string message)
+    {
+        if (CurrentLogLevel >= LogLevel.Info)
+        {
+            Debug.Log(string.Format("[{0}] {1}", tag, message));
+        }
+    }
+
+    public static void LogWarning(string tag, string message)
+    {
+        if (CurrentLogLevel >= LogLevel.Warning)
+        {
+            Debug.LogWarning(string.Format("[{0}] {1}", tag, message));
+        }
+    }
+
+    public static void LogError(string tag, string message, Exception ex = null)
+    {
+        if (CurrentLogLevel >= LogLevel.Error)
+        {
+            if (ex != null)
+            {
+                Debug.LogError(string.Format("[{0}] {1}\n{2}", tag, message, ex));
+            }
+            else
+            {
+                Debug.LogError(string.Format("[{0}] {1}", tag, message));
+            }
+        }
+    }
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     private static void Initialize()
@@ -121,12 +254,9 @@ public static class UnityLogger
         }
 
         // 2. Kiểm tra bộ lọc loại bỏ spam gói tin & đòn đánh chu kỳ cao
-        for (int i = 0; i < SpamBlacklist.Length; i++)
+        if (IsSpam(logString))
         {
-            if (logString.IndexOf(SpamBlacklist[i], StringComparison.OrdinalIgnoreCase) >= 0)
-            {
-                return; // Loại bỏ ngay lập tức
-            }
+            return;
         }
 
         // 3. Xử lý đặc thù cho log âm thanh: chỉ ghi khi thất bại
@@ -139,15 +269,7 @@ public static class UnityLogger
         }
 
         // 4. Kiểm tra các nhóm thông tin có giá trị (Whitelist)
-        bool isValuable = false;
-        for (int i = 0; i < ValueWhitelist.Length; i++)
-        {
-            if (logString.IndexOf(ValueWhitelist[i], StringComparison.OrdinalIgnoreCase) >= 0)
-            {
-                isValuable = true;
-                break;
-            }
-        }
+        bool isValuable = IsValuable(logString);
 
         if (isValuable || type == LogType.Warning)
         {

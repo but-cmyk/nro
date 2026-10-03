@@ -100,7 +100,6 @@ public class DeathOrAliveArena {
                 if (boss.isDie()) {
                     round++;
                     timeTotal += (180 - time);
-                    traThuongHatMit(true);
                     boss.leaveMap();
                     toTheNextRound();
                 }
@@ -195,8 +194,12 @@ public class DeathOrAliveArena {
         if (player.timePKVDST == 0 || player.timePKVDST > timeTotal) {
             player.timePKVDST = timeTotal;
         }
+        player.arenaWins++;
+        database.daos.PlayerDAO.updatePlayer(player);
+        Service.gI().sendThongBao(player, "Chúc mừng bạn đã xuất sắc vượt qua 5 Boss và giành chiến thắng trận thứ " + player.arenaWins + " tại Võ Đài Sinh Tử!");
+        traThuongHatMit(true);
         endChallenge();
-        npc.npcChat(player, "Đây là phần thưởng cho con.");
+        npc.npcChat(player, "Chúc mừng con đã vô địch Võ Đài Sinh Tử! Hãy gặp ta để nhận phần thưởng xứng đáng.");
         reward();
     }
 
@@ -216,6 +219,29 @@ public class DeathOrAliveArena {
 
     private void traThuongHatMit(boolean playerWin) {
         try {
+            if (cuocBaHatMit == 0 || cuocPlayer == 0) {
+                // Không có đối ứng -> Hoàn trả lại 100% tiền cược cho khán giả, bảo vệ vốn
+                for (Player pl : binhChon) {
+                    try {
+                        if (pl == null) continue;
+                        int tongPhieu = pl.binhChonPlayer + pl.binhChonHatMit;
+                        if (tongPhieu > 0 && pl.zoneBinhChon != null && pl.zoneBinhChon.equals(zone)) {
+                            long vangHoan = (long) tongPhieu * 1_000_000L;
+                            pl.inventory.gold = Math.min(pl.inventory.gold + vangHoan, 2_000_000_000L);
+                            pl.binhChonPlayer = 0;
+                            pl.binhChonHatMit = 0;
+                            Service.gI().sendMoney(pl);
+                            Service.gI().sendThongBao(pl, "Võ đài không có người cược đối ứng, bạn được hoàn lại 100% tiền cược: " + Util.powerToString(vangHoan) + " vàng!");
+                        }
+                    } catch (Exception e) {
+                    }
+                }
+                cuocBaHatMit = 0;
+                cuocPlayer = 0;
+                binhChon.clear();
+                return;
+            }
+
             long tongCuoc = (long) (cuocBaHatMit + cuocPlayer) * 900_000L;
             if ((cuocBaHatMit > 0 && !playerWin) || (cuocPlayer > 0 && playerWin)) {
                 if (playerWin) {
@@ -262,6 +288,10 @@ public class DeathOrAliveArena {
         if (!endChallenge) {
             endChallenge = true;
             if (player != null) {
+                if (player.pvp != null) {
+                    player.pvp.dispose();
+                    player.pvp = null;
+                }
                 Service.gI().sendPlayerVS(player, null, (byte) 0);
                 if (player.zone != null) {
                     PlayerService.gI().hoiSinh(player);
@@ -275,8 +305,8 @@ public class DeathOrAliveArena {
             if (boss != null) {
                 boss.leaveMap();
             }
-            zone = null;
             DeathOrAliveArenaManager.gI().remove(this);
+            zone = null;
         }
     }
 

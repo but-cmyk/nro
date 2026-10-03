@@ -252,6 +252,7 @@ public class ConstNpc {
     public static final int MENU_OPTION_USE_ITEM726 = 726;
     public static final int MENU_SIEU_THAN_THUY = 2006;
     public static final int MENU_XUONG_TANG_DUOI = 2007;
+    public static final int MENU_MUA_BINH_NUOC_VDST = 2008;
 
     //index menu rong thieng
     public static final int SHENRON_CONFIRM = 501;
@@ -448,7 +449,7 @@ public class ConstNpc {
     public static final int MENU_OPTION_USE_ITEM1468= 1468;
     public static final int MENU_OPTION_USE_ITEM1469 = 1469;
     public static final int CONFIRM_BUY_INSPECT_ITEM = 5000;
-    
+    public static final int MENU_PORATA = 5001;
 
     public static String TextNpc(Player pl, byte type) {
         StringBuilder text = new StringBuilder();

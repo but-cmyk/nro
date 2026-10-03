@@ -5,6 +5,7 @@ import consts.ConstMob;
 import consts.ConstNpc;
 import consts.ConstPlayer;
 import models.player.Player;
+import models.player.Pet;
 import consts.ConstTask;
 import models.boss.Boss;
 import consts.BossID;
@@ -736,8 +737,16 @@ public class TaskService {
         doneTask(player, ConstTask.TASK_16_0);
     }
 
-    //kiểm tra hoàn thành nhiệm vụ khi tiêu diệt được boss
+    public Player getMasterIfPet(Player player) {
+        if (player != null && player.isPet && player instanceof Pet && ((Pet) player).master != null) {
+            return ((Pet) player).master;
+        }
+        return player;
+    }
+
+    //kiểm tra hoàn thành nhiệm vụ khi tiêu diệt được boss (hỗ trợ cả khi đệ tử tiêu diệt Boss)
     public void checkDoneTaskKillBoss(Player player, Boss boss) {
+        player = getMasterIfPet(player);
         if (player != null && !player.isBoss && !player.isPet) {
             switch ((int) boss.id) {
                 case BossID.KUKU:
@@ -841,9 +850,10 @@ public class TaskService {
         }
     }
 
-    //kiểm tra hoàn thành nhiệm vụ khi giết được quái
+    //kiểm tra hoàn thành nhiệm vụ khi giết được quái (hỗ trợ cả khi đệ tử tiêu diệt Quái)
     public void checkDoneTaskKillMob(Player player, Mob mob) {
-        if (!player.isBoss && !player.isPet) {
+        player = getMasterIfPet(player);
+        if (player != null && !player.isBoss && !player.isPet) {
             switch (mob.tempId) {
                 case ConstMob.MOC_NHAN:
                     doneTask(player, ConstTask.TASK_1_0);
@@ -937,9 +947,10 @@ public class TaskService {
         }
     }
 
-    //xong nhiệm vụ nào đó
+    //xong nhiệm vụ nào đó (hỗ trợ cả khi gọi với đối tượng đệ tử)
     public boolean doneTask(Player player, int idTaskCustom) {
-        if (TaskService.gI().isCurrentTask(player, idTaskCustom)) {
+        player = getMasterIfPet(player);
+        if (player != null && TaskService.gI().isCurrentTask(player, idTaskCustom)) {
             if (this.addDoneSubTask(player)) {
                 switch (idTaskCustom) {
                     case ConstTask.TASK_0_2:
@@ -1322,12 +1333,14 @@ public class TaskService {
         return text;
     }
 
-    private boolean isCurrentTask(Player player, int idTaskCustom) {
+    public boolean isCurrentTask(Player player, int idTaskCustom) {
+        player = getMasterIfPet(player);
         return (player != null && player.playerTask != null && player.playerTask.taskMain != null && idTaskCustom == (player.playerTask.taskMain.id << 10) + player.playerTask.taskMain.index << 1);
     }
 
     public int getIdTask(Player player) {
-        if (player.isPet || player.isBoss || player.playerTask == null || player.playerTask.taskMain == null) {
+        player = getMasterIfPet(player);
+        if (player == null || player.isPet || player.isBoss || player.playerTask == null || player.playerTask.taskMain == null) {
             return -1;
         }
         return (player.playerTask.taskMain.id << 10) + player.playerTask.taskMain.index << 1;
@@ -1552,8 +1565,8 @@ public class TaskService {
     public void paySideTask(Player player) {
         if (player.playerTask.sideTask.template != null) {
             if (player.playerTask.sideTask.isDone()) {
-                if (InventoryService.gI().getCountEmptyBag(player) < 3) {
-                    Service.gI().sendThongBao(player, "Hành trang cần tối thiểu 3 ô trống để nhận thưởng!");
+                if (InventoryService.gI().getCountEmptyBag(player) < 5) {
+                    Service.gI().sendThongBao(player, "Hành trang cần tối thiểu 5 ô trống để nhận thưởng!");
                     return;
                 }
 
@@ -1561,58 +1574,40 @@ public class TaskService {
                 long tnsmReward = 0;
                 int goldReward = 0;
                 int gemReward = 0;
-                int thoiVangQty = 0;
-                Item luckyReward = null;
 
                 switch (level) {
                     case ConstTask.EASY:
                         tnsmReward = Util.nextInt(100_000, 300_000);
                         goldReward = 50_000;
                         gemReward = 2;
-                        if (Util.isTrue(1, 10)) { // 10% Capsule 1 lần
-                            luckyReward = ItemService.gI().createNewItem((short) 193, 1);
-                        }
                         break;
                     case ConstTask.NORMAL:
                         tnsmReward = Util.nextInt(1_000_000, 3_000_000);
                         goldReward = 200_000;
                         gemReward = 5;
-                        if (Util.isTrue(2, 10)) { // 20% Đá nâng cấp cấp 1 (Lục bảo, Saphia)
-                            luckyReward = ItemService.gI().createNewItem((short) Util.nextInt(220, 221), 1);
-                        }
                         break;
                     case ConstTask.HARD:
                         tnsmReward = Util.nextInt(5_000_000, 15_000_000);
                         goldReward = 1_000_000;
                         gemReward = 10;
-                        thoiVangQty = 1;
-                        if (Util.isTrue(3, 10)) { // 30% Đá Ruby, Titan, Thạch anh tím (222-224)
-                            luckyReward = ItemService.gI().createNewItem((short) Util.nextInt(222, 224), 1);
-                        }
                         break;
                     case ConstTask.VERY_HARD:
                         tnsmReward = Util.nextInt(25_000_000, 60_000_000);
-                        goldReward = 3_000_000;
+                        goldReward = 2_000_000;
                         gemReward = 20;
-                        thoiVangQty = 2;
                         if (player.playerTask.taskdh.TaskBoMong < 10) {
                             player.playerTask.taskdh.TaskBoMong++;
                             player.playerTask.taskdh.ResetTime = System.currentTimeMillis();
-                        }
-                        if (Util.isTrue(5, 10)) { // 50% Ngọc rồng 4-7 sao
-                            luckyReward = ItemService.gI().createNewItem((short) Util.nextInt(17, 20), 1);
                         }
                         break;
                     case ConstTask.HELL:
                         tnsmReward = Util.nextInt(100_000_000, 250_000_000);
-                        goldReward = 10_000_000;
-                        gemReward = 50;
-                        thoiVangQty = 5;
+                        goldReward = 3_000_000;
+                        gemReward = 30;
                         if (player.playerTask.taskdh.TaskBoMong < 10) {
                             player.playerTask.taskdh.TaskBoMong++;
                             player.playerTask.taskdh.ResetTime = System.currentTimeMillis();
                         }
-                        luckyReward = ItemService.gI().createNewItem((short) Util.nextInt(222, 224), Util.nextInt(1, 3));
                         break;
                 }
 
@@ -1637,15 +1632,10 @@ public class TaskService {
                     player.inventory.addGem(gemReward);
                 }
 
-                // Trao Thỏi Vàng
-                if (thoiVangQty > 0) {
-                    Item thoiVang = ItemService.gI().createNewItem((short) ConstItem.THOI_VANG, thoiVangQty);
-                    InventoryService.gI().addItemBag(player, thoiVang);
-                }
-
-                // Trao Quà may mắn
-                if (luckyReward != null) {
-                    InventoryService.gI().addItemBag(player, luckyReward);
+                // Trao 100% x5 tất cả các loại đá nâng cấp (Cấp 1 - 5, ID 220 -> 224)
+                for (short stoneId = 220; stoneId <= 224; stoneId++) {
+                    Item stone = ItemService.gI().createNewItem(stoneId, 5);
+                    InventoryService.gI().addItemBag(player, stone);
                 }
 
                 // Trao Vé quay Thượng Đế (Cày Free)
@@ -1695,16 +1685,11 @@ public class TaskService {
                 sb.append("- ").append(Util.powerToString(tnsmReward)).append(" Tiềm năng & Sức mạnh\n");
                 sb.append("- ").append(Util.powerToString(goldReward)).append(" Vàng\n");
                 sb.append("- ").append(gemReward).append(" Ngọc Xanh\n");
+                sb.append("- x5 Tất cả các loại đá nâng cấp (Cấp 1 - 5)\n");
                 sb.append("- ").append(vegSideQty).append(" Cà chua & ").append(vegSideQty).append(" Cà rốt\n");
                 sb.append("- ").append(charmName);
-                if (thoiVangQty > 0) {
-                    sb.append("\n- ").append(thoiVangQty).append(" Thỏi Vàng");
-                }
                 if (veQuayQty > 0) {
                     sb.append("\n- ").append(veQuayQty).append(" Vé quay Thượng Đế");
-                }
-                if (luckyReward != null) {
-                    sb.append("\n- ").append(luckyReward.template.name);
                 }
                 Service.gI().sendThongBaoOK(player, sb.toString());
 
@@ -1715,9 +1700,10 @@ public class TaskService {
         }
     }
 
-    // OPTIMIZATION: Thay thế 100 dòng if-else bằng Map lookup
+    // OPTIMIZATION: Thay thế 100 dòng if-else bằng Map lookup (hỗ trợ cả đệ tử tiêu diệt quái)
     public void checkDoneSideTaskKillMob(Player player, Mob mob) {
-        if (player.playerTask != null && player.playerTask.sideTask.template != null) {
+        player = getMasterIfPet(player);
+        if (player != null && !player.isBoss && !player.isPet && player.playerTask != null && player.playerTask.sideTask != null && player.playerTask.sideTask.template != null) {
             int currentTaskId = player.playerTask.sideTask.template.id;
             // Lấy danh sách quái cần giết cho task hiện tại
             List<Integer> requiredMobs = SIDE_TASK_MOB_MAP.get(currentTaskId);
@@ -1861,9 +1847,10 @@ public class TaskService {
         }
     }
 
-    // OPTIMIZATION: Tương tự như Side Task, dùng Map lookup
+    // OPTIMIZATION: Tương tự như Side Task, dùng Map lookup (hỗ trợ cả đệ tử tiêu diệt quái)
     public void checkDoneClanTaskKillMob(Player player, Mob mob) {
-        if (player.playerTask != null && player.playerTask.clanTask.template != null) {
+        player = getMasterIfPet(player);
+        if (player != null && !player.isBoss && !player.isPet && player.playerTask != null && player.playerTask.clanTask != null && player.playerTask.clanTask.template != null) {
             int currentTaskId = player.playerTask.clanTask.template.id;
             List<Integer> requiredMobs = CLAN_TASK_MOB_MAP.get(currentTaskId);
 

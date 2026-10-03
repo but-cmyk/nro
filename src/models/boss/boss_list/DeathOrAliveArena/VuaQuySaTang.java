@@ -24,9 +24,18 @@ public class VuaQuySaTang extends DeathOrAliveArena {
 
     @Override
     public void bayLungTung() {
-        if (Util.canDoWithTime(lastTimeBay, 1000)) {
-            goToXY(playerAtt.location.x + (Util.getOne(-1, 1) * Util.nextInt(20, 80)), Util.nextInt(10) % 2 == 0 ? playerAtt.location.y : playerAtt.location.y - Util.nextInt(0, 200), false);
+        if (Util.canDoWithTime(lastTimeBay, 3500)) {
+            super.bayLungTung();
             lastTimeBay = System.currentTimeMillis();
+            if (Util.isTrue(50, 100)) {
+                String[] funnyChat = {
+                    "Đố anh bắt được em, lêu lêu đồ chậm chạp!",
+                    "Ta bay như chim phượng hoàng, ngươi với tới sao được!",
+                    "Ở dưới đất ngước nhìn lên có thấy ta ngầu lòi không?",
+                    "Bay nhiều chóng mặt quá, ai cho xin viên thuốc say xe đi!"
+                };
+                this.chat(funnyChat[Util.nextInt(0, funnyChat.length - 1)]);
+            }
         }
     }
 }

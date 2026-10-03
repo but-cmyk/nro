@@ -56,9 +56,8 @@ public class DeathOrAliveArenaService {
 
         player.thoiVangVoDaiSinhTu += 1;
         player.lastTimePKVoDaiSinhTu = System.currentTimeMillis();
-        player.arenaWins++;
 
-        Service.gI().sendThongBao(player, "Bạn đã tham gia Võ Đài Sinh Tử " + player.arenaWins + " lần!");
+        Service.gI().sendThongBao(player, "Đăng ký thành công! Đây là lượt thi đấu thứ " + player.thoiVangVoDaiSinhTu + " hôm nay của bạn.");
 
         if (!zone.equals(player.zone)) {
             ChangeMapService.gI().changeMap(player, zone, player.location.x, 408);

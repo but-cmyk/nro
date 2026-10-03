@@ -144,10 +144,6 @@ namespace Game1
     			empty = second + "s";
     		}
     		mFont.tahoma_7b_white.drawString(g, empty, x, y + 15, 2, mFont.tahoma_7b_dark);
-    		if (isAutoUse(idIcon))
-    		{
-    			mFont.tahoma_7_yellow.drawString(g, "A", x + 10, y - 6, 0);
-    		}
     	}
     
     	public void paintText(mGraphics g, int x, int y)

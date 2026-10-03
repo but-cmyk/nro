@@ -196,6 +196,27 @@ public class NpcFactory {
                 switch (player.idMark.getIndexMenu()) {
                     case ConstNpc.IGNORE_MENU -> {
                     }
+                    case ConstNpc.MENU_PORATA -> {
+                        if (select == 0) {
+                            if (player.pet != null) {
+                                player.pet.unFusion();
+                            }
+                        } else if (select == 1) {
+                            player.isDisplayCaiTrangHapThe = !player.isDisplayCaiTrangHapThe;
+                            Service.gI().Send_Caitrang(player);
+                            if (player.isDisplayCaiTrangHapThe) {
+                                boolean hasCaiTrang = player.inventory != null && player.inventory.itemsBody != null
+                                        && player.inventory.itemsBody.size() > 5 && player.inventory.itemsBody.get(5).isNotNullItem();
+                                if (hasCaiTrang) {
+                                    Service.gI().sendThongBao(player, "Đã bật hiển thị Cải trang khi hợp thể");
+                                } else {
+                                    Service.gI().sendThongBao(player, "Đã bật hiển thị Cải trang (Hãy mặc Cải trang để hiển thị)");
+                                }
+                            } else {
+                                Service.gI().sendThongBao(player, "Đã bật hiển thị hình dạng Hợp thể");
+                            }
+                        }
+                    }
                     case ConstNpc.CONFIRM_CHANGE_PET -> {
                     if (select == 0) {
                         services.func.UseItem.gI().changePet(player, null);

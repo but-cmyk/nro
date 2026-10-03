@@ -749,4 +749,20 @@ public class DatabaseTemplateLoader {
         Logger.log(Logger.GREEN, String.format(">> [DATABASE] Load thanh cong: %d Maps, %d Mobs, %d NPCs, %d Items, %d Clans trong %d ms!\n",
                 mapCount, Manager.MOB_TEMPLATES.size(), Manager.NPC_TEMPLATES.size(), Manager.ITEM_TEMPLATES.size(), Manager.CLANS.size(), (System.currentTimeMillis() - st)));
     }
+
+    public static void reloadAchievementTemplate() {
+        try (java.sql.Connection con = AlyraManager.getConnection();
+             java.sql.PreparedStatement ps = con.prepareStatement("select * from achievement_template ORDER BY id ASC");
+             java.sql.ResultSet rs = ps.executeQuery()) {
+            java.util.List<AchievementTemplate> list = new java.util.ArrayList<>();
+            while (rs.next()) {
+                list.add(new AchievementTemplate(rs.getString("info1"), rs.getString("info2"), rs.getInt("money"), rs.getLong("max_count")));
+            }
+            Manager.ACHIEVEMENT_TEMPLATE.clear();
+            Manager.ACHIEVEMENT_TEMPLATE.addAll(list);
+            Manager.logLoaded("Successfully reloaded achievement (" + Manager.ACHIEVEMENT_TEMPLATE.size() + ")\n");
+        } catch (Exception e) {
+            Logger.logException(DatabaseTemplateLoader.class, e);
+        }
+    }
 }

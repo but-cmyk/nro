@@ -1,7 +1,7 @@
 package managers.tournament;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import models.map.Zone;
 import models.tournament.DeathOrAliveArena;
 import server.Maintenance;
@@ -11,7 +11,7 @@ public class DeathOrAliveArenaManager implements Runnable {
 
     private static DeathOrAliveArenaManager instance;
     private volatile long lastUpdate;
-    private static final List<DeathOrAliveArena> list = new ArrayList<>();
+    private static final List<DeathOrAliveArena> list = new CopyOnWriteArrayList<>();
 
     public static DeathOrAliveArenaManager gI() {
         if (instance == null) {
@@ -38,25 +38,36 @@ public class DeathOrAliveArenaManager implements Runnable {
     public void update() {
         if (Util.canDoWithTime(lastUpdate, 1000)) {
             lastUpdate = System.currentTimeMillis();
-            for (int i = list.size() - 1; i >= 0; i--) {
-                if (i < list.size()) {
-                    list.get(i).update();
+            for (DeathOrAliveArena vdst : list) {
+                if (vdst != null) {
+                    try {
+                        vdst.update();
+                    } catch (Exception e) {
+                        utils.Logger.logException(DeathOrAliveArenaManager.class, e, "Lỗi update VDST");
+                    }
                 }
             }
         }
     }
 
     public void add(DeathOrAliveArena vdst) {
-        list.add(vdst);
+        if (vdst != null && !list.contains(vdst)) {
+            list.add(vdst);
+        }
     }
 
     public void remove(DeathOrAliveArena vdst) {
-        list.remove(vdst);
+        if (vdst != null) {
+            list.remove(vdst);
+        }
     }
 
-    public DeathOrAliveArena getVDST( Zone zone) {
+    public DeathOrAliveArena getVDST(Zone zone) {
+        if (zone == null) {
+            return null;
+        }
         for (DeathOrAliveArena vdst : list) {
-            if (vdst.getZone().equals(zone)) {
+            if (vdst != null && vdst.getZone() != null && vdst.getZone().equals(zone)) {
                 return vdst;
             }
         }

@@ -404,7 +404,8 @@ public ItemMap getItemMapByTempId(int tempId) {
                 return;
             }
             int playerId = Math.abs(itemMap.playerId > 100_000_000 ? 1_000_000_000 - (int) itemMap.playerId : (int) itemMap.playerId);
-            if (playerId != player.id && itemMap.playerId != player.id && itemMap.playerId != -1) {
+            boolean isMyPetItem = (player.pet != null && (itemMap.playerId == player.pet.id || itemMap.playerId == -player.id));
+            if (playerId != player.id && itemMap.playerId != player.id && itemMap.playerId != -1 && !isMyPetItem) {
                 Service.gI().sendThongBao(player, "Không thể nhặt vật phẩm của người khác");
                 return;
             }
@@ -503,6 +504,9 @@ public ItemMap getItemMapByTempId(int tempId) {
             TaskService.gI().checkDoneTaskPickItem(player, itemMap);
             TaskService.gI().checkDoneSideTaskPickItem(player, itemMap);
             TaskService.gI().checkDoneClanTaskPickItem(player, itemMap);
+            if (item.template != null && (item.template.type == 10 || item.template.type == 34 || item.template.id == 77 || item.template.id == 861)) {
+                services.AchievementService.gI().checkDoneTaskPickGem(player, item.quantity);
+            }
 
             if (!isFoodOrKid) {
                 itemMap.dispose();

@@ -25,6 +25,9 @@ public abstract class DeathOrAliveArena extends Boss {
 
     protected Player playerAtt;
     protected long timeJoinMap;
+    protected long lastTimeAttack = 0;
+    protected long lastTimeMove = 0;
+    protected long delayNextMove = 3500;
 
     public DeathOrAliveArena(BossType ducvupro, int id, BossData data) throws Exception {
         super(ducvupro, id, data);
@@ -45,7 +48,13 @@ public abstract class DeathOrAliveArena extends Boss {
     }
 
     public void bayLungTung() {
-
+        if (Util.canDoWithTime(lastTimeMove, delayNextMove)) {
+            lastTimeMove = System.currentTimeMillis();
+            delayNextMove = Util.nextInt(3500, 5000);
+            int nextX = Util.nextInt(350, 590);
+            int nextY = Util.nextInt(220, 336);
+            goToXY(nextX, nextY, false);
+        }
     }
 
     @Override
@@ -56,12 +65,16 @@ public abstract class DeathOrAliveArena extends Boss {
     }
 
     protected void goToXY(int x, int y, boolean isTeleport) {
+        int safeX = Math.max(340, Math.min(600, x));
+        int safeY = Math.max(220, Math.min(336, y));
         if (!isTeleport) {
-            byte dir = (byte) (this.location.x - x < 0 ? 1 : -1);
-            byte move = (byte) Util.nextInt(50, 100);
-            PlayerService.gI().playerMove(this, this.location.x + (dir == 1 ? move : -move), y);
+            byte dir = (byte) (this.location.x - safeX < 0 ? 1 : -1);
+            byte move = (byte) Util.nextInt(40, 80);
+            int newX = this.location.x + (dir == 1 ? move : -move);
+            newX = Math.max(340, Math.min(600, newX));
+            PlayerService.gI().playerMove(this, newX, safeY);
         } else {
-            ChangeMapService.gI().changeMapYardrat(this, this.zone, x, y);
+            ChangeMapService.gI().changeMapYardrat(this, this.zone, safeX, safeY);
         }
     }
 
@@ -75,15 +88,44 @@ public abstract class DeathOrAliveArena extends Boss {
                 hutMau();
                 tanHinh();
                 bayLungTung();
-                this.playerSkill.skillSelect = this.playerSkill.skills.get(Util.nextInt(0, this.playerSkill.skills.size() - 1));
-                if (Util.getDistance(this, playerAtt) <= this.getRangeCanAttackWithSkillSelect()) {
-                    if (Util.isTrue(15, ConstRatio.PER100) && SkillUtil.isUseSkillChuong(this)) {
-                        goToXY(playerAtt.location.x + (Util.getOne(-1, 1) * Util.nextInt(20, 80)), Util.nextInt(10) % 2 == 0 ? playerAtt.location.y : playerAtt.location.y - Util.nextInt(0, 50), false);
+
+                // Tần suất: 3s đấm hoặc chưởng 1 lần
+                if (!Util.canDoWithTime(lastTimeAttack, 3000)) {
+                    return;
+                }
+
+                // Chọn chiêu: Ưu tiên chọn giữa Đấm và Chưởng
+                java.util.List<models.skill.Skill> attackSkills = new java.util.ArrayList<>();
+                if (this.playerSkill.skills != null) {
+                    for (models.skill.Skill s : this.playerSkill.skills) {
+                        if (s.template.id != models.skill.Skill.TAI_TAO_NANG_LUONG) {
+                            attackSkills.add(s);
+                        }
                     }
+                }
+
+                if (!attackSkills.isEmpty()) {
+                    this.playerSkill.skillSelect = attackSkills.get(Util.nextInt(0, attackSkills.size() - 1));
+                } else if (!this.playerSkill.skills.isEmpty()) {
+                    this.playerSkill.skillSelect = this.playerSkill.skills.get(Util.nextInt(0, this.playerSkill.skills.size() - 1));
+                }
+
+                boolean isChuong = SkillUtil.isUseSkillChuong(this);
+                if (isChuong) {
+                    // Chưởng từ xa trong phạm vi võ đài
                     SkillService.gI().useSkill(this, playerAtt, null, -1, null);
                     checkPlayerDie(playerAtt);
+                    lastTimeAttack = System.currentTimeMillis();
                 } else {
-                    goToPlayer(playerAtt, false);
+                    // Đấm: Áp sát player nếu còn xa
+                    int distance = Util.getDistance(this, playerAtt);
+                    if (distance <= 80) {
+                        SkillService.gI().useSkill(this, playerAtt, null, -1, null);
+                        checkPlayerDie(playerAtt);
+                        lastTimeAttack = System.currentTimeMillis();
+                    } else {
+                        goToPlayer(playerAtt, false);
+                    }
                 }
             } else {
                 this.leaveMap();
@@ -149,7 +191,13 @@ public abstract class DeathOrAliveArena extends Boss {
     public synchronized int injured(Player plAtt, long damage, boolean piercing, boolean isMobAttack) {
         if (!this.isDie()) {
             if (!piercing && Util.isTrue(100, 1000)) {
-                this.chat("Xí hụt");
+                String[] missChat = {
+                    "Xí hụt rồi nha cưng!",
+                    "Lêu lêu, đánh vào không khí à!",
+                    "Nhanh như chớp, đố trúng được ta!",
+                    "Trượt rồi bé ơi, ngắm kỹ lại đi nào!"
+                };
+                this.chat(missChat[Util.nextInt(0, missChat.length - 1)]);
                 return 0;
             }
 
@@ -173,6 +221,13 @@ public abstract class DeathOrAliveArena extends Boss {
             this.nPoint.subHP(damage);
 
             if (isDie()) {
+                String[] dieChat = {
+                    "Ui da đau quá, ta xin hàng!",
+                    "Bà Hạt Mít ơi cứu con, đối thủ bạo lực quá!",
+                    "Gãy hết xương cốt rồi, ta rút lui đây!",
+                    "Chờ đấy, ta đi méch mẹ ta!"
+                };
+                this.chat(dieChat[Util.nextInt(0, dieChat.length - 1)]);
                 this.setDie(plAtt);
                 die(plAtt);
             }

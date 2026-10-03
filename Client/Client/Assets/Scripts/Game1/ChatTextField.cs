@@ -333,7 +333,6 @@ namespace Game1
     		switch (idAction)
     		{
     		case 8000:
-    			Cout.LogError("perform chat 8000");
     			if (parentScreen != null)
     			{
     				long num = mSystem.currentTimeMillis();
@@ -348,7 +347,6 @@ namespace Game1
     			}
     			break;
     		case 8001:
-    			Cout.LogError("perform chat 8001");
     			if (tfChat.getText().Equals(string.Empty))
     			{
     				isShow = false;

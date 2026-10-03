@@ -144,12 +144,12 @@ namespace Game1.God
                 PlayerInfo.getInstance().canLogin = item.isEnabled;
             }));
 
-            // 14. Tốc độ Game (0.85x -> 10x)
+            // 14. Tốc độ Game (0.8x -> 10x)
             items.Add(new AutoSettingItem("speed", "Tốc Độ Game", 1, false, 1, 1, 10, 1, (item) =>
             {
                 if (item.value <= 1)
                 {
-                    Main.gameSpeed = 0.85f;
+                    Main.gameSpeed = 0.8f;
                 }
                 else
                 {
@@ -227,7 +227,7 @@ namespace Game1.God
             }
             if (it.key.Equals("speed"))
             {
-                return (it.value <= 1) ? "0.85x" : (it.value + "x");
+                return (it.value <= 1) ? "0.8x" : (it.value + "x");
             }
             if (it.maxVal <= 10)
             {

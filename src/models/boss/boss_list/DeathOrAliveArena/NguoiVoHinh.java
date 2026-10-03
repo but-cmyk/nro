@@ -29,6 +29,12 @@ public class NguoiVoHinh extends DeathOrAliveArena {
     public void tanHinh() {
         if (Util.canDoWithTime(lastTimeTanHinh, 15000)) {
             lastTimeTanHinh = System.currentTimeMillis();
+            String[] funnyChatTanHinh = {
+                "Ú òa! Ta biến mất nè, đố bắt được ta đó!",
+                "Tàng hình đỉnh cao, đứng ngay cạnh mà không thấy lêu lêu!",
+                "Đoán xem ta đang trốn ở đâu nào!"
+            };
+            this.chat(funnyChatTanHinh[Util.nextInt(0, funnyChatTanHinh.length - 1)]);
         }
 
         if (!Util.canDoWithTime(this.lastTimeTanHinh, 5000)) {
@@ -39,6 +45,12 @@ public class NguoiVoHinh extends DeathOrAliveArena {
             if (!goToPlayer) {
                 goToPlayer = true;
                 goToPlayer(playerAtt, false);
+                String[] funnyChatXuatHien = {
+                    "Bắt quả tang đang ngơ ngác tìm ta nhé!",
+                    "Ta ở ngay sau lưng ngươi nè!",
+                    "Đố ngươi biết tay ta đang chọc vào đâu đấy!"
+                };
+                this.chat(funnyChatXuatHien[Util.nextInt(0, funnyChatXuatHien.length - 1)]);
             }
         }
 

@@ -159,7 +159,6 @@ namespace Game1
     			int num2 = readKey(dis.ReadSByte()) + 128;
     			int num3 = readKey(dis.ReadSByte()) + 128;
     			int num4 = (num3 * 256 + num2) * 256 + num;
-    			Cout.LogError("SIZE = " + num4);
     			sbyte[] array = new sbyte[num4];
     			byte[] src = dis.ReadBytes(num4);
                 array = ArrayCast.cast(src);

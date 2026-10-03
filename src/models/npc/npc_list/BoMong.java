@@ -30,7 +30,7 @@ public class BoMong extends Npc {
                 if (this.mapId == 47 || this.mapId == 84) {
                     this.createOtherMenu(player, ConstNpc.BASE_MENU,
                             "Ngươi muốn vip, có nhiều cách, nạp thẻ là nhanh nhất, còn không thì chịu khó cày hãy nghe lời thầy dạy cần cù bù siêng năng.",
-                            "Nhiệm vụ\nhàng ngày", "Nhiệm vụ\nthành tích", "Nhập\nGiftcode", "Quên Mã\nBảo Vệ", "Đổi Mật\nKhẩu", "Từ chối");
+                            "Nhiệm vụ\nhàng ngày", "Nhiệm vụ\ntích lũy", "Nhập\nGiftcode", "Quên Mã\nBảo Vệ", "Đổi Mật\nKhẩu", "Từ chối");
                 }
             }
         }

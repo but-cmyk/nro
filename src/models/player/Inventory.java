@@ -65,6 +65,13 @@ public class Inventory {
         this.ruby -= num;
     }
 
+    public void addRuby(int num) {
+        if (num <= 0) {
+            return;
+        }
+        this.ruby = (int) Math.min((long) this.ruby + num, 2_000_000_000L);
+    }
+
     public void subGem(int num) {
         this.gem -= num;
     }
@@ -74,6 +81,26 @@ public class Inventory {
             return;
         }
         this.gem = (int) Math.min((long) this.gem + num, 2_000_000_000L);
+    }
+
+    /**
+     * Trừ ngọc thông minh: Ưu tiên trừ hồng ngọc trước, thiếu thì bù bằng ngọc xanh.
+     * @param amount Số lượng ngọc cần trừ
+     * @return true nếu trừ thành công, false nếu tổng ngọc không đủ
+     */
+    public boolean subGemAndRuby(long amount) {
+        if (amount <= 0) {
+            return true;
+        }
+        long total = (long) this.ruby + (long) this.gem;
+        if (total < amount) {
+            return false;
+        }
+        long deductRuby = Math.min((long) this.ruby, amount);
+        long deductGem = amount - deductRuby;
+        this.ruby -= (int) deductRuby;
+        this.gem -= (int) deductGem;
+        return true;
     }
 
     public void subGold(long num) {

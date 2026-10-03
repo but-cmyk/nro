@@ -605,6 +605,10 @@ public class InventoryService {
         if (player == null || player.inventory == null || index < 0 || index >= player.inventory.itemsBody.size()) {
             return;
         }
+        if (player.isTrade || services.func.TransactionService.gI().check(player)) {
+            Service.gI().sendThongBao(player, "Không thể thao tác rương khi đang giao dịch!");
+            return;
+        }
         Item item = player.inventory.itemsBody.get(index);
         if (item.isNotNullItem()) {
             player.inventory.itemsBody.set(index, putItemBox(player, item));

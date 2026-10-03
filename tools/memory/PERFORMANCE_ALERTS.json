@@ -1,18 +1,18 @@
 {
   "version": "1.0.0",
-  "updated_at": "2026-10-02 11:26:44.170",
+  "updated_at": "2026-10-03 13:39:07.994",
   "alerts": [
     {
       "cmd": -29,
       "command_name": "CMD_-29",
-      "max_latency_ms": 747,
-      "avg_latency_ms": 376,
-      "call_count": 2,
-      "slow_count": 1,
+      "max_latency_ms": 491,
+      "avg_latency_ms": 196,
+      "call_count": 7,
+      "slow_count": 3,
       "severity": "CRITICAL",
       "status": "OPEN",
       "slowest_context": "Non-login session",
-      "detected_at": "2026-10-02 11:26:44.169"
+      "detected_at": "2026-10-03 13:39:07.994"
     }
   ]
 }

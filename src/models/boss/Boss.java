@@ -857,7 +857,10 @@ public class Boss extends Player implements IBoss {
         if (plKill != null) {
             reward(plKill);
             dropVeQuayLuckyRound(plKill);
-            ServerNotify.gI().notify(plKill.name + ": Đã tiêu diệt được " + this.name + " mọi người đều ngưỡng mộ.");
+            String killerName = (plKill.isPet && plKill instanceof Pet && ((Pet) plKill).master != null)
+                    ? "Đệ tử của " + ((Pet) plKill).master.name
+                    : plKill.name;
+            ServerNotify.gI().notify(killerName + ": Đã tiêu diệt được " + this.name + " mọi người đều ngưỡng mộ.");
         }
         this.changeStatus(BossStatus.DIE);
     }
@@ -866,10 +869,13 @@ public class Boss extends Player implements IBoss {
         if (plKill != null && this.zone != null && !MapService.gI().isMapOffline(this.zone.map.mapId)) {
             // 40% rơi 1-2 Vé quay Thượng Đế (ID 821) khi hạ gục Boss thế giới
             if (Util.isTrue(40, 100)) {
+                long plId = (plKill.isPet && plKill instanceof Pet && ((Pet) plKill).master != null)
+                        ? ((Pet) plKill).master.id
+                        : plKill.id;
                 ItemMap it = new ItemMap(this.zone, consts.ConstItem.VE_QUAY_NGOC_VANG, Util.nextInt(1, 2),
                         this.location.x,
                         this.zone.map.yPhysicInTop(this.location.x, this.location.y - 24),
-                        plKill.id);
+                        plId);
                 Service.gI().dropItemMap(this.zone, it);
             }
         }

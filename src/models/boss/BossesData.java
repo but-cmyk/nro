@@ -1939,11 +1939,15 @@ public class BossesData {
             new int[]{1000000000}, //hp
             new int[]{112}, //map join
             new int[][]{
+                {Skill.DRAGON, 7, 1000},
+                {Skill.KAMEJOKO, 7, 1000},
                 {Skill.TAI_TAO_NANG_LUONG, 1, 60000},},
             new String[]{}, //text chat 1
-            new String[]{"|-1|He he he",
-                "|-1|Ta sẽ xé xác ngươi ra thành trăm mảnh",
-                "|-1|Xem các ngươi mạnh đến đâu"}, //text chat 2
+            new String[]{
+                "|-1|Máu của ngươi có ngọt như trà sữa trân châu không?",
+                "|-1|Đừng đánh vào mặt, ta vừa mới bọc răng nanh đó!",
+                "|-1|Người này ăn nhiều tỏi quá, hút xong rát hết cả lưỡi!",
+                "|-1|Nhìn ta đẹp trai lãng tử thế này mà nỡ ra tay à!"}, //text chat 2
             new String[]{}, //text chat 3
             REST_1_S
     );
@@ -1956,11 +1960,15 @@ public class BossesData {
             new int[]{1000000000}, //hp
             new int[]{112}, //map join
             new int[][]{
+                {Skill.DEMON, 7, 1000},
+                {Skill.MASENKO, 7, 1000},
                 {Skill.TAI_TAO_NANG_LUONG, 1, 60000},},
             new String[]{}, //text chat 1
-            new String[]{"|-1|He he he",
-                "|-1|Ta sẽ xé xác ngươi ra thành trăm mảnh",
-                "|-1|Xem các ngươi mạnh đến đâu"}, //text chat 2
+            new String[]{
+                "|-1|Ú òa! Ta ở đây nè, đố bắt được ta đó!",
+                "|-1|Bắt quả tang đang ngơ ngác tìm ta nhé!",
+                "|-1|Tàng hình đỉnh cao, đứng ngay cạnh mà không thấy lêu lêu!",
+                "|-1|Đố ngươi biết tay ta đang chọc vào đâu đấy!"}, //text chat 2
             new String[]{}, //text chat 3
             REST_1_S
     );
@@ -1973,11 +1981,15 @@ public class BossesData {
             new int[]{1000000000}, //hp
             new int[]{112}, //map join
             new int[][]{
+                {Skill.GALICK, 7, 1000},
+                {Skill.ANTOMIC, 7, 1000},
                 {Skill.TAI_TAO_NANG_LUONG, 1, 60000},},
             new String[]{}, //text chat 1
-            new String[]{"|-1|He he he",
-                "|-1|Ta sẽ xé xác ngươi ra thành trăm mảnh",
-                "|-1|Xem các ngươi mạnh đến đâu"}, //text chat 2
+            new String[]{
+                "|-1|Đứng im cho ta băng bó vết thương tâm hồn nào bạn hiền!",
+                "|-1|Ối ối, rách mất lớp vải xịn ta săn sale hôm qua rồi!",
+                "|-1|Quấn vải mấy ngàn năm chưa giặt, ngửi tí là xỉu liền!",
+                "|-1|Cứu ta với, cuộn băng dính bị tuột hết rồi!"}, //text chat 2
             new String[]{}, //text chat 3
             REST_1_S
     );
@@ -1990,11 +2002,15 @@ public class BossesData {
             new int[]{1000000000}, //hp
             new int[]{112}, //map join
             new int[][]{
+                {Skill.DRAGON, 7, 1000},
+                {Skill.KAMEJOKO, 7, 1000},
                 {Skill.TAI_TAO_NANG_LUONG, 1, 60000},},
             new String[]{}, //text chat 1
-            new String[]{"|-1|He he he",
-                "|-1|Ta sẽ xé xác ngươi ra thành trăm mảnh",
-                "|-1|Xem các ngươi mạnh đến đâu"}, //text chat 2
+            new String[]{
+                "|-1|Đố anh bắt được em, lêu lêu đồ chậm chạp!",
+                "|-1|Ta bay như chim phượng hoàng, ngươi với tới sao được!",
+                "|-1|Ở dưới đất ngước nhìn lên có thấy ta ngầu lòi không?",
+                "|-1|Bay nhiều chóng mặt quá, ai cho xin viên thuốc say xe đi!"}, //text chat 2
             new String[]{}, //text chat 3
             REST_1_S
     );
@@ -2007,11 +2023,15 @@ public class BossesData {
             new int[]{1000000000}, //hp
             new int[]{112}, //map join
             new int[][]{
+                {Skill.DEMON, 7, 1000},
+                {Skill.MASENKO, 7, 1000},
                 {Skill.TAI_TAO_NANG_LUONG, 1, 60000},},
             new String[]{}, //text chat 1
-            new String[]{"|-1|He he he",
-                "|-1|Ta sẽ xé xác ngươi ra thành trăm mảnh",
-                "|-1|Xem các ngươi mạnh đến đâu"}, //text chat 2
+            new String[]{
+                "|-1|Cà rốt thần chưởng! Ăn một củ là sáng mắt ra liền!",
+                "|-1|Thỏ ngọc cute phô mai que thế này mà cũng nỡ đánh à!",
+                "|-1|Một củ cà rốt, hai củ cà rốt... ai mua cà rốt không?",
+                "|-1|Đánh đau thế, ta về mách Bà Hạt Mít phạt ngươi bây giờ!"}, //text chat 2
             new String[]{}, //text chat 3
             REST_1_S
     );

@@ -172,7 +172,7 @@ namespace Game1
     
     	public static void outz(string s)
     	{
-    		if (mSystem.isTest)
+    		if (mSystem.isTest && !string.IsNullOrEmpty(s) && UnityLogger.ShouldLog(s, LogType.Log))
     		{
     			Debug.Log(s);
     		}
@@ -180,15 +180,41 @@ namespace Game1
     
     	public static void outz(string s, int logIndex)
     	{
-    		if (mSystem.isTest)
+    		if (mSystem.isTest && !string.IsNullOrEmpty(s))
     		{
-    			Debug.Log(LOG_CAT[logIndex] + s);
+    			string full = ((logIndex >= 0 && logIndex < LOG_CAT.Length) ? LOG_CAT[logIndex] : string.Empty) + s;
+    			if (UnityLogger.ShouldLog(full, LogType.Log))
+    			{
+    				Debug.Log(full);
+    			}
     		}
     	}
     
     	public static void err(string s)
     	{
-    		Debug.Log(s);
+    		if (string.IsNullOrEmpty(s))
+    		{
+    			return;
+    		}
+    		// Chỉ xuất icon lỗi đỏ (Debug.LogError) khi thực sự có dấu hiệu lỗi/ngoại lệ để tránh cảnh báo giả làm đỏ Console
+    		if (s.IndexOf("error", System.StringComparison.OrdinalIgnoreCase) >= 0 ||
+    		    s.IndexOf("loi", System.StringComparison.OrdinalIgnoreCase) >= 0 ||
+    		    s.IndexOf("fail", System.StringComparison.OrdinalIgnoreCase) >= 0 ||
+    		    s.IndexOf("exception", System.StringComparison.OrdinalIgnoreCase) >= 0 ||
+    		    s.IndexOf("cannot", System.StringComparison.OrdinalIgnoreCase) >= 0 ||
+    		    s.IndexOf("err:", System.StringComparison.OrdinalIgnoreCase) >= 0 ||
+    		    s.IndexOf("err ", System.StringComparison.OrdinalIgnoreCase) >= 0 ||
+    		    s.StartsWith("err", System.StringComparison.OrdinalIgnoreCase))
+    		{
+    			if (UnityLogger.ShouldLog(s, LogType.Error))
+    			{
+    				Debug.LogError(s);
+    			}
+    		}
+    		else
+    		{
+    			outz(s);
+    		}
     	}
     
     	public static void outz2(string s)

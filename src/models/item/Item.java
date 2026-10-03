@@ -254,7 +254,7 @@ public class Item {
     public boolean isHaveOption(int id) {
         for (int i = 0; i < this.itemOptions.size(); i++) {
             ItemOption itemOption = this.itemOptions.get(i);
-            if (itemOption != null && itemOption.optionTemplate.id == id) {
+            if (itemOption != null && itemOption.optionTemplate != null && itemOption.optionTemplate.id == id) {
                 return true;
             }
         }

@@ -33,7 +33,7 @@ public class ShopService {
 
     private static final byte COST_GOLD = 0;
     public static final byte COST_GEM = 1;
-    private static final byte COST_RUBY = 3;
+    public static final byte COST_RUBY = 3;
     private static final byte COST_COUPON = 4;
 
     private static final byte NORMAL_SHOP = 0;
@@ -737,76 +737,76 @@ public class ShopService {
 
     private boolean subMoneyByItemShop(Player player, ItemShop is) {
         long gold = 0;
-        long gem = 0;
-        long ruby = 0;
         long coupon = 0;
+        boolean isGemOrRuby = false;
+        long gemRubyCost = 0;
+
         switch (is.typeSell) {
             case COST_GOLD ->
                 gold = is.cost;
-            case COST_GEM ->
-                gem = is.cost;
-            case COST_RUBY ->
-                ruby = is.cost;
+            case COST_GEM, COST_RUBY -> {
+                isGemOrRuby = true;
+                gemRubyCost = is.cost;
+            }
             case COST_COUPON ->
                 coupon = is.cost;
-
         }
+
         if (player.inventory.gold < gold) {
             Service.gI().sendThongBao(player, "Bạn không có đủ vàng");
-            return false;
-        } else if (player.inventory.gem < gem) {
-            Service.gI().sendThongBao(player, "Bạn không có đủ ngọc");
-            return false;
-        } else if (player.inventory.ruby < ruby) {
-            Service.gI().sendThongBao(player, "Bạn không có đủ hồng ngọc");
             return false;
         } else if (player.inventory.coupon < coupon) {
             Service.gI().sendThongBao(player, "Bạn không có đủ điểm");
             return false;
+        } else if (isGemOrRuby) {
+            if (!player.inventory.subGemAndRuby(gemRubyCost)) {
+                Service.gI().sendThongBao(player, "Bạn không đủ ngọc/hồng ngọc (cần " + Util.powerToString(gemRubyCost) + ")");
+                return false;
+            }
         }
+
         player.inventory.gold -= gold;
-        player.inventory.gem -= (int) gem;
-        player.inventory.ruby -= (int) ruby;
         player.inventory.coupon -= (int) coupon;
+        Service.gI().sendMoney(player);
         return true;
     }
 
     private boolean subMoneyByItemShopV2(Player player, ItemShop is) {
         long gold = 0;
-        long gem = 0;
-        long ruby = 0;
         long coupon = 0;
+        boolean isGemOrRuby = false;
+        long gemRubyCost = 0;
+
         switch (is.typeSell) {
             case COST_GOLD ->
                 gold = is.cost;
-            case COST_GEM ->
-                gem = is.cost;
-            case COST_RUBY ->
-                ruby = is.cost;
+            case COST_GEM, COST_RUBY -> {
+                isGemOrRuby = true;
+                gemRubyCost = is.cost;
+            }
             case COST_COUPON ->
                 coupon = is.cost;
-
         }
+
         if (player.inventory.gold < gold) {
             Service.gI().sendThongBaoOK(player,
                     "Bạn không đủ vàng, còn thiếu " + Util.powerToString(player.inventory.gold - gold));
-            return false;
-        } else if (player.inventory.gem < gem) {
-            Service.gI().sendThongBaoOK(player,
-                    "Bạn không đủ ngọc, còn thiếu " + Util.powerToString(player.inventory.gem - gem));
-            return false;
-        } else if (player.inventory.ruby < ruby) {
-            Service.gI().sendThongBaoOK(player,
-                    "Bạn không đủ hồng ngọc, còn thiếu " + Util.powerToString(player.inventory.ruby - ruby));
             return false;
         } else if (player.inventory.coupon < coupon) {
             Service.gI().sendThongBaoOK(player,
                     "Bạn không đủ điểm, còn thiếu " + Util.powerToString(player.inventory.coupon - coupon));
             return false;
+        } else if (isGemOrRuby) {
+            long totalGemRuby = (long) player.inventory.ruby + (long) player.inventory.gem;
+            if (totalGemRuby < gemRubyCost) {
+                Service.gI().sendThongBaoOK(player,
+                        "Bạn không đủ ngọc/hồng ngọc, còn thiếu " + Util.powerToString(gemRubyCost - totalGemRuby));
+                return false;
+            }
+            player.inventory.subGemAndRuby(gemRubyCost);
         }
+
         player.inventory.gold -= gold;
-        player.inventory.gem -= (int) gem;
-        player.inventory.ruby -= (int) ruby;
         player.inventory.coupon -= (int) coupon;
         Service.gI().sendMoney(player);
         return true;
@@ -1109,26 +1109,18 @@ public class ShopService {
                 Service.gI().sendThongBao(pl, "Bạn không thể bán vật phẩm có hạn sử dụng");
                 return;
             }
-            int quantity = item.quantity;
-            int cost = item.template.gold;
-            if (item.template.id == 457) {
-                quantity = 1;
-            } else {
-                cost /= 4;
-            }
-            if (cost == 0) {
-                cost = 1;
-            }
-            cost *= quantity;
+            int quantity = (item.template.id == 457) ? 1 : item.quantity;
+            long unitCost = (item.template.id == 457) ? item.template.gold : Math.max(1, item.template.gold / 4);
+            long totalCost = unitCost * (long) quantity;
 
-            if (pl.inventory.gold + cost > pl.inventory.getGoldLimit()) {
+            if (pl.inventory.gold + totalCost > pl.inventory.getGoldLimit()) {
                 Service.gI().sendThongBao(pl, "Vàng sau khi bán vượt quá giới hạn");
                 return;
             }
-            pl.inventory.addGold(cost);
+            pl.inventory.addGold(totalCost);
             Service.gI().sendMoney(pl);
             Service.gI().sendThongBao(pl, "Đã bán " + item.template.name
-                    + " thu được " + Util.powerToString(cost) + " vàng");
+                    + " thu được " + Util.powerToString(totalCost) + " vàng");
 
             // Add vật phẩm đã bán
             if (item.template.id != 457) {
@@ -1228,10 +1220,10 @@ public class ShopService {
             return;
         }
         Item item = items.get(index);
-        int giamualaingoc = item.template.gem / 2;
-        int giamualaivang = giamualaingoc == 0
-                ? item.template.gold / 2 > 0 ? item.template.gold / 2 : item.quantity * 100
-                : 0;
+        long giamualaingoc = (long) item.quantity * (item.template.gem / 2);
+        long unitGold = (item.template.gold / 2 > 0) ? (item.template.gold / 2) : 100;
+        long giamualaivang = (giamualaingoc == 0) ? ((long) item.quantity * unitGold) : 0;
+
         if (giamualaivang > 0 && player.inventory.gold < giamualaivang) {
             Service.gI().sendThongBao(player, "Bạn không có đủ vàng!");
             return;
@@ -1240,8 +1232,12 @@ public class ShopService {
             Service.gI().sendThongBao(player, "Bạn không có đủ ngọc xanh!");
             return;
         }
-        player.inventory.gem -= giamualaingoc;
-        player.inventory.gold -= giamualaivang;
+        if (giamualaingoc > 0) {
+            player.inventory.subGem((int) giamualaingoc);
+        }
+        if (giamualaivang > 0) {
+            player.inventory.subGold(giamualaivang);
+        }
         Service.gI().sendMoney(player);
         if (item.isNotNullItem()) {
             if (InventoryService.gI().getCountEmptyBag(player) != 0) {
@@ -1253,7 +1249,14 @@ public class ShopService {
                 InventoryService.gI().sendItemBags(player);
                 items.remove(index);
             } else {
-                Service.gI().sendThongBao(player, "Hành trang đã đầy");
+                if (giamualaingoc > 0) {
+                    player.inventory.addGem((int) giamualaingoc);
+                }
+                if (giamualaivang > 0) {
+                    player.inventory.addGold(giamualaivang);
+                }
+                Service.gI().sendMoney(player);
+                Service.gI().sendThongBao(player, "Hành trang đã đầy, giao dịch đã được hoàn lại");
             }
         } else {
             Service.gI().sendThongBao(player, "Không thể thực hiện");

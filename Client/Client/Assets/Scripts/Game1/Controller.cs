@@ -1695,7 +1695,7 @@ namespace Game1
                                 {
                                     ClanImage clanImage3 = new ClanImage();
                                     clanImage3.ID = msg.reader().readUnsignedByte();
-                                    clanImage3.name = msg.reader().readUTF();
+                                    clanImage3.name = TabClanIcon.CleanClanIconName(msg.reader().readUTF());
                                     clanImage3.xu = msg.reader().readInt();
                                     clanImage3.luong = msg.reader().readInt();
                                     if (!ClanImage.isExistClanImage(clanImage3.ID))
@@ -3410,7 +3410,6 @@ namespace Game1
                                 }
                                 else if (text5.Length == 1)
                                 {
-                                    Cout.LogError3("strInf.Length =1:  " + text5);
                                 }
                                 else
                                 {
@@ -5733,7 +5732,6 @@ namespace Game1
             {
                 GameCanvas.debug("SA12", 2);
                 sbyte b = msg.reader().readByte();
-                Res.outz("---messageSubCommand : " + b);
                 switch (b)
                 {
                     case 63:
@@ -6113,7 +6111,6 @@ namespace Game1
                             {
                                 GameScr.startFlyText("-" + (cMP - Char.myCharz().cMP) + " " + mResources.KI, Char.myCharz().cx, Char.myCharz().cy - Char.myCharz().ch - 23, 0, -2, mFont.MP);
                             }
-                            Res.outz("curr MP= " + Char.myCharz().cMP);
                             GameScr.gI().dMP = Char.myCharz().cMP;
                             if (GameScr.isPaintInfoMe)
                             {

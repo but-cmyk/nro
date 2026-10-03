@@ -4682,27 +4682,6 @@ namespace Game1
     			return;
     		}
     		mScreen.keyTouch = -1;
-    		if (Char.vItemTime != null && Char.vItemTime.size() > 0 && cmdMenu != null)
-    		{
-    			for (int k = 0; k < Char.vItemTime.size(); k++)
-    			{
-    				int iconX = cmdMenu.x + 32 + k * 24;
-    				int iconY = 55;
-    				if (GameCanvas.isPointerHoldIn(iconX - 4, iconY - 4, 26, 26))
-    				{
-    					if (GameCanvas.isPointerClick && GameCanvas.isPointerJustRelease)
-    					{
-    						ItemTime it = (ItemTime)Char.vItemTime.elementAt(k);
-    						if (it != null)
-    						{
-    							it.showMenuAutoUse();
-    						}
-    						GameCanvas.clearAllPointerEvent();
-    						return;
-    					}
-    				}
-    			}
-    		}
     		if (GameCanvas.isTouchControl)
     		{
     			if (GameCanvas.isPointerHoldIn(0, 0, 60, 50) && GameCanvas.isPointerClick && GameCanvas.isPointerJustRelease)
@@ -7305,53 +7284,44 @@ namespace Game1
     		if (vFlag.size() == 0)
     		{
     			Service.gI().getFlag(2, cflag);
-    			Res.outz("getFlag1");
     			return;
     		}
     		if (charID == Char.myCharz().charID)
     		{
-    			Res.outz("my cflag: isme");
     			if (Char.myCharz().isGetFlagImage(cflag))
     			{
-    				Res.outz("my cflag: true");
     				for (int i = 0; i < vFlag.size(); i++)
     				{
     					PKFlag pKFlag = (PKFlag)vFlag.elementAt(i);
     					if (pKFlag != null && pKFlag.cflag == cflag)
     					{
-    						Res.outz("my cflag: cflag==");
     						Char.myCharz().flagImage = pKFlag.IDimageFlag;
     					}
     				}
     			}
     			else if (!Char.myCharz().isGetFlagImage(cflag))
     			{
-    				Res.outz("my cflag: false");
     				Service.gI().getFlag(2, cflag);
     			}
     			return;
     		}
-    		Res.outz("my cflag: not me");
     		if (findCharInMap(charID) == null)
     		{
     			return;
     		}
     		if (findCharInMap(charID).isGetFlagImage(cflag))
     		{
-    			Res.outz("my cflag: true");
     			for (int j = 0; j < vFlag.size(); j++)
     			{
     				PKFlag pKFlag2 = (PKFlag)vFlag.elementAt(j);
     				if (pKFlag2 != null && pKFlag2.cflag == cflag)
     				{
-    					Res.outz("my cflag: cflag==");
     					findCharInMap(charID).flagImage = pKFlag2.IDimageFlag;
     				}
     			}
     		}
     		else if (!findCharInMap(charID).isGetFlagImage(cflag))
     		{
-    			Res.outz("my cflag: false");
     			Service.gI().getFlag(2, cflag);
     		}
     	}
