@@ -3,6 +3,7 @@ package models.boss.boss_list.Earth;
 import models.boss.Boss;
 import consts.BossID;
 import consts.BossStatus;
+import consts.ConstItem;
 import models.boss.BossesData;
 import models.item.Item;
 import models.map.ItemMap;
@@ -24,7 +25,7 @@ public class BOJACK extends Boss {
         // Tỉ lệ rớt đồ (Code cũ 100/100 thì không cần if, nhưng giữ lại cho chuẩn form)
         if (Util.isTrue(100, 100)) {
 
-            // Rơi rác (Item 77)
+            // Rơi Hồng Ngọc (Item 861)
             int itemCount = 20;
             for (int i = 0; i < itemCount; i++) {
                 int range = (i + 1) * 15; // Giãn cách rộng hơn chút
@@ -32,7 +33,7 @@ public class BOJACK extends Boss {
                 if (xDrop < 50) xDrop = 50;
                 if (xDrop > this.zone.map.mapWidth - 50) xDrop = this.zone.map.mapWidth - 50;
 
-                Service.gI().dropItemMap(this.zone, new ItemMap(this.zone, 77, 1,
+                Service.gI().dropItemMap(this.zone, new ItemMap(this.zone, ConstItem.HONG_NGOC, 1,
                         xDrop, this.zone.map.yPhysicInTop(xDrop, this.location.y - 24), pl.id));
             }
 

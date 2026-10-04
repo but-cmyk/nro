@@ -165,8 +165,7 @@ public abstract class Npc implements IAtionNpc {
                     || player.zone.map.mapId == 23) {
                 return true;
             } else {
-                Service.gI().hideWaitDialog(player);
-                Service.gI().sendThongBao(player, "Không thể thực hiện");
+                Service.gI().sendThongBaoResetWait(player, "Bạn chỉ có thể chăm sóc và thu hoạch Cây Đậu khi đang ở Nhà!");
                 return false;
             }
         }
@@ -177,8 +176,7 @@ public abstract class Npc implements IAtionNpc {
         } else if (this.tempId == ConstNpc.LY_TIEU_NUONG) {
             return true;
         } else {
-            Service.gI().hideWaitDialog(player);
-            Service.gI().sendThongBao(player, "Không thể thực hiện khi đứng quá xa");
+            Service.gI().sendThongBaoResetWait(player, "Khoảng cách quá xa! Hãy tiến lại gần NPC hơn để trò chuyện.");
             return false;
         }
     }

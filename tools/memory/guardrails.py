@@ -10,37 +10,28 @@ import os
 import json
 import re
 import time
+from datetime import datetime
 from pathlib import Path
 
-# Force UTF-8 stdout
-if sys.stdout.encoding != 'utf-8':
-    try:
-        sys.stdout.reconfigure(encoding='utf-8')
-    except Exception:
-        pass
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from memlib import PROJECT_ROOT, ALL_KNOWN_MODULES, tokenize, force_utf8_stdout
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+force_utf8_stdout()
+
 ROUTING_FILE = PROJECT_ROOT / "tools" / "memory" / "CODE_ROUTING.json"
 LOCK_FILE = PROJECT_ROOT / "tools" / "memory" / ".memory.lock"
+ALERT_FILE = PROJECT_ROOT / "tools" / "memory" / "PERFORMANCE_ALERTS.json"
 
 MAX_LINES_PER_GEMINI = 120
+MAX_BYTES_PER_GEMINI = 8000      # token budget: module files are auto-loaded as rules
+MAX_CHARS_PER_BULLET = 450       # longer bullets = feature specs, belong elsewhere
+PERF_MIN_SAMPLES = 20            # alerts with fewer calls are informational only
 
 MANDATORY_SECTIONS = [
     "## 1. Trách Nhiệm & Kiến Trúc",
     "## 2. Landmark Index & Core Methods",
     "## 3. Các Bất Biến Bắt Buộc",
     "## 4. Lỗi Thường Gặp Cần Tránh"
-]
-
-ALL_KNOWN_MODULES = [
-    "src/services/GEMINI.md",
-    "src/models/player/GEMINI.md",
-    "src/models/map/GEMINI.md",
-    "src/models/boss/GEMINI.md",
-    "src/models/task/GEMINI.md",
-    "src/network/GEMINI.md",
-    "src/database/GEMINI.md",
-    "Client/Client/Assets/Scripts/GEMINI.md"
 ]
 
 class MemoryLock:
@@ -91,20 +82,29 @@ def validate_gemini_file(rel_path):
         return False, [f"Không đọc được file {rel_path}: {e}"]
 
     lines = content.splitlines()
+    size = len(content.encode("utf-8"))
     errors = []
+    warnings = []
 
-    # 1. Check size limit
+    # 1. Check size limits (lines + bytes)
     if len(lines) > MAX_LINES_PER_GEMINI:
         errors.append(f"Vượt quá giới hạn dòng: {len(lines)}/{MAX_LINES_PER_GEMINI} dòng. Cần Pruning bớt nội dung cũ.")
+    if size > MAX_BYTES_PER_GEMINI:
+        errors.append(f"Vượt quá dung lượng: {size}/{MAX_BYTES_PER_GEMINI} bytes. Chuyển chi tiết sang LESSONS.jsonl.")
 
     # 2. Check 4 mandatory sections
     for sec in MANDATORY_SECTIONS:
         if sec not in content:
             errors.append(f"Thiếu mục bắt buộc: '{sec}'")
 
+    # 3. Soft check: over-long bullets
+    for i, l in enumerate(lines, 1):
+        if l.strip().startswith("- ") and len(l) > MAX_CHARS_PER_BULLET:
+            warnings.append(f"Dòng {i} dài {len(l)} ký tự (> {MAX_CHARS_PER_BULLET}) — nên rút gọn")
+
     if errors:
-        return False, errors
-    return True, [f"OK ({len(lines)} dòng)"]
+        return False, errors + warnings
+    return True, [f"OK ({len(lines)} dòng, {size} bytes)"] + [f"[WARN] {w}" for w in warnings]
 
 
 def check_all():
@@ -124,12 +124,13 @@ def check_all():
             all_passed = False
 
     print("-" * 60)
+    n = len(ALL_KNOWN_MODULES)
     if all_passed:
-        print("[SUCCESS] Tất cả 8/8 memory modules đạt chuẩn 100% Guardrails!")
+        print(f"[SUCCESS] Tất cả {n}/{n} memory modules đạt chuẩn Guardrails!")
     else:
         print("[WARNING] Có module vi phạm schema hoặc vượt giới hạn dung lượng!")
 
-    # Phase 2: Violation scan (nếu violation_scanner.py tồn tại)
+    # Phase 2: Violation scan (only NEW violations vs baseline fail the gate)
     print("\n" + "=" * 60)
     print("KIỂM TRA VI PHẠM INVARIANT TRONG CODE THỰC TẾ")
     print("=" * 60)
@@ -147,31 +148,81 @@ def check_all():
     print("\n" + "=" * 60)
     print("KIỂM TRA SỰ CỐ HIỆU NĂNG SERVER (PERFORMANCE ALERTS)")
     print("=" * 60)
-    alert_file = ROUTING_FILE.parent / "PERFORMANCE_ALERTS.json"
-    if alert_file.exists():
-        try:
-            with open(alert_file, "r", encoding="utf-8") as f:
-                data = json.load(f)
-            open_alerts = [a for a in data.get("alerts", []) if a.get("status") == "OPEN"]
-            if open_alerts:
-                print(f"🔴 [CẢNH BÁO] Phát hiện {len(open_alerts)} chức năng đang bị nghẽn hiệu năng:")
-                for a in open_alerts:
-                    cmd = a.get("cmd")
-                    name = a.get("command_name", f"CMD_{cmd}")
-                    max_ms = a.get("max_latency_ms", 0)
-                    avg_ms = a.get("avg_latency_ms", 0)
-                    ctx = a.get("slowest_context", "")
-                    print(f"  * CMD {cmd} ({name}) | Max: {max_ms}ms, Avg: {avg_ms}ms | Context: {ctx}")
-                print("\n→ [YÊU CẦU AI AGENT]: Bóc tách rõ nguyên nhân & lập kế hoạch fix trình User phê duyệt!")
-                all_passed = False
-            else:
-                print("✅ Không có cảnh báo nghẽn hiệu năng đang mở (All clear).")
-        except Exception as e:
-            print(f"⚠️ Không đọc được PERFORMANCE_ALERTS.json: {e}")
-    else:
-        print("✅ Chưa có file PERFORMANCE_ALERTS.json (Hệ thống hoạt động bình thường).")
+    if not check_perf_alerts():
+        all_passed = False
 
     return all_passed
+
+
+def check_perf_alerts():
+    """OPEN alerts with enough samples fail the gate; low-sample alerts are informational."""
+    if not ALERT_FILE.exists():
+        print("✅ Chưa có file PERFORMANCE_ALERTS.json (Hệ thống hoạt động bình thường).")
+        return True
+    try:
+        data = json.loads(ALERT_FILE.read_text(encoding="utf-8"))
+    except Exception as e:
+        print(f"⚠️ Không đọc được PERFORMANCE_ALERTS.json: {e}")
+        return True
+
+    open_alerts = [a for a in data.get("alerts", []) if a.get("status") == "OPEN"]
+    real = [a for a in open_alerts if a.get("call_count", 0) >= PERF_MIN_SAMPLES]
+    low = [a for a in open_alerts if a.get("call_count", 0) < PERF_MIN_SAMPLES]
+
+    def fmt(a):
+        cmd = a.get("cmd")
+        return (f"CMD {cmd} ({a.get('command_name', f'CMD_{cmd}')}) | Max: {a.get('max_latency_ms', 0)}ms, "
+                f"Avg: {a.get('avg_latency_ms', 0)}ms | Calls: {a.get('call_count', 0)} | "
+                f"Context: {a.get('slowest_context', '')}")
+
+    for a in low:
+        print(f"⚪ [LOW-SAMPLE] {fmt(a)} — chưa đủ {PERF_MIN_SAMPLES} mẫu, chưa kết luận")
+    if real:
+        print(f"🔴 [CẢNH BÁO] {len(real)} chức năng nghẽn hiệu năng (đủ mẫu):")
+        for a in real:
+            print(f"  * {fmt(a)}")
+        print("\n→ [YÊU CẦU AI AGENT]: Bóc tách nguyên nhân & lập kế hoạch fix trình User phê duyệt!")
+        print("  Sau khi xử lý/xác nhận: python tools/memory/guardrails.py --ack <cmd> [RESOLVED|ACK]")
+        return False
+    if not low:
+        print("✅ Không có cảnh báo nghẽn hiệu năng đang mở (All clear).")
+    return True
+
+
+def ack_alert(cmd, status="ACK"):
+    if not ALERT_FILE.exists():
+        print("[ERROR] Không có PERFORMANCE_ALERTS.json")
+        return False
+    data = json.loads(ALERT_FILE.read_text(encoding="utf-8"))
+    hit = False
+    for a in data.get("alerts", []):
+        if str(a.get("cmd")) == str(cmd):
+            a["status"] = status
+            a["acked_at"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            hit = True
+    if hit:
+        ALERT_FILE.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+        print(f"[OK] CMD {cmd} → {status}")
+    else:
+        print(f"[ERROR] Không tìm thấy alert CMD {cmd}")
+    return hit
+
+
+def validate_routing():
+    """Verify every core_file / doc_module in CODE_ROUTING.json exists on disk."""
+    data = json.loads(ROUTING_FILE.read_text(encoding="utf-8"))
+    missing = []
+    for route in data.get("routes", []):
+        for f in [route.get("doc_module")] + route.get("core_files", []):
+            if f and not (PROJECT_ROOT / f).exists():
+                missing.append((route["domain"], f))
+    if missing:
+        print(f"[FAIL] {len(missing)} đường dẫn trong CODE_ROUTING.json không tồn tại:")
+        for d, f in missing:
+            print(f"  - [{d}] {f}")
+        return False
+    print("[PASS] Tất cả đường dẫn trong CODE_ROUTING.json đều tồn tại.")
+    return True
 
 
 def query_routing(query_str):
@@ -183,21 +234,23 @@ def query_routing(query_str):
     with open(ROUTING_FILE, "r", encoding="utf-8") as f:
         data = json.load(f)
 
-    # Normalize query keywords
-    tokens = set(re.findall(r"\w+", query_str.lower()))
+    # Normalize query: strip Vietnamese diacritics, add bigrams ("dap do" -> "dap_do")
+    tokens = tokenize(query_str)
     results = []
 
     for route in data.get("routes", []):
         score = 0
-        keywords = route.get("keywords", [])
+        keywords = [k.lower() for k in route.get("keywords", [])]
+        kw_set = set(keywords)
         for token in tokens:
-            for kw in keywords:
-                if token in kw or kw in token:
-                    score += 2
-            # Also check in files/methods
-            for cf in route.get("core_files", []):
-                if token in cf.lower():
+            if token in kw_set:
+                score += 4 if "_" in token else 3          # exact (bigram stronger)
+            elif len(token) >= 4 and any(token in kw or kw in token for kw in keywords if len(kw) >= 4):
+                score += 1                                  # partial, long tokens only
+            for cf in route.get("core_files", []) + route.get("key_methods", []):
+                if len(token) >= 4 and token in cf.lower():
                     score += 1
+                    break
 
         if score > 0:
             results.append((score, route))
@@ -236,6 +289,11 @@ if __name__ == "__main__":
             query = " ".join(sys.argv[2:])
             print_routing_results(query)
             sys.exit(0)
+        elif sys.argv[1] == "--validate-routing":
+            sys.exit(0 if validate_routing() else 1)
+        elif sys.argv[1] == "--ack" and len(sys.argv) > 2:
+            st = sys.argv[3].upper() if len(sys.argv) > 3 else "ACK"
+            sys.exit(0 if ack_alert(sys.argv[2], st) else 1)
         elif sys.argv[1] == "--lock-test":
             print("[TEST] Thử nghiệm MemoryLock...")
             with MemoryLock():

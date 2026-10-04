@@ -98,10 +98,7 @@ public class Trade {
             Service.gI().sendThongBaoFromAdmin(pl, "|7|Không thể thay đổi nội dung sau khi đã khóa hoặc xác nhận giao dịch!");
             return;
         }
-        if (this.player1.getSession() == null || !this.player1.getSession().actived
-                || this.player2.getSession() == null || !this.player2.getSession().actived) {
-            Service.gI().sendThongBaoFromAdmin(pl,
-                    "|7|Bạn chưa mở thành viên hoặc người kia chưa mở");
+        if (this.player1.getSession() == null || this.player2.getSession() == null) {
             removeItemTrade(pl, index);
             return;
         }

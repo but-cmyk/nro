@@ -66,7 +66,11 @@ public class TreasureUnderSeaService {
                     Service.gI().sendThongBao(player, "Không tìm thấy bản đồ kho báu");
                 }
             } else {
-                Service.gI().sendThongBao(player, "Không thể thực hiện");
+                if (player.clan == null) {
+                    Service.gI().sendThongBao(player, "Bạn cần có bang hội để mở Bản đồ kho báu!");
+                } else {
+                    Service.gI().sendThongBao(player, "Bang hội của bạn hiện đang mở Bản đồ kho báu rồi!");
+                }
             }
         }
     }

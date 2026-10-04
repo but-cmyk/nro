@@ -393,7 +393,7 @@ public ItemMap getItemMapByTempId(int tempId) {
         synchronized (this.items) {
             itemMap = getItemMapByItemMapId(itemMapId);
             if (itemMap == null || itemMap.itemTemplate == null) {
-                Service.gI().sendThongBao(player, "Không thể thực hiện");
+                Service.gI().sendThongBao(player, "Vật phẩm không còn tồn tại hoặc đã bị người khác nhặt mất!");
                 return;
             }
             if (!isThuHut && player.location != null && utils.Util.getDistance(player.location.x, player.location.y, itemMap.x, itemMap.y) > 120) {
@@ -544,17 +544,37 @@ public ItemMap getItemMapByTempId(int tempId) {
     }
 
     public Player getRandomPlayerInMap() {
-        List<Player> plNotVoHinh = new ArrayList<Player>();
-        //Lỗi
-        for (Player pl : this.notBosses) {
-            if (pl != null && (pl.effectSkin == null || !pl.effectSkin.isVoHinh) && pl.maBuHold == null && !pl.isMabuHold) {
-                plNotVoHinh.add(pl);
+        int validCount = 0;
+        int size = this.notBosses.size();
+        for (int i = 0; i < size; i++) {
+            if (i < this.notBosses.size()) {
+                Player pl = this.notBosses.get(i);
+                if (isValidRandomTarget(pl)) {
+                    validCount++;
+                }
             }
         }
-        if (!plNotVoHinh.isEmpty()) {
-            return plNotVoHinh.get(Util.nextInt(0, plNotVoHinh.size() - 1));
+        if (validCount == 0) {
+            return null;
+        }
+        int targetIdx = Util.nextInt(0, validCount - 1);
+        int current = 0;
+        for (int i = 0; i < size; i++) {
+            if (i < this.notBosses.size()) {
+                Player pl = this.notBosses.get(i);
+                if (isValidRandomTarget(pl)) {
+                    if (current == targetIdx) {
+                        return pl;
+                    }
+                    current++;
+                }
+            }
         }
         return null;
+    }
+
+    private static boolean isValidRandomTarget(Player pl) {
+        return pl != null && (pl.effectSkin == null || !pl.effectSkin.isVoHinh) && pl.maBuHold == null && !pl.isMabuHold;
     }
 
     public void load_Me_To_Another(Player player) { //load thông tin người chơi cho những người chơi khác

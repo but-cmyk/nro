@@ -78,7 +78,7 @@ public class SkillBookItemHandler implements ItemActionHandler {
                     InventoryService.gI().sendItemBags(pl);
                 }
             } else {
-                Service.gI().sendThongBao(pl, "Không thể thực hiện");
+                Service.gI().sendThongBao(pl, "Bí kíp này không dành cho hành tinh của bạn!");
             }
         } catch (Exception e) {
             Logger.logException(SkillBookItemHandler.class, e);
@@ -87,7 +87,7 @@ public class SkillBookItemHandler implements ItemActionHandler {
 
     private void upSkillPet(Player pl, Item item) {
         if (pl.pet == null) {
-            Service.gI().sendThongBao(pl, "Không thể thực hiện");
+            Service.gI().sendThongBao(pl, "Bạn không có đệ tử để nâng cấp kỹ năng!");
             return;
         }
         try {
@@ -105,10 +105,10 @@ public class SkillBookItemHandler implements ItemActionHandler {
                 InventoryService.gI().sendItemBags(pl);
                 Service.gI().showInfoPet(pl);
             } else {
-                Service.gI().sendThongBao(pl, "Không thể thực hiện");
+                Service.gI().sendThongBao(pl, "Kỹ năng đệ tử đã đạt cấp tối đa hoặc chưa mở khóa!");
             }
         } catch (Exception e) {
-            Service.gI().sendThongBao(pl, "Không thể thực hiện");
+            Service.gI().sendThongBao(pl, "Nâng cấp kỹ năng đệ tử thất bại!");
         }
     }
 }

@@ -30,12 +30,7 @@ public class KyGui extends Npc {
                     NpcService.gI().createTutorial(pl, tempId, avartar,
                             "Cửa hàng chuyên nhận ký gửi mua bán vật phẩm\bChỉ với 5 ngọc\bMột người bán, vạn người mua, mại dô, mại dô");
                 case 1 -> {
-                    if (!pl.getSession().actived) {
-                        Service.gI().sendThongBao(pl, "Vui lòng kích hoạt tài khoản để sử dụng chức năng này");
-                    } else {
-                        ConsignShopService.gI().openShopKyGui(pl);
-
-                    }
+                    ConsignShopService.gI().openShopKyGui(pl);
                 }
             }
         }

@@ -8,6 +8,7 @@ import services.map.ItemMapService;
 import consts.ConstMap;
 import consts.ConstMob;
 import consts.ConstTask;
+import services.map.SmartDropService;
 import event.EventManager;
 import models.item.Item;
 import models.map.ItemMap;
@@ -575,6 +576,28 @@ public class Mob {
         if (this.tempId == 0) {
             return list;
         }
+
+        Player plReward = player.isPet ? ((Pet) player).master : player;
+        if (plReward != null && !plReward.isBot && !plReward.isNewPet && plReward.canReceiveDailyMobRuby()) {
+            list.add(new ItemMap(this.zone, 861, 10, x, yEnd, plReward.id));
+            plReward.lastTimeRewardDailyMobRuby = System.currentTimeMillis();
+            Service.gI().sendThongBao(plReward, "Bạn đã nhận được 10 Hồng ngọc từ quái vật đầu tiên trong ngày!");
+            database.daos.PlayerDAO.updatePlayerAsync(plReward);
+        }
+
+        // ======================== SMART DROP TÂN THỦ ========================
+        if (plReward != null && !plReward.isBoss && !plReward.isBot && !plReward.isNewPet
+                && plReward.nPoint != null && plReward.nPoint.power < SmartDropService.MAX_POWER_APPLY) {
+            ItemMap smartItem = SmartDropService.gI().rollDrop(this, plReward, x, yEnd);
+            if (smartItem != null) {
+                list.add(smartItem);
+                plReward.smartDropCountToday++;
+                plReward.smartDropStreak = 0;
+            } else {
+                plReward.smartDropStreak++;
+            }
+        }
+
         int mapid = player.zone.map.mapId;
         int co4LaRate = player.itemTime.isUseCo4La ? 2 : 1; // x2 khi có cỏ 4 lá, bình thường = 1
 

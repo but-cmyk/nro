@@ -144,6 +144,30 @@ public class Player extends Character {
 
     public boolean danhanthoivang;
     public long lastRewardGoldBarTime;
+    public long lastTimeRewardDailyMobRuby;
+
+    // --- Smart Drop State (Zero-GC Transient & Daily Tracking) ---
+    public int smartDropStreak = 0;
+    public int smartDropCountToday = 0;
+    public long lastTimeSmartDropReset = 0L;
+
+    public void checkResetSmartDropDaily() {
+        if (this.lastTimeSmartDropReset == 0 || utils.Util.isAfterMidnight(this.lastTimeSmartDropReset)) {
+            this.smartDropCountToday = 0;
+            this.smartDropStreak = 0;
+            this.lastTimeSmartDropReset = System.currentTimeMillis();
+        }
+    }
+
+    public boolean canReceiveDailyMobRuby() {
+        if (this.isPet || this.isBot || this.isNewPet) {
+            return false;
+        }
+        if (this.lastTimeRewardDailyMobRuby == 0) {
+            return true;
+        }
+        return utils.Util.isAfterMidnight(this.lastTimeRewardDailyMobRuby);
+    }
 
     public int timesPerDayBDKB = 0;
     public long lastTimeJoinBDKB;
@@ -1095,7 +1119,7 @@ public class Player extends Character {
     }
 
     public boolean isActive() {
-        return (this.isPl() && this.session != null && this.session.actived) || (this.isPet && ((Pet) this).master.session != null && ((Pet) this).master.session.actived);
+        return true;
     }
 
     public void sendNewPet() {

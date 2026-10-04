@@ -25,7 +25,7 @@ public class TraThu extends PVP {
         if (!p1.zone.equals(p2.zone)) {
             int mapId = p2.zone.map.mapId;
             if (MapService.gI().isMapPhoBan(mapId) || ChangeMapService.gI().checkMapCanJoin(p1, p2.zone) == null || ChangeMapService.gI().checkMapCanJoinByYardart(p1, p2.zone) == null) {
-                Service.gI().sendThongBao(p1, "Không thể thực hiện.");
+                Service.gI().sendThongBaoResetWait(p1, "Đối thủ đang ở trong khu vực phó bản hoặc khu vực bạn chưa thể tiến vào!");
                 this.dispose();
                 return;
             }

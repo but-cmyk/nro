@@ -54,10 +54,7 @@ public class TransactionService implements Runnable {
                 Service.gI().sendThongBao(pl, "Chức năng bảo vệ đã được bật. Bạn vui lòng kiểm tra lại");
                 return;
             }
-            if (!pl.getSession().actived) {
-                Service.gI().sendThongBao(pl, "Vui lòng kích hoạt thành viên");
-                return;
-            }
+
             if (action == SEND_INVITE_TRADE) {
                 pl.idMark.setTransactionWP(false);
                 pl.idMark.setTransactionWVP(false);
@@ -109,10 +106,10 @@ public class TransactionService implements Runnable {
                             }
 
                         } else {
-                            Service.gI().sendThongBao(pl, "Không thể thực hiện");
+                            Service.gI().sendThongBaoResetWait(pl, "Đối phương đã hủy lời mời giao dịch hoặc đang bận!");
                         }
                     } else {
-                        Service.gI().sendThongBao(pl, "Người chơi không ở gần hoặc đã rời khu vực");
+                        Service.gI().sendThongBaoResetWait(pl, "Người chơi không ở gần hoặc đã rời khu vực");
                     }
                     break;
                 case ADD_ITEM_TRADE:
@@ -120,7 +117,7 @@ public class TransactionService implements Runnable {
                         byte index = msg.reader().readByte();
                         int quantity = msg.reader().readInt();
                         if (quantity < 0) {
-                            Service.gI().sendThongBao(pl, "Không thể thực hiện");
+                            Service.gI().sendThongBaoResetWait(pl, "Số lượng vật phẩm giao dịch không hợp lệ!");
                             trade.cancelTrade();
                             break;
                         }

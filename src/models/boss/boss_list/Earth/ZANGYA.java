@@ -2,6 +2,7 @@ package models.boss.boss_list.Earth;
 
 import models.boss.Boss;
 import consts.BossID;
+import consts.ConstItem;
 import consts.BossStatus;
 import models.boss.BossesData;
 import models.item.Item;
@@ -29,14 +30,14 @@ public class ZANGYA extends Boss {
 
     @Override
     public void reward(Player pl) {
-        // Drop rác
+        // Drop Hồng Ngọc (Item 861)
         for (int i = 0; i < 20; i++) {
             int range = (i + 1) * 15;
             int xDrop = this.location.x + (i % 2 == 0 ? range : -range);
             if (xDrop < 50) xDrop = 50;
             if (xDrop > this.zone.map.mapWidth - 50) xDrop = this.zone.map.mapWidth - 50;
 
-            Service.gI().dropItemMap(this.zone, new ItemMap(this.zone, 77, 1,
+            Service.gI().dropItemMap(this.zone, new ItemMap(this.zone, ConstItem.HONG_NGOC, 1,
                     xDrop, this.zone.map.yPhysicInTop(xDrop, this.location.y - 24), pl.id));
         }
 

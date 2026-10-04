@@ -15,12 +15,12 @@ Codebase NRO bao gồm hàng trăm nghìn dòng mã Java và C# Unity. **Tuyệt
 ```
 [User Yêu Cầu]
       ↓
-[Bước 1: Fast-Path Routing]
-Tra cứu tools/memory/CODE_ROUTING.json hoặc chạy:
-python tools/memory/guardrails.py --test-routing "<từ khóa>"
+[Bước 1: Fast-Path Routing & Recall]
+1.1 Tra cứu file nguồn: python tools/memory/guardrails.py --test-routing "<từ khóa>"
+1.2 Nhớ lại bài học cũ: python tools/memory/memory.py recall "<mô tả task>" --files "<file dự kiến>"
       ↓
 [Bước 2: Nạp Bất Biến Module]
-Đọc file GEMINI.md tương ứng (src/services/, src/models/player/, Client/,...)
+Đọc file GEMINI.md tương ứng (src/services/, src/models/player/, src/models/tournament/, Client/,...)
 Nắm vững các Bất Biến Bắt Buộc và Landmark Index
       ↓
 [Bước 3: Targeted Edit & Verification]
@@ -28,9 +28,10 @@ Chỉ mở đúng class và method then chốt (dưới 100 dòng).
 Biên dịch & kiểm thử (build.bat / test scripts / rà soát asset đĩa).
 Tự vấn Checklist lỗi nghiêm ngặt trước khi báo cáo hoàn thành!
       ↓
-[Bước 4: Dreaming & Memory Consolidation]
-Đúc kết bài học sau phiên:
-python tools/memory/dreaming_engine.py --dry-run
+[Bước 4: Feedback & Memory Capture]
+- Nếu áp dụng thành công bài học cũ: python tools/memory/memory.py feedback <L_ID> +1
+- Nếu có bài học/lỗi mới đáng giá: python tools/memory/memory.py capture --files "..." --tags "..." --symptom "..." --cause "..." --rule "..."
+- Xem tổng hợp phiên: python tools/memory/memory.py digest
 ```
 
 ---
@@ -39,14 +40,17 @@ python tools/memory/dreaming_engine.py --dry-run
 
 Trước khi chạm vào bất kỳ file nguồn nào, hãy nạp bất biến từ module tương ứng:
 
-1. **Vật phẩm, Đập đồ Bà Hạt Mít, Dupe đồ**: [src/services/GEMINI.md](file:///d:/SRC_NRO_219/SRC_NRO_219/SRC_NRO_189/SRC_NRO_OK/SRC_NRO_OK/DEMO_NETBEAN_tsSv2_new/src/services/GEMINI.md)
+1. **Vật phẩm, Đập đồ Bà Hạt Mít, Dupe đồ, NPC**: [src/services/GEMINI.md](file:///d:/SRC_NRO_219/SRC_NRO_219/SRC_NRO_189/SRC_NRO_OK/SRC_NRO_OK/DEMO_NETBEAN_tsSv2_new/src/services/GEMINI.md)
 2. **Người chơi, Chỉ số HP/KI/Dame, Tràn số, Đệ tử**: [src/models/player/GEMINI.md](file:///d:/SRC_NRO_219/SRC_NRO_219/SRC_NRO_189/SRC_NRO_OK/SRC_NRO_OK/DEMO_NETBEAN_tsSv2_new/src/models/player/GEMINI.md)
 3. **Bản đồ, Quái vật, Zone Realtime Loop**: [src/models/map/GEMINI.md](file:///d:/SRC_NRO_219/SRC_NRO_219/SRC_NRO_189/SRC_NRO_OK/SRC_NRO_OK/DEMO_NETBEAN_tsSv2_new/src/models/map/GEMINI.md)
 4. **Hệ thống Boss, Trùm Fide/Broly, Sự kiện**: [src/models/boss/GEMINI.md](file:///d:/SRC_NRO_219/SRC_NRO_219/SRC_NRO_189/SRC_NRO_OK/SRC_NRO_OK/DEMO_NETBEAN_tsSv2_new/src/models/boss/GEMINI.md)
-5. **Nhiệm vụ, Danh hiệu, Tiến trình**: [src/models/task/GEMINI.md](file:///d:/SRC_NRO_219/SRC_NRO_219/SRC_NRO_189/SRC_NRO_OK/SRC_NRO_OK/DEMO_NETBEAN_tsSv2_new/src/models/task/GEMINI.md)
-6. **Mạng Netty, Gói tin nhị phân, Stream**: [src/network/GEMINI.md](file:///d:/SRC_NRO_219/SRC_NRO_219/SRC_NRO_189/SRC_NRO_OK/SRC_NRO_OK/DEMO_NETBEAN_tsSv2_new/src/network/GEMINI.md)
-7. **Database MySQL, HikariCP, DAO**: [src/database/GEMINI.md](file:///d:/SRC_NRO_219/SRC_NRO_219/SRC_NRO_189/SRC_NRO_OK/SRC_NRO_OK/DEMO_NETBEAN_tsSv2_new/src/database/GEMINI.md)
-8. **Client Unity C#, Single-Client, Giao diện**: [Client/Client/Assets/Scripts/GEMINI.md](file:///d:/SRC_NRO_219/SRC_NRO_219/SRC_NRO_189/SRC_NRO_OK/SRC_NRO_OK/DEMO_NETBEAN_tsSv2_new/Client/Client/Assets/Scripts/GEMINI.md)
+5. **Võ Đài Whis, Giải Đấu Liên Vũ Trụ, Sinh Tử, Bot**: [src/models/tournament/GEMINI.md](file:///d:/SRC_NRO_219/SRC_NRO_219/SRC_NRO_189/SRC_NRO_OK/SRC_NRO_OK/DEMO_NETBEAN_tsSv2_new/src/models/tournament/GEMINI.md)
+6. **Nhiệm vụ, Danh hiệu, Tiến trình**: [src/models/task/GEMINI.md](file:///d:/SRC_NRO_219/SRC_NRO_219/SRC_NRO_189/SRC_NRO_OK/SRC_NRO_OK/DEMO_NETBEAN_tsSv2_new/src/models/task/GEMINI.md)
+7. **Mạng Netty, Gói tin nhị phân, Stream**: [src/network/GEMINI.md](file:///d:/SRC_NRO_219/SRC_NRO_219/SRC_NRO_189/SRC_NRO_OK/SRC_NRO_OK/DEMO_NETBEAN_tsSv2_new/src/network/GEMINI.md)
+8. **Database MySQL, HikariCP, DAO**: [src/database/GEMINI.md](file:///d:/SRC_NRO_219/SRC_NRO_219/SRC_NRO_189/SRC_NRO_OK/SRC_NRO_OK/DEMO_NETBEAN_tsSv2_new/src/database/GEMINI.md)
+9. **Client Unity C#, Single-Client, Giao diện**: [Client/Client/Assets/Scripts/GEMINI.md](file:///d:/SRC_NRO_219/SRC_NRO_219/SRC_NRO_189/SRC_NRO_OK/SRC_NRO_OK/DEMO_NETBEAN_tsSv2_new/Client/Client/Assets/Scripts/GEMINI.md)
+
+*Ghi chú*: Thư mục `src/models/` có file điều hướng con [src/models/GEMINI.md](file:///d:/SRC_NRO_219/SRC_NRO_219/SRC_NRO_189/SRC_NRO_OK/SRC_NRO_OK/DEMO_NETBEAN_tsSv2_new/src/models/GEMINI.md) tự động chỉ đường tới module đúng khi sửa các class không có module riêng.
 
 ---
 
@@ -70,18 +74,10 @@ Trước khi chạm vào bất kỳ file nguồn nào, hãy nạp bất biến t
 
 ---
 
-## 4. Vận Hành Dreaming Consolidation (Sau Mỗi Task)
+## 4. Quản Trị Trí Nhớ & Học Tăng Cường (Memory System)
 
-Khi hoàn tất sửa đổi code và kiểm thử thành công:
-1. Chạy lệnh:
-   ```bash
-   python tools/memory/dreaming_engine.py
-   ```
-2. Nếu phát hiện một kinh nghiệm hoặc quy tắc mới cần lưu lại ngay, dùng cú pháp:
-   ```bash
-   python tools/memory/dreaming_engine.py --learn "Mô tả quy tắc/bài học mới" --module "src/services/GEMINI.md" --apply
-   ```
-3. Luôn đảm bảo kiểm tra guardrails trước khi commit:
-   ```bash
-   python tools/memory/guardrails.py --check-all
-   ```
+Hệ thống trí nhớ được quản lý qua skill `.agents/skills/nro-memory/SKILL.md` và các công cụ:
+- **`tools/memory/memory.py`**: Lưu trữ và truy xuất bài học có cấu trúc (`LESSONS.jsonl`), chấm điểm feedback +1/-1, thăng hạng (promote) bài học lên module `GEMINI.md`.
+- **`tools/memory/dreaming_engine.py`**: Tổng hợp phiên làm việc (`digest`), bổ sung quy tắc mới trực tiếp (`--learn`).
+- **`tools/memory/guardrails.py`**: Kiểm tra toàn vẹn schema, dung lượng token, kiểm tra routing và quét vi phạm code (`--check-all`).
+

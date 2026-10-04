@@ -460,13 +460,18 @@ public class MapService {
     }
 
     private void addListMapCapsule(Player pl, List<Zone> list, Zone zone) {
+        if (zone == null || pl == null || pl.zone == null || pl.zone.map == null) {
+            return;
+        }
         for (Zone z : list) {
-            if (z != null && zone != null && z.map.mapId == zone.map.mapId) {
+            if (z != null && z.map.mapId == zone.map.mapId) {
                 return;
             }
         }
-        if (zone != null && pl.zone.map.mapId != zone.map.mapId) {
-            list.add(zone);
+        if (pl.zone.map.mapId != zone.map.mapId) {
+            if (ChangeMapService.gI().checkMapCanJoin(pl, zone) != null) {
+                list.add(zone);
+            }
         }
     }
 

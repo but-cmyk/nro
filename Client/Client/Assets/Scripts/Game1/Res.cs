@@ -477,5 +477,42 @@ namespace Game1
     		}
     		return number + string.Empty;
     	}
+
+    	public static string formatNumberWithCommas(long number)
+    	{
+    		bool isNegative = number < 0;
+    		if (isNegative)
+    		{
+    			number = -number;
+    		}
+    		string s = number.ToString();
+    		if (s.Length <= 3)
+    		{
+    			return isNegative ? ("-" + s) : s;
+    		}
+    		System.Text.StringBuilder sb = new System.Text.StringBuilder();
+    		if (isNegative)
+    		{
+    			sb.Append('-');
+    		}
+    		int mod = s.Length % 3;
+    		if (mod > 0)
+    		{
+    			sb.Append(s, 0, mod);
+    			if (s.Length > mod)
+    			{
+    				sb.Append('.');
+    			}
+    		}
+    		for (int i = mod; i < s.Length; i += 3)
+    		{
+    			sb.Append(s, i, 3);
+    			if (i + 3 < s.Length)
+    			{
+    				sb.Append('.');
+    			}
+    		}
+    		return sb.ToString();
+    	}
     }
 }

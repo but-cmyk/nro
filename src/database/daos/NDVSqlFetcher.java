@@ -207,7 +207,7 @@ public class NDVSqlFetcher {
 
         try {
             rsAccount = AlyraManager.executeQuery(
-                    "SELECT account.id, account.username, account.password, account.create_time, account.update_time, account.ban, account.is_admin, account.last_time_login, account.last_time_logout, account.ip_address, account.active, account.thoi_vang, account.server_login, account.bd_player, account.is_gift_box, account.gift_time, account.cash, account.danap, account.luotquay, account.vang, account.event_point, account.vip, account.vip1, account.vip2, account.sotien, account.diem_da_nhan, account.hasReceivedVIP, account.hasReceivedVIP1, account.hasReceivedVIP2, account.lastTimeReceivedVIP, account.lastTimeReceivedVIP1, account.lastTimeReceivedVIP2, account.gioithieu, account.tichdiem, account.gmail, account.server FROM account WHERE username = ?",
+                    "SELECT account.id, account.username, account.password, account.create_time, account.ban, account.is_admin, account.last_time_login, account.last_time_logout, account.ip_address, account.thoi_vang, account.bd_player, account.cash, account.danap, account.luotquay, account.vang, account.event_point, account.vip, account.vip1, account.vip2, account.sotien, account.diem_da_nhan, account.hasReceivedVIP, account.hasReceivedVIP1, account.hasReceivedVIP2, account.lastTimeReceivedVIP, account.lastTimeReceivedVIP1, account.lastTimeReceivedVIP2 FROM account WHERE username = ?",
                     session.uu
             );
 
@@ -233,7 +233,7 @@ public class NDVSqlFetcher {
                 session.isAdmin = rsAccount.getBoolean("is_admin");
                 Timestamp logoutTs = rsAccount.getTimestamp("last_time_logout");
                 session.lastTimeLogout = (logoutTs != null) ? logoutTs.getTime() : System.currentTimeMillis();
-                session.actived = rsAccount.getBoolean("active");
+                session.actived = true;
                 session.goldBar = rsAccount.getInt("account.thoi_vang");
                 session.luotquay = rsAccount.getInt("account.luotquay");
                 session.gold = rsAccount.getLong("account.vang");
@@ -1311,14 +1311,18 @@ public class NDVSqlFetcher {
                 player.lastTimePlayerNotAttack = System.currentTimeMillis();
             }
 
-            //data Nhận Thỏi Vàng
+            //data Nhận Thỏi Vàng & Quà quái đầu ngày
             try {
                 dataArray = (JSONArray) JSONValue.parse(rs.getString("nhanthoivang"));
                 player.danhanthoivang = Boolean.parseBoolean(dataArray.get(0).toString());
                 player.lastRewardGoldBarTime = Long.parseLong(dataArray.get(1).toString());
+                if (dataArray.size() > 2) {
+                    player.lastTimeRewardDailyMobRuby = Long.parseLong(dataArray.get(2).toString());
+                }
             } catch (Exception e) {
                 player.danhanthoivang = false;
                 player.lastRewardGoldBarTime = 0;
+                player.lastTimeRewardDailyMobRuby = 0;
             }
 
             //data Rương gỗ

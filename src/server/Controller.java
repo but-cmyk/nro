@@ -107,7 +107,7 @@ public class Controller implements IMessageHandler {
                         player.idMark.setLastTimeConsign(now);
                     }
                     if (TransactionService.gI().check(player)) {
-                        Service.gI().sendThongBao(player, "Không thể thực hiện");
+                        Service.gI().sendThongBaoResetWait(player, "Không thể mở Siêu thị/Ký gửi khi đang giao dịch!");
                         return;
                     }
                     if (player.baovetaikhoan) {
@@ -151,7 +151,7 @@ public class Controller implements IMessageHandler {
                             ConsignShopService.gI().upItemToTop(player, idItem);
                             break;
                         default:
-                            Service.gI().sendThongBao(player, "Không thể thực hiện");
+                            Service.gI().sendThongBaoResetWait(player, "Thao tác ký gửi không hợp lệ!");
                             break;
                     }
                     break;
@@ -279,7 +279,7 @@ public class Controller implements IMessageHandler {
                 case -125:
                     if (player != null) {
                         if (TransactionService.gI().check(player)) {
-                            Service.gI().sendThongBao(player, "Không thể thực hiện");
+                            Service.gI().sendThongBaoResetWait(player, "Không thể thực hiện thao tác này khi đang giao dịch!");
                             return;
                         }
                         Input.gI().doInput(player, _msg);
@@ -360,7 +360,7 @@ public class Controller implements IMessageHandler {
                 case 6: // buy item
                     if (player != null && !Maintenance.isRunning) {
                         if (TransactionService.gI().check(player)) {
-                            Service.gI().sendThongBao(player, "Không thể thực hiện");
+                            Service.gI().sendThongBaoResetWait(player, "Không thể mua vật phẩm khi đang trong phiên giao dịch!");
                             return;
                         }
                         if (player.baovetaikhoan) {
@@ -407,7 +407,7 @@ public class Controller implements IMessageHandler {
                 case -71:
                     if (player != null) {
                         if (TransactionService.gI().check(player)) {
-                            Service.gI().sendThongBao(player, "Không thể thực hiện");
+                            Service.gI().sendThongBao(player, "Không thể chat kênh thế giới khi đang giao dịch!");
                             return;
                         }
                         ChatGlobalService.gI().chat(player, _msg.reader().readUTF());
@@ -591,7 +591,7 @@ public class Controller implements IMessageHandler {
                 case -45:
                     if (player != null) {
                         if (TransactionService.gI().check(player)) {
-                            Service.gI().sendThongBao(player, "Không thể thực hiện");
+                            Service.gI().sendThongBao(player, "Không thể dùng kỹ năng khi đang trong phiên giao dịch!");
                             PlayerAuditLogger.logAction(player, "CMD_SKILL_NOT_FOCUS", "Blocked: TransactionService check");
                             return;
                         }
@@ -650,7 +650,7 @@ public class Controller implements IMessageHandler {
                 case -40:
                     if (player != null) {
                         if (TransactionService.gI().check(player)) {
-                            Service.gI().sendThongBao(player, "Không thể thực hiện");
+                            Service.gI().sendThongBaoResetWait(player, "Không thể chuyển vật phẩm khi đang giao dịch!");
                             return;
                         }
                         UseItem.gI().getItem(_session, _msg);
@@ -662,7 +662,7 @@ public class Controller implements IMessageHandler {
                 case -43:
                     if (player != null) {
                         if (TransactionService.gI().check(player)) {
-                            Service.gI().sendThongBao(player, "Không thể thực hiện");
+                            Service.gI().sendThongBaoResetWait(player, "Không thể sử dụng vật phẩm khi đang giao dịch!");
                             return;
                         }
                         if (player.baovetaikhoan) {
@@ -697,7 +697,7 @@ public class Controller implements IMessageHandler {
                 case 44:
                     if (player != null) {
                         if (TransactionService.gI().check(player)) {
-                            Service.gI().sendThongBao(player, "Không thể thực hiện");
+                            Service.gI().sendThongBao(player, "Không thể sử dụng lệnh này khi đang giao dịch!");
                             return;
                         }
                         Command.gI().chat(player, _msg.reader().readUTF());
@@ -815,7 +815,7 @@ public class Controller implements IMessageHandler {
                                                 boss.location.y);
                                     }
                                 } else {
-                                    Service.gI().sendThongBao(player, "Không thể thực hiện");
+                                    Service.gI().sendThongBaoResetWait(player, "Chức năng dịch chuyển chỉ dành cho Quản Trị Viên (Admin)!");
                                 }
                             }
                         }

@@ -88,7 +88,7 @@ public class SummonDragonNamek {
             activeShenron(pl, true, DRAGON_PORUNGA);
             sendWhishesNamec(pl);
         } else {
-            Service.gI().sendThongBao(pl, "Không thể thực hiện");
+            Service.gI().sendThongBaoResetWait(pl, "Rồng thần Namek chỉ có thể triệu hồi tại Làng Mori (Hành tinh Namek)!");
         }
     }
 

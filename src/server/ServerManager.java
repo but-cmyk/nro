@@ -212,18 +212,25 @@ public class ServerManager {
                 if (!isRunning) {
                     return;
                 }
-                Logger.log("=== THỰC HIỆN RESET NHIỆM VỤ HÀNG NGÀY LÚC 00:00:00 ===");
                 List<Player> players = new ArrayList<>(Client.gI().getPlayers());
                 for (Player player : players) {
-                    if (player != null && player.isPl() && player.playerTask != null && player.playerTask.sideTask != null) {
-                        try {
-                            player.playerTask.sideTask.reset();
-                            player.playerTask.sideTask.leftTask = consts.ConstTask.MAX_SIDE_TASK;
-                            player.playerTask.sideTask.cancelCount = 0;
-                            player.playerTask.sideTask.receivedTime = System.currentTimeMillis();
-                            services.Service.gI().sendThongBao(player, "Nhiệm vụ hàng ngày đã được làm mới!");
-                        } catch (Exception ex) {
-                            Logger.error("Lỗi reset task cho player " + player.name + ": " + ex.getMessage());
+                    if (player != null && player.isPl()) {
+                        if (player.playerTask != null && player.playerTask.sideTask != null) {
+                            try {
+                                player.playerTask.sideTask.reset();
+                                player.playerTask.sideTask.leftTask = consts.ConstTask.MAX_SIDE_TASK;
+                                player.playerTask.sideTask.cancelCount = 0;
+                                player.playerTask.sideTask.receivedTime = System.currentTimeMillis();
+                                services.Service.gI().sendThongBao(player, "Nhiệm vụ hàng ngày đã được làm mới!");
+                            } catch (Exception ex) {
+                                Logger.error("Lỗi reset task cho player " + player.name + ": " + ex.getMessage());
+                            }
+                        }
+                        if (player.canReceiveDailyMobRuby()) {
+                            if (player.idMark != null) {
+                                player.idMark.setLastTimeNotifyDailyMobRuby(0);
+                            }
+                            services.Service.gI().sendThongBao(player, "Bạn sẽ nhận được 10 hồng ngọc khi tiêu diệt quái");
                         }
                     }
                 }

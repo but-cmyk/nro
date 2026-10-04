@@ -86,7 +86,7 @@ public class CSMM implements Runnable {
 
     private void giveReward(Player pl, int numRuby) {
         pl.inventory.ruby += numRuby;
-        Service.gI().sendThongBaoFromAdmin(pl, "Bạn vừa nhận được " + numRuby + " ngọc từ Con số may mắn!");
+        Service.gI().sendThongBaoFromAdmin(pl, "Bạn vừa nhận được " + numRuby + " hồng ngọc từ Con số may mắn!");
         Service.gI().sendMoney(pl);
     }
 
@@ -98,14 +98,13 @@ public class CSMM implements Runnable {
             return;
         }
 
-        if (player.inventory.ruby >= costRuby) {
+        if (player.inventory.subGemAndRuby(costRuby)) {
             totalRuby += costRuby;
-            player.inventory.ruby -= costRuby;
             list.add(numReg);
-            Service.gI().sendThongBao(player, "Bạn đã đăng ký thành công với số " + numReg + "!");
+            Service.gI().sendThongBao(player, "Bạn đã đăng ký thành công số " + numReg + " (-" + costRuby + " ngọc)!");
             Service.gI().sendMoney(player);
         } else {
-            Service.gI().sendThongBao(player, "Bạn còn thiếu " + (costRuby - player.inventory.ruby) + " ngọc nữa!");
+            Service.gI().sendThongBao(player, "Bạn không có đủ ngọc để đăng ký (cần " + costRuby + " ngọc)!");
         }
     }
 }

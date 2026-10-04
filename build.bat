@@ -21,6 +21,7 @@ if %errorlevel% neq 0 (
 )
 
 echo [3/3] Packaging dist\NROK.jar...
+if exist "dist\NROK.jar" del /f /q "dist\NROK.jar" > nul 2>&1
 jar --create --file dist\NROK.jar --main-class server.ServerManager -C build\classes .
 
 echo.

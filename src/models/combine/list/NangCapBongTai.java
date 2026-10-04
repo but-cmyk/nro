@@ -50,12 +50,12 @@ public class NangCapBongTai {
                             "Nâng cấp\n"
                             + Util.powerToString(player.combineNew.goldCombine) + " vàng\n"
                             + Util.powerToString(player.combineNew.gemCombine) + " ngọc\n", "Từ chối");
-                } else if (player.inventory.gem < player.combineNew.gemCombine) {
+                } else if (!player.inventory.checkGemAndRuby(player.combineNew.gemCombine)) {
                     npcSay += "|2|Cần 9999 " + manhVo.template.name + "\n";
-                    npcSay += "|7|Cần: " + player.combineNew.gemCombine + " ngọc xanh\n";
+                    npcSay += "|7|Cần: " + player.combineNew.gemCombine + " ngọc\n";
                     npcSay += "|2|Cần: " + Util.powerToString(player.combineNew.goldCombine) + " vàng\n";
                     npcSay += "|7|Thất bại -99 " + manhVo.template.name + "\n";
-                    npcSay += "Còn thiếu\n" + (player.combineNew.gemCombine - player.inventory.gem) + " ngọc xanh";
+                    npcSay += "Còn thiếu\n" + (player.combineNew.gemCombine - player.inventory.getGemAndRuby()) + " ngọc";
                     CombineService.gI().baHatMit.createOtherMenu(player, ConstNpc.IGNORE_MENU, npcSay, "Đóng");
                 } else if (player.inventory.gold < player.combineNew.goldCombine) {
                     npcSay += "|2|Cần 9999 " + manhVo.template.name + "\n";
@@ -83,7 +83,7 @@ public class NangCapBongTai {
                 return;
             }
             int gem = player.combineNew.gemCombine;
-            if (player.inventory.gem < gem) {
+            if (!player.inventory.checkGemAndRuby(gem)) {
                 Service.gI().sendThongBao(player, "Không đủ ngọc để thực hiện");
                 return;
             }
@@ -99,11 +99,11 @@ public class NangCapBongTai {
             if (bongTai != null && manhVo != null) {
                 Item findItemBag = InventoryService.gI().findItemBag(player, 921); //Khóa btc2
                 if (findItemBag != null) {
-                    Service.gI().sendThongBao(player, "Ngươi đã có bông tai Porata cấp 2 trong hàng trang rồi, không thể nâng cấp nữa.");
+                    Service.gI().sendThongBaoResetWait(player, "Ngươi đã có bông tai Porata cấp 2 trong hành trang rồi, không thể nâng cấp nữa.");
                     return;
                 }
                 player.inventory.gold -= gold;
-                player.inventory.gem -= gem;
+                player.inventory.subGemAndRuby(gem);
                 if (Util.isTrue(player.combineNew.ratioCombine, 100)) {
                     bongTai.template = ItemService.gI().getTemplate(921);
                     bongTai.itemOptions.clear();

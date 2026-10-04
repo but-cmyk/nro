@@ -55,12 +55,12 @@ public class SummonDragon {
             "Găng tay\nđang mang\nlên 1 cấp", "Chí mạng\nGốc +2%",
             "Thay\nChiêu 2-3\nĐệ tử", "Điều ước\nkhác" };
     public static final String[] SHENRON_1_STAR_WISHES_2 = new String[] { "Đẹp trai\nnhất\nVũ trụ",
-            "Giàu có\n+1500\nNgọc",
+            "Giàu có\n+1500\nHồng ngọc",
             "Găng tay đệ\nđang mang\nlên 1 cấp",
             "Điều ước\nkhác" };
-    public static final String[] SHENRON_2_STARS_WHISHES = new String[] { "Giàu có\n+150\nNgọc",
+    public static final String[] SHENRON_2_STARS_WHISHES = new String[] { "Giàu có\n+150\nHồng ngọc",
             "Giàu có\n+20 Tr\nVàng" };
-    public static final String[] SHENRON_3_STARS_WHISHES = new String[] { "Giàu có\n+20\nNgọc",
+    public static final String[] SHENRON_3_STARS_WHISHES = new String[] { "Giàu có\n+20\nHồng ngọc",
             "Giàu có\n+2 Tr\nVàng" };
 
     public static final String[] SHEN_RON_BI_NGO_WISHES = new String[] { "Đổi kỹ năng 2\n Đệ tử",
@@ -149,7 +149,7 @@ public class SummonDragon {
         if (pl.zone.map.mapId == 5) {
             if (checkShenronBall(pl, DRAGON_BLACK_SHENRON)) {
                 if (isShenronAppear) {
-                    Service.gI().sendThongBao(pl, "Không thể thực hiện");
+                    Service.gI().sendThongBaoResetWait(pl, "Rồng Thần đang xuất hiện ở nơi khác, vui lòng quay lại sau!");
                     return;
                 }
                 if (Util.canDoWithTime(lastTimeShenronAppeared, timeResummonShenron)) {
@@ -181,7 +181,7 @@ public class SummonDragon {
         if (pl.zone.map.mapId == 0 || pl.zone.map.mapId == 7 || pl.zone.map.mapId == 14) {
             if (checkShenronBall(pl)) {
                 if (isShenronAppear) {
-                    Service.gI().sendThongBao(pl, "Không thể thực hiện");
+                    Service.gI().sendThongBaoResetWait(pl, "Rồng Thần đang xuất hiện ở nơi khác, vui lòng chờ điều ước hoàn tất!");
                     return;
                 }
 
@@ -503,8 +503,8 @@ public class SummonDragon {
                             return;
                         }
                         break;
-                    case 1: // +1,5 ngọc
-                        this.playerSummonShenron.inventory.gem += 1500;
+                    case 1: // +1500 hồng ngọc
+                        this.playerSummonShenron.inventory.ruby += 1500;
                         PlayerService.gI().sendInfoHpMpMoney(this.playerSummonShenron);
                         break;
                     case 2: // găng tay đệ lên 1 cấp
@@ -553,8 +553,8 @@ public class SummonDragon {
                 break;
             case ConstNpc.SHENRON_2:
                 switch (this.select) {
-                    case 0: // +150 ngọc
-                        this.playerSummonShenron.inventory.gem += 150;
+                    case 0: // +150 hồng ngọc
+                        this.playerSummonShenron.inventory.ruby += 150;
                         PlayerService.gI().sendInfoHpMpMoney(this.playerSummonShenron);
                         break;
                     case 1: // 20 tr vàng
@@ -565,8 +565,8 @@ public class SummonDragon {
                 break;
             case ConstNpc.SHENRON_3:
                 switch (this.select) {
-                    case 0: // +20 ngọc
-                        this.playerSummonShenron.inventory.gem += 20;
+                    case 0: // +20 hồng ngọc
+                        this.playerSummonShenron.inventory.ruby += 20;
                         PlayerService.gI().sendInfoHpMpMoney(this.playerSummonShenron);
                         break;
                     case 1: // 2tr vàng

@@ -45,13 +45,11 @@ public class Calick extends Npc {
         }
         player.idMark.setIndexMenu(ConstNpc.BASE_MENU);
         if (TaskService.gI().getIdTask(player) < ConstTask.TASK_20_0) {
-            Service.gI().hideWaitDialog(player);
-            Service.gI().sendThongBao(player, "Không thể thực hiện");
+            Service.gI().sendThongBaoResetWait(player, "Cháu chỉ nói chuyện với người đã hoàn thành Nhiệm vụ 20 (Tìm kiếm Calích)!");
             return;
         }
         if (this.mapId != player.zone.map.mapId) {
-            Service.gI().sendThongBao(player, "Calích đã rời khỏi map!");
-            Service.gI().hideWaitDialog(player);
+            Service.gI().sendThongBaoResetWait(player, "Calích đã rời khỏi map!");
             return;
         }
 
@@ -89,7 +87,7 @@ public class Calick extends Npc {
                     }
                 }
                 default ->
-                    Service.gI().sendThongBao(player, "Không thể thực hiện");
+                    Service.gI().hideWaitDialog(player);
             }
         }
     }

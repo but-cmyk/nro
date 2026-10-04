@@ -85,7 +85,7 @@ public class HungVuong extends Npc {
                             if ((ngaVoii != null && ngaVoii.quantity >= 9)
                                     && (cuaGaa != null && cuaGaa.quantity >= 9)
                                     && (hongMaoo != null && hongMaoo.quantity >= 9)
-                                    && player.inventory.gem >= 10) {
+                                    && player.inventory.checkGemAndRuby(10)) {
                                 createOtherMenu(player, ConstNpc.MENU_SINHLE_XIN,
                                         "|2|Con muốn dâng sính lễ ?\n"
                                                 + "|1|Ngà voi " + ngaVoii.quantity + "/9\n"
@@ -111,7 +111,7 @@ public class HungVuong extends Npc {
                                 } else {
                                     NpcSay += "|1|Hồng mao" + hongMaoo.quantity + "/9\n";
                                 }
-                                if (player.inventory.gem < 10) {
+                                if (!player.inventory.checkGemAndRuby(10)) {
                                     NpcSay += "|7|Còn thiếu ngọc";
                                 } else {
                                     NpcSay += "|1|Giá ngọc: 10\n";
@@ -242,7 +242,7 @@ public class HungVuong extends Npc {
                             InventoryService.gI().subQuantityItemsBag(player, ngaVoii, 9);
                             InventoryService.gI().subQuantityItemsBag(player, cuaGaa, 9);
                             InventoryService.gI().subQuantityItemsBag(player, hongMaoo, 9);
-                            player.inventory.gem -= gem;
+                            player.inventory.subGemAndRuby(gem);
                             Service.gI().sendThongBao(player, "Dâng sính lễ thành công bạn nhận được " + hopQuaVip.template.name);
                             InventoryService.gI().sendItemBags(player);
                             return;

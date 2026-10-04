@@ -68,7 +68,7 @@ public class ChatGlobalService implements Runnable {
         return;
     }
 
-    if (player.inventory != null && player.inventory.gem >= 5) {
+    if (player.inventory != null && player.inventory.checkGemAndRuby(5)) {
         if (player.isAdmin() || Util.canDoWithTime(player.idMark.getLastTimeChatGlobal(), 60000)) {
             if (player.isAdmin() || player.nPoint.power > 2000000000) {
                 player.inventory.subGemAndRuby(1);

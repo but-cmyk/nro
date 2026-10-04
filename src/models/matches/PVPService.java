@@ -119,8 +119,7 @@ public class PVPService {
             Service.gI().sendThongBao(pl, "Đối thủ đã rời map");
             return;
         }
-        if (plMap.getSession() == null || !plMap.getSession().actived) {
-            Service.gI().sendThongBao(pl, "Đối thủ chưa kích hoạt tài khoản");
+        if (plMap.getSession() == null) {
             return;
         }
         int goldThachDau = GOLD_CHALLENGE[selectGold];
@@ -158,8 +157,7 @@ public class PVPService {
             Service.gI().sendThongBao(pl, "Đối thủ đã rời map");
             return;
         }
-        if (plMap.getSession() == null || !plMap.getSession().actived) {
-            Service.gI().sendThongBao(pl, "Đối thủ chưa kích hoạt tài khoản");
+        if (plMap.getSession() == null) {
             return;
         }
 

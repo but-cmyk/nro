@@ -81,11 +81,6 @@ public class Command {
         });
 
 
-        adminCommands.put("s", player -> {
-            SkillService.gI().learSkillSpecial(player, Skill.MA_PHONG_BA);
-            SkillService.gI().learSkillSpecial(player, Skill.SUPER_KAME);
-            SkillService.gI().learSkillSpecial(player, Skill.LIEN_HOAN_CHUONG);
-        });
         adminCommands.put("lbtt", player -> TrungThuEventManager.gI().showListBoss(player));
         adminCommands.put("ad", player -> NpcService.gI().createMenuConMeo(player, ConstNpc.MENU_ADMIN, -1,
                 "|0|Time start: " + ServerManager.timeStart + "\nClients: " + Client.gI().getPlayers().size()

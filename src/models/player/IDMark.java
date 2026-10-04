@@ -299,6 +299,10 @@ public class IDMark {
         return this.indexMenu == ConstNpc.BASE_MENU;
     }
 
+    private long lastTimeNotifyDailyMobRuby;
+    public long getLastTimeNotifyDailyMobRuby() { return lastTimeNotifyDailyMobRuby; }
+    public void setLastTimeNotifyDailyMobRuby(long lastTimeNotifyDailyMobRuby) { this.lastTimeNotifyDailyMobRuby = lastTimeNotifyDailyMobRuby; }
+
     public void dispose() {
         if (this.shopOpen != null) {
             this.shopOpen.dispose();

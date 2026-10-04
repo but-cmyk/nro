@@ -1442,6 +1442,14 @@ public class Service {
         }
     }
 
+    public void sendThongBaoResetWait(Player pl, String text) {
+        if (pl == null) {
+            return;
+        }
+        hideWaitDialog(pl);
+        sendThongBao(pl, text);
+    }
+
     public void chatPrivate(Player plChat, Player plReceive, String text) {
         if (Functions.isSpam(plChat, text)) {
             return;

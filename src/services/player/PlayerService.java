@@ -280,12 +280,12 @@ public class PlayerService {
                         return;
                     }
                 } else {
-                    if (player.inventory.gem >= COST_GEM_HOI_SINH) {
-                        player.inventory.gem -= COST_GEM_HOI_SINH;
+                    if (player.inventory.checkGemAndRuby(COST_GEM_HOI_SINH)) {
+                        player.inventory.subGemAndRuby(COST_GEM_HOI_SINH);
                         canHs = true;
                     } else {
                         Service.gI().sendThongBao(player, "Không đủ ngọc để thực hiện, còn thiếu " + Util.powerToString(COST_GEM_HOI_SINH
-                                - player.inventory.gem) + " ngọc");
+                                - player.inventory.getGemAndRuby()) + " ngọc");
                         return;
                     }
                 }

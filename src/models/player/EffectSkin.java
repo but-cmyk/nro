@@ -378,23 +378,7 @@ public class EffectSkin {
 //    }
 
     private void updateMaPhongBa() {
-        try {
-            if (this.player.effectSkill != null && this.player.effectSkill.isBinh && this.player.effectSkill.playerUseMafuba != null) {
-                if (Util.canDoWithTime(lastTimeMaPhongBa, 500) && this.player.effectSkill.playerUseMafuba.playerSkill != null) {
-                    double param = this.player.effectSkill.playerUseMafuba.playerSkill.getSkillbyId(Skill.MA_PHONG_BA).point * (this.player.effectSkill.typeBinh == 0 ? 1 : 2);
-                    long subHp = (long) (this.player.effectSkill.playerUseMafuba.nPoint.hpMax * param / 100);
-                    if (subHp >= this.player.nPoint.hp) {
-                        subHp = Math.abs(this.player.nPoint.hp - 100);
-                    }
-                    PlayerService.gI().sendInfoHpMpMoney(this.player);
-                    Service.gI().Send_Info_NV(this.player);
-                    this.player.injured(this.player.effectSkill.playerUseMafuba, subHp, true, false);
-                    this.lastTimeMaPhongBa = System.currentTimeMillis();
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        // Skill Ma phong ba removed from project
     }
 
     private void updateHalloween() {

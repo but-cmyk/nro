@@ -357,9 +357,9 @@ namespace Game1
     		mResources.receive_all = "Receive All";
     		mResources.no_map = "Have no map for this area";
     		mResources.go_to_quest = "Go to the flashing point on the map for quest";
-    		mResources.from_earth = "For Earth only\n";
-    		mResources.from_namec = "For Namekian Only\n";
-    		mResources.from_sayda = "For Saiyan Only\n";
+    		mResources.from_earth = "For Earth only";
+    		mResources.from_namec = "For Namekian Only";
+    		mResources.from_sayda = "For Saiyan Only";
     		mResources.expire = "Expire";
     		mResources.pow_request = "Power required";
     		mResources.your_pow = "Your power";

@@ -50,7 +50,7 @@ public class AchievementService {
         }
 
         if (!player.achievement.canReward(select)) {
-            Service.gI().sendThongBao(player, "Không thể thực hiện");
+            Service.gI().sendThongBaoResetWait(player, "Bạn chưa đạt đủ mốc thành tích này hoặc đã nhận thưởng rồi!");
             return;
         }
 

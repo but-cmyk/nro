@@ -27,17 +27,13 @@
 - Tối Ưu GC Paint UI: Cấm gọi Substring hoặc nối chuỗi trong paintMultiLine/paint 60 FPS; phải pre-parse màu trước khi render
 - Tach biet Target HUD va Player Info: Khong tai su dung vi tri Target Bar cho Suc Manh ban than de tranh mat so khi target quai
 - Quy tắc Option Hiển Thị: Dummy option (ID 73, 206) và template rỗng/placeholder phải trả về string.Empty trong getOptionString(); tuyệt đối không fallback in chuỗi debug thô Option <id> cho người chơi.
-- Khóa Đồng Bộ Luồng: Luôn đảm bảo lock trạng thái khi thao tác đa luồng hoặc spam packet để chống bug dupe. `[2026-09-24]`
-- Kiểm tra quantity > 0 trước khi trừ, không bao giờ để quantity âm. `[2026-09-24]`
 - Đồng Bộ Trạng Thái GUIStyle IMGUI: Khi vẽ text bằng GUIStyle/GUI.Label, phải gán đồng bộ textColor cho toàn bộ trạng thái (hover, active, focused, on*) bằng color1 để tránh text đổi màu trắng khi rê chuột hoặc click. `[2026-09-24]`
 - myReader trong Unity tra ve 0 khi EOF (khong nem Exception). Do do khi doc subCommand 62 (nang cap skill), neu khong kiem tra available() > 0 truoc khi readSByte(), bien b bi gan 0 khien client nham sang cap nhat exp chieu dac biet thay vi cap nhat level skill vSkill. `[2026-09-24]`
-- Phòng Ngừa Tràn Số: Luôn sử dụng kiểu `long` cho các trường tích lũy (HP, sức mạnh, tiền, kinh nghiệm) để tránh tràn mốc 2 tỷ. `[2026-09-24]`
-- Đồng Bộ Gói Tin Nhị Phân 1:1: Mọi thứ tự write/read packet giữa Server Java và Client Unity C# phải hoàn toàn tương ứng. `[2026-09-24]`
-- Dùng CopyOnWriteArrayList/ConcurrentHashMap cho collection duyệt trong vòng lặp Zone update. `[2026-09-24]`
 - **Kiến Trúc Audio Môi Trường & SFX**: Phân tách rõ các AudioSource (`SoundBGLoop` cho nhạc nền, `SoundWater` cho âm thanh môi trường như mưa rơi/nước chảy, `SoundRun` cho di chuyển, `PlayOneShot` cho SFX). Không trừ volume khiến âm lượng bị triệt tiêu (về 0.01f), luôn kiểm tra trạng thái rain active trong updateEff() để tự động bật/tắt loop âm thanh môi trường theo map. `[2026-09-26]`
 - Quản lý Hiệu Ứng Bụi Bước Chân: Pre-allocate mảng hạt bụi MAX_DUST trong GameCanvas đảm bảo Zero-GC 60 FPS; đồng bộ nhịp bước chân cp1 == 1 || cp1 == 6 và vẽ tại GameScr.paint() sau paintSplash `[2026-09-27]`
 - **Kiến Trúc Logging Client Bất Đồng Bộ & Bộ Lọc Spam**: Bắt buộc dùng Async Buffered Logger (`ConcurrentQueue` + Background Worker Thread) cho Client; cấm mở/đóng FileStream đồng bộ từng dòng log; loại bỏ 100% log chu kỳ ngắn (SEND ATTACK, Cooldown blocked, [READ] cmd thô) trong vòng lặp điều khiển và render để bảo toàn quy chuẩn Zero-GC và ngăn ngừa sụt giảm FPS. Giới hạn log tối đa 3MB có xoay vòng tệp (Log Rotation). `[2026-10-02]`
 - Cổng Kiểm Thử Trước Báo Cáo: Khi can thiệp logic nạp asset hoặc log, bắt buộc kiểm tra tệp tin thực tế trên đĩa (.wav, .png, .meta); không tự ý nâng warning thành LogError gây cờ đỏ Console. `[2026-10-02]`
+- Loai bo newline o cuoi chuoi tai nguyen ngon ngu va dung TrimEnd truoc khi ghep newline de tranh duplicate newline trong ChatPopup (ref L0007) `[2026-10-04]`
 
 ## 4. Lỗi Thường Gặp Cần Tránh
 - Treo đơ UI (Freeze) khi Server phản hồi chậm hoặc disconnect nhưng Client vẫn chờ trong `InfoDlg.showWait()`.

@@ -155,11 +155,11 @@ public class Osin extends Npc {
                             NpcService.gI().createTutorial(player, tempId, 4388, ConstNpc.HUONG_DAN_MAP_MA_BU);
                         case 1 -> {
                             if (!player.itemTime.isUseGTPT) {
-                                if (player.inventory.gem < 1) {
+                                if (!player.inventory.checkGemAndRuby(1)) {
                                     Service.gI().sendThongBao(player, "Bạn không đủ ngọc để giải trừ phép thuật!");
                                     return;
                                 }
-                                player.inventory.gem -= 1;
+                                player.inventory.subGemAndRuby(1);
                                 Service.gI().sendMoney(player);
                                 player.itemTime.lastTimeUseGTPT = System.currentTimeMillis();
                                 player.itemTime.isUseGTPT = true;

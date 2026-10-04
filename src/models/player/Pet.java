@@ -61,8 +61,16 @@ public class Pet extends Player {
     }
 
     public void changeStatus(byte status) {
-        if (goingHome || master.fusion.typeFusion != 0 || (this.isDie() && status == FUSION)) {
-            Service.gI().sendThongBao(master, "Không thể thực hiện");
+        if (goingHome) {
+            Service.gI().sendThongBaoResetWait(master, "Đệ tử đang trên đường về nhà!");
+            return;
+        }
+        if (master.fusion.typeFusion != 0) {
+            Service.gI().sendThongBaoResetWait(master, "Không thể đổi trạng thái đệ tử khi đang hợp thể!");
+            return;
+        }
+        if (this.isDie() && status == FUSION) {
+            Service.gI().sendThongBaoResetWait(master, "Đệ tử đang kiệt sức, không thể thực hiện hợp thể!");
             return;
         }
         Service.gI().chatJustForMe(master, this, getTextStatus(status));
@@ -120,7 +128,7 @@ public class Pet extends Player {
             case GOHOME:
                 return "OK con về, bibi sư phụ";
             case HTVV:
-                return "Đm sư phụ thích hợp thể bố mày vĩnh viễn k ?";
+                return "Sư phụ chắc chắn muốn cùng con hợp thể vĩnh viễn chứ?";
             default:
                 return "Sư phụ ơi con lên cấp rồi";
         }

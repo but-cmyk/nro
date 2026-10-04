@@ -96,10 +96,10 @@ public class Cui extends Npc {
                         case 0 -> {
                             Boss boss = BossManager.gI().getBossById(BossID.KUKU);
                             if (boss != null && !boss.isDie() && boss.zone != null && !MapService.gI().isMapPhoBan(boss.zone.map.mapId)) {
-                                if (player.inventory.gem >= COST_FIND_BOSS) {
+                                if (player.inventory.checkGemAndRuby(COST_FIND_BOSS)) {
                                     Zone z = MapService.gI().getMapCanJoin(player, boss.zone.map.mapId, boss.zone.zoneId);
                                     if (z.getNumOfPlayers() < z.maxPlayer) {
-                                        player.inventory.gem -= COST_FIND_BOSS;
+                                        player.inventory.subGemAndRuby(COST_FIND_BOSS);
                                         ChangeMapService.gI().changeMap(player, boss.zone, boss.location.x, boss.location.y);
                                         Service.gI().sendMoney(player);
                                     } else {
@@ -107,7 +107,7 @@ public class Cui extends Npc {
                                     }
                                 } else {
                                     Service.gI().sendThongBao(player, "Không đủ ngọc, còn thiếu "
-                                            + Util.powerToString(COST_FIND_BOSS - player.inventory.gem) + " ngọc");
+                                            + Util.powerToString(COST_FIND_BOSS - player.inventory.getGemAndRuby()) + " ngọc");
                                 }
                                 break;
                             }
@@ -123,10 +123,10 @@ public class Cui extends Npc {
                         case 0 -> {
                             Boss boss = BossManager.gI().getBossById(BossID.MAP_DAU_DINH);
                             if (boss != null && !boss.isDie() && boss.zone != null && !MapService.gI().isMapPhoBan(boss.zone.map.mapId)) {
-                                if (player.inventory.gem >= COST_FIND_BOSS) {
+                                if (player.inventory.checkGemAndRuby(COST_FIND_BOSS)) {
                                     Zone z = MapService.gI().getMapCanJoin(player, boss.zone.map.mapId, boss.zone.zoneId);
                                     if (z.getNumOfPlayers() < z.maxPlayer) {
-                                        player.inventory.gem -= COST_FIND_BOSS;
+                                        player.inventory.subGemAndRuby(COST_FIND_BOSS);
                                         ChangeMapService.gI().changeMap(player, boss.zone, boss.location.x, boss.location.y);
                                         Service.gI().sendMoney(player);
                                     } else {
@@ -134,7 +134,7 @@ public class Cui extends Npc {
                                     }
                                 } else {
                                     Service.gI().sendThongBao(player, "Không đủ ngọc, còn thiếu "
-                                            + Util.powerToString(COST_FIND_BOSS - player.inventory.gem) + " ngọc");
+                                            + Util.powerToString(COST_FIND_BOSS - player.inventory.getGemAndRuby()) + " ngọc");
                                 }
                                 break;
                             }
@@ -150,10 +150,10 @@ public class Cui extends Npc {
                         case 0 -> {
                             Boss boss = BossManager.gI().getBossById(BossID.RAMBO);
                             if (boss != null && !boss.isDie() && boss.zone != null && !MapService.gI().isMapPhoBan(boss.zone.map.mapId)) {
-                                if (player.inventory.gem >= COST_FIND_BOSS) {
+                                if (player.inventory.checkGemAndRuby(COST_FIND_BOSS)) {
                                     Zone z = MapService.gI().getMapCanJoin(player, boss.zone.map.mapId, boss.zone.zoneId);
                                     if (z.getNumOfPlayers() < z.maxPlayer) {
-                                        player.inventory.gem -= COST_FIND_BOSS;
+                                        player.inventory.subGemAndRuby(COST_FIND_BOSS);
                                         ChangeMapService.gI().changeMap(player, boss.zone, boss.location.x, boss.location.y);
                                         Service.gI().sendMoney(player);
                                     } else {
@@ -161,7 +161,7 @@ public class Cui extends Npc {
                                     }
                                 } else {
                                     Service.gI().sendThongBao(player, "Không đủ ngọc, còn thiếu "
-                                            + Util.powerToString(COST_FIND_BOSS - player.inventory.gem) + " ngọc");
+                                            + Util.powerToString(COST_FIND_BOSS - player.inventory.getGemAndRuby()) + " ngọc");
                                 }
                                 break;
                             }

@@ -40,7 +40,7 @@ public class MySession extends Session {
     public long lastTimeLogout;
     public boolean joinedGame;
 
-    public boolean actived;
+    public boolean actived = true;
     public boolean hasReceivedVIP;
     public boolean hasReceivedVIP1;
     public boolean hasReceivedVIP2;

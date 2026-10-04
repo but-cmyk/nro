@@ -640,9 +640,6 @@ public class TaskService {
                     case 47:
                         doneTask(player, ConstTask.TASK_8_3);
                         break;
-                    case 52:
-                        doneTask(player, ConstTask.TASK_18_1);
-                        break;
                     case 59:
                         doneTask(player, ConstTask.TASK_19_1);
                         break;
@@ -735,6 +732,22 @@ public class TaskService {
 
     public void checkDoneTaskKillPlayer(Player player) {
         doneTask(player, ConstTask.TASK_16_0);
+    }
+
+    // Kiểm tra hoàn thành nhiệm vụ hàng ngày (Task 16)
+    public void checkDoneTaskSideTask(Player player) {
+        player = getMasterIfPet(player);
+        if (player != null && !player.isBoss && !player.isPet) {
+            doneTask(player, ConstTask.TASK_16_0);
+        }
+    }
+
+    // Kiểm tra hoàn thành nhiệm vụ thắng giải ĐHVT (Task 18: ĐHVT 23, Siêu Hạng, Siêu Cấp...)
+    public void checkDoneTaskDHVT(Player player) {
+        player = getMasterIfPet(player);
+        if (player != null && !player.isBoss && !player.isPet) {
+            doneTask(player, ConstTask.TASK_18_1);
+        }
     }
 
     public Player getMasterIfPet(Player player) {
@@ -1536,11 +1549,11 @@ public class TaskService {
     }
 
     public void quickResetSideTaskWithGem(Player player, Npc npc) {
-        if (player.inventory.gem < 1) {
-            Service.gI().sendThongBao(player, "Bạn không đủ Ngọc Xanh để đổi nhiệm vụ ngay!");
+        if (!player.inventory.checkGemAndRuby(1)) {
+            Service.gI().sendThongBao(player, "Bạn không đủ Ngọc để đổi nhiệm vụ ngay!");
             return;
         }
-        player.inventory.subGem(1);
+        player.inventory.subGemAndRuby(1);
         Service.gI().sendMoney(player);
         player.playerTask.sideTask.lastTimeCancel = 0; // Xóa thời gian chờ
         Service.gI().sendThongBao(player, "Đã xóa thời gian chờ thành công! Bạn có thể chọn nhiệm vụ mới ngay bây giờ.");
@@ -1694,6 +1707,7 @@ public class TaskService {
                 Service.gI().sendThongBaoOK(player, sb.toString());
 
                 player.playerTask.sideTask.reset();
+                checkDoneTaskSideTask(player);
             } else {
                 Service.gI().sendThongBao(player, "Bạn chưa hoàn thành nhiệm vụ");
             }
@@ -1827,6 +1841,7 @@ public class TaskService {
             if (player.playerTask.clanTask.isDone()) {
                 int capsuleClan = (player.playerTask.clanTask.level + 1) * 10;
                 player.playerTask.clanTask.reset();
+                checkDoneTaskSideTask(player);
                 Service.gI().sendThongBaoOK(player, "Chúc mừng! Bạn nhận được "
                         + Util.powerToString(capsuleClan) + " capsule bang.");
                 if (player.clan != null) {

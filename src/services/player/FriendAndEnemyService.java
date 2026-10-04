@@ -80,8 +80,7 @@ public class FriendAndEnemyService {
                        
                         PVPService.gI().openSelectRevenge(player, id);
                     } else {
-                      
-                        Service.gI().sendThongBao(player, "Không thể thực hiện");
+                        Service.gI().sendThongBao(player, "Kẻ thù hiện không online!");
                     }
                     break;
                 case REMOVE_ENEMY:
@@ -290,10 +289,14 @@ public class FriendAndEnemyService {
                                 Service.gI().sendThongBao(player, "Bạn chưa đủ điều kiện nhiệm vụ hoặc sức mạnh để đến khu vực này!");
                             }
                         } else {
-                            Service.gI().sendThongBao(player, "Không thể thực hiện");
+                            if (!player.isAdmin() && pl.zone.isFullPlayer()) {
+                                Service.gI().sendThongBao(player, "Khu vực của người chơi này hiện đã đầy!");
+                            } else {
+                                Service.gI().sendThongBao(player, "Không thể dịch chuyển đến khu vực đặc biệt này!");
+                            }
                         }
                     } else {
-                        Service.gI().sendThongBao(player, "Không thể thực hiện");
+                        Service.gI().sendThongBao(player, "Người chơi này đang sử dụng Ẩn danh, không thể định vị!");
                     }
                 } else {
                     Service.gI().sendThongBao(player, "Yêu cầu trang bị có khả năng dịch chuyển tức thời");

@@ -56,7 +56,7 @@ public class PhaLeHoaTrangBi {
         if (item == null || !item.isNotNullItem()) return;
 
         if (item.isHaveOption(OPTION_HAN_SU_DUNG)) {
-            Service.gI().sendDialogMessage(player, "Trang bị có hạn sử dụng, không thể thực hiện");
+            Service.gI().sendDialogMessage(player, "Trang bị có hạn sử dụng, không thể pha lê hóa!");
             return;
         }
         if (!item.canPhaLeHoa()) {
@@ -113,7 +113,7 @@ public class PhaLeHoaTrangBi {
         int gemCost = getGem(star);
         
         // Kiểm tra nhanh cho lần đầu tiên
-        if (player.inventory.gold < goldCost || player.inventory.gem < gemCost) {
+        if (player.inventory.gold < goldCost || !player.inventory.checkGemAndRuby(gemCost)) {
             Service.gI().sendServerMessage(player, "Bạn không đủ vàng hoặc ngọc để thực hiện.");
             return;
         }
@@ -123,14 +123,14 @@ public class PhaLeHoaTrangBi {
 
         for (int i = 0; i < maxAttempts; i++) {
             // Kiểm tra tài nguyên trước mỗi lần đập
-            if (player.inventory.gold < goldCost || player.inventory.gem < gemCost) {
+            if (player.inventory.gold < goldCost || !player.inventory.checkGemAndRuby(gemCost)) {
                 Service.gI().sendServerMessage(player, "Dừng lại tại lần thứ " + i + " do không đủ tài nguyên.");
                 break;
             }
 
             // Trừ tiền
             player.inventory.gold -= goldCost;
-            player.inventory.gem -= gemCost;
+            player.inventory.subGemAndRuby(gemCost);
             attemptsDone++;
 
             // Check tỉ lệ

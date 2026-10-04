@@ -77,9 +77,7 @@ public class PlayerSkill {
 //            case Skill.ANTOMIC:
 //            case Skill.MASENKO:
 //                return 2;
-//            case Skill.LIEN_HOAN_CHUONG:
-//            case Skill.SUPER_KAME:
-//            case Skill.MA_PHONG_BA:
+
 //                return 4;
 //            default:
 //                return 3;

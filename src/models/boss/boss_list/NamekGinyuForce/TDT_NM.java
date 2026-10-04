@@ -2,6 +2,7 @@ package models.boss.boss_list.NamekGinyuForce;
 import models.boss.Boss;
 import consts.BossID;
 import consts.BossStatus;
+import consts.ConstItem;
 import java.util.Random;
 import models.boss.BossesData;
 import models.item.Item;
@@ -30,7 +31,7 @@ public class TDT_NM extends Boss {
 
     @Override
     public void reward(Player plKill) {
-        // Drop rác (Item 77 - Đá/Vàng?)
+        // Drop Hồng Ngọc (Item 861)
         int itemCount = 10;
         for (int i = 0; i < itemCount; i++) {
             // Logic rải đều item sang 2 bên
@@ -43,7 +44,7 @@ public class TDT_NM extends Boss {
 
             int yDrop = this.zone.map.yPhysicInTop(xDrop, this.location.y - 24);
 
-            Service.gI().dropItemMap(this.zone, new ItemMap(this.zone, 77, 1, xDrop, yDrop, plKill.id));
+            Service.gI().dropItemMap(this.zone, new ItemMap(this.zone, ConstItem.HONG_NGOC, 1, xDrop, yDrop, plKill.id));
         }
 
         // Drop Item Đặc biệt của Số 1 (ID 432)

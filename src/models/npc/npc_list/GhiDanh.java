@@ -117,13 +117,13 @@ public class GhiDanh extends Npc {
         }
 
         if (useRuby) {
-            if (player.inventory.gem >= rubyChallenge) {
+            if (player.inventory.checkGemAndRuby(rubyChallenge)) {
                 The23rdMartialArtCongressService.gI().startChallenge(player);
-                player.inventory.gem -= rubyChallenge;
+                player.inventory.subGemAndRuby(rubyChallenge);
                 afterChallengeSuccess(player);
             } else {
                 Service.gI().sendThongBao(player,
-                    "Bạn không đủ ngọc, còn thiếu " + Util.powerToString(rubyChallenge - player.inventory.gem) + " ngọc nữa");
+                    "Bạn không đủ ngọc, còn thiếu " + Util.powerToString(rubyChallenge - player.inventory.getGemAndRuby()) + " ngọc nữa");
             }
         } else {
             if (player.inventory.gold >= goldChallenge) {

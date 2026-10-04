@@ -99,41 +99,7 @@ import services.map.NpcService;
                                 "Quy Đổi\n50.000\n 50 Thỏi Vàng", "Quy Đổi\n100.000\n 105 Thỏi Vàng",
                                 "Quy Đổi\n200.000 \n210 Thỏi Vàng", "Quy Đổi\n500.000 \n550 Thỏi Vàng", "Quy Đổi\n1.000.000 \n1100 Thỏi Vàng", "Đóng");
                 }
-            } else if (player.idMark.getIndexMenu() == ConstNpc.MENU_MTV) {
-                switch (select) {
-                    case 0:
-                        if (!player.getSession().actived) {
-                            if (player.getSession().sotien >= 10000) {
-                                if (PlayerDAO.subVND2(player, 10000)) {
-                                    Item itemqua;
-                                    itemqua = ItemService.gI().createNewItem((short) 987, 5);
-                                    InventoryService.gI().addItemBag(player, itemqua);
-                                    Service.gI().sendThongBao(player, "Bạn Đã Nhận Được " + itemqua.template.name);
-                                    Service.gI().sendThongBao(player, "Đã mở thành viên thành công");
-                                } else {
-                                    this.npcChat(player, "Lỗi vui lòng báo admin...");
-                                }
-                            } else {
-                                Service.gI().sendThongBao(player, "Không đủ 10k");
-                            }
-                        } else {
-                            Service.gI().sendThongBao(player, "Bạn đã mở thành viên rồi");
-                        }
-                        break;
 
-                    case 1:
-                        if (player.getSession().player.nPoint.power >= 15_000_000_000L) {
-                            if (PlayerDAO.subVND2(player, 0)) {
-                                Service.gI().sendThongBao(player, "Đã mở thành viên thành công");
-                            } else {
-                                this.npcChat(player, "Lỗi vui lòng báo admin...");
-                            }
-                        } else {
-                            this.npcChat(player, "Bạn chưa đủ sức mạnh");
-                            Service.gI().sendThongBao(player, "Yêu cầu sm lớn hơn 15 tỷ");
-                        }
-                        break;
-                }
             } else if (player.idMark.getIndexMenu() == ConstNpc.MENU_OPEN_HONG_NGOC) {
                 int required = 5000;
                 int percentDone = (int) ((double) player.playerTask.taskdh.Nap / required * 100);

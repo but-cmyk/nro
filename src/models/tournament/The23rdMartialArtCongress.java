@@ -128,6 +128,7 @@ public class The23rdMartialArtCongress {
             if (player != null && player.location != null && player.isPKDHVT && !player.isDie() && player.zone != null) {
                 if (boss.isDie()) {
                     round++;
+                    services.TaskService.gI().checkDoneTaskDHVT(player);
                     boss.leaveMap();
                     toTheNextRound();
                     reward();
@@ -222,6 +223,9 @@ public class The23rdMartialArtCongress {
     }
 
     private void champion() {
+        if (player != null) {
+            services.TaskService.gI().checkDoneTaskDHVT(player);
+        }
         Service.gI().sendThongBao(player, "Chúc mừng " + player.name + " vừa vô địch giải");
         endChallenge();
     }

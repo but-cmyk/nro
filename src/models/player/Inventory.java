@@ -38,8 +38,16 @@ public class Inventory {
     }
 
     public int getGemAndRuby() {
-        return this.gem + this.ruby;
+        return (int) Math.min((long) this.gem + (long) this.ruby, 2_000_000_000L);
     }
+
+    public boolean checkGemAndRuby(long amount) {
+        if (amount <= 0) {
+            return true;
+        }
+        return (long) this.ruby + (long) this.gem >= amount;
+    }
+
     public int getGem() {
         return this.gem;
     }
@@ -73,6 +81,10 @@ public class Inventory {
     }
 
     public void subGem(int num) {
+        this.subGemAndRuby((long) num);
+    }
+
+    public void subGemDirect(int num) {
         this.gem -= num;
     }
 
@@ -103,6 +115,10 @@ public class Inventory {
         return true;
     }
 
+    public boolean subGemAndRuby(int num) {
+        return this.subGemAndRuby((long) num);
+    }
+
     public void subGold(long num) {
         if (num <= 0) {
             return;
@@ -123,14 +139,6 @@ public class Inventory {
             return it.itemOptions.stream().anyMatch(op -> op != null && op.optionTemplate.id == id);
         }
         return false;
-    }
-
-    public void subGemAndRuby(int num) {
-        this.ruby -= num;
-        if (this.ruby < 0) {
-            this.gem += this.ruby;
-            this.ruby = 0;
-        }
     }
 
     public long getGoldLimit() {

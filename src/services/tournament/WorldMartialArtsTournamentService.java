@@ -155,15 +155,15 @@ public class WorldMartialArtsTournamentService extends ConstTournament {
                 NpcService.gI().createTutorial(player, npc.tempId, npc.avartar, "Bạn không đủ vàng, còn thiếu " + (gold - player.inventory.gold) + " vàng nữa");
                 return;
             }
-            if (player.inventory.getGem() < gem) {
-                NpcService.gI().createTutorial(player, npc.tempId, npc.avartar, "Bạn không đủ ngọc, còn thiếu " + (gem - player.inventory.getGem()) + " ngọc nữa");
+            if (!player.inventory.checkGemAndRuby(gem)) {
+                NpcService.gI().createTutorial(player, npc.tempId, npc.avartar, "Bạn không đủ ngọc, còn thiếu " + (gem - player.inventory.getGemAndRuby()) + " ngọc nữa");
                 return;
             }
 
             if (tour == NGOAI_HANG) {
                 NpcService.gI().createTutorial(player, npc.tempId, npc.avartar, ConstTournament.TEXT_DANG_KY_THANH_CONG.replaceAll("%1", TimeUtil.getCurrHour() + "").replaceAll("%2", TimeUtil.getCurrHour() + "h" + TimeUtil.getCurrMin()));
                 player.inventory.gold -= gold;
-                player.inventory.subGem(gem);
+                player.inventory.subGemAndRuby(gem);
                 Service.gI().sendMoney(player);
                 WorldMartialArtsTournamentManager.gI().listReg.add(player.id);
                 return;
@@ -197,7 +197,7 @@ public class WorldMartialArtsTournamentService extends ConstTournament {
             }
 
             player.inventory.gold -= gold;
-            player.inventory.subGem(gem);
+            player.inventory.subGemAndRuby(gem);
             Service.gI().sendMoney(player);
             WorldMartialArtsTournamentManager.gI().listReg.add(player.id);
             NpcService.gI().createTutorial(player, npc.tempId, npc.avartar, ConstTournament.TEXT_DANG_KY_THANH_CONG.replaceAll("%1", TimeUtil.getCurrHour() + "").replaceAll("%2", TimeUtil.getCurrHour() + "h" + TimeUtil.getCurrMin()));

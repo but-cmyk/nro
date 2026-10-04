@@ -279,9 +279,9 @@ public class PlayerDAO {
             String charms = dataArray.toJSONString();
             dataArray.clear();
 
-            int[] skillsArr = gender == 0 ? new int[]{0, 1, 6, 9, 10, 20, 22, 19, 24}
-                    : gender == 1 ? new int[]{2, 3, 7, 11, 12, 17, 18, 19, 26}
-                    : new int[]{4, 5, 8, 13, 14, 21, 23, 19, 25};
+            int[] skillsArr = gender == 0 ? new int[]{0, 1, 6, 9, 10, 20, 22, 19}
+                    : gender == 1 ? new int[]{2, 3, 7, 11, 12, 17, 18, 19}
+                    : new int[]{4, 5, 8, 13, 14, 21, 23, 19};
             //[{"temp_id":"4","point":0,"last_time_use":0},]
 
             JSONArray skill = new JSONArray();
@@ -895,9 +895,10 @@ public class PlayerDAO {
                 String dataCDRD = dataArray.toJSONString();
                 dataArray.clear();
 
-                //Nhận Thỏi Vàng
+                //Nhận Thỏi Vàng & Quà quái đầu ngày
                 dataArray.add(player.danhanthoivang);
                 dataArray.add(player.lastRewardGoldBarTime);
+                dataArray.add(player.lastTimeRewardDailyMobRuby);
                 String dataNhanThoiVang = dataArray.toJSONString();
                 dataArray.clear();
 
@@ -1551,13 +1552,9 @@ public class PlayerDAO {
         }
         PreparedStatement ps;
         try (Connection con = AlyraManager.getConnection();) {
-            ps = con.prepareStatement("UPDATE account SET sotien = (sotien - ?), active = ? WHERE id = ?");
-            if (!player.getSession().actived) {
-                player.getSession().actived = true;
-            }
+            ps = con.prepareStatement("UPDATE account SET sotien = (sotien - ?) WHERE id = ?");
             ps.setInt(1, sotien);
-            ps.setInt(2, player.getSession().actived ? 1 : 0);
-            ps.setInt(3, player.getSession().userId);
+            ps.setInt(2, player.getSession().userId);
             ps.executeUpdate();
             player.getSession().sotien -= sotien;
             return true;

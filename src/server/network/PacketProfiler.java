@@ -27,9 +27,24 @@ public class PacketProfiler {
         return instance;
     }
 
-    public static final long SLOW_THRESHOLD_MS = 50;    // Cảnh báo log chậm > 50ms
-    public static final long CRITICAL_ALERT_MS = 100;  // Ngưỡng tạo Performance Alert > 100ms
-    private static final int FLUSH_INTERVAL_MIN = 5;   // Chu kỳ xuất CSV (phút)
+    public static final long SLOW_THRESHOLD_MS = 50;           // Cảnh báo log chậm > 50ms cho realtime in-game packet
+    public static final long CRITICAL_ALERT_MS = 100;          // Ngưỡng tạo Performance Alert > 100ms cho realtime gameplay
+    public static final long SLOW_THRESHOLD_LOGIN_MS = 300;    // Ngưỡng log chậm cho gói Login/Handshake (-29, -28, -27)
+    public static final long CRITICAL_ALERT_LOGIN_MS = 800;    // Ngưỡng tạo Alert cho gói Login/Handshake (BCrypt + full DB JSON load)
+    public static final int MIN_ALERT_SAMPLES = 20;            // Cần tối thiểu 20 mẫu để kích hoạt cảnh báo, tránh cold-start
+    private static final int FLUSH_INTERVAL_MIN = 5;          // Chu kỳ xuất CSV (phút)
+
+    public static boolean isHandshakeOrLoginCommand(byte cmd) {
+        return cmd == -29 || cmd == -28 || cmd == -27;
+    }
+
+    public static long getSlowThreshold(byte cmd) {
+        return isHandshakeOrLoginCommand(cmd) ? SLOW_THRESHOLD_LOGIN_MS : SLOW_THRESHOLD_MS;
+    }
+
+    public static long getCriticalThreshold(byte cmd) {
+        return isHandshakeOrLoginCommand(cmd) ? CRITICAL_ALERT_LOGIN_MS : CRITICAL_ALERT_MS;
+    }
 
     private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
     private static final SimpleDateFormat DAY_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
@@ -152,7 +167,10 @@ public class PacketProfiler {
         }
 
         long durationMs = durationNs / 1_000_000;
-        if (durationMs >= SLOW_THRESHOLD_MS) {
+        long slowThreshold = getSlowThreshold(cmd);
+        long criticalThreshold = getCriticalThreshold(cmd);
+
+        if (durationMs >= slowThreshold) {
             metric.slowCount.increment();
             metric.lastSlowTime = System.currentTimeMillis();
 
@@ -163,8 +181,8 @@ public class PacketProfiler {
 
             logQueue.offer(logEntry);
 
-            // Kiểm tra ngưỡng nghiêm trọng để kích hoạt Alert cho AI Agent
-            if (durationMs >= CRITICAL_ALERT_MS) {
+            // Kiểm tra ngưỡng nghiêm trọng và đủ mẫu (>= 20) trước khi tạo persistent alert, tránh cold-start
+            if (durationMs >= criticalThreshold && metric.callCount.sum() >= MIN_ALERT_SAMPLES) {
                 triggerPerformanceAlert(cmd, metric, durationMs);
             }
         }

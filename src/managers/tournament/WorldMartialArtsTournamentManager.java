@@ -153,8 +153,8 @@ public class WorldMartialArtsTournamentManager implements Runnable {
                     Player plHup = getPlayerById(listReg.remove(listReg.size() - 1));
                     if (plHup != null) {
                         listWait.add(plHup.id);
+                        services.TaskService.gI().checkDoneTaskDHVT(plHup);
                         Service.gI().sendThongBao(plHup, ConstTournament.TEXT_DOI_THU_BO_CUOC);                        
-                    
                     }
                 }
 
@@ -203,6 +203,7 @@ public class WorldMartialArtsTournamentManager implements Runnable {
     }
 
     public void reward(Player pl) {
+        services.TaskService.gI().checkDoneTaskDHVT(pl);
         listChamp.add(pl.name);
         listReg.clear();
         listWait.clear();

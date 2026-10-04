@@ -131,7 +131,7 @@ public class ChuyenHoaBangNgoc {
             }
             chisogoc -= chisogoc * (soLanRotCap * 0.1);
 
-            if (player.inventory.gem < ngocChuyenHoa) {
+            if (!player.inventory.checkGemAndRuby(ngocChuyenHoa)) {
                 Service.gI().sendThongBao(player, "Không đủ ngọc!!");
                 return;
             }
@@ -164,7 +164,7 @@ public class ChuyenHoaBangNgoc {
                 trangBiCanChuyenHoa_2.itemOptions.add(new ItemOption(io.optionTemplate.id, io.param));
             }
 
-            player.inventory.gem -= ngocChuyenHoa;
+            player.inventory.subGemAndRuby(ngocChuyenHoa);
             Service.gI().sendMoney(player);
             InventoryService.gI().subQuantityItemsBag(player, trangBiGoc, 1);
             InventoryService.gI().subQuantityItemsBag(player, trangBiCanChuyenHoa, 1);

@@ -30,8 +30,8 @@ public class NangCapSaoPhaLe {
             Service.gI().sendThongBao(player, "Không đủ vật phẩm nâng cấp!");
             return;
         }
-        if (player.inventory.ruby < 2 || player.inventory.gold < 200_000_000) {
-            Service.gI().sendThongBao(player, "Không đủ hồng ngọc hoặc vàng!");
+        if (!player.inventory.checkGemAndRuby(2) || player.inventory.gold < 200_000_000) {
+            Service.gI().sendThongBao(player, "Không đủ ngọc hoặc vàng!");
             CombineService.gI().reOpenItemCombine(player);
             return;
         }
@@ -53,7 +53,7 @@ public class NangCapSaoPhaLe {
             Service.gI().sendThongBao(player, "|7|Bạn nhận được " + newItem.template.name);
             InventoryService.gI().subQuantityItemsBag(player, spl, 2);
             InventoryService.gI().subQuantityItemsBag(player, daHematit, 1);
-            player.inventory.subRuby(2);
+            player.inventory.subGemAndRuby(2);
             player.inventory.subGold(200_000_000);
             CombineService.gI().sendEffectSuccessCombine(player);
             InventoryService.gI().sendItemBags(player);
@@ -83,8 +83,8 @@ public class NangCapSaoPhaLe {
             Service.gI().sendThongBao(player, "Không đủ vật phẩm nâng cấp!");
             return;
         }
-        if (player.inventory.ruby < 2 || player.inventory.gold < 200_000_000) {
-            Service.gI().sendThongBao(player, "Không đủ hồng ngọc hoặc vàng!");
+        if (!player.inventory.checkGemAndRuby(2) || player.inventory.gold < 200_000_000) {
+            Service.gI().sendThongBao(player, "Không đủ ngọc hoặc vàng!");
             CombineService.gI().reOpenItemCombine(player);
             return;
         }
@@ -108,7 +108,7 @@ public class NangCapSaoPhaLe {
             Service.gI().sendThongBao(player, "|7|Bạn nhận được " + newItem.template.name);
             InventoryService.gI().subQuantityItemsBag(player, spl, 5);
             InventoryService.gI().subQuantityItemsBag(player, daMai, 1);
-            player.inventory.subRuby(2);
+            player.inventory.subGemAndRuby(2);
             player.inventory.subGold(200_000_000);
             CombineService.gI().sendEffectSuccessCombine(player);
             InventoryService.gI().sendItemBags(player);
@@ -134,8 +134,8 @@ public class NangCapSaoPhaLe {
             Service.gI().sendThongBao(player, "Không đủ vật phẩm nâng cấp!");
             return;
         }
-        if (player.inventory.ruby < 2 || player.inventory.gold < 200_000_000) {
-            Service.gI().sendThongBao(player, "Không đủ hồng ngọc hoặc vàng!");
+        if (!player.inventory.checkGemAndRuby(2) || player.inventory.gold < 200_000_000) {
+            Service.gI().sendThongBao(player, "Không đủ ngọc hoặc vàng!");
             CombineService.gI().reOpenItemCombine(player);
             return;
         }
@@ -143,7 +143,7 @@ public class NangCapSaoPhaLe {
         InventoryService.gI().addItemBag(player, newItem);
         Service.gI().sendThongBao(player, "|7|Bạn nhận được " + newItem.template.name);
         InventoryService.gI().subQuantityItemsBag(player, spl, 5);
-        player.inventory.subRuby(2);
+        player.inventory.subGemAndRuby(2);
         player.inventory.subGold(200_000_000);
         CombineService.gI().sendEffectSuccessCombine(player);
         InventoryService.gI().sendItemBags(player);

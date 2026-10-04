@@ -357,7 +357,7 @@ public class ClanService {
                     Service.gI().sendThongBao(player, "Bang đã đủ thành viên không thể gia nhập");
                 }
             } else {
-                Service.gI().sendThongBao(player, "Không thể thực hiện");
+                Service.gI().sendThongBao(player, "Bạn đã có bang hội, không thể gia nhập bang khác!");
             }
         } catch (Exception ex) {
             Service.gI().sendThongBao(player, ex.getMessage());
@@ -437,7 +437,7 @@ public class ClanService {
                 }
                 clan.sendMyClanForAllMember();
             } else {
-                Service.gI().sendThongBao(player, "Không thể thực hiện");
+                Service.gI().sendThongBao(player, "Chỉ bang chủ mới có quyền duyệt thành viên!");
             }
         }
     }
@@ -540,11 +540,11 @@ public class ClanService {
 //                            Service.gI().sendThongBao(player, "Bang hội đã đủ người");
 //                        }
                     } else {
-                        Service.gI().sendThongBao(player, "Không thể thực hiện");
+                        Service.gI().sendThongBao(player, "Bạn đã gửi yêu cầu gia nhập bang này rồi!");
                     }
                 }
             } else {
-                Service.gI().sendThongBao(player, "Không thể thực hiện");
+                Service.gI().sendThongBao(player, "Bạn đã là thành viên của bang này rồi!");
             }
         } catch (Exception ex) {
             Service.gI().sendThongBao(player, ex.getMessage());
@@ -583,11 +583,11 @@ public class ClanService {
                     }
                 }
                 if (flagBag.gem > 0) {
-                    if (player.inventory.gem >= flagBag.gem) {
-                        player.inventory.gem -= flagBag.gem;
+                    if (player.inventory.checkGemAndRuby(flagBag.gem)) {
+                        player.inventory.subGemAndRuby(flagBag.gem);
                     } else {
                         Service.gI().sendThongBao(player, "Bạn không đủ ngọc, còn thiếu "
-                                + (flagBag.gem - player.inventory.gem) + " ngọc");
+                                + (flagBag.gem - player.inventory.getGemAndRuby()) + " ngọc");
                         return;
                     }
                 }
@@ -800,11 +800,11 @@ public class ClanService {
                     }
                 }
                 if (flagBag.gem > 0) {
-                    if (player.inventory.gem >= flagBag.gem) {
-                        player.inventory.gem -= flagBag.gem;
+                    if (player.inventory.checkGemAndRuby(flagBag.gem)) {
+                        player.inventory.subGemAndRuby(flagBag.gem);
                     } else {
                         Service.gI().sendThongBao(player, "Bạn không đủ ngọc, còn thiếu "
-                                + (flagBag.gem - player.inventory.gem) + " ngọc");
+                                + (flagBag.gem - player.inventory.getGemAndRuby()) + " ngọc");
                         return;
                     }
                 }
@@ -1000,7 +1000,7 @@ public class ClanService {
                 clan.sendMessageClan(cmg);
                 clan.update();
             } else {
-                Service.gI().sendThongBao(player, "Không thể thực hiện");
+                Service.gI().sendThongBao(player, "Thành viên này không tồn tại hoặc đã có chức vụ!");
             }
         }
     }

@@ -77,15 +77,15 @@ public class QuocVuong extends Npc {
                         OpenPowerService.gI().openPowerBasic(player);
                         break;
                     case 1: {
-                        if (player.inventory.gem >= OpenPowerService.COST_SPEED_OPEN_LIMIT_POWER) {
+                        if (player.inventory.checkGemAndRuby(OpenPowerService.COST_SPEED_OPEN_LIMIT_POWER)) {
                             if (OpenPowerService.gI().openPowerSpeed(player)) {
-                                player.inventory.gem -= OpenPowerService.COST_SPEED_OPEN_LIMIT_POWER;
+                                player.inventory.subGemAndRuby(OpenPowerService.COST_SPEED_OPEN_LIMIT_POWER);
                                 Service.gI().sendMoney(player);
                             }
                         } else {
                             Service.gI().sendThongBao(player,
                                     "Con không đủ ngọc để mở, còn thiếu "
-                                            + Util.powerToString((OpenPowerService.COST_SPEED_OPEN_LIMIT_POWER - player.inventory.gem)) + " ngọc");
+                                            + Util.powerToString((OpenPowerService.COST_SPEED_OPEN_LIMIT_POWER - player.inventory.getGemAndRuby())) + " ngọc");
                         }
                         break;
                     }
@@ -94,18 +94,18 @@ public class QuocVuong extends Npc {
             // Menu con: Xác nhận nâng cấp cho đệ tử
             else if (player.idMark.getIndexMenu() == ConstNpc.OPEN_POWER_PET) {
                 if (select == 0) {
-                    if (player.inventory.gem >= OpenPowerService.COST_SPEED_OPEN_LIMIT_POWER) {
+                    if (player.inventory.checkGemAndRuby(OpenPowerService.COST_SPEED_OPEN_LIMIT_POWER)) {
                         // Lưu ý: Cần kiểm tra xem hàm openPowerSpeed trong OpenPowerService
                         // có kiểm tra điều kiện sức mạnh không. Nếu có thì phải sửa cả bên Service.
                         // Nhưng thường thì hàm NPC là cổng kiểm tra chính.
                         if (OpenPowerService.gI().openPowerSpeed(player.pet)) {
-                            player.inventory.gem -= OpenPowerService.COST_SPEED_OPEN_LIMIT_POWER;
+                            player.inventory.subGemAndRuby(OpenPowerService.COST_SPEED_OPEN_LIMIT_POWER);
                             Service.gI().sendMoney(player);
                         }
                     } else {
                         Service.gI().sendThongBao(player,
                                 "Con không đủ ngọc để mở, còn thiếu "
-                                        + Util.powerToString((OpenPowerService.COST_SPEED_OPEN_LIMIT_POWER - player.inventory.gem)) + " ngọc");
+                                        + Util.powerToString((OpenPowerService.COST_SPEED_OPEN_LIMIT_POWER - player.inventory.getGemAndRuby())) + " ngọc");
                     }
                 }
             }

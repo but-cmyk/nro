@@ -39,7 +39,7 @@
       "core_files": [
         "src/models/player/Player.java",
         "src/models/player/NPoint.java",
-        "src/models/player/PlayerSkill.java",
+        "src/models/skill/PlayerSkill.java",
         "src/models/player/EffectSkill.java",
         "src/services/PetService.java"
       ],
@@ -66,8 +66,8 @@
         "src/models/map/Map.java",
         "src/models/map/Zone.java",
         "src/models/mob/Mob.java",
-        "src/models/map/TileMap.java",
-        "src/services/MapService.java"
+        "src/managers/map/TileMapDataLoader.java",
+        "src/services/map/MapService.java"
       ],
       "key_methods": [
         "Zone.update",
@@ -90,7 +90,7 @@
         "src/models/boss/Boss.java",
         "src/models/boss/BossData.java",
         "src/models/boss/BossesData.java",
-        "src/services/BossManager.java"
+        "src/managers/boss/BossManager.java"
       ],
       "key_methods": [
         "Boss.active",
@@ -112,7 +112,7 @@
       "core_files": [
         "src/models/task/TaskDanhHieu.java",
         "src/models/task/TaskPlayer.java",
-        "src/models/task/TaskOrder.java",
+        "src/models/task/SubTaskMain.java",
         "src/services/TaskService.java"
       ],
       "key_methods": [
@@ -131,9 +131,9 @@
       "keywords": ["network", "socket", "netty", "packet", "message", "opcode", "command", "controller", "session", "disconnect", "connect", "writebyte", "readbyte", "protocol"],
       "doc_module": "src/network/GEMINI.md",
       "core_files": [
-        "src/server/NettyServer.java",
-        "src/server/NettySession.java",
-        "src/server/Message.java",
+        "src/network/netty/NettyServer.java",
+        "src/network/netty/NettySession.java",
+        "src/network/io/Message.java",
         "src/server/Controller.java",
         "src/services/Service.java"
       ],
@@ -158,7 +158,7 @@
         "src/database/AlyraManager.java",
         "src/database/daos/PlayerDAO.java",
         "src/database/daos/SuperRankDAO.java",
-        "src/database/NDVSqlFetcher.java"
+        "src/database/daos/NDVSqlFetcher.java"
       ],
       "key_methods": [
         "AlyraManager.getConnection",
@@ -205,7 +205,7 @@
       "keywords": ["clan", "bang_hoi", "clan_member", "clan_task", "boss_clan", "donate", "truong_bang", "pho_bang"],
       "doc_module": "src/services/GEMINI.md",
       "core_files": [
-        "src/services/ClanService.java",
+        "src/services/player/ClanService.java",
         "src/models/clan/Clan.java",
         "src/models/clan/ClanMember.java"
       ],
@@ -293,11 +293,12 @@
     },
     {
       "domain": "whis_arena",
-      "keywords": ["vodai", "vo_dai", "whis_arena", "loi_dai", "capsule_vang", "dau_truong", "bot_player", "whis", "kaio", "top_5"],
-      "doc_module": "src/services/GEMINI.md",
+      "keywords": ["vodai", "vo_dai", "whis_arena", "loi_dai", "capsule_vang", "dau_truong", "bot_player", "whis", "kaio", "top_5", "tournament", "giai_dau", "lien_vu_tru", "lien_server", "san_dau", "bxh", "bang_xep_hang", "clone_bot", "frost", "kyabe", "hit", "bill", "u6"],
+      "doc_module": "src/models/tournament/GEMINI.md",
       "core_files": [
         "src/models/tournament/whis_arena/WhisArenaService.java",
         "src/models/tournament/whis_arena/WhisArenaMatch.java",
+        "src/models/tournament/whis_arena/WhisArenaBossMatch.java",
         "src/models/tournament/whis_arena/WhisArenaBotManager.java",
         "src/models/tournament/whis_arena/WhisArenaBot.java",
         "src/models/tournament/whis_arena/WhisArenaRival.java"
@@ -315,6 +316,49 @@
         "Chỉ Top 1-5 BXH tuần mới được đổi Capsule Vàng Kì Bí (ID 574)",
         "Chu kỳ tuần chốt 22h CN, reset điểm 23h59 CN"
       ]
+    },
+    {
+      "domain": "npc_system",
+      "keywords": ["npc", "ba_hat_mit", "vados", "bill", "whis", "trong_tai", "santa", "quy_lao", "bunma", "dende", "menu_npc", "hoi_thoai", "confirm_menu"],
+      "doc_module": "src/services/GEMINI.md",
+      "core_files": [
+        "src/models/npc/Npc.java",
+        "src/models/npc/NpcFactory.java",
+        "src/models/npc/npc_list/BaHatMit.java",
+        "src/services/map/NpcManager.java"
+      ],
+      "key_methods": [
+        "Npc.openMenu",
+        "Npc.confirmMenu",
+        "NpcFactory.createNPC",
+        "NpcManager.getNpc"
+      ],
+      "invariants": [
+        "Player phải chủ động tương tác với NPC để mở menu, không tự động pop-up timeout",
+        "Kiểm tra điều kiện inventory và trạng thái player trước khi xử lý hành động menu"
+      ]
+    },
+    {
+      "domain": "death_or_alive_arena",
+      "keywords": ["vo_dai_sinh_tu", "sinh_tu", "death_or_alive", "vdst", "bong_bang", "dracula", "vua_quy_sa_tang", "tho_dau_bac", "santa_shop", "top_tuan_sinh_tu", "thoi_vang"],
+      "doc_module": "src/models/tournament/GEMINI.md",
+      "core_files": [
+        "src/managers/tournament/DeathOrAliveArenaManager.java",
+        "src/models/boss/boss_list/DeathOrAliveArena/BongBang.java",
+        "src/models/boss/boss_list/DeathOrAliveArena/ThoDauBac.java",
+        "src/models/boss/boss_list/DeathOrAliveArena/VuaQuySaTang.java",
+        "src/models/boss/boss_list/DeathOrAliveArena/Dracula.java"
+      ],
+      "key_methods": [
+        "DeathOrAliveArenaManager.update",
+        "DeathOrAliveArenaManager.joinArena",
+        "DeathOrAliveArenaManager.reward"
+      ],
+      "invariants": [
+        "Chỉ mở trong khung giờ quy định, đồng bộ phần thưởng qua Santa Shop",
+        "Xử lý dọn sạch quái/boss khi kết thúc round hoặc player rời map"
+      ]
     }
   ]
 }
+

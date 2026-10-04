@@ -53,8 +53,8 @@ public class QuaTrung extends Npc {
                                 Service.gI().sendThongBao(player, "Trứng đã sẵn sàng nở, không cần ấp nhanh!");
                                 return;
                             }
-                            if (player.inventory.gem >= COST_AP_TRUNG_NHANH) {
-                                player.inventory.gem -= COST_AP_TRUNG_NHANH;
+                            if (player.inventory.checkGemAndRuby(COST_AP_TRUNG_NHANH)) {
+                                player.inventory.subGemAndRuby(COST_AP_TRUNG_NHANH);
                                 player.mabuEgg.timeDone = 0;
                                 Service.gI().sendMoney(player);
                                 player.mabuEgg.sendMabuEgg();
@@ -64,7 +64,7 @@ public class QuaTrung extends Npc {
                                 Service.gI().sendThongBao(player,
                                         "Bạn không đủ ngọc để thực hiện, còn thiếu "
                                         + Util.powerToString(
-                                                (COST_AP_TRUNG_NHANH - player.inventory.gem))
+                                                (COST_AP_TRUNG_NHANH - player.inventory.getGemAndRuby()))
                                         + " ngọc");
                             }
                         }

@@ -80,11 +80,11 @@ public class LuckyRound {
             return;
         }
         if (player.isDie()) {
-            Service.gI().sendThongBao(player, "Bạn đang kiệt sức, không thể thực hiện");
+            Service.gI().sendThongBaoResetWait(player, "Bạn đang kiệt sức, hãy hồi phục sinh lực trước khi quay vòng quay may mắn!");
             return;
         }
         if (TransactionService.gI().check(player)) {
-            Service.gI().sendThongBao(player, "Không thể thực hiện khi đang giao dịch");
+            Service.gI().sendThongBaoResetWait(player, "Không thể tham gia Vòng quay may mắn khi đang trong phiên giao dịch!");
             return;
         }
         try {
@@ -122,7 +122,7 @@ public class LuckyRound {
     private void openBallByGem(Player player, byte count) {
         synchronized (player) {
             int gemNeed = count * PRICE_GEM;
-            if (player.inventory.gem < gemNeed) {
+            if (!player.inventory.checkGemAndRuby(gemNeed)) {
                 Service.gI().sendThongBao(player, "Bạn không đủ ngọc để mở");
                 return;
             }
@@ -131,7 +131,7 @@ public class LuckyRound {
                     Service.gI().sendThongBao(player, "Rương phụ đã đầy (tối đa " + MAX_ITEM_IN_BOX + " món)");
                     return;
                 }
-                player.inventory.subGem(gemNeed);
+                player.inventory.subGemAndRuby(gemNeed);
                 player.luckySpins += count;
                 List<Item> list = RewardService.gI().getListItemLuckyRound(player, count, USING_GEM);
                 addItemToBox(player, list);

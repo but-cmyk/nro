@@ -3,6 +3,7 @@ package models.boss.boss_list.Earth;
 import models.boss.Boss;
 import consts.BossID;
 import consts.BossStatus;
+import consts.ConstItem;
 import models.boss.BossesData;
 import models.item.Item;
 import models.map.ItemMap;
@@ -29,7 +30,7 @@ public class BUJIN extends Boss {
 
     @Override
     public void reward(Player pl) {
-        // Rơi 20 item rác (ID 77)
+        // Rơi 20 viên Hồng Ngọc (Item 861)
         int itemCount = 20;
         for (int i = 0; i < itemCount; i++) {
             // Logic: Rải đều sang 2 bên trái phải
@@ -42,7 +43,7 @@ public class BUJIN extends Boss {
 
             int yDrop = this.zone.map.yPhysicInTop(xDrop, this.location.y - 24);
 
-            ItemMap it = new ItemMap(this.zone, 77, 1, xDrop, yDrop, pl.id);
+            ItemMap it = new ItemMap(this.zone, ConstItem.HONG_NGOC, 1, xDrop, yDrop, pl.id);
             Service.gI().dropItemMap(this.zone, it);
         }
 

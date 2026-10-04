@@ -150,6 +150,9 @@ public final class SuperRank implements Runnable {
         win = true;
         try {
             finish();
+            if (player != null) {
+                services.TaskService.gI().checkDoneTaskDHVT(player);
+            }
             int currentRivalRank = SuperRankDAO.getRank((int) rivalId);
             if (currentRivalRank > 0 && player != null && currentRivalRank < player.superRank.rank) {
                 rankWin = currentRivalRank;
@@ -168,8 +171,8 @@ public final class SuperRank implements Runnable {
                 player.superRank.win++;
                 if (player.superRank.ticket > 0) {
                     player.superRank.ticket--;
-                } else if (player.inventory.getGem() >= 2) {
-                    player.inventory.subGem(2);
+                } else if (player.inventory.checkGemAndRuby(2)) {
+                    player.inventory.subGemAndRuby(2);
                     Service.gI().sendMoney(player);
                 }
                 player.superRank.rank = rankWin;
@@ -211,8 +214,8 @@ public final class SuperRank implements Runnable {
                 player.superRank.lose++;
                 if (player.superRank.ticket > 0) {
                     player.superRank.ticket--;
-                } else if (player.inventory.getGem() >= 3) {
-                    player.inventory.subGem(3);
+                } else if (player.inventory.checkGemAndRuby(3)) {
+                    player.inventory.subGemAndRuby(3);
                     Service.gI().sendMoney(player);
                 }
                 player.superRank.rank = rankLose;

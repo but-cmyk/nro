@@ -217,13 +217,7 @@ public class SkillService {
                 }
                 dir = (byte) (dx > x ? -1 : 1);
             }
-            switch (skillId) {
-                case Skill.SUPER_KAME, Skill.LIEN_HOAN_CHUONG, Skill.MA_PHONG_BA -> {
-                    player.newSkill.setSkillSpecial(dir, dx, dy, x, y);
-                    newSkillNotFocus(player, status);
-                    AchievementService.gI().checkDoneTask(player, ConstAchievement.TUYET_KY_THANH_THAO);
-                }
-            }
+            // Skill special cases (SUPER_KAME, LIEN_HOAN_CHUONG, MA_PHONG_BA) removed
             affterUseSkill(player, skillId != -1 ? skillId : player.playerSkill.skillSelect.template.id);
         } catch (Exception ignored) {
         }
@@ -238,52 +232,7 @@ public class SkillService {
                 player.newSkill.closeSkillSpecial();
                 return;
             }
-            if (player.newSkill.skillSelect.template.id == Skill.MA_PHONG_BA) {
-                if (Util.canDoWithTime(player.newSkill.lastTimeSkillSpecial, NewSkill.TIME_GONG)) {
-                    if (Util.isTrue(1, 50) && player.isPl()) {
-                        Service.gI().sendThongBao(player, "Bạn đã kiệt sức vì dùng ma phong ba quá nhiều!");
-                        player.setDie();
-                    }
-                    player.newSkill.lastTimeSkillSpecial = System.currentTimeMillis();
-                    player.newSkill.closeSkillSpecial();
-                    List<Player> playersMap;
-                    if (player.isBoss) {
-                        playersMap = player.zone.getNotBosses();
-                    } else {
-                        playersMap = player.zone.getHumanoids();
-                    }
-
-                    for (Player playerMap : playersMap) {
-                        if (playerMap == null || playerMap.id == player.id) {
-                            continue;
-                        }
-                        if (player.newSkill.dir == -1 && !playerMap.isDie() && Util.getDistance(player, playerMap) <= 500 && this.canAttackPlayer(player, playerMap)) {
-                            player.newSkill.playersTaget.add(playerMap);
-
-                        } else if (player.newSkill.dir == 1 && !playerMap.isDie() && Util.getDistance(player, playerMap) <= 500 && this.canAttackPlayer(player, playerMap)) {
-                            player.newSkill.playersTaget.add(playerMap);
-                        }
-                    }
-
-                    if (!player.isBoss) {
-                        for (Mob mobMap : player.zone.mobs) {
-                            if (mobMap == null) {
-                                continue;
-                            }
-                            if (player.newSkill.dir == -1 && !mobMap.isDie() && Util.getDistance(player, mobMap) <= 500) {
-                                player.newSkill.mobsTaget.add(mobMap);
-                                mobMap.addTemporaryEnemies(player);
-                            } else if (player.newSkill.dir == 1 && !mobMap.isDie() && Util.getDistance(player, mobMap) <= 500) {
-                                player.newSkill.mobsTaget.add(mobMap);
-                                mobMap.addTemporaryEnemies(player);
-                            }
-                        }
-                    }
-                    newSkillNotFocus(player, 21);
-                    EffectSkillService.gI().startUseMafuba(player, 4000);
-                }
-            } else {
-                if (player.newSkill.stepSkillSpecial == 0 && Util.canDoWithTime(player.newSkill.lastTimeSkillSpecial, NewSkill.TIME_GONG)) {
+            if (player.newSkill.stepSkillSpecial == 0 && Util.canDoWithTime(player.newSkill.lastTimeSkillSpecial, NewSkill.TIME_GONG)) {
                     player.newSkill.lastTimeSkillSpecial = System.currentTimeMillis();
                     player.newSkill.stepSkillSpecial = 1;
                     newSkillNotFocus(player, 21);
@@ -332,7 +281,6 @@ public class SkillService {
                 } else if (player.newSkill.stepSkillSpecial == 1) {
                     player.newSkill.closeSkillSpecial();
                 }
-            }
         } catch (Exception e) {
             Logger.error("Error updateSkillSpecial");
         }
@@ -365,14 +313,6 @@ public class SkillService {
             msg.writer().writeShort(newSkill.skillSelect.template.id);
             if (status == 20) {
                 byte typeFrame = 4;
-                switch (newSkill.skillSelect.template.id) {
-                    case Skill.SUPER_KAME ->
-                        typeFrame = 1;
-                    case Skill.LIEN_HOAN_CHUONG ->
-                        typeFrame = 2;
-                    case Skill.MA_PHONG_BA ->
-                        typeFrame = 3;
-                }
                 byte dir = newSkill.dir;
                 short timeGong = NewSkill.TIME_GONG;
                 byte typePaint = newSkill.typePaint;

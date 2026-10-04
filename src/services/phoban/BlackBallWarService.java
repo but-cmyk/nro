@@ -138,8 +138,8 @@ public class BlackBallWarService {
                 cost = COST_X7;
                 break;
         }
-        if (player.inventory.gem >= cost) {
-            player.inventory.gem -= cost;
+        if (player.inventory.checkGemAndRuby(cost)) {
+            player.inventory.subGemAndRuby(cost);
             Service.gI().sendMoney(player);
             player.effectSkin.lastTimeXHPKI = System.currentTimeMillis();
             player.effectSkin.xHPKI = x;
@@ -150,7 +150,7 @@ public class BlackBallWarService {
             Service.gI().point(player);
         } else {
             Service.gI().sendThongBao(player, "Không đủ ngọc để thực hiện, còn thiếu "
-                    + Util.powerToString(cost - player.inventory.gem) + " ngọc");
+                    + Util.powerToString(cost - player.inventory.getGemAndRuby()) + " ngọc");
         }
     }
 
@@ -167,8 +167,8 @@ public class BlackBallWarService {
                 cost = COST_X7;
                 break;
         }
-        if (player.inventory.gem >= cost) {
-            player.inventory.gem -= cost;
+        if (player.inventory.checkGemAndRuby(cost)) {
+            player.inventory.subGemAndRuby(cost);
             Service.gI().sendMoney(player);
             player.effectSkin.lastTimeXDame = System.currentTimeMillis();
             player.effectSkin.xDame = x;
@@ -176,7 +176,7 @@ public class BlackBallWarService {
             Service.gI().point(player);
         } else {
             Service.gI().sendThongBao(player, "Không đủ ngọc để thực hiện, còn thiếu "
-                    + Util.powerToString(cost - player.inventory.gem) + " ngọc");
+                    + Util.powerToString(cost - player.inventory.getGemAndRuby()) + " ngọc");
         }
     }
 

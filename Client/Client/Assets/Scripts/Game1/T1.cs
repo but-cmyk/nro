@@ -309,9 +309,9 @@ namespace Game1
     		mResources.receive_all = "Nhận tất";
     		mResources.no_map = "Chưa có bản đồ cho khu vực này";
     		mResources.go_to_quest = "Hãy đến vị trí chớp nháy trên bản đồ để làm nhiệm vụ";
-    		mResources.from_earth = "Dành cho Trái Đất\n";
-    		mResources.from_namec = "Dành cho Namếc\n";
-    		mResources.from_sayda = "Dành cho Sayda\n";
+    		mResources.from_earth = "Dành cho Trái Đất";
+    		mResources.from_namec = "Dành cho Namếc";
+    		mResources.from_sayda = "Dành cho Sayda";
     		mResources.expire = "Hạn dùng";
     		mResources.pow_request = "Sức mạnh yêu cầu";
     		mResources.your_pow = "Sức mạnh của bạn";

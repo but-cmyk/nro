@@ -26,9 +26,40 @@ public class CapsuleItemHandler implements ItemActionHandler {
 
     @Override
     public void handle(Player player, Item item, int bagIndex) {
+        if (player.isDie()) {
+            Service.gI().sendThongBao(player, "Bạn đang kiệt sức, không thể dùng phi thuyền!");
+            return;
+        }
+        if (player.effectSkill != null && (player.effectSkill.isHaveEffectSkill() || player.effectSkill.useTroi)) {
+            Service.gI().sendThongBao(player, "Bạn đang bị khống chế, không thể dùng phi thuyền!");
+            return;
+        }
         if (player.idNRNM != -1) {
             Service.gI().sendThongBao(player, "Không thể mang ngọc rồng này lên Phi thuyền");
             return;
+        }
+        if (player.zone != null && player.zone.map != null) {
+            int currentMapId = player.zone.map.mapId;
+            if (MapService.gI().isMapPhoBan(currentMapId)) {
+                Service.gI().sendThongBao(player, "Không thể sử dụng phi thuyền trong phó bản!");
+                return;
+            }
+            if (MapService.gI().isMapMaBu(currentMapId)) {
+                Service.gI().sendThongBao(player, "Không thể sử dụng phi thuyền tại khu vực Ma Bư!");
+                return;
+            }
+            if (MapService.gI().isMapBlackBallWar(currentMapId)) {
+                Service.gI().sendThongBao(player, "Không thể sử dụng phi thuyền trong khu vực Ngọc Rồng Sao Đen!");
+                return;
+            }
+            if (currentMapId == 186 || currentMapId == 187) {
+                Service.gI().sendThongBao(player, "Không thể sử dụng phi thuyền tại Võ Đài Whis!");
+                return;
+            }
+            if (currentMapId == 51 || currentMapId == 112 || currentMapId == 113 || currentMapId == 129 || currentMapId == 183) {
+                Service.gI().sendThongBao(player, "Không thể sử dụng phi thuyền tại Đại Hội Võ Thuật!");
+                return;
+            }
         }
         if (item.template.id == 193) {
             InventoryService.gI().subQuantityItemsBag(player, item, 1);
@@ -49,25 +80,36 @@ public class CapsuleItemHandler implements ItemActionHandler {
             return;
         }
 
-        int zoneId = -1;
-        if (index > pl.mapCapsule.size() - 1 || index < 0) {
-            Service.gI().sendThongBao(pl, "Không thể thực hiện");
+        if (pl.mapCapsule == null || index > pl.mapCapsule.size() - 1 || index < 0) {
+            Service.gI().sendThongBao(pl, "Danh sách bản đồ đã đóng hoặc không hợp lệ!");
             Service.gI().hideWaitDialog(pl);
             return;
         }
         Zone zoneChose = pl.mapCapsule.get(index);
-        zoneChose = ChangeMapService.gI().checkMapCanJoin(pl, zoneChose);
-        if (zoneChose == null) {
-            Service.gI().sendThongBao(pl, "Không thể thực hiện");
+        if (zoneChose == null || zoneChose.map == null) {
+            Service.gI().sendThongBao(pl, "Bản đồ không tồn tại!");
             Service.gI().hideWaitDialog(pl);
             return;
         }
-        if (zoneChose.getNumOfPlayers() > 25
-                || MapService.gI().isMapMaBu(zoneChose.map.mapId)
-                || MapService.gI().isMapHuyDiet(zoneChose.map.mapId)) {
-            Service.gI().sendThongBao(pl, "Hiện tại không thể vào được khu!");
+        Zone validZone = ChangeMapService.gI().checkMapCanJoin(pl, zoneChose);
+        if (validZone == null) {
+            String reason = ChangeMapService.gI().getReasonCannotJoinMap(pl, zoneChose);
+            Service.gI().sendThongBao(pl, reason != null ? reason : "Bạn chưa thể đến khu vực này!");
+            Service.gI().hideWaitDialog(pl);
             return;
         }
+        if (MapService.gI().isMapMaBu(zoneChose.map.mapId)) {
+            Service.gI().sendThongBao(pl, "Không thể dùng phi thuyền bay trực tiếp vào khu vực Ma Bư!");
+            Service.gI().hideWaitDialog(pl);
+            return;
+        }
+        if (MapService.gI().isMapHuyDiet(zoneChose.map.mapId)) {
+            Service.gI().sendThongBao(pl, "Không thể dùng phi thuyền bay trực tiếp vào khu vực Hủy Diệt!");
+            Service.gI().hideWaitDialog(pl);
+            return;
+        }
+
+        int zoneId = -1;
         if (index != 0 || zoneChose.map.mapId == 21
                 || zoneChose.map.mapId == 22
                 || zoneChose.map.mapId == 23) {
@@ -77,6 +119,6 @@ public class CapsuleItemHandler implements ItemActionHandler {
             pl.mapBeforeCapsule = null;
         }
         pl.changeMapVIP = true;
-        ChangeMapService.gI().changeMapBySpaceShip(pl, pl.mapCapsule.get(index).map.mapId, zoneId, -1);
+        ChangeMapService.gI().changeMapBySpaceShip(pl, zoneChose.map.mapId, zoneId, -1);
     }
 }

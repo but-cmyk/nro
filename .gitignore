@@ -34,3 +34,5 @@ scratch/
 __pycache__/
 *.pyc
 **/.vs/
+tools/memory/.hook_state.json
+data/vdst_weekly.json

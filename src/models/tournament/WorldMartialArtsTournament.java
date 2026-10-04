@@ -195,6 +195,7 @@ public final class WorldMartialArtsTournament implements Runnable {
         try {
             thongBao();
             if (plWin != null) {
+                services.TaskService.gI().checkDoneTaskDHVT(plWin);
                 if (WorldMartialArtsTournamentManager.gI().listWait.isEmpty() && WorldMartialArtsTournamentManager.gI().listTournaments.size() == 1) {
                     WorldMartialArtsTournamentManager.gI().reward(plWin);
                 } else {

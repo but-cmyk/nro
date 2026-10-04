@@ -85,7 +85,7 @@ public class MuaCtService {
     int originalPrice = (int) itemShopSource.cost;
         int discountPrice = (int) (originalPrice * (1 - DISCOUNT_RATE_FOR_BUYER));
         int commissionAmount = (int) (originalPrice * COMMISSION_RATE_FOR_SELLER);
-        if (buyer.inventory.gem < discountPrice) {
+        if (!buyer.inventory.checkGemAndRuby(discountPrice)) {
             Service.gI().sendThongBao(buyer, "Bạn không đủ ngọc.");
             return;
         }
@@ -93,7 +93,7 @@ public class MuaCtService {
             Service.gI().sendThongBao(buyer, "Hành trang không đủ chỗ trống.");
             return;
         }
-        buyer.inventory.gem -= discountPrice;
+        buyer.inventory.subGemAndRuby(discountPrice);
         seller.inventory.gem += commissionAmount;
         Item newItem = ItemService.gI().createItemFromItemShop(itemShopSource);
         InventoryService.gI().addItemBag(buyer, newItem);

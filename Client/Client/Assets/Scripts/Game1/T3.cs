@@ -349,9 +349,9 @@ namespace Game1
     		mResources.receive_all = "Terima semua";
     		mResources.no_map = "Tidak ada peta untuk area ini";
     		mResources.go_to_quest = "Pergi ke titik berkedip di peta untuk pencarian";
-    		mResources.from_earth = "Hanya untuk Bumi\n";
-    		mResources.from_namec = "Hanya untuk Namekian\n";
-    		mResources.from_sayda = "Hanya untuk Saiyan\n";
+    		mResources.from_earth = "Hanya untuk Bumi";
+    		mResources.from_namec = "Hanya untuk Namekian";
+    		mResources.from_sayda = "Hanya untuk Saiyan";
     		mResources.expire = "Expire";
     		mResources.pow_request = "Power dibutuhkan";
     		mResources.your_pow = "Power kamu";

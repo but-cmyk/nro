@@ -71,14 +71,10 @@ public class NewSkill {
 
         int length = _xObjTaget - _xPlayer;
         int dx = dir * (skillSelect.point * 100 + 100);
-        if (skillSelect.template.id != Skill.MA_PHONG_BA) {
-            if (Math.abs(dx) < Math.abs(length) || Math.abs(length) < 100) {
-                this._xObjTaget = (short) dx;
-            } else {
-                this._xObjTaget = (short) length;
-            }
+        if (Math.abs(dx) < Math.abs(length) || Math.abs(length) < 100) {
+            this._xObjTaget = (short) dx;
         } else {
-            this._xObjTaget = 75;
+            this._xObjTaget = (short) length;
         }
 
 //        if (this._xObjTaget < 0) {

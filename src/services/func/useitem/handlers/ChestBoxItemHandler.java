@@ -246,7 +246,7 @@ public class ChestBoxItemHandler implements ItemActionHandler {
             InventoryService.gI().sendItemBags(pl);
             CombineService.gI().sendEffectOpenItem(pl, icon[0], icon[1]);
         } else {
-            Service.gI().sendThongBao(pl, "Hàng trang đã đầy");
+            Service.gI().sendThongBaoResetWait(pl, "Hành trang của bạn đã đầy, hãy dọn chỗ trống!");
         }
     }
 
@@ -259,7 +259,7 @@ public class ChestBoxItemHandler implements ItemActionHandler {
             InventoryService.gI().sendItemBags(pl);
             CombineService.gI().sendEffectOpenItem(pl, item.template.iconID, (short) 15127);
         } else {
-            Service.gI().sendThongBao(pl, "Hàng trang đã đầy");
+            Service.gI().sendThongBaoResetWait(pl, "Hành trang của bạn đã đầy, hãy dọn chỗ trống!");
         }
     }
 
@@ -272,7 +272,7 @@ public class ChestBoxItemHandler implements ItemActionHandler {
             InventoryService.gI().sendItemBags(pl);
             CombineService.gI().sendEffectOpenItem(pl, item.template.iconID, it.template.iconID);
         } else {
-            Service.gI().sendThongBao(pl, "Hàng trang đã đầy");
+            Service.gI().sendThongBaoResetWait(pl, "Hành trang của bạn đã đầy, hãy dọn chỗ trống!");
         }
     }
 
@@ -285,7 +285,7 @@ public class ChestBoxItemHandler implements ItemActionHandler {
             InventoryService.gI().sendItemBags(pl);
             CombineService.gI().sendEffectOpenItem(pl, item.template.iconID, it.template.iconID);
         } else {
-            Service.gI().sendThongBao(pl, "Hàng trang đã đầy");
+            Service.gI().sendThongBaoResetWait(pl, "Hành trang của bạn đã đầy, hãy dọn chỗ trống!");
         }
     }
 

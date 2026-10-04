@@ -54,19 +54,19 @@ public class NangChiSoBongTai {
                     npcSay += "|1|+1 Chỉ số ngẫu nhiên";
                     npcSay += "|2|Còn thiếu\n" + (99 - honBongTai.quantity) + " " + honBongTai.template.name;
                     CombineService.gI().baHatMit.createOtherMenu(player, ConstNpc.IGNORE_MENU, npcSay, "Đóng");
-                } else if (player.inventory.gem >= player.combineNew.gemCombine) {
+                } else if (player.inventory.checkGemAndRuby(player.combineNew.gemCombine)) {
                     npcSay += "|2|Cần 99 " + honBongTai.template.name + "\n";
                     npcSay += "|2|Cần 1 " + daXanhLam.template.name + "\n";
                     npcSay += "|2|Cần: " + player.combineNew.gemCombine + " ngọc\n";
                     npcSay += "|1|+1 Chỉ số ngẫu nhiên";
                     CombineService.gI().baHatMit.createOtherMenu(player, ConstNpc.MENU_START_COMBINE, npcSay,
                             "Nâng cấp\n" + player.combineNew.gemCombine + " ngọc", "Từ chối");
-                } else if (player.inventory.gem < player.combineNew.gemCombine) {
+                } else if (!player.inventory.checkGemAndRuby(player.combineNew.gemCombine)) {
                     npcSay += "|2|Cần 99 " + honBongTai.template.name + "\n";
                     npcSay += "|2|Cần 1 " + daXanhLam.template.name + "\n";
                     npcSay += "|7|Cần: " + player.combineNew.gemCombine + " ngọc\n";
                     npcSay += "|1|+1 Chỉ số ngẫu nhiên";
-                    npcSay += "|2|Còn thiếu\n" + (player.combineNew.gemCombine - player.inventory.gem) + " ngọc xanh";
+                    npcSay += "|2|Còn thiếu\n" + (player.combineNew.gemCombine - player.inventory.getGemAndRuby()) + " ngọc";
                     CombineService.gI().baHatMit.createOtherMenu(player, ConstNpc.IGNORE_MENU, npcSay, "Đóng");
                 }
             } else {
@@ -81,11 +81,11 @@ public class NangChiSoBongTai {
 
     public static void nangChiSoBongTai(Player player) {
         try {
-            if (player.inventory.gem < player.combineNew.gemCombine) {
-                Service.gI().sendThongBao(player, "Bạn không đủ ngọc, còn thiếu " + Util.powerToString(player.combineNew.gemCombine - player.inventory.gem) + " ngọc nữa!");
+            if (!player.inventory.checkGemAndRuby(player.combineNew.gemCombine)) {
+                Service.gI().sendThongBao(player, "Bạn không đủ ngọc, còn thiếu " + Util.powerToString(player.combineNew.gemCombine - player.inventory.getGemAndRuby()) + " ngọc nữa!");
                 return;
             }
-            player.inventory.gem -= player.combineNew.gemCombine;
+            player.inventory.subGemAndRuby(player.combineNew.gemCombine);
             Service.gI().sendMoney(player);
             Item BongTai2 = null,
                     honBongTai = null,

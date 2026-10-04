@@ -153,8 +153,7 @@ public class Input {
                         Service.gI().sendThongBao(player, "Không thể thực hiện khi đang giao dịch!");
                         return;
                     }
-                    if (player.getSession() == null || !player.getSession().actived) {
-                        Service.gI().sendThongBao(player, "Vui lòng kích hoạt thành viên!");
+                    if (player.getSession() == null) {
                         return;
                     }
                     String name = text[0];
@@ -278,8 +277,7 @@ public class Input {
                         Service.gI().sendThongBao(player, "Không thể thực hiện khi đang giao dịch!");
                         return;
                     }
-                    if (player.getSession() == null || !player.getSession().actived) {
-                        Service.gI().sendThongBao(player, "Vui lòng kích hoạt thành viên!");
+                    if (player.getSession() == null) {
                         return;
                     }
                     String name = text[0];
@@ -348,7 +346,7 @@ public class Input {
 
                     // 4. Nếu thành công thì trừ tiền người gửi và lượt dùng của item
                     if (isSuccess) {
-                        player.inventory.subGem(numGem); // Trừ ngọc xanh người gửi
+                        player.inventory.subGemDirect(numGem); // Trừ ngọc xanh người gửi
                         option.param -= numGem;
                         PlayerService.gI().sendInfoHpMpMoney(player);
                         InventoryService.gI().sendItemBags(player); // Cập nhật hành trang
@@ -591,7 +589,7 @@ public class Input {
                                     new String[]{"Đồng ý", "Từ chối"}, level);
                         }
                     } else {
-                        Service.gI().sendThongBao(player, "Không thể thực hiện");
+                        Service.gI().sendThongBaoResetWait(player, "Cấp độ Bản Đồ Kho Báu chỉ cho phép từ cấp 1 đến 110!");
                     }
 
                     break;
@@ -604,6 +602,8 @@ public class Input {
                                     "Cậu có chắc muốn đến\nDestron Gas cấp độ " + level + " ?",
                                     new String[]{"Đồng ý", "Từ chối"}, level);
                         }
+                    } else {
+                        Service.gI().sendThongBaoResetWait(player, "Cấp độ Khí Gas Hủy Diệt chỉ cho phép từ cấp 1 đến 110!");
                     }
                     break;
                 case CHOOSE_LEVEL_CDRD:
@@ -615,6 +615,8 @@ public class Input {
                                     "Con có chắc muốn đến\ncon đường rắn độc cấp độ " + level + " ?",
                                     new String[]{"Đồng ý", "Từ chối"}, level);
                         }
+                    } else {
+                        Service.gI().sendThongBaoResetWait(player, "Cấp độ Con Đường Rắn Độc chỉ cho phép từ cấp 1 đến 110!");
                     }
                     break;
                 case MBV:
@@ -622,16 +624,16 @@ public class Input {
                     int nmbv = Integer.parseInt(text[1]);
                     int rembv = Integer.parseInt(text[2]);
                     if ((mbv + "").length() != 6 || (nmbv + "").length() != 6 || (rembv + "").length() != 6) {
-                        Service.gI().sendThongBao(player, "Trêu bố mày à?");
+                        Service.gI().sendThongBaoResetWait(player, "Mã bảo vệ bắt buộc phải gồm đúng 6 chữ số!");
                     } else if (player.mbv == 0) {
-                        Service.gI().sendThongBao(player, "Bạn chưa cài mã bảo vệ!");
+                        Service.gI().sendThongBaoResetWait(player, "Bạn chưa cài mã bảo vệ!");
                     } else if (player.mbv != mbv) {
-                        Service.gI().sendThongBao(player, "Mã bảo vệ không đúng");
+                        Service.gI().sendThongBaoResetWait(player, "Mã bảo vệ không đúng");
                     } else if (nmbv != rembv) {
-                        Service.gI().sendThongBao(player, "Mã bảo vệ không trùng khớp");
+                        Service.gI().sendThongBaoResetWait(player, "Mã bảo vệ không trùng khớp");
                     } else {
                         player.mbv = nmbv;
-                        Service.gI().sendThongBao(player, "Đổi mã bảo vệ thành công!");
+                        Service.gI().sendThongBaoResetWait(player, "Đổi mã bảo vệ thành công!");
                     }
                     break;
                     
@@ -764,7 +766,7 @@ public class Input {
 
     public void createFormCSMM(Player player) {
         createForm(player, CSMMNE,
-                "Trò chơi con số ", new SubInput("Nhập số lựa chọn : (1-999)", NUMERIC));
+                "Con số may mắn (1 hồng ngọc/số)", new SubInput("Nhập số lựa chọn (1-999)", NUMERIC));
     }
 
 

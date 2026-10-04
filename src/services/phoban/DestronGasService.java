@@ -69,7 +69,7 @@ public class DestronGasService {
                             }
                         }
                     } else {
-                        Service.gI().sendThongBao(player, "Không thể thực hiện");
+                        Service.gI().sendThongBao(player, "Cấp độ lựa chọn không hợp lệ (1 - 110)!");
                         return;
                     }
                 }

@@ -35,7 +35,7 @@ public class RedRibbonHQService {
 
     public void joinDoanhTrai(Player pl) {
         if (pl.clan == null) {
-            Service.gI().sendThongBao(pl, "Không thể thực hiện");
+            Service.gI().sendThongBao(pl, "Bạn cần có bang hội để vào Doanh trại!");
             return;
         }
         if (pl.clan.haveGoneDoanhTrai && !Util.isAfterMidnight(pl.clan.lastTimeOpenDoanhTrai)) {

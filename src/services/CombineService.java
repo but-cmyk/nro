@@ -111,7 +111,7 @@ public class CombineService {
             return;
         }
         if (TransactionService.gI().check(player)) {
-            Service.gI().sendThongBao(player, "Không thể thực hiện khi đang giao dịch");
+            Service.gI().sendThongBaoResetWait(player, "Không thể luyện/ghép đồ khi đang trong phiên giao dịch!");
             return;
         }
         player.combineNew.clearItemCombine();
@@ -227,7 +227,7 @@ public class CombineService {
             return;
         }
         if (TransactionService.gI().check(player)) {
-            Service.gI().sendThongBao(player, "Không thể thực hiện khi đang giao dịch");
+            Service.gI().sendThongBaoResetWait(player, "Không thể luyện/ghép đồ khi đang trong phiên giao dịch!");
             return;
         }
         synchronized (player) {
@@ -319,7 +319,7 @@ public class CombineService {
             return;
         }
         if (TransactionService.gI().check(player)) {
-            Service.gI().sendThongBao(player, "Không thể thực hiện khi đang giao dịch");
+            Service.gI().sendThongBaoResetWait(player, "Không thể luyện/ghép đồ khi đang trong phiên giao dịch!");
             return;
         }
         synchronized (player) {
@@ -347,7 +347,7 @@ public class CombineService {
             return;
         }
         if (TransactionService.gI().check(player)) {
-            Service.gI().sendThongBao(player, "Không thể thực hiện khi đang giao dịch");
+            Service.gI().sendThongBaoResetWait(player, "Không thể luyện/ghép đồ khi đang trong phiên giao dịch!");
             return;
         }
         player.combineNew.setTypeCombine(type);

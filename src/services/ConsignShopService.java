@@ -69,11 +69,7 @@ public class ConsignShopService {
             return;
         }
         if (pl.isTrade || services.func.TransactionService.gI().check(pl)) {
-            Service.gI().sendThongBao(pl, "Không thể thực hiện khi đang giao dịch");
-            return;
-        }
-        if (!pl.getSession().actived) {
-            Service.gI().sendThongBao(pl, "Vui lòng kích hoạt thành viên");
+            Service.gI().sendThongBaoResetWait(pl, "Không thể mua vật phẩm ký gửi khi đang giao dịch!");
             return;
         }
         if (pl.nPoint.power < 17_000_000_000L) {
@@ -117,7 +113,7 @@ public class ConsignShopService {
                     Service.gI().sendThongBao(pl, "Bạn không đủ Ngọc Xanh để mua vật phẩm này!");
                     return;
                 }
-                pl.inventory.subGem(it.gemSell);
+                pl.inventory.subGemDirect(it.gemSell);
                 paid = true;
             }
 
@@ -167,10 +163,6 @@ public class ConsignShopService {
 
     public void openShopKyGui(Player pl, byte index, int page) {
         if (pl == null || pl.getSession() == null) {
-            return;
-        }
-        if (!pl.getSession().actived) {
-            Service.gI().sendThongBao(pl, "Vui lòng kích hoạt thành viên");
             return;
         }
         ConsignPage pageResult = getConsignPage(index, page, 20);
@@ -270,11 +262,7 @@ public class ConsignShopService {
             return;
         }
         if (pl.isTrade || services.func.TransactionService.gI().check(pl)) {
-            Service.gI().sendThongBao(pl, "Không thể thực hiện khi đang giao dịch");
-            return;
-        }
-        if (!pl.getSession().actived) {
-            Service.gI().sendThongBao(pl, "Vui lòng kích hoạt thành viên");
+            Service.gI().sendThongBaoResetWait(pl, "Không thể nhận/hủy vật phẩm ký gửi khi đang giao dịch!");
             return;
         }
         ConsignShopManager manager = ConsignShopManager.gI();
@@ -505,11 +493,7 @@ public class ConsignShopService {
             return;
         }
         if (pl.isTrade || services.func.TransactionService.gI().check(pl)) {
-            Service.gI().sendThongBao(pl, "Không thể thực hiện khi đang giao dịch");
-            return;
-        }
-        if (!pl.getSession().actived) {
-            Service.gI().sendThongBao(pl, "Vui lòng kích hoạt thành viên");
+            Service.gI().sendThongBaoResetWait(pl, "Không thể đăng bán ký gửi khi đang giao dịch!");
             return;
         }
         ConsignShopManager manager = ConsignShopManager.gI();
@@ -642,10 +626,6 @@ public class ConsignShopService {
 
     public void openShopKyGui(Player pl) {
         if (pl == null || pl.getSession() == null) {
-            return;
-        }
-        if (!pl.getSession().actived) {
-            Service.gI().sendThongBao(pl, "Vui lòng kích hoạt thành viên để sử dụng chức năng này");
             return;
         }
         Message msg = null;

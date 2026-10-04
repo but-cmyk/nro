@@ -75,7 +75,7 @@ public class EpSaoTrangBi {
     public static void epSaoTrangBi(Player player) {
         if (player.combineNew.itemsCombine.size() == 2) {
             int gem = player.combineNew.gemCombine;
-            if (player.inventory.gem < gem) {
+            if (!player.inventory.checkGemAndRuby(gem)) {
                 Service.gI().sendThongBao(player, "Không đủ ngọc để thực hiện");
                 return;
             }
@@ -101,7 +101,7 @@ public class EpSaoTrangBi {
                     }
                 }
                 if (star < starEmpty) {
-                    player.inventory.gem -= gem;
+                    player.inventory.subGemAndRuby(gem);
                     int optionId = CombineUtil.getOptionDaPhaLe(daPhaLe);
                     int param = CombineUtil.getParamDaPhaLe(daPhaLe);
                     Item.ItemOption option = null;

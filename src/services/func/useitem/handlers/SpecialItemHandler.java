@@ -65,38 +65,50 @@ public class SpecialItemHandler implements ItemActionHandler {
     }
 
     public static void usePorata(Player pl) {
-        if (pl.pet == null || pl.fusion.typeFusion == 4) {
-            Service.gI().sendThongBao(pl, "Không thể thực hiện");
+        if (pl.pet == null) {
+            Service.gI().sendThongBao(pl, "Bạn không có đệ tử để hợp thể!");
+            return;
+        }
+        if (pl.fusion.typeFusion == 4) {
+            Service.gI().sendThongBao(pl, "Không thể dùng bông tai trong trạng thái hợp thể này!");
+            return;
+        }
+        if (pl.fusion.typeFusion == ConstPlayer.NON_FUSION) {
+            pl.pet.fusion(true);
         } else {
-            if (pl.fusion.typeFusion == ConstPlayer.NON_FUSION) {
-                pl.pet.fusion(true);
-            } else {
-                openMenuPorata(pl);
-            }
+            openMenuPorata(pl);
         }
     }
 
     public static void usePorata2(Player pl) {
-        if (pl.pet == null || pl.fusion.typeFusion == 4) {
-            Service.gI().sendThongBao(pl, "Không thể thực hiện");
+        if (pl.pet == null) {
+            Service.gI().sendThongBao(pl, "Bạn không có đệ tử để hợp thể!");
+            return;
+        }
+        if (pl.fusion.typeFusion == 4) {
+            Service.gI().sendThongBao(pl, "Không thể dùng bông tai trong trạng thái hợp thể này!");
+            return;
+        }
+        if (pl.fusion.typeFusion == ConstPlayer.NON_FUSION) {
+            pl.pet.fusion2(true);
         } else {
-            if (pl.fusion.typeFusion == ConstPlayer.NON_FUSION) {
-                pl.pet.fusion2(true);
-            } else {
-                openMenuPorata(pl);
-            }
+            openMenuPorata(pl);
         }
     }
 
     public static void usePorata3(Player pl) {
-        if (pl.pet == null || pl.fusion.typeFusion == 4) {
-            Service.gI().sendThongBao(pl, "Không thể thực hiện");
+        if (pl.pet == null) {
+            Service.gI().sendThongBao(pl, "Bạn không có đệ tử để hợp thể!");
+            return;
+        }
+        if (pl.fusion.typeFusion == 4) {
+            Service.gI().sendThongBao(pl, "Không thể dùng bông tai trong trạng thái hợp thể này!");
+            return;
+        }
+        if (pl.fusion.typeFusion == ConstPlayer.NON_FUSION) {
+            pl.pet.fusion3(true);
         } else {
-            if (pl.fusion.typeFusion == ConstPlayer.NON_FUSION) {
-                pl.pet.fusion3(true);
-            } else {
-                openMenuPorata(pl);
-            }
+            openMenuPorata(pl);
         }
     }
 
@@ -212,7 +224,7 @@ public class SpecialItemHandler implements ItemActionHandler {
                 InventoryService.gI().subQuantityItemsBag(player, player.itemToConfirmChangePet, 1);
                 InventoryService.gI().sendItemBags(player);
             } else {
-                Service.gI().sendThongBao(player, "Không thể thực hiện");
+                Service.gI().sendThongBao(player, "Bạn không có đệ tử để đổi hành tinh!");
             }
         }
     }

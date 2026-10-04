@@ -42,11 +42,13 @@ public class BaHatMit extends Npc {
                         if (Nguqua != null && Nguqua.quantity >= 1) {
                             this.createOtherMenu(player, ConstNpc.BASE_MENU,
                                     "Ngươi tìm ta có việc gì?",
-                                    "Chức năng\nPha lê", "Võ đài\nSinh Tử", "Nâng Đồ\nKích Hoạt", "Chức năng\nChuyển hoá");
+                                    "Chức năng\nPha lê", "Võ đài\nSinh Tử", "Nâng Đồ\nKích Hoạt",
+                                    "Chức năng\nChuyển hoá");
                         } else {
                             this.createOtherMenu(player, ConstNpc.BASE_MENU,
                                     "Ngươi tìm ta có việc gì?",
-                                    "Chức năng\nPha lê", "Võ đài\nSinh Tử", "Nâng Đồ\nKích Hoạt", "Chức năng\nChuyển hoá");
+                                    "Chức năng\nPha lê", "Võ đài\nSinh Tử", "Nâng Đồ\nKích Hoạt",
+                                    "Chức năng\nChuyển hoá");
                         }
                     } else {
                         this.createOtherMenu(player, ConstNpc.BASE_MENU,
@@ -110,20 +112,26 @@ public class BaHatMit extends Npc {
                 default -> {
                     Item nguoituyet = InventoryService.gI().findItemBag(player, 1210);
                     Item nguoituyetbanggia = InventoryService.gI().findItemBag(player, 1211);
-                    String nangcapbt = InventoryService.gI().findItemBongTaiCap2(player) ? "Mở chỉ số\nBông tai\nPorata cấp\n2" : "Nâng cấp\nBông tai\nPorata";
+                    String nangcapbt = InventoryService.gI().findItemBongTaiCap2(player)
+                            ? "Mở chỉ số\nBông tai\nPorata cấp\n2"
+                            : "Nâng cấp\nBông tai\nPorata";
 
                     if (nguoituyet != null && nguoituyetbanggia != null) {
                         this.createOtherMenu(player, ConstNpc.BASE_MENU, "Ngươi tìm ta có việc gì?",
-                                "Sách\nTuyệt kỹ", "Cửa hàng\nBùa", "Nâng cấp\nVật phẩm", nangcapbt, "Làm phép\nNhập đá", "Nhập\nNgọc Rồng", "Giao\nNgười Tuyết", "Giao\nNgười Tuyết\nBăng Giá");
+                                "Sách\nTuyệt kỹ", "Cửa hàng\nBùa", "Nâng cấp\nVật phẩm", nangcapbt, "Làm phép\nNhập đá",
+                                "Nhập\nNgọc Rồng", "Giao\nNgười Tuyết", "Giao\nNgười Tuyết\nBăng Giá");
                     } else if (nguoituyet != null) {
                         this.createOtherMenu(player, ConstNpc.BASE_MENU, "Ngươi tìm ta có việc gì?",
-                                "Sách\nTuyệt kỹ", "Cửa hàng\nBùa", "Nâng cấp\nVật phẩm", nangcapbt, "Làm phép\nNhập đá", "Nhập\nNgọc Rồng", "Giao\nNgười Tuyết");
+                                "Sách\nTuyệt kỹ", "Cửa hàng\nBùa", "Nâng cấp\nVật phẩm", nangcapbt, "Làm phép\nNhập đá",
+                                "Nhập\nNgọc Rồng", "Giao\nNgười Tuyết");
                     } else if (nguoituyetbanggia != null) {
                         this.createOtherMenu(player, ConstNpc.BASE_MENU, "Ngươi tìm ta có việc gì?",
-                                "Sách\nTuyệt kỹ", "Cửa hàng\nBùa", "Nâng cấp\nVật phẩm", nangcapbt, "Làm phép\nNhập đá", "Nhập\nNgọc Rồng", "Giao\nNgười Tuyết\nBăng Giá");
+                                "Sách\nTuyệt kỹ", "Cửa hàng\nBùa", "Nâng cấp\nVật phẩm", nangcapbt, "Làm phép\nNhập đá",
+                                "Nhập\nNgọc Rồng", "Giao\nNgười Tuyết\nBăng Giá");
                     } else {
                         this.createOtherMenu(player, ConstNpc.BASE_MENU, "Ngươi tìm ta có việc gì?",
-                                "Sách\nTuyệt kỹ", "Cửa hàng\nBùa", "Nâng cấp\nVật phẩm", nangcapbt, "Làm phép\nNhập đá", "Nhập\nNgọc Rồng");
+                                "Sách\nTuyệt kỹ", "Cửa hàng\nBùa", "Nâng cấp\nVật phẩm", nangcapbt, "Làm phép\nNhập đá",
+                                "Nhập\nNgọc Rồng");
                     }
                 }
             }
@@ -143,7 +151,8 @@ public class BaHatMit extends Npc {
                                         "Ép Sao\n Trang Bị",
                                         "Pha lê\nhóa\ntrang bị");
                             case 1 ->
-                                ChangeMapService.gI().changeMapNonSpaceship(player, 112, 200 + Util.nextInt(-100, 100), 408);
+                                ChangeMapService.gI().changeMapNonSpaceship(player, 112, 200 + Util.nextInt(-100, 100),
+                                        408);
                             case 2 ->
                                 createOtherMenu(player, ConstNpc.CHUC_NANG_SKH,
                                         "Chọn Chức Năng Ngươi Muốn Thực Hiện",
@@ -176,18 +185,23 @@ public class BaHatMit extends Npc {
                             case 1 ->
                                 CombineService.gI().openTabCombine(player, CombineService.PHA_LE_HOA_TRANG_BI);
                         }
-                   } else if (player.idMark.getIndexMenu() == ConstNpc.MENU_START_COMBINE) {
+                    } else if (player.idMark.getIndexMenu() == ConstNpc.MENU_START_COMBINE) {
                         switch (player.combineNew.typeCombine) {
                             // --- TÁCH PHA LÊ HÓA RA XỬ LÝ RIÊNG ---
                             case CombineService.PHA_LE_HOA_TRANG_BI -> {
                                 switch (select) {
                                     case 0 -> CombineService.gI().startCombine(player, 10); // Nút đầu (x10)
-                                    case 1 -> CombineService.gI().startCombine(player, 1);  // Nút sau (x1)
+                                    case 1 -> CombineService.gI().startCombine(player, 1); // Nút sau (x1)
                                 }
                             }
 
-                            // --- CÁC CHỨC NĂNG CÒN LẠI GIỮ NGUYÊN (Đã xóa PHA_LE_HOA_TRANG_BI ở list dưới) ---
-                            case CombineService.EP_SAO_TRANG_BI, CombineService.NANG_CAP_SAO_PHA_LE, CombineService.DANH_BONG_SAO_PHA_LE, CombineService.CUONG_HOA_LO_SAO, CombineService.TAO_DA_HEMATITE, CombineService.DOI_DO_THAN, CombineService.DOI_SKH_HD, CombineService.NANG_HUY_DIET_LEN_SKH, CombineService.CHUYEN_HOA_BANG_VANG, CombineService.CHUYEN_HOA_BANG_NGOC -> {
+                            // --- CÁC CHỨC NĂNG CÒN LẠI GIỮ NGUYÊN (Đã xóa PHA_LE_HOA_TRANG_BI ở list dưới)
+                            // ---
+                            case CombineService.EP_SAO_TRANG_BI, CombineService.NANG_CAP_SAO_PHA_LE,
+                                    CombineService.DANH_BONG_SAO_PHA_LE, CombineService.CUONG_HOA_LO_SAO,
+                                    CombineService.TAO_DA_HEMATITE, CombineService.DOI_DO_THAN,
+                                    CombineService.DOI_SKH_HD, CombineService.NANG_HUY_DIET_LEN_SKH,
+                                    CombineService.CHUYEN_HOA_BANG_VANG, CombineService.CHUYEN_HOA_BANG_NGOC -> {
                                 switch (select) {
                                     case 0 ->
                                         CombineService.gI().startCombine(player, 100);
@@ -203,7 +217,11 @@ public class BaHatMit extends Npc {
                             }
 
                             // --- CÁC CHỨC NĂNG KHÁC (Nâng cấp vật phẩm, bông tai...) ---
-                            case CombineService.NANG_CAP_VAT_PHAM, CombineService.NANG_CAP_BONG_TAI, CombineService.NANG_CHI_SO_BONG_TAI, CombineService.LAM_PHEP_NHAP_DA, CombineService.NHAP_NGOC_RONG, CombineService.GIAM_DINH_SACH, CombineService.TAY_SACH, CombineService.NANG_CAP_SACH_TUYET_KY, CombineService.PHUC_HOI_SACH, CombineService.PHAN_RA_SACH -> {
+                            case CombineService.NANG_CAP_VAT_PHAM, CombineService.NANG_CAP_BONG_TAI,
+                                    CombineService.NANG_CHI_SO_BONG_TAI, CombineService.LAM_PHEP_NHAP_DA,
+                                    CombineService.NHAP_NGOC_RONG, CombineService.GIAM_DINH_SACH,
+                                    CombineService.TAY_SACH, CombineService.NANG_CAP_SACH_TUYET_KY,
+                                    CombineService.PHUC_HOI_SACH, CombineService.PHAN_RA_SACH -> {
                                 switch (select) {
                                     case 0 ->
                                         CombineService.gI().startCombine(player);
@@ -226,29 +244,35 @@ public class BaHatMit extends Npc {
                             switch (select) {
                                 case 0 -> { // Nhận phần thưởng
                                     if (InventoryService.gI().getCountEmptyBag(player) < 3) {
-                                        Service.gI().sendThongBao(player, "Hành trang cần tối thiểu 3 ô trống để nhận toàn bộ phần thưởng!");
+                                        Service.gI().sendThongBao(player,
+                                                "Hành trang cần tối thiểu 3 ô trống để nhận toàn bộ phần thưởng!");
                                         return;
                                     }
 
                                     StringBuilder thongBao = new StringBuilder("Bạn nhận được:\n");
 
-                                    // 1. Vàng (300k - 500k: Kiểm soát lạm phát, hoàn vốn tiền mua bình nước phép + có lời)
+                                    // 1. Vàng (300k - 500k: Kiểm soát lạm phát, hoàn vốn tiền mua bình nước phép +
+                                    // có lời)
                                     long goldReward = Util.nextInt(300_000, 500_000);
-                                    player.inventory.gold = Math.min(player.inventory.gold + goldReward, 2_000_000_000L);
+                                    player.inventory.gold = Math.min(player.inventory.gold + goldReward,
+                                            2_000_000_000L);
                                     Service.gI().sendMoney(player);
                                     thongBao.append("- ").append(Util.format(goldReward)).append(" vàng\n");
 
-                                    // 2. Tiềm năng / Sức mạnh: Phương Án 1 - Phân đoạn theo từng cột mốc sức mạnh (Tier Pacing)
+                                    // 2. Tiềm năng / Sức mạnh: Phương Án 1 - Phân đoạn theo từng cột mốc sức mạnh
+                                    // (Tier Pacing)
                                     long power = player.nPoint.power;
                                     long tnsm = 0;
                                     if (power < 1_500_000L) {
-                                        // Dưới 1.5 triệu SM (Ví dụ 550k): Thưởng 2% - 3% sức mạnh (550k nhận ~11k - 16k)
+                                        // Dưới 1.5 triệu SM (Ví dụ 550k): Thưởng 2% - 3% sức mạnh (550k nhận ~11k -
+                                        // 16k)
                                         tnsm = (long) (power * Util.nextInt(20, 30) / 1000.0);
                                         if (tnsm < 5_000L) {
                                             tnsm = 5_000L;
                                         }
                                     } else if (power < 50_000_000L) {
-                                        // 1.5 triệu - 50 triệu SM: Thưởng 0.3% - 0.5% sức mạnh (10tr nhận 30k - 50k, 40tr nhận 120k - 200k)
+                                        // 1.5 triệu - 50 triệu SM: Thưởng 0.3% - 0.5% sức mạnh (10tr nhận 30k - 50k,
+                                        // 40tr nhận 120k - 200k)
                                         tnsm = (long) (power * Util.nextInt(3, 5) / 1000.0);
                                     } else if (power < 1_500_000_000L) {
                                         // 50 triệu - 1.5 tỷ SM: Thưởng 0.05% sức mạnh (500tr nhận 250k, 1 tỷ nhận 500k)
@@ -257,7 +281,8 @@ public class BaHatMit extends Npc {
                                         // 1.5 tỷ - 40 tỷ SM: Thưởng 300.000 - 500.000 TNSM cố định
                                         tnsm = Util.nextInt(300_000, 500_000);
                                     } else if (power < 90_000_000_000L) {
-                                        // 40 tỷ - 80 tỷ SM: Thưởng 50.000 - 100.000 TNSM cố định (tương đương 20 - 50 hit đấm quái)
+                                        // 40 tỷ - 80 tỷ SM: Thưởng 50.000 - 100.000 TNSM cố định (tương đương 20 - 50
+                                        // hit đấm quái)
                                         tnsm = Util.nextInt(50_000, 100_000);
                                     } else {
                                         // Trên 90 tỷ SM (chạm max cap): Tượng trưng 1.000 TNSM
@@ -284,12 +309,14 @@ public class BaHatMit extends Npc {
                                     InventoryService.gI().addItemBag(player, veTinh);
                                     thongBao.append("- ").append(veTinh.template.name).append("\n");
 
-                                    // 4. Đá nâng cấp trang bị (220-224: Ruby, Lam Ngọc, Ngọc Bích, Thạch Anh Tím, Titan)
+                                    // 4. Đá nâng cấp trang bị (220-224: Ruby, Lam Ngọc, Ngọc Bích, Thạch Anh Tím,
+                                    // Titan)
                                     short daId = (short) Util.nextInt(220, 224);
                                     int slDa = Util.nextInt(1, 3);
                                     Item daNangCap = ItemService.gI().createNewItem(daId, slDa);
                                     InventoryService.gI().addItemBag(player, daNangCap);
-                                    thongBao.append("- x").append(slDa).append(" ").append(daNangCap.template.name).append("\n");
+                                    thongBao.append("- x").append(slDa).append(" ").append(daNangCap.template.name)
+                                            .append("\n");
 
                                     // 5. Gacha may mắn: Bùa 1h (tỷ lệ 30%)
                                     if (Util.isTrue(30, 100)) {
@@ -310,14 +337,15 @@ public class BaHatMit extends Npc {
                                         thongBao.append("- [May mắn] 1 Thỏi vàng\n");
                                     }
 
-                                    // 7. Gacha may mắn: Cải trang Boss Võ Đài Sinh Tử (Chỉ số chuẩn 100% theo Shop Santa)
+                                    // 7. Gacha may mắn: Cải trang Boss Võ Đài Sinh Tử (Chỉ số chuẩn 100% theo Shop
+                                    // Santa)
                                     // 448: Dracula (opt 104, param 50)
                                     // 449: Người Vô Hình (opt 105, param 0)
                                     // 450: Bông Băng (opt 106, param 0)
                                     // 451: Vua Quỷ Sa Tăng (opt 100, param 20)
                                     // 452: Thỏ Đầu Bạc (opt 101, param 20)
                                     if (Util.isTrue(15, 100)) {
-                                        short[] ctIds = {448, 449, 450, 451, 452};
+                                        short[] ctIds = { 448, 449, 450, 451, 452 };
                                         short ctId = ctIds[Util.nextInt(0, ctIds.length - 1)];
                                         Item caiTrang = ItemService.gI().createNewItem(ctId);
                                         if (caiTrang.itemOptions == null) {
@@ -336,13 +364,18 @@ public class BaHatMit extends Npc {
                                         // Tỷ lệ Vĩnh Viễn: ~1% tổng thể (7% trong 15% trúng)
                                         if (Util.isTrue(7, 100)) {
                                             InventoryService.gI().addItemBag(player, caiTrang);
-                                            thongBao.append("- [SIÊU PHẨM] ").append(caiTrang.template.name).append(" (VĨNH VIỄN)!\n");
-                                            Service.gI().sendThongBaoAllPlayer(player.name + " vừa xuất sắc vô địch Võ Đài Sinh Tử và nhận được " + caiTrang.template.name + " VĨNH VIỄN!");
+                                            thongBao.append("- [SIÊU PHẨM] ").append(caiTrang.template.name)
+                                                    .append(" (VĨNH VIỄN)!\n");
+                                            Service.gI()
+                                                    .sendThongBaoAllPlayer(player.name
+                                                            + " vừa xuất sắc vô địch Võ Đài Sinh Tử và nhận được "
+                                                            + caiTrang.template.name + " VĨNH VIỄN!");
                                         } else {
                                             int days = Util.nextInt(3, 7);
                                             caiTrang.itemOptions.add(new Item.ItemOption(93, days));
                                             InventoryService.gI().addItemBag(player, caiTrang);
-                                            thongBao.append("- [Đặc biệt] ").append(caiTrang.template.name).append(" (HSD: ").append(days).append(" ngày)\n");
+                                            thongBao.append("- [Đặc biệt] ").append(caiTrang.template.name)
+                                                    .append(" (HSD: ").append(days).append(" ngày)\n");
                                         }
                                     }
 
@@ -447,9 +480,11 @@ public class BaHatMit extends Npc {
                                         player.zoneBinhChon = player.zone;
                                         player.inventory.gold -= 1_000_000;
                                         Service.gI().sendMoney(player);
-                                        Service.gI().sendThongBao(player, "Bạn đã bình chọn thành công cho " + vdst.getPlayer().name);
+                                        Service.gI().sendThongBao(player,
+                                                "Bạn đã bình chọn thành công cho " + vdst.getPlayer().name);
                                     } else {
-                                        Service.gI().sendThongBao(player, "Bạn không đủ vàng, còn thiếu " + Util.powerToString(1_000_000 - player.inventory.gold) + " vàng nữa");
+                                        Service.gI().sendThongBao(player, "Bạn không đủ vàng, còn thiếu "
+                                                + Util.powerToString(1_000_000 - player.inventory.gold) + " vàng nữa");
                                     }
                                 }
                                 case 1 -> { // bình chọn cho hạt mít
@@ -460,9 +495,11 @@ public class BaHatMit extends Npc {
                                         player.zoneBinhChon = player.zone;
                                         player.inventory.gold -= 1_000_000;
                                         Service.gI().sendMoney(player);
-                                        Service.gI().sendThongBao(player, "Bạn đã bình chọn thành công cho Bà Hạt Mít.");
+                                        Service.gI().sendThongBao(player,
+                                                "Bạn đã bình chọn thành công cho Bà Hạt Mít.");
                                     } else {
-                                        Service.gI().sendThongBao(player, "Bạn không đủ vàng, còn thiếu " + Util.powerToString(1_000_000 - player.inventory.gold) + " vàng nữa");
+                                        Service.gI().sendThongBao(player, "Bạn không đủ vàng, còn thiếu "
+                                                + Util.powerToString(1_000_000 - player.inventory.gold) + " vàng nữa");
                                     }
                                 }
                             }
@@ -500,7 +537,7 @@ public class BaHatMit extends Npc {
                             case 1 -> // shop bùa
                                 createOtherMenu(player, ConstNpc.MENU_OPTION_SHOP_BUA,
                                         "Bùa của ta rất lợi hại, nhìn ngươi yếu đuối thế này, chắc muốn mua bùa để "
-                                        + "mạnh mẽ à, mua không ta bán cho, xài rồi lại thích cho mà xem.",
+                                                + "mạnh mẽ à, mua không ta bán cho, xài rồi lại thích cho mà xem.",
                                         "Bùa\n1 giờ", "Bùa\n8 giờ", "Bùa\n1 tháng", "Đóng");
                             case 2 ->
                                 CombineService.gI().openTabCombine(player,
@@ -547,13 +584,15 @@ public class BaHatMit extends Npc {
                             case 0 -> {
                                 Item trangSachCu = InventoryService.gI().findItemBagByTemp(player, 1188);
                                 Item biaSach = InventoryService.gI().findItemBagByTemp(player, 1154);
-                                if ((trangSachCu != null && trangSachCu.quantity >= 9999) && (biaSach != null && biaSach.quantity >= 1)) {
+                                if ((trangSachCu != null && trangSachCu.quantity >= 9999)
+                                        && (biaSach != null && biaSach.quantity >= 1)) {
                                     createOtherMenu(player, ConstNpc.DONG_THANH_SACH_CU,
                                             "|2|Chế tạo Cuốn sách cũ\n"
-                                            + "|1|Trang sách cũ " + trangSachCu.quantity + "/9999\n"
-                                            + "Bìa sách " + biaSach.quantity + "/1\n"
-                                            + "|4|Tỉ lệ thành công: 20%\n"
-                                            + "Thất bại mất 99 trang sách và 1 bìa sách", "Đồng ý", "Từ chối");
+                                                    + "|1|Trang sách cũ " + trangSachCu.quantity + "/9999\n"
+                                                    + "Bìa sách " + biaSach.quantity + "/1\n"
+                                                    + "|4|Tỉ lệ thành công: 20%\n"
+                                                    + "Thất bại mất 99 trang sách và 1 bìa sách",
+                                            "Đồng ý", "Từ chối");
                                 } else {
                                     String NpcSay = "|2|Chế tạo Cuốn sách cũ\n";
                                     if (trangSachCu == null) {
@@ -577,12 +616,14 @@ public class BaHatMit extends Npc {
                                 Item cuonSachCu = InventoryService.gI().findItemBagByTemp(player, 1187);
                                 Item kimBam = InventoryService.gI().findItemBagByTemp(player, 1153);
 
-                                if ((cuonSachCu != null && cuonSachCu.quantity >= 10) && (kimBam != null && kimBam.quantity >= 1)) {
+                                if ((cuonSachCu != null && cuonSachCu.quantity >= 10)
+                                        && (kimBam != null && kimBam.quantity >= 1)) {
                                     createOtherMenu(player, ConstNpc.DOI_SACH_TUYET_KY,
                                             "|2|Đổi sách tuyệt kỹ 1\n"
-                                            + "|1|Cuốn sách cũ " + cuonSachCu.quantity + "/10\n"
-                                            + "Kìm bấm giấy " + kimBam.quantity + "/1\n"
-                                            + "|4|Tỉ lệ thành công: 20%\n", "Đồng ý", "Từ chối");
+                                                    + "|1|Cuốn sách cũ " + cuonSachCu.quantity + "/10\n"
+                                                    + "Kìm bấm giấy " + kimBam.quantity + "/1\n"
+                                                    + "|4|Tỉ lệ thành công: 20%\n",
+                                            "Đồng ý", "Từ chối");
                                 } else {
                                     String NpcSay = "|2|Đổi sách Tuyệt kỹ 1\n";
                                     if (cuonSachCu == null) {
@@ -697,7 +738,8 @@ public class BaHatMit extends Npc {
                                 Item kimBam = InventoryService.gI().findItemBagByTemp(player, 1153);
 
                                 short baseValue = 1183;
-                                short genderModifier = (player.gender == 0) ? -2 : ((player.gender == 2) ? 2 : (short) 0);
+                                short genderModifier = (player.gender == 0) ? -2
+                                        : ((player.gender == 2) ? 2 : (short) 0);
 
                                 Item sachTuyetKy = ItemService.gI().createNewItem((short) (baseValue + genderModifier));
 
@@ -781,7 +823,11 @@ public class BaHatMit extends Npc {
                         }
                     } else if (player.idMark.getIndexMenu() == ConstNpc.MENU_START_COMBINE) {
                         switch (player.combineNew.typeCombine) {
-                            case CombineService.NANG_CAP_VAT_PHAM, CombineService.NANG_CAP_BONG_TAI, CombineService.NANG_CHI_SO_BONG_TAI, CombineService.LAM_PHEP_NHAP_DA, CombineService.NHAP_NGOC_RONG, CombineService.GIAM_DINH_SACH, CombineService.TAY_SACH, CombineService.NANG_CAP_SACH_TUYET_KY, CombineService.PHUC_HOI_SACH, CombineService.PHAN_RA_SACH -> {
+                            case CombineService.NANG_CAP_VAT_PHAM, CombineService.NANG_CAP_BONG_TAI,
+                                    CombineService.NANG_CHI_SO_BONG_TAI, CombineService.LAM_PHEP_NHAP_DA,
+                                    CombineService.NHAP_NGOC_RONG, CombineService.GIAM_DINH_SACH,
+                                    CombineService.TAY_SACH, CombineService.NANG_CAP_SACH_TUYET_KY,
+                                    CombineService.PHUC_HOI_SACH, CombineService.PHAN_RA_SACH -> {
                                 switch (select) {
                                     case 0 ->
                                         CombineService.gI().startCombine(player);
@@ -800,7 +846,8 @@ public class BaHatMit extends Npc {
 
     private void nhanBinhNuocFree(Player player) {
         if (Util.isAfterMidnight(player.lastTimeNhanBinhNuocFree)) {
-            if (InventoryService.gI().getCountEmptyBag(player) == 0 && InventoryService.gI().findItemBagByTemp(player, 456) == null) {
+            if (InventoryService.gI().getCountEmptyBag(player) == 0
+                    && InventoryService.gI().findItemBagByTemp(player, 456) == null) {
                 Service.gI().sendThongBao(player, "Hành trang của con đã đầy, hãy dọn bớt ô trống nhé!");
                 return;
             }
@@ -808,7 +855,8 @@ public class BaHatMit extends Npc {
             InventoryService.gI().addItemBag(player, waterBottle);
             InventoryService.gI().sendItemBags(player);
             player.lastTimeNhanBinhNuocFree = System.currentTimeMillis();
-            Service.gI().sendThongBao(player, "Bà tặng con 3 Bình nước phép miễn phí hôm nay! Chúc con thi đấu may mắn!");
+            Service.gI().sendThongBao(player,
+                    "Bà tặng con 3 Bình nước phép miễn phí hôm nay! Chúc con thi đấu may mắn!");
         } else {
             Service.gI().sendThongBao(player, "Hôm nay con đã nhận 3 Bình nước phép rồi. Hãy quay lại sau 0h nhé!");
         }
@@ -826,10 +874,12 @@ public class BaHatMit extends Npc {
 
     private void buyBinhNuoc(Player player, int quantity, long gemCost) {
         if (player.inventory.getGemAndRuby() < gemCost) {
-            Service.gI().sendThongBao(player, "Con không đủ ngọc, còn thiếu " + (gemCost - player.inventory.getGemAndRuby()) + " ngọc nữa!");
+            Service.gI().sendThongBao(player,
+                    "Con không đủ ngọc, còn thiếu " + (gemCost - player.inventory.getGemAndRuby()) + " ngọc nữa!");
             return;
         }
-        if (InventoryService.gI().getCountEmptyBag(player) == 0 && InventoryService.gI().findItemBagByTemp(player, 456) == null) {
+        if (InventoryService.gI().getCountEmptyBag(player) == 0
+                && InventoryService.gI().findItemBagByTemp(player, 456) == null) {
             Service.gI().sendThongBao(player, "Hành trang của con đã đầy, hãy dọn bớt ô trống nhé!");
             return;
         }

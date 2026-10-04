@@ -206,7 +206,7 @@ public class ChangeMapService {
                     changeMap(pl, zoneJoin, -1, -1, pl.location.x, targetY, NON_SPACE_SHIP);
                 }
             } else {
-                Service.gI().sendThongBao(pl, "Không thể thực hiện");
+                Service.gI().sendThongBao(pl, "Khu vực không tồn tại hoặc đã đóng!");
             }
         } else {
             NpcService.gI().createTutorial(pl, -1, "Chưa thể chuyển khu vực lúc này vui lòng chờ "
@@ -355,6 +355,7 @@ public class ChangeMapService {
         if (typeSpace == TELEPORT_YARDRAT) {
             zoneJoin = checkMapCanJoinByYardart(pl, zoneJoin);
         }
+        Zone targetZone = zoneJoin;
         zoneJoin = checkMapCanJoin(pl, zoneJoin);
         if (zoneJoin != null) {
             boolean currMapIsCold = pl.zone != null && MapService.gI().isMapCold(pl.zone.map);
@@ -470,7 +471,8 @@ public class ChangeMapService {
                 plX = 60;
             }
             Service.gI().resetPoint(pl, plX, pl.location.y);
-            Service.gI().sendThongBao(pl, "Bạn chưa thể đến khu vực này");
+            String reason = getReasonCannotJoinMap(pl, targetZone);
+            Service.gI().sendThongBao(pl, reason != null ? reason : "Bạn chưa thể đến khu vực này");
         }
 
     }
@@ -612,6 +614,16 @@ public class ChangeMapService {
         }
         if (player.isPl() && player.effectSkill != null && player.effectSkill.isBodyChangeTechnique) {
             EffectSkillService.gI().removeBodyChangeTechnique(player);
+        }
+        if (player.isPl() && player.canReceiveDailyMobRuby()) {
+            if (player.idMark != null && utils.Util.canDoWithTime(player.idMark.getLastTimeNotifyDailyMobRuby(), 30 * 60 * 1000L)) {
+                player.idMark.setLastTimeNotifyDailyMobRuby(System.currentTimeMillis());
+                utils.Util.setTimeout(() -> {
+                    if (player != null && player.isPl() && player.canReceiveDailyMobRuby()) {
+                        Service.gI().sendThongBao(player, "Bạn sẽ nhận được 10 hồng ngọc khi tiêu diệt quái");
+                    }
+                }, 1500);
+            }
         }
         try {
             for (int i = player.zone.getPlayers().size() - 1; i >= 0; i--) {
@@ -1166,6 +1178,186 @@ public class ChangeMapService {
             return null;
         }
         return zoneJoin;
+    }
+
+    public String getReasonCannotJoinMap(Player player, Zone zoneJoin) {
+        if (zoneJoin == null || zoneJoin.map == null) {
+            return "Bản đồ không tồn tại!";
+        }
+        int mapId = zoneJoin.map.mapId;
+        String mapName = zoneJoin.map.mapName;
+        int idTask = TaskService.gI().getIdTask(player);
+
+        switch (mapId) {
+            case 1:
+            case 8:
+            case 15:
+                if (idTask < ConstTask.TASK_1_0) {
+                    return "Cần hoàn thành nhiệm vụ đầu tiên trước khi đến " + mapName + "!";
+                }
+                break;
+            case 42:
+            case 43:
+            case 44:
+                if (idTask < ConstTask.TASK_3_0) {
+                    return "Cần hoàn thành nhiệm vụ Tìm thức ăn mới có thể đến " + mapName + "!";
+                }
+                break;
+            case 2:
+            case 9:
+            case 16:
+            case 24:
+            case 25:
+            case 26:
+                if (idTask < ConstTask.TASK_4_0) {
+                    return "Cần hoàn thành nhiệm vụ Trạm tàu vũ trụ để đến " + mapName + "!";
+                }
+                break;
+            case 3:
+            case 11:
+            case 17:
+                if (idTask < ConstTask.TASK_7_0) {
+                    return "Cần hoàn thành thêm nhiệm vụ cốt truyện để đến " + mapName + "!";
+                }
+                break;
+            case 5:
+            case 20:
+            case 13:
+                if (idTask < ConstTask.TASK_10_0) {
+                    return "Cần hoàn thành nhiệm vụ Đảo Kame để đến " + mapName + "!";
+                }
+                break;
+            case 27:
+            case 28:
+            case 31:
+            case 32:
+            case 35:
+            case 36:
+                if (idTask < ConstTask.TASK_13_0) {
+                    return "Cần hoàn thành thêm nhiệm vụ cốt truyện để đến " + mapName + "!";
+                }
+                break;
+            case 30:
+            case 34:
+            case 38:
+            case 84:
+                if (idTask < ConstTask.TASK_15_0) {
+                    return "Cần hoàn thành thêm nhiệm vụ cốt truyện để đến " + mapName + "!";
+                }
+                break;
+            case 6:
+            case 10:
+            case 19:
+                if (idTask < ConstTask.TASK_16_0) {
+                    return "Cần hoàn thành nhiệm vụ đến Thành phố để vào " + mapName + "!";
+                }
+                break;
+            case 68:
+            case 69:
+            case 70:
+            case 71:
+            case 72:
+            case 64:
+            case 65:
+                if (idTask < ConstTask.TASK_20_0) {
+                    return "Cần đạt nhiệm vụ Hành tinh Fide mới có thể đến " + mapName + "!";
+                }
+                break;
+            case 63:
+            case 66:
+            case 67:
+            case 73:
+            case 74:
+            case 75:
+            case 76:
+            case 77:
+                if (idTask < ConstTask.TASK_21_0) {
+                    return "Cần đạt nhiệm vụ Trại lính Fide mới có thể đến " + mapName + "!";
+                }
+                break;
+            case 81:
+            case 82:
+            case 83:
+            case 79:
+                if (idTask < ConstTask.TASK_22_0) {
+                    return "Cần đạt nhiệm vụ Núi khỉ mới có thể đến " + mapName + "!";
+                }
+                break;
+            case 80:
+            case 92:
+            case 93:
+            case 94:
+            case 96:
+            case 102:
+                if (idTask < ConstTask.TASK_23_0) {
+                    return "Cần đạt nhiệm vụ Tương lai mới có thể đến " + mapName + "!";
+                }
+                break;
+            case 97:
+            case 98:
+            case 99:
+            case 100:
+                if (idTask < ConstTask.TASK_27_0) {
+                    return "Cần đạt nhiệm vụ Thị trấn phía Bắc mới có thể đến " + mapName + "!";
+                }
+                break;
+            case 103:
+            case 105:
+            case 106:
+            case 107:
+            case 108:
+            case 109:
+            case 110:
+                if (idTask < ConstTask.TASK_29_0) {
+                    return "Cần đạt nhiệm vụ Thách đấu Xên bọ hung mới có thể đến " + mapName + "!";
+                }
+                break;
+            case 111:
+                if (player.nPoint.power > 1500000L) {
+                    return "Sức mạnh phải dưới 1,5 triệu mới có thể vào " + mapName + "!";
+                }
+                break;
+            case 148:
+                if (player.clan == null || player.clan.KhiGasHuyDiet == null) {
+                    return "Yêu cầu Bang hội đang tham gia Khí Gas Hủy Diệt!";
+                }
+                break;
+            case 160:
+            case 161:
+            case 162:
+            case 163:
+                if (idTask < ConstTask.TASK_23_0 || player.nPoint.power < 1500000L) {
+                    return "Yêu cầu sức mạnh trên 1,5 triệu và hoàn thành nhiệm vụ tương ứng để vào " + mapName + "!";
+                }
+                break;
+            case 169:
+            case 170:
+            case 171:
+                if (idTask < ConstTask.TASK_25_0 || player.nPoint.power < 1500000L) {
+                    return "Bạn chưa đủ điều kiện bước vào thánh địa Thần Kaio (" + mapName + ")!";
+                }
+                break;
+        }
+
+        switch (player.gender) {
+            case ConstPlayer.TRAI_DAT:
+                if (mapId == 22 || mapId == 23) {
+                    return "Bạn không thể vào nhà của hành tinh khác!";
+                }
+                break;
+            case ConstPlayer.NAMEC:
+                if (mapId == 21 || mapId == 23) {
+                    return "Bạn không thể vào nhà của hành tinh khác!";
+                }
+                break;
+            case ConstPlayer.XAYDA:
+                if (mapId == 21 || mapId == 22) {
+                    return "Bạn không thể vào nhà của hành tinh khác!";
+                }
+                break;
+        }
+
+        return "Bạn chưa thể đến " + mapName + " (chưa đủ điều kiện)!";
     }
 
     private void checkJoinSpecialMap(Player player) {

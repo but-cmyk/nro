@@ -119,7 +119,8 @@ namespace Game1
     			{
     				return string.Empty;
     			}
-    			return NinjaUtil.replace(templateName, "#", param + string.Empty);
+    			string val = (param >= 10000 || param <= -10000) ? Res.formatNumberWithCommas(param) : (param + string.Empty);
+    			return NinjaUtil.replace(templateName, "#", val);
     		}
     		return string.Empty;
     	}

@@ -47,7 +47,9 @@ public class LyTieuNuong extends Npc {
                                     ? ("\nBạn đã đăng ký: " + CSMM.gI().listRegNumber.get(pl).stream()
                                             .map(String::valueOf)
                                             .reduce((a, b) -> a + ", " + b).orElse("Không có số nào."))
-                                    : "\nBạn chưa đăng ký số nào."),
+                                    : "\nBạn chưa đăng ký số nào.")
+                                    + "\nPhí tham gia: " + CSMM.gI().costRuby + " hồng ngọc/số"
+                                    + "\nTổng giải thưởng: " + CSMM.gI().totalRuby + " hồng ngọc",
                                      "Dự đoán", "Cập nhật", "Đóng");
                         }
                     }
@@ -69,7 +71,9 @@ public class LyTieuNuong extends Npc {
                                     ? ("\nBạn đã đăng ký: " + CSMM.gI().listRegNumber.get(pl).stream()
                                             .map(String::valueOf)
                                             .reduce((a, b) -> a + ", " + b).orElse("Không có số nào."))
-                                    : "\nBạn chưa đăng ký số nào."),
+                                    : "\nBạn chưa đăng ký số nào.")
+                                    + "\nPhí tham gia: " + CSMM.gI().costRuby + " hồng ngọc/số"
+                                    + "\nTổng giải thưởng: " + CSMM.gI().totalRuby + " hồng ngọc",
                                     "Dự đoán", "Cập nhật", "Đóng");
                     }
                 }

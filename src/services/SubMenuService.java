@@ -96,14 +96,7 @@ public class SubMenuService {
             return;
         }
 
-        if (!plTarget.getSession().actived) {
-            Service.gI().sendThongBao(player, plTarget.name + " chưa kích hoạt tài khoản!");
-            return;
-        }
-        if (!player.getSession().actived) {
-            Service.gI().sendThongBao(player, "Bạn chưa kích hoạt tài khoản!");
-            return;
-        }
+
         if (plTarget.inventory.gold < 5_000_000) {
             Service.gI().sendThongBao(player, plTarget.name + " không có đủ 5tr vàng.");
             return;
