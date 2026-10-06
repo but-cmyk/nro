@@ -453,7 +453,11 @@ public class ChangeMapService {
             if (currMapIsCold != nextMapIsCold && !pl.isBoss) {
                 if (!currMapIsCold && nextMapIsCold) {
                     Service.gI().sendThongBao(pl, "Bạn đã đến hành tinh Cold");
-                    Service.gI().sendThongBao(pl, "Sức tấn công và HP của bạn bị giảm 50% vì quá lạnh");
+                    if (pl.nPoint != null && pl.nPoint.isKhongLanh) {
+                        Service.gI().sendThongBao(pl, "Nhờ trang bị kháng lạnh, bạn không bị giảm sức tấn công và HP");
+                    } else {
+                        Service.gI().sendThongBao(pl, "Sức tấn công và HP của bạn bị giảm 50% vì quá lạnh");
+                    }
                 } else {
                     Service.gI().sendThongBao(pl, "Bạn đã rời hành tinh Cold");
                     Service.gI().sendThongBao(pl, "Sức tấn công và HP của bạn đã trở lại bình thường");

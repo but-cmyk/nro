@@ -161,10 +161,13 @@ public class Service {
     }
 
     public void sendChibi(Player player) {
-        Item linhThu = player.inventory.itemsBody.get(11);
-        short smallId = (short) (player.effectSkill.isChibi ? player.typeChibi + 5000 : !linhThu.isNotNullItem() ? 0 : linhThu.template.iconID - 1);
+        if (player == null) {
+            return;
+        }
+        Item linhThu = (player.inventory != null && player.inventory.itemsBody != null && player.inventory.itemsBody.size() > 11) ? player.inventory.itemsBody.get(11) : null;
+        short smallId = (short) (player.effectSkill.isChibi ? player.typeChibi + 5000 : (linhThu != null && linhThu.isNotNullItem()) ? linhThu.template.iconID - 1 : 0);
         if (!player.effectSkill.isChibi) {
-            //   sendPetFollow(player, smallId);
+            sendPetFollow(player, smallId);
             return;
         }
         Message msg;
@@ -192,9 +195,9 @@ public class Service {
     }
 
     public void sendHaveChibiFollowToAllMap(Player pl) {
-        if (pl.zone != null) {
+        if (pl != null && pl.zone != null) {
             for (Player plMap : pl.zone.getPlayers()) {
-                if (plMap.isPl()) {
+                if (plMap != null && plMap.isPl()) {
                     sendChibiFollowToMe(plMap, pl);
                 }
             }
@@ -202,26 +205,30 @@ public class Service {
     }
 
     public void sendChibiFollowToMe(Player me, Player pl) {
-        Item linhThu = pl.inventory.itemsBody.get(11);
-        short smallId = (short) (pl.effectSkill.isChibi ? pl.typeChibi + 5000 : !linhThu.isNotNullItem() ? 0 : linhThu.template.iconID - 1);
-        if (!pl.effectSkill.isChibi) {
-            //      sendPetFollowToMe(me, pl);
+        if (me == null || pl == null) {
             return;
         }
+        Item linhThu = (pl.inventory != null && pl.inventory.itemsBody != null && pl.inventory.itemsBody.size() > 11) ? pl.inventory.itemsBody.get(11) : null;
+        short smallId = (short) (pl.effectSkill.isChibi ? pl.typeChibi + 5000 : (linhThu != null && linhThu.isNotNullItem()) ? linhThu.template.iconID - 1 : 0);
         Message msg;
         try {
             msg = new Message(31);
             msg.writer().writeInt((int) pl.id);
-            msg.writer().writeByte(1);
-            msg.writer().writeShort(smallId);
-            msg.writer().writeByte(1);
-            int[] fr = new int[]{0, 1, 2};
-            msg.writer().writeByte(fr.length);
-            for (int j : fr) {
-                msg.writer().writeByte(j);
+            if (smallId == 0) {
+                msg.writer().writeByte(0);
+            } else {
+                msg.writer().writeByte(1);
+                msg.writer().writeShort(smallId);
+                msg.writer().writeByte(1);
+                int[] fr = (pl.effectSkill.isChibi) ? new int[]{0, 1, 2} : new int[]{0, 1, 2, 3, 4, 5, 6, 7};
+                msg.writer().writeByte(fr.length);
+                for (int j : fr) {
+                    msg.writer().writeByte(j);
+                }
+                short size = (short) (pl.effectSkill.isChibi ? 32 : (smallId == 15067 ? 65 : 75));
+                msg.writer().writeShort(size);
+                msg.writer().writeShort(size);
             }
-            msg.writer().writeShort(32);
-            msg.writer().writeShort(32);
             me.sendMessage(msg);
             msg.cleanup();
         } catch (Exception ignored) {

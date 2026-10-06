@@ -3019,6 +3019,10 @@ namespace Game1
             {
                 return;
             }
+            if (cmyLim < 0)
+            {
+                cmyLim = 0;
+            }
             bool flag = false;
             if (GameKeys.IsUpPressed())
             {
@@ -3152,7 +3156,15 @@ namespace Game1
                     if (pointerDownTime > 5 && pointerDownFirstX == GameCanvas.py && !isDownWhenRunning)
                     {
                         pointerDownFirstX = -1000;
-                        selected = (cmtoY + GameCanvas.py - yScroll) / ITEM_HEIGHT;
+                        int clickY = cmtoY + GameCanvas.py - yScroll;
+                        if (clickY < 0)
+                        {
+                            selected = -1;
+                        }
+                        else
+                        {
+                            selected = clickY / ITEM_HEIGHT;
+                        }
                         if (selected >= currentListLength)
                         {
                             selected = -1;
@@ -3215,8 +3227,20 @@ namespace Game1
             {
                 cmRun = 0;
                 cmtoY = cmy;
+                if (cmtoY < 0)
+                {
+                    cmtoY = (cmy = 0);
+                }
                 pointerDownFirstX = -1000;
-                selected = (cmtoY + GameCanvas.py - yScroll) / ITEM_HEIGHT;
+                int clickY = cmtoY + GameCanvas.py - yScroll;
+                if (clickY < 0)
+                {
+                    selected = -1;
+                }
+                else
+                {
+                    selected = clickY / ITEM_HEIGHT;
+                }
                 if (selected >= currentListLength)
                 {
                     selected = -1;
@@ -3818,6 +3842,10 @@ namespace Game1
             ITEM_HEIGHT = 24;
             currentListLength = mapNames.Length;
             cmyLim = currentListLength * ITEM_HEIGHT - hScroll;
+            if (cmyLim < 0)
+            {
+                cmyLim = 0;
+            }
             cmy = (cmtoY = 0);
             selected = (GameCanvas.isTouch ? (-1) : 0);
         }
@@ -3827,6 +3855,10 @@ namespace Game1
             ITEM_HEIGHT = 24;
             currentListLength = GameScr.gI().zones.Length;
             cmyLim = currentListLength * ITEM_HEIGHT - hScroll;
+            if (cmyLim < 0)
+            {
+                cmyLim = 0;
+            }
             cmy = (cmtoY = 0);
             selected = (GameCanvas.isTouch ? (-1) : 0);
         }
@@ -9636,6 +9668,10 @@ namespace Game1
                 cp = null;
             }
             cmyLim = currentListLength * ITEM_HEIGHT - hScroll;
+            if (cmyLim < 0)
+            {
+                cmyLim = 0;
+            }
         }
     
         public void itemRequest(sbyte itemAction, string info, sbyte where, sbyte index)

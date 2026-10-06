@@ -111,14 +111,20 @@ namespace Game1.Assets.src.f
 					}
 					else if (num19 == Char.myCharz().charID)
 					{
-						Char.myCharz().petFollow.remove();
-						Char.myCharz().petFollow = null;
+						if (Char.myCharz().petFollow != null)
+						{
+							Char.myCharz().petFollow.remove();
+							Char.myCharz().petFollow = null;
+						}
 					}
 					else
 					{
 						Char char4 = GameScr.findCharInMap(num19);
-						char4.petFollow.remove();
-						char4.petFollow = null;
+						if (char4 != null && char4.petFollow != null)
+						{
+							char4.petFollow.remove();
+							char4.petFollow = null;
+						}
 					}
 					break;
 				}

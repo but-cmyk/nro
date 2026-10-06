@@ -180,78 +180,7 @@ namespace Game1.God
         }
         public void KeyPressed(int keyCode)
         {
-            switch (keyCode)
-            {
-                case 'x':
-                    ClientManager.getInstance().MenuClient();
-                    break;
-                case 'j':
-                    MapController.getInstance().NextMap(0);
-                    break;
-                case 'k':
-                    MapController.getInstance().NextMap(2);
-                    break;
-                case 'l':
-                    MapController.getInstance().NextMap(1);
-                    break;
-                case 'c':
-                    if (Utils.findItemBag(193))
-                    {
-                        Utils.UseItem(193);
-                    }
-                    else if (Utils.findItemBag(194))
-                    {
-                        Utils.UseItem(194);
-                    }
-                    else
-                    {
-                        GameScr.info1.addInfo("Không Có Capsule", 0);
-                    }
-                    break;
-                case 'f':
-                    if (Utils.findItemBag(454))
-                    {
-                        Utils.UseItem(454);
-                    }
-                    else if (Utils.findItemBag(921))
-                    {
-                        Utils.UseItem(921);
-                    }
-                    else if(Utils.findItemName("bông tai"))
-                    {
-                        Item item = Utils.getItemFromName("bông tai");
-                        if (item != null)
-                        {
-                            Utils.UseItem(item.template.id);
-                        }
-                    }
-                    else
-                    {
-                        GameScr.info1.addInfo("Không Có Bông Tai", 0);
-                    }
-                    break;
-                case 'm':
-                    Service.gI().openUIZone();
-                    break;
-                case 'e':
-                    perform(1, null);
-                    break;
-                case 'a':
-                    perform(2, null);
-                    break;
-                case 'g':
-                    bool flag10 = Char.myCharz().charFocus == null;
-                    if (flag10)
-                    {
-                        GameScr.info1.addInfo("Vui Lòng Chọn Mục Tiêu!", 0);
-                    }
-                    else
-                    {
-                        Service.gI().giaodich(0, Char.myCharz().charFocus.charID, -1, -1);
-                        GameScr.info1.addInfo("Đã Gửi Lời Mời Giao Dịch Đến: " + Char.myCharz().charFocus.cName, 0);
-                    }
-                    break;
-            }
+            // Các phím tắt chức năng auto (m: đổi khu, l/j/k: next map, e: auto hồi sinh, a: auto tự đánh, g: giao dịch, c: capsule, f: bông tai, x: menu client) đã được xóa bỏ theo yêu cầu
         }
         private void MenuClient()
         {

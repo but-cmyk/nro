@@ -8,14 +8,20 @@ import models.map.Zone;
 import models.mob.Mob;
 import models.player.Player;
 import services.ItemService;
+import services.player.InventoryService;
 import utils.Util;
 
 /**
  * Dịch vụ Rơi Đồ Thông Minh Cho Tân Thủ (Smart Adaptive Loot Engine)
  * - Phân tầng 8 Bậc trang bị theo chuẩn Shop 3 Làng (Bunma, Dende, Appule).
- * - Cơ chế bảo hiểm rớt đồ (Pity System) tích lũy chuỗi không rớt (+0.5%/con, 25 con = 100%).
+ * - Cơ chế bảo vệ chống trùng lặp (Anti-Duplicate & Missing-Slot Priority):
+ *   + Ưu tiên 85%-90% rơi vào các slot còn thiếu (chưa mặc / chưa có trong túi).
+ *   + Tuyệt đối không rơi trùng slot vừa rơi ở lần trước (lastSmartDropSlot).
+ *   + Khóa 100% đúng Hành Tinh và đúng Tier cho tân thủ (SM < 50.000).
+ * - Cơ chế bảo hiểm rớt đồ (Pity System) tích lũy chuỗi không rớt (+0.3%/con, 35 con = 100%).
+ * - Bảo vệ hành trang tân thủ: Không kích hoạt rơi khi túi đồ đã đầy.
  * - Thưởng ngẫu nhiên biến thiên chỉ số (+0% -> +15%) và lỗ Sao Pha Lê (1★ - 2★).
- * - Khóa giao dịch (Option 30) để bảo vệ kinh tế game.
+ * - Option 208: Bán shop 1 vàng, cho phép giao dịch giữa người chơi.
  */
 public class SmartDropService {
 
@@ -71,7 +77,7 @@ public class SmartDropService {
         if (mob == null || player == null || player.zone == null) {
             return null;
         }
-        if (player.isBoss || player.isBot || player.nPoint == null) {
+        if (player.isBoss || player.isBot || player.isNewPet || player.nPoint == null) {
             return null;
         }
         if (player.nPoint.power >= MAX_POWER_APPLY) {
@@ -80,56 +86,150 @@ public class SmartDropService {
 
         player.checkResetSmartDropDaily();
 
-        // 1. Kiểm tra xác suất rơi đồ (kèm Pity bảo hiểm)
+        // 1. Kiểm tra xác suất rơi đồ (kèm Pity bảo hiểm và kiểm tra túi trống)
         if (!shouldDropGear(player)) {
             return null;
         }
 
         // 2. Xác định Tier theo sức mạnh người chơi
         int targetTier = getTargetTier(player.nPoint.power);
-
-        // Phân phối: 70% In-Tier (mặc được ngay), 20% Next-Tier (+1), 10% Sub-Tier (-1)
-        int rollTier = Util.nextInt(1, 100);
         int selectedTier;
-        if (rollTier <= 70) {
-            selectedTier = targetTier;
-        } else if (rollTier <= 90) {
-            selectedTier = Math.min(targetTier + 1, GEAR_TEMPLATES.length - 1);
+
+        if (targetTier <= 0) {
+            // Tân thủ < 15.000 SM: 100% đúng Tier 1 (mặc được ngay)
+            selectedTier = 0;
+        } else if (targetTier == 1) {
+            // Sức mạnh 15.000 - 50.000 SM: 90% Tier 2, 10% Tier 1
+            selectedTier = Util.isTrue(90, 100) ? 1 : 0;
         } else {
-            selectedTier = Math.max(targetTier - 1, 0);
+            // Tier 3 trở lên: Phân phối 70% In-Tier, 20% Next-Tier (+1), 10% Sub-Tier (-1)
+            int rollTier = Util.nextInt(1, 100);
+            if (rollTier <= 70) {
+                selectedTier = targetTier;
+            } else if (rollTier <= 90) {
+                selectedTier = Math.min(targetTier + 1, GEAR_TEMPLATES.length - 1);
+            } else {
+                selectedTier = Math.max(targetTier - 1, 0);
+            }
         }
 
-        // 3. Phân phối Slot: Găng (25%), Áo (20%), Quần (20%), Giày (20%), Rada (15%)
-        int rollSlot = Util.nextInt(1, 100);
-        int slot;
-        if (rollSlot <= 25) {
-            slot = 2; // Găng
-        } else if (rollSlot <= 45) {
-            slot = 0; // Áo
-        } else if (rollSlot <= 65) {
-            slot = 1; // Quần
-        } else if (rollSlot <= 85) {
-            slot = 3; // Giày
-        } else {
-            slot = 4; // Rada
-        }
+        // 3. Phân phối Slot thông minh (Chống trùng lặp & Ưu tiên slot còn thiếu)
+        int slot = selectSmartSlot(player, targetTier);
 
         // 4. Xác định Hành tinh (Gender)
         int gender = player.gender;
         if (gender < 0 || gender > 2) {
             gender = 0;
         }
+        // Slot 4 là Rada (dùng chung cho cả 3 phái)
         if (slot != 4) {
-            // 85% rơi đúng hành tinh của người chơi, 15% rơi chéo
-            if (!Util.isTrue(85, 100)) {
-                gender = Util.nextInt(0, 2);
+            // Với tân thủ (Tier 1-3, SM < 200.000): 100% rơi đúng hành tinh của mình
+            // Chỉ khi đạt Tier 4 trở lên mới có 10% rơi chéo phái để giao dịch
+            if (selectedTier >= 3) {
+                if (!Util.isTrue(90, 100)) {
+                    gender = Util.nextInt(0, 2);
+                }
             }
         }
 
         int tempId = GEAR_TEMPLATES[selectedTier][slot][gender];
 
+        // Ghi nhận slot vừa rơi để ngăn chặn rơi trùng liên tiếp
+        player.lastSmartDropSlot = slot;
+
         // 5. Khởi tạo ItemMap và thuộc tính
         return createSmartDropItemMap(mob.zone, tempId, player, x, yEnd);
+    }
+
+    /**
+     * Thuật toán chọn Slot rơi đồ thông minh (Zero-GC):
+     * - Quét trang bị trên người (itemsBody) và trong túi (itemsBag).
+     * - Nếu còn slot chưa có đồ: Ưu tiên 85%-90% rơi vào các slot còn thiếu.
+     * - Tránh rơi lại slot vừa nhặt ở lần trước (player.lastSmartDropSlot).
+     */
+    public int selectSmartSlot(Player player, int targetTier) {
+        boolean[] hasSlot = new boolean[5];
+
+        // 1. Quét trang bị đang mặc trên người (itemsBody)
+        if (player.inventory != null && player.inventory.itemsBody != null) {
+            int bodySize = player.inventory.itemsBody.size();
+            for (int i = 0; i < 5 && i < bodySize; i++) {
+                Item it = player.inventory.itemsBody.get(i);
+                if (it != null && it.isNotNullItem() && it.template != null) {
+                    int type = it.template.type;
+                    if (type >= 0 && type <= 4) {
+                        hasSlot[type] = true;
+                    }
+                }
+            }
+        }
+
+        // 2. Quét trang bị hợp lệ trong hành trang (itemsBag)
+        if (player.inventory != null && player.inventory.itemsBag != null) {
+            int bagSize = player.inventory.itemsBag.size();
+            for (int i = 0; i < bagSize; i++) {
+                Item it = player.inventory.itemsBag.get(i);
+                if (it != null && it.isNotNullItem() && it.template != null) {
+                    int type = it.template.type;
+                    if (type >= 0 && type <= 4) {
+                        // Rada (type 4) hoặc đồ cùng phái (hoặc gender > 2 dùng chung)
+                        if (type == 4 || it.template.gender == player.gender || it.template.gender > 2) {
+                            hasSlot[type] = true;
+                        }
+                    }
+                }
+            }
+        }
+
+        // 3. Tìm các slot còn thiếu
+        int[] missing = new int[5];
+        int missingCount = 0;
+        for (int i = 0; i < 5; i++) {
+            if (!hasSlot[i]) {
+                missing[missingCount++] = i;
+            }
+        }
+
+        int selectedSlot;
+        int missingPriorityRate = (targetTier <= 1) ? 90 : 80;
+
+        // Nếu còn slot thiếu: Ưu tiên cao rơi vào các slot còn thiếu
+        if (missingCount > 0 && Util.isTrue(missingPriorityRate, 100)) {
+            if (missingCount > 1) {
+                // Lọc tránh rơi lại lastSmartDropSlot nếu còn slot thiếu khác
+                int[] candidates = new int[missingCount];
+                int candCount = 0;
+                for (int i = 0; i < missingCount; i++) {
+                    if (missing[i] != player.lastSmartDropSlot) {
+                        candidates[candCount++] = missing[i];
+                    }
+                }
+                if (candCount > 0) {
+                    selectedSlot = candidates[Util.nextInt(0, candCount - 1)];
+                } else {
+                    selectedSlot = missing[Util.nextInt(0, missingCount - 1)];
+                }
+            } else {
+                selectedSlot = missing[0];
+            }
+        } else {
+            // Đã đủ bộ (hoặc 10-20% roll nâng cấp chỉ số):
+            // Chống trùng lặp liên tiếp: Loại bỏ slot vừa rơi gần nhất
+            int[] candidates = new int[5];
+            int candCount = 0;
+            for (int i = 0; i < 5; i++) {
+                if (i != player.lastSmartDropSlot) {
+                    candidates[candCount++] = i;
+                }
+            }
+            if (candCount > 0) {
+                selectedSlot = candidates[Util.nextInt(0, candCount - 1)];
+            } else {
+                selectedSlot = Util.nextInt(0, 4);
+            }
+        }
+
+        return selectedSlot;
     }
 
     /**
@@ -145,25 +245,30 @@ public class SmartDropService {
     }
 
     /**
-     * Kiểm tra xác suất rơi đồ với hệ thống Pity tích lũy
+     * Kiểm tra xác suất rơi đồ với hệ thống Pity tích lũy và bảo vệ hành trang
      */
     public boolean shouldDropGear(Player player) {
+        // Bảo vệ hành trang tân thủ: Không rơi nếu túi đồ đã đầy
+        if (player.inventory == null || InventoryService.gI().getCountEmptyBag(player) <= 0) {
+            return false;
+        }
+
         // Pha 3: Đã nhặt trên 30 món trong ngày -> Giảm về tỉ lệ nền 0.2%
         if (player.smartDropCountToday >= 30) {
             return Util.isTrue(2, 1000);
         }
 
-        // Hard Pity: Đánh trượt liên tiếp 25 quái -> 100% RƠI ĐỒ
-        if (player.smartDropStreak >= 25) {
+        // Hard Pity: Đánh trượt liên tiếp 35 quái -> 100% RƠI ĐỒ
+        if (player.smartDropStreak >= 35) {
             return true;
         }
 
-        // Pha 1 (1 -> 15 món đầu): Base rate = 5% (50/1000)
-        // Pha 2 (16 -> 30 món):    Base rate = 2.5% (25/1000)
-        int baseRate = (player.smartDropCountToday < 15) ? 50 : 25;
+        // Pha 1 (1 -> 15 món đầu): Base rate = 3.5% (35/1000)
+        // Pha 2 (16 -> 30 món):    Base rate = 2.0% (20/1000)
+        int baseRate = (player.smartDropCountToday < 15) ? 35 : 20;
 
-        // Tích lũy: Mỗi con quái đánh hụt cộng thêm +0.5% (5/1000)
-        int totalRate = baseRate + (player.smartDropStreak * 5);
+        // Tích lũy: Mỗi con quái đánh hụt cộng thêm +0.3% (3/1000)
+        int totalRate = baseRate + (player.smartDropStreak * 3);
 
         return Util.isTrue(totalRate, 1000);
     }

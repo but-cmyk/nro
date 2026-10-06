@@ -299,13 +299,17 @@ public class MagicTree {
 
     public int addPeaHarvest(byte level, int quantity) {
         Item pea = ItemService.gI().createNewItem(MagicTree.PEA_TEMP[level - 1], quantity);
-        Item peaBag = InventoryService.gI().findItemBag(player, MagicTree.PEA_TEMP[level - 1]);
         pea.itemOptions.add(new Item.ItemOption(level - 1 > 1 ? 2 : 48, MagicTree.PEA_PARAM[level - 1]));
         if (pea.quantity > 0) {
-            if (peaBag != null && peaBag.quantity >= 20) {
+            // Ưu tiên cộng trực tiếp vào hành trang của player
+            InventoryService.gI().addItemBag(player, pea);
+            // Nếu hành trang đã đầy mà vẫn còn đậu thừa, chuyển phần dư vào rương đồ
+            if (pea.quantity > 0) {
+                int peasRemainBeforeBox = pea.quantity;
                 InventoryService.gI().addItemBox(player, pea);
-            } else {
-                InventoryService.gI().addItemBag(player, pea);
+                if (pea.quantity < peasRemainBeforeBox) {
+                    InventoryService.gI().sendItemBox(player);
+                }
             }
         }
         if (pea.quantity < quantity) {

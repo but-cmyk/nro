@@ -534,8 +534,17 @@ public class EffectSkillService {
     }
 
     public void removeChibi(Player player) {
+        if (player == null || player.effectSkill == null) {
+            return;
+        }
+        boolean hadChibiBuffHp = (player.typeChibi == 3);
         player.effectSkill.isChibi = false;
         player.typeChibi = -1;
+        if (hadChibiBuffHp) {
+            player.nPoint.calPoint();
+            Service.gI().point(player);
+            Service.gI().Send_Info_NV(player);
+        }
         ItemTimeService.gI().sendItemTime(player, 433, 0);
         Service.gI().sendChibi(player);
         Service.gI().sendHaveChibiFollowToAllMap(player);

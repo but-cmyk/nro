@@ -1225,12 +1225,28 @@ public class TaskService {
                 player.inventory.addGold(goldReward);
             }
 
-            // 3. Thưởng mốc lớn (Milestone Cột Mốc)
+            // 2.1. Thưởng Hồng Ngọc theo từng nhiệm vụ chính hoàn thành (thay vì ngọc xanh)
+            int rubyReward = switch (taskId) {
+                case 0, 1, 2, 3 -> 5;
+                case 4, 5, 6 -> 10;
+                case 7 -> 20; // Mốc đệ tử / gia nhập bang
+                case 8, 9, 10 -> 10;
+                case 11, 12, 13, 14 -> 15;
+                case 15, 16, 17, 18 -> 20;
+                case 19, 20, 21, 22 -> 25;
+                case 23 -> 100; // Mốc Fide
+                case 24, 25, 26, 27, 28 -> 30;
+                case 29 -> 50; // Mốc Siêu Bọ Hung
+                case 30, 31 -> 50;
+                default -> 10;
+            };
+            player.inventory.ruby += rubyReward;
+
+            // 3. Thưởng vật phẩm mốc lớn (Milestone Cột Mốc)
             String milestoneRewardStr = null;
             switch (taskId) {
                 case 7 -> {
-                    player.inventory.gem += 20;
-                    milestoneRewardStr = "Thưởng cột mốc: 20 Ngọc Xanh";
+                    milestoneRewardStr = "Thưởng cột mốc: 20 Hồng Ngọc";
                 }
                 case 11 -> {
                     Item capsule = ItemService.gI().createNewItem((short) 193, 10);
@@ -1238,13 +1254,11 @@ public class TaskService {
                     milestoneRewardStr = "Sư phụ thưởng: 10 Capsule Vàng";
                 }
                 case 23 -> {
-                    player.inventory.gem += 100;
                     Item thoiVang = ItemService.gI().createNewItem((short) 457, 5);
                     InventoryService.gI().addItemBag(player, thoiVang);
-                    milestoneRewardStr = "Chiến thắng Fide: 100 Ngọc & 5 Thỏi Vàng";
+                    milestoneRewardStr = "Chiến thắng Fide: 100 Hồng Ngọc & 5 Thỏi Vàng";
                 }
                 case 29 -> {
-                    player.inventory.ruby += 50;
                     Item daNangCap = ItemService.gI().createNewItem((short) 223, 10);
                     InventoryService.gI().addItemBag(player, daNangCap);
                     milestoneRewardStr = "Chinh phục Siêu Bọ Hung: 50 Hồng Ngọc & 10 Đá May Mắn";
@@ -1268,6 +1282,9 @@ public class TaskService {
             }
             if (goldReward > 0) {
                 sbReward.append("- ").append(Util.formatNumber(goldReward)).append(" Vàng\n");
+            }
+            if (rubyReward > 0) {
+                sbReward.append("- ").append(rubyReward).append(" Hồng Ngọc\n");
             }
             sbReward.append("- ").append(vegQuantity).append(" Cà chua & ").append(vegQuantity).append(" Cà rốt");
             if (milestoneRewardStr != null) {

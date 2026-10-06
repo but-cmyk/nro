@@ -721,43 +721,43 @@ public class Mob {
         }
         
         
-         //========================SKH CŨ========================
-        if (MapService.gI().isMapUpSKH(mapid)) {
-            if (Util.isTrue(co4LaRate, 2000)) { // 1/2000 thường, 2/2000 khi có cỏ 4 lá (0.05% - 0.1%)
-                short itTemp = (short) ItemService.gI().randTempItemKichHoat(player.gender);
-                ItemMap it = new ItemMap(zone, itTemp, 1, x, yEnd, player.id);
+         //========================SKH CŨ (ĐÃ TẮT RƠI THEO YÊU CẦU)========================
+//        if (MapService.gI().isMapUpSKH(mapid)) {
+//            if (Util.isTrue(co4LaRate, 2000)) { // 1/2000 thường, 2/2000 khi có cỏ 4 lá (0.05% - 0.1%)
+//                short itTemp = (short) ItemService.gI().randTempItemKichHoat(player.gender);
+//                ItemMap it = new ItemMap(zone, itTemp, 1, x, yEnd, player.id);
+//
+//                RewardService.gI().initBaseOptionClothes(itTemp, it.itemTemplate.type, it.options);
+//
+//                int[] opsrand = ItemService.gI().randOptionItemKichHoat(player.gender);
+//                it.options.add(new Item.ItemOption(opsrand[0], 0));
+//                it.options.add(new Item.ItemOption(opsrand[1], 0));
+//                it.options.add(new Item.ItemOption(30, 0));
+//
+//                list.add(it);
+//
+//                ChatGlobalService.gI().sendThongBaoTheGioi(player,
+//                        "[ Hệ Thống ] " + player.name + " vừa nhặt được " + it.itemTemplate.name + " Sét Kích Hoạt");
+//            }
+//        }
 
-                RewardService.gI().initBaseOptionClothes(itTemp, it.itemTemplate.type, it.options);
-
-                int[] opsrand = ItemService.gI().randOptionItemKichHoat(player.gender);
-                it.options.add(new Item.ItemOption(opsrand[0], 0));
-                it.options.add(new Item.ItemOption(opsrand[1], 0));
-                it.options.add(new Item.ItemOption(30, 0));
-
-                list.add(it);
-
-                ChatGlobalService.gI().sendThongBaoTheGioi(player,
-                        "[ Hệ Thống ] " + player.name + " vừa nhặt được " + it.itemTemplate.name + " Sét Kích Hoạt");
-            }
-        }
-
-          //========================ĐỒ SAO 3 MAP ĐẦU ========================
-        if (player.isPl() && MapService.gI().isMapUpSKH(mapid)) {           
-            if (Util.isTrue(co4LaRate, 2500)) {
-                short itTemp = (short) ItemService.gI().randTempItemKichHoat(player.gender);
-                ItemMap it = new ItemMap(zone, itTemp, 1, x, yEnd, player.id);
-
-                RewardService.gI().initBaseOptionClothes(itTemp, it.itemTemplate.type, it.options);
-
-                it.options.add(new Item.ItemOption(107, randomSaoDo())); // sao đỏ ngẫu nhiên
-                it.options.add(new Item.ItemOption(208, 0));
-
-                list.add(it);
-
-                ChatGlobalService.gI().sendThongBaoTheGioi(player,
-                        "[ Hệ Thống ] " + player.name + " vừa nhặt được " + it.itemTemplate.name + " Sét Kích Hoạt");
-            }
-        }
+          //========================ĐỒ SAO 3 MAP ĐẦU (ĐÃ TẮT THEO YÊU CẦU)========================
+//        if (player.isPl() && MapService.gI().isMapUpSKH(mapid)) {           
+//            if (Util.isTrue(co4LaRate, 2500)) {
+//                short itTemp = (short) ItemService.gI().randTempItemKichHoat(player.gender);
+//                ItemMap it = new ItemMap(zone, itTemp, 1, x, yEnd, player.id);
+//
+//                RewardService.gI().initBaseOptionClothes(itTemp, it.itemTemplate.type, it.options);
+//
+//                it.options.add(new Item.ItemOption(107, randomSaoDo())); // sao đỏ ngẫu nhiên
+//                it.options.add(new Item.ItemOption(208, 0));
+//
+//                list.add(it);
+//
+//                ChatGlobalService.gI().sendThongBaoTheGioi(player,
+//                        "[ Hệ Thống ] " + player.name + " vừa nhặt được " + it.itemTemplate.name + " Sét Kích Hoạt");
+//            }
+//        }
 
         
          //========================ĐỒ SAO MAP < NAPPA========================

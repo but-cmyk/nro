@@ -179,6 +179,11 @@ public class NPoint {
 
     public int tlDameChuong;
     public boolean xDameChuong;
+    public short tlDamePet;
+    public short tlGiamDame;
+    public short tlHoiKiKhiBiDanh;
+    public short tlDamePunchMax;
+    public int stackDamePunch;
 
     /**
      * Tỉ lệ sức đánh đẹp cộng thêm cho bản thân và người xung quanh
@@ -389,13 +394,25 @@ public class NPoint {
                                 this.tlSexyDame = io.param;
                             }
                             break;
+                        case 4: // Hồi phục #% KI khi bị đánh
+                            this.tlHoiKiKhiBiDanh += io.param;
+                            break;
+                        case 79: // Đệ tử #% sức đánh
+                            this.tlDamePet += io.param;
+                            break;
                         case 147: //+#% sức đánh
                             this.tlDame.add(io.param);
                             break;
-                        case 156: //Giảm 50% sức đánh, HP, KI và +#% SM, TN, vàng từ quái
+                        case 155: //Giảm 50% sức đánh, HP, KI và +#% SM, TN, vàng từ quái
                             this.tlSubSD += 50;
                             this.tlTNSM.add(io.param);
                             this.tlGold += io.param;
+                            break;
+                        case 156: //Cộng dồn 1% sức đánh khi chỉ dùng chiêu đấm, tối đa #%
+                            this.tlDamePunchMax += io.param;
+                            break;
+                        case 157: //Giảm #% sát thương
+                            this.tlGiamDame += io.param;
                             break;
                         case 162: //Cute hồi #% KI/s bản thân và xung quanh
                             this.mpHoiCute += io.param;
@@ -612,25 +629,37 @@ public class NPoint {
                     this.tlSexyDame = io.param;
                 }
                 break;
+            case 4: // Hồi phục #% KI khi bị đánh
+                this.tlHoiKiKhiBiDanh += io.param;
+                break;
+            case 79: // Đệ tử #% sức đánh
+                this.tlDamePet += io.param;
+                break;
             case 147: //+#% sức đánh
                 this.tlDame.add(io.param);
                 break;
-            case 156: //Giảm 50% sức đánh, HP, KI và +#% SM, TN, vàng từ quái
+            case 155: //Giảm 50% sức đánh, HP, KI và +#% SM, TN, vàng từ quái
                 this.tlSubSD += 50;
                 this.tlTNSM.add(io.param);
                 this.tlGold += io.param;
+                break;
+            case 156: //Cộng dồn 1% sức đánh khi chỉ dùng chiêu đấm, tối đa #%
+                this.tlDamePunchMax += io.param;
+                break;
+            case 157: //Giảm #% sát thương
+                this.tlGiamDame += io.param;
                 break;
             case 162: //Cute hồi #% KI/s bản thân và xung quanh
                 this.mpHoiCute += io.param;
                 break;
             case 159: // x chưởng
-                //     this.tlDameChuong += io.param;
+                this.tlDameChuong += io.param;
                 break;
             case 222:
-                //   this.tlDameChuong = 2;
+                this.tlDameChuong = 2;
                 break;
             case 223:
-                //    this.tlDameChuong = 4;
+                this.tlDameChuong = 4;
                 break;
             case 160: // TNSM PET;
                 this.tlTNSMPet += io.param;
@@ -650,7 +679,16 @@ public class NPoint {
 
     private void setSpeed() {
         if (player.isPl()) {
-            speed = (byte) (8 + 8 * (tlSpeed / 100));
+            byte base = 8;
+            if (this.tlSpeed > 0) {
+                int bonus = (int) Math.round((base * (double) this.tlSpeed) / 100.0);
+                if (bonus < 1) {
+                    bonus = 1;
+                }
+                speed = (byte) Math.min(25, base + bonus);
+            } else {
+                speed = base;
+            }
         }
     }
 
@@ -773,6 +811,9 @@ public class NPoint {
         }
 
         this.mpHoi += (((long) this.mpMax * this.tlMpHoiBanThanVaDongDoi) / 100);
+        if (this.mpHoiCute > 0) {
+            this.mpHoi += (((long) this.mpMax * this.mpHoiCute) / 100);
+        }
     }
 
     private void setHpMax() {
@@ -1010,6 +1051,12 @@ public class NPoint {
         if (this.player.isPet && ((Pet) this.player).typePet == 1 && masterFused) {
             totalPercentDame += 25;
         }
+        if (this.player.isPet && ((Pet) this.player).master != null && ((Pet) this.player).master.nPoint != null && ((Pet) this.player).master.nPoint.tlDamePet > 0) {
+            totalPercentDame += ((Pet) this.player).master.nPoint.tlDamePet;
+        }
+        if (this.tlDamePet > 0) {
+            totalPercentDame += this.tlDamePet;
+        }
         if (this.player.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA2) {
             totalPercentDame += 10;
         }
@@ -1174,6 +1221,13 @@ public class NPoint {
         this.tlSubSD = 0;
         this.tlHpGiamODo = 0;
         this.tlSpeed = 0;
+        this.tlDamePet = 0;
+        this.tlGiamDame = 0;
+        this.tlHoiKiKhiBiDanh = 0;
+        this.tlDamePunchMax = 0;
+        if (this.tlDamePunchMax == 0) {
+            this.stackDamePunch = 0;
+        }
         this.teleport = false;
 
         this.wearingVoHinh = false;
@@ -1246,7 +1300,7 @@ public class NPoint {
         intrinsic = this.player.playerIntrinsic.intrinsic;
         percentDameIntrinsic = 0;
         int percentDameSkill = 0;
-        byte percentXDame = 0;
+        int percentXDame = 0;
         Skill skillSelect = player.playerSkill.skillSelect;
         if (skillSelect.template.id != Skill.DICH_CHUYEN_TUC_THOI && isCritTele) {
             isCrit = true;
@@ -1258,14 +1312,26 @@ public class NPoint {
                     percentDameIntrinsic = intrinsic.param1;
                 }
                 percentDameSkill = skillSelect.damage;
+                if (this.tlDamePunchMax > 0) {
+                    if (this.stackDamePunch < this.tlDamePunchMax) {
+                        this.stackDamePunch++;
+                    }
+                    percentDameSkill += this.stackDamePunch;
+                }
                 break;
             case Skill.KAMEJOKO:
+                this.stackDamePunch = 0;
                 if (intrinsic.id == 2) {
                     percentDameIntrinsic = intrinsic.param1;
                 }
                 percentDameSkill = skillSelect.damage;
                 if (this.player.setClothes.songoku == 5) {
-                    percentXDame = 100;
+                    percentXDame += 100;
+                }
+                if (this.xDameChuong && this.tlDameChuong > 0) {
+                    percentXDame += (this.tlDameChuong - 1) * 100;
+                    this.xDameChuong = false;
+                    Service.gI().chat(player, "Uy lực đòn chưởng x" + this.tlDameChuong + "!");
                 }
                 break;
             case Skill.GALICK:
@@ -1274,53 +1340,80 @@ public class NPoint {
                 }
                 percentDameSkill = skillSelect.damage;
                 if (this.player.setClothes.kakarot == 5) {
-                    percentXDame = 100;
+                    percentXDame += 100;
+                }
+                if (this.tlDamePunchMax > 0) {
+                    if (this.stackDamePunch < this.tlDamePunchMax) {
+                        this.stackDamePunch++;
+                    }
+                    percentDameSkill += this.stackDamePunch;
                 }
                 break;
             case Skill.ANTOMIC:
+                this.stackDamePunch = 0;
                 if (intrinsic.id == 17) {
                     percentDameIntrinsic = intrinsic.param1;
                 }
                 percentDameSkill = skillSelect.damage;
+                if (this.xDameChuong && this.tlDameChuong > 0) {
+                    percentXDame += (this.tlDameChuong - 1) * 100;
+                    this.xDameChuong = false;
+                    Service.gI().chat(player, "Uy lực đòn chưởng x" + this.tlDameChuong + "!");
+                }
                 break;
             case Skill.DEMON:
                 if (intrinsic.id == 8) {
                     percentDameIntrinsic = intrinsic.param1;
                 }
                 percentDameSkill = skillSelect.damage;
+                if (this.tlDamePunchMax > 0) {
+                    if (this.stackDamePunch < this.tlDamePunchMax) {
+                        this.stackDamePunch++;
+                    }
+                    percentDameSkill += this.stackDamePunch;
+                }
                 break;
             case Skill.MASENKO:
+                this.stackDamePunch = 0;
                 if (intrinsic.id == 9) {
                     percentDameIntrinsic = intrinsic.param1;
                 }
                 if (this.player.setClothes.nail == 5) {
-                    percentXDame = 50;
+                    percentXDame += 50;
                 }
                 percentDameSkill = skillSelect.damage;
+                if (this.xDameChuong && this.tlDameChuong > 0) {
+                    percentXDame += (this.tlDameChuong - 1) * 100;
+                    this.xDameChuong = false;
+                    Service.gI().chat(player, "Uy lực đòn chưởng x" + this.tlDameChuong + "!");
+                }
                 break;
             case Skill.KAIOKEN:
+                this.stackDamePunch = 0;
                 percentDameSkill = skillSelect.damage;
                 if (this.player.setClothes.kaioken == 5) {
-                    percentXDame = 100;
+                    percentXDame += 100;
                 } else if (player.setClothes.thanVuTruKaio == 5) {
-                    percentXDame = 30;
+                    percentXDame += 30;
                 }
                 break;
             case Skill.TU_SAT:
+                this.stackDamePunch = 0;
                 percentDameSkill = skillSelect.damage;
                 if (this.player.setClothes.cadicM == 4) {
-                    percentXDame = 20;
+                    percentXDame += 20;
                 } else if (this.player.setClothes.cadicM == 5) {
-                    percentXDame = 40;
+                    percentXDame += 40;
                 }
                 break;
             case Skill.LIEN_HOAN:
+                this.stackDamePunch = 0;
                 if (intrinsic.id == 13) {
                     percentDameIntrinsic = intrinsic.param1;
                 }
                 percentDameSkill = skillSelect.damage;
                 if (this.player.setClothes.ocTieu == 5) {
-                    percentXDame = 100;
+                    percentXDame += 100;
                 }
                 break;
             case Skill.DICH_CHUYEN_TUC_THOI:

@@ -149,12 +149,14 @@ public class Player extends Character {
     // --- Smart Drop State (Zero-GC Transient & Daily Tracking) ---
     public int smartDropStreak = 0;
     public int smartDropCountToday = 0;
+    public int lastSmartDropSlot = -1;
     public long lastTimeSmartDropReset = 0L;
 
     public void checkResetSmartDropDaily() {
         if (this.lastTimeSmartDropReset == 0 || utils.Util.isAfterMidnight(this.lastTimeSmartDropReset)) {
             this.smartDropCountToday = 0;
             this.smartDropStreak = 0;
+            this.lastSmartDropSlot = -1;
             this.lastTimeSmartDropReset = System.currentTimeMillis();
         }
     }
@@ -971,6 +973,11 @@ public class Player extends Character {
 
             damage -= ((damage / 100) * tlGiap);
 
+            if (this.nPoint.tlGiamDame > 0) {
+                int reducePercent = Math.min(80, (int) this.nPoint.tlGiamDame);
+                damage -= (damage * reducePercent / 100);
+            }
+
             if (!piercing) {
                 damage = this.nPoint.subDameInjureWithDeff(damage);
             }
@@ -1018,6 +1025,14 @@ public class Player extends Character {
             }
 
             this.nPoint.subHP(damage);
+
+            if (this.nPoint.tlHoiKiKhiBiDanh > 0 && damage > 0 && !this.isDie()) {
+                long mpHoi = (long) this.nPoint.mpMax * this.nPoint.tlHoiKiKhiBiDanh / 100;
+                if (mpHoi > 0) {
+                    this.nPoint.addMp(mpHoi);
+                    PlayerService.gI().sendInfoHpMpMoney(this);
+                }
+            }
 
             // Smart TTNL Cancel: Nếu là Đệ tử đang gồng Tái tạo năng lượng mà bị tấn công mất máu, tự ngắt gồng để phản ứng chiến đấu
             if (this.isPet && damage > 0 && this.effectSkill != null && this.effectSkill.isCharging) {

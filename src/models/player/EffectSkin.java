@@ -90,7 +90,7 @@ public class EffectSkin {
             updateHoaDa();
             updateSocola2();
             updateLamCham();
-          //  setxDameChuong();
+            setxDameChuong();
             updateHalloween();
         }
         if (!this.player.isBoss && !this.player.isPet && !player.isNewPet) {
@@ -364,18 +364,18 @@ public class EffectSkin {
         }
     }
 
-//    private void setxDameChuong() {
-//        try {
-//            if (this.player.nPoint.tlDameChuong > 0) {
-//                if (Util.canDoWithTime(lastTimexDameChuong, 60000)) {
-//                    this.player.nPoint.xDameChuong = true;
-//                    this.lastTimexDameChuong = System.currentTimeMillis();
-//                }
-//            }
-//        } catch (Exception e) {
-//            Logger.error("update setxDameChuong()" + e.getMessage());
-//        }
-//    }
+    private void setxDameChuong() {
+        try {
+            if (this.player.nPoint.tlDameChuong > 0) {
+                if (Util.canDoWithTime(lastTimexDameChuong, 60000)) {
+                    this.player.nPoint.xDameChuong = true;
+                    this.lastTimexDameChuong = System.currentTimeMillis();
+                }
+            }
+        } catch (Exception e) {
+            Logger.error("update setxDameChuong()" + e.getMessage());
+        }
+    }
 
     private void updateMaPhongBa() {
         // Skill Ma phong ba removed from project

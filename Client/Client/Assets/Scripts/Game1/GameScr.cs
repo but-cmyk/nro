@@ -3151,7 +3151,7 @@ namespace Game1
     							ChatTextField.gI().startChat(this, string.Empty);
     							GameCanvas.keyAsciiPress = 0;
     						}
-                            ClientManager.getInstance().KeyPressed(GameCanvas.keyAsciiPress);
+                            // ClientManager.getInstance().KeyPressed(GameCanvas.keyAsciiPress);
                         }
     					else if (!GameCanvas.isMoveNumberPad)
     					{

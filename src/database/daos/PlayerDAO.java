@@ -141,10 +141,6 @@ public class PlayerDAO {
                     opt.add(100); // param: 100 HP, KI
                     options.add(opt.toJSONString());
                     opt.clear();
-                    opt.add(30); // id option: không thể giao dịch
-                    opt.add(0);
-                    options.add(opt.toJSONString());
-                    opt.clear();
                     item.add(13); // id item: Đậu thần cấp 1
                     item.add(100); // số lượng: 100 viên
                 } else {

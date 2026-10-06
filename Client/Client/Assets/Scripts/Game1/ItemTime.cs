@@ -206,6 +206,14 @@ namespace Game1
     			{
     				triggerAutoUse(idIcon);
     			}
+    			if (idIcon == 433)
+    			{
+    				if (Char.myCharz().petFollow != null && Char.myCharz().petFollow.smallID >= 5000 && Char.myCharz().petFollow.smallID <= 5003)
+    				{
+    					Char.myCharz().petFollow.remove();
+    					Char.myCharz().petFollow = null;
+    				}
+    			}
     			Char.vItemTime.removeElement(this);
     		}
     		if (minute < 0 && isText && !dontClear)
