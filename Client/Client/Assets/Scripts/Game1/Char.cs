@@ -3960,9 +3960,13 @@ namespace Game1
     				stop();
     			}
     		}
-    		if (statusMe == 2 && !isMount && (TileMap.tileTypeAtPixel(cx, cy) & 2) == 2 && (cp1 == 1 || cp1 == 6))
+    		if (statusMe == 2 && !isMount && (cp1 == 1 || cp1 == 6))
     		{
-    			GameCanvas.gI().startDust(cdir, cx - (cdir << 3), cy);
+    			GameCanvas.gI().startDust(cdir, cx - (cdir << 3), cy - 2);
+    			if (cBonusSpeed > 0)
+    			{
+    				GameCanvas.gI().startDust(cdir, cx - (cdir * 11), cy - 1);
+    			}
     		}
     		updateCharInBridge();
     		addDustEff(2);

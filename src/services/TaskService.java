@@ -314,6 +314,9 @@ public class TaskService {
             return;
         }
         rewardDoneTask(player);
+        if (player.playerTask != null) {
+            player.playerTask.isJustDoneMainTask = true;
+        }
         int nextTaskId = switch (player.playerTask.taskMain.id) {
             case 3 -> player.gender + 4;
             case 4, 5, 6 -> 7;
@@ -430,6 +433,9 @@ public class TaskService {
     }
 
     public boolean checkDoneTaskTalkNpc(Player player, Npc npc) {
+        if (checkPendingNpcSay(player, npc)) {
+            return true;
+        }
         return switch (npc.tempId) {
             case ConstNpc.QUY_LAO_KAME ->
                 player.gender == ConstPlayer.TRAI_DAT && (doneTask(player, ConstTask.TASK_11_0)
@@ -640,9 +646,6 @@ public class TaskService {
                     case 47:
                         doneTask(player, ConstTask.TASK_8_3);
                         break;
-                    case 59:
-                        doneTask(player, ConstTask.TASK_19_1);
-                        break;
                     case 93:
                         doneTask(player, ConstTask.TASK_25_0);
                         break;
@@ -731,14 +734,54 @@ public class TaskService {
     }
 
     public void checkDoneTaskKillPlayer(Player player) {
-        doneTask(player, ConstTask.TASK_16_0);
     }
 
-    // Kiểm tra hoàn thành nhiệm vụ hàng ngày (Task 16)
+    // Kiểm tra hoàn thành nhiệm vụ hàng ngày
     public void checkDoneTaskSideTask(Player player) {
+    }
+
+    // Kiểm tra hoàn thành nhiệm vụ vô địch Võ Đài Sinh Tử tại Bà Hạt Mít ở Đảo Kame (Task 16)
+    public void checkDoneTaskVoDaiSinhTu(Player player) {
         player = getMasterIfPet(player);
         if (player != null && !player.isBoss && !player.isPet) {
             doneTask(player, ConstTask.TASK_16_0);
+        }
+    }
+
+    // Kiểm tra hoàn thành nhiệm vụ tiêu diệt Trung Úy Trại Độc Nhãn (Task 19)
+    // Hỗ trợ: khi 5 thành viên trong bang đi doanh trại, chỉ cần 1 thành viên bất kỳ hoặc đệ tử tiêu diệt Boss thì các thành viên còn lại cũng được hoàn thành nhiệm vụ
+    public void checkDoneTaskTrungUy(Player player, Boss boss) {
+        player = getMasterIfPet(player);
+        if (player == null || player.isBoss || player.isPet) {
+            return;
+        }
+
+        // 1. Hoàn thành cho người trực tiếp tiêu diệt (hoặc sư phụ của đệ tử)
+        doneTask(player, ConstTask.TASK_19_1);
+
+        // 2. Chia sẻ hoàn thành nhiệm vụ cho tất cả các thành viên trong bang đi Doanh trại
+        if (player.clan != null) {
+            if (player.clan.doanhTrai != null && player.clan.doanhTrai.zones != null) {
+                for (Zone z : player.clan.doanhTrai.zones) {
+                    if (z != null) {
+                        for (Player pl : z.getPlayers()) {
+                            if (pl != null && !pl.isBoss && !pl.isPet && pl.clan != null && pl.clan.id == player.clan.id) {
+                                if (doneTask(pl, ConstTask.TASK_19_1)) {
+                                    Service.gI().sendThongBao(pl, "Đồng đội đã tiêu diệt Trung Úy! Bạn đã hoàn thành nhiệm vụ tiêu diệt Trung Úy.");
+                                }
+                            }
+                        }
+                    }
+                }
+            } else if (boss != null && boss.zone != null) {
+                for (Player pl : boss.zone.getPlayers()) {
+                    if (pl != null && !pl.isBoss && !pl.isPet && pl.clan != null && pl.clan.id == player.clan.id) {
+                        if (doneTask(pl, ConstTask.TASK_19_1)) {
+                            Service.gI().sendThongBao(pl, "Đồng đội đã tiêu diệt Trung Úy! Bạn đã hoàn thành nhiệm vụ tiêu diệt Trung Úy.");
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -762,6 +805,9 @@ public class TaskService {
         player = getMasterIfPet(player);
         if (player != null && !player.isBoss && !player.isPet) {
             switch ((int) boss.id) {
+                case BossID.TRUNG_UY_TRANG, BossID.TRUNG_UY_THEP, BossID.TRUNG_UY_XANH_LO:
+                    checkDoneTaskTrungUy(player, boss);
+                    break;
                 case BossID.KUKU:
                     doneTask(player, ConstTask.TASK_21_0);
                     break;
@@ -970,6 +1016,7 @@ public class TaskService {
                         npcSay(player, ConstTask.NPC_NHA, "Con đã tỉnh dậy rồi à? Mau mở rương đồ phía bên trái nhà để lấy quần áo đi con!");
                         break;
                     case ConstTask.TASK_0_3:
+                        Service.gI().sendThongBao(player, "Đã lấy trang bị từ rương thành công!");
                         npcSay(player, ConstTask.NPC_NHA, "Tốt lắm. Bây giờ con hãy thu hoạch 1 hạt đậu thần từ cây đậu thần sau nhà nhé!");
                         break;
                     case ConstTask.TASK_0_4:
@@ -1060,6 +1107,15 @@ public class TaskService {
                     case ConstTask.TASK_12_0:
                         npcSay(player, ConstTask.NPC_QUY_LAO, "Tốt lắm, giờ con đã có đồng đội! Hãy cùng bang hội đi tiêu diệt heo rừng để tăng sự gắn kết.");
                         break;
+                    case ConstTask.TASK_16_0:
+                        npcSay(player, ConstTask.NPC_QUY_LAO, "Tuyệt vời! Con đã xuất sắc vô địch Võ Đài Sinh Tử tại đảo Kame! Mau về đây báo cáo với ta.");
+                        break;
+                    case ConstTask.TASK_19_1:
+                        npcSay(player, ConstTask.NPC_QUY_LAO, "Tuyệt vời! Con và đồng đội đã tiêu diệt được Trung Úy trong trại Độc Nhãn! Mau về đây báo cáo với ta.");
+                        break;
+                }
+                if (player.playerTask != null) {
+                    player.playerTask.isJustDoneMainTask = false;
                 }
             }
             PlayerService.gI().sendInfoHpMpMoney(player);
@@ -1068,7 +1124,34 @@ public class TaskService {
         return false;
     }
 
+    public boolean checkPendingNpcSay(Player player, Npc npc) {
+        if (player == null || npc == null || player.playerTask == null) {
+            return false;
+        }
+        if (player.playerTask.pendingNpcSayText != null) {
+            int targetNpcId = player.playerTask.pendingNpcSayNpcId;
+            if (targetNpcId == npc.tempId || targetNpcId == -1) {
+                String text = player.playerTask.pendingNpcSayText;
+                player.playerTask.pendingNpcSayText = null;
+                player.playerTask.pendingNpcSayNpcId = -1;
+                int avatar = NpcService.gI().getAvatar(npc.tempId);
+                NpcService.gI().createTutorial(player, avatar, text);
+                return true;
+            }
+        }
+        return false;
+    }
+
     private void npcSay(Player player, int npcId, String text) {
+        if (player == null) {
+            return;
+        }
+        if (player.playerTask != null && player.playerTask.isJustDoneMainTask) {
+            player.playerTask.isJustDoneMainTask = false;
+            player.playerTask.pendingNpcSayNpcId = transformNpcId(player, npcId);
+            player.playerTask.pendingNpcSayText = transformName(player, text);
+            return;
+        }
         npcId = transformNpcId(player, npcId);
         text = transformName(player, text);
         int avatar = NpcService.gI().getAvatar(npcId);
@@ -1217,6 +1300,10 @@ public class TaskService {
             currentStm.count += 1;
             PlayerAuditLogger.logAction(player, "TASK_PROGRESS", "Task ID " + tm.id + " SubTask " + tm.index + ": count=" + currentStm.count + "/" + currentStm.maxCount);
             if (currentStm.count >= currentStm.maxCount) {
+                if (player.playerTask.pendingNpcSayText != null) {
+                    player.playerTask.pendingNpcSayText = null;
+                    player.playerTask.pendingNpcSayNpcId = -1;
+                }
                 tm.index++;
                 if (tm.index >= tm.subTasks.size()) {
                     this.sendNextTaskMain(player);

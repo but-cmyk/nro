@@ -68,12 +68,15 @@ public class BaHatMit extends Npc {
                         return;
                     }
                     DeathOrAliveArena vdst = DeathOrAliveArenaManager.gI().getVDST(player.zone);
+                    String registerMsg = player.getTicketVDST() > 0
+                            ? "Ưu tiên\nđấu ngay\n(Còn " + player.getTicketVDST() + " vé)"
+                            : "Đăng ký\n" + (player.thoiVangVoDaiSinhTu + 1) + " bình nước";
                     if (vdst != null) {
                         if (vdst.getPlayer().equals(player)) {
                             this.createOtherMenu(player, ConstNpc.BASE_MENU,
                                     "Ngươi muốn hủy đăng ký thi đấu võ đài?",
                                     "Hủy Đăng Ký",
-                                    "Nhận 3 bình\nmiễn phí",
+                                    "3 vé ưu tiên\nđấu ngay",
                                     "Bảng Xếp\nHạng",
                                     "Thưởng Top\nTuần",
                                     "Hướng dẫn",
@@ -83,7 +86,7 @@ public class BaHatMit extends Npc {
                                     "Ngươi muốn đăng ký thi đấu võ đài?\nnhiều phần thưởng giá trị đang đợi ngươi đó",
                                     "Bình chọn",
                                     "Vào sàn khác",
-                                    "Nhận 3 bình\nmiễn phí",
+                                    "3 vé ưu tiên\nđấu ngay",
                                     "Bảng Xếp\nHạng",
                                     "Thưởng Top\nTuần",
                                     "Hướng dẫn",
@@ -92,8 +95,8 @@ public class BaHatMit extends Npc {
                     } else {
                         this.createOtherMenu(player, ConstNpc.BASE_MENU,
                                 "Ngươi muốn đăng ký thi đấu võ đài?\nnhiều phần thưởng giá trị đang đợi ngươi đó",
-                                "Đăng ký\n" + (player.thoiVangVoDaiSinhTu + 1) + " bình nước",
-                                "Nhận 3 bình\nmiễn phí",
+                                registerMsg,
+                                "3 vé ưu tiên\nđấu ngay",
                                 "Bảng Xếp\nHạng",
                                 "Thưởng Top\nTuần",
                                 "Hướng dẫn",
@@ -384,6 +387,7 @@ public class BaHatMit extends Npc {
 
                                     player.haveRewardVDST = false;
                                     PlayerDAO.updatePlayer(player);
+                                    services.TaskService.gI().checkDoneTaskVoDaiSinhTu(player);
                                     return;
                                 }
                                 case 1 -> {
@@ -402,8 +406,8 @@ public class BaHatMit extends Npc {
                                     case 0: // Hủy đăng ký
                                         DeathOrAliveArenaService.gI().cancelChallenge(player);
                                         break;
-                                    case 1: // Nhận 3 bình miễn phí
-                                        nhanBinhNuocFree(player);
+                                    case 1: // 3 vé ưu tiên đấu ngay
+                                        nhanTicketVDSTFree(player);
                                         break;
                                     case 2: // Bảng Xếp Hạng
                                         Service.gI().showListTop(player, Manager.topArena);
@@ -429,8 +433,8 @@ public class BaHatMit extends Npc {
                                     case 1: // Thách đấu
                                         DeathOrAliveArenaService.gI().startChallenge(player);
                                         break;
-                                    case 2: // Nhận 3 bình miễn phí
-                                        nhanBinhNuocFree(player);
+                                    case 2: // 3 vé ưu tiên đấu ngay
+                                        nhanTicketVDSTFree(player);
                                         break;
                                     case 3: // Bảng Xếp Hạng
                                         Service.gI().showListTop(player, Manager.topArena);
@@ -451,8 +455,8 @@ public class BaHatMit extends Npc {
                                 case 0: // Đăng ký
                                     DeathOrAliveArenaService.gI().startChallenge(player);
                                     break;
-                                case 1: // Nhận 3 bình miễn phí
-                                    nhanBinhNuocFree(player);
+                                case 1: // 3 vé ưu tiên đấu ngay
+                                    nhanTicketVDSTFree(player);
                                     break;
                                 case 2: // Bảng Xếp Hạng
                                     Service.gI().showListTop(player, Manager.topArena);
@@ -844,21 +848,16 @@ public class BaHatMit extends Npc {
         }
     }
 
-    private void nhanBinhNuocFree(Player player) {
+    private void nhanTicketVDSTFree(Player player) {
         if (Util.isAfterMidnight(player.lastTimeNhanBinhNuocFree)) {
-            if (InventoryService.gI().getCountEmptyBag(player) == 0
-                    && InventoryService.gI().findItemBagByTemp(player, 456) == null) {
-                Service.gI().sendThongBao(player, "Hành trang của con đã đầy, hãy dọn bớt ô trống nhé!");
-                return;
-            }
-            Item waterBottle = ItemService.gI().createNewItem((short) 456, 3);
-            InventoryService.gI().addItemBag(player, waterBottle);
-            InventoryService.gI().sendItemBags(player);
+            player.ticketVDST = 3;
+            player.lastTimeResetTicketVDST = System.currentTimeMillis();
             player.lastTimeNhanBinhNuocFree = System.currentTimeMillis();
+            PlayerDAO.updatePlayer(player);
             Service.gI().sendThongBao(player,
-                    "Bà tặng con 3 Bình nước phép miễn phí hôm nay! Chúc con thi đấu may mắn!");
+                    "Bà tặng con 3 Vé ưu tiên đấu ngay hôm nay! Con được thi đấu miễn phí 3 lượt không tốn bình nước giống Giải Siêu Hạng!");
         } else {
-            Service.gI().sendThongBao(player, "Hôm nay con đã nhận 3 Bình nước phép rồi. Hãy quay lại sau 0h nhé!");
+            Service.gI().sendThongBao(player, "Hôm nay con đã nhận 3 Vé ưu tiên rồi (Hiện còn: " + player.getTicketVDST() + " vé). Hãy quay lại sau 0h nhé!");
         }
     }
 
@@ -901,10 +900,9 @@ public class BaHatMit extends Npc {
                 + "Dracula, Người Vô Hình, Bông Băng, Sa Tăng, Thỏ Đầu Bạc\b"
                 + "Mỗi hiệp tối đa 3 phút, có 5 giây nghỉ ngơi chuẩn bị\b"
                 + "Hạ gục cả 5 Boss để Vô Địch! Hết HP, hết giờ là Thua\n"
-                + "2. VÉ THI ĐẤU (BÌNH NƯỚC PHÉP)\b"
-                + "Vé vào cửa Võ Đài Sinh Tử là Bình Nước Phép\b"
-                + "Mỗi ngày gặp ta nhận MIỄN PHÍ 3 bình (reset lúc 0h đêm)\b"
-                + "Lượt 1: 1 bình, Lượt 2: 2 bình, tăng dần mỗi lượt (reset sau 0h)\b"
+                + "2. VÉ THI ĐẤU (VÉ ƯU TIÊN & BÌNH NƯỚC PHÉP)\b"
+                + "Mỗi ngày gặp ta nhận MIỄN PHÍ 3 Vé ưu tiên đấu ngay (reset lúc 0h đêm giống Giải Siêu Hạng)\b"
+                + "Sau khi dùng hết 3 vé miễn phí, mỗi lượt thi đấu sẽ cần Bình Nước Phép (Lượt 1: 1 bình, Lượt 2: 2 bình, tăng dần)\b"
                 + "Nếu hết, mua thêm tại NPC Santa tab Đặc Biệt (1 Ngọc / 1 bình)\n"
                 + "3. CƠ CHẾ BÌNH CHỌN CHO KHÁN GIẢ\b"
                 + "Khán giả có thể cược 1.000.000 Vàng cho Người Chơi hoặc Bà Hạt Mít\b"

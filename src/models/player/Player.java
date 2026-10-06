@@ -276,6 +276,16 @@ public class Player extends Character {
     public int thoiVangVoDaiSinhTu;
     public long timePKVDST;
     public long lastTimeNhanBinhNuocFree;
+    public int ticketVDST = 3;
+    public long lastTimeResetTicketVDST;
+
+    public int getTicketVDST() {
+        if (utils.Util.isAfterMidnight(this.lastTimeResetTicketVDST)) {
+            this.ticketVDST = 3;
+            this.lastTimeResetTicketVDST = System.currentTimeMillis();
+        }
+        return this.ticketVDST;
+    }
 
     public int binhChonHatMit;
     public int binhChonPlayer;

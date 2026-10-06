@@ -53,6 +53,7 @@ public class TrungUyTrang extends Boss {
                     this.location.y - 24), plKill.id);
             Service.gI().dropItemMap(this.zone, it);
         }
+        services.TaskService.gI().checkDoneTaskKillBoss(plKill, this);
     }
 
     @Override

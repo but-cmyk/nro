@@ -102,14 +102,6 @@ namespace Game1
     
     	public static void addNextPopUpMultiLine(string strNext, Npc next)
 	{
-		if (GameCanvas.panel != null && GameCanvas.panel.isShow)
-		{
-			GameCanvas.panel.hide();
-		}
-		if (GameCanvas.panel2 != null && GameCanvas.panel2.isShow)
-		{
-			GameCanvas.panel2.hide();
-		}
 		nextMultiChatPopUp = strNext;
 		nextChar = next;
 		if (currChatPopup == null)
@@ -122,14 +114,6 @@ namespace Game1
 
 	public static void addBigMessage(string chat, int howLong, Npc c)
 	{
-		if (GameCanvas.panel != null && GameCanvas.panel.isShow)
-		{
-			GameCanvas.panel.hide();
-		}
-		if (GameCanvas.panel2 != null && GameCanvas.panel2.isShow)
-		{
-			GameCanvas.panel2.hide();
-		}
 		string[] array = new string[1] { chat };
 		if (c.charID != 5 && GameScr.info1.isDone)
 		{
@@ -150,14 +134,6 @@ namespace Game1
 
 	public static void addChatPopupMultiLine(string chat, int howLong, Npc c)
 	{
-		if (GameCanvas.panel != null && GameCanvas.panel.isShow)
-		{
-			GameCanvas.panel.hide();
-		}
-		if (GameCanvas.panel2 != null && GameCanvas.panel2.isShow)
-		{
-			GameCanvas.panel2.hide();
-		}
 		string[] array = Res.split(chat, "\n", 0);
 		Char.isLockKey = true;
 		currChatPopup = addChatPopup(array[0], howLong, c);

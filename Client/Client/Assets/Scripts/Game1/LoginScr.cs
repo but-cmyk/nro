@@ -300,15 +300,9 @@ namespace Game1
     	public void setUserPass()
     	{
     		string text = Rms.loadRMSString("acc");
-    		if (text != null && !text.Equals(string.Empty))
-    		{
-    			tfUser.setText(text);
-    		}
-		string text2 = Rms.loadRMSPassword("pass");
-    		if (text2 != null && !text2.Equals(string.Empty))
-    		{
-    			tfPass.setText(text2);
-    		}
+    		tfUser.setText((text != null) ? text : string.Empty);
+    		string text2 = Rms.loadRMSPassword("pass");
+    		tfPass.setText((text2 != null) ? text2 : string.Empty);
     	}
     
     	public void updateTfWhenOpenKb()
@@ -447,31 +441,49 @@ namespace Game1
     
     	public void doLogin()
     	{
-    		string text = Rms.loadRMSString("acc");
-		string text2 = Rms.loadRMSPassword("pass");
-    		if (text != null && !text.Equals(string.Empty))
+    		string text;
+    		string text2;
+    		bool isFormInput = (GameCanvas.currentScreen == this || (GameCanvas.loginScr != null && GameCanvas.currentScreen == GameCanvas.loginScr));
+    		if (isFormInput)
     		{
+    			text = (tfUser != null) ? tfUser.getText().Trim() : string.Empty;
+    			text2 = (tfPass != null) ? tfPass.getText().Trim() : string.Empty;
     			isLogin2 = false;
-    		}
-    		else if (Rms.loadRMSString("userAo" + ServerListScreen.ipSelect) != null && !Rms.loadRMSString("userAo" + ServerListScreen.ipSelect).Equals(string.Empty))
-    		{
-    			isLogin2 = true;
     		}
     		else
     		{
-    			isLogin2 = false;
-    		}
-    		if ((text == null || text.Equals(string.Empty)) && isLogin2)
-    		{
-    			text = Rms.loadRMSString("userAo" + ServerListScreen.ipSelect);
-    			text2 = "a";
+    			text = Rms.loadRMSString("acc");
+    			text2 = Rms.loadRMSPassword("pass");
+    			if (text != null && !text.Equals(string.Empty))
+    			{
+    				isLogin2 = false;
+    			}
+    			else if (Rms.loadRMSString("userAo" + ServerListScreen.ipSelect) != null && !Rms.loadRMSString("userAo" + ServerListScreen.ipSelect).Equals(string.Empty))
+    			{
+    				isLogin2 = true;
+    			}
+    			else
+    			{
+    				isLogin2 = false;
+    			}
+    			if ((text == null || text.Equals(string.Empty)) && isLogin2)
+    			{
+    				text = Rms.loadRMSString("userAo" + ServerListScreen.ipSelect);
+    				text2 = "a";
+    			}
     		}
     		if (text == null || text.Trim().Equals(string.Empty))
     		{
     			focus = 0;
-    			tfUser.isFocus = true;
-    			tfPass.isFocus = false;
-    			if (!GameCanvas.isTouch)
+    			if (tfUser != null)
+    			{
+    				tfUser.isFocus = true;
+    			}
+    			if (tfPass != null)
+    			{
+    				tfPass.isFocus = false;
+    			}
+    			if (!GameCanvas.isTouch && tfUser != null)
     			{
     				right = tfUser.cmdClear;
     			}
@@ -481,14 +493,37 @@ namespace Game1
     		if (text2 == null || text2.Trim().Equals(string.Empty))
     		{
     			focus = 1;
-    			tfUser.isFocus = false;
-    			tfPass.isFocus = true;
-    			if (!GameCanvas.isTouch)
+    			if (tfUser != null)
+    			{
+    				tfUser.isFocus = false;
+    			}
+    			if (tfPass != null)
+    			{
+    				tfPass.isFocus = true;
+    			}
+    			if (!GameCanvas.isTouch && tfPass != null)
     			{
     				right = tfPass.cmdClear;
     			}
     			GameCanvas.startOKDlg("Vui lòng nhập mật khẩu!");
     			return;
+    		}
+    		if (!isLogin2)
+    		{
+    			Rms.saveRMSString("acc", text);
+    			Rms.saveRMSPassword("pass", text2);
+    			if (isCheck)
+    			{
+    				Rms.saveRMSInt("check", 1);
+    			}
+    			if (tfUser != null)
+    			{
+    				tfUser.setText(text);
+    			}
+    			if (tfPass != null)
+    			{
+    				tfPass.setText(text2);
+    			}
     		}
     		if (!Session_ME.gI().isConnected())
     		{
@@ -516,14 +551,19 @@ namespace Game1
     		if (isCheck)
     		{
     			Rms.saveRMSInt("check", 1);
-    			Rms.saveRMSString("acc", tfUser.getText().ToLower().Trim());
-			Rms.saveRMSPassword("pass", tfPass.getText().ToLower().Trim());
+    			string text = (tfUser != null) ? tfUser.getText().Trim() : string.Empty;
+    			string text2 = (tfPass != null) ? tfPass.getText().Trim() : string.Empty;
+    			if (!string.IsNullOrEmpty(text))
+    			{
+    				Rms.saveRMSString("acc", text);
+    				Rms.saveRMSPassword("pass", text2);
+    			}
     		}
     		else
     		{
     			Rms.saveRMSInt("check", 2);
     			Rms.saveRMSString("acc", string.Empty);
-			Rms.saveRMSPassword("pass", string.Empty);
+    			Rms.saveRMSPassword("pass", string.Empty);
     		}
     	}
     

@@ -8,6 +8,7 @@ import services.map.NpcManager;
 import network.session.MySession;
 import models.player.Player;
 import services.Service;
+import services.TaskService;
 import services.func.TransactionService;
 
 public class MenuController {
@@ -36,6 +37,9 @@ public class MenuController {
                     && utils.Util.getDistance(player.location.x, player.location.y, npc.cx, npc.cy) > 200) {
                 Service.gI().sendThongBao(player, "Bạn ở quá xa NPC!");
                 Service.gI().hideWaitDialog(player);
+                return;
+            }
+            if (TaskService.gI().checkPendingNpcSay(player, npc)) {
                 return;
             }
             npc.openBaseMenu(player);

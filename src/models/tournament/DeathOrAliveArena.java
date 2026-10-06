@@ -60,6 +60,7 @@ public class DeathOrAliveArena {
     public void setZone(Zone zone) { this.zone = zone; }
 
     public int costWaterBottle = 1;
+    public boolean isUseTicket;
 
     private final List<Player> binhChon = new java.util.concurrent.CopyOnWriteArrayList<>();
 
@@ -201,6 +202,7 @@ public class DeathOrAliveArena {
         endChallenge();
         npc.npcChat(player, "Chúc mừng con đã vô địch Võ Đài Sinh Tử! Hãy gặp ta để nhận phần thưởng xứng đáng.");
         reward();
+        services.TaskService.gI().checkDoneTaskVoDaiSinhTu(player);
     }
 
     public void leave() {

@@ -266,10 +266,10 @@ public class ItemService {
         item.createTime = System.currentTimeMillis();
 
         if (tempId == 191) {
-            item.itemOptions.add(new ItemOption(104, 5));
+            item.itemOptions.add(new ItemOption(104, 50));
             item.itemOptions.add(new ItemOption(30, 0));
         } else if (tempId == 192) {
-            item.itemOptions.add(new ItemOption(96, 5));
+            item.itemOptions.add(new ItemOption(96, 50));
             item.itemOptions.add(new ItemOption(30, 0));
         }
 
@@ -377,11 +377,11 @@ public class ItemService {
         }
         if (item.template.id == 191) {
             item.itemOptions.clear();
-            item.itemOptions.add(new ItemOption(104, 5));
+            item.itemOptions.add(new ItemOption(104, 50));
             item.itemOptions.add(new ItemOption(30, 0));
         } else if (item.template.id == 192) {
             item.itemOptions.clear();
-            item.itemOptions.add(new ItemOption(96, 5));
+            item.itemOptions.add(new ItemOption(96, 50));
             item.itemOptions.add(new ItemOption(30, 0));
         }
     }

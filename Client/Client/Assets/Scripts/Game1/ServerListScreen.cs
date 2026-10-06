@@ -1111,6 +1111,21 @@ namespace Game1
     		{
     			GameCanvas.endDlg();
     			Rms.clearAll();
+    			Rms.clearLoginData();
+    			if (GameCanvas.loginScr != null)
+    			{
+    				if (GameCanvas.loginScr.tfUser != null)
+    				{
+    					GameCanvas.loginScr.tfUser.setText(string.Empty);
+    				}
+    				if (GameCanvas.loginScr.tfPass != null)
+    				{
+    					GameCanvas.loginScr.tfPass.setText(string.Empty);
+    				}
+    				GameCanvas.loginScr.isLogin2 = false;
+    			}
+    			GameCanvas.loginScr = null;
+    			initCommand();
     			SmallImage.freeBig();
     			SmallImage.imgNew = null;
     			BgItem.clearHashTable();

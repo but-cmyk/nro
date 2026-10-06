@@ -1360,6 +1360,12 @@ public class NDVSqlFetcher {
                 if (dataArray.size() >= 5) {
                     player.lastTimeNhanBinhNuocFree = Long.parseLong(dataArray.get(4).toString());
                 }
+                if (dataArray.size() >= 6) {
+                    player.ticketVDST = Integer.parseInt(dataArray.get(5).toString());
+                }
+                if (dataArray.size() >= 7) {
+                    player.lastTimeResetTicketVDST = Long.parseLong(dataArray.get(6).toString());
+                }
             } catch (Exception e) {
             }
 

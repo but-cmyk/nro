@@ -968,10 +968,10 @@ public class Mob {
                 int itemDropId = Util.isTrue(50, 100) ? 191 : 192; // 50% Cà chua, 50% Cà rốt
                 ItemMap it = new ItemMap(zone, itemDropId, 1, x, yEnd, plOwner.id);
                 if (itemDropId == 191) {
-                    it.options.add(new Item.ItemOption(104, 5));
+                    it.options.add(new Item.ItemOption(104, 50));
                     it.options.add(new Item.ItemOption(30, 0));
                 } else {
-                    it.options.add(new Item.ItemOption(96, 5));
+                    it.options.add(new Item.ItemOption(96, 50));
                     it.options.add(new Item.ItemOption(30, 0));
                 }
                 list.add(it);

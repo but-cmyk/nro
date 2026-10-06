@@ -42,28 +42,41 @@ public class DeathOrAliveArenaService {
             return;
         }
 
-        int cost = player.thoiVangVoDaiSinhTu;
-        if (cost == 0) cost = 1;
-        Item waterBottle = InventoryService.gI().findItemBagByTemp(player, 456);
+        boolean isUseTicket = player.getTicketVDST() > 0;
+        int cost = 0;
+        if (!isUseTicket) {
+            cost = player.thoiVangVoDaiSinhTu;
+            if (cost == 0) cost = 1;
+            Item waterBottle = InventoryService.gI().findItemBagByTemp(player, 456);
 
-        if (waterBottle == null || waterBottle.quantity < cost) {
-            Service.gI().sendThongBao(player, "Bạn không đủ " + cost + " bình nước!");
-            return;
+            if (waterBottle == null || waterBottle.quantity < cost) {
+                Service.gI().sendThongBao(player, "Bạn không đủ " + cost + " bình nước! Hãy gặp Bà Hạt Mít nhận 3 vé ưu tiên đấu ngay hoặc mua thêm bình nước.");
+                return;
+            }
+
+            InventoryService.gI().subQuantityItemsBag(player, waterBottle, cost);
+            InventoryService.gI().sendItemBags(player);
+        } else {
+            player.ticketVDST--;
+            player.lastTimeResetTicketVDST = System.currentTimeMillis();
         }
-
-        InventoryService.gI().subQuantityItemsBag(player, waterBottle, cost);
-        InventoryService.gI().sendItemBags(player);
 
         player.thoiVangVoDaiSinhTu += 1;
         player.lastTimePKVoDaiSinhTu = System.currentTimeMillis();
+        database.daos.PlayerDAO.updatePlayer(player);
 
-        Service.gI().sendThongBao(player, "Đăng ký thành công! Đây là lượt thi đấu thứ " + player.thoiVangVoDaiSinhTu + " hôm nay của bạn.");
+        if (isUseTicket) {
+            Service.gI().sendThongBao(player, "Sử dụng 1 Vé ưu tiên thi đấu ngay miễn phí! (Còn lại " + player.ticketVDST + " vé). Đây là lượt thi đấu thứ " + player.thoiVangVoDaiSinhTu + " hôm nay của bạn.");
+        } else {
+            Service.gI().sendThongBao(player, "Đăng ký thành công bằng " + cost + " bình nước! Đây là lượt thi đấu thứ " + player.thoiVangVoDaiSinhTu + " hôm nay của bạn.");
+        }
 
         if (!zone.equals(player.zone)) {
             ChangeMapService.gI().changeMap(player, zone, player.location.x, 408);
         }
 
         final int costUsed = cost;
+        final boolean ticketUsed = isUseTicket;
         setTimeout(() -> {
             try {
                 Npc baHatMit = NpcManager.getNpc(ConstNpc.BA_HAT_MIT);
@@ -75,6 +88,7 @@ public class DeathOrAliveArenaService {
                 vdst.setZone(zone);
                 vdst.setTimeTotal(0);
                 vdst.costWaterBottle = costUsed;
+                vdst.isUseTicket = ticketUsed;
                 vdst.endChallenge = false;
 
                 DeathOrAliveArenaManager.gI().add(vdst);
@@ -106,13 +120,18 @@ public class DeathOrAliveArenaService {
         // Chỉ chủ phòng mới có thể hủy
         if (vdst != null && vdst.getPlayer() != null && vdst.getPlayer().equals(player)) {
 
-            // Hoàn lại phí đã đăng ký của lượt này
-            int cost = vdst.costWaterBottle;
-            if (cost > 0) {
-                Item waterBottleRefund = ItemService.gI().createNewItem((short) 456, cost);
-                InventoryService.gI().addItemBag(player, waterBottleRefund);
-                InventoryService.gI().sendItemBags(player);
-                Service.gI().sendThongBao(player, "Đã hoàn lại " + cost + " bình nước.");
+            // Hoàn lại vé hoặc bình nước đã đăng ký của lượt này
+            if (vdst.isUseTicket) {
+                player.ticketVDST++;
+                Service.gI().sendThongBao(player, "Đã hoàn lại 1 Vé ưu tiên thi đấu ngay (Hiện có: " + player.ticketVDST + " vé).");
+            } else {
+                int cost = vdst.costWaterBottle;
+                if (cost > 0) {
+                    Item waterBottleRefund = ItemService.gI().createNewItem((short) 456, cost);
+                    InventoryService.gI().addItemBag(player, waterBottleRefund);
+                    InventoryService.gI().sendItemBags(player);
+                    Service.gI().sendThongBao(player, "Đã hoàn lại " + cost + " bình nước.");
+                }
             }
 
             // Dọn dẹp boss nếu đã sinh ra trên map
@@ -123,6 +142,7 @@ public class DeathOrAliveArenaService {
             // Giảm lại 1 lượt vì đã hủy
             player.thoiVangVoDaiSinhTu = Math.max(0, player.thoiVangVoDaiSinhTu - 1);
             player.isPKDHVT = false;
+            database.daos.PlayerDAO.updatePlayer(player);
 
             // Xóa trận đấu khỏi manager để khu vực này trống trở lại
             DeathOrAliveArenaManager.gI().remove(vdst);

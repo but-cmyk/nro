@@ -420,9 +420,111 @@ namespace Game1
                         }
                     }
                 }
+                clearLoginData();
+                try
+                {
+                    PlayerPrefs.DeleteAll();
+                    PlayerPrefs.Save();
+                }
+                catch
+                {
+                }
             }
             catch
             {
+            }
+        }
+
+        public static void clearLoginData()
+        {
+            try
+            {
+                string[] filesToDelete = new string[] { "acc", "pass", "check", "NRIPlink", "svselect" };
+                string userProfile = string.Empty;
+                try
+                {
+                    userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+                }
+                catch
+                {
+                }
+
+                string[] folders = new string[]
+                {
+                    GetiPhoneDocumentsPath(),
+                    rootPersistentPath,
+                    Application.persistentDataPath,
+                    (rootPersistentPath != null) ? (rootPersistentPath + "/Game1") : null,
+                    !string.IsNullOrEmpty(userProfile) ? (userProfile + "/AppData/LocalLow/Team/NgocRongOnline/Game1") : null,
+                    !string.IsNullOrEmpty(userProfile) ? (userProfile + "/AppData/LocalLow/Team/NgocRongOnline") : null,
+                    !string.IsNullOrEmpty(userProfile) ? (userProfile + "/AppData/LocalLow/Team/Nro6Tab/Game1") : null,
+                    !string.IsNullOrEmpty(userProfile) ? (userProfile + "/AppData/LocalLow/Team/Nro6Tab") : null,
+                    "Game1",
+                    "."
+                };
+
+                foreach (string folder in folders)
+                {
+                    if (string.IsNullOrEmpty(folder) || !Directory.Exists(folder))
+                    {
+                        continue;
+                    }
+                    try
+                    {
+                        foreach (string fname in filesToDelete)
+                        {
+                            string fpath = folder + "/" + fname;
+                            if (File.Exists(fpath))
+                            {
+                                File.Delete(fpath);
+                            }
+                        }
+
+                        DirectoryInfo dInfo = new DirectoryInfo(folder);
+                        FileInfo[] allFiles = dInfo.GetFiles();
+                        foreach (FileInfo fi in allFiles)
+                        {
+                            if (fi.Name.StartsWith("userAo") || fi.Name.StartsWith("passAo"))
+                            {
+                                try
+                                {
+                                    fi.Delete();
+                                }
+                                catch
+                                {
+                                }
+                            }
+                        }
+                    }
+                    catch
+                    {
+                    }
+                }
+
+                try
+                {
+                    PlayerPrefs.DeleteKey("Game1_acc");
+                    PlayerPrefs.DeleteKey("Game1_pass");
+                    PlayerPrefs.DeleteKey("Game1_check");
+                    PlayerPrefs.DeleteKey("acc");
+                    PlayerPrefs.DeleteKey("pass");
+                    PlayerPrefs.DeleteKey("check");
+                    for (int i = 0; i <= 30; i++)
+                    {
+                        PlayerPrefs.DeleteKey("Game1_userAo" + i);
+                        PlayerPrefs.DeleteKey("userAo" + i);
+                        PlayerPrefs.DeleteKey("Game1_passAo" + i);
+                        PlayerPrefs.DeleteKey("passAo" + i);
+                    }
+                    PlayerPrefs.Save();
+                }
+                catch
+                {
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning("clearLoginData exception: " + ex.Message);
             }
         }
 

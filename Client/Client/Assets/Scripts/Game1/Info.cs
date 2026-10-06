@@ -44,7 +44,25 @@ namespace Game1
     
     	public Image img;
     
-    	public static Image gocnhon = GameCanvas.loadImage("/mainImage/myTexture2dgocnhon.png");
+    	private static Image _gocnhon;
+    	private static int lastZoomGocNhon = -1;
+
+    	public static Image gocnhon
+    	{
+    		get
+    		{
+    			if (_gocnhon == null || _gocnhon.texture == null || lastZoomGocNhon != mGraphics.zoomLevel)
+    			{
+    				lastZoomGocNhon = mGraphics.zoomLevel;
+    				_gocnhon = GameCanvas.loadImage("/mainImage/myTexture2dgocnhon.png");
+    			}
+    			return _gocnhon;
+    		}
+    		set
+    		{
+    			_gocnhon = value;
+    		}
+    	}
     
     	public int time;
     
@@ -90,7 +108,7 @@ namespace Game1
     			{
     				mSystem.paintPopUp2(g, X - 23, Y - num / 2, W + 15, H + ((!GameCanvas.isTouch) ? 14 : 0) + num);
     			}
-    			if (info.charInfo == null)
+    			if (info.charInfo == null && gocnhon != null && gocnhon.texture != null)
     			{
     				g.drawRegion(gocnhon, 0, 0, 9, 8, (dir != 1) ? 2 : 0, cx - 3 + ((dir != 1) ? 20 : (-15)), cy - ch - 20 + sayRun + 2, mGraphics.TOP | mGraphics.HCENTER);
     			}

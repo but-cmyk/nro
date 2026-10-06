@@ -2136,6 +2136,7 @@ namespace Game1
             }
             cmdClose.isPlaySoundButton = false;
             ChatPopup.currChatPopup = null;
+            ChatPopup.serverChatPopUp = null;
             InfoDlg.hide();
             timeShow = 20;
             isShow = true;

@@ -3574,7 +3574,6 @@ namespace Game1
                                 if (npc4.template.npcTemplateId == num87)
                                 {
                                     ChatPopup.addChatPopupMultiLine(str, 100000, npc4);
-                                    GameCanvas.panel.hideNow();
                                     return;
                                 }
                             }
@@ -3591,7 +3590,6 @@ namespace Game1
                             {
                             }
                             ChatPopup.addChatPopupMultiLine(str, 100000, npc5);
-                            GameCanvas.panel.hideNow();
                             break;
                         }
                     case 32:

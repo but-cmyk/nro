@@ -54,7 +54,6 @@ namespace Game1
                                 if (npc4 != null && npc4.template != null && npc4.template.npcTemplateId == num87)
                                 {
                                     ChatPopup.addChatPopupMultiLine(str, 100000, npc4);
-                                    if (GameCanvas.panel != null) GameCanvas.panel.hideNow();
                                     return true;
                                 }
                             }
@@ -74,7 +73,6 @@ namespace Game1
                             {
                             }
                             ChatPopup.addChatPopupMultiLine(str, 100000, npc5);
-                            if (GameCanvas.panel != null) GameCanvas.panel.hideNow();
                             return true;
                         }
 

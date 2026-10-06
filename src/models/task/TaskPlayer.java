@@ -10,6 +10,10 @@ public class TaskPlayer {
 
     public TaskDanhHieu taskdh;
 
+    public boolean isJustDoneMainTask;
+    public int pendingNpcSayNpcId = -1;
+    public String pendingNpcSayText;
+
     public TaskPlayer() {
         this.sideTask = new SideTask();
         this.clanTask = new ClanTask();
@@ -21,6 +25,9 @@ public class TaskPlayer {
         this.sideTask = null;
         this.clanTask = null;
         this.taskdh = null;
+        this.isJustDoneMainTask = false;
+        this.pendingNpcSayNpcId = -1;
+        this.pendingNpcSayText = null;
     }
 
 }

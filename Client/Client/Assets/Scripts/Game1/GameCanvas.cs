@@ -392,7 +392,7 @@ namespace Game1
 
     	public int[] dustDir;
 
-    	public const int MAX_DUST = 10;
+    	public const int MAX_DUST = 30;
     
     	public static int[] wsX;
     
@@ -654,17 +654,7 @@ namespace Game1
     			}
                     if (currentScreen != null)
     			{
-    				if (ChatPopup.serverChatPopUp != null)
-    				{
-    					ChatPopup.serverChatPopUp.update();
-    					ChatPopup.serverChatPopUp.updateKey();
-    				}
-    				else if (ChatPopup.currChatPopup != null)
-    				{
-    					ChatPopup.currChatPopup.update();
-    					ChatPopup.currChatPopup.updateKey();
-    				}
-    				else if (currentDialog != null)
+    				if (currentDialog != null)
     				{
     					debug("B", 0);
     					currentDialog.update();
@@ -726,6 +716,16 @@ namespace Game1
     					{
     						panel.hide();
     					}
+    				}
+    				else if (ChatPopup.serverChatPopUp != null)
+    				{
+    					ChatPopup.serverChatPopUp.update();
+    					ChatPopup.serverChatPopUp.updateKey();
+    				}
+    				else if (ChatPopup.currChatPopup != null)
+    				{
+    					ChatPopup.currChatPopup.update();
+    					ChatPopup.currChatPopup.updateKey();
     				}
     				debug("E", 0);
     				if (!isLoading)
@@ -1060,6 +1060,7 @@ namespace Game1
     			GameScr.info2.cmdChat = null;
     			Hint.isShow = false;
     			ChatPopup.currChatPopup = null;
+    			ChatPopup.serverChatPopUp = null;
     			Controller.isStopReadMessage = false;
     			GameScr.loadCamera(true, -1, -1);
     			GameScr.cmx = 100;
@@ -2738,18 +2739,21 @@ namespace Game1
     			}
     			GameScr.info1.paint(g);
     			GameScr.info2.paint(g);
-    			if (GameScr.gI().popUpYesNo != null)
+    			if (currentDialog == null && !panel.isShow && !menu.showMenu)
     			{
-    				GameScr.gI().popUpYesNo.paint(g);
-    			}
-    			if (ChatPopup.currChatPopup != null)
-    			{
-    				ChatPopup.currChatPopup.paint(g);
-    			}
-    			Hint.paint(g);
-    			if (ChatPopup.serverChatPopUp != null)
-    			{
-    				ChatPopup.serverChatPopUp.paint(g);
+    				if (GameScr.gI().popUpYesNo != null)
+    				{
+    					GameScr.gI().popUpYesNo.paint(g);
+    				}
+    				if (ChatPopup.currChatPopup != null)
+    				{
+    					ChatPopup.currChatPopup.paint(g);
+    				}
+    				Hint.paint(g);
+    				if (ChatPopup.serverChatPopUp != null)
+    				{
+    					ChatPopup.serverChatPopUp.paint(g);
+    				}
     			}
     			for (int i = 0; i < Effect2.vEffect2.size(); i++)
     			{
@@ -3074,10 +3078,6 @@ namespace Game1
     
     	public bool startDust(int dir, int x, int y)
     	{
-    		if (lowGraphic)
-    		{
-    			return false;
-    		}
     		if (imgDust == null || dustState == null)
     		{
     			loadDust();
@@ -3165,7 +3165,7 @@ namespace Game1
     
     	public void updateDust()
     	{
-    		if (lowGraphic || dustState == null)
+    		if (dustState == null)
     		{
     			return;
     		}
@@ -3174,21 +3174,24 @@ namespace Game1
     			if (dustState[i] != -1)
     			{
     				dustState[i]++;
-    				if (dustState[i] >= 5)
+    				if (dustState[i] >= 20)
     				{
     					dustState[i] = -1;
     				}
     				else
     				{
-    					if (dustDir[i] == 0)
+    					if (dustState[i] % 2 == 0)
     					{
-    						dustX[i]--;
+    						if (dustDir[i] == 0)
+    						{
+    							dustX[i]--;
+    						}
+    						else
+    						{
+    							dustX[i]++;
+    						}
+    						dustY[i]--;
     					}
-    					else
-    					{
-    						dustX[i]++;
-    					}
-    					dustY[i]--;
     				}
     			}
     		}
@@ -3217,22 +3220,27 @@ namespace Game1
 
     	public void paintDust(mGraphics g)
     	{
-    		if (lowGraphic || dustState == null || imgDust == null)
+    		if (dustState == null || imgDust == null)
     		{
     			return;
     		}
     		for (int i = 0; i < MAX_DUST; i++)
     		{
-    			if (dustState[i] >= 0 && dustState[i] < 5)
+    			if (dustState[i] >= 0 && dustState[i] < 20)
     			{
     				int dx = dustX[i];
     				int dy = dustY[i];
     				if (dx >= GameScr.cmx - 20 && dx <= GameScr.cmx + GameScr.gW + 20 && dy >= GameScr.cmy - 20 && dy <= GameScr.cmy + GameScr.gH + 40)
     				{
-    					int d = dustDir[i];
-    					if (d >= 0 && d < imgDust.Length && imgDust[d] != null && imgDust[d][dustState[i]] != null)
+    					int frame = dustState[i] / 4;
+    					if (frame > 4)
     					{
-    						g.drawImage(imgDust[d][dustState[i]], dx, dy, 3);
+    						frame = 4;
+    					}
+    					int d = dustDir[i];
+    					if (d >= 0 && d < imgDust.Length && imgDust[d] != null && imgDust[d][frame] != null)
+    					{
+    						g.drawImage(imgDust[d][frame], dx, dy, 3);
     					}
     				}
     			}

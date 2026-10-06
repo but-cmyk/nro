@@ -329,14 +329,26 @@ public class DatabaseTemplateLoader {
                     task.id = taskId;
                     task.name = rs.getString("name");
                     task.detail = rs.getString("detail") != null ? rs.getString("detail").replace("\\r\\n", "\n").replace("\\n", "\n") : "";
+                    if (taskId == 16) {
+                        task.name = "Vô địch Võ Đài Sinh Tử";
+                        task.detail = "Đến Đảo Kamê gặp Bà Hạt Mít, tham gia và chiến thắng cả 5 hiệp để Vô địch Võ Đài Sinh Tử.\nThưởng 150 k sức mạnh\nThưởng 150 k tiềm năng";
+                    }
                     Manager.TASKS.add(task);
                 }
                 SubTaskMain subTask = new SubTaskMain();
-                subTask.name = rs.getString("sub_name");
-                subTask.maxCount = rs.getShort("max_count");
-                subTask.notify = rs.getString("notify");
-                subTask.npcId = rs.getByte("npc_id");
-                subTask.mapId = rs.getShort("map");
+                if (task.id == 16 && task.subTasks.isEmpty()) {
+                    subTask.name = "Vô địch Võ Đài Sinh Tử";
+                    subTask.maxCount = 1;
+                    subTask.notify = "Hãy đến Đảo Kamê gặp Bà Hạt Mít tham gia và vô địch Võ Đài Sinh Tử.";
+                    subTask.npcId = consts.ConstNpc.BA_HAT_MIT;
+                    subTask.mapId = 5;
+                } else {
+                    subTask.name = rs.getString("sub_name");
+                    subTask.maxCount = rs.getShort("max_count");
+                    subTask.notify = rs.getString("notify");
+                    subTask.npcId = rs.getByte("npc_id");
+                    subTask.mapId = rs.getShort("map");
+                }
                 task.subTasks.add(subTask);
             }
             Manager.logLoaded("Successfully loaded task (" + Manager.TASKS.size() + ")\n");
