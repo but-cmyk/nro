@@ -805,6 +805,7 @@ public class Service {
                 pl.sendMessage(msg);
                 msg.cleanup();
                 PlayerService.gI().sendInfoHpMpMoney(pl);
+                Service.gI().point(pl);
             }
 
             msg = messageSubCommand((byte) 15);

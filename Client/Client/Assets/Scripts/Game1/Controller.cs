@@ -1760,7 +1760,7 @@ namespace Game1
                         Char.myCharz().cCriticalGoc = msg.reader().readByte();
                         try
                         {
-                            if (msg.reader().available() > 0)
+                            if (msg.reader().available() >= 8)
                             {
                                 Char.myCharz().cPower = msg.reader().readLong();
                                 Char.myCharz().applyCharLevelPercent();
@@ -4555,8 +4555,11 @@ namespace Game1
                         Char.myCharz().startDie(msg.reader().readShort(), msg.reader().readShort());
                         try
                         {
-                            Char.myCharz().cPower = msg.reader().readLong();
-                            Char.myCharz().applyCharLevelPercent();
+                            if (msg.reader().available() >= 8)
+                            {
+                                Char.myCharz().cPower = msg.reader().readLong();
+                                Char.myCharz().applyCharLevelPercent();
+                            }
                         }
                         catch (Exception)
                         {

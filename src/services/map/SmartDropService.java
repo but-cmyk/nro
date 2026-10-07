@@ -14,10 +14,14 @@ import utils.Util;
 /**
  * Dịch vụ Rơi Đồ Thông Minh Cho Tân Thủ (Smart Adaptive Loot Engine)
  * - Phân tầng 8 Bậc trang bị theo chuẩn Shop 3 Làng (Bunma, Dende, Appule).
- * - Cơ chế bảo vệ chống trùng lặp (Anti-Duplicate & Missing-Slot Priority):
- *   + Ưu tiên 85%-90% rơi vào các slot còn thiếu (chưa mặc / chưa có trong túi).
- *   + Tuyệt đối không rơi trùng slot vừa rơi ở lần trước (lastSmartDropSlot).
- *   + Khóa 100% đúng Hành Tinh và đúng Tier cho tân thủ (SM < 50.000).
+ * - Cơ chế bảo vệ chống trùng lặp tuyệt đối (100% Strict Anti-Duplicate):
+ *   + Quét đa tầng Zero-GC: Trang bị trên người (itemsBody), trong túi (itemsBag),
+ *     vật phẩm đang rơi trên đất (zone.items) và lịch sử đã rơi (smartDropTierHistory).
+ *   + 100% chỉ chọn trong các slot chưa từng rơi / chưa sở hữu của targetTier.
+ *   + Cơ chế Tier Progression Lock: Khi đã thu thập đủ 5 món của Tier hiện tại,
+ *     lập tức DỪNG RƠI để bảo vệ hành trang tân thủ và tránh rác map, chỉ mở khóa
+ *     khi người chơi thăng tiến Sức Mạnh đạt mốc Tier tiếp theo.
+ *   + Khóa 100% đúng Hành Tinh cho tân thủ.
  * - Cơ chế bảo hiểm rớt đồ (Pity System) tích lũy chuỗi không rớt (+0.3%/con, 35 con = 100%).
  * - Bảo vệ hành trang tân thủ: Không kích hoạt rơi khi túi đồ đã đầy.
  * - Thưởng ngẫu nhiên biến thiên chỉ số (+0% -> +15%) và lỗ Sao Pha Lê (1★ - 2★).
@@ -70,6 +74,131 @@ public class SmartDropService {
 
     public static final long MAX_POWER_APPLY = 50_000_000L;
 
+    // Fast O(1) Zero-GC lookup tables tra cứu Tier và Slot của từng ID trang bị
+    private static final byte[] GEAR_TIER_LOOKUP = new byte[300];
+    private static final byte[] GEAR_SLOT_LOOKUP = new byte[300];
+
+    static {
+        for (int i = 0; i < GEAR_TIER_LOOKUP.length; i++) {
+            GEAR_TIER_LOOKUP[i] = -1;
+            GEAR_SLOT_LOOKUP[i] = -1;
+        }
+        for (int t = 0; t < GEAR_TEMPLATES.length; t++) {
+            for (int s = 0; s < 5; s++) {
+                for (int g = 0; g < 3; g++) {
+                    int id = GEAR_TEMPLATES[t][s][g];
+                    if (id >= 0 && id < GEAR_TIER_LOOKUP.length) {
+                        GEAR_TIER_LOOKUP[id] = (byte) t;
+                        GEAR_SLOT_LOOKUP[id] = (byte) s;
+                    }
+                }
+            }
+        }
+    }
+
+    public static int getGearTier(int tempId) {
+        if (tempId >= 0 && tempId < GEAR_TIER_LOOKUP.length) {
+            return GEAR_TIER_LOOKUP[tempId];
+        }
+        return -1;
+    }
+
+    public static int getGearSlot(int tempId) {
+        if (tempId >= 0 && tempId < GEAR_SLOT_LOOKUP.length) {
+            return GEAR_SLOT_LOOKUP[tempId];
+        }
+        return -1;
+    }
+
+    /**
+     * Kiểm tra xem người chơi đã sở hữu hoặc đã từng rơi trang bị tương ứng với slot ở targetTier chưa.
+     * Quét đa tầng Zero-GC:
+     * 1. Lịch sử rơi theo Tier (smartDropTierHistory)
+     * 2. Trang bị trên người (itemsBody) có tier >= targetTier
+     * 3. Trang bị trong hành trang (itemsBag) có tier >= targetTier
+     * 4. Trang bị của player đang rơi trên đất trong zone chưa kịp nhặt
+     */
+    public boolean isSlotAcquired(Player player, int targetTier, int slot, Zone zone) {
+        // 1. Kiểm tra lịch sử rơi của Tier hiện tại
+        if (player.smartDropTierHistory != null && targetTier >= 0 && targetTier < player.smartDropTierHistory.length) {
+            if ((player.smartDropTierHistory[targetTier] & (1 << slot)) != 0) {
+                return true;
+            }
+        }
+
+        // 2. Quét trang bị trên người (itemsBody)
+        if (player.inventory != null && player.inventory.itemsBody != null) {
+            int bodySize = player.inventory.itemsBody.size();
+            if (slot < bodySize) {
+                Item it = player.inventory.itemsBody.get(slot);
+                if (it != null && it.isNotNullItem() && it.template != null) {
+                    int t = getGearTier(it.template.id);
+                    if (t >= targetTier) {
+                        return true;
+                    }
+                    if (it.template.strRequire >= TIER_POWERS[targetTier]) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        // 3. Quét trang bị trong hành trang (itemsBag)
+        if (player.inventory != null && player.inventory.itemsBag != null) {
+            int bagSize = player.inventory.itemsBag.size();
+            for (int i = 0; i < bagSize; i++) {
+                Item it = player.inventory.itemsBag.get(i);
+                if (it != null && it.isNotNullItem() && it.template != null) {
+                    int itemSlot = it.template.type;
+                    if (itemSlot == slot) {
+                        if (slot == 4 || it.template.gender == player.gender || it.template.gender > 2) {
+                            int t = getGearTier(it.template.id);
+                            if (t >= targetTier) {
+                                return true;
+                            }
+                            if (it.template.strRequire >= TIER_POWERS[targetTier]) {
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // 4. Quét trang bị của người chơi đang nằm trên mặt đất trong khu vực (zone.items)
+        if (zone != null && zone.items != null && !zone.items.isEmpty()) {
+            synchronized (zone.items) {
+                int size = zone.items.size();
+                for (int i = 0; i < size; i++) {
+                    if (i < zone.items.size()) {
+                        ItemMap im = zone.items.get(i);
+                        if (im != null && im.playerId == player.id && im.itemTemplate != null) {
+                            int s = getGearSlot(im.itemTemplate.id);
+                            int t = getGearTier(im.itemTemplate.id);
+                            if (s == slot && t >= targetTier) {
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Kiểm tra người chơi đã thu thập đủ 5 slot của targetTier chưa
+     */
+    public boolean isTierCompleted(Player player, int targetTier, Zone zone) {
+        for (int s = 0; s < 5; s++) {
+            if (!isSlotAcquired(player, targetTier, s, zone)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     /**
      * Kiểm tra và thực hiện rơi trang bị thông minh khi hạ gục quái
      */
@@ -86,150 +215,85 @@ public class SmartDropService {
 
         player.checkResetSmartDropDaily();
 
-        // 1. Kiểm tra xác suất rơi đồ (kèm Pity bảo hiểm và kiểm tra túi trống)
+        if (player.smartDropTierHistory == null) {
+            player.smartDropTierHistory = new int[8];
+        }
+
+        // 1. Xác định Tier theo sức mạnh người chơi
+        int targetTier = getTargetTier(player.nPoint.power);
+
+        // 2. Tier Progression Lock: Đã có đủ trọn bộ 5 món của Tier hiện tại -> DỪNG RƠI ngay lập tức
+        // Tránh xả đồ trùng, rác map và đầy túi tân thủ. Chờ người chơi thăng tiến Sức Mạnh lên Tier tiếp theo.
+        if (isTierCompleted(player, targetTier, mob.zone)) {
+            player.smartDropStreak = 0;
+            return null;
+        }
+
+        // 3. Kiểm tra xác suất rơi đồ (kèm Pity bảo hiểm và kiểm tra túi trống)
         if (!shouldDropGear(player)) {
             return null;
         }
 
-        // 2. Xác định Tier theo sức mạnh người chơi
-        int targetTier = getTargetTier(player.nPoint.power);
-        int selectedTier;
-
-        if (targetTier <= 0) {
-            // Tân thủ < 15.000 SM: 100% đúng Tier 1 (mặc được ngay)
-            selectedTier = 0;
-        } else if (targetTier == 1) {
-            // Sức mạnh 15.000 - 50.000 SM: 90% Tier 2, 10% Tier 1
-            selectedTier = Util.isTrue(90, 100) ? 1 : 0;
-        } else {
-            // Tier 3 trở lên: Phân phối 70% In-Tier, 20% Next-Tier (+1), 10% Sub-Tier (-1)
-            int rollTier = Util.nextInt(1, 100);
-            if (rollTier <= 70) {
-                selectedTier = targetTier;
-            } else if (rollTier <= 90) {
-                selectedTier = Math.min(targetTier + 1, GEAR_TEMPLATES.length - 1);
-            } else {
-                selectedTier = Math.max(targetTier - 1, 0);
-            }
+        // 4. Phân phối Slot thông minh (100% Anti-Duplicate Strict Mode: chỉ chọn trong slot còn thiếu)
+        int slot = selectSmartSlot(player, targetTier);
+        if (slot < 0) {
+            player.smartDropStreak = 0;
+            return null;
         }
 
-        // 3. Phân phối Slot thông minh (Chống trùng lặp & Ưu tiên slot còn thiếu)
-        int slot = selectSmartSlot(player, targetTier);
-
-        // 4. Xác định Hành tinh (Gender)
+        // 5. Xác định Hành tinh (Gender) - 100% đúng hành tinh của mình
         int gender = player.gender;
         if (gender < 0 || gender > 2) {
             gender = 0;
         }
-        // Slot 4 là Rada (dùng chung cho cả 3 phái)
-        if (slot != 4) {
-            // Với tân thủ (Tier 1-3, SM < 200.000): 100% rơi đúng hành tinh của mình
-            // Chỉ khi đạt Tier 4 trở lên mới có 10% rơi chéo phái để giao dịch
-            if (selectedTier >= 3) {
-                if (!Util.isTrue(90, 100)) {
-                    gender = Util.nextInt(0, 2);
-                }
-            }
+
+        int tempId = GEAR_TEMPLATES[targetTier][slot][gender];
+
+        // 6. Ghi nhận slot vừa rơi vào lịch sử Tier để ngăn chặn rơi trùng tuyệt đối
+        if (targetTier >= 0 && targetTier < player.smartDropTierHistory.length) {
+            player.smartDropTierHistory[targetTier] |= (1 << slot);
         }
-
-        int tempId = GEAR_TEMPLATES[selectedTier][slot][gender];
-
-        // Ghi nhận slot vừa rơi để ngăn chặn rơi trùng liên tiếp
         player.lastSmartDropSlot = slot;
 
-        // 5. Khởi tạo ItemMap và thuộc tính
+        // 7. Khởi tạo ItemMap và thuộc tính
         return createSmartDropItemMap(mob.zone, tempId, player, x, yEnd);
     }
 
     /**
-     * Thuật toán chọn Slot rơi đồ thông minh (Zero-GC):
-     * - Quét trang bị trên người (itemsBody) và trong túi (itemsBag).
-     * - Nếu còn slot chưa có đồ: Ưu tiên 85%-90% rơi vào các slot còn thiếu.
-     * - Tránh rơi lại slot vừa nhặt ở lần trước (player.lastSmartDropSlot).
+     * Thuật toán chọn Slot rơi đồ thông minh (Zero-GC, 100% Anti-Duplicate):
+     * - Chỉ chọn trong các slot chưa từng rơi / chưa sở hữu của targetTier.
+     * - Nếu còn nhiều slot thiếu: tránh rơi lại lastSmartDropSlot.
+     * - Nếu không còn slot thiếu nào: trả về -1 (đã hoàn thành bộ).
      */
     public int selectSmartSlot(Player player, int targetTier) {
-        boolean[] hasSlot = new boolean[5];
-
-        // 1. Quét trang bị đang mặc trên người (itemsBody)
-        if (player.inventory != null && player.inventory.itemsBody != null) {
-            int bodySize = player.inventory.itemsBody.size();
-            for (int i = 0; i < 5 && i < bodySize; i++) {
-                Item it = player.inventory.itemsBody.get(i);
-                if (it != null && it.isNotNullItem() && it.template != null) {
-                    int type = it.template.type;
-                    if (type >= 0 && type <= 4) {
-                        hasSlot[type] = true;
-                    }
-                }
-            }
-        }
-
-        // 2. Quét trang bị hợp lệ trong hành trang (itemsBag)
-        if (player.inventory != null && player.inventory.itemsBag != null) {
-            int bagSize = player.inventory.itemsBag.size();
-            for (int i = 0; i < bagSize; i++) {
-                Item it = player.inventory.itemsBag.get(i);
-                if (it != null && it.isNotNullItem() && it.template != null) {
-                    int type = it.template.type;
-                    if (type >= 0 && type <= 4) {
-                        // Rada (type 4) hoặc đồ cùng phái (hoặc gender > 2 dùng chung)
-                        if (type == 4 || it.template.gender == player.gender || it.template.gender > 2) {
-                            hasSlot[type] = true;
-                        }
-                    }
-                }
-            }
-        }
-
-        // 3. Tìm các slot còn thiếu
         int[] missing = new int[5];
         int missingCount = 0;
-        for (int i = 0; i < 5; i++) {
-            if (!hasSlot[i]) {
-                missing[missingCount++] = i;
+        Zone zone = player.zone;
+        for (int s = 0; s < 5; s++) {
+            if (!isSlotAcquired(player, targetTier, s, zone)) {
+                missing[missingCount++] = s;
             }
         }
 
-        int selectedSlot;
-        int missingPriorityRate = (targetTier <= 1) ? 90 : 80;
-
-        // Nếu còn slot thiếu: Ưu tiên cao rơi vào các slot còn thiếu
-        if (missingCount > 0 && Util.isTrue(missingPriorityRate, 100)) {
-            if (missingCount > 1) {
-                // Lọc tránh rơi lại lastSmartDropSlot nếu còn slot thiếu khác
-                int[] candidates = new int[missingCount];
-                int candCount = 0;
-                for (int i = 0; i < missingCount; i++) {
-                    if (missing[i] != player.lastSmartDropSlot) {
-                        candidates[candCount++] = missing[i];
-                    }
-                }
-                if (candCount > 0) {
-                    selectedSlot = candidates[Util.nextInt(0, candCount - 1)];
-                } else {
-                    selectedSlot = missing[Util.nextInt(0, missingCount - 1)];
-                }
-            } else {
-                selectedSlot = missing[0];
-            }
-        } else {
-            // Đã đủ bộ (hoặc 10-20% roll nâng cấp chỉ số):
-            // Chống trùng lặp liên tiếp: Loại bỏ slot vừa rơi gần nhất
-            int[] candidates = new int[5];
-            int candCount = 0;
-            for (int i = 0; i < 5; i++) {
-                if (i != player.lastSmartDropSlot) {
-                    candidates[candCount++] = i;
-                }
-            }
-            if (candCount > 0) {
-                selectedSlot = candidates[Util.nextInt(0, candCount - 1)];
-            } else {
-                selectedSlot = Util.nextInt(0, 4);
-            }
+        if (missingCount == 0) {
+            return -1;
+        }
+        if (missingCount == 1) {
+            return missing[0];
         }
 
-        return selectedSlot;
+        // Lọc tránh rơi lại lastSmartDropSlot nếu còn slot thiếu khác
+        int[] candidates = new int[missingCount];
+        int candCount = 0;
+        for (int i = 0; i < missingCount; i++) {
+            if (missing[i] != player.lastSmartDropSlot) {
+                candidates[candCount++] = missing[i];
+            }
+        }
+        if (candCount > 0) {
+            return candidates[Util.nextInt(0, candCount - 1)];
+        }
+        return missing[Util.nextInt(0, missingCount - 1)];
     }
 
     /**

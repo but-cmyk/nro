@@ -151,6 +151,7 @@ public class Player extends Character {
     public int smartDropCountToday = 0;
     public int lastSmartDropSlot = -1;
     public long lastTimeSmartDropReset = 0L;
+    public int[] smartDropTierHistory = new int[8];
 
     public void checkResetSmartDropDaily() {
         if (this.lastTimeSmartDropReset == 0 || utils.Util.isAfterMidnight(this.lastTimeSmartDropReset)) {
