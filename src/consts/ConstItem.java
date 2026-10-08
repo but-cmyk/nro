@@ -1276,6 +1276,8 @@ public class ConstItem {
     public static final int BACH_NGOC = 1350;
     public static final int NGU_SAC = 1462;
     public static final int RONG_XANH = 1279;
+    public static final int CHUOI = 2047;
+
 
 
 

@@ -1581,7 +1581,10 @@ public class NPoint {
             }
             long tn = tiemNang;
             if (this.player.charms != null && this.player.charms.tdTriTue > System.currentTimeMillis()) {
-                tiemNang += (long) tn * 30 / 100;
+                tiemNang += (long) tn * 50 / 100;
+            }
+            if (this.player.itemTime != null && this.player.itemTime.isUseChuoi) {
+                tiemNang += (long) tn * 20 / 100;
             }
             if (this.player.charms != null && this.player.charms.tdTriTue3 > System.currentTimeMillis()) {
                 tiemNang += tn * 2;

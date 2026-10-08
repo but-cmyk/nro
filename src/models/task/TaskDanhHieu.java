@@ -48,6 +48,41 @@ public class TaskDanhHieu {
         }
     }
 
+    public int getRequired(int itemId) {
+        return switch (itemId) {
+            case 1286 -> 20;   // Kẻ thao túng sói
+            case 1287 -> 5;    // Nước anh bao
+            case 1289 -> 5000; // Đại gia mới nhú
+            case 1290 -> 10;   // Trùm ước rồng
+            case 1291 -> 30;   // Trùm săn Boss
+            case 1292 -> 3;    // Thánh đập đồ +7
+            case 1293 -> 3;    // Cao thủ siêu hạng
+            case 1294 -> 1;    // Nông dân chăm chỉ
+            case 1295 -> 500;  // Ông thần ve chai
+            case 1296 -> 30;   // Bị móc sạch túi
+            case 1300 -> 30;   // Thánh ở dơ
+            default -> 0;
+        };
+    }
+
+    public int getCurrent(int itemId) {
+        renew();
+        return switch (itemId) {
+            case 1286 -> this.ChoSuong;
+            case 1287 -> this.ChoNuoc;
+            case 1289 -> this.Nap;
+            case 1290 -> this.Shenron;
+            case 1291 -> this.Hagucboss;
+            case 1292 -> this.DapDo;
+            case 1293 -> this.SieuHang;
+            case 1294 -> this.TaskBoMong;
+            case 1295 -> this.NhatDo;
+            case 1296 -> this.AnTrom;
+            case 1300 -> this.ODo;
+            default -> 0;
+        };
+    }
+
     public boolean CheckItem(Player player, ItemShop itemShop, int itemId) {
         renew();
         Item existingItem = InventoryService.gI().findItemInAllInventories(player, itemId);
@@ -55,62 +90,15 @@ public class TaskDanhHieu {
             Service.gI().sendThongBao(player, "Bạn đã sở hữu danh hiệu này rồi.");
             return false;
         }
-        int required = 0;
-        int current = 0;
-        switch (itemId) {
-            case 1289 -> {
-                required = 5000;
-                current = player.playerTask.taskdh.Nap;
-            }
-            case 1287 -> {
-                required = 5;
-                current = player.playerTask.taskdh.ChoNuoc;
-            }
-            case 1290 -> {
-                required = 10; // Đã sửa từ 50 xuống 10 (khớp với SummonDragon caps 10)
-                current = player.playerTask.taskdh.Shenron;
-            }
-            case 1291 -> {
-                required = 30; // Khớp với trần 30 lần hạ boss
-                current = player.playerTask.taskdh.Hagucboss;
-            }
-            case 1292 -> {
-                required = 3; // Đã sửa từ 30 xuống 3 (khớp với NangCapVatPham caps 3)
-                current = player.playerTask.taskdh.DapDo;
-            }
-            case 1293 -> {
-                required = 3;
-                current = player.playerTask.taskdh.SieuHang;
-            }
-            case 1294 -> {
-                required = 1;
-                current = player.playerTask.taskdh.TaskBoMong;
-            }
-            case 1295 -> {
-                required = 500; // Khớp với Mob.java caps 500 lần nhặt đồ trong ngày
-                current = player.playerTask.taskdh.NhatDo;
-            }
-            case 1296 -> {
-                required = 30; // Đã sửa từ 500 xuống 30 (khớp với AnTrom caps 30)
-                current = player.playerTask.taskdh.AnTrom;
-            }
-            case 1300 -> {
-                required = 30;
-                current = player.playerTask.taskdh.ODo;
-            }
-            case 1286 -> {
-                required = 20; // Đã sửa từ 30 xuống 20 (khớp với ChoRach caps 20)
-                current = player.playerTask.taskdh.ChoSuong;
-            }
-            default -> {
-                return true;
-            }
+        int required = getRequired(itemId);
+        if (required <= 0) {
+            return true;
         }
+        int current = getCurrent(itemId);
         if (current < required) {
-            Service.gI().sendThongBao(player, "Bạn chưa mở khoá danh hiệu này");
+            Service.gI().sendThongBao(player, "Bạn chưa mở khoá danh hiệu này (" + current + "/" + required + ")");
             return false;
         } else {
-            Service.gI().sendThongBao(player, "Bạn đã sở hữu danh hiệu này");
             return true;
         }
     }

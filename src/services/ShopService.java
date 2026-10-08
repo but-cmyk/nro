@@ -36,9 +36,9 @@ public class ShopService {
     public static final byte COST_RUBY = 3;
     private static final byte COST_COUPON = 4;
 
-    private static final byte NORMAL_SHOP = 0;
-    private static final byte LEARN_SKILL_SHOP = 1;
-    private static final byte SPEC_SHOP = 3;
+    public static final byte NORMAL_SHOP = 0;
+    public static final byte LEARN_SKILL_SHOP = 1;
+    public static final byte SPEC_SHOP = 3;
 
     private static ShopService I;
 
@@ -99,6 +99,9 @@ public class ShopService {
                 || shop.tagName.equals("BUA_8H") || shop.tagName.equals("BUA_1M"))) {
             return this.resolveShopBua(player, new Shop(shop));
         }
+        if (shop.typeShop == LEARN_SKILL_SHOP) {
+            return new Shop(shop, player);
+        }
         return allGender ? new Shop(shop) : new Shop(shop, player);
     }
 
@@ -158,118 +161,6 @@ public class ShopService {
         return s;
     }
 
-    private Shop DanhHieu(Player player, Shop s) {
-        if (player.playerTask != null && player.playerTask.taskdh != null) {
-            player.playerTask.taskdh.renew();
-        }
-        for (TabShop tabShop : s.tabShops) {
-            if (tabShop.id != 28) {
-                continue;
-            }
-            for (ItemShop item : tabShop.itemShops) {
-                int required;
-                int current = 0;
-                int percentDone;
-                switch (item.temp.id) {
-                    case 1289 -> {
-                        required = 5000;
-                        current = player.playerTask.taskdh.Nap;
-                    }
-                    case 1287 -> {
-                        required = 5;
-                        current = player.playerTask.taskdh.ChoNuoc;
-                    }
-                    case 1290 -> {
-                        required = 10;
-                        current = player.playerTask.taskdh.Shenron;
-                    }
-                    case 1291 -> {
-                        required = 30;
-                        current = player.playerTask.taskdh.Hagucboss;
-                    }
-                    case 1292 -> {
-                        required = 3;
-                        current = player.playerTask.taskdh.DapDo;
-                    }
-                    case 1293 -> {
-                        required = 3;
-                        current = player.playerTask.taskdh.SieuHang;
-                    }
-                    case 1294 -> {
-                        required = 1;
-                        current = player.playerTask.taskdh.TaskBoMong;
-                    }
-                    case 1295 -> {
-                        required = 500;
-                        current = player.playerTask.taskdh.NhatDo;
-                    }
-                    case 1296 -> {
-                        required = 30;
-                        current = player.playerTask.taskdh.AnTrom;
-                    }
-                    case 1300 -> {
-                        required = 30;
-                        current = player.playerTask.taskdh.ODo;
-                    }
-                    case 1286 -> {
-                        required = 20;
-                        current = player.playerTask.taskdh.ChoSuong;
-                    }
-                    default -> {
-                        continue;
-                    }
-                }
-                percentDone = (int) ((double) current / required * 100);
-                boolean hasProgressOption = false;
-                for (Item.ItemOption option : item.options) {
-                    if (option.optionTemplate.id == 228) {
-                        hasProgressOption = true;
-                        break;
-                    }
-                }
-                if (!hasProgressOption) {
-                    if (current < required) {
-                        item.options.add(new Item.ItemOption(228, percentDone));
-                    } else {
-                        item.options.add(new Item.ItemOption(228, 100));
-                    }
-                }
-            }
-        }
-        return s;
-    }
-
-    private Shop SoHuu(Player player, Shop s) {
-        for (TabShop tabShop : s.tabShops) {
-            if (tabShop.id != 29) {
-                continue;
-            }
-            for (ItemShop item : tabShop.itemShops) {
-                long min = 3 * 24 * 60;
-                if (!CheckDanhHieu(player, item)) {
-                    continue;
-                }
-                boolean hasDayOption = false;
-                for (Item.ItemOption option : item.options) {
-                    if (option.optionTemplate.id == 63) {
-                        hasDayOption = true;
-                        break;
-                    }
-                }
-                if (!hasDayOption) {
-                    if (min >= 1440) {
-                        item.options.add(new Item.ItemOption(63, (int) min / 1440));
-                    } else if (min >= 60) {
-                        item.options.add(new Item.ItemOption(64, (int) min / 60));
-                    } else {
-                        item.options.add(new Item.ItemOption(65, (int) min));
-                    }
-                }
-            }
-        }
-        return s;
-    }
-
     private int ItemDanhHieu(Player player, TabShop tab) {
         int count = 0;
         for (ItemShop itemShop : tab.itemShops) {
@@ -281,91 +172,10 @@ public class ShopService {
     }
 
     private boolean CheckDanhHieu(Player player, ItemShop itemShop) {
-        if (itemShop.temp.id == 1286) {
-            Item napItem = InventoryService.gI().findItemInAllInventories(player, 1286);
-            return napItem != null;
+        if (player == null || itemShop == null || itemShop.temp == null) {
+            return false;
         }
-        if (itemShop.temp.id == 1287) {
-            Item napItem = InventoryService.gI().findItemInAllInventories(player, 1287);
-            return napItem != null;
-        }
-        if (itemShop.temp.id == 1288) {
-            Item napItem = InventoryService.gI().findItemInAllInventories(player, 1288);
-            return napItem != null;
-        }
-        if (itemShop.temp.id == 1289) {
-            Item napItem = InventoryService.gI().findItemInAllInventories(player, 1289);
-            return napItem != null;
-        }
-        if (itemShop.temp.id == 1290) {
-            Item napItem = InventoryService.gI().findItemInAllInventories(player, 1290);
-            return napItem != null;
-        }
-        if (itemShop.temp.id == 1291) {
-            Item napItem = InventoryService.gI().findItemInAllInventories(player, 1291);
-            return napItem != null;
-        }
-        if (itemShop.temp.id == 1292) {
-            Item napItem = InventoryService.gI().findItemInAllInventories(player, 1292);
-            return napItem != null;
-        }
-        if (itemShop.temp.id == 1293) {
-            Item napItem = InventoryService.gI().findItemInAllInventories(player, 1293);
-            return napItem != null;
-        }
-        if (itemShop.temp.id == 1294) {
-            Item napItem = InventoryService.gI().findItemInAllInventories(player, 1294);
-            return napItem != null;
-        }
-        if (itemShop.temp.id == 1295) {
-            Item napItem = InventoryService.gI().findItemInAllInventories(player, 1295);
-            return napItem != null;
-        }
-        if (itemShop.temp.id == 1296) {
-            Item napItem = InventoryService.gI().findItemInAllInventories(player, 1296);
-            return napItem != null;
-        }
-        if (itemShop.temp.id == 1297) {
-            Item napItem = InventoryService.gI().findItemInAllInventories(player, 1297);
-            return napItem != null;
-        }
-        if (itemShop.temp.id == 1298) {
-            Item napItem = InventoryService.gI().findItemInAllInventories(player, 1298);
-            return napItem != null;
-        }
-        if (itemShop.temp.id == 1299) {
-            Item napItem = InventoryService.gI().findItemInAllInventories(player, 1299);
-            return napItem != null;
-        }
-        if (itemShop.temp.id == 1300) {
-            Item napItem = InventoryService.gI().findItemInAllInventories(player, 1300);
-            return napItem != null;
-        }
-        if (itemShop.temp.id == 1175) {
-            Item napItem = InventoryService.gI().findItemInAllInventories(player, 1175);
-            return napItem != null;
-        }
-        if (itemShop.temp.id == 1176) {
-            Item napItem = InventoryService.gI().findItemInAllInventories(player, 1176);
-            return napItem != null;
-        }
-        if (itemShop.temp.id == 1177) {
-            Item napItem = InventoryService.gI().findItemInAllInventories(player, 1177);
-            return napItem != null;
-        }
-        if (itemShop.temp.id == 1178) {
-            Item napItem = InventoryService.gI().findItemInAllInventories(player, 1178);
-            return napItem != null;
-        }
-        if (itemShop.temp.id == 1179) {
-            Item napItem = InventoryService.gI().findItemInAllInventories(player, 1179);
-            return napItem != null;
-        }
-        if (itemShop.temp.id == 1180) {
-            Item napItem = InventoryService.gI().findItemInAllInventories(player, 1180);
-            return napItem != null;
-        }
-        return true;
+        return InventoryService.gI().findItemInAllInventories(player, itemShop.temp.id) != null;
     }
 
     private void openShopType0(Player player, Shop shop) {
@@ -490,10 +300,11 @@ public class ShopService {
             msg.writer().writeByte(SPEC_SHOP);
             msg.writer().writeByte(shop.tabShops.size());
             for (TabShop tab : shop.tabShops) {
+                String tabName = tab.name;
                 if (tab.id == 29) {
-                    tab.name = tab.name + "\n" + "[" + ItemDanhHieu(player, tab) + "]";
+                    tabName = tabName + "\n" + "[" + ItemDanhHieu(player, tab) + "]";
                 }
-                msg.writer().writeUTF(tab.name);
+                msg.writer().writeUTF(tabName);
                 List<ItemShop> validItems = new ArrayList<>();
                 for (ItemShop itemShop : tab.itemShops) {
                     if (tab.id == 29 && !CheckDanhHieu(player, itemShop)) {
@@ -504,15 +315,23 @@ public class ShopService {
                 msg.writer().writeByte(validItems.size());
                 for (ItemShop itemShop : validItems) {
                     msg.writer().writeShort(itemShop.temp.id);
-                    shop = DanhHieu(player, shop);
-                    shop = SoHuu(player, shop);
                     msg.writer().writeShort(itemShop.iconSpec);
                     msg.writer().writeInt((int) itemShop.cost);
 
-                    // msg.writer().writeByte(itemShop.options.size());
+                    List<ItemOption> sendOptions = new ArrayList<>(itemShop.options);
+                    if (tab.id == 28 && player.playerTask != null && player.playerTask.taskdh != null) {
+                        int required = player.playerTask.taskdh.getRequired(itemShop.temp.id);
+                        if (required > 0) {
+                            int current = player.playerTask.taskdh.getCurrent(itemShop.temp.id);
+                            int percentDone = Math.min(100, (int) ((double) current / required * 100));
+                            sendOptions.removeIf(option -> option.optionTemplate.id == 228);
+                            sendOptions.add(new ItemOption(228, percentDone));
+                        }
+                    }
+
                     boolean isBundle = (itemShop.temp.id == 193 || itemShop.temp.id == 361 || itemShop.temp.id == 65);
-                    msg.writer().writeByte(itemShop.options.size() + (isBundle ? 1 : 0));
-                    for (ItemOption option : itemShop.options) {
+                    msg.writer().writeByte(sendOptions.size() + (isBundle ? 1 : 0));
+                    for (ItemOption option : sendOptions) {
                         msg.writer().writeByte(option.optionTemplate.id);
                         msg.writer().writeShort(option.param);
                     }
@@ -860,7 +679,7 @@ public class ShopService {
                 return;
             }
         }
-        if (player.BoughtSkill.contains(is.temp.id)) {
+        if (player.BoughtSkills != null && player.BoughtSkills.contains((int) is.temp.id)) {
             Service.gI().sendThongBao(player, "Bạn đã học kỹ năng này rồi");
             return;
         }

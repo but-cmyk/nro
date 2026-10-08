@@ -825,7 +825,8 @@ public class RewardService {
                         if (sub == 1) {
                             it = ItemService.gI().createNewItem((short) 193, 1);
                         } else if (sub == 2) {
-                            int vegId = Util.isTrue(1, 2) ? 191 : 192;
+                            int[] vegIds = {191, 192, ConstItem.CHUOI};
+                            int vegId = vegIds[Util.nextInt(0, vegIds.length - 1)];
                             it = ItemService.gI().createNewItem((short) vegId, Util.nextInt(3, 5));
                         } else {
                             it = ItemService.gI().createNewItem((short) 20, Util.nextInt(5, 10));

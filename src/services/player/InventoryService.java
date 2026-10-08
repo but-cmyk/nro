@@ -1,4 +1,5 @@
 package services.player;
+import consts.ConstItem;
 import models.item.Item;
 import models.item.Item.ItemOption;
 import models.npc.mabu.MabuEgg;
@@ -432,11 +433,16 @@ public class InventoryService {
         }
         Item item = player.inventory.itemsBag.get(index);
         if (item.isNotNullItem()) {
-            player.inventory.itemsBag.set(index, putItemBody(player, item));
+            boolean isTitle = (item.template != null && item.template.type == 36);
+            Item swapped = putItemBody(player, item);
+            player.inventory.itemsBag.set(index, swapped);
             sendItemBags(player);
             sendItemBody(player);
             Service.gI().point(player);
             Service.gI().Send_Caitrang(player);
+            if (isTitle || (swapped != null && swapped.isNotNullItem() && swapped.template != null && swapped.template.type == 36)) {
+                Service.gI().sendEffPlayer(player);
+            }
         }
     }
 
@@ -866,7 +872,7 @@ public class InventoryService {
         //item tăng số lượng
         if (itemAdd.template.isUpToUp) {
             for (Item it : items) {
-                if (it.isNotNullItem() && (it.template.id == 191 || it.template.id == 192)) {
+                if (it.isNotNullItem() && (it.template.id == 191 || it.template.id == 192 || it.template.id == ConstItem.CHUOI)) {
                     ItemService.gI().normalizeVeggiesOptions(it);
                 }
                 if (!it.isNotNullItem() || it.template.id != itemAdd.template.id || (!checkListsEqual(it.itemOptions, itemAdd.itemOptions) && itemAdd.template.id != 2074 && !itemAdd.isDaNangCap() && !itemAdd.isManhTS() && itemAdd.template.type != 6) || it.quantity >= 100_000_000) {

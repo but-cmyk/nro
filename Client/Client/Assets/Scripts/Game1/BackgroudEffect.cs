@@ -238,9 +238,10 @@ namespace Game1
     			{
     				imgMua2 = GameCanvas.loadImageRMS("/bg/mua2.png");
     			}
-    			int minRain = System.Math.Max(10, GameCanvas.w / 3);
-    			int maxRain = System.Math.Max(minRain + 1, GameCanvas.h / 3);
-    			sum = Res.random(minRain, maxRain);
+    			int calculated = (GameCanvas.w * GameCanvas.h) / 800;
+    			if (calculated < 360) calculated = 360;
+    			if (calculated > 600) calculated = 600;
+    			sum = calculated + Res.random(0, 40);
     			x = new int[sum];
     			y = new int[sum];
     			vx = new int[sum];
@@ -252,19 +253,24 @@ namespace Game1
     			activeEff = new bool[sum];
     			for (int k = 0; k < sum; k++)
     			{
-    				y[k] = Res.random(-10, GameCanvas.h + 100) + GameScr.cmy;
-    				x[k] = Res.random(-10, GameCanvas.w + 300) + GameScr.cmx;
-    				t[k] = Res.random(0, 1);
-    				vx[k] = -3;
-    				vy[k] = 3;
-    				type[k] = Res.random(1, 3);
-    				isRainEffect[k] = false;
-    				if (type[k] == 2 && k % 2 == 0)
+    				y[k] = GameScr.cmy + Res.random(-60, GameCanvas.h + 60);
+    				x[k] = GameScr.cmx + Res.random(-40, GameCanvas.w + 240);
+    				t[k] = 0;
+    				frame[k] = 0;
+    				activeEff[k] = false;
+    				type[k] = (Res.random(0, 10) < 4) ? 2 : 1;
+    				if (type[k] == 2)
     				{
+    					vy[k] = Res.random(6, 8);
+    					vx[k] = -Res.random(2, 3);
     					isRainEffect[k] = true;
     				}
-    				activeEff[k] = false;
-    				frame[k] = Res.random(1, 2);
+    				else
+    				{
+    					vy[k] = Res.random(4, 5);
+    					vx[k] = -Res.random(1, 2);
+    					isRainEffect[k] = false;
+    				}
     			}
     			break;
     		}
@@ -724,55 +730,79 @@ namespace Game1
     					isStopping = true;
     				}
     				bool hasRainDropAlive = false;
+    				int cmx = GameScr.cmx;
+    				int cmy = GameScr.cmy;
+    				int limitBottom = cmy + GameCanvas.h + 20;
+    				int limitLeft = cmx - 60;
+    				int limitRight = cmx + GameCanvas.w + 300;
+    				int limitTop = cmy - 120;
     				for (int l = 0; l < sum; l++)
     				{
-    					if (isStopping && y[l] > GameCanvas.h + GameScr.cmy + 50)
+    					if (isStopping && y[l] > limitBottom)
     					{
     						continue;
     					}
     					hasRainDropAlive = true;
-    					if (l % 3 != 0 && typeEff != 12 && TileMap.tileTypeAt(x[l], y[l] - GameCanvas.transY, 2))
+    					if (activeEff[l])
+    					{
+    						t[l]++;
+    						if (t[l] > 1)
+    						{
+    							t[l] = 0;
+    							frame[l]++;
+    							if (frame[l] > 1)
+    							{
+    								frame[l] = 0;
+    								activeEff[l] = false;
+    								if (isStopping)
+    								{
+    									y[l] = limitBottom + 100;
+    								}
+    								else
+    								{
+    									y[l] = cmy - Res.random(10, 60);
+    									x[l] = cmx + Res.random(-40, GameCanvas.w + 240);
+    									vy[l] = Res.random(6, 8);
+    									vx[l] = -Res.random(2, 3);
+    								}
+    							}
+    						}
+    						continue;
+    					}
+
+    					// Giọt mưa đang rơi
+    					y[l] += vy[l];
+    					x[l] += vx[l];
+
+    					// Kiểm tra va chạm mặt đất gạch cho hạt tầng trước
+    					if (type[l] == 2 && typeEff != 12 && TileMap.tileTypeAt(x[l], y[l] - GameCanvas.transY, 2))
     					{
     						activeEff[l] = true;
+    						frame[l] = 0;
+    						t[l] = 0;
+    						continue;
     					}
-    					if (l % 3 == 0 && y[l] > GameCanvas.h + GameScr.cmy)
+
+    					// Kiểm tra ra khỏi màn hình hoặc lệch camera do người chơi di chuyển
+    					if (y[l] > limitBottom || x[l] < limitLeft || x[l] > limitRight || y[l] < limitTop)
     					{
     						if (isStopping)
     						{
-    							y[l] = GameCanvas.h + GameScr.cmy + 100;
+    							y[l] = limitBottom + 100;
     						}
     						else
     						{
-    							x[l] = Res.random(-10, GameCanvas.w + 300) + GameScr.cmx;
-    							y[l] = Res.random(-100, 0) + GameScr.cmy;
-    						}
-    					}
-    					if (!activeEff[l])
-    					{
-    						y[l] += vy[l];
-    						x[l] += vx[l];
-    					}
-    					if (!activeEff[l])
-    					{
-    						continue;
-    					}
-    					t[l]++;
-    					if (t[l] > 4)
-    					{
-    						frame[l]++;
-    						t[l] = 0;
-    						if (frame[l] > 1)
-    						{
-    							frame[l] = 0;
-    							activeEff[l] = false;
-    							if (isStopping)
+    							y[l] = cmy - Res.random(10, 60);
+    							x[l] = cmx + Res.random(-40, GameCanvas.w + 240);
+    							if (type[l] == 2)
     							{
-    								y[l] = GameCanvas.h + GameScr.cmy + 100;
+    								vy[l] = Res.random(6, 8);
+    								vx[l] = -Res.random(2, 3);
     							}
     							else
     							{
-    								x[l] = Res.random(-10, GameCanvas.w + 300) + GameScr.cmx;
-    								y[l] = Res.random(-100, 0) + GameScr.cmy;
+    								vy[l] = Res.random(4, 5);
+    								vx[l] = -Res.random(1, 2);
     							}
     						}
     					}
@@ -992,9 +1022,13 @@ namespace Game1
     			{
     				int cmx = GameScr.cmx;
     				int cmy = GameScr.cmy;
+    				int minW = cmx - 20;
+    				int maxW = cmx + GameCanvas.w + 20;
+    				int minH = cmy - 20;
+    				int maxH = cmy + GameCanvas.h + 20;
     				for (int i = 0; i < sum; i++)
     				{
-    					if (type[i] == 2 && x[i] >= GameScr.cmx && x[i] <= GameCanvas.w + GameScr.cmx && y[i] >= GameScr.cmy && y[i] <= GameCanvas.h + GameScr.cmy)
+    					if (type[i] == 2 && x[i] >= minW && x[i] <= maxW && y[i] >= minH && y[i] <= maxH)
     					{
     						if (activeEff[i])
     						{
@@ -1139,13 +1173,17 @@ namespace Game1
     		case 3:
     			break;
     		case 0:
+    		case 12:
     		{
     			int cmx = GameScr.cmx;
     			int cmy = GameScr.cmy;
-    			g.setColor(10742731);
+    			int minW = cmx - 20;
+    			int maxW = cmx + GameCanvas.w + 20;
+    			int minH = cmy - 20;
+    			int maxH = cmy + GameCanvas.h + 20;
     			for (int i = 0; i < sum; i++)
     			{
-    				if (type[i] != 2 && x[i] >= GameScr.cmx && x[i] <= GameCanvas.w + GameScr.cmx && y[i] >= GameScr.cmy && y[i] <= GameCanvas.h + GameScr.cmy)
+    				if (type[i] != 2 && x[i] >= minW && x[i] <= maxW && y[i] >= minH && y[i] <= maxH)
     				{
     					g.drawImage(imgMua2, x[i], y[i], 0);
     				}
@@ -1176,7 +1214,6 @@ namespace Game1
     		case 8:
     		case 9:
     		case 10:
-    		case 12:
     		case 13:
     		case 14:
     			break;

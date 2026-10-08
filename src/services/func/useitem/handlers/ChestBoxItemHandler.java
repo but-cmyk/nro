@@ -95,8 +95,9 @@ public class ChestBoxItemHandler implements ItemActionHandler {
             RewardService.gI().initBaseOptionClothes(eq.template.id, eq.template.type, eq.itemOptions);
             InventoryService.gI().addItemBag(pl, eq);
             Service.gI().sendThongBao(pl, "|1|Bạn mở Capsule Vàng Kì Bí nhận được " + eq.template.name + "!");
-        } else if (roll <= 75) { // 20% Cà chua / Cà rốt buff
-            short itemId = (short) (Util.isTrue(50, 100) ? ConstItem.CA_CHUA : ConstItem.CA_ROT);
+        } else if (roll <= 75) { // 20% Cà chua / Cà rốt / Chuối buff
+            short[] vegIds = {(short) ConstItem.CA_CHUA, (short) ConstItem.CA_ROT, (short) ConstItem.CHUOI};
+            short itemId = vegIds[Util.nextInt(0, vegIds.length - 1)];
             Item food = ItemService.gI().createNewItem(itemId);
             food.quantity = Util.nextInt(3, 5);
             food.itemOptions.add(new ItemOption(30, 0));

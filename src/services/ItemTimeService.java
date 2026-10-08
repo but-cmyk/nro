@@ -87,6 +87,9 @@ public class ItemTimeService {
         if (player.itemTime.isUseCaRot) {
             sendItemTime(player, 933, (int) ((TIME_ITEM - (System.currentTimeMillis() - player.itemTime.lastTimeCaRot)) / 1000));
         }
+        if (player.itemTime.isUseChuoi) {
+            sendItemTime(player, 1042, (int) ((TIME_ITEM - (System.currentTimeMillis() - player.itemTime.lastTimeChuoi)) / 1000));
+        }
         if (player.itemTime.isUseAnDanh2) {
             sendItemTime(player, 10717, (int) ((TIME_ITEM - (System.currentTimeMillis() - player.itemTime.lastTimeAnDanh2)) / 1000));
         }

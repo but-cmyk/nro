@@ -1,5 +1,6 @@
 package services.func.useitem.handlers;
 
+import consts.ConstItem;
 import consts.ConstPlayer;
 import models.item.Item;
 import models.map.ItemMap;
@@ -54,7 +55,7 @@ public class ConsumableItemHandler implements ItemActionHandler {
 
     private static boolean isItemTimeId(int id) {
         return switch (id) {
-            case 191, 192, 379, 381, 382, 383, 384, 385, 579, 638, 663, 664, 665, 666, 667,
+            case 191, 192, ConstItem.CHUOI, 379, 381, 382, 383, 384, 385, 579, 638, 663, 664, 665, 666, 667,
                  752, 753, 764, 880, 881, 882, 1045, 1099, 1100, 1101, 1102, 1103,
                  1136, 1137, 1261, 1262, 1397, 2160 -> true;
             default -> false;
@@ -183,6 +184,7 @@ public class ConsumableItemHandler implements ItemActionHandler {
         switch (item.template.id) {
             case 191 -> { pl.itemTime.lastTimeCaChua = now; pl.itemTime.isUseCaChua = true; }
             case 192 -> { pl.itemTime.lastTimeCaRot = now; pl.itemTime.isUseCaRot = true; }
+            case ConstItem.CHUOI -> { pl.itemTime.lastTimeChuoi = now; pl.itemTime.isUseChuoi = true; }
             case 1397 -> { pl.itemTime.lastTimeBuaTNSM = now; pl.itemTime.isBuaTNSM = true; }
             case 382 -> { pl.itemTime.lastTimeBoHuyet = now; pl.itemTime.isUseBoHuyet = true; }
             case 383 -> { pl.itemTime.lastTimeBoKhi = now; pl.itemTime.isUseBoKhi = true; }

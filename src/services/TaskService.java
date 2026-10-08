@@ -368,7 +368,7 @@ public class TaskService {
             
             short x_hint = 0;
             short y_hint = 0;
-            if (player != null && player.zone != null && player.zone.map != null) {
+            if (tm.id <= 2 && player != null && player.zone != null && player.zone.map != null) {
                 if (stm.mapId == player.zone.map.mapId) {
                     if (stm.npcId != -1) {
                         for (Npc npc : Manager.NPCS) {

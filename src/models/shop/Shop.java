@@ -4,6 +4,7 @@ package models.shop;
 import java.util.ArrayList;
 import java.util.List;
 import models.player.Player;
+import services.ShopService;
 
 public class Shop {
 
@@ -31,19 +32,19 @@ public class Shop {
             this.tabShops.add(new TabShop(tabShop, gender));
         }
     }
-public Shop(Shop shop, Player player) {
+
+    public Shop(Shop shop, Player player) {
         this.tabShops = new ArrayList<>();
         this.id = shop.id;
         this.npcId = shop.npcId;
         this.tagName = shop.tagName;
         this.typeShop = shop.typeShop;
         for (TabShop tabShop : shop.tabShops) {
-//            if (shop.typeShop == 1){
-//                            this.tabShops.add(new TabShopHocKyNang(tabShop, player));
-//
-//            }else{
-            this.tabShops.add(new TabShop(tabShop, player));
-           // }
+            if (shop.typeShop == ShopService.LEARN_SKILL_SHOP) {
+                this.tabShops.add(new TabShopHocKyNang(tabShop, player));
+            } else {
+                this.tabShops.add(new TabShop(tabShop, player));
+            }
         }
     }
     public Shop(Shop shop) {

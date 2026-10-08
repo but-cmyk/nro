@@ -119,7 +119,6 @@ public class Player extends Character {
     public boolean beforeDispose;
 
     public List<String> textRuongGo = new ArrayList<>();
-    public List<Integer> BoughtSkill = new ArrayList<>();
     public int mbv = 0;
     public boolean baovetaikhoan;
     public long mbvtime;

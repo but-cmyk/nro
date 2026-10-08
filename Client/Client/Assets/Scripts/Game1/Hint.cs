@@ -264,7 +264,7 @@ namespace Game1
     
     	public static void paint(mGraphics g)
     	{
-    		if (ChatPopup.serverChatPopUp != null || Char.myCharz().isUsePlane || Char.myCharz().isTeleport)
+    		if (ChatPopup.serverChatPopUp != null || Char.myCharz().isUsePlane || Char.myCharz().isTeleport || (Char.myCharz().taskMaint != null && Char.myCharz().taskMaint.taskId > 2))
     		{
     			return;
     		}
@@ -296,6 +296,12 @@ namespace Game1
     		{
     			int taskId = Char.myCharz().taskMaint.taskId;
     			int index = Char.myCharz().taskMaint.index;
+    			if (taskId > 2)
+    			{
+    				isPaint = false;
+    				isPaintArrow = false;
+    				return;
+    			}
     			isCamera = false;
     			trans = 0;
     			type = 0;

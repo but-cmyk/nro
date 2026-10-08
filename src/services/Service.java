@@ -1713,9 +1713,9 @@ public class Service {
     }
 
     public void sendEffPlayer(Player pl) {
-        if (pl.isPl()) {
+        if (pl != null && pl.isPl() && pl.inventory != null && pl.inventory.itemsBody != null && pl.inventory.itemsBody.size() > 10) {
             Item danhhieu = pl.inventory.itemsBody.get(10);
-            if (danhhieu.isNotNullItem()) {
+            if (danhhieu != null && danhhieu.isNotNullItem() && danhhieu.template != null) {
                 Service.gI().sendEffAllPlayer(pl, danhhieu.template.part, 1, -1, 1);
             }
         }
@@ -1740,16 +1740,20 @@ public class Service {
     }
 
     public void sendEffAllPlayerMapToMe(Player pl) {
+        if (pl == null || pl.zone == null) {
+            return;
+        }
         try {
             for (Player plM : pl.zone.getPlayers()) {
-                if (plM.isPl() && plM.inventory.itemsBody.size() >= 10) {
+                if (plM != null && plM.isPl() && plM.inventory != null && plM.inventory.itemsBody != null && plM.inventory.itemsBody.size() > 10) {
                     Item danhhieu = plM.inventory.itemsBody.get(10);
-                    if (danhhieu.isNotNullItem()) {
+                    if (danhhieu != null && danhhieu.isNotNullItem() && danhhieu.template != null) {
                         Service.gI().sendEffPlayer(plM, pl, danhhieu.template.part, 1, -1, 1);
                     }
                 }
             }
         } catch (Exception e) {
+            Logger.logException(Service.class, e, "Lỗi sendEffAllPlayerMapToMe");
         }
     }
 

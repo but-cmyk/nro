@@ -1,5 +1,6 @@
 package services;
 
+import consts.ConstItem;
 import models.Template;
 import models.Template.ItemOptionTemplate;
 import models.item.Item;
@@ -271,6 +272,9 @@ public class ItemService {
         } else if (tempId == 192) {
             item.itemOptions.add(new ItemOption(96, 50));
             item.itemOptions.add(new ItemOption(30, 0));
+        } else if (tempId == ConstItem.CHUOI) {
+            item.itemOptions.add(new ItemOption(83, 20));
+            item.itemOptions.add(new ItemOption(30, 0));
         }
 
         if (item.template != null) {
@@ -382,6 +386,10 @@ public class ItemService {
         } else if (item.template.id == 192) {
             item.itemOptions.clear();
             item.itemOptions.add(new ItemOption(96, 50));
+            item.itemOptions.add(new ItemOption(30, 0));
+        } else if (item.template.id == ConstItem.CHUOI) {
+            item.itemOptions.clear();
+            item.itemOptions.add(new ItemOption(83, 20));
             item.itemOptions.add(new ItemOption(30, 0));
         }
     }

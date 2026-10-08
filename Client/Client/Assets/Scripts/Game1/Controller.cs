@@ -3314,6 +3314,11 @@ namespace Game1
                         {
                             short x_hint = msg.reader().readShort();
                             short y_hint = msg.reader().readShort();
+                            if (Char.myCharz().taskMaint != null && Char.myCharz().taskMaint.taskId > 2)
+                            {
+                                x_hint = 0;
+                                y_hint = 0;
+                            }
                             Char.myCharz().x_hint = x_hint;
                             Char.myCharz().y_hint = y_hint;
                         }

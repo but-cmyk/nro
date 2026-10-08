@@ -810,6 +810,7 @@ public class NpcFactory {
                                             player.BoughtSkills.add((int) player.hocKyNang.ItemTemplateSkillId);
                                             player.nPoint.tiemNangUp(-player.hocKyNang.PotentialLearn);
                                             Service.gI().point(player);
+                                            Service.gI().sendThongBao(player, "Học thành công " + curSkill.template.name + " cấp " + level + "!");
                                         } else {
                                             Skill skillNeed = SkillUtil.createSkill(SkillUtil.getTempSkillSkillByItemID(
                                                     player.hocKyNang.ItemTemplateSkillId), level);
@@ -830,6 +831,7 @@ public class NpcFactory {
                                             player.BoughtSkills.add((int) player.hocKyNang.ItemTemplateSkillId);
                                             player.nPoint.tiemNangUp(-player.hocKyNang.PotentialLearn);
                                             Service.gI().point(player);
+                                            Service.gI().sendThongBao(player, "Học thành công " + curSkill.template.name + " cấp " + level + "!");
                                         } else {
                                             Service.gI().sendThongBao(player, "Vui lòng học " + curSkill.template.name
                                                     + " cấp " + (curSkill.point + 1) + " trước!");

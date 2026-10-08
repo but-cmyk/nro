@@ -436,6 +436,34 @@ public class DatabaseTemplateLoader {
                 itemTemp.leg = rs.getInt("leg");
                 Manager.ITEM_TEMPLATES.add(itemTemp);
             }
+            if (Manager.ITEM_TEMPLATES.size() <= consts.ConstItem.CHUOI) {
+                boolean hasChuoi = false;
+                for (ItemTemplate it : Manager.ITEM_TEMPLATES) {
+                    if (it.id == consts.ConstItem.CHUOI) {
+                        hasChuoi = true;
+                        break;
+                    }
+                }
+                if (!hasChuoi) {
+                    ItemTemplate chuoi = new ItemTemplate();
+                    chuoi.id = (short) consts.ConstItem.CHUOI;
+                    chuoi.type = 27;
+                    chuoi.gender = 3;
+                    chuoi.name = "Chuối";
+                    chuoi.description = "Tác dụng trong 10 phút";
+                    chuoi.level = 0;
+                    chuoi.iconID = 1042;
+                    chuoi.part = -1;
+                    chuoi.isUpToUp = true;
+                    chuoi.strRequire = 0;
+                    chuoi.gold = 0;
+                    chuoi.gem = 0;
+                    chuoi.head = -1;
+                    chuoi.body = -1;
+                    chuoi.leg = -1;
+                    Manager.ITEM_TEMPLATES.add(chuoi);
+                }
+            }
             Manager.logLoaded("Successfully loaded map item template (" + Manager.ITEM_TEMPLATES.size() + ")\n");
 
             // 14. Load item option template

@@ -118,6 +118,9 @@ public class ItemTime {
     public boolean isUseCaRot;
     public long lastTimeCaRot;
 
+    public boolean isUseChuoi;
+    public long lastTimeChuoi;
+
     // Nhận bùa
     public long lastTimeSendTextTime;
 
@@ -135,6 +138,12 @@ public class ItemTime {
         if (isUseCaRot) {
             if (Util.canDoWithTime(lastTimeCaRot, TIME_ITEM)) {
                 isUseCaRot = false;
+                Service.gI().point(player);
+            }
+        }
+        if (isUseChuoi) {
+            if (Util.canDoWithTime(lastTimeChuoi, TIME_ITEM)) {
+                isUseChuoi = false;
                 Service.gI().point(player);
             }
         }

@@ -5764,7 +5764,7 @@ namespace Game1
     
     	private void paint_map_line(mGraphics g)
     	{
-    		if (isPaintNewSkill || x_hint == 0 || y_hint == 0 || statusMe == 14)
+    		if (isPaintNewSkill || x_hint == 0 || y_hint == 0 || statusMe == 14 || (taskMaint != null && taskMaint.taskId > 2))
     		{
     			return;
     		}
