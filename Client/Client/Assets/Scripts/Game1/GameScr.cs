@@ -4244,8 +4244,10 @@ namespace Game1
     				Mob mob2 = (Mob)vMob.elementAt(k);
     				if (mob2.status != 0 && mob2.status != 1 && mob2.hp > 0 && !mob2.isMobMe)
     				{
-    					Char.myCharz().cx = mob2.x;
-    					Char.myCharz().cy = mob2.y;
+    					int targetX = (mob2.xFirst != 0) ? mob2.xFirst : mob2.x;
+    					int targetY = (mob2.yFirst != 0) ? mob2.yFirst : mob2.y;
+    					Char.myCharz().cx = targetX;
+    					Char.myCharz().cy = targetY;
     					Char.myCharz().mobFocus = mob2;
     					Service.gI().charMove();
     					break;
@@ -4256,7 +4258,7 @@ namespace Game1
     		{
     			Char.myCharz().mobFocus = null;
     		}
-    		if (Char.myCharz().mobFocus == null || timeSkill != 0 || (Char.myCharz().skillInfoPaint() != null && Char.myCharz().indexSkill < Char.myCharz().skillInfoPaint().Length && Char.myCharz().dart != null && Char.myCharz().arr != null))
+    		if (Char.myCharz().mobFocus == null || timeSkill != 0 || Char.myCharz().dart != null || Char.myCharz().arr != null || Char.myCharz().skillInfoPaint() != null)
     		{
     			return;
     		}

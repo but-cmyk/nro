@@ -172,7 +172,7 @@ public class SkillService {
         } else {
             if (player.playerSkill.skillSelect.template.type == 1) {
                 long nowAttack = System.currentTimeMillis();
-                long minInterval = (player.itemTime != null && player.itemTime.isUseTDLT) ? 200 : 300;
+                long minInterval = (player.itemTime != null && player.itemTime.isUseTDLT) ? 100 : 150;
                 if (nowAttack - player.lastTimeAttack < minInterval) {
                     if (player.isPl()) {
                         PlayerAuditLogger.logSkillUsage(player, curSkillName, curSkillTemplateId, targetDesc, false, "Spam attack rate limit (<" + minInterval + "ms, diff=" + (nowAttack - player.lastTimeAttack) + "ms)");
@@ -1172,7 +1172,14 @@ public class SkillService {
     public boolean canUseSkillWithCooldown(Player player) {
         int tolerance = 150;
         if (player.itemTime != null && player.itemTime.isUseTDLT) {
-            tolerance = 200;
+            tolerance = 250;
+        }
+        if (player.playerSkill != null && player.playerSkill.skillSelect != null && player.playerSkill.skillSelect.template != null) {
+            int skillId = player.playerSkill.skillSelect.template.id;
+            // Bù độ trễ đạn bay trên Client cho các chiêu chưởng tầm xa (Kamejoko, Masenko, Antomic)
+            if (skillId == Skill.KAMEJOKO || skillId == Skill.MASENKO || skillId == Skill.ANTOMIC) {
+                tolerance += 500;
+            }
         }
         int cd = player.playerSkill.skillSelect.coolDown;
         long requiredTime = Math.max(0, cd - tolerance);

@@ -726,9 +726,9 @@ public class Controller implements IMessageHandler {
                 case 54:
                     if (player != null) {
                         long nowAttack = System.currentTimeMillis();
-                        long minInterval = (player.itemTime != null && player.itemTime.isUseTDLT) ? 200 : 300;
+                        long minInterval = (player.itemTime != null && player.itemTime.isUseTDLT) ? 100 : 150;
                         if (nowAttack - player.lastTimeAttack < minInterval) {
-                            // Chặn spam gói tin tấn công quái từ tool mod (GACD < 300ms, TDLT < 200ms)
+                            // Chặn spam gói tin tấn công quái từ tool mod (GACD < 150ms, TDLT < 100ms)
                             PlayerAuditLogger.logAttackMob(player, -1, false, -1, "BLOCKED", "Spam rate limit (<" + minInterval + "ms, diff=" + (nowAttack - player.lastTimeAttack) + "ms)");
                             break;
                         }

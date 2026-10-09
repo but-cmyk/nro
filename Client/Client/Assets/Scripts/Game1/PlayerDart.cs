@@ -155,6 +155,10 @@ namespace Game1
     		charBelong.setAttack();
     		if (charBelong.me)
     		{
+    			if (charBelong.myskill != null)
+    			{
+    				charBelong.myskill.lastTimeUseThisSkill = mSystem.currentTimeMillis();
+    			}
     			charBelong.saveLoadPreviousSkill();
     		}
     		if (charBelong.isUseSkillAfterCharge)
