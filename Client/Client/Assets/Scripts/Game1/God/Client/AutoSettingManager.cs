@@ -157,8 +157,8 @@ namespace Game1.God
                 }
             }));
 
-            // 15. Tốc độ di chuyển (4 -> 30)
-            items.Add(new AutoSettingItem("movespeed", "Tốc Độ Chạy", 1, false, 4, 4, 30, 1, (item) =>
+            // 15. Tốc độ di chuyển (1 -> 30)
+            items.Add(new AutoSettingItem("movespeed", "Tốc Độ Chạy", 1, false, 2, 1, 30, 1, (item) =>
             {
                 int spd = Mathf.Clamp(item.value, item.minVal, item.maxVal);
                 ClientManager.speedRun = spd;
@@ -325,6 +325,10 @@ namespace Game1.God
                                         int parsedVal;
                                         if (int.TryParse(v, out parsedVal))
                                         {
+                                            if (items[j].key.Equals("movespeed") && parsedVal == 4)
+                                            {
+                                                parsedVal = 2;
+                                            }
                                             items[j].value = Mathf.Clamp(parsedVal, items[j].minVal, items[j].maxVal);
                                         }
                                     }

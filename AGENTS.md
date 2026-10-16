@@ -40,17 +40,17 @@ Tự vấn Checklist lỗi nghiêm ngặt trước khi báo cáo hoàn thành!
 
 Trước khi chạm vào bất kỳ file nguồn nào, hãy nạp bất biến từ module tương ứng:
 
-1. **Vật phẩm, Đập đồ Bà Hạt Mít, Dupe đồ, NPC**: [src/services/GEMINI.md](file:///d:/SRC_NRO_219/SRC_NRO_219/SRC_NRO_189/SRC_NRO_OK/SRC_NRO_OK/DEMO_NETBEAN_tsSv2_new/src/services/GEMINI.md)
-2. **Người chơi, Chỉ số HP/KI/Dame, Tràn số, Đệ tử**: [src/models/player/GEMINI.md](file:///d:/SRC_NRO_219/SRC_NRO_219/SRC_NRO_189/SRC_NRO_OK/SRC_NRO_OK/DEMO_NETBEAN_tsSv2_new/src/models/player/GEMINI.md)
-3. **Bản đồ, Quái vật, Zone Realtime Loop**: [src/models/map/GEMINI.md](file:///d:/SRC_NRO_219/SRC_NRO_219/SRC_NRO_189/SRC_NRO_OK/SRC_NRO_OK/DEMO_NETBEAN_tsSv2_new/src/models/map/GEMINI.md)
-4. **Hệ thống Boss, Trùm Fide/Broly, Sự kiện**: [src/models/boss/GEMINI.md](file:///d:/SRC_NRO_219/SRC_NRO_219/SRC_NRO_189/SRC_NRO_OK/SRC_NRO_OK/DEMO_NETBEAN_tsSv2_new/src/models/boss/GEMINI.md)
-5. **Võ Đài Whis, Giải Đấu Liên Vũ Trụ, Sinh Tử, Bot**: [src/models/tournament/GEMINI.md](file:///d:/SRC_NRO_219/SRC_NRO_219/SRC_NRO_189/SRC_NRO_OK/SRC_NRO_OK/DEMO_NETBEAN_tsSv2_new/src/models/tournament/GEMINI.md)
-6. **Nhiệm vụ, Danh hiệu, Tiến trình**: [src/models/task/GEMINI.md](file:///d:/SRC_NRO_219/SRC_NRO_219/SRC_NRO_189/SRC_NRO_OK/SRC_NRO_OK/DEMO_NETBEAN_tsSv2_new/src/models/task/GEMINI.md)
-7. **Mạng Netty, Gói tin nhị phân, Stream**: [src/network/GEMINI.md](file:///d:/SRC_NRO_219/SRC_NRO_219/SRC_NRO_189/SRC_NRO_OK/SRC_NRO_OK/DEMO_NETBEAN_tsSv2_new/src/network/GEMINI.md)
-8. **Database MySQL, HikariCP, DAO**: [src/database/GEMINI.md](file:///d:/SRC_NRO_219/SRC_NRO_219/SRC_NRO_189/SRC_NRO_OK/SRC_NRO_OK/DEMO_NETBEAN_tsSv2_new/src/database/GEMINI.md)
-9. **Client Unity C#, Single-Client, Giao diện**: [Client/Client/Assets/Scripts/GEMINI.md](file:///d:/SRC_NRO_219/SRC_NRO_219/SRC_NRO_189/SRC_NRO_OK/SRC_NRO_OK/DEMO_NETBEAN_tsSv2_new/Client/Client/Assets/Scripts/GEMINI.md)
+1. **Vật phẩm, Đập đồ Bà Hạt Mít, Dupe đồ, NPC**: [src/services/GEMINI.md](file:///d:/SRC_NRO_219/src/services/GEMINI.md)
+2. **Người chơi, Chỉ số HP/KI/Dame, Tràn số, Đệ tử**: [src/models/player/GEMINI.md](file:///d:/SRC_NRO_219/src/models/player/GEMINI.md)
+3. **Bản đồ, Quái vật, Zone Realtime Loop**: [src/models/map/GEMINI.md](file:///d:/SRC_NRO_219/src/models/map/GEMINI.md)
+4. **Hệ thống Boss, Trùm Fide/Broly, Sự kiện**: [src/models/boss/GEMINI.md](file:///d:/SRC_NRO_219/src/models/boss/GEMINI.md)
+5. **Võ Đài Whis, Giải Đấu Liên Vũ Trụ, Sinh Tử, Bot**: [src/models/tournament/GEMINI.md](file:///d:/SRC_NRO_219/src/models/tournament/GEMINI.md)
+6. **Nhiệm vụ, Danh hiệu, Tiến trình**: [src/models/task/GEMINI.md](file:///d:/SRC_NRO_219/src/models/task/GEMINI.md)
+7. **Mạng Netty, Gói tin nhị phân, Stream**: [src/network/GEMINI.md](file:///d:/SRC_NRO_219/src/network/GEMINI.md)
+8. **Database MySQL, HikariCP, DAO**: [src/database/GEMINI.md](file:///d:/SRC_NRO_219/src/database/GEMINI.md)
+9. **Client Unity C#, Single-Client, Giao diện**: [Client/Client/Assets/Scripts/GEMINI.md](file:///d:/SRC_NRO_219/Client/Client/Assets/Scripts/GEMINI.md)
 
-*Ghi chú*: Thư mục `src/models/` có file điều hướng con [src/models/GEMINI.md](file:///d:/SRC_NRO_219/SRC_NRO_219/SRC_NRO_189/SRC_NRO_OK/SRC_NRO_OK/DEMO_NETBEAN_tsSv2_new/src/models/GEMINI.md) tự động chỉ đường tới module đúng khi sửa các class không có module riêng.
+*Ghi chú*: Thư mục `src/models/` có file điều hướng con [src/models/GEMINI.md](file:///d:/SRC_NRO_219/src/models/GEMINI.md) tự động chỉ đường tới module đúng khi sửa các class không có module riêng.
 
 ---
 

@@ -478,11 +478,11 @@ public class Controller implements IMessageHandler {
                             }
                         } else if (player.zone != null && !player.isAdmin()) {
                             int distance = Util.getDistance(player.location.x, player.location.y, toX, toY);
-                            // Tốc độ di chuyển cơ bản của người chơi (mặc định tối thiểu 4)
+                            // Tốc độ di chuyển cơ bản của người chơi (mặc định tối thiểu 2)
                             int baseSpeed = (player.nPoint != null && player.nPoint.speed > 0) ? player.nPoint.speed
-                                    : 7;
-                            if (baseSpeed < 4) {
-                                baseSpeed = 4;
+                                    : 2;
+                            if (baseSpeed < 2) {
+                                baseSpeed = 2;
                             }
                             // Khoảng cách tối đa cho phép: (speed * 40 * elapsed / 1000) + 180px dung sai
                             // trễ mạng

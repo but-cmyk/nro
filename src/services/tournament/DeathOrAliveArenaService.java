@@ -50,7 +50,7 @@ public class DeathOrAliveArenaService {
             Item waterBottle = InventoryService.gI().findItemBagByTemp(player, 456);
 
             if (waterBottle == null || waterBottle.quantity < cost) {
-                Service.gI().sendThongBao(player, "Bạn không đủ " + cost + " bình nước! Hãy gặp Bà Hạt Mít nhận 3 vé ưu tiên đấu ngay hoặc mua thêm bình nước.");
+                Service.gI().sendThongBao(player, "Bạn đã hết lượt thi đấu hôm nay! Cần " + cost + " bình nước phép để đấu thêm.");
                 return;
             }
 
@@ -66,7 +66,7 @@ public class DeathOrAliveArenaService {
         database.daos.PlayerDAO.updatePlayer(player);
 
         if (isUseTicket) {
-            Service.gI().sendThongBao(player, "Sử dụng 1 Vé ưu tiên thi đấu ngay miễn phí! (Còn lại " + player.ticketVDST + " vé). Đây là lượt thi đấu thứ " + player.thoiVangVoDaiSinhTu + " hôm nay của bạn.");
+            Service.gI().sendThongBao(player, "Sử dụng 1 lượt thi đấu! (Còn lại " + player.ticketVDST + " lượt hôm nay).");
         } else {
             Service.gI().sendThongBao(player, "Đăng ký thành công bằng " + cost + " bình nước! Đây là lượt thi đấu thứ " + player.thoiVangVoDaiSinhTu + " hôm nay của bạn.");
         }
@@ -123,7 +123,7 @@ public class DeathOrAliveArenaService {
             // Hoàn lại vé hoặc bình nước đã đăng ký của lượt này
             if (vdst.isUseTicket) {
                 player.ticketVDST++;
-                Service.gI().sendThongBao(player, "Đã hoàn lại 1 Vé ưu tiên thi đấu ngay (Hiện có: " + player.ticketVDST + " vé).");
+                Service.gI().sendThongBao(player, "Đã hoàn lại 1 lượt thi đấu (Hiện còn: " + player.ticketVDST + " lượt).");
             } else {
                 int cost = vdst.costWaterBottle;
                 if (cost > 0) {

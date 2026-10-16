@@ -80,7 +80,7 @@ public class NPoint {
     public long dame, dameg;
     public int def, defg;
     public int crit, critg;
-    public byte speed = 8;
+    public byte speed = 2;
 
     public boolean teleport;
 
@@ -677,9 +677,9 @@ public class NPoint {
         }
     }
 
-    private void setSpeed() {
+    public void setSpeed() {
         if (player.isPl()) {
-            byte base = 8;
+            byte base = 2;
             if (this.tlSpeed > 0) {
                 int bonus = (int) Math.round((base * (double) this.tlSpeed) / 100.0);
                 if (bonus < 1) {

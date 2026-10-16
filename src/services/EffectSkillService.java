@@ -432,7 +432,7 @@ public class EffectSkillService {
 
     public void removeLamCham(Player player) {
         if (player != null && player.effectSkill != null) {
-            player.nPoint.speed = 8;
+            player.nPoint.setSpeed();
             Service.gI().point(player);
             Service.gI().sendSpeedPlayer(player, -1);
             Service.gI().chat(player, "Nhẹ lại rồi!");

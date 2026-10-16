@@ -8,7 +8,7 @@ namespace Game1.God
     {
         private static ClientManager instance { get; set; }
         private int xJ, yJ;
-        public static int speedRun = 4;
+        public static int speedRun = 2;
         public static ClientManager getInstance()
         {
             return (instance == null) ? (instance = new ClientManager()) : instance;

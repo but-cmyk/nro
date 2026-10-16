@@ -63,22 +63,18 @@ public class BaHatMit extends Npc {
                     }
                     if (player.haveRewardVDST) {
                         this.createOtherMenu(player, ConstNpc.BASE_MENU,
-                                "Chúc mừng con đã xuất sắc vô địch Võ Đài Sinh Tử!\nTa có phần thưởng giá trị gồm Vàng, Tiềm năng, Vệ tinh, Đá nâng cấp và cơ hội nhận Cải trang Boss Võ Đài quý hiếm!",
+                                "Chúc mừng con đã xuất sắc vô địch Võ Đài Sinh Tử!\nTa có phần thưởng giá trị gồm Vàng, Tiềm năng, 3 Vệ tinh, Đá nâng cấp và cơ hội nhận Cải trang Boss Võ Đài quý hiếm!",
                                 "Nhận thưởng", "Từ chối");
                         return;
                     }
                     DeathOrAliveArena vdst = DeathOrAliveArenaManager.gI().getVDST(player.zone);
-                    String registerMsg = player.getTicketVDST() > 0
-                            ? "Ưu tiên\nđấu ngay\n(Còn " + player.getTicketVDST() + " vé)"
-                            : "Đăng ký\n" + (player.thoiVangVoDaiSinhTu + 1) + " bình nước";
+                    String registerMsg = "Còn " + player.getTicketVDST() + "\nlượt thi đấu";
                     if (vdst != null) {
                         if (vdst.getPlayer().equals(player)) {
                             this.createOtherMenu(player, ConstNpc.BASE_MENU,
                                     "Ngươi muốn hủy đăng ký thi đấu võ đài?",
                                     "Hủy Đăng Ký",
-                                    "3 vé ưu tiên\nđấu ngay",
                                     "Bảng Xếp\nHạng",
-                                    "Thưởng Top\nTuần",
                                     "Hướng dẫn",
                                     "Về\nđảo rùa");
                         } else {
@@ -86,9 +82,7 @@ public class BaHatMit extends Npc {
                                     "Ngươi muốn đăng ký thi đấu võ đài?\nnhiều phần thưởng giá trị đang đợi ngươi đó",
                                     "Bình chọn",
                                     "Vào sàn khác",
-                                    "3 vé ưu tiên\nđấu ngay",
                                     "Bảng Xếp\nHạng",
-                                    "Thưởng Top\nTuần",
                                     "Hướng dẫn",
                                     "Về\nđảo rùa");
                         }
@@ -96,9 +90,7 @@ public class BaHatMit extends Npc {
                         this.createOtherMenu(player, ConstNpc.BASE_MENU,
                                 "Ngươi muốn đăng ký thi đấu võ đài?\nnhiều phần thưởng giá trị đang đợi ngươi đó",
                                 registerMsg,
-                                "3 vé ưu tiên\nđấu ngay",
                                 "Bảng Xếp\nHạng",
-                                "Thưởng Top\nTuần",
                                 "Hướng dẫn",
                                 "Về\nđảo rùa");
                     }
@@ -246,9 +238,9 @@ public class BaHatMit extends Npc {
                         if (player.haveRewardVDST) {
                             switch (select) {
                                 case 0 -> { // Nhận phần thưởng
-                                    if (InventoryService.gI().getCountEmptyBag(player) < 3) {
+                                    if (InventoryService.gI().getCountEmptyBag(player) < 5) {
                                         Service.gI().sendThongBao(player,
-                                                "Hành trang cần tối thiểu 3 ô trống để nhận toàn bộ phần thưởng!");
+                                                "Hành trang cần tối thiểu 5 ô trống để nhận toàn bộ phần thưởng!");
                                         return;
                                     }
 
@@ -297,20 +289,22 @@ public class BaHatMit extends Npc {
                                         thongBao.append("- ").append(Util.format(tnsm)).append(" tiềm năng\n");
                                     }
 
-                                    // 3. Vệ tinh ngẫu nhiên (342-345)
-                                    short veTinhId = (short) Util.nextInt(342, 345);
-                                    Item veTinh = ItemService.gI().createNewItem(veTinhId);
-                                    if (veTinh.itemOptions == null) {
-                                        veTinh.itemOptions = new ArrayList<>();
+                                    // 3. 3 Vệ tinh ngẫu nhiên (342-345)
+                                    for (int i = 0; i < 3; i++) {
+                                        short veTinhId = (short) Util.nextInt(342, 345);
+                                        Item veTinh = ItemService.gI().createNewItem(veTinhId);
+                                        if (veTinh.itemOptions == null) {
+                                            veTinh.itemOptions = new ArrayList<>();
+                                        }
+                                        switch (veTinhId) {
+                                            case 342 -> veTinh.itemOptions.add(new Item.ItemOption(81, 5));
+                                            case 343 -> veTinh.itemOptions.add(new Item.ItemOption(83, 20));
+                                            case 344 -> veTinh.itemOptions.add(new Item.ItemOption(82, 1));
+                                            case 345 -> veTinh.itemOptions.add(new Item.ItemOption(80, 5));
+                                        }
+                                        InventoryService.gI().addItemBag(player, veTinh);
+                                        thongBao.append("- ").append(veTinh.template.name).append("\n");
                                     }
-                                    switch (veTinhId) {
-                                        case 342 -> veTinh.itemOptions.add(new Item.ItemOption(81, 5));
-                                        case 343 -> veTinh.itemOptions.add(new Item.ItemOption(83, 20));
-                                        case 344 -> veTinh.itemOptions.add(new Item.ItemOption(82, 1));
-                                        case 345 -> veTinh.itemOptions.add(new Item.ItemOption(80, 5));
-                                    }
-                                    InventoryService.gI().addItemBag(player, veTinh);
-                                    thongBao.append("- ").append(veTinh.template.name).append("\n");
 
                                     // 4. Đá nâng cấp trang bị (220-224: Ruby, Lam Ngọc, Ngọc Bích, Thạch Anh Tím,
                                     // Titan)
@@ -406,19 +400,13 @@ public class BaHatMit extends Npc {
                                     case 0: // Hủy đăng ký
                                         DeathOrAliveArenaService.gI().cancelChallenge(player);
                                         break;
-                                    case 1: // 3 vé ưu tiên đấu ngay
-                                        nhanTicketVDSTFree(player);
-                                        break;
-                                    case 2: // Bảng Xếp Hạng
+                                    case 1: // Bảng Xếp Hạng
                                         Service.gI().showListTop(player, Manager.topArena);
                                         break;
-                                    case 3: // Thưởng Top Tuần
-                                        DeathOrAliveArenaWeeklyService.gI().claimReward(player);
-                                        break;
-                                    case 4: // Hướng dẫn
+                                    case 2: // Hướng dẫn
                                         showHuongDanVDST(player);
                                         break;
-                                    case 5: // Về đảo rùa
+                                    case 3: // Về đảo rùa
                                         ChangeMapService.gI().changeMapBySpaceShip(player, 5, -1, 1156);
                                         break;
                                 }
@@ -430,44 +418,32 @@ public class BaHatMit extends Npc {
                                                 "Bình chọn cho " + vdst.getPlayer().name,
                                                 "Bình chọn cho hạt mít");
                                         break;
-                                    case 1: // Thách đấu
+                                    case 1: // Thách đấu / Vào sàn khác
                                         DeathOrAliveArenaService.gI().startChallenge(player);
                                         break;
-                                    case 2: // 3 vé ưu tiên đấu ngay
-                                        nhanTicketVDSTFree(player);
-                                        break;
-                                    case 3: // Bảng Xếp Hạng
+                                    case 2: // Bảng Xếp Hạng
                                         Service.gI().showListTop(player, Manager.topArena);
                                         break;
-                                    case 4: // Thưởng Top Tuần
-                                        DeathOrAliveArenaWeeklyService.gI().claimReward(player);
-                                        break;
-                                    case 5: // Hướng dẫn
+                                    case 3: // Hướng dẫn
                                         showHuongDanVDST(player);
                                         break;
-                                    case 6: // Về đảo rùa
+                                    case 4: // Về đảo rùa
                                         ChangeMapService.gI().changeMapBySpaceShip(player, 5, -1, 1156);
                                         break;
                                 }
                             }
                         } else { // Chưa có ai đăng ký
                             switch (select) {
-                                case 0: // Đăng ký
+                                case 0: // Còn ... lượt thi đấu (Đăng ký)
                                     DeathOrAliveArenaService.gI().startChallenge(player);
                                     break;
-                                case 1: // 3 vé ưu tiên đấu ngay
-                                    nhanTicketVDSTFree(player);
-                                    break;
-                                case 2: // Bảng Xếp Hạng
+                                case 1: // Bảng Xếp Hạng
                                     Service.gI().showListTop(player, Manager.topArena);
                                     break;
-                                case 3: // Thưởng Top Tuần
-                                    DeathOrAliveArenaWeeklyService.gI().claimReward(player);
-                                    break;
-                                case 4: // Hướng dẫn
+                                case 2: // Hướng dẫn
                                     showHuongDanVDST(player);
                                     break;
-                                case 5: // Về đảo rùa
+                                case 3: // Về đảo rùa
                                     ChangeMapService.gI().changeMapBySpaceShip(player, 5, -1, 1156);
                                     break;
                             }
@@ -900,10 +876,9 @@ public class BaHatMit extends Npc {
                 + "Dracula, Người Vô Hình, Bông Băng, Sa Tăng, Thỏ Đầu Bạc\b"
                 + "Mỗi hiệp tối đa 3 phút, có 5 giây nghỉ ngơi chuẩn bị\b"
                 + "Hạ gục cả 5 Boss để Vô Địch! Hết HP, hết giờ là Thua\n"
-                + "2. VÉ THI ĐẤU (VÉ ƯU TIÊN & BÌNH NƯỚC PHÉP)\b"
-                + "Mỗi ngày gặp ta nhận MIỄN PHÍ 3 Vé ưu tiên đấu ngay (reset lúc 0h đêm giống Giải Siêu Hạng)\b"
-                + "Sau khi dùng hết 3 vé miễn phí, mỗi lượt thi đấu sẽ cần Bình Nước Phép (Lượt 1: 1 bình, Lượt 2: 2 bình, tăng dần)\b"
-                + "Nếu hết, mua thêm tại NPC Santa tab Đặc Biệt (1 Ngọc / 1 bình)\n"
+                + "2. LƯỢT THI ĐẤU\b"
+                + "Mỗi ngày tự động nhận MIỄN PHÍ 3 lượt thi đấu (reset lúc 0h đêm giống Giải Siêu Hạng)\b"
+                + "Sau khi dùng hết 3 lượt miễn phí, mỗi lượt thi đấu sẽ cần Bình Nước Phép (mua thêm tại NPC Santa tab Đặc Biệt)\n"
                 + "3. CƠ CHẾ BÌNH CHỌN CHO KHÁN GIẢ\b"
                 + "Khán giả có thể cược 1.000.000 Vàng cho Người Chơi hoặc Bà Hạt Mít\b"
                 + "Cược Người Chơi: Thắng khi võ sĩ vô địch cả 5 hiệp\b"
@@ -913,7 +888,7 @@ public class BaHatMit extends Npc {
                 + "4. PHẦN THƯỞNG MỖI TRẬN THẮNG\b"
                 + "Chiến thắng cả 5 Hiệp đấu sẽ nhận được:\b"
                 + "300.000 đến 500.000 Vàng, Tiềm Năng & Sức Mạnh khủng\b"
-                + "1 Vệ Tinh ngẫu nhiên + 1 đến 3 Đá Nâng Cấp trang bị\b"
+                + "3 Vệ Tinh ngẫu nhiên + 1 đến 3 Đá Nâng Cấp trang bị\b"
                 + "May mắn nhận: Bùa 1h (30%), Thỏi Vàng (3%), Cải Trang (15%)\b"
                 + "ĐẶC BIỆT: Cơ hội nhận CẢI TRANG BOSS VĨNH VIỄN!\n"
                 + "5. ĐUA TOP TUẦN (0H CHỦ NHẬT)\b"
@@ -922,7 +897,7 @@ public class BaHatMit extends Npc {
                 + "CƠ CẤU PHẦN THƯỞNG TOP NGỌC:\b"
                 + "Top 1: 200 Ngọc  |  Top 2: 100 Ngọc\b"
                 + "Top 3: 50 Ngọc   |  Top 4: 30 Ngọc   |  Top 5: 20 Ngọc\b"
-                + "Quà tự động phát lúc 0h CN hoặc nhận tại 'Thưởng Top Tuần' của ta!";
+                + "Quà tự động trao thưởng lúc 0h Chủ Nhật!";
         NpcService.gI().createTutorial(player, this.tempId, this.avartar, text);
     }
 }
