@@ -9,6 +9,7 @@ import models.map.Zone;
 import models.player.Player;
 import server.Client;
 import services.player.InventoryService;
+import services.player.PlayerService;
 import services.ItemService;
 import services.map.NpcService;
 import services.Service;
@@ -161,99 +162,46 @@ public class SummonDragonNamek {
                                 Service.gI().sendThongBaoOK(playerSummonShenron, "Chúc mừng! Bạn nhận được 7 ngày Bùa Trí Tuệ (x2 TNSM) từ Rồng Thần Namek!");
                             }
                             break;
-                        case 1: // 5 Thỏi vàng + 3 Đá bảo vệ (Khóa)
+                        case 1: // 50 Hồng ngọc + 3 Đá bảo vệ (Khóa)
                             if (playerSummonShenron.clan != null) {
                                 playerSummonShenron.clan.members.forEach(m -> {
                                     Player p = Client.gI().getPlayer(m.id);
                                     if (p != null) {
-                                        if (InventoryService.gI().getCountEmptyBag(p) >= 2) {
-                                            Item thoiVang = ItemService.gI().createNewItem((short) 457, 5);
+                                        p.inventory.ruby += 50;
+                                        PlayerService.gI().sendInfoHpMpMoney(p);
+                                        if (InventoryService.gI().getCountEmptyBag(p) >= 1) {
                                             Item daBaoVe = ItemService.gI().createNewItem((short) 987, 3);
                                             daBaoVe.itemOptions.add(new Item.ItemOption(30, 0));
-                                            InventoryService.gI().addItemBag(p, thoiVang);
                                             InventoryService.gI().addItemBag(p, daBaoVe);
                                             InventoryService.gI().sendItemBags(p);
-                                            Service.gI().sendThongBaoOK(p, "Chúc mừng! Nhận được 5 Thỏi Vàng và 3 Đá Bảo Vệ từ Rồng Thần Namek!");
+                                            Service.gI().sendThongBaoOK(p, "Chúc mừng! Nhận được 50 Hồng Ngọc và 3 Đá Bảo Vệ từ Rồng Thần Namek!");
                                         } else {
-                                            Service.gI().sendThongBaoOK(p, "Hành trang đầy, không thể nhận quà Rồng Namek!");
+                                            Service.gI().sendThongBaoOK(p, "Hành trang đầy (cần ít nhất 1 ô trống để nhận Đá Bảo Vệ)!");
                                         }
                                     } else {
                                         Player pOff = NDVSqlFetcher.loadById(m.id);
-                                        if (pOff != null && InventoryService.gI().getCountEmptyBag(pOff) >= 2) {
-                                            Item thoiVang = ItemService.gI().createNewItem((short) 457, 5);
-                                            Item daBaoVe = ItemService.gI().createNewItem((short) 987, 3);
-                                            daBaoVe.itemOptions.add(new Item.ItemOption(30, 0));
-                                            InventoryService.gI().addItemBag(pOff, thoiVang);
-                                            InventoryService.gI().addItemBag(pOff, daBaoVe);
+                                        if (pOff != null) {
+                                            pOff.inventory.ruby += 50;
+                                            if (InventoryService.gI().getCountEmptyBag(pOff) >= 1) {
+                                                Item daBaoVe = ItemService.gI().createNewItem((short) 987, 3);
+                                                daBaoVe.itemOptions.add(new Item.ItemOption(30, 0));
+                                                InventoryService.gI().addItemBag(pOff, daBaoVe);
+                                            }
                                             PlayerDAO.updatePlayer(pOff);
                                         }
                                     }
                                 });
                             } else {
-                                if (InventoryService.gI().getCountEmptyBag(playerSummonShenron) >= 2) {
-                                    Item thoiVang = ItemService.gI().createNewItem((short) 457, 5);
+                                playerSummonShenron.inventory.ruby += 50;
+                                PlayerService.gI().sendInfoHpMpMoney(playerSummonShenron);
+                                if (InventoryService.gI().getCountEmptyBag(playerSummonShenron) >= 1) {
                                     Item daBaoVe = ItemService.gI().createNewItem((short) 987, 3);
                                     daBaoVe.itemOptions.add(new Item.ItemOption(30, 0));
-                                    InventoryService.gI().addItemBag(playerSummonShenron, thoiVang);
                                     InventoryService.gI().addItemBag(playerSummonShenron, daBaoVe);
                                     InventoryService.gI().sendItemBags(playerSummonShenron);
-                                    Service.gI().sendThongBaoOK(playerSummonShenron, "Chúc mừng! Nhận được 5 Thỏi Vàng và 3 Đá Bảo Vệ từ Rồng Thần Namek!");
+                                    Service.gI().sendThongBaoOK(playerSummonShenron, "Chúc mừng! Nhận được 50 Hồng Ngọc và 3 Đá Bảo Vệ từ Rồng Thần Namek!");
                                 } else {
-                                    Service.gI().sendThongBaoOK(playerSummonShenron, "Hành trang đầy (cần ít nhất 2 ô trống)!");
-                                }
-                            }
-                            break;
-                        case 2: // Pet Chiến Binh Namek (+10% chỉ số, 7 ngày, Khóa)
-                            if (playerSummonShenron.clan != null) {
-                                playerSummonShenron.clan.members.forEach(m -> {
-                                    Player p = Client.gI().getPlayer(m.id);
-                                    if (p != null) {
-                                        if (InventoryService.gI().getCountEmptyBag(p) >= 1) {
-                                            Item pet = ItemService.gI().createNewItem((short) 1128, 1);
-                                            pet.itemOptions.clear();
-                                            pet.itemOptions.add(new Item.ItemOption(93, 7));
-                                            pet.itemOptions.add(new Item.ItemOption(77, 10));
-                                            pet.itemOptions.add(new Item.ItemOption(103, 10));
-                                            pet.itemOptions.add(new Item.ItemOption(50, 10));
-                                            pet.itemOptions.add(new Item.ItemOption(14, 5));
-                                            pet.itemOptions.add(new Item.ItemOption(30, 0));
-                                            InventoryService.gI().addItemBag(p, pet);
-                                            InventoryService.gI().sendItemBags(p);
-                                            Service.gI().sendThongBao(p, "Nhận được Pet Chiến Binh Namek (7 ngày) từ Rồng Thần Namek!");
-                                        } else {
-                                            Service.gI().sendThongBao(p, "Hành trang đầy, không thể nhận Pet Namek!");
-                                        }
-                                    } else {
-                                        Player pOff = NDVSqlFetcher.loadById(m.id);
-                                        if (pOff != null && InventoryService.gI().getCountEmptyBag(pOff) >= 1) {
-                                            Item pet = ItemService.gI().createNewItem((short) 1128, 1);
-                                            pet.itemOptions.clear();
-                                            pet.itemOptions.add(new Item.ItemOption(93, 7));
-                                            pet.itemOptions.add(new Item.ItemOption(77, 10));
-                                            pet.itemOptions.add(new Item.ItemOption(103, 10));
-                                            pet.itemOptions.add(new Item.ItemOption(50, 10));
-                                            pet.itemOptions.add(new Item.ItemOption(14, 5));
-                                            pet.itemOptions.add(new Item.ItemOption(30, 0));
-                                            InventoryService.gI().addItemBag(pOff, pet);
-                                            PlayerDAO.updatePlayer(pOff);
-                                        }
-                                    }
-                                });
-                            } else {
-                                if (InventoryService.gI().getCountEmptyBag(playerSummonShenron) >= 1) {
-                                    Item pet = ItemService.gI().createNewItem((short) 1128, 1);
-                                    pet.itemOptions.clear();
-                                    pet.itemOptions.add(new Item.ItemOption(93, 7));
-                                    pet.itemOptions.add(new Item.ItemOption(77, 10));
-                                    pet.itemOptions.add(new Item.ItemOption(103, 10));
-                                    pet.itemOptions.add(new Item.ItemOption(50, 10));
-                                    pet.itemOptions.add(new Item.ItemOption(14, 5));
-                                    pet.itemOptions.add(new Item.ItemOption(30, 0));
-                                    InventoryService.gI().addItemBag(playerSummonShenron, pet);
-                                    InventoryService.gI().sendItemBags(playerSummonShenron);
-                                    Service.gI().sendThongBaoOK(playerSummonShenron, "Chúc mừng! Nhận được Pet Chiến Binh Namek (7 ngày)!");
-                                } else {
-                                    Service.gI().sendThongBaoOK(playerSummonShenron, "Hành trang đầy (cần ít nhất 1 ô trống)!");
+                                    Service.gI().sendThongBaoOK(playerSummonShenron, "Hành trang đầy (cần ít nhất 1 ô trống để nhận Đá Bảo Vệ)!");
                                 }
                             }
                             break;
@@ -279,10 +227,7 @@ public class SummonDragonNamek {
                         wish = "Bùa Trí Tuệ (x2 Tiềm Năng Sức Mạnh) 7 ngày cho toàn Bang Hội";
                         break;
                     case 1:
-                        wish = "5 Thỏi vàng và 3 Đá bảo vệ (Khóa giao dịch) cho toàn Bang Hội";
-                        break;
-                    case 2:
-                        wish = "Pet Chiến Binh Namek (7 ngày, +10% HP/KI/SĐ, +5% Chí mạng) cho toàn Bang Hội";
+                        wish = "50 Hồng ngọc và 3 Đá bảo vệ (Khóa giao dịch) cho toàn Bang Hội";
                         break;
                 }
                 break;
@@ -294,8 +239,7 @@ public class SummonDragonNamek {
         NpcService.gI().createMenuRongThieng(pl, ConstNpc.SHOW_SHENRON_NAMEK_CONFIRM,
                 "Ta sẽ ban cho cả bang hội ngươi 1 điều ước, ngươi có 5 phút, hãy suy nghĩ thật kỹ trước khi quyết định",
                 "Bùa Trí Tuệ\nToàn bang\n(7 ngày)",
-                "5 Thỏi vàng\n+ 3 Đá bảo vệ\n(Khóa)",
-                "Pet Namek\n(+10% chỉ số)\n(7 ngày)");
+                "50 Hồng ngọc\n+ Đá bảo vệ\n(Khóa)");
     }
 
     public void shenronLeave(Player pl, byte type) {

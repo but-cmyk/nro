@@ -3960,16 +3960,7 @@ namespace Game1
     				stop();
     			}
     		}
-    		if (statusMe == 2 && !isMount && (cp1 == 1 || cp1 == 6))
-    		{
-    			GameCanvas.gI().startDust(cdir, cx - (cdir << 3), cy - 2);
-    			if (cBonusSpeed > 0)
-    			{
-    				GameCanvas.gI().startDust(cdir, cx - (cdir * 11), cy - 1);
-    			}
-    		}
     		updateCharInBridge();
-    		addDustEff(2);
     	}
     
     	private void stop()
@@ -7782,11 +7773,6 @@ namespace Game1
     			}
     			break;
     		case 2:
-    			if ((!me || isMonkey != 1) && isNhapThe && GameCanvas.gameTick % 5 == 0)
-    			{
-    				Effect effect2 = new Effect(22, cx - 5, cy + 35, 2, 1, -1);
-    				EffecMn.addEff(effect2);
-    			}
     			break;
     		case 3:
     			if (clevel >= 9 && ySd - cy <= 5)

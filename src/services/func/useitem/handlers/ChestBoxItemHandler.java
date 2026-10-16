@@ -123,7 +123,7 @@ public class ChestBoxItemHandler implements ItemActionHandler {
         int param = item.itemOptions.get(0).param;
         int gold = 1000 * (int) Math.pow(param, 2) * 9;
         int gem = 0;
-        int ruby = 0;
+        int ruby = param; // 1-11 hồng ngọc tăng theo level rương
         String text = "Bạn nhận được\n";
         List<Item> rewards = new ArrayList<>();
 
@@ -131,26 +131,11 @@ public class ChestBoxItemHandler implements ItemActionHandler {
         int[] itemT2 = {441, 442, 443, 444};
         int[] itemT3 = {445, 446, 447, 19, 20};
 
-        if (param >= 6 && param <= 9) {
-            gem = Util.nextInt(1, 3);
-        } else if (param == 10) {
-            gem = Util.nextInt(3, 6);
-        } else if (param > 10) {
-            gem = Util.nextInt(5, 10);
-            ruby = Util.nextInt(1, 3);
-        }
-
         int numClothes = param < 6 ? 1 : (param < 10 ? 2 : 3);
         for (int i = 0; i < numClothes; i++) {
             int clothesId = ConstItem.LIST_ITEM_CLOTHES[Util.nextInt(0, 2)][Util.nextInt(0, 4)][param - 1];
             Item eq = ItemService.gI().createNewItem((short) clothesId);
             RewardService.gI().initBaseOptionClothes(eq.template.id, eq.template.type, eq.itemOptions);
-            RewardService.gI().initStarOption(eq, new RewardService.RatioStar[]{
-                new RewardService.RatioStar((byte) 1, 40 - param, 100),
-                new RewardService.RatioStar((byte) 2, 20, 100),
-                new RewardService.RatioStar((byte) 3, 10, 100),
-                new RewardService.RatioStar((byte) 4, 5, 100),
-            });
             rewards.add(eq);
         }
 
@@ -192,7 +177,7 @@ public class ChestBoxItemHandler implements ItemActionHandler {
 
     private void openCSKB(Player pl, Item item) {
         if (InventoryService.gI().getCountEmptyBag(pl) > 0) {
-            short[] temp = {76, 188, 189, 190, 381, 382, 383, 384, 385};
+            short[] temp = {76, 188, 189, 190, 381, 382, 383, 384, 385, (short) ConstItem.NGOC_RONG_6_SAO, (short) ConstItem.NGOC_RONG_7_SAO};
             byte index = (byte) Util.nextInt(0, temp.length - 1);
             short[] icon = new short[2];
             icon[0] = item.template.iconID;

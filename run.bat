@@ -32,6 +32,8 @@ if errorlevel 1 goto RUN_NATIVE_REDIS
 
 :RUN_NATIVE_REDIS
 echo.
+echo [DOCKER] Dung container backend server (neu co) de tranh xung dot port 14445...
+docker stop nro_backend nro_server >nul 2>&1
 echo [DOCKER] Kich hoat nhanh MySQL (3308) va Redis Cache trong Docker...
 docker start nro_mysql nro_redis >nul 2>&1 || docker compose up -d mysql redis >nul 2>&1
 timeout /t 2 /nobreak >nul 2>&1
@@ -74,9 +76,17 @@ goto END
 :RUN_NATIVE
 echo.
 echo ===================================================================
-echo           KHOI DONG NRO GAME SERVER (NATIVE JAVA 22)
+echo           KHOI DONG NRO GAME SERVER (NATIVE JAVA)
 echo ===================================================================
-java -server -Xms128M -Xmx1024M -XX:+UseG1GC --add-opens java.base/jdk.internal.misc=ALL-UNNAMED --add-opens java.base/java.lang=ALL-UNNAMED "-Dio.netty.tryReflectionSetAccessible=true" "-Dfile.encoding=UTF-8" -cp "build\classes;dist\NROK.jar;lib\*" server.ServerManager
+
+echo [PORT] Kiem tra va giai phong port 14445 truoc khi khoi dong...
+for /f "tokens=5" %%a in ('netstat -ano ^| findstr :14445 ^| findstr LISTENING') do (
+    echo [PORT] Phat hien tien trinh PID %%a dang chiem port 14445. Dang giai phong...
+    taskkill /f /pid %%a >nul 2>&1
+)
+timeout /t 1 /nobreak >nul 2>&1
+
+java -server -Xms128M -Xmx1024M -XX:+UseG1GC --sun-misc-unsafe-memory-access=allow --add-opens java.base/jdk.internal.misc=ALL-UNNAMED --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.nio=ALL-UNNAMED "-Dio.netty.tryReflectionSetAccessible=true" "-Dfile.encoding=UTF-8" -cp "build\classes;dist\NROK.jar;lib\*" server.ServerManager
 
 if %errorlevel% neq 0 (
     echo.

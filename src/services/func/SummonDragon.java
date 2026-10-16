@@ -44,14 +44,14 @@ public class SummonDragon {
             + "Để gọi rồng 1 sao cần ngọc từ 1 sao đến 7 sao\n"
             + "Để gọi rồng 2 sao cần ngọc từ 2 sao đến 7 sao\n"
             + "Để gọi rồng 3 sao cần ngọc từ 3 sao đến 7sao\n"
-            + "Điều ước rồng 3 sao: Capsule 3 sao, hoặc 2 triệu sức mạnh, hoặc 200k vàng\n"
-            + "Điều ước rồng 2 sao: Capsule 2 sao, hoặc 20 triệu sức mạnh, hoặc 2 triệu vàng\n"
-            + "Điều ước rồng 1 sao: Capsule 1 sao, hoặc 200 triệu sức mạnh, hoặc 20 triệu vàng, hoặc đẹp trai, hoặc....\n"
+            + "Điều ước rồng 3 sao: +2 triệu sức mạnh và tiềm năng, hoặc 20 hồng ngọc\n"
+            + "Điều ước rồng 2 sao: +20 triệu sức mạnh và tiềm năng, hoặc 150 hồng ngọc\n"
+            + "Điều ước rồng 1 sao: +100 triệu sức mạnh và tiềm năng, hoặc găng tay lên 1 cấp, hoặc đẹp trai, hoặc....\n"
             + "Ngọc rồng sẽ mất ngay khi gọi rồng dù bạn có ước hay không\n"
             + "Quá 5 phút nếu không ước rồng thần sẽ bay mất";
     public static final String SHENRON_SAY = "Ta sẽ ban cho ngươi 1 điều ước, ngươi có 5 phút, hãy suy nghĩ thật kỹ trước khi quyết định";
 
-    public static final String[] SHENRON_1_STAR_WISHES_1 = new String[] { "Giàu có\n+100 Triệu\nVàng",
+    public static final String[] SHENRON_1_STAR_WISHES_1 = new String[] { "+100 Triệu\nSức mạnh\nvà Tiềm năng",
             "Găng tay\nđang mang\nlên 1 cấp", "Chí mạng\nGốc +2%",
             "Thay\nChiêu 2-3\nĐệ tử", "Điều ước\nkhác" };
     public static final String[] SHENRON_1_STAR_WISHES_2 = new String[] { "Đẹp trai\nnhất\nVũ trụ",
@@ -59,9 +59,9 @@ public class SummonDragon {
             "Găng tay đệ\nđang mang\nlên 1 cấp",
             "Điều ước\nkhác" };
     public static final String[] SHENRON_2_STARS_WHISHES = new String[] { "Giàu có\n+150\nHồng ngọc",
-            "Giàu có\n+20 Tr\nVàng" };
+            "+20 Triệu\nSức mạnh\nvà Tiềm năng" };
     public static final String[] SHENRON_3_STARS_WHISHES = new String[] { "Giàu có\n+20\nHồng ngọc",
-            "Giàu có\n+2 Tr\nVàng" };
+            "+2 Triệu\nSức mạnh\nvà Tiềm năng" };
 
     public static final String[] SHEN_RON_BI_NGO_WISHES = new String[] { "Đổi kỹ năng 2\n Đệ tử",
             "Đổi kỹ năng 3\n Đệ tử", "Đổi kỹ năng 4\n Đệ tử", "X10 \n Item Siêu cấp" };
@@ -416,9 +416,8 @@ public class SummonDragon {
                 break;
             case ConstNpc.SHENRON_1_1:
                 switch (this.select) {
-                    case 0: // 20 tr vàng
-                        this.playerSummonShenron.inventory.addGold(100_000_000);
-                        PlayerService.gI().sendInfoHpMpMoney(this.playerSummonShenron);
+                    case 0: // +100 triệu sức mạnh và tiềm năng
+                        Service.gI().addSMTN(this.playerSummonShenron, (byte) 2, 100_000_000L, false);
                         break;
                     case 1: // găng tay đang đeo lên 1 cấp
                         Item item = this.playerSummonShenron.inventory.itemsBody.get(2);
@@ -557,9 +556,8 @@ public class SummonDragon {
                         this.playerSummonShenron.inventory.ruby += 150;
                         PlayerService.gI().sendInfoHpMpMoney(this.playerSummonShenron);
                         break;
-                    case 1: // 20 tr vàng
-                        this.playerSummonShenron.inventory.addGold(20_000_000);
-                        PlayerService.gI().sendInfoHpMpMoney(this.playerSummonShenron);
+                    case 1: // +20 triệu sức mạnh và tiềm năng
+                        Service.gI().addSMTN(this.playerSummonShenron, (byte) 2, 20_000_000L, false);
                         break;
                 }
                 break;
@@ -569,9 +567,8 @@ public class SummonDragon {
                         this.playerSummonShenron.inventory.ruby += 20;
                         PlayerService.gI().sendInfoHpMpMoney(this.playerSummonShenron);
                         break;
-                    case 1: // 2tr vàng
-                        this.playerSummonShenron.inventory.addGold(2_000_000);
-                        PlayerService.gI().sendInfoHpMpMoney(this.playerSummonShenron);
+                    case 1: // +2 triệu sức mạnh và tiềm năng
+                        Service.gI().addSMTN(this.playerSummonShenron, (byte) 2, 2_000_000L, false);
                         break;
                 }
                 break;

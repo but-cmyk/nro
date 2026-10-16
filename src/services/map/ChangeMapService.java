@@ -620,11 +620,11 @@ public class ChangeMapService {
             EffectSkillService.gI().removeBodyChangeTechnique(player);
         }
         if (player.isPl() && player.canReceiveDailyMobRuby()) {
-            if (player.idMark != null && utils.Util.canDoWithTime(player.idMark.getLastTimeNotifyDailyMobRuby(), 30 * 60 * 1000L)) {
+            if (player.idMark != null && utils.Util.canDoWithTime(player.idMark.getLastTimeNotifyDailyMobRuby(), 15 * 60 * 1000L)) {
                 player.idMark.setLastTimeNotifyDailyMobRuby(System.currentTimeMillis());
                 utils.Util.setTimeout(() -> {
                     if (player != null && player.isPl() && player.canReceiveDailyMobRuby()) {
-                        Service.gI().sendThongBao(player, "Bạn sẽ nhận được 10 hồng ngọc khi tiêu diệt quái");
+                        Service.gI().sendThongBao(player, "Hôm nay bạn có thể nhận 30 Hồng ngọc khi tiêu diệt quái!");
                     }
                 }, 1500);
             }

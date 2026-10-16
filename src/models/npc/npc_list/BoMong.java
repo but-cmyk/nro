@@ -29,8 +29,8 @@ public class BoMong extends Npc {
             if (!TaskService.gI().checkDoneTaskTalkNpc(player, this)) {
                 if (this.mapId == 47 || this.mapId == 84) {
                     this.createOtherMenu(player, ConstNpc.BASE_MENU,
-                            "Ngươi muốn vip, có nhiều cách, nạp thẻ là nhanh nhất, còn không thì chịu khó cày hãy nghe lời thầy dạy cần cù bù siêng năng.",
-                            "Nhiệm vụ\nhàng ngày", "Nhiệm vụ\ntích lũy", "Nhập\nGiftcode", "Quên Mã\nBảo Vệ", "Đổi Mật\nKhẩu", "Từ chối");
+                            "Ta có nhiệm vụ phù hợp với sức mạnh của ngươi. Hãy nhận và hoàn thành để được trọng thưởng!",
+                            "Nhận nhiệm\nvụ hàng ngày", "Nhiệm vụ\ntích lũy", "Nhập\nGiftcode", "Quên Mã\nBảo Vệ", "Đổi Mật\nKhẩu", "Từ chối");
                 }
             }
         }
@@ -67,20 +67,8 @@ public class BoMong extends Npc {
                                         + "Bạn có muốn dùng 1 Ngọc Xanh để đổi nhiệm vụ ngay lập tức?",
                                         "Đổi ngay\n(1 Ngọc)", "Chờ đợi");
                             } else {
-                                this.createOtherMenu(player, ConstNpc.MENU_OPTION_LEVEL_SIDE_TASK,
-                                        "Chào cậu, tôi có các nhiệm vụ phân theo từng cấp bậc sức mạnh:\n"
-                                        + "• Dễ: Dành cho tân thủ\n"
-                                        + "• Bình thường: Yêu cầu từ 1.5M sức mạnh\n"
-                                        + "• Khó: Yêu cầu từ 15M sức mạnh\n"
-                                        + "• Siêu khó: Yêu cầu từ 150M sức mạnh\n"
-                                        + "• Địa ngục: Yêu cầu từ 1.5 Tỷ sức mạnh\n"
-                                        + "(Lưu ý: Cần mở các bản đồ tương ứng để gặp quái)",
-                                        "Dễ",
-                                        "Bình thường",
-                                        "Khó",
-                                        "Siêu khó",
-                                        "Địa ngục",
-                                        "Từ chối");
+                                // Auto-assign: Server tự chọn task phù hợp dựa trên power + taskMain + planet
+                                TaskService.gI().autoAssignSideTask(player);
                             }
                         }
                         case 1 ->
@@ -95,11 +83,6 @@ public class BoMong extends Npc {
 
                     }
 
-                } else if (player.idMark.getIndexMenu() == ConstNpc.MENU_OPTION_LEVEL_SIDE_TASK) {
-                    switch (select) {
-                        case 0, 1, 2, 3, 4 ->
-                            TaskService.gI().changeSideTask(player, (byte) select);
-                    }
                 } else if (player.idMark.getIndexMenu() == ConstNpc.MENU_OPTION_PAY_SIDE_TASK) {
                     switch (select) {
                         case 0 ->

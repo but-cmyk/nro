@@ -268,7 +268,7 @@ public class Mob {
         if (this.isDie() && !Maintenance.isRunning && !isBigBoss()) {
             switch (zone.map.type) {
                 case ConstMap.MAP_DOANH_TRAI:
-                    if (this.tempId == ConstMob.BULON && this.zone.isTUTAlive && Util.canDoWithTime(lastTimeDie, 10000)) {
+                    if (this.tempId == ConstMob.BULON && this.zone.isTUTAlive && Util.canDoWithTime(lastTimeDie, 30000)) {
                         this.hoiSinh();
                         this.hoiSinhMobPhoBan();
                         if (this.id == 13) {
@@ -579,9 +579,9 @@ public class Mob {
 
         Player plReward = player.isPet ? ((Pet) player).master : player;
         if (plReward != null && !plReward.isBot && !plReward.isNewPet && plReward.canReceiveDailyMobRuby()) {
-            list.add(new ItemMap(this.zone, 861, 10, x, yEnd, plReward.id));
+            list.add(new ItemMap(this.zone, 861, 30, x, yEnd, plReward.id));
             plReward.lastTimeRewardDailyMobRuby = System.currentTimeMillis();
-            Service.gI().sendThongBao(plReward, "Bạn đã nhận được 10 Hồng ngọc từ quái vật đầu tiên trong ngày!");
+            Service.gI().sendThongBao(plReward, "Bạn đã nhận được 30 Hồng ngọc từ quái vật đầu tiên trong ngày!");
             database.daos.PlayerDAO.updatePlayerAsync(plReward);
         }
 
@@ -905,36 +905,35 @@ public class Mob {
         }
          
         //========================VÀNG BDKB========================
-        if ((zone.map.mapId >= 135 && zone.map.mapId <= 138) && player.clan != null && player.clan.BanDoKhoBau != null && Util.isTrue(100, 100)) {
-            int bdkbLevel = player.clan.BanDoKhoBau.level;
-            int numPiles;
-            int minGold;
-            int maxGold;
+        if ((zone.map.mapId >= 135 && zone.map.mapId <= 138) && player.clan != null && player.clan.BanDoKhoBau != null) {
+            boolean isBigMob = (this.lvMob == 1 || this.tempId == 71 || this.tempId == 72);
+            int dropY = (yEnd > 0) ? yEnd : this.location.y;
 
-            if (bdkbLevel <= 10) {
-                numPiles = 3;
-                minGold = 2000;
-                maxGold = 4000;
-            } else if (bdkbLevel <= 50) {
-                numPiles = 4;
-                minGold = 5000 + bdkbLevel * 300;
-                maxGold = 8000 + bdkbLevel * 500;
-            } else if (bdkbLevel <= 80) {
-                numPiles = 4;
-                minGold = 20000 + bdkbLevel * 500;
-                maxGold = 35000 + bdkbLevel * 800;
+            if (isBigMob) {
+                // Quái lớn / Thủ lĩnh: 5 - 8 cọc vàng lớn, mỗi cọc 300.000 - 600.000 vàng
+                int numPiles = Util.nextInt(5, 8);
+                for (int i = 0; i < numPiles; i++) {
+                    int goldAmount = Util.nextInt(300_000, 600_000);
+                    int itemId = (i % 2 == 0) ? 190 : 76;
+                    int offsetX = (i % 2 == 0) ? (i * 18) : (-i * 18);
+                    ItemMap it = new ItemMap(this.zone, itemId, goldAmount, this.location.x + offsetX, dropY, player.id);
+                    Service.gI().dropItemMap(this.zone, it);
+                }
+                // 15% rơi 1 Thỏi vàng (Item 457)
+                if (Util.isTrue(15, 100)) {
+                    ItemMap itGoldBar = new ItemMap(this.zone, 457, 1, this.location.x, dropY, player.id);
+                    Service.gI().dropItemMap(this.zone, itGoldBar);
+                }
             } else {
-                numPiles = 5;
-                minGold = 50000 + bdkbLevel * 600;
-                maxGold = 80000 + bdkbLevel * 1000;
-            }
-
-            for (int i = 0; i < numPiles; i++) {
-                int goldAmount = Util.nextInt(minGold, maxGold);
-                int itemId = (i % 2 == 0) ? 190 : 76;
-                int offsetX = (i % 2 == 0) ? (i * 20) : (-i * 20);
-                ItemMap it = new ItemMap(this.zone, itemId, goldAmount, this.location.x + offsetX, this.location.y, player.id);
-                Service.gI().dropItemMap(this.zone, it);
+                // Quái nhỏ: 3 - 5 cọc vàng, mỗi cọc 60.000 - 150.000 vàng
+                int numPiles = Util.nextInt(3, 5);
+                for (int i = 0; i < numPiles; i++) {
+                    int goldAmount = Util.nextInt(60_000, 150_000);
+                    int itemId = (i % 2 == 0) ? 190 : 76;
+                    int offsetX = (i % 2 == 0) ? (i * 15) : (-i * 15);
+                    ItemMap it = new ItemMap(this.zone, itemId, goldAmount, this.location.x + offsetX, dropY, player.id);
+                    Service.gI().dropItemMap(this.zone, it);
+                }
             }
         }
         

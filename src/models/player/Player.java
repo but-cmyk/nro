@@ -434,6 +434,13 @@ public class Player extends Character {
                         this.playerTask.taskMain.index = 2;
                         TaskService.gI().sendTaskMain(this);
                     }
+
+                    if (this.isPl() && this.canReceiveDailyMobRuby()) {
+                        if (this.idMark != null && Util.canDoWithTime(this.idMark.getLastTimeNotifyDailyMobRuby(), 15 * 60 * 1000L)) {
+                            this.idMark.setLastTimeNotifyDailyMobRuby(System.currentTimeMillis());
+                            services.Service.gI().sendThongBao(this, "Hôm nay bạn có thể nhận 30 Hồng ngọc khi tiêu diệt quái!");
+                        }
+                    }
                 }
 
                 if ((this.zone != null && !MapService.gI().isHome(this.zone.map.mapId)) || (!this.isPl() && this.zone == null)) {

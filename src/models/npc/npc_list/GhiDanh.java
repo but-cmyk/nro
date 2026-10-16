@@ -95,7 +95,7 @@ public class GhiDanh extends Npc {
                 case 1, 2 -> tryChallenge(player, select == 1, rubyChallenge, goldChallenge);
 
                 case 3 -> this.createOtherMenu(player, 1,
-                    "Phần thưởng của bạn đang ở cấp " + player.levelWoodChest + " / 12\n"
+                    "Phần thưởng của bạn đang ở cấp " + player.levelWoodChest + " / 11\n"
                         + "Mỗi ngày chỉ được nhận phần thưởng 1 lần\n"
                         + "Bạn có chắc sẽ nhận phần thưởng ngay bây giờ?",
                     "OK", "Từ chối");
@@ -106,7 +106,7 @@ public class GhiDanh extends Npc {
     }
 
     private void tryChallenge(Player player, boolean useRuby, long rubyChallenge, long goldChallenge) {
-        if (player.levelWoodChest == 12) {
+        if (player.levelWoodChest == 11) {
             Service.gI().sendThongBao(player, "Bạn đã vô địch giải. Vui lòng chờ đến ngày mai");
             return;
         }

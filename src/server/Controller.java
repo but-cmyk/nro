@@ -244,6 +244,9 @@ public class Controller implements IMessageHandler {
                                 ChangeMapService.gI().changeMap(player, MapService.gI().getMapCanJoin(player, 135, -1),
                                         35, 35);
                                 player.idMark.setGoToBDKB(false);
+                                if (player.clan != null && player.clan.BanDoKhoBau != null) {
+                                    player.clan.BanDoKhoBau.updateHPDame();
+                                }
                             }
                         } else if (player.type == 2 && player.maxTime == 5) {
                             if (MapService.gI().isMapHanhTinhThucVat(player.zone.map.mapId)) {
@@ -1105,13 +1108,27 @@ public class Controller implements IMessageHandler {
             TaskService.gI().sendInfoCurrentTask(player);
 
             if (TaskService.gI().getIdTask(player) == ConstTask.TASK_0_0) {
-                NpcService.gI().createTutorial(player, -1,
-                        "Chào mừng " + player.name + " đến với Ngọc Rồng Online\n"
-                                + "Nhiệm vụ đầu tiên của bạn là di chuyển\n"
-                                + "Bạn hãy di chuyển nhân vật theo mũi tên chỉ hướng");
+                String welcomeMsg = "Chào mừng " + player.name + " đến với Ngọc Rồng Online\n"
+                        + "Nhiệm vụ đầu tiên của bạn là di chuyển\n"
+                        + "Bạn hãy di chuyển nhân vật theo mũi tên chỉ hướng";
+                if (player.canReceiveDailyMobRuby()) {
+                    welcomeMsg += "\n|2|Hôm nay bạn có thể nhận 30 Hồng ngọc khi tiêu diệt quái!";
+                }
+                NpcService.gI().createTutorial(player, -1, welcomeMsg);
             } else {
                 // -70 thông báo bigmessage
                 sendThongBaoServer(player);
+            }
+
+            if (player.idMark != null) {
+                player.idMark.setLastTimeNotifyDailyMobRuby(System.currentTimeMillis());
+            }
+            if (player.canReceiveDailyMobRuby()) {
+                utils.Util.setTimeout(() -> {
+                    if (player != null && player.isPl() && player.canReceiveDailyMobRuby()) {
+                        Service.gI().sendThongBao(player, "Hôm nay bạn có thể nhận 30 Hồng ngọc khi tiêu diệt quái!");
+                    }
+                }, 5000);
             }
 
             if (player.inventory != null && player.inventory.itemsBody != null
@@ -1188,6 +1205,10 @@ public class Controller implements IMessageHandler {
             Logger.logException(this.getClass(), e, "Lỗi khi lấy thông tin nhiệm vụ cho " + player.name);
         }
         // --- KẾT THÚC LẤY THÔNG TIN NHIỆM VỤ ---
+
+        if (player != null && player.canReceiveDailyMobRuby()) {
+            message += "\n|2|Hôm nay bạn có thể nhận 30 Hồng ngọc khi tiêu diệt quái!";
+        }
 
         // 5. Gửi thông báo cuối cùng cho người chơi
         NpcService.gI().createTutorial(player, 1139, message);

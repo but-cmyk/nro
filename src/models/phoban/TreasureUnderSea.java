@@ -44,6 +44,7 @@ public class TreasureUnderSea {
     private long lastTimeSendNotify;
     private boolean allCharactersDead;
     private boolean isRecordUpdated = false;
+    private long lastTimeUpdateHPDame;
 
     public void addZone(Zone zone) {
         this.zones.add(zone);
@@ -61,6 +62,11 @@ public class TreasureUnderSea {
             if (Util.canDoWithTime(lastTimeOpen, TIME_BAN_DO_KHO_BAU) || (kickoutbdkb && Util.canDoWithTime(timeKickOutBDKB, 60000))) {
                 finish();
                 dispose();
+            }
+
+            if (Util.canDoWithTime(lastTimeUpdateHPDame, 15000)) {
+                this.updateHPDame();
+                this.lastTimeUpdateHPDame = System.currentTimeMillis();
             }
 
             allCharactersDead = true;
@@ -152,61 +158,145 @@ public class TreasureUnderSea {
         }
     }
 
-    private void init() {
-        //Hồi sinh quái
+    public List<Player> getPlayersInBDKB() {
+        List<Player> list = new ArrayList<>();
+        for (Zone zone : this.zones) {
+            for (Player pl : zone.getPlayers()) {
+                if (pl != null && !pl.isBoss && !pl.isPet && !pl.isNewPet) {
+                    list.add(pl);
+                }
+            }
+        }
+        return list;
+    }
+
+    public void updateHPDame() {
+        List<Player> players = getPlayersInBDKB();
+        if (players.isEmpty() && this.clan != null && this.clan.playerOpenBanDoKhoBau != null) {
+            players = new ArrayList<>();
+            players.add(this.clan.playerOpenBanDoKhoBau);
+        }
+
+        long totalDame = 0;
+        long totalHp = 0;
+        for (Player pl : players) {
+            if (pl != null && pl.nPoint != null) {
+                totalDame += pl.nPoint.dame;
+                totalHp += pl.nPoint.hpMax;
+            }
+        }
+
+        totalDame = Math.max(totalDame, 10_000L);
+        totalHp = Math.max(totalHp, 100_000L);
+
+        // Cập nhật sát thương bẫy (độ khó cao hơn Doanh trại)
         for (Zone zone : this.zones) {
             for (TrapMap trap : zone.trapMaps) {
-                trap.dame = Math.min((long) this.level * 2000L, 200_000L);
+                trap.dame = Math.max(1000L, Math.min(totalHp / 25, 200_000L));
             }
+        }
 
-            if (zone.map.mapId == 135 || zone.map.mapId == 136 || zone.map.mapId == 137) {
+        // Cập nhật HP, Sức đánh quái
+        for (Zone zone : this.zones) {
+            for (Mob mob : zone.mobs) {
+                if (mob.isDie()) {
+                    continue;
+                }
+                boolean isBigMob = (mob.lvMob == 1 || mob.tempId == 71 || mob.tempId == 72);
+                int newDame;
+                int newMaxHp;
+
+                if (isBigMob) {
+                    // Quái lớn / Thủ lĩnh: Mạnh gấp ~5 lần Doanh trại
+                    // Dame gấp 4.3 lần DT (totalHp / 7 so với totalHp / 30)
+                    // HP gấp 6 lần DT (totalDame * 150 so với totalDame * 25)
+                    newDame = (int) Math.max(1500, Math.min(totalHp / 7, 2_000_000_000L));
+                    newMaxHp = (int) Math.max(150_000, Math.min(totalDame * 150, 2_000_000_000L));
+                } else {
+                    // Quái nhỏ: Mạnh gấp 3 lần Doanh trại
+                    // Dame gấp 3 lần DT (totalHp / 10 so với totalHp / 30)
+                    // HP gấp 3 lần DT (totalDame * 75 so với totalDame * 25)
+                    newDame = (int) Math.max(500, Math.min(totalHp / 10, 2_000_000_000L));
+                    newMaxHp = (int) Math.max(30_000, Math.min(totalDame * 75, 2_000_000_000L));
+                }
+
+                mob.point.dame = newDame;
+                if (mob.point.hp >= mob.point.maxHp) {
+                    mob.point.hp = newMaxHp;
+                } else if (mob.point.maxHp > 0) {
+                    mob.point.hp = (int) Math.max(1, (long) mob.point.hp * newMaxHp / mob.point.maxHp);
+                }
+                mob.point.maxHp = newMaxHp;
+                mob.setTiemNang();
+            }
+        }
+
+        // Cập nhật HP, Sức đánh Boss Trung Úy Xanh Lơ: Mạnh gấp 4 - 5 lần Boss Doanh trại
+        // Dame gấp 4 lần Boss DT (totalHp / 5 so với totalHp / 20)
+        // HP gấp 5 lần Boss DT (totalDame * 250 so với totalDame * 50)
+        if (this.boss != null && !this.boss.isDie() && this.boss.zone != null && this.boss.nPoint != null) {
+            long bossDamage = Math.max(5000, Math.min(totalHp / 5, 200_000_000L));
+            long bossMaxHealth = Math.max(500_000, Math.min(totalDame * 250, 2_000_000_000L));
+
+            try {
+                if (this.boss.nPoint.hp >= this.boss.nPoint.hpMax) {
+                    this.boss.nPoint.hp = (int) bossMaxHealth;
+                } else if (this.boss.nPoint.hpMax > 0) {
+                    this.boss.nPoint.hp = (int) Math.max(1, (long) this.boss.nPoint.hp * bossMaxHealth / this.boss.nPoint.hpMax);
+                }
+                this.boss.nPoint.hpMax = (int) bossMaxHealth;
+                this.boss.nPoint.dame = (int) bossDamage;
+            } catch (Exception e) {
+            }
+        }
+    }
+
+    private void init() {
+        // Hồi sinh và phân loại quái
+        for (Zone zone : this.zones) {
+            if (zone.map.mapId == 135) {
                 List<Mob> mobs = zone.mobs;
                 for (int i = 0; i < mobs.size(); i++) {
                     Mob mob = mobs.get(i);
-                    if (((i == 5 || i == 10) && zone.map.mapId == 135) || (i == 5 && zone.map.mapId == 136) || (i == 5 && zone.map.mapId == 137)) {
-                        mob.lvMob = 1;
-                        mob.point.dame = (int) Math.min((long) level * 600 * mob.tempId * 10, 2_000_000_000);
-                        mob.point.maxHp = (int) Math.min((long) level * 4697* mob.tempId , 2_000_000_000);
-                        mob.hoiSinh();
-                        mob.hoiSinhMobPhoBan();
-                    } else {
-                        mob.lvMob = 0;
-                        mob.point.dame = (int) Math.min((long) level *  200 * mob.tempId, 2_000_000_000);
-                        mob.point.maxHp = (int) Math.min((long) level * 4697 * mob.tempId, 2_000_000_000);
-                        mob.hoiSinh();
-                        mob.hoiSinhMobPhoBan();
-                    }
+                    mob.lvMob = (i == 5 || i == 10) ? 1 : 0;
+                    mob.hoiSinh();
+                    mob.hoiSinhMobPhoBan();
+                }
+            } else if (zone.map.mapId == 136) {
+                List<Mob> mobs = zone.mobs;
+                for (int i = 0; i < mobs.size(); i++) {
+                    Mob mob = mobs.get(i);
+                    mob.lvMob = (i == 5 || mob.tempId == 71) ? 1 : 0;
+                    mob.hoiSinh();
+                    mob.hoiSinhMobPhoBan();
+                }
+            } else if (zone.map.mapId == 137) {
+                List<Mob> mobs = zone.mobs;
+                for (int i = 0; i < mobs.size(); i++) {
+                    Mob mob = mobs.get(i);
+                    mob.lvMob = (i == 5) ? 1 : 0;
+                    mob.hoiSinh();
+                    mob.hoiSinhMobPhoBan();
+                }
+                try {
+                    boss = new TrungUyXanhLo(
+                            zone,
+                            level,
+                            1000,
+                            100000
+                    );
+                } catch (Exception exception) {
                 }
             } else {
                 for (Mob mob : zone.mobs) {
-                    mob.point.dame = (int) Math.min((long) level * 31 * 50 * mob.tempId, 2_000_000_000);
-                    mob.point.maxHp = (int) Math.min((long) level * 3107 * 50 * mob.tempId, 2_000_000_000);
+                    mob.lvMob = (mob.tempId == 72) ? 1 : 0;
                     mob.hoiSinh();
                     mob.hoiSinhMobPhoBan();
                 }
             }
-// hết
-            // Trong TreasureUnderSea.java - hàm init()
-            if (zone.map.mapId == 137) {
-                try {
-                    // [SỬA] Công thức mới: HP tăng dần theo level
-                    long bossDamage = (200000 * level);
-                    long bossMaxHealth = (5000000 * level); // 5 triệu mỗi level thay vì 200 triệu
-
-                    bossDamage = Math.min(bossDamage, 200000000L);
-                    bossMaxHealth = Math.min(bossMaxHealth, 2000000000L);
-
-                    boss = new TrungUyXanhLo(
-                            zone,
-                            level,
-                            (int) bossDamage,
-                            (int) bossMaxHealth
-                    );
-                } catch (Exception exception) {
-                }
-
-            }
         }
+        // Tính toán HP và Dame theo thành viên tham gia
+        this.updateHPDame();
     }
 
     //kết thúc bản đồ kho báu

@@ -5561,7 +5561,6 @@ namespace Game1
     		g.translate(0, -GameCanvas.transY);
     		GameCanvas.debug("PA9", 1);
     		paintSplash(g);
-    		GameCanvas.gI().paintDust(g);
     		GameCanvas.debug("PA10", 1);
     		GameCanvas.debug("PA11", 1);
     		GameCanvas.debug("PA13", 1);

@@ -3078,26 +3078,6 @@ namespace Game1
     
     	public bool startDust(int dir, int x, int y)
     	{
-    		if (imgDust == null || dustState == null)
-    		{
-    			loadDust();
-    		}
-    		if (dustState == null)
-    		{
-    			return false;
-    		}
-    		int d = ((dir != 1) ? 1 : 0);
-    		for (int i = 0; i < MAX_DUST; i++)
-    		{
-    			if (dustState[i] == -1)
-    			{
-    				dustState[i] = 0;
-    				dustDir[i] = d;
-    				dustX[i] = x;
-    				dustY[i] = y;
-    				return true;
-    			}
-    		}
     		return false;
     	}
     
@@ -3165,36 +3145,6 @@ namespace Game1
     
     	public void updateDust()
     	{
-    		if (dustState == null)
-    		{
-    			return;
-    		}
-    		for (int i = 0; i < MAX_DUST; i++)
-    		{
-    			if (dustState[i] != -1)
-    			{
-    				dustState[i]++;
-    				if (dustState[i] >= 20)
-    				{
-    					dustState[i] = -1;
-    				}
-    				else
-    				{
-    					if (dustState[i] % 2 == 0)
-    					{
-    						if (dustDir[i] == 0)
-    						{
-    							dustX[i]--;
-    						}
-    						else
-    						{
-    							dustX[i]++;
-    						}
-    						dustY[i]--;
-    					}
-    				}
-    			}
-    		}
     	}
 
     	public static bool isPaint(int x, int y)
@@ -3220,31 +3170,6 @@ namespace Game1
 
     	public void paintDust(mGraphics g)
     	{
-    		if (dustState == null || imgDust == null)
-    		{
-    			return;
-    		}
-    		for (int i = 0; i < MAX_DUST; i++)
-    		{
-    			if (dustState[i] >= 0 && dustState[i] < 20)
-    			{
-    				int dx = dustX[i];
-    				int dy = dustY[i];
-    				if (dx >= GameScr.cmx - 20 && dx <= GameScr.cmx + GameScr.gW + 20 && dy >= GameScr.cmy - 20 && dy <= GameScr.cmy + GameScr.gH + 40)
-    				{
-    					int frame = dustState[i] / 4;
-    					if (frame > 4)
-    					{
-    						frame = 4;
-    					}
-    					int d = dustDir[i];
-    					if (d >= 0 && d < imgDust.Length && imgDust[d] != null && imgDust[d][frame] != null)
-    					{
-    						g.drawImage(imgDust[d][frame], dx, dy, 3);
-    					}
-    				}
-    			}
-    		}
     	}
 
     	public void loadDust()

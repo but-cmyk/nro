@@ -10,9 +10,10 @@
       "call_count": 279,
       "slow_count": 1,
       "severity": "HIGH",
-      "status": "OPEN",
+      "status": "ACK",
       "slowest_context": "Player admin (ID: 1023302, Map 20)",
-      "detected_at": "2026-10-04 11:42:23.946"
+      "detected_at": "2026-10-04 11:42:23.946",
+      "acked_at": "2026-10-16 10:44:42"
     }
   ]
 }

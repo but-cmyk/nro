@@ -272,15 +272,18 @@ public class CombineService {
                 break;
             case EP_SAO_TRANG_BI:
                 EpSaoTrangBi.epSaoTrangBi(player);
+                TaskService.gI().checkDoneSideTaskUpgrade(player);
                 break;
             case PHA_LE_HOA_TRANG_BI:
                 PhaLeHoaTrangBi.phaLeHoa(player, num);
+                TaskService.gI().checkDoneSideTaskUpgrade(player);
                 break;
             case NHAP_NGOC_RONG:
                 NhapNgocRong.nhapNgocRong(player);
                 break;
             case NANG_CAP_VAT_PHAM:
                 NangCapVatPham.nangCapVatPham(player);
+                TaskService.gI().checkDoneSideTaskUpgrade(player);
                 break;
             case NANG_CAP_BONG_TAI:
                 NangCapBongTai.nangCapBongTai(player);
@@ -290,6 +293,7 @@ public class CombineService {
                 break;
             case NANG_CAP_SAO_PHA_LE:
                 NangCapSaoPhaLe.nangSaoC2(player);
+                TaskService.gI().checkDoneSideTaskUpgrade(player);
                 break;
             case DANH_BONG_SAO_PHA_LE:
                 NangCapSaoPhaLe.saoLapLanh(player);
@@ -299,6 +303,7 @@ public class CombineService {
                 break;
             case CUONG_HOA_LO_SAO:
                 CuongHoaLoSao.cuongHoa(player);
+                TaskService.gI().checkDoneSideTaskUpgrade(player);
                 break;
             case DOI_DO_THAN:
                 DoiDoThan.doiVeNdung(player);

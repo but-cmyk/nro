@@ -51,12 +51,30 @@ public class TaskService {
 
     // Lưu trữ điều kiện bản đồ & hành tinh của từng Side Task để tránh giao nhiệm vụ ở map chưa tới được
     private static class SideTaskRequirement {
-        final int planet;      // 0: Trái Đất, 1: Namếc, 2: Xayda, -1: Tất cả/Liên hành tinh
-        final int minTaskMain; // taskMain.id tối thiểu cần đạt để tới được map quái
+        final int planet;          // 0: Trái Đất, 1: Namếc, 2: Xayda, -1: Tất cả/Liên hành tinh
+        final int minTaskMain;     // taskMain.id tối thiểu cần đạt để tới được map quái
+        final int targetMapId;     // ID bản đồ chính xác nhiệm vụ diễn ra (-1 nếu không cố định)
+        final long minPower;       // Sức mạnh tối thiểu để đến map / đủ sức thực hiện
+        final boolean requireClan; // Bắt buộc phải có Bang Hội
 
-        SideTaskRequirement(int planet, int minTaskMain) {
+        SideTaskRequirement(int planet, int minTaskMain, int targetMapId, long minPower, boolean requireClan) {
             this.planet = planet;
             this.minTaskMain = minTaskMain;
+            this.targetMapId = targetMapId;
+            this.minPower = minPower;
+            this.requireClan = requireClan;
+        }
+
+        SideTaskRequirement(int planet, int minTaskMain, int targetMapId, long minPower) {
+            this(planet, minTaskMain, targetMapId, minPower, false);
+        }
+
+        SideTaskRequirement(int planet, int minTaskMain, int targetMapId) {
+            this(planet, minTaskMain, targetMapId, 0L, false);
+        }
+
+        SideTaskRequirement(int planet, int minTaskMain) {
+            this(planet, minTaskMain, -1, 0L, false);
         }
     }
 
@@ -136,79 +154,134 @@ public class TaskService {
 
     private static void initSideTaskRequirements() {
         // EASY (0 - 14): Mobs tân thủ & các map sơ cấp trên 3 hành tinh
-        SIDE_TASK_REQ_MAP.put(0, new SideTaskRequirement(ConstPlayer.TRAI_DAT, 1));  // Khủng long (Đồi hoa cúc 1)
-        SIDE_TASK_REQ_MAP.put(1, new SideTaskRequirement(ConstPlayer.NAMEC, 1));     // Lợn lòi (Đồi nấm tím 8)
-        SIDE_TASK_REQ_MAP.put(2, new SideTaskRequirement(ConstPlayer.XAYDA, 1));     // Quỷ đất (Đồi hoang 15)
-        SIDE_TASK_REQ_MAP.put(3, new SideTaskRequirement(ConstPlayer.TRAI_DAT, 4));  // Khủng long mẹ (Thung lũng tre 2)
-        SIDE_TASK_REQ_MAP.put(4, new SideTaskRequirement(ConstPlayer.NAMEC, 4));     // Lợn lòi mẹ (Thị trấn Moori 9)
-        SIDE_TASK_REQ_MAP.put(5, new SideTaskRequirement(ConstPlayer.XAYDA, 4));     // Quỷ đất mẹ (Làng Plant 16)
-        SIDE_TASK_REQ_MAP.put(6, new SideTaskRequirement(ConstPlayer.TRAI_DAT, 7));  // Thằn lằn bay (Rừng nấm 3)
-        SIDE_TASK_REQ_MAP.put(7, new SideTaskRequirement(ConstPlayer.NAMEC, 7));     // Phi long (Thung lũng Maima 11)
-        SIDE_TASK_REQ_MAP.put(8, new SideTaskRequirement(ConstPlayer.XAYDA, 7));     // Quỷ bay (Rừng nguyên sinh 17)
-        SIDE_TASK_REQ_MAP.put(9, new SideTaskRequirement(ConstPlayer.TRAI_DAT, 7));  // Thằn lằn mẹ (Rừng xương 4, qua map 3 req 7)
-        SIDE_TASK_REQ_MAP.put(10, new SideTaskRequirement(ConstPlayer.NAMEC, 7));    // Phi long mẹ (Vực Maima 12, qua map 11 req 7)
-        SIDE_TASK_REQ_MAP.put(11, new SideTaskRequirement(ConstPlayer.XAYDA, 7));    // Quỷ bay mẹ (Rừng thông Xayda 18, qua map 17 req 7)
-        SIDE_TASK_REQ_MAP.put(12, new SideTaskRequirement(ConstPlayer.TRAI_DAT, 13)); // Heo rừng (Rừng Bamboo 27)
-        SIDE_TASK_REQ_MAP.put(13, new SideTaskRequirement(ConstPlayer.NAMEC, 13));    // Heo da xanh (Núi hoa vàng 31)
-        SIDE_TASK_REQ_MAP.put(14, new SideTaskRequirement(ConstPlayer.XAYDA, 13));    // Heo xayda (Rừng cọ 35)
+        SIDE_TASK_REQ_MAP.put(0, new SideTaskRequirement(ConstPlayer.TRAI_DAT, 1, 1));   // Khủng long (Đồi hoa cúc 1)
+        SIDE_TASK_REQ_MAP.put(1, new SideTaskRequirement(ConstPlayer.NAMEC, 1, 8));      // Lợn lòi (Đồi nấm tím 8)
+        SIDE_TASK_REQ_MAP.put(2, new SideTaskRequirement(ConstPlayer.XAYDA, 1, 15));     // Quỷ đất (Đồi hoang 15)
+        SIDE_TASK_REQ_MAP.put(3, new SideTaskRequirement(ConstPlayer.TRAI_DAT, 4, 2));   // Khủng long mẹ (Thung lũng tre 2)
+        SIDE_TASK_REQ_MAP.put(4, new SideTaskRequirement(ConstPlayer.NAMEC, 4, 9));      // Lợn lòi mẹ (Thị trấn Moori 9)
+        SIDE_TASK_REQ_MAP.put(5, new SideTaskRequirement(ConstPlayer.XAYDA, 4, 16));     // Quỷ đất mẹ (Làng Plant 16)
+        SIDE_TASK_REQ_MAP.put(6, new SideTaskRequirement(ConstPlayer.TRAI_DAT, 7, 3));   // Thằn lằn bay (Rừng nấm 3)
+        SIDE_TASK_REQ_MAP.put(7, new SideTaskRequirement(ConstPlayer.NAMEC, 7, 11));     // Phi long (Thung lũng Maima 11)
+        SIDE_TASK_REQ_MAP.put(8, new SideTaskRequirement(ConstPlayer.XAYDA, 7, 17));     // Quỷ bay (Rừng nguyên sinh 17)
+        SIDE_TASK_REQ_MAP.put(9, new SideTaskRequirement(ConstPlayer.TRAI_DAT, 7, 4));   // Thằn lằn mẹ (Rừng xương 4, qua map 3 req 7)
+        SIDE_TASK_REQ_MAP.put(10, new SideTaskRequirement(ConstPlayer.NAMEC, 7, 12));    // Phi long mẹ (Vực Maima 12, qua map 11 req 7)
+        SIDE_TASK_REQ_MAP.put(11, new SideTaskRequirement(ConstPlayer.XAYDA, 7, 18));    // Quỷ bay mẹ (Rừng thông Xayda 18, qua map 17 req 7)
+        SIDE_TASK_REQ_MAP.put(12, new SideTaskRequirement(ConstPlayer.TRAI_DAT, 13, 27)); // Heo rừng (Rừng Bamboo 27)
+        SIDE_TASK_REQ_MAP.put(13, new SideTaskRequirement(ConstPlayer.NAMEC, 13, 31));    // Heo da xanh (Núi hoa vàng 31)
+        SIDE_TASK_REQ_MAP.put(14, new SideTaskRequirement(ConstPlayer.XAYDA, 13, 35));    // Heo xayda (Rừng cọ 35)
 
         // NORMAL (15 - 23): Mobs trung cấp (Đảo Kame/Guru/Vách núi đen, Bulông, Karin/Vegeta)
-        SIDE_TASK_REQ_MAP.put(15, new SideTaskRequirement(ConstPlayer.TRAI_DAT, 10)); // Ốc mượn hồn (Đảo Kamê 5)
-        SIDE_TASK_REQ_MAP.put(16, new SideTaskRequirement(ConstPlayer.NAMEC, 10));    // Ốc sên (Đảo Guru 13)
-        SIDE_TASK_REQ_MAP.put(17, new SideTaskRequirement(ConstPlayer.XAYDA, 10));    // Heo xayda mẹ (Vách núi đen 20)
-        SIDE_TASK_REQ_MAP.put(18, new SideTaskRequirement(ConstPlayer.TRAI_DAT, 15)); // Không tặc (Đảo Bulông 30)
-        SIDE_TASK_REQ_MAP.put(19, new SideTaskRequirement(ConstPlayer.NAMEC, 15));    // Quỷ đầu to (Đông Nam Guru 34)
-        SIDE_TASK_REQ_MAP.put(20, new SideTaskRequirement(ConstPlayer.XAYDA, 15));    // Quỷ địa ngục (Bờ vực đen 38)
-        SIDE_TASK_REQ_MAP.put(21, new SideTaskRequirement(ConstPlayer.TRAI_DAT, 16)); // Heo rừng mẹ (Đông Karin 6)
-        SIDE_TASK_REQ_MAP.put(22, new SideTaskRequirement(ConstPlayer.NAMEC, 16));    // Heo xanh mẹ (Thung lũng Namếc 10)
-        SIDE_TASK_REQ_MAP.put(23, new SideTaskRequirement(ConstPlayer.XAYDA, 16));    // Alien (Thành phố Vegeta 19)
+        SIDE_TASK_REQ_MAP.put(15, new SideTaskRequirement(ConstPlayer.TRAI_DAT, 10, 5));  // Ốc mượn hồn (Đảo Kamê 5)
+        SIDE_TASK_REQ_MAP.put(16, new SideTaskRequirement(ConstPlayer.NAMEC, 10, 13));    // Ốc sên (Đảo Guru 13)
+        SIDE_TASK_REQ_MAP.put(17, new SideTaskRequirement(ConstPlayer.XAYDA, 10, 20));    // Heo xayda mẹ (Vách núi đen 20)
+        SIDE_TASK_REQ_MAP.put(18, new SideTaskRequirement(ConstPlayer.TRAI_DAT, 15, 30)); // Không tặc (Đảo Bulông 30)
+        SIDE_TASK_REQ_MAP.put(19, new SideTaskRequirement(ConstPlayer.NAMEC, 15, 34));    // Quỷ đầu to (Đông Nam Guru 34)
+        SIDE_TASK_REQ_MAP.put(20, new SideTaskRequirement(ConstPlayer.XAYDA, 15, 38));    // Quỷ địa ngục (Bờ vực đen 38)
+        SIDE_TASK_REQ_MAP.put(21, new SideTaskRequirement(ConstPlayer.TRAI_DAT, 16, 6));  // Heo rừng mẹ (Đông Karin 6)
+        SIDE_TASK_REQ_MAP.put(22, new SideTaskRequirement(ConstPlayer.NAMEC, 16, 10));    // Heo xanh mẹ (Thung lũng Namếc 10)
+        SIDE_TASK_REQ_MAP.put(23, new SideTaskRequirement(ConstPlayer.XAYDA, 16, 19));    // Alien (Thành phố Vegeta 19)
 
         // HARD (24 - 45): Đệ tử Piccolo, Lính Fide, Quái Cold / Yardrat
-        SIDE_TASK_REQ_MAP.put(24, new SideTaskRequirement(ConstPlayer.XAYDA, 15));    // Tambourine (Bờ vực đen 38)
-        SIDE_TASK_REQ_MAP.put(25, new SideTaskRequirement(ConstPlayer.TRAI_DAT, 16)); // Drum (Đông Karin 6)
-        SIDE_TASK_REQ_MAP.put(26, new SideTaskRequirement(ConstPlayer.NAMEC, 16));    // Akkuman (Thung lũng Namếc 10)
-        SIDE_TASK_REQ_MAP.put(27, new SideTaskRequirement(ConstPlayer.XAYDA, 16));    // Nappa (Thành phố Vegeta 19)
-        SIDE_TASK_REQ_MAP.put(28, new SideTaskRequirement(-1, 20)); // Soldier (Vực cấm 69)
-        SIDE_TASK_REQ_MAP.put(29, new SideTaskRequirement(-1, 20)); // Appule (Núi Appule 70)
-        SIDE_TASK_REQ_MAP.put(30, new SideTaskRequirement(-1, 20)); // Raspberry (Căn cứ Raspberry 71)
-        SIDE_TASK_REQ_MAP.put(31, new SideTaskRequirement(-1, 20)); // Thằn lằn xanh (Núi dây leo 64)
-        SIDE_TASK_REQ_MAP.put(32, new SideTaskRequirement(-1, 20)); // Quỷ đầu nhọn (Núi dây leo 64)
-        SIDE_TASK_REQ_MAP.put(33, new SideTaskRequirement(-1, 20)); // Quỷ đầu vàng (Núi cây quỷ 65)
-        SIDE_TASK_REQ_MAP.put(34, new SideTaskRequirement(-1, 21)); // Quỷ da tím (Trại lính Fide 63)
-        SIDE_TASK_REQ_MAP.put(35, new SideTaskRequirement(-1, 21)); // Quỷ già (Trại quỷ già 66)
-        SIDE_TASK_REQ_MAP.put(36, new SideTaskRequirement(-1, 21)); // Cá sấu (Thung lũng chết 73)
-        SIDE_TASK_REQ_MAP.put(37, new SideTaskRequirement(-1, 21)); // Dơi da xanh (Đồi cây Fide 74)
-        SIDE_TASK_REQ_MAP.put(38, new SideTaskRequirement(-1, 21)); // Quỷ chim (Núi đá 76)
-        SIDE_TASK_REQ_MAP.put(39, new SideTaskRequirement(-1, 21)); // Lính đầu trọc (Khe núi tử thần 75)
-        SIDE_TASK_REQ_MAP.put(40, new SideTaskRequirement(-1, 21)); // Lính tai dài (Khe núi tử thần 75)
-        SIDE_TASK_REQ_MAP.put(41, new SideTaskRequirement(-1, 21)); // Lính vũ trụ (Rừng đá 77)
-        SIDE_TASK_REQ_MAP.put(42, new SideTaskRequirement(-1, 22)); // Khỉ lông đen (Núi khỉ đen 82)
-        SIDE_TASK_REQ_MAP.put(43, new SideTaskRequirement(-1, 22)); // Khỉ giáp sắt (Hang khỉ đen 83)
-        SIDE_TASK_REQ_MAP.put(44, new SideTaskRequirement(-1, 22)); // Khỉ lông đỏ (Núi khỉ đỏ 79)
-        SIDE_TASK_REQ_MAP.put(45, new SideTaskRequirement(-1, 23)); // Khỉ lông vàng (Núi khỉ vàng 80)
+        SIDE_TASK_REQ_MAP.put(24, new SideTaskRequirement(ConstPlayer.XAYDA, 15, 38));    // Tambourine (Bờ vực đen 38)
+        SIDE_TASK_REQ_MAP.put(25, new SideTaskRequirement(ConstPlayer.TRAI_DAT, 16, 6));  // Drum (Đông Karin 6)
+        SIDE_TASK_REQ_MAP.put(26, new SideTaskRequirement(ConstPlayer.NAMEC, 16, 10));    // Akkuman (Thung lũng Namếc 10)
+        SIDE_TASK_REQ_MAP.put(27, new SideTaskRequirement(ConstPlayer.XAYDA, 16, 19));    // Nappa (Thành phố Vegeta 19)
+        SIDE_TASK_REQ_MAP.put(28, new SideTaskRequirement(-1, 20, 69, 1_500_000L));       // Soldier (Vực cấm 69)
+        SIDE_TASK_REQ_MAP.put(29, new SideTaskRequirement(-1, 20, 70, 1_500_000L));       // Appule (Núi Appule 70)
+        SIDE_TASK_REQ_MAP.put(30, new SideTaskRequirement(-1, 20, 71, 1_500_000L));       // Raspberry (Căn cứ Raspberry 71)
+        SIDE_TASK_REQ_MAP.put(31, new SideTaskRequirement(-1, 20, 64, 1_500_000L));       // Thằn lằn xanh (Núi dây leo 64)
+        SIDE_TASK_REQ_MAP.put(32, new SideTaskRequirement(-1, 20, 64, 1_500_000L));       // Quỷ đầu nhọn (Núi dây leo 64)
+        SIDE_TASK_REQ_MAP.put(33, new SideTaskRequirement(-1, 20, 65, 1_500_000L));       // Quỷ đầu vàng (Núi cây quỷ 65)
+        SIDE_TASK_REQ_MAP.put(34, new SideTaskRequirement(-1, 21, 63, 1_500_000L));       // Quỷ da tím (Trại lính Fide 63)
+        SIDE_TASK_REQ_MAP.put(35, new SideTaskRequirement(-1, 21, 66, 1_500_000L));       // Quỷ già (Trại quỷ già 66)
+        SIDE_TASK_REQ_MAP.put(36, new SideTaskRequirement(-1, 21, 73, 1_500_000L));       // Cá sấu (Thung lũng chết 73)
+        SIDE_TASK_REQ_MAP.put(37, new SideTaskRequirement(-1, 21, 74, 1_500_000L));       // Dơi da xanh (Đồi cây Fide 74)
+        SIDE_TASK_REQ_MAP.put(38, new SideTaskRequirement(-1, 21, 76, 1_500_000L));       // Quỷ chim (Núi đá 76)
+        SIDE_TASK_REQ_MAP.put(39, new SideTaskRequirement(-1, 21, 75, 1_500_000L));       // Lính đầu trọc (Khe núi tử thần 75)
+        SIDE_TASK_REQ_MAP.put(40, new SideTaskRequirement(-1, 21, 75, 1_500_000L));       // Lính tai dài (Khe núi tử thần 75)
+        SIDE_TASK_REQ_MAP.put(41, new SideTaskRequirement(-1, 21, 77, 1_500_000L));       // Lính vũ trụ (Rừng đá 77)
+        SIDE_TASK_REQ_MAP.put(42, new SideTaskRequirement(-1, 22, 82, 15_000_000L));      // Khỉ lông đen (Núi khỉ đen 82)
+        SIDE_TASK_REQ_MAP.put(43, new SideTaskRequirement(-1, 22, 83, 15_000_000L));      // Khỉ giáp sắt (Hang khỉ đen 83)
+        SIDE_TASK_REQ_MAP.put(44, new SideTaskRequirement(-1, 22, 79, 15_000_000L));      // Khỉ lông đỏ (Núi khỉ đỏ 79)
+        SIDE_TASK_REQ_MAP.put(45, new SideTaskRequirement(-1, 23, 80, 15_000_000L));      // Khỉ lông vàng (Núi khỉ vàng 80)
 
         // VERY_HARD (46 - 53): Xên con cấp 1 -> 8 (Tương lai & Thị trấn Ginder)
-        SIDE_TASK_REQ_MAP.put(46, new SideTaskRequirement(-1, 23)); // Xên con cấp 1 (Thành phố phía đông 92)
-        SIDE_TASK_REQ_MAP.put(47, new SideTaskRequirement(-1, 23)); // Xên con cấp 2 (Thành phố phía nam 93)
-        SIDE_TASK_REQ_MAP.put(48, new SideTaskRequirement(-1, 23)); // Xên con cấp 3 (Đảo Balê 94)
-        SIDE_TASK_REQ_MAP.put(49, new SideTaskRequirement(-1, 23)); // Xên con cấp 4 (Cao nguyên 96)
-        SIDE_TASK_REQ_MAP.put(50, new SideTaskRequirement(-1, 27)); // Xên con cấp 5 (Thành phố phía bắc 97)
-        SIDE_TASK_REQ_MAP.put(51, new SideTaskRequirement(-1, 27)); // Xên con cấp 6 (Ngọn núi phía bắc 98)
-        SIDE_TASK_REQ_MAP.put(52, new SideTaskRequirement(-1, 27)); // Xên con cấp 7 (Thung lũng phía bắc 99)
-        SIDE_TASK_REQ_MAP.put(53, new SideTaskRequirement(-1, 27)); // Xên con cấp 8 (Thị trấn Ginder 100)
+        SIDE_TASK_REQ_MAP.put(46, new SideTaskRequirement(-1, 23, 92, 150_000_000L));     // Xên con cấp 1 (Thành phố phía đông 92)
+        SIDE_TASK_REQ_MAP.put(47, new SideTaskRequirement(-1, 23, 93, 150_000_000L));     // Xên con cấp 2 (Thành phố phía nam 93)
+        SIDE_TASK_REQ_MAP.put(48, new SideTaskRequirement(-1, 23, 94, 150_000_000L));     // Xên con cấp 3 (Đảo Balê 94)
+        SIDE_TASK_REQ_MAP.put(49, new SideTaskRequirement(-1, 23, 96, 150_000_000L));     // Xên con cấp 4 (Cao nguyên 96)
+        SIDE_TASK_REQ_MAP.put(50, new SideTaskRequirement(-1, 27, 97, 150_000_000L));     // Xên con cấp 5 (Thành phố phía bắc 97)
+        SIDE_TASK_REQ_MAP.put(51, new SideTaskRequirement(-1, 27, 98, 150_000_000L));     // Xên con cấp 6 (Ngọn núi phía bắc 98)
+        SIDE_TASK_REQ_MAP.put(52, new SideTaskRequirement(-1, 27, 99, 150_000_000L));     // Xên con cấp 7 (Thung lũng phía bắc 99)
+        SIDE_TASK_REQ_MAP.put(53, new SideTaskRequirement(-1, 27, 100, 150_000_000L));    // Xên con cấp 8 (Thị trấn Ginder 100)
 
         // HELL (54 - 57): Vùng Băng Tuyết (Cánh đồng tuyết, Rừng tuyết, Sông băng, Hang băng)
-        SIDE_TASK_REQ_MAP.put(54, new SideTaskRequirement(-1, 29)); // Tai tím (Cánh đồng tuyết 105)
-        SIDE_TASK_REQ_MAP.put(55, new SideTaskRequirement(-1, 29)); // Abo (Rừng tuyết 106)
-        SIDE_TASK_REQ_MAP.put(56, new SideTaskRequirement(-1, 29)); // Kado (Dòng sông băng 108)
-        SIDE_TASK_REQ_MAP.put(57, new SideTaskRequirement(-1, 29)); // Da xanh (Rừng băng 109)
+        SIDE_TASK_REQ_MAP.put(54, new SideTaskRequirement(-1, 29, 105, 1_500_000_000L));   // Tai tím (Cánh đồng tuyết 105)
+        SIDE_TASK_REQ_MAP.put(55, new SideTaskRequirement(-1, 29, 106, 1_500_000_000L));   // Abo (Rừng tuyết 106)
+        SIDE_TASK_REQ_MAP.put(56, new SideTaskRequirement(-1, 29, 108, 1_500_000_000L));   // Kado (Dòng sông băng 108)
+        SIDE_TASK_REQ_MAP.put(57, new SideTaskRequirement(-1, 29, 109, 1_500_000_000L));   // Da xanh (Rừng băng 109)
 
         // NHẶT VÀNG (58): Toàn bộ hành tinh, mọi cấp độ
-        SIDE_TASK_REQ_MAP.put(58, new SideTaskRequirement(-1, 0));
+        SIDE_TASK_REQ_MAP.put(58, new SideTaskRequirement(-1, 0, -1, 0L, false));
+
+        // HÁI ĐẬU THẦN (59): Mọi hành tinh, có sẵn từ đầu
+        SIDE_TASK_REQ_MAP.put(59, new SideTaskRequirement(-1, 0, 21, 0L, false));
+
+        // VÕ ĐÀI SIÊU HẠNG (60): Mở giải đấu (taskMain >= 15, SM >= 1.5M)
+        SIDE_TASK_REQ_MAP.put(60, new SideTaskRequirement(-1, 15, -1, 1_500_000L, false));
+
+        // CƯỜNG HÓA / ÉP SAO BÀ HẠT MÍT (61): Mở Đảo Kame (taskMain >= 10, Map 5)
+        SIDE_TASK_REQ_MAP.put(61, new SideTaskRequirement(-1, 10, 5, 0L, false));
+
+        // DOANH TRẠI ĐỘC NHÃN (62): Bắt buộc Bang hội, taskMain >= 14, SM >= 1.5M
+        SIDE_TASK_REQ_MAP.put(62, new SideTaskRequirement(-1, 14, 53, 1_500_000L, true));
+
+        // PHÓ BẢN KHÍ GAS / KHO BÁU (63): Bắt buộc Bang hội, taskMain >= 20, SM >= 15M
+        SIDE_TASK_REQ_MAP.put(63, new SideTaskRequirement(-1, 20, 135, 15_000_000L, true));
+
+        // SĂN BOSS THẾ GIỚI (64): Cấp cao (taskMain >= 20, SM >= 150M)
+        SIDE_TASK_REQ_MAP.put(64, new SideTaskRequirement(-1, 20, -1, 150_000_000L, false));
+
+        // Tự động khởi tạo các template nhiệm vụ mới nếu chưa có trong DB
+        initCustomSideTaskTemplates();
+    }
+
+    private static void initCustomSideTaskTemplates() {
+        addCustomSideTaskTemplate(59, "Thu hoạch %1 hạt đậu thần tại nhà", new int[][]{
+            {3, 5}, {3, 5}, {5, 7}, {5, 8}, {5, 10}
+        });
+        addCustomSideTaskTemplate(60, "Thách đấu %1 trận tại Võ Đài Siêu Hạng", new int[][]{
+            {1, 1}, {1, 2}, {1, 2}, {2, 3}, {2, 3}
+        });
+        addCustomSideTaskTemplate(61, "Cường hóa trang bị hoặc ép Sao Pha Lê %1 lần", new int[][]{
+            {1, 1}, {1, 2}, {1, 2}, {2, 3}, {2, 3}
+        });
+        addCustomSideTaskTemplate(62, "Tham gia Doanh Trại Độc Nhãn %1 lần", new int[][]{
+            {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}
+        });
+        addCustomSideTaskTemplate(63, "Tham gia Bản Đồ Kho Báu hoặc Khí Gas %1 lần", new int[][]{
+            {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}
+        });
+        addCustomSideTaskTemplate(64, "Tham gia tiêu diệt Boss Thế Giới %1 lần", new int[][]{
+            {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}
+        });
+    }
+
+    private static void addCustomSideTaskTemplate(int id, String name, int[][] count) {
+        for (SideTaskTemplate t : Manager.SIDE_TASKS_TEMPLATE) {
+            if (t.id == id) {
+                return;
+            }
+        }
+        SideTaskTemplate st = new SideTaskTemplate();
+        st.id = id;
+        st.name = name;
+        st.count = count;
+        Manager.SIDE_TASKS_TEMPLATE.add(st);
     }
 
     public boolean isSideTaskAccessible(Player player, int taskId) {
-        if (player == null || player.playerTask == null || player.playerTask.taskMain == null) {
+        if (player == null || player.playerTask == null || player.playerTask.taskMain == null || player.nPoint == null) {
             return false;
         }
         SideTaskRequirement req = SIDE_TASK_REQ_MAP.get(taskId);
@@ -217,21 +290,99 @@ public class TaskService {
         }
 
         int currentTaskMainId = player.playerTask.taskMain.id;
+        long currentPower = player.nPoint.power;
 
-        // 1. Kiểm tra giới hạn hành tinh khi chưa có Tàu Vũ Trụ (trước nhiệm vụ 8)
+        // 1. Kiểm tra yêu cầu Bang Hội (Clan Check):
+        // Nếu nhiệm vụ yêu cầu Bang Hội (Doanh Trại 62, Kho Báu / Khí Gas 63) mà người chơi chưa vào bang -> Bỏ qua
+        if (req.requireClan && player.clan == null) {
+            return false;
+        }
+
+        // 2. Kiểm tra yêu cầu Sức Mạnh tối thiểu (Power Check)
+        if (currentPower < req.minPower) {
+            return false;
+        }
+
+        // 3. Kiểm tra tiến trình Nhiệm Vụ Chính (TaskMain Check)
+        if (currentTaskMainId < req.minTaskMain) {
+            return false;
+        }
+
+        // 4. Kiểm tra giới hạn hành tinh khi chưa có Tàu Vũ Trụ (trước nhiệm vụ 8)
         if (currentTaskMainId < 8) {
             if (req.planet != -1 && req.planet != (int) player.gender) {
                 return false;
             }
         }
 
-        // 2. Trường hợp đặc biệt tân thủ mới vào (taskMainId == 0): Cho phép nhận quái sơ sinh hành tinh mình hoặc nhặt vàng
-        if (currentTaskMainId == 0 && (taskId == (int) player.gender || taskId == 58)) {
-            return true;
+        // 5. Kiểm tra tính khả dụng đặc thù theo từng loại nhiệm vụ
+        switch (taskId) {
+            case 58 -> { // Nhặt vàng: Ai cũng làm được
+                return true;
+            }
+            case 59 -> { // Hái đậu: Cần có cây đậu thần và cây không đang trong quá trình nâng cấp
+                if (player.magicTree == null || player.magicTree.isUpgrade) {
+                    return false;
+                }
+            }
+            case 60 -> { // Võ Đài Siêu Hạng: Cần mở giải đấu (taskMain >= 15) và SM >= 1.5M
+                if (currentTaskMainId < 15 || currentPower < 1_500_000L) {
+                    return false;
+                }
+            }
+            case 61 -> { // Cường hóa / Ép sao Bà Hạt Mít: Cần mở Đảo Kame (taskMain >= 10)
+                if (currentTaskMainId < 10) {
+                    return false;
+                }
+            }
+            case 62 -> { // Doanh Trại: Cần có bang và taskMain >= 14
+                if (player.clan == null || currentTaskMainId < 14) {
+                    return false;
+                }
+            }
+            case 63 -> { // Khí Gas / Kho Báu: Cần có bang, taskMain >= 20 và SM >= 15M
+                if (player.clan == null || currentTaskMainId < 20 || currentPower < 15_000_000L) {
+                    return false;
+                }
+            }
+            case 64 -> { // Săn Boss Thế Giới: Cần taskMain >= 20 và SM >= 150M
+                if (currentTaskMainId < 20 || currentPower < 150_000_000L) {
+                    return false;
+                }
+            }
         }
 
-        // 3. Kiểm tra tiến trình nhiệm vụ chính đạt mốc mở map spawn quái
-        return currentTaskMainId >= req.minTaskMain;
+        // 6. Kiểm tra khả năng tiếp cận Map thực tế
+        if (req.targetMapId != -1) {
+            // Kiểm tra map có tồn tại trên server không
+            if (MapService.gI().getMapById(req.targetMapId) == null) {
+                return false;
+            }
+            // Map Tương Lai: Cần hoàn thành task Fide (taskMain >= 23) và SM >= 150M
+            if (MapService.gI().isMapTuongLai(req.targetMapId)) {
+                if (currentTaskMainId < 23 || currentPower < 150_000_000L) {
+                    return false;
+                }
+            }
+            // Map Băng Tuyết (Cold 105 - 109): Cần taskMain >= 29 và SM >= 1.5 tỷ
+            if (req.targetMapId >= 105 && req.targetMapId <= 109) {
+                if (currentTaskMainId < 29 || currentPower < 1_500_000_000L) {
+                    return false;
+                }
+            }
+            // Map Nappa / Fide (63 - 83): Cần taskMain >= 20 và SM >= 1.5M
+            if (MapService.gI().isMapNappa(req.targetMapId)) {
+                if (currentTaskMainId < 20 || currentPower < 1_500_000L) {
+                    return false;
+                }
+            }
+            // Map Phó Bản Bang Hội: Nếu player không có bang -> không thể vào bất kỳ phó bản nào
+            if (MapService.gI().isMapPhoBan(req.targetMapId) && player.clan == null) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     public static services.TaskService gI() {
@@ -790,6 +941,7 @@ public class TaskService {
         player = getMasterIfPet(player);
         if (player != null && !player.isBoss && !player.isPet) {
             doneTask(player, ConstTask.TASK_18_1);
+            checkDoneSideTaskArena(player);
         }
     }
 
@@ -804,6 +956,18 @@ public class TaskService {
     public void checkDoneTaskKillBoss(Player player, Boss boss) {
         player = getMasterIfPet(player);
         if (player != null && !player.isBoss && !player.isPet) {
+            // Hook hoàn thành SideTask tiêu diệt Boss thế giới (ID 64)
+            checkDoneSideTaskKillBoss(player, boss);
+
+            // Hook hoàn thành SideTask phó bản (Doanh trại 62, Kho báu/Gas 63)
+            if (boss.zone != null && boss.zone.map != null) {
+                int mapId = boss.zone.map.mapId;
+                if (MapService.gI().isMapDoanhTrai(mapId)) {
+                    checkDoneSideTaskDungeon(player, 62);
+                } else if (MapService.gI().isMapBanDoKhoBau(mapId) || MapService.gI().isMapKhiGasHuyDiet(mapId)) {
+                    checkDoneSideTaskDungeon(player, 63);
+                }
+            }
             switch ((int) boss.id) {
                 case BossID.TRUNG_UY_TRANG, BossID.TRUNG_UY_THEP, BossID.TRUNG_UY_XANH_LO:
                     checkDoneTaskTrungUy(player, boss);
@@ -1466,7 +1630,11 @@ public class TaskService {
     //========================SIDE TASK========================
     public SideTaskTemplate getSideTaskTemplateById(int id) {
         if (id != -1) {
-            return Manager.SIDE_TASKS_TEMPLATE.get(id);
+            for (SideTaskTemplate t : Manager.SIDE_TASKS_TEMPLATE) {
+                if (t.id == id) {
+                    return t;
+                }
+            }
         }
         return null;
     }
@@ -1570,6 +1738,117 @@ public class TaskService {
                 + " (" + player.playerTask.sideTask.getLevel() + ")");
     }
 
+    /**
+     * Xác định cấp độ nhiệm vụ hàng ngày cao nhất mà player đủ sức mạnh VÀ đã mở map tương ứng.
+     * Sử dụng cùng ngưỡng power/taskMain.id như checkConditionSideTask() nhưng KHÔNG reject
+     * — chỉ trả về level phù hợp nhất cho player.
+     */
+    private byte determineBestLevel(long power, int taskMainId) {
+        if (power >= 1_500_000_000L && taskMainId >= 29) return ConstTask.HELL;
+        if (power >= 150_000_000   && taskMainId >= 23) return ConstTask.VERY_HARD;
+        if (power >= 15_000_000    && taskMainId >= 15) return ConstTask.HARD;
+        if (power >= 1_500_000     && taskMainId >= 10) return ConstTask.NORMAL;
+        return ConstTask.EASY;
+    }
+
+    /**
+     * Tự động gán nhiệm vụ hàng ngày phù hợp cho MỌI player (từ tân thủ tới VIP).
+     * Thuật toán:
+     *  1. Đọc power + taskMain.id → xác định level cao nhất player đủ điều kiện
+     *  2. Quét pool task từ level cao nhất xuống thấp nhất
+     *     (getSideTaskTemplatesByLevel đã gọi isSideTaskAccessible bên trong
+     *      để lọc map player đến được dựa trên planet + minTaskMain)
+     *  3. Random chọn 1 task từ pool → gán vào player.playerTask.sideTask
+     */
+    public void autoAssignSideTask(Player player) {
+        player.playerTask.sideTask.renew();
+
+        // Guard: hết lượt trong ngày
+        if (player.playerTask.sideTask.leftTask <= 0) {
+            Service.gI().sendThongBao(player, "Hôm nay bạn đã hoàn thành tối đa "
+                    + ConstTask.MAX_SIDE_TASK + "/" + ConstTask.MAX_SIDE_TASK
+                    + " nhiệm vụ rồi. Hãy quay lại vào ngày mai nhé!");
+            return;
+        }
+
+        // Guard: cooldown hủy quá 3 lần
+        if (player.playerTask.sideTask.cancelCount > 3) {
+            int remainSeconds = player.playerTask.sideTask.getRemainingCooldownSeconds();
+            if (remainSeconds > 0) {
+                int minutes = remainSeconds / 60;
+                int seconds = remainSeconds % 60;
+                String timeStr = (minutes > 0 ? minutes + " phút " : "") + seconds + " giây";
+                Service.gI().sendThongBao(player, "Bạn đã hủy nhiệm vụ quá 3 lần hôm nay! Cần chờ "
+                        + timeStr + " mới có thể nhận lại (hoặc dùng 1 Ngọc Xanh để đổi ngay).");
+                return;
+            }
+        }
+
+        // Bước 1: Tính level cao nhất phù hợp với player
+        byte bestLevel = determineBestLevel(player.nPoint.power, player.playerTask.taskMain.id);
+
+        // Bước 2: Quét pool — ưu tiên level cao nhất, fallback xuống thấp hơn nếu pool rỗng
+        List<SideTaskTemplate> pool = null;
+        byte assignedLevel = bestLevel;
+        for (byte lv = bestLevel; lv >= ConstTask.EASY; lv--) {
+            List<SideTaskTemplate> candidates = getSideTaskTemplatesByLevel(player, lv);
+            if (!candidates.isEmpty()) {
+                pool = candidates;
+                assignedLevel = lv;
+                break;
+            }
+        }
+
+        // Fallback cuối cùng: nhặt vàng (ID 58) — ai cũng làm được
+        if (pool == null || pool.isEmpty()) {
+            pool = new ArrayList<>();
+            SideTaskTemplate goldTask = getSideTaskTemplateById(58);
+            if (goldTask != null) {
+                pool.add(goldTask);
+            } else if (!Manager.SIDE_TASKS_TEMPLATE.isEmpty()) {
+                pool.add(Manager.SIDE_TASKS_TEMPLATE.get(0));
+            }
+            assignedLevel = ConstTask.EASY;
+        }
+
+        // Bước 3: Random chọn 1 task từ pool → gán cho player
+        player.playerTask.sideTask.reset();
+        SideTaskTemplate chosen = pool.get(Util.nextInt(0, pool.size() - 1));
+
+        int baseCount;
+        if (chosen.id == 59) {
+            baseCount = Util.nextInt(3, 5); // 3 - 5 hạt đậu thần
+        } else if (chosen.id == 60) {
+            baseCount = (assignedLevel >= ConstTask.VERY_HARD) ? 2 : 1; // 1 - 2 trận Võ Đài Siêu Hạng
+        } else if (chosen.id == 61) {
+            baseCount = (assignedLevel >= ConstTask.VERY_HARD) ? 2 : 1; // 1 - 2 lần Cường hóa / Ép sao
+        } else if (chosen.id == 62 || chosen.id == 63 || chosen.id == 64) {
+            baseCount = 1; // 1 lần phó bản hoặc 1 Boss thế giới
+        } else if (chosen.id == 58) {
+            baseCount = Util.nextInt(10_000, 30_000); // 10k - 30k vàng
+        } else if (assignedLevel == ConstTask.HELL) {
+            baseCount = 100; // [User feedback] Diệt 100 quái map cao
+        } else if (assignedLevel == ConstTask.VERY_HARD) {
+            baseCount = Util.nextInt(30, 50);
+        } else if (assignedLevel == ConstTask.HARD) {
+            baseCount = Util.nextInt(25, 30);
+        } else if (assignedLevel == ConstTask.NORMAL) {
+            baseCount = Util.nextInt(20, 25);
+        } else {
+            baseCount = Util.nextInt(15, 20); // EASY: 15 - 20 con
+        }
+
+        player.playerTask.sideTask.template = chosen;
+        player.playerTask.sideTask.maxCount = baseCount;
+        player.playerTask.sideTask.level = assignedLevel;
+        player.playerTask.sideTask.receivedTime = System.currentTimeMillis();
+
+        Service.gI().sendThongBao(player, "Bạn nhận được nhiệm vụ: " + player.playerTask.sideTask.getName()
+                + " (" + player.playerTask.sideTask.getLevel() + ")"
+                + "\nSố nhiệm vụ còn lại: " + player.playerTask.sideTask.leftTask
+                + "/" + ConstTask.MAX_SIDE_TASK);
+    }
+
     private List<SideTaskTemplate> getSideTaskTemplatesByLevel(Player player, byte level) {
         List<SideTaskTemplate> list = new ArrayList<>();
         List<Integer> candidateTaskIds = new ArrayList<>();
@@ -1580,6 +1859,7 @@ public class TaskService {
                     candidateTaskIds.add(i);
                 }
                 candidateTaskIds.add(58); // Nhặt vàng
+                candidateTaskIds.add(59); // Thu hoạch đậu thần tại nhà
                 break;
             }
             case ConstTask.NORMAL: {
@@ -1587,25 +1867,37 @@ public class TaskService {
                     candidateTaskIds.add(i);
                 }
                 candidateTaskIds.add(58); // Nhặt vàng
+                candidateTaskIds.add(60); // Võ đài Siêu Hạng
+                candidateTaskIds.add(61); // Cường hóa / ép sao Bà Hạt Mít
                 break;
             }
             case ConstTask.HARD: {
                 for (int i = 24; i <= 45; i++) {
                     candidateTaskIds.add(i);
                 }
-                candidateTaskIds.add(58); // Nhặt vàng
+                candidateTaskIds.add(60); // Võ đài Siêu Hạng
+                candidateTaskIds.add(61); // Cường hóa / ép sao Bà Hạt Mít
+                candidateTaskIds.add(62); // Doanh Trại Độc Nhãn
                 break;
             }
             case ConstTask.VERY_HARD: {
                 for (int i = 46; i <= 53; i++) {
                     candidateTaskIds.add(i);
                 }
+                candidateTaskIds.add(60); // Võ đài Siêu Hạng
+                candidateTaskIds.add(61); // Cường hóa / ép sao Bà Hạt Mít
+                candidateTaskIds.add(62); // Doanh Trại Độc Nhãn
+                candidateTaskIds.add(63); // Bản Đồ Kho Báu / Khí Gas
                 break;
             }
             case ConstTask.HELL: {
                 for (int i = 54; i <= 57; i++) {
                     candidateTaskIds.add(i);
                 }
+                candidateTaskIds.add(60); // Võ đài Siêu Hạng
+                candidateTaskIds.add(61); // Cường hóa / ép sao Bà Hạt Mít
+                candidateTaskIds.add(63); // Bản Đồ Kho Báu / Khí Gas
+                candidateTaskIds.add(64); // Tiêu diệt Boss Thế Giới
                 break;
             }
         }
@@ -1619,8 +1911,8 @@ public class TaskService {
             }
         }
 
-        // Đảm bảo không bao giờ rỗng: nếu không có nv nào phù hợp thì fallback về nhặt vàng hoặc quái làng
-        if (list.isEmpty()) {
+        // Đảm bảo không bao giờ rỗng: nếu ở cấp EASY mà không có nv nào phù hợp thì fallback về nhặt vàng hoặc quái làng
+        if (list.isEmpty() && level == ConstTask.EASY) {
             SideTaskTemplate goldTask = getSideTaskTemplateById(58);
             if (goldTask != null) {
                 list.add(goldTask);
@@ -1660,72 +1952,30 @@ public class TaskService {
         player.inventory.subGemAndRuby(1);
         Service.gI().sendMoney(player);
         player.playerTask.sideTask.lastTimeCancel = 0; // Xóa thời gian chờ
-        Service.gI().sendThongBao(player, "Đã xóa thời gian chờ thành công! Bạn có thể chọn nhiệm vụ mới ngay bây giờ.");
-        if (npc != null) {
-            npc.createOtherMenu(player, ConstNpc.MENU_OPTION_LEVEL_SIDE_TASK,
-                    "Chào cậu, tôi có các nhiệm vụ phân theo từng cấp bậc sức mạnh:\n"
-                    + "• Dễ: Dành cho tân thủ\n"
-                    + "• Bình thường: Yêu cầu từ 1.5M sức mạnh\n"
-                    + "• Khó: Yêu cầu từ 15M sức mạnh\n"
-                    + "• Siêu khó: Yêu cầu từ 150M sức mạnh\n"
-                    + "• Địa ngục: Yêu cầu từ 1.5 Tỷ sức mạnh\n"
-                    + "(Lưu ý: Cần mở các bản đồ tương ứng để gặp quái)",
-                    "Dễ",
-                    "Bình thường",
-                    "Khó",
-                    "Siêu khó",
-                    "Địa ngục",
-                    "Từ chối");
-        }
+        Service.gI().sendThongBao(player, "Đã xóa thời gian chờ thành công!");
+        // Auto-assign nhiệm vụ mới phù hợp với player ngay lập tức
+        autoAssignSideTask(player);
     }
 
     public void paySideTask(Player player) {
         if (player.playerTask.sideTask.template != null) {
             if (player.playerTask.sideTask.isDone()) {
-                if (InventoryService.gI().getCountEmptyBag(player) < 5) {
-                    Service.gI().sendThongBao(player, "Hành trang cần tối thiểu 5 ô trống để nhận thưởng!");
+                if (InventoryService.gI().getCountEmptyBag(player) < 8) {
+                    Service.gI().sendThongBao(player, "Hành trang cần tối thiểu 8 ô trống để nhận toàn bộ phần thưởng!");
                     return;
                 }
 
                 int level = player.playerTask.sideTask.level;
-                long tnsmReward = 0;
-                int goldReward = 0;
-                int gemReward = 0;
+                // 1. Cố định cho tất cả độ khó theo yêu cầu của User: 100k TNSM, 100k Vàng, 5 Hồng Ngọc
+                long tnsmReward = 100_000L;
+                int goldReward = 100_000;
+                int rubyReward = 5;
 
-                switch (level) {
-                    case ConstTask.EASY:
-                        tnsmReward = Util.nextInt(100_000, 300_000);
-                        goldReward = 50_000;
-                        gemReward = 2;
-                        break;
-                    case ConstTask.NORMAL:
-                        tnsmReward = Util.nextInt(1_000_000, 3_000_000);
-                        goldReward = 200_000;
-                        gemReward = 5;
-                        break;
-                    case ConstTask.HARD:
-                        tnsmReward = Util.nextInt(5_000_000, 15_000_000);
-                        goldReward = 1_000_000;
-                        gemReward = 10;
-                        break;
-                    case ConstTask.VERY_HARD:
-                        tnsmReward = Util.nextInt(25_000_000, 60_000_000);
-                        goldReward = 2_000_000;
-                        gemReward = 20;
-                        if (player.playerTask.taskdh.TaskBoMong < 10) {
-                            player.playerTask.taskdh.TaskBoMong++;
-                            player.playerTask.taskdh.ResetTime = System.currentTimeMillis();
-                        }
-                        break;
-                    case ConstTask.HELL:
-                        tnsmReward = Util.nextInt(100_000_000, 250_000_000);
-                        goldReward = 3_000_000;
-                        gemReward = 30;
-                        if (player.playerTask.taskdh.TaskBoMong < 10) {
-                            player.playerTask.taskdh.TaskBoMong++;
-                            player.playerTask.taskdh.ResetTime = System.currentTimeMillis();
-                        }
-                        break;
+                if (level == ConstTask.VERY_HARD || level == ConstTask.HELL) {
+                    if (player.playerTask.taskdh.TaskBoMong < 10) {
+                        player.playerTask.taskdh.TaskBoMong++;
+                        player.playerTask.taskdh.ResetTime = System.currentTimeMillis();
+                    }
                 }
 
                 // Trừ 1 lượt hoàn thành trong ngày
@@ -1744,24 +1994,25 @@ public class TaskService {
                     }
                 }
 
-                // Trao Ngọc xanh
-                if (gemReward > 0) {
-                    player.inventory.addGem(gemReward);
+                // Trao Hồng Ngọc (Ruby)
+                if (rubyReward > 0) {
+                    player.inventory.addRuby(rubyReward);
                 }
 
-                // Trao 100% x5 tất cả các loại đá nâng cấp (Cấp 1 - 5, ID 220 -> 224)
+                // 2. Trao vật phẩm theo Tầng: Tất cả độ khó đều nhận x5 Đá Nâng Cấp (5 loại: ID 220 -> 224)
                 for (short stoneId = 220; stoneId <= 224; stoneId++) {
                     Item stone = ItemService.gI().createNewItem(stoneId, 5);
                     InventoryService.gI().addItemBag(player, stone);
                 }
+                String tierItemRewardStr = "- x5 Đá Nâng Cấp (5 loại: Lục Bảo, Saphia, Ruby, Titan, Thạch Anh Tím)\n";
 
-                // Trao Vé quay Thượng Đế (Cày Free)
+                // 3. Trao Vé quay Thượng Đế [Theo feedback User: VIP 7 vé, Tầm trung 1-2 vé, Tân thủ 50% 1 vé]
                 int veQuayQty = switch (level) {
-                    case ConstTask.EASY -> Util.isTrue(1, 2) ? 1 : 0; // 50% ra 1 vé
+                    case ConstTask.EASY -> Util.isTrue(1, 2) ? 1 : 0;
                     case ConstTask.NORMAL -> 1;
                     case ConstTask.HARD -> 2;
-                    case ConstTask.VERY_HARD -> 3;
-                    case ConstTask.HELL -> 5;
+                    case ConstTask.VERY_HARD -> 4;
+                    case ConstTask.HELL -> 7; // [Theo feedback User: 7 vé cho VIP]
                     default -> 1;
                 };
                 if (veQuayQty > 0) {
@@ -1769,7 +2020,7 @@ public class TaskService {
                     InventoryService.gI().addItemBag(player, veQuay);
                 }
 
-                // Trao Cà chua & Cà rốt theo độ khó
+                // 4. Trao Cà chua & Cà rốt theo độ khó
                 int vegSideQty = switch (level) {
                     case ConstTask.EASY -> 2;
                     case ConstTask.NORMAL -> 3;
@@ -1783,7 +2034,7 @@ public class TaskService {
                 InventoryService.gI().addItemBag(player, caChuaSide);
                 InventoryService.gI().addItemBag(player, caRotSide);
 
-                // Trao Bùa 1h ngẫu nhiên (Trí Tuệ, Mạnh Mẽ, Da Trâu, Oai Hùng, Bất Tử, Dẻo Dai, Thu Hút)
+                // 5. Trao Bùa 1h ngẫu nhiên
                 int[] randomCharmIds = {213, 214, 215, 216, 217, 218, 219};
                 String[] randomCharmNames = {
                     "Bùa Trí Tuệ (1h)", "Bùa Mạnh Mẽ (1h)", "Bùa Da Trâu (1h)",
@@ -1801,8 +2052,8 @@ public class TaskService {
                 StringBuilder sb = new StringBuilder("Chúc mừng! Bạn nhận được:\n");
                 sb.append("- ").append(Util.powerToString(tnsmReward)).append(" Tiềm năng & Sức mạnh\n");
                 sb.append("- ").append(Util.powerToString(goldReward)).append(" Vàng\n");
-                sb.append("- ").append(gemReward).append(" Ngọc Xanh\n");
-                sb.append("- x5 Tất cả các loại đá nâng cấp (Cấp 1 - 5)\n");
+                sb.append("- ").append(rubyReward).append(" Hồng Ngọc\n");
+                sb.append(tierItemRewardStr);
                 sb.append("- ").append(vegSideQty).append(" Cà chua & ").append(vegSideQty).append(" Cà rốt\n");
                 sb.append("- ").append(charmName);
                 if (veQuayQty > 0) {
@@ -1841,6 +2092,61 @@ public class TaskService {
         if (player.playerTask != null && player.playerTask.sideTask != null && player.playerTask.sideTask.template != null && item != null && item.itemTemplate != null) {
             if ((player.playerTask.sideTask.template.id == 58 && item.itemTemplate.type == 9)) {
                 player.playerTask.sideTask.count += item.quantity;
+                notifyProcessSideTask(player);
+            }
+        }
+    }
+
+    public void checkDoneSideTaskHarvestMagicTree(Player player, int quantity) {
+        player = getMasterIfPet(player);
+        if (player != null && !player.isBoss && !player.isPet && player.playerTask != null
+                && player.playerTask.sideTask != null && player.playerTask.sideTask.template != null) {
+            if (player.playerTask.sideTask.template.id == 59) {
+                player.playerTask.sideTask.count += quantity;
+                notifyProcessSideTask(player);
+            }
+        }
+    }
+
+    public void checkDoneSideTaskArena(Player player) {
+        player = getMasterIfPet(player);
+        if (player != null && !player.isBoss && !player.isPet && player.playerTask != null
+                && player.playerTask.sideTask != null && player.playerTask.sideTask.template != null) {
+            if (player.playerTask.sideTask.template.id == 60) {
+                player.playerTask.sideTask.count++;
+                notifyProcessSideTask(player);
+            }
+        }
+    }
+
+    public void checkDoneSideTaskUpgrade(Player player) {
+        player = getMasterIfPet(player);
+        if (player != null && !player.isBoss && !player.isPet && player.playerTask != null
+                && player.playerTask.sideTask != null && player.playerTask.sideTask.template != null) {
+            if (player.playerTask.sideTask.template.id == 61) {
+                player.playerTask.sideTask.count++;
+                notifyProcessSideTask(player);
+            }
+        }
+    }
+
+    public void checkDoneSideTaskDungeon(Player player, int dungeonTaskId) {
+        player = getMasterIfPet(player);
+        if (player != null && !player.isBoss && !player.isPet && player.playerTask != null
+                && player.playerTask.sideTask != null && player.playerTask.sideTask.template != null) {
+            if (player.playerTask.sideTask.template.id == dungeonTaskId) {
+                player.playerTask.sideTask.count++;
+                notifyProcessSideTask(player);
+            }
+        }
+    }
+
+    public void checkDoneSideTaskKillBoss(Player player, Boss boss) {
+        player = getMasterIfPet(player);
+        if (player != null && !player.isBoss && !player.isPet && player.playerTask != null
+                && player.playerTask.sideTask != null && player.playerTask.sideTask.template != null) {
+            if (player.playerTask.sideTask.template.id == 64) {
+                player.playerTask.sideTask.count++;
                 notifyProcessSideTask(player);
             }
         }

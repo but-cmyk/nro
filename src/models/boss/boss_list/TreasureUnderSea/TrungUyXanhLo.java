@@ -46,25 +46,36 @@ public class TrungUyXanhLo extends Boss {
 
     @Override
     public void reward(Player plKill) {
-        int bdkbLevel = (plKill != null && plKill.clan != null && plKill.clan.BanDoKhoBau != null) ? plKill.clan.BanDoKhoBau.level : 50;
-        int goldReward = 2_000_000 + (bdkbLevel * 250_000);
         int dropY = this.zone.map.yPhysicInTop(this.location.x, this.location.y - 24);
+        long plId = (plKill != null) ? plKill.id : -1;
 
-        // 1. Cọc vàng lớn
-        ItemMap itGold = new ItemMap(this.zone, 190, goldReward, this.location.x, dropY, plKill != null ? plKill.id : -1);
-        Service.gI().dropItemMap(this.zone, itGold);
+        // 1. Bão vàng (8 - 12 cọc vàng, mỗi cọc 1.500.000 - 3.000.000 vàng, tổng ~ 15m - 30m vàng)
+        int numGoldPiles = Util.nextInt(8, 12);
+        for (int i = 0; i < numGoldPiles; i++) {
+            int goldAmount = Util.nextInt(1_500_000, 3_000_000);
+            int itemId = (i % 2 == 0) ? 190 : 76;
+            int offsetX = (i % 2 == 0) ? (i * 18) : (-i * 18);
+            ItemMap itGold = new ItemMap(this.zone, itemId, goldAmount, this.location.x + offsetX, dropY, plId);
+            Service.gI().dropItemMap(this.zone, itGold);
+        }
 
-        // 2. Ngọc Rồng ngẫu nhiên (3 - 6 sao)
-        int nrId = Util.nextInt(16, 19);
-        ItemMap itNr = new ItemMap(this.zone, nrId, 1, this.location.x + 25, dropY, plKill != null ? plKill.id : -1);
+        // 2. Rơi cố định 1 - 3 Thỏi vàng (Item 457)
+        int numGoldBars = Util.nextInt(1, 3);
+        for (int i = 0; i < numGoldBars; i++) {
+            int offsetX = (i == 0) ? 0 : (i % 2 == 0 ? (i + 1) * 22 : -(i + 1) * 22);
+            ItemMap itGoldBar = new ItemMap(this.zone, 457, 1, this.location.x + offsetX, dropY, plId);
+            Service.gI().dropItemMap(this.zone, itGoldBar);
+        }
+
+        // 3. Ngọc Rồng ngẫu nhiên (4 - 7 sao: id 17 - 20)
+        int nrId = Util.nextInt(17, 20);
+        ItemMap itNr = new ItemMap(this.zone, nrId, 1, this.location.x + 35, dropY, plId);
         Service.gI().dropItemMap(this.zone, itNr);
 
-        // 3. Sao Pha Lê ngẫu nhiên (441 - 447)
-        if (Util.isTrue(70, 100)) {
-            int splId = Util.nextInt(441, 447);
-            ItemMap itSpl = new ItemMap(this.zone, splId, 1, this.location.x - 25, dropY, plKill != null ? plKill.id : -1);
-            Service.gI().dropItemMap(this.zone, itSpl);
-        }
+        // 4. Sao Pha Lê ngẫu nhiên (441 - 447)
+        int splId = Util.nextInt(441, 447);
+        ItemMap itSpl = new ItemMap(this.zone, splId, 1, this.location.x - 35, dropY, plId);
+        Service.gI().dropItemMap(this.zone, itSpl);
     }
 
     @Override

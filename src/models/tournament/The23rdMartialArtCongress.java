@@ -5,7 +5,6 @@ import managers.tournament.The23rdMartialArtCongressManager;
 import services.tournament.The23rdMartialArtCongressService;
 import models.boss.boss_list.The23rdMartialArtCongress.TauPayPay;
 import models.boss.boss_list.The23rdMartialArtCongress.PonPut;
-import models.boss.boss_list.The23rdMartialArtCongress.Pocolo;
 import models.boss.boss_list.The23rdMartialArtCongress.LiuLiu;
 import models.boss.boss_list.The23rdMartialArtCongress.ODo;
 import models.boss.boss_list.The23rdMartialArtCongress.JackyChun;
@@ -191,9 +190,6 @@ public class The23rdMartialArtCongress {
                     bss = new LiuLiu(player);
                     break;
                 case 11:
-                    bss = new Pocolo(player);
-                    break;
-                case 12:
                     champion();
                     return;
                 default:
@@ -231,7 +227,7 @@ public class The23rdMartialArtCongress {
     }
 
     public void leave() {
-        if (player.levelWoodChest != 12) {
+        if (player.levelWoodChest != 11) {
             setTime(0);
             EffectSkillService.gI().removeStun(player);
             Service.gI().sendThongBao(player, "Thua rồi");

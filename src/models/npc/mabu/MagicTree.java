@@ -8,6 +8,7 @@ import services.Service;
 import utils.Util;
 import network.io.Message;
 import services.ItemService;
+import services.TaskService;
 import services.player.PlayerService;
 import services.player.InventoryService;
 import utils.Logger;
@@ -182,6 +183,10 @@ public class MagicTree {
                 return;
             }
             this.lastTimeHarvest = System.currentTimeMillis();
+            int harvested = currPeasTemp - this.currPeas;
+            if (harvested > 0) {
+                TaskService.gI().checkDoneSideTaskHarvestMagicTree(player, harvested);
+            }
             InventoryService.gI().sendItemBags(player);
             Message msg;
             try {

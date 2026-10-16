@@ -29,6 +29,8 @@ import data.DataGame;
 import data.ItemData;
 
 import javax.swing.SwingUtilities;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -228,9 +230,9 @@ public class ServerManager {
                         }
                         if (player.canReceiveDailyMobRuby()) {
                             if (player.idMark != null) {
-                                player.idMark.setLastTimeNotifyDailyMobRuby(0);
+                                player.idMark.setLastTimeNotifyDailyMobRuby(System.currentTimeMillis());
                             }
-                            services.Service.gI().sendThongBao(player, "Bạn sẽ nhận được 10 hồng ngọc khi tiêu diệt quái");
+                            services.Service.gI().sendThongBao(player, "Hôm nay bạn có thể nhận 30 Hồng ngọc khi tiêu diệt quái!");
                         }
                     }
                 }
@@ -244,11 +246,65 @@ public class ServerManager {
     }
 
     private void activeServerSocket() {
+        int maxRetries = 3;
+        for (int attempt = 1; attempt <= maxRetries; attempt++) {
+            try {
+                NettyServer.gI().start(PORT);
+                return;
+            } catch (Exception e) {
+                Logger.error("Lỗi khi khởi chạy Netty Server (lần " + attempt + "/" + maxRetries + "): " + e.getMessage());
+                if (attempt < maxRetries) {
+                    Logger.warning(">> Đang tự động giải phóng port " + PORT + " và thử khởi động lại sau 1.5 giây...");
+                    freePort(PORT);
+                    try {
+                        Thread.sleep(1500);
+                    } catch (InterruptedException ignored) {
+                        Thread.currentThread().interrupt();
+                    }
+                } else {
+                    Logger.error("Không thể giải phóng hoặc lắng nghe trên PORT " + PORT + ". Server buộc phải dừng!");
+                    System.exit(1);
+                }
+            }
+        }
+    }
+
+    public static void freePort(int port) {
+        String os = System.getProperty("os.name", "").toLowerCase();
         try {
-            NettyServer.gI().start(PORT);
-        } catch (Exception e) {
-            Logger.error("Lỗi khi khởi chạy Netty Server: " + e.getMessage());
-            System.exit(1);
+            long currentPid = ProcessHandle.current().pid();
+            if (os.contains("win")) {
+                ProcessBuilder pb = new ProcessBuilder("cmd.exe", "/c", "netstat -ano | findstr :" + port);
+                Process proc = pb.start();
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(proc.getInputStream()))) {
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        line = line.trim();
+                        if (line.isEmpty() || !line.toUpperCase().contains("LISTENING")) {
+                            continue;
+                        }
+                        String[] parts = line.split("\\s+");
+                        if (parts.length >= 5) {
+                            String pidStr = parts[parts.length - 1];
+                            try {
+                                long pid = Long.parseLong(pidStr);
+                                if (pid > 0 && pid != currentPid) {
+                                    Logger.warning(">> [PortRecovery] Phát hiện tiến trình PID " + pid + " đang chiếm giữ port " + port + ". Đang tiến hành giải phóng...");
+                                    new ProcessBuilder("taskkill", "/F", "/PID", String.valueOf(pid)).start().waitFor(3, TimeUnit.SECONDS);
+                                    Logger.success(">> [PortRecovery] Đã gửi lệnh giải phóng PID " + pid + " thành công!");
+                                }
+                            } catch (NumberFormatException ignored) {
+                            }
+                        }
+                    }
+                }
+                proc.waitFor(2, TimeUnit.SECONDS);
+            } else {
+                Logger.warning(">> [PortRecovery] Đang giải phóng port " + port + " trên môi trường Unix/Linux...");
+                new ProcessBuilder("sh", "-c", "fuser -k -n tcp " + port + " || lsof -ti :" + port + " | xargs kill -9").start().waitFor(3, TimeUnit.SECONDS);
+            }
+        } catch (Exception ex) {
+            Logger.error(">> [PortRecovery] Lỗi khi giải phóng port " + port + ": " + ex.getMessage());
         }
     }
 
