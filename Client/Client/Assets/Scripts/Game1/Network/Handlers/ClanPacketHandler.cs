@@ -53,6 +53,12 @@ namespace Game1
                             Char.myCharz().clan.name = msg.reader().readUTF();
                             Char.myCharz().clan.slogan = msg.reader().readUTF();
                             Char.myCharz().clan.imgID = msg.reader().readUnsignedByte();
+                            if (!ClanImage.isExistClanImage(Char.myCharz().clan.imgID))
+                            {
+                                ClanImage cm = new ClanImage();
+                                cm.ID = Char.myCharz().clan.imgID;
+                                ClanImage.addClanImage(cm);
+                            }
                             Char.myCharz().clan.powerPoint = msg.reader().readUTF();
                             Char.myCharz().clan.leaderName = msg.reader().readUTF();
                             Char.myCharz().clan.currMember = msg.reader().readUnsignedByte();
@@ -264,6 +270,12 @@ namespace Game1
                             {
                                 Char.myCharz().clan.imgID = msg.reader().readUnsignedByte();
                                 Char.myCharz().clan.slogan = msg.reader().readUTF();
+                                if (!ClanImage.isExistClanImage(Char.myCharz().clan.imgID))
+                                {
+                                    ClanImage cm = new ClanImage();
+                                    cm.ID = Char.myCharz().clan.imgID;
+                                    ClanImage.addClanImage(cm);
+                                }
                             }
                             return true;
                         }

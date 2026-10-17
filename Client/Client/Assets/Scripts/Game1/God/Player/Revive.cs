@@ -31,21 +31,11 @@ namespace Game1.God
         {
             if (canRevive && Char.myCharz().meDead)
             {
-                long now = mSystem.currentTimeMillis();
-                if (reviveCount >= maxReviveCount)
-                {
-                    canRevive = false;
-                    reviveCount = 0;
-                    GameScr.info1.addInfo("Đã ngắt Auto Hồi Sinh (" + maxReviveCount + " lần) để bảo vệ Ngọc!", 0);
-                    AutoSettingManager.getInstance().updateItemState("ahs", false);
-                    return;
-                }
-
                 if (GameCanvas.gameTick % 20 == 0)
                 {
                     Service.gI().wakeUpFromDead();
                     reviveCount++;
-                    lastReviveTime = now;
+                    lastReviveTime = mSystem.currentTimeMillis();
                 }
             }
             else if (!Char.myCharz().meDead && canRevive && reviveCount > 0)

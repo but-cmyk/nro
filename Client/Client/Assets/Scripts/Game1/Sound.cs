@@ -25,6 +25,8 @@ namespace Game1
 
         public static bool stopAll;
 
+        public static bool isIngame = false;
+
         public static AudioSource SoundWater;
 
         public static AudioSource SoundRun;
@@ -179,27 +181,48 @@ namespace Game1
 
         public static void stopAllz()
         {
-            stopRainSound();
-            for (int i = 0; i < music.Length; i++)
+            try
             {
-                stop(i);
+                stopRainSound();
+                if (music != null)
+                {
+                    for (int i = 0; i < music.Length; i++)
+                    {
+                        stop(i);
+                    }
+                }
+                if (SoundBGLoop != null)
+                {
+                    for (int j = 0; j < l1; j++)
+                    {
+                        sTopSoundBG(j);
+                    }
+                }
             }
-            for (int j = 0; j < l1; j++)
+            catch
             {
-                sTopSoundBG(j);
             }
         }
 
         public static void stopAllBg()
         {
-            stopRainSound();
-            for (int i = 0; i < music.Length; i++)
+            try
             {
-                stop(i);
+                stopRainSound();
+                if (music != null)
+                {
+                    for (int i = 0; i < music.Length; i++)
+                    {
+                        stop(i);
+                    }
+                }
+                sTopSoundBG(0);
+                sTopSoundRun();
+                stopSoundNatural(0);
             }
-            sTopSoundBG(0);
-            sTopSoundRun();
-            stopSoundNatural(0);
+            catch
+            {
+            }
         }
 
         public static void update()
@@ -221,6 +244,10 @@ namespace Game1
 
         public static void play(int id, float volume)
         {
+            if (!isIngame || GameCanvas.currentScreen != GameScr.instance)
+            {
+                return;
+            }
             if (!isNotPlay && GameCanvas.isPlaySound)
             {
                 start(volume, id);
@@ -229,6 +256,10 @@ namespace Game1
 
         public static void playSoundRun(int id, float volume)
         {
+            if (!isIngame || GameCanvas.currentScreen != GameScr.instance)
+            {
+                return;
+            }
             if (GameCanvas.isPlaySound && !(SoundRun == null))
             {
                 SoundRun.GetComponent<AudioSource>().loop = true;
@@ -240,7 +271,14 @@ namespace Game1
 
         public static void sTopSoundRun()
         {
-            SoundRun.GetComponent<AudioSource>().Stop();
+            if (SoundRun != null)
+            {
+                AudioSource src = SoundRun.GetComponent<AudioSource>();
+                if (src != null)
+                {
+                    src.Stop();
+                }
+            }
         }
 
         public static bool isPlayingSound()
@@ -254,6 +292,10 @@ namespace Game1
 
         public static void playSoundNatural(int id, float volume, bool isLoop)
         {
+            if (!isIngame || GameCanvas.currentScreen != GameScr.instance)
+            {
+                return;
+            }
             if (GameCanvas.isPlaySound && !(SoundBGLoop == null))
             {
                 SoundWater.GetComponent<AudioSource>().loop = isLoop;
@@ -279,6 +321,10 @@ namespace Game1
 
         public static void playRainSound(float volume = 0.45f)
         {
+            if (!isIngame || GameCanvas.currentScreen != GameScr.instance)
+            {
+                return;
+            }
             if (!GameCanvas.isPlaySound) return;
             if (SoundWater == null)
             {
@@ -329,6 +375,10 @@ namespace Game1
 
         public static void playSoundBGLoop(int id, float volume)
         {
+            if (!isIngame || GameCanvas.currentScreen != GameScr.instance)
+            {
+                return;
+            }
             if (GameCanvas.isPlaySound)
             {
                 if (id == SoundMn.AIR_SHIP)
@@ -500,9 +550,13 @@ namespace Game1
 
         public static void __stop(int pos)
         {
-            if (player[pos] != null)
+            if (player != null && pos >= 0 && pos < player.Length && player[pos] != null)
             {
-                player[pos].GetComponent<AudioSource>().Stop();
+                AudioSource src = player[pos].GetComponent<AudioSource>();
+                if (src != null)
+                {
+                    src.Stop();
+                }
             }
         }
     }

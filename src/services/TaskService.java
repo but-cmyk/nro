@@ -1367,22 +1367,22 @@ public class TaskService {
                 Service.gI().addSMTN(player, (byte) 2, rewardSMTN, false);
             }
 
-            // 2. Thưởng vàng hợp lý theo mốc nhiệm vụ (nhiệm vụ tân thủ 0-3 không lạm phát vàng)
+            // 2. Thưởng vàng hợp lý theo mốc nhiệm vụ (giảm đi 1 nửa theo yêu cầu)
             int goldReward = switch (taskId) {
                 case 0, 1, 2, 3 -> 0;
-                case 4, 5, 6 -> 1_000;
-                case 7 -> 5_000;
-                case 8, 10 -> 10_000;
-                case 12 -> 20_000;
-                case 14 -> 50_000;
-                case 15, 16 -> 100_000;
-                case 17 -> 200_000;
-                case 18 -> 500_000;
-                case 19 -> 1_000_000;
-                case 20 -> 5_000_000;
-                case 21, 22, 23 -> 2_000_000;
-                case 24, 25, 26, 27, 28, 29 -> 1_000_000;
-                case 31 -> 2_000_000;
+                case 4, 5, 6 -> 500;
+                case 7 -> 2_500;
+                case 8, 10 -> 5_000;
+                case 12 -> 10_000;
+                case 14 -> 25_000;
+                case 15, 16 -> 50_000;
+                case 17 -> 100_000;
+                case 18 -> 250_000;
+                case 19 -> 500_000;
+                case 20 -> 2_500_000;
+                case 21, 22, 23 -> 1_000_000;
+                case 24, 25, 26, 27, 28, 29 -> 500_000;
+                case 31 -> 1_000_000;
                 default -> 0;
             };
             if (goldReward > 0) {
@@ -1429,12 +1429,15 @@ public class TaskService {
                 }
             }
 
-            // 4. Thưởng Cà chua & Cà rốt hoàn thành nhiệm vụ chính
-            int vegQuantity = taskId <= 10 ? 2 : (taskId <= 20 ? 5 : 10);
-            Item caChua = ItemService.gI().createNewItem((short) 191, vegQuantity);
-            Item caRot = ItemService.gI().createNewItem((short) 192, vegQuantity);
-            InventoryService.gI().addItemBag(player, caChua);
-            InventoryService.gI().addItemBag(player, caRot);
+            // 4. Thưởng Cà chua & Cà rốt (giảm 1 nửa và chỉ thưởng khi chưa hoàn thành nhiệm vụ trung úy trắng: taskId <= 19)
+            int vegQuantity = 0;
+            if (taskId <= 19) {
+                vegQuantity = taskId <= 10 ? 1 : 2;
+                Item caChua = ItemService.gI().createNewItem((short) 191, vegQuantity);
+                Item caRot = ItemService.gI().createNewItem((short) 192, vegQuantity);
+                InventoryService.gI().addItemBag(player, caChua);
+                InventoryService.gI().addItemBag(player, caRot);
+            }
 
             InventoryService.gI().sendItemBags(player);
             PlayerService.gI().sendInfoHpMpMoney(player);
@@ -1450,11 +1453,13 @@ public class TaskService {
             if (rubyReward > 0) {
                 sbReward.append("- ").append(rubyReward).append(" Hồng Ngọc\n");
             }
-            sbReward.append("- ").append(vegQuantity).append(" Cà chua & ").append(vegQuantity).append(" Cà rốt");
-            if (milestoneRewardStr != null) {
-                sbReward.append("\n- ").append(milestoneRewardStr);
+            if (vegQuantity > 0) {
+                sbReward.append("- ").append(vegQuantity).append(" Cà chua & ").append(vegQuantity).append(" Cà rốt\n");
             }
-            Service.gI().sendThongBaoOK(player, sbReward.toString());
+            if (milestoneRewardStr != null) {
+                sbReward.append("- ").append(milestoneRewardStr).append("\n");
+            }
+            Service.gI().sendThongBaoOK(player, sbReward.toString().trim());
 
             Service.gI().point(player);
             PlayerAuditLogger.logAction(player, "TASK_REWARD", "Completed Task " + taskId + " -> SMTN: +" + rewardSMTN + ", Gold: +" + goldReward);

@@ -18,6 +18,10 @@ import org.json.simple.JSONValue;
 
 public class ShopDAO {
 
+    private static final int[] MASENKO_BOOK_DAMES = {115, 130, 150, 170, 190, 210, 230};
+    private static final int[] ANTOMIC_BOOK_DAMES = {125, 140, 170, 200, 230, 260, 290};
+    private static final int[] GALICK_BOOK_DAMES  = {110, 120, 130, 140, 150, 160, 170};
+
     public static List<Shop> getShops(Connection con) {
         List<Shop> list = new ArrayList<>();
         try {
@@ -102,8 +106,19 @@ public class ShopDAO {
                     JSONArray options = (JSONArray) dataObject.get("options");
                     for (int j = 0; j < options.size(); j++) {
                         JSONObject opt = (JSONObject) options.get(j);
-                        itemShop.options.add(new Item.ItemOption(Integer.parseInt(String.valueOf(opt.get("id"))),
-                                Integer.parseInt(String.valueOf(opt.get("param")))));
+                        int optId = Integer.parseInt(String.valueOf(opt.get("id")));
+                        int optParam = Integer.parseInt(String.valueOf(opt.get("param")));
+                        if (optId == 50 && itemShop.temp != null) {
+                            int tempId = itemShop.temp.id;
+                            if (tempId >= 101 && tempId <= 107) {
+                                optParam = MASENKO_BOOK_DAMES[tempId - 101];
+                            } else if (tempId >= 108 && tempId <= 114) {
+                                optParam = ANTOMIC_BOOK_DAMES[tempId - 108];
+                            } else if (tempId >= 87 && tempId <= 93) {
+                                optParam = GALICK_BOOK_DAMES[tempId - 87];
+                            }
+                        }
+                        itemShop.options.add(new Item.ItemOption(optId, optParam));
                     }
                     boolean isSell = Boolean.parseBoolean(String.valueOf(dataObject.get("is_sell")));
                     if (isSell) {

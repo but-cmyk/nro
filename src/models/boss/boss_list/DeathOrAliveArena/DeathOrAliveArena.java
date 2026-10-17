@@ -82,7 +82,7 @@ public abstract class DeathOrAliveArena extends Boss {
     public void attack() {
         try {
             if (playerAtt != null && playerAtt.location != null && playerAtt.zone != null && this.zone != null && this.zone.equals(playerAtt.zone)) {
-                if (this.isDie()) {
+                if (this.isDie() || this.nPoint == null || playerAtt.isDie() || playerAtt.nPoint == null) {
                     return;
                 }
                 hutMau();

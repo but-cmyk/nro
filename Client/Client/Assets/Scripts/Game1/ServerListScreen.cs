@@ -386,8 +386,8 @@ namespace Game1
 		int num3 = ((GameCanvas.w < 200) ? 160 : 180);
 		if (cmdDeleteRMS != null)
 		{
-			int btnW = 104;
-			int btnH = 24;
+			int btnW = 76;
+			int btnH = 22;
 			int btnX = GameCanvas.w - btnW - 6;
 			int btnY = GameCanvas.h - btnH - 6;
 			cmdDeleteRMS.x = btnX;
@@ -409,7 +409,7 @@ namespace Game1
 				g.setColor(isHover ? 0xf58e38 : 0xe67824);
 				g.fillRect(btnX + 2, btnY + 2, btnW - 4, btnH - 4, 3);
 			}
-			mFont.tahoma_7b_dark.drawString(g, mResources.xoadulieu, btnX + btnW / 2, btnY + 6, 2);
+			mFont.tahoma_7b_dark.drawString(g, mResources.xoadulieu, btnX + btnW / 2, btnY + 5, 2);
 		}
 		if (GameCanvas.currentDialog == null)
 		{
@@ -822,6 +822,8 @@ namespace Game1
     
     	public override void switchToMe()
 	{
+		Sound.isIngame = false;
+		Sound.stopAllz();
 		EffectManager.remove();
 		GameScr.loadCamera(true, -1, -1);
 		GameScr.cmx = 100;
@@ -853,6 +855,8 @@ namespace Game1
     
 	public void switchToMe2()
 	{
+		Sound.isIngame = false;
+		Sound.stopAllz();
 		GameScr.loadCamera(true, -1, -1);
 		GameScr.cmx = 100;
 		GameScr.cmy = 200;

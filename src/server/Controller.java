@@ -207,8 +207,7 @@ public class Controller implements IMessageHandler {
                                     .orElse(null);
                             if (card != null) {
                                 if (card.Level <= 0) {
-                                    Service.gI().sendThongBao(player, "Thẻ chưa đạt cấp độ để sử dụng.");
-                                    return;
+                                    card.Level = 1;
                                 }
                                 if (card.Used == 0) {
                                     // Tắt tất cả thẻ khác trước khi bật thẻ mới
@@ -478,11 +477,11 @@ public class Controller implements IMessageHandler {
                             }
                         } else if (player.zone != null && !player.isAdmin()) {
                             int distance = Util.getDistance(player.location.x, player.location.y, toX, toY);
-                            // Tốc độ di chuyển cơ bản của người chơi (mặc định tối thiểu 2)
+                            // Tốc độ di chuyển cơ bản của người chơi (mặc định tối thiểu 3)
                             int baseSpeed = (player.nPoint != null && player.nPoint.speed > 0) ? player.nPoint.speed
-                                    : 2;
-                            if (baseSpeed < 2) {
-                                baseSpeed = 2;
+                                    : 3;
+                            if (baseSpeed < 3) {
+                                baseSpeed = 3;
                             }
                             // Khoảng cách tối đa cho phép: (speed * 40 * elapsed / 1000) + 180px dung sai
                             // trễ mạng
@@ -801,6 +800,9 @@ public class Controller implements IMessageHandler {
                 case -118:
                     if (player != null) {
                         int _id = _msg.reader().readInt();
+                        if (_id <= 0) {
+                            break;
+                        }
                         int menuType = player.idMark.getMenuType();
                         if (menuType == 186 || (player.zone != null && (player.zone.map.mapId == 186 || player.zone.map.mapId == 187))) {
                             models.tournament.whis_arena.WhisArenaService.gI().competing(player, _id);

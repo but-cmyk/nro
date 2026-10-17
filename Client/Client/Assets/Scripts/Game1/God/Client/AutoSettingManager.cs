@@ -62,7 +62,7 @@ namespace Game1.God
             }));
 
             // 1. Tự động đánh
-            items.Add(new AutoSettingItem("ak", "Tự Động Đánh Quái", 0, false, 0, 0, 1, 1, (item) =>
+            items.Add(new AutoSettingItem("ak", "Tự Động Đánh", 0, false, 0, 0, 1, 1, (item) =>
             {
                 nSkill.getInstance().canAttack = item.isEnabled;
             }));
@@ -158,7 +158,7 @@ namespace Game1.God
             }));
 
             // 15. Tốc độ di chuyển (1 -> 30)
-            items.Add(new AutoSettingItem("movespeed", "Tốc Độ Chạy", 1, false, 2, 1, 30, 1, (item) =>
+            items.Add(new AutoSettingItem("movespeed", "Tốc Độ Chạy", 1, false, 3, 1, 30, 1, (item) =>
             {
                 int spd = Mathf.Clamp(item.value, item.minVal, item.maxVal);
                 ClientManager.speedRun = spd;

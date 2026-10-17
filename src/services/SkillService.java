@@ -42,6 +42,12 @@ public class SkillService {
     }
 
     public boolean useSkill(Player player, Player plTarget, Mob mobTarget, int status, Message msg) {
+        if (player == null || player.nPoint == null) {
+            return false;
+        }
+        if (plTarget != null && (plTarget.nPoint == null || plTarget.zone == null)) {
+            return false;
+        }
         if (plTarget != null && player.clan != null && plTarget.clan != null && player.clan == plTarget.clan && MapService.gI().isMapBlackBallWar(plTarget.zone.map.mapId)) {
             Service.gI().chatJustForMe(player, plTarget, "Ê cùng bang mà");
             if (player.isPl()) {
@@ -897,6 +903,9 @@ public class SkillService {
 
 
     private void hutHPMP(Player player, long dame, Player pl, Mob mob) {
+        if (player == null || player.nPoint == null) {
+            return;
+        }
         int tiLeHutHp = player.nPoint.getTileHutHp(mob != null);
         int tiLeHutMp = player.nPoint.getTiLeHutMp(mob != null);
         long hpHoi = (dame * tiLeHutHp / 100);
@@ -904,64 +913,74 @@ public class SkillService {
         if (hpHoi > 0 || mpHoi > 0) {
             int x = -1;
             int y = -1;
-            if (pl != null) {
+            if (pl != null && pl.location != null) {
                 x = pl.location.x;
                 y = pl.location.y;
-            } else if (mob != null) {
+            } else if (mob != null && mob.location != null) {
                 x = mob.location.x;
                 y = mob.location.y;
             }
-            EffectMapService.gI().sendEffectMapToAllInMap(player, 37, 3, 1, x, y, -1);
+            if (player.zone != null && x != -1 && y != -1) {
+                EffectMapService.gI().sendEffectMapToAllInMap(player, 37, 3, 1, x, y, -1);
+            }
             PlayerService.gI().hoiPhuc(player, hpHoi, mpHoi);
         }
     }
 
     public void phanSatThuong(Player plAtt, Player plTarget, long dame) {
-        if (plAtt != null) {
-            // Kiểm tra nếu là GoldFide, không áp dụng phản sát thương
-            if (plAtt instanceof GoldenFrieza) {
-                return; // Nếu là GoldFide thì không thực hiện phản sát thương
-            }
-            int percentPST = plTarget.nPoint.tlPST;
-            if (percentPST != 0) {
-                long damePST = (long) dame * percentPST / 100L;
-                Message msg = null;
-                try {
-                    msg = new Message(56);
-                    msg.writer().writeInt((int) plAtt.id);
-                    if (damePST >= plAtt.nPoint.hp) {
-                        damePST = plAtt.nPoint.hp - 1;
-                    }
-                    if (plAtt.isBoss && !(plAtt instanceof Broly || plAtt instanceof SuperBroly)) {
-                        if (damePST > plAtt.nPoint.hpMax / 100) {
-                            long giamdame = 0;
-                            long maxBound = plAtt.nPoint.hpMax / 200;
-                            if (maxBound > 1) {
-                                giamdame = Util.nextInt(NPoint.safeInt(maxBound));
-                            }
-                            damePST = plAtt.nPoint.hpMax / 100 - giamdame;
+        if (plAtt == null || plTarget == null || plAtt.nPoint == null || plTarget.nPoint == null) {
+            return;
+        }
+        // Kiểm tra nếu là GoldFide, không áp dụng phản sát thương
+        if (plAtt instanceof GoldenFrieza) {
+            return; // Nếu là GoldFide thì không thực hiện phản sát thương
+        }
+        int percentPST = plTarget.nPoint.tlPST;
+        if (percentPST != 0) {
+            long damePST = (long) dame * percentPST / 100L;
+            Message msg = null;
+            try {
+                msg = new Message(56);
+                msg.writer().writeInt((int) plAtt.id);
+                if (plAtt.nPoint != null && damePST >= plAtt.nPoint.hp) {
+                    damePST = plAtt.nPoint.hp - 1;
+                }
+                if (plAtt.isBoss && !(plAtt instanceof Broly || plAtt instanceof SuperBroly)) {
+                    if (plAtt.nPoint != null && damePST > plAtt.nPoint.hpMax / 100) {
+                        long giamdame = 0;
+                        long maxBound = plAtt.nPoint.hpMax / 200;
+                        if (maxBound > 1) {
+                            giamdame = Util.nextInt(NPoint.safeInt(maxBound));
                         }
+                        damePST = plAtt.nPoint.hpMax / 100 - giamdame;
                     }
-                    int dameInflicted = plAtt.injured(plAtt, damePST, true, false);
+                }
+                int dameInflicted = plAtt.injured(plAtt, damePST, true, false);
+                if (plAtt.nPoint != null) {
                     msg.writer().writeInt(NPoint.safeInt(plAtt.nPoint.hp));
-                    msg.writer().writeInt(dameInflicted);
-                    msg.writer().writeBoolean(false);
-                    msg.writer().writeByte(36);
-                    Service.gI().sendMessAllPlayerInMap(plAtt, msg);
-                } catch (Exception e) {
-                    Logger.logException(SkillService.class, e);
-                } finally {
-                    if (msg != null) {
-                        msg.cleanup();
-                    }
+                } else {
+                    msg.writer().writeInt(0);
+                }
+                msg.writer().writeInt(dameInflicted);
+                msg.writer().writeBoolean(false);
+                msg.writer().writeByte(36);
+                Service.gI().sendMessAllPlayerInMap(plAtt, msg);
+            } catch (Exception e) {
+                Logger.logException(SkillService.class, e);
+            } finally {
+                if (msg != null) {
+                    msg.cleanup();
                 }
             }
         }
     }
 
     private void playerAttackPlayer(Player plAtt, Player plInjure, boolean miss) {
+        if (plAtt == null || plInjure == null || plAtt.nPoint == null || plInjure.nPoint == null) {
+            return;
+        }
         // 1. Logic chuẩn bị chỉ số
-        if (plInjure.effectSkill.anTroi) {
+        if (plInjure.effectSkill != null && plInjure.effectSkill.anTroi) {
             plAtt.nPoint.isCrit100 = true;
         }
         long dameAttack = plAtt.nPoint.getDameAttack(false);
@@ -976,7 +995,7 @@ public class SkillService {
         // Biến đánh dấu đã kích hoạt PST chưa để tránh tính trùng lặp
         boolean isPSTActive = false;
 
-        if (!miss && plInjure.nPoint.tlPST > 0) {
+        if (!miss && plInjure.nPoint != null && plInjure.nPoint.tlPST > 0) {
             // A. Phản sát thương lên người đánh (plAtt) - Dựa trên dame GỐC
             // Hàm này gửi Message 56 -> Hiện dame đỏ trên đầu người đánh
             phanSatThuong(plAtt, plInjure, dameAttack);
@@ -986,11 +1005,16 @@ public class SkillService {
             // Người bị đánh có thể vẫn nhận dame hoặc né tùy vào Vô Hiệu Chưởng
         }
 
+        // Nếu plAtt hoặc plInjure đã chết/dispose sau khi phản sát thương, dừng xử lý tiếp
+        if (plAtt.nPoint == null || plInjure.nPoint == null || plAtt.isDie() || plInjure.isDie()) {
+            return;
+        }
+
         // 3. Logic Vô Hiệu Chưởng (Chạy sau PST, KHÔNG kiểm tra isPSTActive)
-        if (!miss && plAtt.playerSkill.skillSelect != null) {
+        if (!miss && plAtt.playerSkill != null && plAtt.playerSkill.skillSelect != null) {
             int skillId = plAtt.playerSkill.skillSelect.template.id;
             if (skillId == Skill.KAMEJOKO || skillId == Skill.ANTOMIC || skillId == Skill.MASENKO) {
-                if (plInjure.nPoint.voHieuChuong > 0 && Util.isTrue(plInjure.nPoint.voHieuChuong, 100)) {
+                if (plInjure.nPoint != null && plInjure.nPoint.voHieuChuong > 0 && Util.isTrue(plInjure.nPoint.voHieuChuong, 100)) {
                     miss = true;
                     dameAttack = 0;
                     // Lúc này PST đã được tính ở bước 2 dựa trên dame gốc
@@ -1003,7 +1027,7 @@ public class SkillService {
         int dameHit = plInjure.injured(plAtt, miss ? 0 : dameAttack, false, false);
 
         // 5. Notify Server (Log chat)
-        if (plAtt.playerSkill != null) {
+        if (plAtt.playerSkill != null && plAtt.playerSkill.skillSelect != null) {
             Skill skillSelect = plAtt.playerSkill.skillSelect;
             if (plAtt.isPl() && dameHit >= 1000000000) {
                 ServerNotify.gI().notify(plAtt.name + ": đã đánh 1 chiêu " + skillSelect.template.name + " với sát thương là " + Util.formatNumber(dameHit));
@@ -1012,20 +1036,22 @@ public class SkillService {
 
         // 6. Logic PST bổ sung (Khiên năng lượng hoặc các hiệu ứng khác)
         // KHÔNG chạy nếu PST chính đã kích hoạt để tránh tính 2 lần
-        if (!isPSTActive) {
+        if (!isPSTActive && plAtt.nPoint != null && plInjure.nPoint != null) {
             int damePST = plInjure.effectSkill != null && plInjure.effectSkill.isShielding && plInjure.idMark != null ? plInjure.idMark.getDamePST() : dameHit;
             phanSatThuong(plAtt, plInjure, miss ? 0 : damePST);
         }
 
         // 7. Hút HP/MP
-        hutHPMP(plAtt, dameHit, plInjure, null);
+        if (plAtt.nPoint != null) {
+            hutHPMP(plAtt, dameHit, plInjure, null);
+        }
 
         // 8. Fix lỗi Boss Yardart
         if (plInjure instanceof Yardart) {
-            if (plInjure.nPoint.hp < dameHit) {
+            if (plInjure.nPoint != null && plInjure.nPoint.hp < dameHit) {
                 dameHit = (int) Math.max(0, plInjure.nPoint.hp - 1);
                 if (dameHit == 0) return;
-            } else if (plInjure.nPoint.hp <= plInjure.nPoint.hpMax / 10) {
+            } else if (plInjure.nPoint != null && plInjure.nPoint.hp <= plInjure.nPoint.hpMax / 10) {
                 return;
             }
         }
@@ -1035,7 +1061,11 @@ public class SkillService {
         try {
             msg = new Message(-60);
             msg.writer().writeInt((int) plAtt.id);        // ID người đánh
-            msg.writer().writeByte(plAtt.playerSkill.skillSelect.skillId);
+            if (plAtt.playerSkill != null && plAtt.playerSkill.skillSelect != null) {
+                msg.writer().writeByte(plAtt.playerSkill.skillSelect.skillId);
+            } else {
+                msg.writer().writeByte(0);
+            }
             msg.writer().writeByte(1);
             msg.writer().writeInt((int) plInjure.id);     // ID người bị đánh (Target)
             msg.writer().writeByte(1);
@@ -1046,18 +1076,22 @@ public class SkillService {
             msg.writer().writeInt(dameHit);
 
             msg.writer().writeBoolean(plInjure.isDie());
-            msg.writer().writeBoolean(plAtt.nPoint.isCrit);
+            msg.writer().writeBoolean(plAtt.nPoint != null && plAtt.nPoint.isCrit);
             Service.gI().sendMessAllPlayerInMap(plAtt, msg);
 
             Service.gI().reload_HP_NV(plInjure);
 
             // Logic cộng chỉ số PVP
             if (plAtt.isPl() && plInjure.isPl() && plAtt.typePk == ConstPlayer.PK_PVP_2 && plInjure.typePk == ConstPlayer.PK_PVP_2) {
-                long tnsm = plAtt.nPoint.calSucManhTiemNang(dameHit / 10) / (Math.abs(Service.gI().getCurrLevel(plAtt) - Service.gI().getCurrLevel(plInjure)) + 1);
-                Service.gI().addSMTN(plInjure, (byte) 2, tnsm, false);
+                if (plAtt.nPoint != null) {
+                    long tnsm = plAtt.nPoint.calSucManhTiemNang(dameHit / 10) / (Math.abs(Service.gI().getCurrLevel(plAtt) - Service.gI().getCurrLevel(plInjure)) + 1);
+                    Service.gI().addSMTN(plInjure, (byte) 2, tnsm, false);
+                }
             }
-            if (plInjure.isDie() && !plAtt.isBoss && !plInjure.isBoss && MapService.gI().isMapMaBu(plInjure.zone.map.mapId)) {
-                plAtt.fightMabu.changePoint((byte) 5);
+            if (plInjure.isDie() && !plAtt.isBoss && !plInjure.isBoss && plInjure.zone != null && MapService.gI().isMapMaBu(plInjure.zone.map.mapId)) {
+                if (plAtt.fightMabu != null) {
+                    plAtt.fightMabu.changePoint((byte) 5);
+                }
             }
         } catch (Exception e) {
             Logger.logException(SkillService.class, e);

@@ -35,4 +35,16 @@ public class RadarCard {
         RequireLevel = 0;
         AuraId = -1;
     }
+
+    public int getMaxLevel() {
+        int max = 1;
+        if (Options != null) {
+            for (OptionCard opt : Options) {
+                if (opt != null && opt.active > max) {
+                    max = opt.active;
+                }
+            }
+        }
+        return max;
+    }
 }

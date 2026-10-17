@@ -40,10 +40,7 @@ public class CapsuleItemHandler implements ItemActionHandler {
         }
         if (player.zone != null && player.zone.map != null) {
             int currentMapId = player.zone.map.mapId;
-            if (MapService.gI().isMapPhoBan(currentMapId)) {
-                Service.gI().sendThongBao(player, "Không thể sử dụng phi thuyền trong phó bản!");
-                return;
-            }
+            // Cho phép dùng capsule trong tất cả phó bản (Doanh Trại, Kho Báu, Rắn Độc, Khí Gas)
             if (MapService.gI().isMapMaBu(currentMapId)) {
                 Service.gI().sendThongBao(player, "Không thể sử dụng phi thuyền tại khu vực Ma Bư!");
                 return;

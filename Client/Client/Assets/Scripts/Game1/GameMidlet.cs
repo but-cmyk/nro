@@ -50,13 +50,21 @@ namespace Game1
     		{
     			GameScr.isPaintChatVip = Rms.loadRMSInt("serverchat") == 0;
     		}
-    		if (Rms.loadRMSInt("isPlaySound") != -1)
+    		if (Rms.loadRMSInt("default_cfg_v1") == -1)
     		{
-    			GameCanvas.isPlaySound = Rms.loadRMSInt("isPlaySound") == 1;
+    			Rms.saveRMSInt("default_cfg_v1", 1);
+    			Rms.saveRMSInt("isPaintAura", 1);
+    			Rms.saveRMSInt("isPaintAura2", 1);
+    			Rms.saveRMSInt("isPlaySound", 1);
+    			Char.isPaintAura = true;
+    			Char.isPaintAura2 = true;
+    			GameCanvas.isPlaySound = true;
     		}
-    		if (GameCanvas.isPlaySound)
+    		else
     		{
-    			SoundMn.gI().loadSound(TileMap.mapID);
+    			Char.isPaintAura = (Rms.loadRMSInt("isPaintAura") != 0);
+    			Char.isPaintAura2 = (Rms.loadRMSInt("isPaintAura2") != 0);
+    			GameCanvas.isPlaySound = (Rms.loadRMSInt("isPlaySound") != 0);
     		}
     		SoundMn.gI().getStrOption();
 

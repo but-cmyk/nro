@@ -73,6 +73,7 @@ public class SmartDropService {
     };
 
     public static final long MAX_POWER_APPLY = 50_000_000L;
+    public static final long POWER_THRESHOLD_HIGH = 9_000_000L; // Mốc 9 triệu sức mạnh: chuyển sang tỉ lệ RẤT KHÓ RƠI
 
     // Fast O(1) Zero-GC lookup tables tra cứu Tier và Slot của từng ID trang bị
     private static final byte[] GEAR_TIER_LOOKUP = new byte[300];
@@ -317,6 +318,21 @@ public class SmartDropService {
             return false;
         }
 
+        // PHÂN NHÓM: Player trên 9 triệu sức mạnh -> Tỉ lệ RẤT KHÓ RƠI (không áp dụng Pity tân thủ)
+        if (player.nPoint != null && player.nPoint.power >= POWER_THRESHOLD_HIGH) {
+            // Giới hạn trong ngày: đã nhặt >= 3 món trong ngày -> tỉ lệ cực hiếm 1/10.000 (0.01%)
+            if (player.smartDropCountToday >= 3) {
+                return Util.isTrue(1, 10000);
+            }
+            // Hard Pity cho người chơi lớn: 1.000 quái trượt liên tiếp mới bảo hiểm 1 món
+            if (player.smartDropStreak >= 1000) {
+                return true;
+            }
+            // Tỉ lệ cơ bản: Rất khó rơi - 1/1.000 (0.1%)
+            return Util.isTrue(1, 1000);
+        }
+
+        // ================= NHÓM TÂN THỦ DƯỚI 9 TRIỆU SỨC MẠNH =================
         // Pha 3: Đã nhặt trên 30 món trong ngày -> Giảm về tỉ lệ nền 0.2%
         if (player.smartDropCountToday >= 30) {
             return Util.isTrue(2, 1000);

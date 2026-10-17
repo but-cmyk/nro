@@ -23,7 +23,7 @@ import services.player.PlayerService;
 
 public class TreasureUnderSea {
 
-    public static final long POWER_CAN_GO_TO_DBKB = 2000000000;
+    public static final long POWER_CAN_GO_TO_DBKB = 150_000_000L;
     public static final int AVAILABLE = 5;
     public static final int TIME_BAN_DO_KHO_BAU = 1800000;
 

@@ -25,6 +25,7 @@ nbdist/
 **/[Uu]ser[Ss]ettings/
 **/*.log
 **/*.txt
+!**/ProjectSettings/ProjectVersion.txt
 *.class
 TestConnection.class
 data/DataGame.class
@@ -36,3 +37,6 @@ __pycache__/
 **/.vs/
 tools/memory/.hook_state.json
 data/vdst_weekly.json
+SRC_NRO_219/
+tools/*.class
+clean_old_nested.bat

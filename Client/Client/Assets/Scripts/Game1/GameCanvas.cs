@@ -515,8 +515,22 @@ namespace Game1
     		Panel.graphics = Rms.loadRMSInt("lowGraphic");
     		lowGraphic = Rms.loadRMSInt("lowGraphic") == 1;
     		GameScr.isPaintChatVip = ((Rms.loadRMSInt("serverchat") != 1) ? true : false);
-    		Char.isPaintAura = Rms.loadRMSInt("isPaintAura") == 1;
-    		Char.isPaintAura2 = Rms.loadRMSInt("isPaintAura2") == 1;
+    		if (Rms.loadRMSInt("default_cfg_v1") == -1)
+    		{
+    			Rms.saveRMSInt("default_cfg_v1", 1);
+    			Rms.saveRMSInt("isPaintAura", 1);
+    			Rms.saveRMSInt("isPaintAura2", 1);
+    			Rms.saveRMSInt("isPlaySound", 1);
+    			Char.isPaintAura = true;
+    			Char.isPaintAura2 = true;
+    			isPlaySound = true;
+    		}
+    		else
+    		{
+    			Char.isPaintAura = (Rms.loadRMSInt("isPaintAura") != 0);
+    			Char.isPaintAura2 = (Rms.loadRMSInt("isPaintAura2") != 0);
+    			isPlaySound = (Rms.loadRMSInt("isPlaySound") != 0);
+    		}
     		Res.init();
     		SmallImage.loadBigImage();
     		Panel.WIDTH_PANEL = 182;
@@ -2987,10 +3001,14 @@ namespace Game1
     		if (panel != null && panel.isShow)
     		{
     			panel.init();
+    			panel.H = h;
+    			panel.hScroll = panel.H - 96;
     		}
     		if (panel2 != null && panel2.isShow)
     		{
     			panel2.init();
+    			panel2.H = h;
+    			panel2.hScroll = panel2.H - 96;
     		}
     		if (ChatTextField.gI() != null && ChatTextField.gI().isShow)
     		{

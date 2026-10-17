@@ -125,6 +125,9 @@ public class RedRibbonHQ {
 
         // Hồi sinh quái
         for (Zone zone : this.zones) {
+            zone.isbulon1Alive = true;
+            zone.isbulon2Alive = true;
+            zone.isTUTAlive = true;
             for (Mob mob : zone.mobs) {
                 mob.point.dame = (int) Math.max(100, Math.min(totalHp / 30, 2_000_000_000L));
                 mob.point.maxHp = (int) Math.max(1000, Math.min(totalDamage * 25, 2_000_000_000L));
@@ -397,6 +400,12 @@ public class RedRibbonHQ {
             }
             // remove itemmap
             for (Zone zone : zones) {
+                zone.isbulon1Alive = true;
+                zone.isbulon2Alive = true;
+                zone.isTUTAlive = true;
+                for (Mob mob : zone.mobs) {
+                    mob.hoiSinh();
+                }
                 synchronized (zone.items) {
                     for (int i = zone.items.size() - 1; i >= 0; i--) {
                         if (i < zone.items.size()) {

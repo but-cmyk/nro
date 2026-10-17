@@ -13,13 +13,13 @@ namespace Game1
     
     	private static List<Matrix4x4> stack = new List<Matrix4x4>();
     
-    	public static void initScaleGUI()
+    	public static void initScaleGUI(int forceW = -1, int forceH = -1)
     	{
-    		Cout.println("Init Scale GUI: Screen.w=" + Screen.width + " Screen.h=" + Screen.height);
-    		WIDTH = Screen.width;
-    		HEIGHT = Screen.height;
+    		WIDTH = (forceW > 0) ? forceW : Screen.width;
+    		HEIGHT = (forceH > 0) ? forceH : Screen.height;
+    		Cout.println("Init Scale GUI: Screen.w=" + WIDTH + " Screen.h=" + HEIGHT);
     		scaleScreen = false;
-    		if (Screen.width <= 1200)
+    		if (WIDTH <= 1200)
     		{
     		}
     	}

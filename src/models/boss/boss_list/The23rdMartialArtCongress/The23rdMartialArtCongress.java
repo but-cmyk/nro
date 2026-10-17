@@ -56,7 +56,10 @@ public abstract class The23rdMartialArtCongress extends Boss {
     public void attack() {
         try {
             if (playerAtt != null && playerAtt.location != null && playerAtt.zone != null && this.zone != null && this.zone.equals(playerAtt.zone)) {
-                if (this.isDie() || playerAtt.lostByDeath) {
+                if (this.isDie() || this.nPoint == null || playerAtt.lostByDeath || playerAtt.isDie() || playerAtt.nPoint == null) {
+                    return;
+                }
+                if (this.playerSkill == null || this.playerSkill.skills == null || this.playerSkill.skills.isEmpty()) {
                     return;
                 }
                 this.playerSkill.skillSelect = this.playerSkill.skills.get(Util.nextInt(0, this.playerSkill.skills.size() - 1));
@@ -100,6 +103,9 @@ public abstract class The23rdMartialArtCongress extends Boss {
             if ((this.effectSkill != null && this.effectSkill.isHaveEffectSkill()) || (this.newSkill != null && this.newSkill.isStartSkillSpecial)) {
                 return;
             }
+            if (this.isDie() || this.nPoint == null) {
+                return;
+            }
             switch (this.bossStatus) {
                 case RESPAWN:
                     this.respawn();
@@ -117,7 +123,7 @@ public abstract class The23rdMartialArtCongress extends Boss {
                     afk();
                     break;
                 case ACTIVE:
-                    if (this.playerSkill.prepareTuSat || this.playerSkill.prepareLaze || this.playerSkill.prepareQCKK) {
+                    if (this.playerSkill == null || this.playerSkill.prepareTuSat || this.playerSkill.prepareLaze || this.playerSkill.prepareQCKK) {
                         break;
                     } else {
                         this.attack();

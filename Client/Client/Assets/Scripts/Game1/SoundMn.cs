@@ -1,6 +1,7 @@
 namespace Game1
 {
     using System;
+    using UnityEngine;
     
     public class SoundMn
     {
@@ -229,16 +230,48 @@ namespace Game1
     	{
     		try
     		{
+    			if (Rms.loadRMSInt("default_cfg_v1") == -1)
+    			{
+    				Rms.saveRMSInt("default_cfg_v1", 1);
+    				Rms.saveRMSInt("isPaintAura", 1);
+    				Rms.saveRMSInt("isPaintAura2", 1);
+    				Rms.saveRMSInt("isPlaySound", 1);
+    				Char.isPaintAura = true;
+    				Char.isPaintAura2 = true;
+    				GameCanvas.isPlaySound = true;
+    			}
     			string text = "[x]   ";
     			string text2 = "[  ]   ";
     			if (Main.isPC)
     			{
-    				Panel.strCauhinh = new string[4]
+    				int savedIdx = Rms.loadRMSInt("screen_size_idx");
+    				int w = UnityEngine.Screen.width;
+    				int h = UnityEngine.Screen.height;
+    				bool isSmall = false;
+    				bool isDefault = false;
+    				bool isLarge = false;
+
+    				if (savedIdx == 1 || (savedIdx < 0 && w <= 960 && h <= 540))
     				{
-    				(!Char.isPaintAura) ? (text2 + mResources.aura_off.Trim()) : (text + mResources.aura_off.Trim()),
-    				(!Char.isPaintAura2) ? (text2 + mResources.aura_off_2.Trim()) : (text + mResources.aura_off_2.Trim()),
-    				(!GameCanvas.isPlaySound) ? (text2 + mResources.turnOffSound) : (text + mResources.turnOffSound),
-    				(mGraphics.zoomLevel <= 1) ? (text2 + mResources.x2Screen) : (text + mResources.x1Screen)
+    					isSmall = true;
+    				}
+    				else if (savedIdx == 2 || (savedIdx < 0 && w >= 1920 && h >= 1080))
+    				{
+    					isLarge = true;
+    				}
+    				else
+    				{
+    					isDefault = true;
+    				}
+
+    				Panel.strCauhinh = new string[6]
+    				{
+    					(!Char.isPaintAura) ? (text2 + mResources.aura_off.Trim()) : (text + mResources.aura_off.Trim()),
+    					(!Char.isPaintAura2) ? (text2 + mResources.aura_off_2.Trim()) : (text + mResources.aura_off_2.Trim()),
+    					(!GameCanvas.isPlaySound) ? (text2 + mResources.turnOffSound) : (text + mResources.turnOffSound),
+    					isSmall ? (text + "Màn hình nhỏ") : (text2 + "Màn hình nhỏ"),
+    					isDefault ? (text + "Màn hình mặc định") : (text2 + "Màn hình mặc định"),
+    					isLarge ? (text + "Màn hình lớn") : (text2 + "Màn hình lớn")
     				};
     				return;
     			}

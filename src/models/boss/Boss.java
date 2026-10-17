@@ -689,7 +689,7 @@ public class Boss extends Player implements IBoss {
 
     protected void notifyJoinMap() {
         if (canSendNotify()) {
-            ServerNotify.gI().notify("BOSS " + this.name + " vừa xuất hiện tại " + this.zone.map.mapName + " khu vực " + this.zone.zoneId);
+            ServerNotify.gI().notify("BOSS " + this.name + " vừa xuất hiện tại " + this.zone.map.mapName + " khu " + this.zone.zoneId);
         }
     }
 

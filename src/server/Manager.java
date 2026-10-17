@@ -55,6 +55,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 import models.task.ClanTaskTemplate;
+import services.player.ClanService;
 import utils.Util;
 
 public final class Manager {
@@ -188,9 +189,7 @@ public final class Manager {
     // Tìm đoạn khai báo các String query và thêm:
 public static final String queryTopWhis = "SELECT id, CAST(JSON_UNQUOTE(JSON_EXTRACT(data_training, '$[0]')) AS UNSIGNED) AS level FROM player ORDER BY level DESC LIMIT 100;";
 
-// Sử dụng JSON_EXTRACT để lấy id của thành viên đầu tiên trong mảng members (Bang chủ)
-    public static final String queryTopBDKB = "SELECT id, name, bdkb_level, bdkb_time, "
-            + "CAST(JSON_UNQUOTE(JSON_EXTRACT(members, '$[0].id')) AS UNSIGNED) AS leader_id "
+    public static final String queryTopBDKB = "SELECT id, name, bdkb_level, bdkb_time, members "
             + "FROM clan WHERE bdkb_level > 0 "
             + "ORDER BY bdkb_level DESC, bdkb_time ASC LIMIT 100;";
     
@@ -441,10 +440,25 @@ public static final String queryTopWhis = "SELECT id, CAST(JSON_UNQUOTE(JSON_EXT
                         top.setInfo1("Cấp độ: " + rs.getInt("level"));
                         top.setInfo2("Cấp độ luyện tập Whis");
                         break;
-                  case queryTopBDKB:
-                        // Ghi đè lại đối tượng top với ID của Bang Chủ
-                        top = TOP.builder().id_player(rs.getInt("leader_id")).build();
-                        
+                    case queryTopBDKB:
+                        int clanId = rs.getInt("id");
+                        int leaderId = -1;
+                        Clan c = ClanService.gI().getClanById(clanId);
+                        if (c != null && c.getLeader() != null) {
+                            leaderId = c.getLeader().id;
+                        } else {
+                            try {
+                                JSONArray arr = (JSONArray) JSONValue.parse(rs.getString("members"));
+                                if (arr != null && !arr.isEmpty()) {
+                                    JSONObject mObj = (JSONObject) JSONValue.parse(String.valueOf(arr.get(0)));
+                                    if (mObj != null && mObj.get("id") != null) {
+                                        leaderId = Integer.parseInt(String.valueOf(mObj.get("id")));
+                                    }
+                                }
+                            } catch (Exception ignored) {
+                            }
+                        }
+                        top = TOP.builder().id_player(leaderId).build();
                         top.setInfo1("Bang: " + rs.getString("name"));
                         top.setInfo2("Cấp: " + rs.getInt("bdkb_level") + " - Thời gian: " + utils.Util.getFormatTime(rs.getLong("bdkb_time")));
                         break;

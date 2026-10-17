@@ -5,11 +5,16 @@ import models.radar.RadarCard;
 import models.player.Player;
 import network.io.Message;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import utils.Util;
 
 public class RadarService {
 
     public List<RadarCard> RADAR_TEMPLATE = new ArrayList<>();
+    private final Map<Byte, List<RadarCard>> cardsByRank = new HashMap<>();
 
     private static RadarService instance;
 
@@ -18,6 +23,34 @@ public class RadarService {
             instance = new RadarService();
         }
         return instance;
+    }
+
+    public synchronized void initCardsByRank() {
+        cardsByRank.clear();
+        for (RadarCard r : RADAR_TEMPLATE) {
+            if (r != null) {
+                cardsByRank.computeIfAbsent(r.Rank, k -> new ArrayList<>()).add(r);
+            }
+        }
+    }
+
+    public List<RadarCard> getCardsByRank(byte rank) {
+        if (cardsByRank.isEmpty() && !RADAR_TEMPLATE.isEmpty()) {
+            initCardsByRank();
+        }
+        return cardsByRank.getOrDefault(rank, Collections.emptyList());
+    }
+
+    public RadarCard getRandomCardByRank(byte rank) {
+        List<RadarCard> list = getCardsByRank(rank);
+        if (list.isEmpty()) {
+            // Fallback nếu rank yêu cầu chưa có thẻ thì tìm bất kỳ thẻ nào có trong template
+            if (!RADAR_TEMPLATE.isEmpty()) {
+                return RADAR_TEMPLATE.get(Util.nextInt(RADAR_TEMPLATE.size()));
+            }
+            return null;
+        }
+        return list.get(Util.nextInt(list.size()));
     }
 
     public void sendRadar(Player pl, List<Card> cards) {

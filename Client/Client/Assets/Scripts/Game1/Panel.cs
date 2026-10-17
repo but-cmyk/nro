@@ -174,7 +174,7 @@ namespace Game1
             mResources.change_account
         };
     
-        public static string[] strCauhinh = new string[4]
+        public static string[] strCauhinh = new string[]
         {
             (!GameCanvas.isPlaySound) ? mResources.turnOnSound : mResources.turnOffSound,
             mResources.increase_vga,
@@ -6602,6 +6602,7 @@ namespace Game1
                 mFont.tahoma_7b_dark.drawString(g, "Cài Đặt Auto", xScroll + wScroll / 2, 59, mFont.CENTER);
                 return;
             }
+
             if (type == TYPE_OPTION)
             {
                 g.setColor(13524492);
@@ -8085,17 +8086,18 @@ namespace Game1
     
         private void doFireTop()
         {
-            if (selected >= -1)
+            if (selected >= 0 && selected < vTop.size())
             {
-                if (isThachDau)
-                {
-                    Service.gI().sendTop(topName, (sbyte)selected);
-                    return;
-                }
+                TopInfo topInfo = (TopInfo)vTop.elementAt(selected);
+                if (topInfo == null) return;
                 MyVector myVector = new MyVector(string.Empty);
-                myVector.addElement(new Command("Đóng", this, 9999, (TopInfo)vTop.elementAt(selected)));
+                if (topInfo.pId != Char.myCharz().charID)
+                {
+                    myVector.addElement(new Command("Thách đấu", this, 9998, topInfo));
+                }
+                myVector.addElement(new Command("Đóng", this, 9999, topInfo));
                 GameCanvas.menu.startAt(myVector, X, (selected + 1) * ITEM_HEIGHT - cmy + yScroll);
-                addThachDauDetail((TopInfo)vTop.elementAt(selected));
+                addThachDauDetail(topInfo);
             }
         }
     
@@ -9694,6 +9696,18 @@ namespace Game1
     
         public void perform(int idAction, object p)
         {
+            if (idAction == 9998)
+            {
+                cp = null;
+                GameCanvas.menu.doCloseMenu();
+                TopInfo topInfo = (TopInfo)p;
+                if (topInfo != null)
+                {
+                    hide();
+                    Service.gI().sendThachDau(topInfo.pId);
+                }
+                return;
+            }
             if (idAction == 9999)
             {
                 cp = null;
@@ -11038,7 +11052,9 @@ namespace Game1
                 case 3:
                     if (Main.isPC)
                     {
-                        GameCanvas.startYesNoDlg(mResources.changeSizeScreen, new Command(mResources.YES, this, 170391, null), new Command(mResources.NO, this, 4005, null));
+                        Main.setResolutionPC(960, 540, 1);
+                        SoundMn.gI().getStrOption();
+                        GameScr.info1.addInfo("Đã đổi: Màn hình nhỏ", 0);
                     }
                     else
                     {
@@ -11048,7 +11064,9 @@ namespace Game1
                 case 4:
                     if (Main.isPC)
                     {
-                        GameCanvas.startYesNoDlg(mResources.changeSizeScreen, new Command(mResources.YES, this, 170391, null), new Command(mResources.NO, this, 4005, null));
+                        Main.setResolutionPC(1280, 720, 0);
+                        SoundMn.gI().getStrOption();
+                        GameScr.info1.addInfo("Đã đổi: Màn hình mặc định", 0);
                     }
                     else
                     {
@@ -11056,7 +11074,16 @@ namespace Game1
                     }
                     break;
                 case 5:
-                    SoundMn.gI().CaseAnalog();
+                    if (Main.isPC)
+                    {
+                        Main.setResolutionPC(1920, 1080, 2);
+                        SoundMn.gI().getStrOption();
+                        GameScr.info1.addInfo("Đã đổi: Màn hình lớn", 0);
+                    }
+                    else
+                    {
+                        SoundMn.gI().CaseAnalog();
+                    }
                     break;
             }
         }

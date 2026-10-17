@@ -19,17 +19,18 @@ namespace Game1.God
 
         public string getElapsedTime()
         {
-            if (this.timeStart == null) return "00:00";
+            if (this.timeStart == null) return "0p";
             TimeSpan elapsed = DateTime.Now - this.timeStart.Value;
             if (elapsed.TotalSeconds < 0)
             {
                 elapsed = TimeSpan.Zero;
             }
+            int totalMinutes = (int)elapsed.TotalMinutes;
             if (elapsed.TotalHours >= 1)
             {
-                return string.Format("{0:D2}:{1:D2}:{2:D2}", (int)elapsed.TotalHours, elapsed.Minutes, elapsed.Seconds);
+                return string.Format("{0}h{1:D2}p", (int)elapsed.TotalHours, elapsed.Minutes);
             }
-            return string.Format("{0:D2}:{1:D2}", elapsed.Minutes, elapsed.Seconds);
+            return totalMinutes + "p";
         }
 
         public string getDisplayString()
@@ -62,7 +63,7 @@ namespace Game1.God
 
                 DateTime now = DateTime.Now;
                 string bName = array[0].Trim();
-                string bMap = array[1].Trim();
+                string bMap = array[1].Replace("khu vực", "khu").Trim();
 
                 BossData bossInfo = new BossData
                 {

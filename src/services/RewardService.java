@@ -2,6 +2,7 @@ package services;
 import consts.ConstItem;
 import models.item.Item;
 import models.player.Player;
+import models.radar.RadarCard;
 import services.func.LuckyRound;
 import services.player.InventoryService;
 import utils.Util;
@@ -756,16 +757,48 @@ public class RewardService {
         return it;
     }
 
+    public Item createRandomCardItem(byte rank, int quantity) {
+        RadarCard rd = RadarService.gI().getRandomCardByRank(rank);
+        if (rd == null) {
+            return ItemService.gI().createNewItem((short) 828, quantity);
+        }
+        return ItemService.gI().createNewItem(rd.Id, quantity);
+    }
+
     public List<Item> getListItemLuckyRound(Player player, int num, byte typeRound) {
         List<Item> list = new ArrayList<>();
+        boolean isGem = (typeRound == LuckyRound.USING_GEM);
+
+        // Ma trận ngưỡng xác suất (tổng roll: 1 - 1000)
+        // Thẻ càng VIP tỉ lệ ra càng thấp
+        int thresholdRank5 = isGem ? 10 : 5;       // Rank 5: Ngọc 1.0% | Vé 0.5%
+        int thresholdFashionJackpot = isGem ? 25 : 15; // Cực phẩm thời trang vĩnh viễn: Ngọc 1.5% | Vé 1.0%
+        int thresholdRank4 = isGem ? 55 : 30;      // Rank 4: Ngọc 3.0% | Vé 1.5%
+        int thresholdRank3 = isGem ? 105 : 65;     // Rank 3: Ngọc 5.0% | Vé 3.5%
+        int thresholdRank2 = isGem ? 185 : 125;    // Rank 2: Ngọc 8.0% | Vé 6.0%
+        int thresholdRank1 = isGem ? 305 : 225;    // Rank 1: Ngọc 12.0% | Vé 10.0%
+        int thresholdRank0 = isGem ? 465 : 375;    // Rank 0: Ngọc 16.0% | Vé 15.0%
+        int thresholdDeoLung = thresholdRank0 + 50; // Đeo lưng: 5.0%
+        int thresholdPet = thresholdDeoLung + 50;   // Pet: 5.0%
+        int thresholdCaiTrangHSD = thresholdPet + 25; // Cải trang HSD: 2.5%
+        int thresholdDaBaoVe = isGem ? (thresholdCaiTrangHSD + 60) : (thresholdCaiTrangHSD + 50); // Đá BV: 6% / 5%
+        int thresholdNgocRong = isGem ? (thresholdDaBaoVe + 130) : (thresholdDaBaoVe + 150);     // Ngọc rồng: 13% / 15%
+        int thresholdDaNangCap = isGem ? (thresholdNgocRong + 110) : (thresholdNgocRong + 150);  // Đá nâng cấp: 11% / 15%
+        int thresholdThucAn = isGem ? (thresholdDaNangCap + 70) : (thresholdDaNangCap + 100);    // Thức ăn: 7% / 10%
+        // Còn lại: 4% (Ngọc) hoặc 5% (Vé) là Capsule / Nông sản / Đậu thần
+
         for (int i = 0; i < num; i++) {
             Item it;
             switch (typeRound) {
                 case LuckyRound.USING_TICKET, LuckyRound.USING_GEM -> {
-                    // Vòng quay Thượng Đế: Quay bằng Vé (Cày Free) hoặc bằng Ngọc cho ra cùng danh mục vật phẩm chuẩn gameplay NRO
                     int roll = Util.nextInt(1, 1000);
-                    if (roll <= 10) {
-                        // 1.0% Cực Phẩm: Cải trang Siêu VIP / Đeo Lưng VIP / Pet VIP vĩnh viễn (Khóa GD)
+                    if (roll <= thresholdRank5) {
+                        // Thẻ Siêu VIP (Rank 5 - Oozaru, Oozaru SSJ, Oozaru SSJ3 có Aura)
+                        it = createRandomCardItem((byte) 5, Util.nextInt(1, 2));
+                        utils.Logger.success("[LUCKY_ROUND] Player " + player.name + " (ID: " + player.id + ") đã trúng Thẻ Siêu VIP " + it.template.name + " x" + it.quantity + "!");
+                        Service.gI().sendThongBaoAllPlayer(player.name + " vừa mở được Thẻ Siêu VIP " + it.template.name + " x" + it.quantity + " từ Vòng quay Thượng Đế!");
+                    } else if (roll <= thresholdFashionJackpot) {
+                        // Cực Phẩm Thời trang VIP vĩnh viễn (Cải trang Siêu VIP / Đeo Lưng VIP / Pet VIP vĩnh viễn)
                         int subRoll = Util.nextInt(1, 3);
                         if (subRoll == 1) {
                             it = ItemService.gI().createNewItem((short) Util.nextInt(2000, 2005));
@@ -782,22 +815,39 @@ public class RewardService {
                         }
                         utils.Logger.success("[LUCKY_ROUND] Player " + player.name + " (ID: " + player.id + ") đã trúng Jackpot " + it.template.name + " vĩnh viễn!");
                         Service.gI().sendThongBaoAllPlayer(player.name + " vừa mở được " + it.template.name + " (Vĩnh Viễn) từ Vòng quay Thượng Đế!");
-                    } else if (roll <= 60) {
-                        // 5.0% Vật phẩm Đeo Lưng Thời Trang (10% cơ hội nổ vĩnh viễn)
+                    } else if (roll <= thresholdRank4) {
+                        // Thẻ VIP (Rank 4 - Boss & Sĩ quan Red Ribbon)
+                        it = createRandomCardItem((byte) 4, Util.nextInt(1, 2));
+                        utils.Logger.success("[LUCKY_ROUND] Player " + player.name + " (ID: " + player.id + ") đã trúng Thẻ VIP " + it.template.name + " x" + it.quantity + "!");
+                        Service.gI().sendThongBaoAllPlayer(player.name + " vừa mở được Thẻ VIP " + it.template.name + " x" + it.quantity + " từ Vòng quay Thượng Đế!");
+                    } else if (roll <= thresholdRank3) {
+                        // Thẻ Hiếm (Rank 3 - Lính Red Ribbon, Sói xám)
+                        it = createRandomCardItem((byte) 3, Util.nextInt(1, 3));
+                    } else if (roll <= thresholdRank2) {
+                        // Thẻ Khá (Rank 2 - Quái bay)
+                        it = createRandomCardItem((byte) 2, Util.nextInt(2, 4));
+                    } else if (roll <= thresholdRank1) {
+                        // Thẻ Trung cấp (Rank 1 - Quái mẹ)
+                        it = createRandomCardItem((byte) 1, Util.nextInt(2, 5));
+                    } else if (roll <= thresholdRank0) {
+                        // Thẻ Sơ cấp (Rank 0 - Quái sơ cấp)
+                        it = createRandomCardItem((byte) 0, Util.nextInt(3, 5));
+                    } else if (roll <= thresholdDeoLung) {
+                        // Vật phẩm Đeo Lưng Thời Trang (10% cơ hội nổ vĩnh viễn)
                         boolean isForever = Util.isTrue(10, 100);
                         it = createLuckyDeoLung(isForever);
                         if (isForever) {
                             Service.gI().sendThongBaoAllPlayer(player.name + " vừa mở được " + it.template.name + " (Vĩnh Viễn) từ Vòng quay Thượng Đế!");
                         }
-                    } else if (roll <= 110) {
-                        // 5.0% Pet Đi Theo Thời Trang (10% cơ hội nổ vĩnh viễn)
+                    } else if (roll <= thresholdPet) {
+                        // Pet Đi Theo Thời Trang (10% cơ hội nổ vĩnh viễn)
                         boolean isForever = Util.isTrue(10, 100);
                         it = createLuckyPet(isForever);
                         if (isForever) {
                             Service.gI().sendThongBaoAllPlayer(player.name + " vừa mở được " + it.template.name + " (Vĩnh Viễn) từ Vòng quay Thượng Đế!");
                         }
-                    } else if (roll <= 135) {
-                        // 2.5% Cải trang thời trang HSD 15 ngày (467 - 471)
+                    } else if (roll <= thresholdCaiTrangHSD) {
+                        // Cải trang thời trang HSD 15 ngày (467 - 471)
                         int[] ids = {467, 468, 469, 470, 471};
                         it = ItemService.gI().createNewItem((short) ids[Util.nextInt(ids.length)]);
                         it.itemOptions.clear();
@@ -807,20 +857,20 @@ public class RewardService {
                         it.itemOptions.add(new Item.ItemOption(93, 15)); // 15 ngày
                         it.itemOptions.add(new Item.ItemOption(30, 0));
                         it.quantity = 1;
-                    } else if (roll <= 185) {
-                        // 5% Đá bảo vệ cấp 1 (ID 987) x1 viên
+                    } else if (roll <= thresholdDaBaoVe) {
+                        // Đá bảo vệ cấp 1 (ID 987) x1 viên
                         it = ItemService.gI().createNewItem((short) 987, 1);
-                    } else if (roll <= 385) {
-                        // 20% Ngọc Rồng 4 sao - 7 sao (ID 17 - 20) x1 viên
+                    } else if (roll <= thresholdNgocRong) {
+                        // Ngọc Rồng 4 sao - 7 sao (ID 17 - 20) x1 viên
                         it = ItemService.gI().createNewItem((short) Util.nextInt(17, 20), 1);
-                    } else if (roll <= 635) {
-                        // 25% Đá nâng cấp C1 - C3 (ID 220 - 222) x1-3 viên
+                    } else if (roll <= thresholdDaNangCap) {
+                        // Đá nâng cấp C1 - C3 (ID 220 - 222) x1-3 viên
                         it = ItemService.gI().createNewItem((short) Util.nextInt(220, 222), Util.nextInt(1, 3));
-                    } else if (roll <= 835) {
-                        // 20% Thức ăn bổ dưỡng (ID 663 - 667) x3-5 cái
+                    } else if (roll <= thresholdThucAn) {
+                        // Thức ăn bổ dưỡng (ID 663 - 667) x3-5 cái
                         it = ItemService.gI().createNewItem((short) Util.nextInt(663, 667), Util.nextInt(3, 5));
                     } else {
-                        // 16.5% Capsule 1 ngày, Cà chua & Cà rốt, hoặc Đậu thần cấp 10
+                        // Capsule 1 ngày, Cà chua & Cà rốt, hoặc Đậu thần cấp 10
                         int sub = Util.nextInt(1, 3);
                         if (sub == 1) {
                             it = ItemService.gI().createNewItem((short) 193, 1);

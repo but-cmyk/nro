@@ -1103,6 +1103,10 @@ namespace Game1
     
     	public GameScr()
     	{
+    		if (imgMenu == null)
+    		{
+    			loadBg();
+    		}
     		if (GameCanvas.w == 128 || GameCanvas.h <= 208)
     		{
     			indexSize = 20;
@@ -1287,6 +1291,11 @@ namespace Game1
     
     	public override void switchToMe()
     	{
+    		Sound.isIngame = true;
+    		if (GameCanvas.isPlaySound)
+    		{
+    			SoundMn.gI().loadSound(TileMap.mapID);
+    		}
     		vChatVip.removeAllElements();
     		ServerListScreen.isWait = false;
     		ServerListScreen.waitToLogin = false;
@@ -5879,14 +5888,26 @@ namespace Game1
     					int ptX = cmdMenu.x + 32 + Char.vItemTime.size() * 24;
     					int ptY = 55;
     					ClanImage cm = ClanImage.getClanImage((short)Char.myCharz().clan.imgID);
-    					if (cm != null && cm.idImage != null && cm.idImage.Length > 0)
+    					if (cm == null)
     					{
-    						SmallImage.drawSmallImage(g, cm.idImage[0], ptX, ptY, 0, 3);
+    						cm = new ClanImage();
+    						cm.ID = Char.myCharz().clan.imgID;
+    						ClanImage.addClanImage(cm);
     					}
-    					else
+    					int drawIconId = 1025;
+    					if (cm != null && cm.idImage != null && cm.idImage.Length > 0 && cm.idImage[0] > 0)
     					{
-    						SmallImage.drawSmallImage(g, 1025, ptX, ptY, 0, 3);
+    						drawIconId = cm.idImage[0];
     					}
+    					else if (ClanImage.idImages != null && ClanImage.idImages.containsKey(Char.myCharz().clan.imgID + string.Empty))
+    					{
+    						ClanImage bagImg = (ClanImage)ClanImage.idImages.get(Char.myCharz().clan.imgID + string.Empty);
+    						if (bagImg != null && bagImg.idImage != null && bagImg.idImage.Length > 0 && bagImg.idImage[0] > 0)
+    						{
+    							drawIconId = bagImg.idImage[0];
+    						}
+    					}
+    					SmallImage.drawSmallImage(g, drawIconId, ptX, ptY, 0, 3);
     					mFont.tahoma_7_green.drawString(g, "PT", ptX + 7, ptY - 6, 2, mFont.tahoma_7b_dark);
     					mFont.tahoma_7_yellow.drawString(g, "+" + percentPT + "%", ptX + 7, ptY + 15, 2, mFont.tahoma_7b_dark);
     					if (GameCanvas.isPointerJustRelease && GameCanvas.isPointerHoldIn(ptX - 4, ptY - 6, 24, 30))

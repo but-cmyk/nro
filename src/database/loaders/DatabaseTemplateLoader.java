@@ -150,6 +150,11 @@ public class DatabaseTemplateLoader {
                     clan.level = 1;
                 }
                 clan.createTime = (int) (rs.getTimestamp("create_time").getTime() / 1000);
+                try {
+                    clan.bdkb_level = rs.getInt("bdkb_level");
+                    clan.bdkb_time = rs.getLong("bdkb_time");
+                } catch (Exception ignored) {
+                }
                 dataArray = (JSONArray) JSONValue.parse(rs.getString("members"));
                 for (int i = 0; i < dataArray.size(); i++) {
                     dataObject = (JSONObject) JSONValue.parse(String.valueOf(dataArray.get(i)));
@@ -692,6 +697,7 @@ public class DatabaseTemplateLoader {
                 rd.AuraId = rs.getShort("aura_id");
                 RadarService.gI().RADAR_TEMPLATE.add(rd);
             }
+            RadarService.gI().initCardsByRank();
             Manager.logLoaded("Successfully loaded radar template (" + RadarService.gI().RADAR_TEMPLATE.size() + ")\n");
 
             // 24. Load giftcode

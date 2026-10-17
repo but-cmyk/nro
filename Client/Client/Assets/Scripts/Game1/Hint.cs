@@ -620,7 +620,7 @@ namespace Game1
     		}
     		if (t == 2)
     		{
-    			if (GameCanvas.isTouch)
+    			if (GameCanvas.isTouch && isOnTask(1, 0))
     			{
     				GameScr.startFlyText(mResources.press_twice, x, y + 10, 0, 20, mFont.MISS_ME);
     			}

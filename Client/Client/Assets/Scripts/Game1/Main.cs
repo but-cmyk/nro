@@ -3,6 +3,7 @@ namespace Game1
     using System;
     using System.Net.NetworkInformation;
     using System.Threading;
+    using System.Runtime.InteropServices;
     using UnityEngine;
     
     public class Main : MonoBehaviour
@@ -95,12 +96,122 @@ namespace Game1
 
         public static int lastScreenHeight;
 
-        public static void onScreenSizeChanged()
+        [StructLayout(LayoutKind.Sequential)]
+        private struct RECT
         {
-            ScaleGUI.initScaleGUI();
+            public int Left;
+            public int Top;
+            public int Right;
+            public int Bottom;
+        }
+
+        [DllImport("user32.dll", EntryPoint = "GetActiveWindow")]
+        private static extern IntPtr GetActiveWindow();
+
+        [DllImport("user32.dll", EntryPoint = "GetWindowRect", SetLastError = true)]
+        private static extern bool GetWindowRect(IntPtr hWnd, out RECT lpRect);
+
+        [DllImport("user32.dll", EntryPoint = "GetClientRect", SetLastError = true)]
+        private static extern bool GetClientRect(IntPtr hWnd, out RECT lpRect);
+
+        [DllImport("user32.dll", EntryPoint = "SetWindowPos", SetLastError = true)]
+        private static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int X, int Y, int cx, int cy, uint uFlags);
+
+        private static IntPtr GetGameWindowHandle()
+        {
+            IntPtr hWnd = GetActiveWindow();
+            if (hWnd != IntPtr.Zero)
+            {
+                return hWnd;
+            }
+            try
+            {
+                hWnd = System.Diagnostics.Process.GetCurrentProcess().MainWindowHandle;
+                if (hWnd != IntPtr.Zero)
+                {
+                    return hWnd;
+                }
+            }
+            catch
+            {
+            }
+            return IntPtr.Zero;
+        }
+
+        public static void setResolutionPC(int width, int height, int sizeIdx)
+        {
+            Rms.saveRMSInt("screen_width", width);
+            Rms.saveRMSInt("screen_height", height);
+            Rms.saveRMSInt("screen_size_idx", sizeIdx);
+
+            if (isPC)
+            {
+                try
+                {
+                    Screen.SetResolution(width, height, false);
+                    if (!Application.isEditor && Application.platform == RuntimePlatform.WindowsPlayer)
+                    {
+                        IntPtr hWnd = GetGameWindowHandle();
+                        if (hWnd != IntPtr.Zero)
+                        {
+                            RECT winRect;
+                            RECT clientRect;
+                            int borderW = 0;
+                            int borderH = 0;
+                            int posX = 0;
+                            int posY = 0;
+                            if (GetWindowRect(hWnd, out winRect) && GetClientRect(hWnd, out clientRect))
+                            {
+                                borderW = (winRect.Right - winRect.Left) - (clientRect.Right - clientRect.Left);
+                                borderH = (winRect.Bottom - winRect.Top) - (clientRect.Bottom - clientRect.Top);
+                                posX = winRect.Left;
+                                posY = winRect.Top;
+                            }
+                            int totalW = width + borderW;
+                            int totalH = height + borderH;
+
+                            int screenW = Display.main.systemWidth;
+                            int screenH = Display.main.systemHeight;
+                            if (screenW <= 0 || screenH <= 0)
+                            {
+                                screenW = Screen.currentResolution.width;
+                                screenH = Screen.currentResolution.height;
+                            }
+                            if (screenW > 0 && screenH > 0)
+                            {
+                                if (posX + totalW > screenW)
+                                {
+                                    posX = (screenW - totalW > 0) ? (screenW - totalW) : 0;
+                                }
+                                if (posY + totalH > screenH)
+                                {
+                                    posY = ((screenH - totalH) / 2 > 0) ? ((screenH - totalH) / 2) : 0;
+                                }
+                            }
+                            // 0x0004 = SWP_NOZORDER, 0x0040 = SWP_SHOWWINDOW
+                            SetWindowPos(hWnd, IntPtr.Zero, posX, posY, totalW, totalH, 0x0044);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogWarning("Resize window error: " + ex.Message);
+                }
+
+                lastScreenWidth = width;
+                lastScreenHeight = height;
+                onScreenSizeChanged(width, height);
+            }
+        }
+
+        public static void onScreenSizeChanged(int forceW = -1, int forceH = -1)
+        {
+            int w = (forceW > 0) ? forceW : Screen.width;
+            int h = (forceH > 0) ? forceH : Screen.height;
+            ScaleGUI.initScaleGUI(w, h);
             if (MotherCanvas.instance != null)
             {
-                MotherCanvas.instance.checkZoomLevel(Screen.width, Screen.height);
+                MotherCanvas.instance.checkZoomLevel(w, h);
                 int newW = MotherCanvas.instance.getWidthz();
                 int newH = MotherCanvas.instance.getHeightz();
                 if (GameMidlet.gameCanvas != null)
@@ -117,7 +228,6 @@ namespace Game1
             if (main != null)
             {
                 Destroy(this.gameObject);
-                SoundMn.gI().loadSound(TileMap.mapID);
                 return;
             }
             DontDestroyOnLoad(this.gameObject);
@@ -158,14 +268,23 @@ namespace Game1
             }
             if (isPC && !Application.isEditor)
             {
-                level = Rms.loadRMSInt("levelScreenKN");
-                if (level == 1)
+                int savedW = Rms.loadRMSInt("screen_width");
+                int savedH = Rms.loadRMSInt("screen_height");
+                if (savedW > 0 && savedH > 0)
                 {
-                    Screen.SetResolution(720, 320, false);
+                    Screen.SetResolution(savedW, savedH, false);
                 }
                 else
                 {
-                    Screen.SetResolution(1024, 600, false);
+                    level = Rms.loadRMSInt("levelScreenKN");
+                    if (level == 1)
+                    {
+                        Screen.SetResolution(720, 320, false);
+                    }
+                    else
+                    {
+                        Screen.SetResolution(1024, 600, false);
+                    }
                 }
             }
         }
@@ -279,7 +398,6 @@ namespace Game1
                 Panel.loadBg();
                 Menu.loadBg();
                 Key.mapKeyPC();
-                SoundMn.gI().loadSound(TileMap.mapID);
             }
         }
 

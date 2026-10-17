@@ -545,6 +545,7 @@ public class EffectSkillService {
             Service.gI().point(player);
             Service.gI().Send_Info_NV(player);
         }
+        player.lastTimeChibi = System.currentTimeMillis();
         ItemTimeService.gI().sendItemTime(player, 433, 0);
         Service.gI().sendChibi(player);
         Service.gI().sendHaveChibiFollowToAllMap(player);

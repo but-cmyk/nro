@@ -100,7 +100,7 @@ namespace Game1
     
     	public int cBonusSpeed;
     
-    	public int cspeed = 2;
+    	public int cspeed = 3;
     
     	public int ccurrentAttack;
     

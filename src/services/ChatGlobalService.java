@@ -70,14 +70,14 @@ public class ChatGlobalService implements Runnable {
 
     if (player.inventory != null && player.inventory.checkGemAndRuby(5)) {
         if (player.isAdmin() || Util.canDoWithTime(player.idMark.getLastTimeChatGlobal(), 60000)) {
-            if (player.isAdmin() || player.nPoint.power > 2000000000) {
+            if (player.isAdmin() || player.nPoint.power >= 15000000L) {
                 player.inventory.subGemAndRuby(1);
                 Service.gI().sendMoney(player);
                 player.idMark.setLastTimeChatGlobal(System.currentTimeMillis());
                 String chatText = text.length() > 100 ? text.substring(0, 100) : text;
                 waitingChat.offer(new ChatGlobal(player, chatText));
             } else {
-                Service.gI().sendThongBao(player, "Sức mạnh phải ít nhất 2 tỷ mới có thể chat thế giới");
+                Service.gI().sendThongBao(player, "Sức mạnh phải ít nhất 15 triệu mới có thể chat thế giới");
             }
         } else {
             Service.gI().sendThongBao(player, "Không thể chat thế giới lúc này, vui lòng đợi "

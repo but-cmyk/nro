@@ -168,35 +168,51 @@ public class SpecialItemHandler implements ItemActionHandler {
                 .findFirst().orElse(null);
 
         if (card == null) {
-            Card newCard = new Card(item.template.id, (byte) 1, radarTemplate.Max, (byte) -1, radarTemplate.Options);
+            Card newCard = new Card(item.template.id, (byte) 1, radarTemplate.Max, (byte) 1, radarTemplate.Options);
+            boolean hasUsed = false;
             for (Card c : pl.Cards) {
-                c.Used = 0;
+                if (c != null && c.Used == 1) {
+                    hasUsed = true;
+                    break;
+                }
             }
-            newCard.Used = 1;
+            if (!hasUsed) {
+                newCard.Used = 1;
+            } else {
+                newCard.Used = 0;
+            }
             pl.Cards.add(newCard);
             RadarService.gI().RadarSetAmount(pl, newCard.Id, newCard.Amount, newCard.MaxAmount);
             RadarService.gI().RadarSetLevel(pl, newCard.Id, newCard.Level);
+            if (newCard.Used == 1) {
+                RadarService.gI().Radar1(pl, newCard.Id, (byte) 1);
+            }
             InventoryService.gI().subQuantityItemsBag(pl, item, 1);
             InventoryService.gI().sendItemBags(pl);
+            Service.gI().point(pl);
+            RadarService.gI().sendAura(pl, pl.getAura(), 0);
+            Service.gI().sendThongBao(pl, "Đã mở khóa " + radarTemplate.Name + " trong Sổ Sưu Tầm!");
         } else {
-            if (card.Level >= 2) {
+            if (card.Level < 1) {
+                card.Level = 1;
+            }
+            int maxLevel = radarTemplate.getMaxLevel();
+            if (card.Level >= maxLevel) {
                 Service.gI().sendThongBao(pl, "Thẻ này đã đạt cấp tối đa");
-                for (Card c : pl.Cards) {
-                    c.Used = 0;
-                }
-                card.Used = 1;
-                RadarService.gI().RadarSetLevel(pl, card.Id, card.Level);
                 return;
             }
             card.Amount++;
             if (card.Amount >= card.MaxAmount) {
                 card.Amount = 0;
                 card.Level++;
+                Service.gI().sendThongBao(pl, "Thẻ " + radarTemplate.Name + " đã nâng cấp lên Lv." + card.Level + "!");
             }
             RadarService.gI().RadarSetAmount(pl, card.Id, card.Amount, card.MaxAmount);
             RadarService.gI().RadarSetLevel(pl, card.Id, card.Level);
             InventoryService.gI().subQuantityItemsBag(pl, item, 1);
             InventoryService.gI().sendItemBags(pl);
+            Service.gI().point(pl);
+            RadarService.gI().sendAura(pl, pl.getAura(), 0);
         }
     }
 

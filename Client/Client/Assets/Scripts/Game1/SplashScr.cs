@@ -44,13 +44,21 @@ namespace Game1
     			{
     				GameScr.isPaintChatVip = Rms.loadRMSInt("serverchat") == 0;
     			}
-    			if (Rms.loadRMSInt("isPlaySound") != -1)
+    			if (Rms.loadRMSInt("default_cfg_v1") == -1)
     			{
-    				GameCanvas.isPlaySound = Rms.loadRMSInt("isPlaySound") == 1;
+    				Rms.saveRMSInt("default_cfg_v1", 1);
+    				Rms.saveRMSInt("isPaintAura", 1);
+    				Rms.saveRMSInt("isPaintAura2", 1);
+    				Rms.saveRMSInt("isPlaySound", 1);
+    				Char.isPaintAura = true;
+    				Char.isPaintAura2 = true;
+    				GameCanvas.isPlaySound = true;
     			}
-    			if (GameCanvas.isPlaySound)
+    			else
     			{
-    				SoundMn.gI().loadSound(TileMap.mapID);
+    				Char.isPaintAura = (Rms.loadRMSInt("isPaintAura") != 0);
+    				Char.isPaintAura2 = (Rms.loadRMSInt("isPaintAura2") != 0);
+    				GameCanvas.isPlaySound = (Rms.loadRMSInt("isPlaySound") != 0);
     			}
     			SoundMn.gI().getStrOption();
     			if (Rms.loadRMSInt("svselect") == -1)
@@ -214,8 +222,8 @@ namespace Game1
     		// 4. Nút Xóa dữ liệu (góc dưới bên phải)
     		if (ServerListScreen.cmdDeleteRMS != null)
     		{
-    			int btnW = 96;
-    			int btnH = 24;
+    			int btnW = 76;
+    			int btnH = 22;
     			int btnX = GameCanvas.w - btnW - 6;
     			int btnY = GameCanvas.h - btnH - 6;
     			ServerListScreen.cmdDeleteRMS.x = btnX;
@@ -237,7 +245,7 @@ namespace Game1
     				g.setColor(isHover ? 0xf58e38 : 0xe67824);
     				g.fillRect(btnX + 2, btnY + 2, btnW - 4, btnH - 4, 3);
     			}
-    			mFont.tahoma_7b_dark.drawString(g, mResources.xoadulieu, btnX + btnW / 2, btnY + 6, 2);
+    			mFont.tahoma_7b_dark.drawString(g, mResources.xoadulieu, btnX + btnW / 2, btnY + 5, 2);
     		}
     	}
     

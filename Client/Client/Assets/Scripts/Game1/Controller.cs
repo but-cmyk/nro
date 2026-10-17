@@ -144,10 +144,10 @@ namespace Game1
                         break;
                     case 20:
                         phuban_Info(msg);
-                        break;
+                        return;
                     case 66:
                         readGetImgByName(msg);
-                        break;
+                        return;
                     case 65:
                         {
                             sbyte b68 = msg.reader().readSByte();
@@ -1357,7 +1357,9 @@ namespace Game1
                             ClanImage clanImage2 = ClanImage.getClanImage((short)num51);
                             if (clanImage2 == null)
                             {
-                                break;
+                                clanImage2 = new ClanImage();
+                                clanImage2.ID = num51;
+                                ClanImage.vClanImage.addElement(clanImage2);
                             }
                             clanImage2.idImage = new short[b26];
                             for (int num52 = 0; num52 < b26; num52++)
@@ -1797,7 +1799,7 @@ namespace Game1
                         GameCanvas.endDlg();
                         CreateCharScr.isCreateChar = true;
                         CreateCharScr.gI().switchToMe();
-                        break;
+                        return;
                     case -107:
                         {
                             sbyte b37 = msg.reader().readByte();
@@ -2715,7 +2717,7 @@ namespace Game1
                             {
                                 readFrameBoss(msg, num9);
                             }
-                            break;
+                            return;
                         }
                     case -69:
                         Char.myCharz().cMaxStamina = msg.reader().readShort();
@@ -3104,7 +3106,7 @@ namespace Game1
                             Char.isManualFocus = true;
                             GameScr.info1.addInfo(@char.cName + mResources.CUU_SAT, 0);
                         }
-                        break;
+                        return;
                     case 63:
                         GameCanvas.debug("SZ4", 2);
                         Char.myCharz().killCharId = msg.reader().readInt();
@@ -3113,7 +3115,7 @@ namespace Game1
                         Char.myCharz().itemFocus = null;
                         Char.myCharz().charFocus = GameScr.findCharInMap(Char.myCharz().killCharId);
                         Char.isManualFocus = true;
-                        break;
+                        return;
                     case 64:
                         GameCanvas.debug("SZ5", 2);
                         @char = Char.myCharz();
@@ -3644,7 +3646,7 @@ namespace Game1
                             short id2 = msg.reader().readShort();
                             string info2 = msg.reader().readUTF();
                             GameCanvas.panel.saleRequest(type, info2, id2);
-                            break;
+                            return;
                         }
                     case 6:
                         GameCanvas.debug("SA70", 2);
@@ -3655,7 +3657,7 @@ namespace Game1
                         Char.myCharz().luongStr = mSystem.numberTostring(Char.myCharz().luong);
                         Char.myCharz().luongKhoaStr = mSystem.numberTostring(Char.myCharz().luongKhoa);
                         GameCanvas.endDlg();
-                        break;
+                        return;
                     case -24:
                         Res.outz("***************MAP_INFO**************");
                         GameScr.isPickNgocRong = false;
@@ -6198,24 +6200,6 @@ namespace Game1
                                 if (@char.wp == -1)
                                 {
                                     @char.setDefaultWeapon();
-                                }
-                            }
-                            break;
-                        }
-                    case 11:
-                        {
-                            GameCanvas.debug("SA29", 2);
-                            Char @char = GameScr.findCharInMap(msg.reader().readInt());
-                            if (@char != null)
-                            {
-                                @char.cHP = msg.readInt3Byte();
-                                @char.cHPFull = msg.readInt3Byte();
-                                @char.eff5BuffHp = msg.reader().readShort();
-                                @char.eff5BuffMp = msg.reader().readShort();
-                                @char.body = msg.reader().readShort();
-                                if (@char.body == -1)
-                                {
-                                    @char.setDefaultBody();
                                 }
                             }
                             break;

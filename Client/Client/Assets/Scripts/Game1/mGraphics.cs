@@ -1134,12 +1134,12 @@ namespace Game1
     
     	public static int getImageWidth(Image image)
     	{
-    		return image.getWidth();
+    		return (image != null) ? image.getWidth() : 0;
     	}
     
     	public static int getImageHeight(Image image)
     	{
-    		return image.getHeight();
+    		return (image != null) ? image.getHeight() : 0;
     	}
     
     	public static bool isNotTranColor(Color color)

@@ -64,7 +64,10 @@ public abstract class SuperRank extends Boss {
     public void attack() {
         try {
             if (playerAtt != null && playerAtt.location != null && playerAtt.zone != null && this.zone != null && this.zone.equals(playerAtt.zone)) {
-                if (this.isDie() || playerAtt.lostByDeath) {
+                if (this.isDie() || this.nPoint == null || playerAtt.lostByDeath || playerAtt.isDie() || playerAtt.nPoint == null) {
+                    return;
+                }
+                if (this.playerSkill == null || this.playerSkill.skills == null || this.playerSkill.skills.isEmpty()) {
                     return;
                 }
                 this.nPoint.mp = this.nPoint.mpMax;

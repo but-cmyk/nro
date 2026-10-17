@@ -458,9 +458,9 @@ public class Player extends Character {
                     if (newPet != null) newPet.update();
                     if (satellite != null) satellite.update();
 
-                    // Logic Chibi (Trung bình 10 phút xuất hiện 1 lần: kiểm tra mỗi 60s với tỉ lệ 10%)
-                    if (this.isPl() && !this.isDie() && this.effectSkill != null && !this.effectSkill.isChibi && Util.canDoWithTime(lastTimeChibi, 60000)) {
-                        if (Util.isTrue(1, 10) && !MapService.gI().isMapBlackBallWar(this.zone.map.mapId)) {
+                    // Logic Chibi (Trung bình 30-40 phút xuất hiện 1 lần: kiểm tra mỗi 300s (5 phút) với tỉ lệ 1/6)
+                    if (this.isPl() && !this.isDie() && this.effectSkill != null && !this.effectSkill.isChibi && Util.canDoWithTime(lastTimeChibi, 300000)) {
+                        if (Util.isTrue(1, 6) && !MapService.gI().isMapBlackBallWar(this.zone.map.mapId)) {
                             EffectSkillService.gI().setChibi(this, 600000);
                         }
                         lastTimeChibi = System.currentTimeMillis();

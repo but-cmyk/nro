@@ -70,54 +70,119 @@ namespace Game1.God
         }
         public bool checkSkill(Char @char)
         {
+            if (@char == null || @char == Char.myCharz() || Char.myCharz().myskill == null)
+            {
+                return false;
+            }
+            if (@char.statusMe == 14 || @char.statusMe == 5 || @char.cHP <= 0)
+            {
+                return false;
+            }
+            if (Char.myCharz().myskill.template.type == 2 || Char.myCharz().myskill.template.type == 3)
+            {
+                return false;
+            }
+
+            // Map Đại hội võ thuật / Lôi đài
             if (TileMap.mapID == 113)
             {
-                return @char != null && Char.myCharz().myskill != null && (@char.cTypePk == 5 || @char.cTypePk == 3);
+                return @char.cTypePk == 5 || @char.cTypePk == 3;
             }
-            if (@char != null && Char.myCharz().myskill != null)
+
+            // Kiểm tra Boss: Boss thường có cTypePk == 5 hoặc theo nhận diện danh sách Boss
+            if (@char.cTypePk == 5 || ListChars.getInstance().isBoss(@char))
             {
-                if (@char.statusMe != 14 && @char.statusMe != 5 && Char.myCharz().myskill.template.type != 2)
-                {
-                    if ((Char.myCharz().cFlag != 8 || @char.cFlag == 0) && (Char.myCharz().cFlag == 0 || @char.cFlag != 8) && (Char.myCharz().cFlag == @char.cFlag || Char.myCharz().cFlag == 0 || @char.cFlag == 0) && (@char.cTypePk != 3 || Char.myCharz().cTypePk != 3) && Char.myCharz().cTypePk != 5 && @char.cTypePk != 5 && (Char.myCharz().cTypePk != 1 || @char.cTypePk != 1))
-                    {
-                        if (Char.myCharz().cTypePk != 4)
-                        {
-                            goto IL_159;
-                        }
-                        if (@char.cTypePk != 4)
-                        {
-                            goto IL_159;
-                        }
-                    }
-                    return true;
-                }
-            IL_159:
-                return Char.myCharz().myskill.template.type == 2 && @char.cTypePk != 5;
+                return true;
             }
+
+            // Kiểm tra các điều kiện PK đối kháng tiêu chuẩn
+            if (Char.myCharz().isMeCanAttackOtherPlayer(@char))
+            {
+                return true;
+            }
+
+            if (Char.myCharz().cTypePk == 5 || @char.cTypePk == 3 || @char.cTypePk == 1 || @char.cTypePk == 4)
+            {
+                return true;
+            }
+            if (Char.myCharz().cFlag != 0 && @char.cFlag != 0 && (Char.myCharz().cFlag == 8 || @char.cFlag == 8 || Char.myCharz().cFlag != @char.cFlag))
+            {
+                return true;
+            }
+
             return false;
         }
+
         public void sendAttack()
         {
-            if (!Char.myCharz().meDead && Char.myCharz().cHP > 0 && Char.myCharz().statusMe != 14 && Char.myCharz().statusMe != 5 && Char.myCharz().myskill.template.type != 3 && Char.myCharz().myskill.template.id != 10 && Char.myCharz().myskill.template.id != 11 && (!Char.myCharz().myskill.paintCanNotUseSkill || GameCanvas.panel.isShow))
+            Char myChar = Char.myCharz();
+            if (myChar == null || myChar.myskill == null)
             {
-                int num = this.getSkill();
-                if (mSystem.currentTimeMillis() - this.timeAttack[num] > this.getMana(Char.myCharz().myskill))
+                return;
+            }
+            if (myChar.meDead || myChar.cHP <= 0 || myChar.statusMe == 14 || myChar.statusMe == 5)
+            {
+                return;
+            }
+            if (myChar.myskill.template.type == 3 || myChar.myskill.template.id == 10 || myChar.myskill.template.id == 11)
+            {
+                return;
+            }
+            if (myChar.myskill.paintCanNotUseSkill && !GameCanvas.panel.isShow)
+            {
+                return;
+            }
+
+            int num = this.getSkill();
+            if (mSystem.currentTimeMillis() - this.timeAttack[num] <= this.getMana(myChar.myskill))
+            {
+                return;
+            }
+
+            // 1. Ưu tiên mục tiêu Boss / Char (người chơi đang focus)
+            Char cFocus = myChar.charFocus;
+            if (cFocus != null)
+            {
+                if (cFocus.statusMe == 14 || cFocus.statusMe == 5 || cFocus.cHP <= 0)
                 {
-                    if (GameScr.gI().isMeCanAttackMob(Char.myCharz().mobFocus) && (double)Res.abs(Char.myCharz().mobFocus.xFirst - Char.myCharz().cx) < (double)Char.myCharz().myskill.dx * 1.7)
+                    myChar.charFocus = null;
+                }
+                else if (this.checkSkill(cFocus))
+                {
+                    int reachX = System.Math.Max(80, (int)(myChar.myskill.dx * 1.7));
+                    int reachY = System.Math.Max(80, (int)(myChar.myskill.dy * 1.7));
+                    if (Res.abs(cFocus.cx - myChar.cx) <= reachX && Res.abs(cFocus.cy - myChar.cy) <= reachY)
                     {
-                        Char.myCharz().myskill.lastTimeUseThisSkill = mSystem.currentTimeMillis();
+                        myChar.myskill.lastTimeUseThisSkill = mSystem.currentTimeMillis();
+                        this.sendAttackPlayer();
+                        this.timeAttack[num] = mSystem.currentTimeMillis();
+                        return;
+                    }
+                }
+            }
+
+            // 2. Mục tiêu Mob
+            Mob mFocus = myChar.mobFocus;
+            if (mFocus != null)
+            {
+                if (mFocus.status == 0 || mFocus.status == 1 || mFocus.hp <= 0)
+                {
+                    myChar.mobFocus = null;
+                }
+                else if (GameScr.gI().isMeCanAttackMob(mFocus))
+                {
+                    int reachX = System.Math.Max(80, (int)(myChar.myskill.dx * 1.7));
+                    int reachY = System.Math.Max(80, (int)(myChar.myskill.dy * 1.7));
+                    int targetX = (mFocus.x != 0) ? mFocus.x : mFocus.xFirst;
+                    int targetY = (mFocus.y != 0) ? mFocus.y : mFocus.yFirst;
+                    if (Res.abs(targetX - myChar.cx) <= reachX && Res.abs(targetY - myChar.cy) <= reachY)
+                    {
+                        myChar.myskill.lastTimeUseThisSkill = mSystem.currentTimeMillis();
                         this.vAttack();
                         this.timeAttack[num] = mSystem.currentTimeMillis();
                         return;
                     }
-                    if (Char.myCharz().charFocus != null && this.checkSkill(Char.myCharz().charFocus) && (double)Res.abs(Char.myCharz().charFocus.cx - Char.myCharz().cx) < (double)Char.myCharz().myskill.dx * 1.7)
-                    {
-                        Char.myCharz().myskill.lastTimeUseThisSkill = mSystem.currentTimeMillis();
-                        this.sendAttackPlayer();
-                        this.timeAttack[num] = mSystem.currentTimeMillis();
-                    }
                 }
-                return;
             }
         }
         public void Update()

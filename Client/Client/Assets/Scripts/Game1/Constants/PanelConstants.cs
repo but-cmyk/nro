@@ -35,6 +35,7 @@ namespace Game1
         public const int TYPE_GAMEINFO = 23;
         public const int TYPE_GAMEINFOSUB = 24;
         public const int TYPE_SPEACIALSKILL = 25;
+        public const int TYPE_AUTO_SETTING = 28;
         #endregion
 
         #region Sub-Panel Tab Indexes

@@ -779,8 +779,12 @@ msg.writer().writeByte(plInfo.idMark != null ? plInfo.idMark.getIdSpaceShip() : 
 
             // mob
             try {
-                msg.writer().writeByte(this.mobs.size());
-                for (Mob mob : this.mobs) {
+                List<Mob> mobsCopy;
+                synchronized (this.mobs) {
+                    mobsCopy = new java.util.ArrayList<>(this.mobs);
+                }
+                msg.writer().writeByte(mobsCopy.size());
+                for (Mob mob : mobsCopy) {
                     msg.writer().writeBoolean(false); //is disable
                     msg.writer().writeBoolean(false); //is dont move
                     msg.writer().writeBoolean(false); //is fire
@@ -788,17 +792,17 @@ msg.writer().writeByte(plInfo.idMark != null ? plInfo.idMark.getIdSpaceShip() : 
                     msg.writer().writeBoolean(false); //is wind
                     msg.writer().writeByte(mob.tempId);
                     msg.writer().writeByte(0); // sys
-                    msg.writer().writeInt(mob.point.gethp());
+                    msg.writer().writeInt(mob.point != null ? mob.point.gethp() : 0);
                     msg.writer().writeByte(mob.level);
-                    msg.writer().writeInt((mob.point.getHpFull()));
+                    msg.writer().writeInt(mob.point != null ? mob.point.getHpFull() : 0);
                     msg.writer().writeShort(mob.location.x);
                     msg.writer().writeShort(mob.location.y);
                     msg.writer().writeByte(mob.status);
                     msg.writer().writeByte(mob.lvMob);
-                    msg.writer().writeBoolean(mob.tempId == ConstMob.GAU_TUONG_CUOP || mob.tempId >= ConstMob.VOI_CHIN_NGA && mob.tempId <= ConstMob.PIANO); //is bigboss
+                    msg.writer().writeBoolean(mob.tempId == ConstMob.GAU_TUONG_CUOP || (mob.tempId >= ConstMob.VOI_CHIN_NGA && mob.tempId <= ConstMob.PIANO)); //is bigboss
                 }
             } catch (Exception e) {
-                msg.writer().writeByte(0);
+                Logger.logException(Zone.class, e, "Lỗi mapInfo write mobs");
             }
 
             msg.writer().writeByte(0);
