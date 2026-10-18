@@ -1,6 +1,7 @@
 package server;
 
 import models.boss.Boss;
+import models.mob.Mob;
 import managers.boss.BossManager;
 import consts.ConstAchievement;
 import services.player.ClanService;
@@ -454,23 +455,43 @@ public class Controller implements IMessageHandler {
                         }
                         long now = System.currentTimeMillis();
                         long elapsed = now - player.location.lastTimeplayerMove;
-                        if (elapsed < 120 && !(player.itemTime != null && player.itemTime.isUseTDLT)) { // Giới hạn tần suất nhận gói move (tối đa ~8 gói/s)
-                            return;
-                        }
                         if (player.effectSkill.isHaveEffectSkill()) {
                             return;
                         }
                         int toX = player.location.x;
                         int toY = player.location.y;
+                        byte b = 0;
                         try {
-                            byte b = _msg.reader().readByte();
+                            b = _msg.reader().readByte();
                             toX = _msg.reader().readShort();
                             try {
                                 toY = _msg.reader().readShort();
                             } catch (IOException ex) {
                             }
-                        if (player.zone != null && player.itemTime != null && player.itemTime.isUseTDLT) {
-                            // Người chơi đang bật Tự Động Luyện Tập: Cho phép dịch chuyển đến quái trong phạm vi bản đồ
+                        } catch (IOException e) {
+                        }
+
+                        // Cho phép dịch chuyển nhanh đến quái trong map (TDLT hoặc Tàn Sát tiếp cận quái)
+                        boolean isNearMobInZone = false;
+                        if (player.zone != null && player.zone.mobs != null) {
+                            for (Mob mob : player.zone.mobs) {
+                                if (mob != null && mob.location != null) {
+                                    int dMob = Util.getDistance(mob.location.x, mob.location.y, toX, toY);
+                                    if (dMob <= 150) {
+                                        isNearMobInZone = true;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+
+                        // Giới hạn tần suất nhận gói move (tối đa ~12 gói/s, tương thích 60fps; không áp dụng khi TDLT hoặc tiếp cận quái)
+                        if (elapsed < 80 && !(player.itemTime != null && player.itemTime.isUseTDLT) && !isNearMobInZone) {
+                            return;
+                        }
+
+                        if (player.zone != null && ((player.itemTime != null && player.itemTime.isUseTDLT) || isNearMobInZone)) {
+                            // Người chơi đang bật Tự Động Luyện Tập hoặc Tàn Sát đến quái: Cho phép dịch chuyển đến quái trong phạm vi bản đồ
                             if (toX < 24 || toX > player.zone.map.mapWidth - 24 || toY < 0 || toY > player.zone.map.mapHeight) {
                                 Service.gI().resetPoint(player, player.location.x, player.location.y);
                                 return;
@@ -478,24 +499,21 @@ public class Controller implements IMessageHandler {
                         } else if (player.zone != null && !player.isAdmin()) {
                             int distance = Util.getDistance(player.location.x, player.location.y, toX, toY);
                             // Tốc độ di chuyển cơ bản của người chơi (mặc định tối thiểu 3)
-                            int baseSpeed = (player.nPoint != null && player.nPoint.speed > 0) ? player.nPoint.speed
-                                    : 3;
+                            int baseSpeed = (player.nPoint != null && player.nPoint.speed > 0) ? player.nPoint.speed : 3;
                             if (baseSpeed < 3) {
                                 baseSpeed = 3;
                             }
-                            // Khoảng cách tối đa cho phép: (speed * 40 * elapsed / 1000) + 180px dung sai
-                            // trễ mạng
-                            int maxAllowedDist = (int) ((baseSpeed * 40L * elapsed) / 1000L) + 180;
-                            if (distance > maxAllowedDist || distance > 300) {
-                                // Phát hiện dịch chuyển tức thời hoặc hack tốc độ -> Rollback vị trí
+                            // Khoảng cách tối đa cho phép: (speed * 60 * max(elapsed, 150) / 1000) + 250px dung sai trễ mạng/nhảy vực
+                            int maxAllowedDist = (int) ((baseSpeed * 60L * Math.max(elapsed, 150L)) / 1000L) + 250;
+                            if (distance > maxAllowedDist || distance > 500) {
+                                // Phát hiện dịch chuyển tức thời hoặc hack tốc độ -> Rollback vị trí và ghi nhận audit log
+                                PlayerAuditLogger.logAction(player, "ANTI_SPEED", String.format("Rollback pos=(%d,%d) to=(%d,%d) dist=%d maxDist=%d elapsed=%d", player.location.x, player.location.y, toX, toY, distance, maxAllowedDist, elapsed));
                                 Service.gI().resetPoint(player, player.location.x, player.location.y);
                                 return;
                             }
                         }
-                            if (b == 1) {
-                                AchievementService.gI().checkDoneTaskFly(player, player.location.x - toX);
-                            }
-                        } catch (IOException e) {
+                        if (b == 1) {
+                            AchievementService.gI().checkDoneTaskFly(player, player.location.x - toX);
                         }
                         player.location.lastTimeplayerMove = now;
                         PlayerService.gI().playerMove(player, toX, toY);

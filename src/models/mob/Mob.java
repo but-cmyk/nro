@@ -952,7 +952,7 @@ public class Mob {
         }
 
 
-        //========================CÀ CHUA, CÀ RỐT & CHUỐI========================
+        //========================CHUỐI (ĐÃ TẮT RƠI CÀ CHUA & CÀ RỐT)========================
         Player plOwner = player.isPet ? ((Pet) player).master : player;
         if (plOwner != null && plOwner.nPoint != null) {
             boolean isOver1B5 = plOwner.nPoint.power > 1_500_000_000L;
@@ -964,19 +964,9 @@ public class Mob {
 
             boolean isDrop = isOver1B5 ? Util.isTrue(1, 1000) : Util.isTrue(1, 100); // 0.1% nếu > 1.5 tỷ, 1% nếu <= 1.5 tỷ
             if (isDrop) {
-                int[] vegDrops = {191, 192, ConstItem.CHUOI};
-                int itemDropId = vegDrops[Util.nextInt(0, vegDrops.length - 1)];
-                ItemMap it = new ItemMap(zone, itemDropId, 1, x, yEnd, plOwner.id);
-                if (itemDropId == 191) {
-                    it.options.add(new Item.ItemOption(104, 50));
-                    it.options.add(new Item.ItemOption(30, 0));
-                } else if (itemDropId == 192) {
-                    it.options.add(new Item.ItemOption(96, 50));
-                    it.options.add(new Item.ItemOption(30, 0));
-                } else if (itemDropId == ConstItem.CHUOI) {
-                    it.options.add(new Item.ItemOption(83, 20));
-                    it.options.add(new Item.ItemOption(30, 0));
-                }
+                ItemMap it = new ItemMap(zone, ConstItem.CHUOI, 1, x, yEnd, plOwner.id);
+                it.options.add(new Item.ItemOption(83, 20));
+                it.options.add(new Item.ItemOption(30, 0));
                 list.add(it);
             }
         }

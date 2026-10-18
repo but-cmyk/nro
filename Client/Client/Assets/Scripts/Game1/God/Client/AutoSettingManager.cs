@@ -31,11 +31,45 @@ namespace Game1.God
         }
     }
 
+    public class MobTanSatEntry
+    {
+        public int templateId;
+        public string name;
+        public int hp;
+        public int count;
+        public bool isAll;
+        public string infoStr;
+
+        public MobTanSatEntry(int templateId, string name, int hp, int count, bool isAll)
+        {
+            this.templateId = templateId;
+            this.name = name;
+            this.hp = hp;
+            this.count = count;
+            this.isAll = isAll;
+            if (isAll)
+            {
+                this.infoStr = "(Đánh mọi loại quái trong map)";
+            }
+            else if (templateId == -2)
+            {
+                this.infoStr = string.Empty;
+            }
+            else
+            {
+                this.infoStr = "HP: " + Res.formatNumber2(hp) + " | SL: " + count;
+            }
+        }
+    }
+
     public class AutoSettingManager
     {
         private static AutoSettingManager instance;
         public List<AutoSettingItem> items = new List<AutoSettingItem>();
+        public List<MobTanSatEntry> mobEntries = new List<MobTanSatEntry>();
         public int lastLoadedCharId = -1;
+        public int lastMobListSize = -1;
+        public int lastMobMapId = -1;
 
         public static AutoSettingManager getInstance()
         {
@@ -77,6 +111,16 @@ namespace Game1.God
             items.Add(new AutoSettingItem("nesieuquai", "Né Siêu Quái Khi TS", 0, true, 0, 0, 1, 1, (item) =>
             {
                 Mobs.neSieuQuai = item.isEnabled;
+            }));
+
+            // 4. Chọn quái tàn sát
+            items.Add(new AutoSettingItem("ts_mobs", "-> Chọn Quái Tàn Sát...", 2, false, 0, 0, 0, 0, (item) =>
+            {
+                if (GameCanvas.panel != null && GameCanvas.panel.type == 28)
+                {
+                    GameCanvas.panel.currentTabIndex = 1;
+                    setTabMobTanSat(GameCanvas.panel);
+                }
             }));
 
             // 4. Tự động nhặt đồ
@@ -248,6 +292,7 @@ namespace Game1.God
                 for (int i = 0; i < items.Count; i++)
                 {
                     AutoSettingItem it = items[i];
+                    if (it.typeControl == 2) continue;
                     sb.Append(it.key).Append(":");
                     if (it.typeControl == 0)
                     {
@@ -430,6 +475,12 @@ namespace Game1.God
                         g.fillRect(x + num2 - 24, num + 3, 20, h - 6);
                         mFont.tahoma_7b_dark.drawString(g, ">", x + num2 - 14, num + 6, mFont.CENTER);
                     }
+                    else if (it.typeControl == 2) // BUTTON / ACTION
+                    {
+                        g.setColor(4348574);
+                        g.fillRect(x + num2 - 56, num + 3, 48, h - 6);
+                        mFont.tahoma_7b_white.drawString(g, "MỞ >", x + num2 - 32, num + 6, mFont.CENTER);
+                    }
                 }
             }
 
@@ -466,6 +517,10 @@ namespace Game1.God
                 string valStr = GetItemValueString(it);
                 GameScr.info1.addInfo(it.name + ": " + valStr, 0);
             }
+            else if (it.typeControl == 2) // BUTTON / ACTION
+            {
+                it.onApply?.Invoke(it);
+            }
 
             if (Char.myCharz() != null)
             {
@@ -489,6 +544,227 @@ namespace Game1.God
                 {
                     Save(Char.myCharz().charID);
                 }
+            }
+        }
+
+        public void UpdateCurrentMapMobs()
+        {
+            mobEntries.Clear();
+
+            // Entry 0: Tàn Sát Tất Cả
+            mobEntries.Add(new MobTanSatEntry(-1, "Tàn Sát Tất Cả Quái", 0, 0, true));
+
+            bool hasAnyMobInMap = false;
+            if (GameScr.vMob != null && GameScr.vMob.size() > 0)
+            {
+                Dictionary<int, MobTanSatEntry> dict = new Dictionary<int, MobTanSatEntry>();
+                for (int i = 0; i < GameScr.vMob.size(); i++)
+                {
+                    Mob mob = (Mob)GameScr.vMob.elementAt(i);
+                    if (mob == null || mob.isMobMe) continue;
+
+                    int tid = mob.templateId;
+                    if (!dict.ContainsKey(tid))
+                    {
+                        string mobName = "Quái #" + tid;
+                        int maxHp = mob.maxHp;
+                        MobTemplate t = mob.getTemplate();
+                        if (t != null)
+                        {
+                            if (!string.IsNullOrEmpty(t.name)) mobName = t.name;
+                            if (t.hp > 0) maxHp = t.hp;
+                        }
+                        dict[tid] = new MobTanSatEntry(tid, mobName, maxHp, 1, false);
+                    }
+                    else
+                    {
+                        dict[tid].count++;
+                        dict[tid].infoStr = "HP: " + Res.formatNumber2(dict[tid].hp) + " | SL: " + dict[tid].count;
+                    }
+                }
+
+                foreach (var kv in dict)
+                {
+                    mobEntries.Add(kv.Value);
+                    hasAnyMobInMap = true;
+                }
+            }
+
+            if (!hasAnyMobInMap)
+            {
+                mobEntries.Add(new MobTanSatEntry(-2, "(Map hiện tại không có quái)", 0, 0, false));
+            }
+
+            // Kiểm tra tính hợp lệ của Mobs.TypeMobsTanSat với map hiện tại
+            if (Mobs.TypeMobsTanSat != null && Mobs.TypeMobsTanSat.Count > 0)
+            {
+                bool anyMatched = false;
+                for (int i = 0; i < mobEntries.Count; i++)
+                {
+                    if (mobEntries[i].templateId >= 0 && Mobs.TypeMobsTanSat.Contains(mobEntries[i].templateId))
+                    {
+                        anyMatched = true;
+                        break;
+                    }
+                }
+                // Nếu không có bất kỳ quái nào trong danh sách chọn tồn tại trong map mới -> trở về tàn sát tất cả
+                if (!anyMatched && hasAnyMobInMap)
+                {
+                    Mobs.TypeMobsTanSat.Clear();
+                }
+            }
+        }
+
+        public void setTabMobTanSat(Panel panel)
+        {
+            UpdateCurrentMapMobs();
+            lastMobListSize = (GameScr.vMob != null) ? GameScr.vMob.size() : 0;
+            lastMobMapId = TileMap.mapID;
+            panel.currentListLength = mobEntries.Count;
+            panel.ITEM_HEIGHT = 28;
+            panel.selected = (GameCanvas.isTouch ? (-1) : 0);
+            panel.cmyLim = panel.currentListLength * panel.ITEM_HEIGHT - panel.hScroll;
+            if (panel.cmyLim < 0)
+            {
+                panel.cmyLim = 0;
+            }
+            panel.cmy = (panel.cmtoY = 0);
+        }
+
+        public void paintMobTanSat(mGraphics g, Panel panel)
+        {
+            g.setClip(panel.xScroll, panel.yScroll, panel.wScroll, panel.hScroll);
+            g.translate(0, -panel.cmy);
+
+            for (int i = 0; i < mobEntries.Count; i++)
+            {
+                int x = panel.xScroll;
+                int num = panel.yScroll + i * panel.ITEM_HEIGHT;
+                int num2 = panel.wScroll - 1;
+                int h = panel.ITEM_HEIGHT - 1;
+
+                // Viewport culling
+                if (num - panel.cmy <= panel.yScroll + panel.hScroll && num - panel.cmy >= panel.yScroll - panel.ITEM_HEIGHT)
+                {
+                    MobTanSatEntry entry = mobEntries[i];
+
+                    // Item background
+                    g.setColor((i != panel.selected) ? 15196114 : 16383818);
+                    g.fillRect(x, num, num2, h);
+
+                    if (entry.templateId == -2)
+                    {
+                        mFont.tahoma_7_grey.drawString(g, entry.name, x + num2 / 2, num + 8, mFont.CENTER);
+                        continue;
+                    }
+
+                    // Tên quái
+                    mFont.tahoma_7b_dark.drawString(g, entry.name, x + 8, num + 3, mFont.LEFT);
+
+                    // Thông tin phụ (HP, SL hoặc mô tả)
+                    if (!string.IsNullOrEmpty(entry.infoStr))
+                    {
+                        mFont.tahoma_7_grey.drawString(g, entry.infoStr, x + 8, num + 15, mFont.LEFT);
+                    }
+
+                    // Trạng thái Checkbox
+                    bool isChecked = false;
+                    if (entry.isAll)
+                    {
+                        isChecked = (Mobs.TypeMobsTanSat.Count == 0);
+                    }
+                    else
+                    {
+                        isChecked = Mobs.TypeMobsTanSat.Contains(entry.templateId);
+                    }
+
+                    int boxW = 24;
+                    int boxH = 18;
+                    int boxX = x + num2 - 32;
+                    int boxY = num + (h - boxH) / 2;
+
+                    if (isChecked)
+                    {
+                        // Checkbox nền xanh lá nổi bật
+                        g.setColor(2532152);
+                        g.fillRect(boxX, boxY, boxW, boxH);
+                        g.setColor(14013909);
+                        g.drawRect(boxX, boxY, boxW, boxH);
+                        mFont.tahoma_7b_white.drawString(g, "X", boxX + boxW / 2, boxY + 2, mFont.CENTER);
+                    }
+                    else
+                    {
+                        // Checkbox rỗng xám viền đậm
+                        g.setColor(13553358);
+                        g.fillRect(boxX, boxY, boxW, boxH);
+                        g.setColor(11184810);
+                        g.drawRect(boxX, boxY, boxW, boxH);
+                    }
+                }
+            }
+
+            panel.paintScrollArrow(g);
+        }
+
+        public void doFireMobTanSat(Panel panel, int selected)
+        {
+            if (selected < 0 || selected >= mobEntries.Count) return;
+
+            MobTanSatEntry entry = mobEntries[selected];
+            if (entry.templateId == -2) return;
+
+            if (entry.isAll)
+            {
+                // Chọn tàn sát tất cả
+                Mobs.TypeMobsTanSat.Clear();
+                GameScr.info1.addInfo("Tàn sát tất cả quái trong map", 0);
+            }
+            else
+            {
+                int tid = entry.templateId;
+                if (Mobs.TypeMobsTanSat.Count == 0)
+                {
+                    // Trước đó đang tàn sát tất cả -> chuyển sang chọn riêng quái này
+                    Mobs.TypeMobsTanSat.Clear();
+                    Mobs.TypeMobsTanSat.Add(tid);
+                    GameScr.info1.addInfo("Tàn sát: " + entry.name, 0);
+                }
+                else
+                {
+                    if (Mobs.TypeMobsTanSat.Contains(tid))
+                    {
+                        // Đã chọn -> bỏ chọn
+                        Mobs.TypeMobsTanSat.Remove(tid);
+                        if (Mobs.TypeMobsTanSat.Count == 0)
+                        {
+                            GameScr.info1.addInfo("Tàn sát tất cả quái trong map", 0);
+                        }
+                        else
+                        {
+                            GameScr.info1.addInfo("Bỏ chọn: " + entry.name, 0);
+                        }
+                    }
+                    else
+                    {
+                        // Chưa chọn -> thêm vào danh sách tàn sát
+                        Mobs.TypeMobsTanSat.Add(tid);
+                        GameScr.info1.addInfo("Chọn thêm: " + entry.name, 0);
+                    }
+                }
+            }
+
+            // Reset focus ngay lập tức để chuyển mục tiêu sang loại quái mới chọn
+            if (Char.myCharz() != null)
+            {
+                Char.myCharz().mobFocus = null;
+                Char.myCharz().charFocus = null;
+                Char.myCharz().currentMovePoint = null;
+            }
+
+            // Tự động bật Tàn Sát Quái nếu đang tắt để người chơi được hưởng ngay
+            if (!Mobs.IsTanSat)
+            {
+                updateItemState("ts", true);
             }
         }
     }

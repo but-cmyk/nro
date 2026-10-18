@@ -315,10 +315,10 @@ public class NPoint {
             }
         }
         if (this.player.itemTime != null && this.player.itemTime.isUseCaChua) {
-            this.tlHutHpMob += 50;
+            this.tlHutHpMob += 30;
         }
         if (this.player.itemTime != null && this.player.itemTime.isUseCaRot) {
-            this.tlHutMpMob += 50;
+            this.tlHutMpMob += 30;
         }
         setDameTrainArmor();
         setBasePoint();

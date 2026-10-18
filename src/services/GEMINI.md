@@ -30,6 +30,7 @@
 - Vòng quay Thượng Đế: Bỏ quay vàng, chỉ giữ quay ngọc và quay vé. Vé quay (ID 821) cày free qua Boss rơi (40%) và Nhiệm vụ hàng ngày (1-5 vé). Phần thưởng chuẩn logic NRO: Ngọc rồng, Đá nâng cấp, Đá bảo vệ, Thức ăn, Cải trang. `[2026-09-28]`
 - Khi nạp options từ DB trong parseItemSafe, bắt buộc clear itemOptions mặc định trước khi duyệt nạp options để tránh nhân bản trùng lặp options sau mỗi lần lưu/tải (đặc biệt với vật phẩm có default option như Cà chua 191, Cà rốt 192). `[2026-10-02]`
 - Bat buoc dung sendThongBaoResetWait (gui kem opcode -99 truoc khi sendThongBao) tai moi handler tu choi UI/Menu/Shop de giai phong InfoDlg ngay lap tuc; thay toan bo cau generic bang thong bao ro nghiep vu Dragon Ball va dung chinh ta hanh trang (ref L0008) `[2026-10-04]`
+- Trong parseItemSafe bat buoc clear itemOptions mac dinh truoc khi duyet nap options de tranh nhan ban options (ref L0001) `[2026-10-18]`
 
 ## 4. Lỗi Thường Gặp Cần Tránh
 - Dupe đồ qua ngắt kết nối mạng ngay thời điểm xác nhận giao dịch.

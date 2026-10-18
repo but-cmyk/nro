@@ -103,6 +103,7 @@ namespace Game1.God
                 }
             }
             bool isTDLT = ItemTime.isExistItem(4387);
+            bool canTele = Mobs.telePem || isTDLT;
             if (Mobs.IsTanSat)
             {
                 if (@char.isCharge)
@@ -117,81 +118,115 @@ namespace Game1.God
                 if (@char.mobFocus == null)
                 {
                     @char.mobFocus = GetMobTanSat();
-                    if (isTDLT && @char.mobFocus != null)
+                    if (canTele && @char.mobFocus != null)
                     {
-                        if (Mobs.telePem)
+                        int tX = (@char.mobFocus.x != 0) ? @char.mobFocus.x : @char.mobFocus.xFirst;
+                        int tY = (@char.mobFocus.y != 0) ? @char.mobFocus.y : @char.mobFocus.yFirst;
+                        int approachOffset = (@char.cx >= tX) ? 35 : -35;
+                        int standX = tX + approachOffset;
+                        if (Math.abs(tX - @char.cx) >= 20 || Math.abs(tY - @char.cy) >= 20)
                         {
-                            if (Math.abs(@char.mobFocus.xFirst - @char.cx) >= 20 || Math.abs(@char.mobFocus.yFirst - @char.cy) >= 20)
-                            {
-                                MoveTo(@char.mobFocus.xFirst, @char.mobFocus.yFirst);
-                            }
-                            return;
+                            MoveTo(standX, tY);
                         }
-                        @char.cx = @char.mobFocus.xFirst;
-                        @char.cy = @char.mobFocus.yFirst;
-                        Service.gI().charMove();
+                        return;
                     }
                 }
                 if (@char.mobFocus != null)
                 {
-                    if (@char.skillInfoPaint() == null)
+                    Mob mobFocus = @char.mobFocus;
+                    int targetX = (mobFocus.x != 0) ? mobFocus.x : mobFocus.xFirst;
+                    int targetY = (mobFocus.y != 0) ? mobFocus.y : mobFocus.yFirst;
+
+                    // Tiếp cận cách tâm quái 35px theo hướng tiếp cận (không đứng đè tâm quái gây lật hướng cdir)
+                    int approachOffset = (@char.cx >= targetX) ? 35 : -35;
+                    int standX = targetX + approachOffset;
+
+                    Skill skillAttack = GetSkillAttack2();
+                    if (skillAttack == null)
                     {
-                        Skill skillAttack = GetSkillAttack2();
-                        if (skillAttack != null && CanUseSkill(skillAttack))
+                        skillAttack = @char.myskill;
+                    }
+                    if (skillAttack == null && @char.vSkillFight != null && @char.vSkillFight.size() > 0)
+                    {
+                        skillAttack = (Skill)@char.vSkillFight.elementAt(0);
+                    }
+
+                    int skillDx = (skillAttack != null) ? skillAttack.dx : 40;
+                    int skillDy = (skillAttack != null) ? skillAttack.dy : 30;
+                    int maxDistX = Math.max(65, (int)(skillDx * 1.2));
+                    int maxDistY = Math.max(55, (int)(skillDy * 1.2));
+
+                    bool inRange = Math.abs(targetX - @char.cx) <= maxDistX && Math.abs(targetY - @char.cy) <= maxDistY;
+
+                    if (inRange)
+                    {
+                        // Đã vào tầm đánh quái: Chỉ dừng di chuyển khi đã gần điểm dừng (standX) hoặc đã đứng vững trên đất
+                        bool isGrounded = (TileMap.tileTypeAtPixel(@char.cx, @char.cy) & 2) == 2;
+                        if (isGrounded || Math.abs(standX - @char.cx) <= 15 || Math.abs(targetX - @char.cx) <= 45)
                         {
-                            Mob mobFocus = @char.mobFocus;
-                            mobFocus.x = mobFocus.xFirst;
-                            mobFocus.y = mobFocus.yFirst;
+                            if (@char.currentMovePoint != null || @char.statusMe == 2)
+                            {
+                                @char.currentMovePoint = null;
+                                @char.cvx = 0;
+                                @char.cvy = 0;
+                                if (isGrounded)
+                                {
+                                    @char.statusMe = 1;
+                                }
+                            }
+                        }
+
+                        if (@char.skillInfoPaint() == null && skillAttack != null && CanUseSkill(skillAttack))
+                        {
                             if (Char.myCharz().myskill != skillAttack)
                             {
                                 GameScr.gI().doSelectSkill(skillAttack, isShortcut: true);
                             }
-                            if (Res.distance(mobFocus.xFirst, mobFocus.yFirst, @char.cx, @char.cy) <= 48)
+
+                            // Dịch chuyển đến quái bay khi có TDLT hoặc telePem
+                            if (canTele && GameCanvas.gameTick % 50 == 0 && mobFocus.templateId < Mob.arrMobTemplate.Length && Mob.arrMobTemplate[mobFocus.templateId] != null && Mob.arrMobTemplate[mobFocus.templateId].type == 4)
                             {
-                                if (GameCanvas.gameTick % 50 == 0 && Mob.arrMobTemplate[Char.myCharz().mobFocus.templateId].type == 4)
-                                {
-                                   MoveTo(mobFocus.xFirst, mobFocus.yFirst + 1);
-                                }
-                                if (skillAttack.template.isAttackSkill())
-                                {
-                                    AttackMob(mobFocus);
-                                    SetUsedSkill(@char.myskill);
-                                }
-                                else if (skillAttack.template.isUseAlone())
-                                {
-                                    GameScr.gI().doDoubleClickToObj(mobFocus);
-                                }
+                                MoveTo(standX, targetY);
                             }
-                            else
+                            if (skillAttack.template.isAttackSkill())
                             {
-                                if (Mobs.telePem)
-                                {
-                                    if (Math.abs(mobFocus.xFirst - @char.cx) >= 20 || Math.abs(mobFocus.yFirst - @char.cy) >= 20)
-                                    {
-                                        MoveTo(mobFocus.xFirst, mobFocus.yFirst);
-                                    }
-                                    return;
-                                }
-                                Move(mobFocus.xFirst, mobFocus.yFirst);
+                                AttackMob(mobFocus);
+                                SetUsedSkill(@char.myskill);
+                            }
+                            else if (skillAttack.template.isUseAlone())
+                            {
+                                GameScr.gI().doDoubleClickToObj(mobFocus);
                             }
                         }
                     }
-                }
-                else if (!isTDLT)
-                {
-                    Mob mobNext = GetMobNext();
-                    if (mobNext != null)
+                    else
                     {
-                        Char.myCharz().focusManualTo(mobNext);
-                        if (Mobs.telePem)
+                        // Chưa tới tầm đánh: Dịch chuyển nhanh thẳng đến điểm tiếp cận cạnh quái (y hệt TDLT)
+                        if (canTele)
                         {
-                            if (Math.abs(mobNext.xFirst - @char.cx) >= 20 || Math.abs(mobNext.yFirst - @char.cy) >= 20)
+                            if (Math.abs(targetX - @char.cx) >= 20 || Math.abs(targetY - @char.cy) >= 20)
                             {
-                                MoveTo(mobNext.xFirst, mobNext.yFirst);
+                                MoveTo(standX, targetY);
                             }
-                            return;
                         }
-                        Move(mobNext.xFirst, mobNext.yFirst);
+                        else
+                        {
+                            Move(standX, targetY);
+                        }
+                    }
+                }
+                else
+                {
+                    // Khi trong map tất cả quái được chọn bị tiêu diệt: Đứng yên, lúc nào quái xuất hiện mới đánh tiếp
+                    if (@char.currentMovePoint != null || @char.statusMe == 2)
+                    {
+                        @char.currentMovePoint = null;
+                        @char.cvx = 0;
+                        @char.cvy = 0;
+                        if ((TileMap.tileTypeAtPixel(@char.cx, @char.cy) & 2) == 2)
+                        {
+                            @char.statusMe = 1;
+                        }
                     }
                 }
                 Wait(100);
@@ -271,6 +306,19 @@ namespace Game1.God
         {
             try
             {
+                Char myChar = Char.myCharz();
+                if (mob != null && myChar != null)
+                {
+                    int targetX = (mob.x != 0) ? mob.x : mob.xFirst;
+                    if (targetX > myChar.cx)
+                    {
+                        myChar.cdir = 1;
+                    }
+                    else if (targetX < myChar.cx)
+                    {
+                        myChar.cdir = -1;
+                    }
+                }
                 attackMobVector.removeAllElements();
                 attackMobVector.addElement(mob);
                 Service.gI().sendPlayerAttack(attackMobVector, emptyVector, 1);
@@ -284,31 +332,27 @@ namespace Game1.God
             Char.myCharz().cx = x;
             Char.myCharz().cy = y;
             Service.gI().charMove();
-            if (!ItemTime.isExistItem(4387))
-            {
-                Char.myCharz().cx = x;
-                Char.myCharz().cy = y + 1;
-                Service.gI().charMove();
-                Char.myCharz().cx = x;
-                Char.myCharz().cy = y;
-                Service.gI().charMove();
-            }
         }
         public static void Move(int x, int y)
         {
             Char @char = Char.myCharz();
-            if (!Mobs.vuotDiaHinh)
+            int destX = x;
+            int destY = y;
+            if (Mobs.vuotDiaHinh && (@char.statusMe == 1 || @char.statusMe == 2))
             {
-                @char.currentMovePoint = new MovePoint(x, y);
+                int[] pointYsdMax = GetPointYsdMax(@char.cx, x);
+                if (pointYsdMax[0] > 0 && pointYsdMax[1] > 0 && pointYsdMax[1] < y && pointYsdMax[1] < @char.cy)
+                {
+                    destX = pointYsdMax[0];
+                    destY = pointYsdMax[1];
+                }
+            }
+            // Dung sai 24px: Không khởi tạo lại MovePoint nếu mục tiêu xEnd/yEnd chỉ dịch chuyển rất nhỏ do animation quái
+            if (@char.currentMovePoint != null && Math.abs(@char.currentMovePoint.xEnd - destX) <= 24 && Math.abs(@char.currentMovePoint.yEnd - destY) <= 24)
+            {
                 return;
             }
-            int[] pointYsdMax = GetPointYsdMax(@char.cx, x);
-            if (pointYsdMax[1] >= y || (pointYsdMax[1] >= @char.cy && (@char.statusMe == 2 || @char.statusMe == 1)))
-            {
-                pointYsdMax[0] = x;
-                pointYsdMax[1] = y;
-            }
-            @char.currentMovePoint = new MovePoint(pointYsdMax[0], pointYsdMax[1]);
+            @char.currentMovePoint = new MovePoint(destX, destY);
         }
 
         private static TpyePickItem GetTypePickItem(ItemMap itemMap)
@@ -385,8 +429,11 @@ namespace Game1.God
             for (int i = 0; i < GameScr.vMob.size(); i++)
             {
                 Mob mob = (Mob)GameScr.vMob.elementAt(i);
-                int num2 = (mob.xFirst - @char.cx) * (mob.xFirst - @char.cx) + (mob.yFirst - @char.cy) * (mob.yFirst - @char.cy);
-                if (IsMobTanSat(mob) && num2 < num)
+                if (mob == null || !IsMobTanSat(mob)) continue;
+                int mx = (mob.x != 0) ? mob.x : mob.xFirst;
+                int my = (mob.y != 0) ? mob.y : mob.yFirst;
+                int num2 = (mx - @char.cx) * (mx - @char.cx) + (my - @char.cy) * (my - @char.cy);
+                if (num2 < num)
                 {
                     result = mob;
                     num = num2;
@@ -583,6 +630,7 @@ namespace Game1.God
                 for (int i = xEnd; i < xStart; i += 24)
                 {
                     int ysd = GetYsd(i);
+                    if (ysd <= 0) continue;
                     if (ysd < num)
                     {
                         num = ysd;
@@ -595,12 +643,17 @@ namespace Game1.God
                 for (int j = xEnd; j > xStart; j -= 24)
                 {
                     int ysd2 = GetYsd(j);
+                    if (ysd2 <= 0) continue;
                     if (ysd2 < num)
                     {
                         num = ysd2;
                         num2 = j;
                     }
                 }
+            }
+            if (num2 == -1)
+            {
+                return new int[2] { xEnd, TileMap.pxh };
             }
             return new int[2] { num2, num };
         }

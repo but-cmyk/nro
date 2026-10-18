@@ -267,10 +267,10 @@ public class ItemService {
         item.createTime = System.currentTimeMillis();
 
         if (tempId == 191) {
-            item.itemOptions.add(new ItemOption(104, 50));
+            item.itemOptions.add(new ItemOption(104, 30));
             item.itemOptions.add(new ItemOption(30, 0));
         } else if (tempId == 192) {
-            item.itemOptions.add(new ItemOption(96, 50));
+            item.itemOptions.add(new ItemOption(96, 30));
             item.itemOptions.add(new ItemOption(30, 0));
         } else if (tempId == ConstItem.CHUOI) {
             item.itemOptions.add(new ItemOption(83, 20));
@@ -381,11 +381,11 @@ public class ItemService {
         }
         if (item.template.id == 191) {
             item.itemOptions.clear();
-            item.itemOptions.add(new ItemOption(104, 50));
+            item.itemOptions.add(new ItemOption(104, 30));
             item.itemOptions.add(new ItemOption(30, 0));
         } else if (item.template.id == 192) {
             item.itemOptions.clear();
-            item.itemOptions.add(new ItemOption(96, 50));
+            item.itemOptions.add(new ItemOption(96, 30));
             item.itemOptions.add(new ItemOption(30, 0));
         } else if (item.template.id == ConstItem.CHUOI) {
             item.itemOptions.clear();

@@ -10,10 +10,13 @@ row_masenko = cur.fetchone()[0]
 skills_raw = json.loads(row_masenko)
 
 masenko_new_dame = [115, 130, 150, 170, 190, 210, 230]
+# Tăng 30% thời gian hồi chiêu: 800->1040, 790->1027, 780->1014, 760->988, 740->962, 720->936, 700->910
+masenko_new_cooldown = [1040, 1027, 1014, 988, 962, 936, 910]
 new_masenko_list = []
 for idx, s_str in enumerate(skills_raw):
     s_obj = json.loads(s_str)
     s_obj["damage"] = masenko_new_dame[idx]
+    s_obj["cool_down"] = masenko_new_cooldown[idx]
     new_masenko_list.append(json.dumps(s_obj, ensure_ascii=False))
 
 new_masenko_json = json.dumps(new_masenko_list, ensure_ascii=False)

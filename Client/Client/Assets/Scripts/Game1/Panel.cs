@@ -256,7 +256,11 @@ namespace Game1
             new string[1][] { new string[1] { string.Empty } },
             new string[1][] { new string[1] { string.Empty } },
             new string[1][] { new string[1] { string.Empty } },
-            new string[1][] { new string[2] { "Cài Đặt Auto", string.Empty } },
+            new string[2][]
+            {
+                new string[2] { "Cài Đặt", string.Empty },
+                new string[2] { "Tàn Sát", string.Empty }
+            },
             new string[1][] { new string[1] { string.Empty } }
         };
     
@@ -3578,6 +3582,16 @@ namespace Game1
                         setTabGiaoDich(false);
                     }
                     break;
+                case 28:
+                    if (currentTabIndex == 0)
+                    {
+                        AutoSettingManager.getInstance().setTabAutoSetting(this);
+                    }
+                    else if (currentTabIndex == 1)
+                    {
+                        AutoSettingManager.getInstance().setTabMobTanSat(this);
+                    }
+                    break;
             }
             selected = lastSelect[currentTabIndex];
         }
@@ -4427,7 +4441,14 @@ namespace Game1
                     paintAuto(g);
                     break;
                 case 28:
-                    AutoSettingManager.getInstance().paint(g, this);
+                    if (currentTabIndex == 0)
+                    {
+                        AutoSettingManager.getInstance().paint(g, this);
+                    }
+                    else if (currentTabIndex == 1)
+                    {
+                        AutoSettingManager.getInstance().paintMobTanSat(g, this);
+                    }
                     break;
                 }
             }
@@ -6595,13 +6616,6 @@ namespace Game1
                 mFont.tahoma_7b_dark.drawString(g, mResources.autoFunction, xScroll + wScroll / 2, 59, mFont.CENTER);
                 return;
             }
-            if (type == 28)
-            {
-                g.setColor(13524492);
-                g.fillRect(X + 1, 78, W - 2, 1);
-                mFont.tahoma_7b_dark.drawString(g, "Cài Đặt Auto", xScroll + wScroll / 2, 59, mFont.CENTER);
-                return;
-            }
 
             if (type == TYPE_OPTION)
             {
@@ -7997,7 +8011,14 @@ namespace Game1
                             doFireAuto();
                             break;
                         case 28:
-                            AutoSettingManager.getInstance().doFire(this, selected);
+                            if (currentTabIndex == 0)
+                            {
+                                AutoSettingManager.getInstance().doFire(this, selected);
+                            }
+                            else if (currentTabIndex == 1)
+                            {
+                                AutoSettingManager.getInstance().doFireMobTanSat(this, selected);
+                            }
                             break;
                     }
                 }
@@ -10963,22 +10984,58 @@ namespace Game1
         {
             type = 28;
             setType(0);
-            AutoSettingManager.getInstance().setTabAutoSetting(this);
+            if (currentTabIndex == 0)
+            {
+                AutoSettingManager.getInstance().setTabAutoSetting(this);
+            }
+            else if (currentTabIndex == 1)
+            {
+                AutoSettingManager.getInstance().setTabMobTanSat(this);
+            }
             cmx = (cmtoX = 0);
         }
 
         private void updateKeyAutoSetting()
         {
             updateKeyOption();
-            if (GameKeys.IsLeftPressed())
+            if (currentTabIndex == 0)
             {
-                GameKeys.ClearLeft();
-                AutoSettingManager.getInstance().doKeyStep(selected, -1);
+                if (selected >= 0 && selected < AutoSettingManager.getInstance().items.Count && AutoSettingManager.getInstance().items[selected].typeControl == 1)
+                {
+                    if (GameKeys.IsLeftPressed())
+                    {
+                        GameKeys.ClearLeft();
+                        AutoSettingManager.getInstance().doKeyStep(selected, -1);
+                    }
+                    if (GameKeys.IsRightPressed())
+                    {
+                        GameKeys.ClearRight();
+                        AutoSettingManager.getInstance().doKeyStep(selected, 1);
+                    }
+                }
             }
-            if (GameKeys.IsRightPressed())
+            else if (currentTabIndex == 1)
             {
-                GameKeys.ClearRight();
-                AutoSettingManager.getInstance().doKeyStep(selected, 1);
+                if (GameCanvas.gameTick % 30 == 0)
+                {
+                    int curMobSize = (GameScr.vMob != null) ? GameScr.vMob.size() : 0;
+                    if (curMobSize != AutoSettingManager.getInstance().lastMobListSize || TileMap.mapID != AutoSettingManager.getInstance().lastMobMapId)
+                    {
+                        AutoSettingManager.getInstance().lastMobListSize = curMobSize;
+                        AutoSettingManager.getInstance().lastMobMapId = TileMap.mapID;
+                        AutoSettingManager.getInstance().UpdateCurrentMapMobs();
+                        currentListLength = AutoSettingManager.getInstance().mobEntries.Count;
+                        cmyLim = currentListLength * ITEM_HEIGHT - hScroll;
+                        if (cmyLim < 0)
+                        {
+                            cmyLim = 0;
+                        }
+                        if (selected >= currentListLength)
+                        {
+                            selected = currentListLength - 1;
+                        }
+                    }
+                }
             }
         }
 
@@ -11703,6 +11760,10 @@ namespace Game1
     
         private bool IsTabOption()
         {
+            if (type == 28 && currentTabIndex == 0 && selected >= 0 && selected < AutoSettingManager.getInstance().items.Count && AutoSettingManager.getInstance().items[selected].typeControl == 1)
+            {
+                return true;
+            }
             if (size_tab > 0)
             {
                 if (currentTabName.Length > 1)

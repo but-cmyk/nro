@@ -429,6 +429,9 @@ public class DatabaseTemplateLoader {
                 itemTemp.gender = rs.getByte("gender");
                 itemTemp.name = rs.getString("name");
                 itemTemp.description = rs.getString("description");
+                if (itemTemp.id == 191 || itemTemp.id == 192) {
+                    itemTemp.description = "Tác dụng trong 10 phút";
+                }
                 itemTemp.level = rs.getByte("level");
                 itemTemp.iconID = rs.getShort("icon_id");
                 itemTemp.part = rs.getShort("part");

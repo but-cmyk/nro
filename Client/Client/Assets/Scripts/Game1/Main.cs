@@ -218,6 +218,7 @@ namespace Game1
                 {
                     GameMidlet.gameCanvas.sizeChanged(newW, newH);
                 }
+                Char.loadMount();
             }
         }
 
@@ -397,6 +398,7 @@ namespace Game1
                 InfoMe.gI().loadCharId();
                 Panel.loadBg();
                 Menu.loadBg();
+                Char.loadMount();
                 Key.mapKeyPC();
             }
         }

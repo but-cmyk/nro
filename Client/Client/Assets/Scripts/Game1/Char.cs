@@ -370,9 +370,9 @@ namespace Game1
     
     	public string currStrLevel;
     
-    	public static Image eyeTraiDat = GameCanvas.loadImage("/mainImage/myTexture2dmat-trai-dat.png");
+    	public static Image eyeTraiDat;
     
-    	public static Image eyeNamek = GameCanvas.loadImage("/mainImage/myTexture2dmat-namek.png");
+    	public static Image eyeNamek;
     
     	public bool isFreez;
     
@@ -406,25 +406,54 @@ namespace Game1
     
     	public bool isSpeacialMount;
     
-    	public static Image imgMount_TD = GameCanvas.loadImage("/mainImage/myTexture2dthucuoi10.png");
+    	public static Image imgMount_TD;
     
-    	public static Image imgMount_NM = GameCanvas.loadImage("/mainImage/myTexture2dthucuoi20.png");
+    	public static Image imgMount_NM;
     
-    	public static Image imgMount_NM_1 = GameCanvas.loadImage("/mainImage/myTexture2dthucuoi21.png");
+    	public static Image imgMount_NM_1;
     
-    	public static Image imgMount_XD = GameCanvas.loadImage("/mainImage/myTexture2dthucuoi30.png");
+    	public static Image imgMount_XD;
     
-    	public static Image imgMount_TD_VIP = GameCanvas.loadImage("/mainImage/myTexture2dthucuoi11.png");
+    	public static Image imgMount_TD_VIP;
     
-    	public static Image imgMount_NM_VIP = GameCanvas.loadImage("/mainImage/myTexture2dthucuoi22.png");
+    	public static Image imgMount_NM_VIP;
     
-    	public static Image imgMount_NM_1_VIP = GameCanvas.loadImage("/mainImage/myTexture2dthucuoi23.png");
+    	public static Image imgMount_NM_1_VIP;
     
-    	public static Image imgMount_XD_VIP = GameCanvas.loadImage("/mainImage/myTexture2dthucuoi31.png");
+    	public static Image imgMount_XD_VIP;
     
-    	public static Image imgEventMount = GameCanvas.loadImage("/mainImage/myTexture2drong.png");
+    	public static Image imgEventMount;
     
-    	public static Image imgEventMountWing = GameCanvas.loadImage("/mainImage/myTexture2dcanhrong.png");
+    	public static Image imgEventMountWing;
+    
+    	public int mountGender = -1;
+    
+    	private static int lastZoomMount = -1;
+    
+    	public static void loadMount()
+    	{
+    		lastZoomMount = mGraphics.zoomLevel;
+    		imgMount_TD = GameCanvas.loadImage("/mainImage/myTexture2dthucuoi10.png");
+    		imgMount_NM = GameCanvas.loadImage("/mainImage/myTexture2dthucuoi20.png");
+    		imgMount_NM_1 = GameCanvas.loadImage("/mainImage/myTexture2dthucuoi21.png");
+    		imgMount_XD = GameCanvas.loadImage("/mainImage/myTexture2dthucuoi30.png");
+    		imgMount_TD_VIP = GameCanvas.loadImage("/mainImage/myTexture2dthucuoi11.png");
+    		imgMount_NM_VIP = GameCanvas.loadImage("/mainImage/myTexture2dthucuoi22.png");
+    		imgMount_NM_1_VIP = GameCanvas.loadImage("/mainImage/myTexture2dthucuoi23.png");
+    		imgMount_XD_VIP = GameCanvas.loadImage("/mainImage/myTexture2dthucuoi31.png");
+    		imgEventMount = GameCanvas.loadImage("/mainImage/myTexture2drong.png");
+    		imgEventMountWing = GameCanvas.loadImage("/mainImage/myTexture2dcanhrong.png");
+    		eyeTraiDat = GameCanvas.loadImage("/mainImage/myTexture2dmat-trai-dat.png");
+    		eyeNamek = GameCanvas.loadImage("/mainImage/myTexture2dmat-namek.png");
+    	}
+    
+    	public static void checkLoadMount()
+    	{
+    		if (lastZoomMount != mGraphics.zoomLevel || imgMount_NM == null || imgMount_NM.texture == null)
+    		{
+    			loadMount();
+    		}
+    	}
     
     	public sbyte[] FrameMount = new sbyte[8] { 0, 0, 1, 1, 2, 2, 1, 1 };
     
@@ -4668,6 +4697,7 @@ namespace Game1
     
     	public void paintMount1(mGraphics g)
     	{
+    		checkLoadMount();
     		if (xMount <= GameScr.cmx || xMount >= GameScr.cmx + GameCanvas.w)
     		{
     			return;
@@ -4781,6 +4811,7 @@ namespace Game1
     
     	public void paintMount2(mGraphics g)
     	{
+    		checkLoadMount();
     		if (xMount <= GameScr.cmx || xMount >= GameScr.cmx + GameCanvas.w)
     		{
     			return;
@@ -4923,7 +4954,7 @@ namespace Game1
     			}
     			if (xdis >= 70 && ySd - cy > 30 && !isStartMount && !isEndMount)
     			{
-    				setMount(charID, cdir, cgender);
+    				setMount(charID, cdir, (mountGender >= 0) ? mountGender : cgender);
     				isStartMount = true;
     			}
     		}
@@ -4958,12 +4989,29 @@ namespace Game1
     		isSpeacialMount = false;
     		isEventMount = false;
     		idMount = -1;
+    		mountGender = -1;
     		switch (num)
     		{
+    		case 346:
+    			mountGender = 0;
+    			break;
+    		case 347:
+    			mountGender = 1;
+    			break;
+    		case 348:
+    			mountGender = 2;
+    			break;
     		case 349:
+    			isMountVip = true;
+    			mountGender = 0;
+    			break;
     		case 350:
+    			isMountVip = true;
+    			mountGender = 1;
+    			break;
     		case 351:
     			isMountVip = true;
+    			mountGender = 2;
     			break;
     		case 396:
     			isEventMount = true;
@@ -6637,6 +6685,10 @@ namespace Game1
 		cH_new = cy - CharInfo[cf][0][2] + num4;
 		if (statusMe == 1 && charID > 0 && !isMask && !isUseChargeSkill() && !isWaitMonkey && skillPaint == null && cf != 23 && bag < 0 && ((GameCanvas.gameTick + charID) % 30 == 0 || isFreez))
 		{
+			if (eyeTraiDat == null || eyeNamek == null)
+			{
+				checkLoadMount();
+			}
 			g.drawImage((cgender != 1) ? eyeTraiDat : eyeNamek, cx + -((cgender != 1) ? 2 : 2) * num2, cy - 32 + ((cgender != 1) ? 11 : 10) - cf, anchor2);
 		}
 		if (eProtect != null)
