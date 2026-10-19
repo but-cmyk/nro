@@ -70,17 +70,19 @@ public class The23rdMartialArtCongress {
                     if (round == 4 || round == 6 || round == 8 || round == 10) {
                         Service.gI().releaseCooldownSkill(player);
                     }
-                    EffectSkillService.gI().startStun(boss, System.currentTimeMillis(), 14000);
+                    if (boss != null) {
+                        EffectSkillService.gI().startStun(boss, System.currentTimeMillis(), 14000);
+                        Service.gI().sendInfoPlayerEatPea(boss);
+                    }
                     EffectSkillService.gI().startStun(player, System.currentTimeMillis(), 14000);
                     ItemTimeService.gI().sendItemTime(player, 3779, 11000 / 1000);
                     player.nPoint.hp = player.nPoint.hpMax;
                     player.nPoint.mp = player.nPoint.mpMax;
                     Service.gI().Send_Info_NV(player);
-                    Service.gI().sendInfoPlayerEatPea(boss);
                     break;
                 case 11:
                     PlayerService.gI().playerMove(npc, 335, 264);
-                    Service.gI().chat(npc, "Trận đấu giữa " + player.name + " vs " + boss.name + " sắp diễn ra"); // 7 STUN
+                    Service.gI().chat(npc, "Trận đấu giữa " + player.name + " vs " + (boss != null && boss.name != null ? boss.name : "Đối thủ") + " sắp diễn ra"); // 7 STUN
                     break;
                 case 8:
                     Service.gI().chat(npc, "Xin quý vị khán giả cho 1 tràng pháo tay cổ vũ cho 2 đấu thủ nào");
@@ -101,16 +103,22 @@ public class The23rdMartialArtCongress {
                     Service.gI().chat(npc, "Trận đấu bắt đầu");
                     PlayerService.gI().playerMove(npc, npc.location.x, 360);
                     EffectSkillService.gI().removeStun(player);
-                    EffectSkillService.gI().removeStun(boss);
+                    if (boss != null) {
+                        EffectSkillService.gI().removeStun(boss);
+                    }
                     ItemTimeService.gI().removeItemTime(player, 3779);
                     Service.gI().chat(player, "OK");
-                    Service.gI().chat(boss, "OK");
+                    if (boss != null) {
+                        Service.gI().chat(boss, "OK");
+                    }
                     break;
                 case 1:
-                    The23rdMartialArtCongressService.gI().sendTypePK(player, boss);
+                    if (boss != null) {
+                        The23rdMartialArtCongressService.gI().sendTypePK(player, boss);
+                        boss.changeStatus(BossStatus.ACTIVE);
+                        new DHVT(player, boss);
+                    }
                     PlayerService.gI().changeAndSendTypePK(this.player, ConstPlayer.PK_PVP);
-                    boss.changeStatus(BossStatus.ACTIVE);
-                    new DHVT(player, boss);
                     setTime(129);
                     break;
             }
@@ -125,7 +133,7 @@ public class The23rdMartialArtCongress {
                 return;
             }
             if (player != null && player.location != null && player.isPKDHVT && !player.isDie() && player.zone != null) {
-                if (boss.isDie()) {
+                if (boss != null && boss.isDie()) {
                     round++;
                     services.TaskService.gI().checkDoneTaskDHVT(player);
                     boss.leaveMap();
@@ -154,6 +162,10 @@ public class The23rdMartialArtCongress {
     public void toTheNextRound() {
         try {
             PlayerService.gI().changeAndSendTypePK(player, ConstPlayer.NON_PK);
+            if (this.boss != null) {
+                this.boss.leaveMap();
+                this.boss = null;
+            }
             Boss bss = null;
             switch (round) {
                 case 0:
@@ -195,17 +207,24 @@ public class The23rdMartialArtCongress {
                 default:
                     return;
             }
+            setBoss(bss);
+            if (bss != null) {
+                if (bss.zone == null && this.zone != null) {
+                    bss.zone = this.zone;
+                }
+                bss.joinMap();
+            }
             Service.gI().setPos(player, 335, 264);
             setTimeWait(13);
-            setBoss(bss);
         } catch (Exception e) {
+            utils.Logger.logException(The23rdMartialArtCongress.class, e, "Lỗi tại toTheNextRound DHVT 23");
         }
     }
 
     public void die() {
         player.lostByDeath = false;
         Service.gI().sendThongBao(player, "Thua rồi");
-        Service.gI().chat(npc, boss.name + " đã chiến thắng");
+        Service.gI().chat(npc, (boss != null && boss.name != null ? boss.name : "Đối thủ") + " đã chiến thắng");
         if (player.zone != null) {
             endChallenge();
         }
@@ -214,7 +233,7 @@ public class The23rdMartialArtCongress {
     private void timeOut() {
         Service.gI().sendThongBao(player, "Thua rồi");
         Service.gI().chat(npc, "Hết thời gian thi đấu");
-        Service.gI().chat(npc, boss.name + " đã chiến thắng");
+        Service.gI().chat(npc, (boss != null && boss.name != null ? boss.name : "Đối thủ") + " đã chiến thắng");
         endChallenge();
     }
 
@@ -231,8 +250,8 @@ public class The23rdMartialArtCongress {
             setTime(0);
             EffectSkillService.gI().removeStun(player);
             Service.gI().sendThongBao(player, "Thua rồi");
-            Service.gI().chat(npc, "Đối thủ đã rơi khỏi võ đài, " + boss.name + " đã chiến thắng");
-            Service.gI().chat(npc, boss.name + " đã chiến thắng");
+            Service.gI().chat(npc, "Đối thủ đã rơi khỏi võ đài, " + (boss != null && boss.name != null ? boss.name : "Đối thủ") + " đã chiến thắng");
+            Service.gI().chat(npc, (boss != null && boss.name != null ? boss.name : "Đối thủ") + " đã chiến thắng");
             endChallenge();
         }
     }

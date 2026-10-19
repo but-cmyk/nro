@@ -4,6 +4,7 @@ import models.mob.BigBoss;
 import models.mob.Mob;
 import network.io.Message;
 import models.player.Player;
+import models.player.NPoint;
 import services.Service;
 import utils.Util;
 
@@ -26,8 +27,8 @@ public class VuaBachTuoc extends BigBoss {
         Player player = getPlayerCanAttack();
         if (!isDie() && !effectSkill.isHaveEffectSkill() && Util.canDoWithTime(lastBigBossAttackTime, 1000)) {
             if (player != null && player.location.x > 440 && player.location.x < 950) {
-                int dameMob = this.point.getDameAttack();
-                int dame = player.injured(null, dameMob, false, true);
+                long dameMob = this.point.getDameAttack();
+                long dame = player.injured(null, dameMob, false, true);
                 action = 3;
                 int dis = Util.getDistance(player, this);
                 if (dis <= 100) {
@@ -45,7 +46,7 @@ public class VuaBachTuoc extends BigBoss {
                     if (action == 3 || action == 4) {
                         msg.writer().writeByte(1); // SIZE PLAYER ATTACK
                         msg.writer().writeInt((int) player.id); // PLAYER ID
-                        msg.writer().writeInt(dame); // DAME
+                        msg.writer().writeInt(NPoint.safeInt(dame)); // DAME
                     } else {
                         msg.writer().writeShort(this.location.x);
                     }

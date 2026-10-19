@@ -423,8 +423,8 @@ public class NDVSqlFetcher {
     public static Player loadPlayer(AlyraResultSet rs, boolean isOffline) throws Exception {
         Player player = null;
         try {
-            int plHp;
-            int plMp;
+            long plHp;
+            long plMp;
             JSONArray dataArray;
 
             //base info

@@ -60,7 +60,7 @@ namespace Game1
     		mResources.inventory_Pass = "Persediaan Sandi";
     		mResources.input_Inventory_Pass = "Masukkan password keamanan";
     		mResources.input_Inventory_Pass_wrong = "Password keamanan harus berupa 6 angka";
-    		mResources.regNote = "Harap masukkan nomor HP atau email, kemudian masukkan password untuk membuat account baru";
+    		mResources.regNote = "Harap masukkan username dan password untuk membuat account baru";
     		mResources.note = "Kamu akan kehilangan account kamu selamanya jika kamu berganti ke account yang lain. Apakah kamu setuju?";
     		mResources.REGISTOPROTECT = "Daftar untuk melindungi account";
     		mResources.finishBomong = "Kamu harus menyelesaikan misi mencari Dragon Ball bintang 6 untuk recharge";
@@ -101,11 +101,11 @@ namespace Game1
     		mResources.change_account = "Pilih akun";
     		mResources.alreadyHadAccount1 = "Apakah kamu telah bermain dan memiliki account pada server Dragon Ball Online sebelumnya?";
     		mResources.alreadyHadAccount2 = "sebelumnya?";
-    		mResources.userBlank = "Email atau nomor HP tidak dimasukkan";
+    		mResources.userBlank = "Username tidak dimasukkan";
     		mResources.passwordBlank = "Password tidak dimasukkan";
-    		mResources.accTooShort = "Nama account harus lebih panjang dari 5 karakter";
-    		mResources.phoneInvalid = "Nomor HP tidak berlaku. Harap masukkan dengan format berikut: 0912345678 atau 84918765432";
-    		mResources.emailInvalid = "Email tidak berlaku. Harap masukkan seperti format berikut: yournamehere@yahoo.com atau yournamehere@gmail.com";
+    		mResources.accTooShort = "Nama account harus 4 sampai 16 karakter";
+    		mResources.phoneInvalid = "Username tidak berlaku (4-16 karakter alfanumerik).";
+    		mResources.emailInvalid = "Username tidak berlaku (4-16 karakter alfanumerik).";
     		mResources.registerNewAcc = "Daftarkan account\nbaru\n";
     		mResources.selectServer = "Pilih\nserver";
     		mResources.forgetPass = "Lupa pass\n";
@@ -119,9 +119,9 @@ namespace Game1
     		};
     		mResources.no_msg = "Tidak ada pesan";
     		mResources.cancelAccountProtection = "Apakah kamu ingin membatalkan fungsi perlindungan account";
-    		mResources.plsCheckAcc = "Harap periksa informasi account dengan baik untuk me-recover account. Jika lupa password\n";
-    		mResources.phone = "Nomor HP";
-    		mResources.email = "Email";
+    		mResources.plsCheckAcc = "Harap periksa informasi account dengan baik\n";
+    		mResources.phone = "Akun";
+    		mResources.email = "Akun";
     		mResources.acc = "Acc";
     		mResources.pwd = "Pwd";
     		mResources.goToWebForPassword = "Untuk me-recover password harap kunjungi website http://ngocrongonline.com/matkhau";

@@ -68,9 +68,18 @@ public class The23rdMartialArtCongressService {
     }
 
     public Zone getMapChallenge(int mapId) {
-        Zone map = MapService.gI().getMapWithRandZone(mapId);
-        if (map.getNumOfBosses() < 1) {
-            return map;
+        models.map.Map map = MapService.gI().getMapById(mapId);
+        if (map != null && map.zones != null) {
+            for (Zone z : map.zones) {
+                if (z.getNumOfBosses() < 1 && z.getPlayers().isEmpty()) {
+                    return z;
+                }
+            }
+            for (Zone z : map.zones) {
+                if (z.getNumOfBosses() < 1) {
+                    return z;
+                }
+            }
         }
         return null;
     }

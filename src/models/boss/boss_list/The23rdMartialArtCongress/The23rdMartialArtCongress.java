@@ -17,6 +17,7 @@ import models.player.Player;
 import services.player.PlayerService;
 import services.SkillService;
 import services.map.ChangeMapService;
+import models.map.Zone;
 import utils.SkillUtil;
 import utils.Util;
 
@@ -27,7 +28,9 @@ public abstract class The23rdMartialArtCongress extends Boss {
 
     public The23rdMartialArtCongress(BossType ducvupro, int id, BossData data) throws Exception {
         super(ducvupro, id, data);
-        this.bossStatus = BossStatus.RESPAWN;
+        this.currentLevel = 0;
+        this.initBase();
+        this.bossStatus = BossStatus.AFK;
     }
 
     @Override
@@ -86,9 +89,14 @@ public abstract class The23rdMartialArtCongress extends Boss {
 
     @Override
     public void joinMap() {
-        if (playerAtt.zone != null) {
-            this.zone = playerAtt.zone;
+        Zone targetZone = (playerAtt != null && playerAtt.zone != null) ? playerAtt.zone : this.zone;
+        if (targetZone != null) {
+            this.zone = targetZone;
             ChangeMapService.gI().changeMap(this, this.zone, 435, 264);
+            changeStatus(BossStatus.AFK);
+            timeJoinMap = System.currentTimeMillis();
+            this.immortalMp();
+            this.typePk = 3;
         }
     }
 
@@ -100,10 +108,10 @@ public abstract class The23rdMartialArtCongress extends Boss {
     public void update() {
         try {
             super.updateInfo();
-            if ((this.effectSkill != null && this.effectSkill.isHaveEffectSkill()) || (this.newSkill != null && this.newSkill.isStartSkillSpecial)) {
+            if (this.isDie() || this.nPoint == null) {
                 return;
             }
-            if (this.isDie() || this.nPoint == null) {
+            if ((this.effectSkill != null && this.effectSkill.isHaveEffectSkill()) || (this.newSkill != null && this.newSkill.isStartSkillSpecial)) {
                 return;
             }
             switch (this.bossStatus) {
@@ -112,12 +120,6 @@ public abstract class The23rdMartialArtCongress extends Boss {
                     this.changeStatus(BossStatus.JOIN_MAP);
                 case JOIN_MAP:
                     joinMap();
-                    if (this.zone != null) {
-                        changeStatus(BossStatus.AFK);
-                        timeJoinMap = System.currentTimeMillis();
-                        this.immortalMp();
-                        this.typePk = 3;
-                    }
                     break;
                 case AFK:
                     afk();

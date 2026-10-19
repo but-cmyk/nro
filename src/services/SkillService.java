@@ -863,7 +863,7 @@ public class SkillService {
                     try {
                         msg = new Message(-60);
                         msg.writer().writeInt((int) player.id); //id pem
-                        msg.writer().writeByte(player.playerSkill.skillSelect.skillId); //skill pem
+                        msg.writer().writeByte(player.playerSkill != null && player.playerSkill.skillSelect != null && player.playerSkill.skillSelect.template != null ? player.playerSkill.skillSelect.template.id : 0); //skill pem
                         msg.writer().writeByte(1); //số người pem
                         msg.writer().writeInt((int) pl.id); //id ăn pem
                         msg.writer().writeByte(0); //read continue
@@ -955,13 +955,13 @@ public class SkillService {
                         damePST = plAtt.nPoint.hpMax / 100 - giamdame;
                     }
                 }
-                int dameInflicted = plAtt.injured(plAtt, damePST, true, false);
+                long dameInflicted = plAtt.injured(plAtt, damePST, true, false);
                 if (plAtt.nPoint != null) {
                     msg.writer().writeInt(NPoint.safeInt(plAtt.nPoint.hp));
                 } else {
                     msg.writer().writeInt(0);
                 }
-                msg.writer().writeInt(dameInflicted);
+                msg.writer().writeInt(NPoint.safeInt(dameInflicted));
                 msg.writer().writeBoolean(false);
                 msg.writer().writeByte(36);
                 Service.gI().sendMessAllPlayerInMap(plAtt, msg);
@@ -1024,7 +1024,7 @@ public class SkillService {
         }
 
         // 4. Trừ máu (Nếu dính Vô Hiệu thì dameAttack = 0)
-        int dameHit = plInjure.injured(plAtt, miss ? 0 : dameAttack, false, false);
+        long dameHit = plInjure.injured(plAtt, miss ? 0 : dameAttack, false, false);
 
         // 5. Notify Server (Log chat)
         if (plAtt.playerSkill != null && plAtt.playerSkill.skillSelect != null) {
@@ -1037,7 +1037,7 @@ public class SkillService {
         // 6. Logic PST bổ sung (Khiên năng lượng hoặc các hiệu ứng khác)
         // KHÔNG chạy nếu PST chính đã kích hoạt để tránh tính 2 lần
         if (!isPSTActive && plAtt.nPoint != null && plInjure.nPoint != null) {
-            int damePST = plInjure.effectSkill != null && plInjure.effectSkill.isShielding && plInjure.idMark != null ? plInjure.idMark.getDamePST() : dameHit;
+            long damePST = plInjure.effectSkill != null && plInjure.effectSkill.isShielding && plInjure.idMark != null ? plInjure.idMark.getDamePST() : dameHit;
             phanSatThuong(plAtt, plInjure, miss ? 0 : damePST);
         }
 
@@ -1049,7 +1049,7 @@ public class SkillService {
         // 8. Fix lỗi Boss Yardart
         if (plInjure instanceof Yardart) {
             if (plInjure.nPoint != null && plInjure.nPoint.hp < dameHit) {
-                dameHit = (int) Math.max(0, plInjure.nPoint.hp - 1);
+                dameHit = Math.max(0L, plInjure.nPoint.hp - 1);
                 if (dameHit == 0) return;
             } else if (plInjure.nPoint != null && plInjure.nPoint.hp <= plInjure.nPoint.hpMax / 10) {
                 return;
@@ -1061,8 +1061,8 @@ public class SkillService {
         try {
             msg = new Message(-60);
             msg.writer().writeInt((int) plAtt.id);        // ID người đánh
-            if (plAtt.playerSkill != null && plAtt.playerSkill.skillSelect != null) {
-                msg.writer().writeByte(plAtt.playerSkill.skillSelect.skillId);
+            if (plAtt.playerSkill != null && plAtt.playerSkill.skillSelect != null && plAtt.playerSkill.skillSelect.template != null) {
+                msg.writer().writeByte(plAtt.playerSkill.skillSelect.template.id);
             } else {
                 msg.writer().writeByte(0);
             }
@@ -1073,7 +1073,7 @@ public class SkillService {
 
             // Nếu Vô Hiệu Chưởng kích hoạt: dameHit = 0 → Client hiện "Hụt" trên plInjure
             // Nhưng đã gọi phanSatThuong() ở bước 2 → Dame đỏ hiện trên plAtt
-            msg.writer().writeInt(dameHit);
+            msg.writer().writeInt(NPoint.safeInt(dameHit));
 
             msg.writer().writeBoolean(plInjure.isDie());
             msg.writer().writeBoolean(plAtt.nPoint != null && plAtt.nPoint.isCrit);
@@ -1128,9 +1128,6 @@ public class SkillService {
             }
             if (miss) {
                 dameHit = 0;
-            }
-            if (dameHit > 2_000_000_000) {
-                dameHit = 2_000_000_000;
             }
             hutHPMP(plAtt, dameHit, null, mob);
             sendPlayerAttackMob(plAtt, mob);

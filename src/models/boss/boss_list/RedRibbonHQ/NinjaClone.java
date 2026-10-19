@@ -45,9 +45,30 @@ public class NinjaClone extends Boss {
 
     @Override
     public void reward(Player plKill) {
-        ItemMap it = new ItemMap(this.zone, Util.nextInt(18, 20), 1, this.location.x, 
-                this.zone.map.yPhysicInTop(this.location.x, this.location.y - 24), plKill.id);
-        Service.gI().dropItemMap(this.zone, it);
+        if (this.zone == null || this.zone.map == null) {
+            return;
+        }
+        long plId = (plKill != null) ? plKill.id : -1;
+
+        // Rơi ngọc rồng (4 - 7 sao: id 17 - 20)
+        int nrId = Util.nextInt(17, 20);
+        int nrX = Math.max(24, Math.min(this.zone.map.mapWidth - 24, this.location.x));
+        int nrY = this.zone.map.yPhysicInTop(nrX, this.location.y - 24);
+        ItemMap itNr = new ItemMap(this.zone, nrId, 1, nrX, nrY, plId);
+        Service.gI().dropItemMap(this.zone, itNr);
+
+        // Rơi 10 cục vàng, mỗi cục 31k vàng (Item 190)
+        for (int i = 0; i < 10; i++) {
+            int offsetX = (i % 2 == 0 ? 1 : -1) * ((i / 2 + 1) * 15);
+            int dropX = Math.max(24, Math.min(this.zone.map.mapWidth - 24, this.location.x + offsetX));
+            int dropY = this.zone.map.yPhysicInTop(dropX, this.location.y - 24);
+            ItemMap itGold = new ItemMap(this.zone, 190, 31000, dropX, dropY, plId);
+            Service.gI().dropItemMap(this.zone, itGold);
+        }
+
+        if (plKill != null) {
+            services.TaskService.gI().checkDoneTaskKillBoss(plKill, this);
+        }
     }
 
     @Override
@@ -58,7 +79,7 @@ public class NinjaClone extends Boss {
     }
 
     @Override
-    public synchronized int injured(Player plAtt, long damage, boolean piercing, boolean isMobAttack) {
+    public synchronized long injured(Player plAtt, long damage, boolean piercing, boolean isMobAttack) {
         if (!this.isDie()) {
             if (!piercing && Util.isTrue(20, 100)) {
                 this.chat("Xí hụt");
@@ -84,9 +105,7 @@ public class NinjaClone extends Boss {
 
     @Override
     public void die(Player plKill) {
-        if (plKill != null) {
-            reward(plKill);
-        }
+        reward(plKill);
         this.changeStatus(BossStatus.DIE);
     }
 

@@ -9,6 +9,7 @@ import models.mob.Mob;
 import models.npc.Npc;
 import services.map.NpcManager;
 import models.player.Player;
+import models.player.NPoint;
 import network.io.Message;
 import models.boss.boss_list.Training.TrainingBoss;
 import consts.ConstMob;
@@ -673,8 +674,8 @@ public ItemMap getItemMapByTempId(int tempId) {
             msg.writer().writeByte(plInfo.gender);
             msg.writer().writeShort(plInfo.getHead());
             msg.writer().writeUTF(Service.gI().name(plInfo));
-            msg.writeFix(plInfo.nPoint != null ? Util.maxIntValue(plInfo.nPoint.hp) : 100);
-            msg.writeFix(plInfo.nPoint != null ? Util.maxIntValue(plInfo.nPoint.hpMax) : 100);
+            msg.writer().writeInt(plInfo.nPoint != null ? NPoint.safeInt(plInfo.nPoint.hp) : 100);
+            msg.writer().writeInt(plInfo.nPoint != null ? NPoint.safeInt(plInfo.nPoint.hpMax) : 100);
             msg.writer().writeShort(plInfo.getBody());
             msg.writer().writeShort(plInfo.getLeg());
             int flagbag = plInfo.getFlagBag();
@@ -792,9 +793,9 @@ msg.writer().writeByte(plInfo.idMark != null ? plInfo.idMark.getIdSpaceShip() : 
                     msg.writer().writeBoolean(false); //is wind
                     msg.writer().writeByte(mob.tempId);
                     msg.writer().writeByte(0); // sys
-                    msg.writer().writeInt(mob.point != null ? mob.point.gethp() : 0);
+                    msg.writer().writeInt(mob.point != null ? NPoint.safeInt(mob.point.gethp()) : 0);
                     msg.writer().writeByte(mob.level);
-                    msg.writer().writeInt(mob.point != null ? mob.point.getHpFull() : 0);
+                    msg.writer().writeInt(mob.point != null ? NPoint.safeInt(mob.point.getHpFull()) : 0);
                     msg.writer().writeShort(mob.location.x);
                     msg.writer().writeShort(mob.location.y);
                     msg.writer().writeByte(mob.status);

@@ -58,7 +58,7 @@ public void reward(Player plKill) {
     }
 
     @Override
-    public synchronized int injured(Player plAtt, long damage, boolean piercing, boolean isMobAttack) {
+    public synchronized long injured(Player plAtt, long damage, boolean piercing, boolean isMobAttack) {
         if (!this.callApk13 && damage >= this.nPoint.hp) {
             if (this.parentBoss != null) {
                 ((Android14) this.parentBoss).callApk13();

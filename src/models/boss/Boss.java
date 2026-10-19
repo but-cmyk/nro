@@ -902,7 +902,7 @@ public class Boss extends Player implements IBoss {
     }
 
     @Override
-    public synchronized int injured(Player plAtt, long damage, boolean piercing, boolean isMobAttack) {
+    public synchronized long injured(Player plAtt, long damage, boolean piercing, boolean isMobAttack) {
         if (this.isDie()) {
             return 0;
         }
@@ -946,7 +946,7 @@ public class Boss extends Player implements IBoss {
             die(plAtt);
         }
 
-        return (int) Math.min(Integer.MAX_VALUE, damage);
+        return damage;
     }
 
     @Override

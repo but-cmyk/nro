@@ -2239,9 +2239,9 @@ namespace Game1
     				BackgroudEffect.addEffect(leafEarth);
     			}
 
-    			// Mưa Động: Tần suất cao, cách cơn mưa trước 45 giây, xác suất 60%
+    			// Mưa Động: Đã giảm 10 lần tần suất xuất hiện, cách cơn mưa trước 450 giây (7.5 phút), xác suất 6%
     			long now = mSystem.currentTimeMillis();
-    			if (BackgroudEffect.isEnableRain && isOutdoorRainMap() && (now - lastRainTime > 45000) && Res.random(0, 100) < 60)
+    			if (BackgroudEffect.isEnableRain && isOutdoorRainMap() && (now - lastRainTime > 450000) && Res.random(0, 100) < 6)
     			{
     				lastRainTime = now;
     				BackgroudEffect.addEffect(0);

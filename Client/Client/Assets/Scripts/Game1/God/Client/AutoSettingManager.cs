@@ -35,12 +35,12 @@ namespace Game1.God
     {
         public int templateId;
         public string name;
-        public int hp;
+        public long hp;
         public int count;
         public bool isAll;
         public string infoStr;
 
-        public MobTanSatEntry(int templateId, string name, int hp, int count, bool isAll)
+        public MobTanSatEntry(int templateId, string name, long hp, int count, bool isAll)
         {
             this.templateId = templateId;
             this.name = name;
@@ -567,7 +567,7 @@ namespace Game1.God
                     if (!dict.ContainsKey(tid))
                     {
                         string mobName = "Quái #" + tid;
-                        int maxHp = mob.maxHp;
+                        long maxHp = mob.maxHp;
                         MobTemplate t = mob.getTemplate();
                         if (t != null)
                         {

@@ -28,9 +28,9 @@ namespace Game1
     
     	public bool isSpeedUp;
     
-    	public int dame;
+    	public long dame;
     
-    	public int dameMp;
+    	public long dameMp;
     
     	public Char c;
     
@@ -61,7 +61,7 @@ namespace Game1
     		0, 1, 2, 1, 0
     	};
     
-    	public MonsterDart(int x, int y, bool isBoss, int dame, int dameMp, Char c, int dartType)
+    	public MonsterDart(int x, int y, bool isBoss, long dame, long dameMp, Char c, int dartType)
     	{
     		if (GameScr.darts != null && dartType >= 0 && dartType < GameScr.darts.Length && GameScr.darts[dartType] != null)
     		{
@@ -89,7 +89,7 @@ namespace Game1
     		}
     	}
     
-    	public MonsterDart(int x, int y, bool isBoss, int dame, int dameMp, int xTo, int yTo, int dartType)
+    	public MonsterDart(int x, int y, bool isBoss, long dame, long dameMp, int xTo, int yTo, int dartType)
     	{
     		if (GameScr.darts != null && dartType >= 0 && dartType < GameScr.darts.Length && GameScr.darts[dartType] != null)
     		{
@@ -126,7 +126,7 @@ namespace Game1
     		vy = va * Res.sin(angle) >> 10;
     	}
     
-    	public static void addMonsterDart(int x, int y, bool isBoss, int dame, int dameMp, Char c, int dartType)
+    	public static void addMonsterDart(int x, int y, bool isBoss, long dame, long dameMp, Char c, int dartType)
     	{
     		if (c == null)
     		{
@@ -135,7 +135,7 @@ namespace Game1
     		Effect2.vEffect2.addElement(new MonsterDart(x, y, isBoss, dame, dameMp, c, dartType));
     	}
     
-    	public static void addMonsterDart(int x, int y, bool isBoss, int dame, int dameMp, int xTo, int yTo, int dartType)
+    	public static void addMonsterDart(int x, int y, bool isBoss, long dame, long dameMp, int xTo, int yTo, int dartType)
     	{
     		Effect2.vEffect2.addElement(new MonsterDart(x, y, isBoss, dame, dameMp, xTo, yTo, dartType));
     	}
@@ -279,7 +279,7 @@ namespace Game1
     		}
     	}
     
-    	public static void addMonsterDart(int x2, int y2, bool checkIsBoss, int dame2, int dameMp2, Mob mobToAttack, sbyte dartType)
+    	public static void addMonsterDart(int x2, int y2, bool checkIsBoss, long dame2, long dameMp2, Mob mobToAttack, sbyte dartType)
     	{
     		addMonsterDart(x2, y2, checkIsBoss, dame2, dameMp2, mobToAttack.x, mobToAttack.y, dartType);
     	}

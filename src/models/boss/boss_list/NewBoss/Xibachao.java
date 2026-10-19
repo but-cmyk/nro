@@ -82,7 +82,7 @@ public class Xibachao extends Boss {
     }
 
     @Override
-    public synchronized int injured(Player plAtt, long damage, boolean piercing, boolean isMobAttack) {
+    public synchronized long injured(Player plAtt, long damage, boolean piercing, boolean isMobAttack) {
         if (!this.isDie()) {
             if (currentState != TricksterState.TRICKSTER) {
                 this.chat("Đừng làm phiền ta!");

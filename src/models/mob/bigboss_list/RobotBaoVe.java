@@ -3,6 +3,7 @@ package models.mob.bigboss_list;
 import models.mob.BigBoss;
 import models.mob.Mob;
 import models.player.Player;
+import models.player.NPoint;
 import services.Service;
 import utils.Util;
 
@@ -25,8 +26,8 @@ public class RobotBaoVe extends BigBoss {
         Player player = getPlayerCanAttack();
         if (!isDie() && !effectSkill.isHaveEffectSkill() && Util.canDoWithTime(lastBigBossAttackTime, 1000)) {
             if (player != null) {
-                int dameMob = this.point.getDameAttack();
-                int dame = player.injured(null, dameMob, false, true);
+                long dameMob = this.point.getDameAttack();
+                long dame = player.injured(null, dameMob, false, true);
                 action = 0;
                 int dis = Util.getDistance(player, this);
                 if (dis <= 100) {
@@ -37,7 +38,7 @@ public class RobotBaoVe extends BigBoss {
                     action = 2;
                 }
                 this.location.x = (short) player.location.x;
-                Service.gI().sendBigBoss(this.zone, action, 1, (int) player.id, dame);
+                Service.gI().sendBigBoss(this.zone, action, 1, (int) player.id, NPoint.safeInt(dame));
             }
             lastBigBossAttackTime = System.currentTimeMillis();
         }

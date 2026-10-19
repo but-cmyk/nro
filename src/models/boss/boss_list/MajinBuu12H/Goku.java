@@ -252,7 +252,7 @@ public class Goku extends Boss {
         }
     }
     @Override
-    public synchronized int injured(Player plAtt, long damage, boolean piercing, boolean isMobAttack) {
+    public synchronized long injured(Player plAtt, long damage, boolean piercing, boolean isMobAttack) {
         if (!this.isDie()) {
             if (plAtt.isPl() && Util.isTrue(1, 5)) {
                 plAtt.fightMabu.changePoint((byte) 1);

@@ -1348,14 +1348,14 @@ namespace Game1
     			SoundMn.gI().stopRain();
     		}
 
-            // Realtime dynamic rain check: Kích hoạt mưa khi người chơi ở lâu trong map ngoài trời
+            // Realtime dynamic rain check: Đã giảm 10 lần tần suất xuất hiện (cooldown 450s, check mỗi 60s, xác suất 5%)
             if (isEnableRain && !hasRain && GameCanvas.isOutdoorRainMap())
             {
                 long now = mSystem.currentTimeMillis();
-                if (now - GameCanvas.lastRainTime > 45000 && now - lastCheckRain > 8000)
+                if (now - GameCanvas.lastRainTime > 450000 && now - lastCheckRain > 60000)
                 {
                     lastCheckRain = now;
-                    if (Res.random(0, 100) < 50)
+                    if (Res.random(0, 100) < 5)
                     {
                         GameCanvas.lastRainTime = now;
                         addEffect(0);

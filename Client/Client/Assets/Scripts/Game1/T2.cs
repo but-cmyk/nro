@@ -61,7 +61,7 @@ namespace Game1
     		mResources.inventory_Pass = "Security password";
     		mResources.input_Inventory_Pass = "Enter Security password";
     		mResources.input_Inventory_Pass_wrong = "Security password must be 6 number.";
-    		mResources.regNote = "Please enter your number phone or email ,then enter your password to create new account";
+    		mResources.regNote = "Please enter username and password to create new account";
     		mResources.note = "You will lost your account forever if you change to another account,do you agree ?";
     		mResources.REGISTOPROTECT = "Register to protect account";
     		mResources.finishBomong = "You must finish the mission find 6 star dragon ball to recharge";
@@ -101,11 +101,11 @@ namespace Game1
     		mResources.change_account = "Change account";
     		mResources.alreadyHadAccount1 = "Did you already play and own a Dragon Ball Online's account at server ";
     		mResources.alreadyHadAccount2 = " before ?";
-    		mResources.userBlank = "You didn't enter you email or phone number.";
+    		mResources.userBlank = "You didn't enter your username.";
     		mResources.passwordBlank = "You didn't enter password";
-    		mResources.accTooShort = "Account name must be longer than 5 character";
-    		mResources.phoneInvalid = "Phone number is invalid. Please enter like these following form: 0912345678 or 84918765432";
-    		mResources.emailInvalid = "Email is invalid. Please enter like these following form: yournamehere@yahoo.com or yournamehere@gmail.com";
+    		mResources.accTooShort = "Account name must be between 4 and 16 characters";
+    		mResources.phoneInvalid = "Username is invalid (4-16 alphanumeric characters).";
+    		mResources.emailInvalid = "Username is invalid (4-16 alphanumeric characters).";
     		mResources.registerNewAcc = "Register\nnew\naccount";
     		mResources.selectServer = "Select\nserver";
     		mResources.forgetPass = "Forget pwd";
@@ -119,9 +119,9 @@ namespace Game1
     		};
     		mResources.no_msg = "No message";
     		mResources.cancelAccountProtection = "Do you want to cancel account protection function ?";
-    		mResources.plsCheckAcc = "Please check your account information carefully to recover account, in case forgot password\n";
-    		mResources.phone = "Phone number";
-    		mResources.email = "Email";
+    		mResources.plsCheckAcc = "Please check your account information carefully\n";
+    		mResources.phone = "Account";
+    		mResources.email = "Account";
     		mResources.acc = "Acc";
     		mResources.pwd = "Pwd";
     		mResources.goToWebForPassword = "To recover password, please visit website http://ngocrongonline.com/matkhau";

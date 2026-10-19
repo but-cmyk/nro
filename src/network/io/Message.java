@@ -31,13 +31,8 @@ public class Message implements IMessage {
         this.is = new ByteArrayInputStream(data);
         this.dis = new DataInputStream(this.is);
     }
-    public static boolean readInt = true;
     public void writeFix(long v) throws IOException {
-        if (readInt) {
-            writeInt((int) v);
-            return;
-        }
-        writeLong(v);
+        writeInt(models.player.NPoint.safeInt(v));
     }
     public void writeInt(int v) throws IOException {
         /* 219 */ writer().writeInt(v);

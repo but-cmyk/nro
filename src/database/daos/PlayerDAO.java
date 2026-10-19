@@ -136,13 +136,20 @@ public class PlayerDAO {
                     item.add(1); // số lượng
                     options.add(opt.toJSONString());
                     opt.clear();
-                } else if (i == 1) { // 100 đậu thần cấp 1
+                } else if (i == 1) { // 50 đậu thần cấp 1
                     opt.add(48); // id option: hồi phục HP, KI
                     opt.add(100); // param: 100 HP, KI
                     options.add(opt.toJSONString());
                     opt.clear();
                     item.add(13); // id item: Đậu thần cấp 1
-                    item.add(100); // số lượng: 100 viên
+                    item.add(50); // số lượng: 50 viên
+                } else if (i == 2) { // Capsule tân thủ (item 1484)
+                    opt.add(30); // id option: Không thể giao dịch
+                    opt.add(0); // param option
+                    options.add(opt.toJSONString());
+                    opt.clear();
+                    item.add(1484); // id item: Capsule tân thủ
+                    item.add(1); // số lượng: 1 cái
                 } else {
                     item.add(-1); // id item
                     item.add(0); // số lượng

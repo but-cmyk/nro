@@ -433,6 +433,7 @@ public class NPoint {
             case 81: //MP+#%/30s
                 this.tlMpHoi += param;
                 break;
+            case 83: //Tăng 20% sức mạnh và tiềm năng nhận được khi đánh quái
             case 88: //Cộng #% exp khi đánh quái
                 this.tlTNSM.add(param);
                 break;
@@ -765,14 +766,11 @@ public class NPoint {
             hpMax += hpMax / 10;
         }
 
-        if (hpMax > 2_000_000_000 || hpMax < 0) {
-            hpMax = 2_000_000_000;
-        }
         if (hpMax <= 0) {
             hpMax = 1;
         }
 
-        this.hpMax = (int) hpMax;
+        this.hpMax = hpMax;
     }
 
     private void setHp() {
@@ -844,14 +842,11 @@ public class NPoint {
             mpMax += mpMax / 10;
         }
 
-        if (mpMax > 2_000_000_000 || mpMax < 0) {
-            mpMax = 2_000_000_000;
-        }
         if (mpMax <= 0) {
             mpMax = 1;
         }
 
-        this.mpMax = (int) mpMax;
+        this.mpMax = mpMax;
     }
 
     private void setMp() {
@@ -1003,14 +998,11 @@ public class NPoint {
             dame += dame / 10;
         }
 
-        if (dame > 2_000_000_000 || dame < 0) {
-            dame = 2_000_000_000;
-        }
         if (dame <= 0) {
             dame = 1;
         }
 
-        this.dame = (int) dame;
+        this.dame = dame;
     }
 
     private void setDef() {
@@ -1104,11 +1096,11 @@ public class NPoint {
 
     public void addHp(long hp) {
         if (hp > 0) {
-            long potentialHp = (long) this.hp + hp;
+            long potentialHp = this.hp + hp;
             if (potentialHp > this.hpMax) {
                 this.hp = this.hpMax;
             } else {
-                this.hp = (int) Math.min(potentialHp, 2000000000);
+                this.hp = potentialHp;
             }
         }
     }
@@ -1121,7 +1113,7 @@ public class NPoint {
         } else if (potentialMp < 0) {
             this.mp = 0;
         } else {
-            this.mp = (int) potentialMp;
+            this.mp = potentialMp;
         }
     }
 
@@ -1154,7 +1146,7 @@ public class NPoint {
         }
     }
 
-    public int getDameAttack(boolean isAttackMob) {
+    public long getDameAttack(boolean isAttackMob) {
         setIsCrit();
         long dameAttack = this.dame;
         intrinsic = this.player.playerIntrinsic.intrinsic;
@@ -1279,27 +1271,24 @@ public class NPoint {
             case Skill.DICH_CHUYEN_TUC_THOI:
                 isCrit = true;
                 isCritTele = true;
-                dameAttack = Util.nextInt((int) (int) Math.min(2_000_000_000L, (dameAttack - (dameAttack / 100 * 5))),
-                        (int) (int) Math.min(2_000_000_000L, (dameAttack + (dameAttack / 100 * 5))));
+                long deltaTele = dameAttack / 100L * 5L;
+                dameAttack = Util.nextLong(Math.max(1L, dameAttack - deltaTele), dameAttack + deltaTele);
                 break;
             case Skill.MAKANKOSAPPO:
                 percentDameSkill = skillSelect.damage;
-                int dameSkill = (int) Math.min(2_000_000_000L, (long) this.mpMax * percentDameSkill / 100);
-                //  System.out.println(" Makanko KI Gốc: " + player.nPoint.mpMax);
-                //  System.out.println(" KI Damage: " + dameSkill);
+                long dameSkill = (long) this.mpMax * (long) percentDameSkill / 100L;
                 if (player.inventory != null && player.inventory.itemsBody != null && player.inventory.itemsBody.size() > 5) {
                     Item TrangBi = player.inventory.itemsBody.get(5);
                     if (TrangBi != null && TrangBi.isNotNullItem() && TrangBi.itemOptions != null) {
                         for (Item.ItemOption io : TrangBi.itemOptions) {
                             if (io.optionTemplate.id == 232) {
-                                dameSkill = (int) (dameSkill * 1.3);
+                                dameSkill = (long) (dameSkill * 1.3);
                                 break;
                             }
                         }
                     }
                 }
-                //System.out.println("Damage MaKanKo Tăng: " + dameSkill);
-                return dameSkill;
+                return Math.max(1L, dameSkill);
             case Skill.QUA_CAU_KENH_KHI:
                 long hpmob = 0;
                 long hppl = 0;
@@ -1323,21 +1312,18 @@ public class NPoint {
                 }
 
                 dameqckk = dameqckk + (Util.nextInt(-5, 5) * dameqckk / 100L);
-                if (dameqckk > 2_000_000_000L || dameqckk < 0) {
-                    dameqckk = 2_000_000_000L;
-                }
                 if (dameqckk <= 0) {
                     dameqckk = 1L;
                 }
-                return (int) dameqckk;
+                return dameqckk;
             case Skill.DE_TRUNG:
                 if (player.setClothes.pikkoroDaimao == 5) {
                     dameAttack *= 4;
                 }
-                if (dameAttack > 2_000_000_000) {
-                    dameAttack = 2_000_000_000;
+                if (dameAttack <= 0) {
+                    dameAttack = 1;
                 }
-                return (int) dameAttack;
+                return dameAttack;
         }
 
         if (intrinsic.id == 18 && this.player.effectSkill.isMonkey) {
@@ -1375,15 +1361,12 @@ public class NPoint {
         if (tempDameAttack <= 0) {
             tempDameAttack = 1;
         }
-        dameAttack += (long) (Util.getOne(-1, 1) * Util.nextInt((int) tempDameAttack) + 1);
-        if (dameAttack > 2_000_000_000 || dameAttack < 0) {
-            dameAttack = 2_000_000_000;
-        }
+        dameAttack += (long) (Util.getOne(-1, 1) * Util.nextLong(tempDameAttack) + 1);
         if (dameAttack <= 0) {
             dameAttack = 1;
         }
 
-        return (int) dameAttack;
+        return dameAttack;
     }
 
     public int getCurrPercentHP() {

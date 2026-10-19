@@ -10,7 +10,7 @@ namespace Game1
     
     	public sbyte type;
     
-    	public int hp;
+    	public long hp;
     
     	public string name;
     

@@ -15,5 +15,5 @@ public abstract class Character {
     public EffectSkill effectSkill;
 
     public abstract boolean isDie();
-    public abstract int injured(Player plAtt, long damage, boolean piercing, boolean isMobAttack);
+    public abstract long injured(Player plAtt, long damage, boolean piercing, boolean isMobAttack);
 }

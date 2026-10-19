@@ -170,7 +170,7 @@ public class EffectSkin {
                         for (Mob mob : this.player.zone.mobs) {
                             if (mob.point.gethp() > 1) {
                                 if (Util.getDistance(this.player, mob) <= 200) {
-                                    int subHp = mob.point.getHpFull() * param / 100;
+                                    long subHp = mob.point.getHpFull() * param / 100L;
                                     if (subHp >= mob.point.gethp()) {
                                         subHp = mob.point.gethp() - 1;
                                     }

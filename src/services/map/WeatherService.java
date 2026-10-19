@@ -44,9 +44,8 @@ public class WeatherService {
 
         // Apply default ambient atmospheric presets if not already specified
         switch (map.mapId) {
-            case 5: // Đảo Kame - Rainy ambient
-                addEffectIfNotExists(effects, "beff", "0");
-                addEffectIfNotExists(effects, "beff", "12");
+            case 5: // Đảo Kame - Sunny tropical beach
+                addEffectIfNotExists(effects, "beff", "13");
                 break;
             case 105:
             case 106:

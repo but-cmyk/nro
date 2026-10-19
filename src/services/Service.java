@@ -117,13 +117,12 @@ public class Service {
             } else {
                 // Hash password with BCrypt before inserting
                 String hashedPassword = utils.PasswordUtils.hashPassword(pass);
-                AlyraManager.executeUpdate("INSERT INTO account (username, password, is_admin, sotien, danap, gmail) VALUES(?, ?, ?, ?, ?, ?)",
+                AlyraManager.executeUpdate("INSERT INTO account (username, password, is_admin, sotien, danap) VALUES(?, ?, ?, ?, ?)",
                         user,           // username
                         hashedPassword, // password
                         0,              // is_admin (int)
                         0,              // sotien (int)
-                        0,              // danap (int)
-                        ""              // gmail
+                        0               // danap (int)
                 );
                 sendThongBaoOK((MySession) session, "Đăng ký tài khoản thành công!\nBạn có thể đăng nhập ngay.");
             }
@@ -1785,7 +1784,7 @@ public class Service {
             msg.writer().writeInt((int) pVS1.id); //ID PLAYER
             msg.writer().writeByte(type); //TYPE PK
             pVS1.sendMessage(msg);
-            if (pVS2.isPl()) {
+            if (pVS2 != null && pVS2.isPl()) {
                 pVS2.sendMessage(msg);
             }
         } catch (Exception e) {
@@ -2118,8 +2117,8 @@ public class Service {
             msg.writer().writeByte(player.zone.getNotBosses().size()); // số player
             for (Player plM : player.zone.getNotBosses()) {
                 msg.writer().writeInt((int) plM.id);
-                int damage = plM.injured(player, player.nPoint.dame + plM.nPoint.hp / 10, true, false);
-                msg.writer().writeInt(damage);
+                long damage = plM.injured(player, player.nPoint.dame + plM.nPoint.hp / 10, true, false);
+                msg.writer().writeInt(NPoint.safeInt(damage));
             }
             sendMessAllPlayerInMap(player, msg);
             msg.cleanup();

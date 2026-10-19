@@ -74,7 +74,7 @@ public void reward(Player plKill) {
     private long st;
 
     @Override
-    public synchronized int injured(Player plAtt, long damage, boolean piercing, boolean isMobAttack) {
+    public synchronized long injured(Player plAtt, long damage, boolean piercing, boolean isMobAttack) {
         if (plAtt != null && plAtt.playerSkill != null && plAtt.playerSkill.skillSelect != null
                 && plAtt.playerSkill.skillSelect.template != null) {
             switch (plAtt.playerSkill.skillSelect.template.id) {
