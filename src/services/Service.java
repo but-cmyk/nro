@@ -117,13 +117,12 @@ public class Service {
             } else {
                 // Hash password with BCrypt before inserting
                 String hashedPassword = utils.PasswordUtils.hashPassword(pass);
-                AlyraManager.executeUpdate("INSERT INTO account (username, password, is_admin, sotien, danap, gmail) VALUES(?, ?, ?, ?, ?, ?)",
+                AlyraManager.executeUpdate("INSERT INTO account (username, password, is_admin, sotien, danap) VALUES(?, ?, ?, ?, ?)",
                         user,           // username
                         hashedPassword, // password
                         0,              // is_admin (int)
                         0,              // sotien (int)
-                        0,              // danap (int)
-                        ""              // gmail
+                        0               // danap (int)
                 );
                 sendThongBaoOK((MySession) session, "Đăng ký tài khoản thành công!\nBạn có thể đăng nhập ngay.");
             }
@@ -335,9 +334,9 @@ public class Service {
         try {
             msg = Service.gI().messageSubCommand((byte) 14);//Cập nhật máu
             msg.writer().writeInt((int) pl.id);
-            msg.writer().writeInt(NPoint.safeInt(pl.nPoint.hp));
+            msg.writer().writeLong(pl.nPoint.hp);
             msg.writer().writeByte(0);//Hiệu ứng Ăn Đậu
-            msg.writer().writeInt(NPoint.safeInt(pl.nPoint.hpMax));
+            msg.writer().writeLong(pl.nPoint.hpMax);
             sendMessAnotherNotMeInMap(pl, msg);
             msg.cleanup();
         } catch (Exception ignored) {
@@ -350,9 +349,9 @@ public class Service {
         try {
             msg = Service.gI().messageSubCommand((byte) 14);//Cập nhật máu
             msg.writer().writeInt((int) pl.id);
-            msg.writer().writeInt(NPoint.safeInt(pl.nPoint.hp));
+            msg.writer().writeLong(pl.nPoint.hp);
             msg.writer().writeByte(2);
-            msg.writer().writeInt(NPoint.safeInt(pl.nPoint.hpMax));
+            msg.writer().writeLong(pl.nPoint.hpMax);
             sendMessAnotherNotMeInMap(pl, msg);
             msg.cleanup();
         } catch (Exception ignored) {
@@ -365,9 +364,9 @@ public class Service {
         try {
             msg = Service.gI().messageSubCommand((byte) 14);
             msg.writer().writeInt((int) pl.id);
-            msg.writer().writeInt(NPoint.safeInt(pl.nPoint.hp));
+            msg.writer().writeLong(pl.nPoint.hp);
             msg.writer().writeByte(1);
-            msg.writer().writeInt(NPoint.safeInt(pl.nPoint.hpMax));
+            msg.writer().writeLong(pl.nPoint.hpMax);
             sendMessAnotherNotMeInMap(pl, msg);
             msg.cleanup();
         } catch (Exception ignored) {
@@ -380,8 +379,8 @@ public class Service {
         try {
             msg = messageSubCommand((byte) 9);
             msg.writer().writeInt((int) pl.id);
-            msg.writer().writeInt(NPoint.safeInt(pl.nPoint.hp));
-            msg.writer().writeInt(NPoint.safeInt(pl.nPoint.hpMax));
+            msg.writer().writeLong(pl.nPoint.hp);
+            msg.writer().writeLong(pl.nPoint.hpMax);
             sendMessAnotherNotMeInMap(pl, msg);
         } catch (Exception ignored) {
         } finally {
@@ -494,18 +493,18 @@ public class Service {
             Message msg;
             try {
                 msg = new Message(-42);
-                msg.writer().writeInt(NPoint.safeInt(player.nPoint.hpg));
-                msg.writer().writeInt(NPoint.safeInt(player.nPoint.mpg));
-                msg.writer().writeInt(NPoint.safeInt(player.nPoint.dameg));
-                msg.writer().writeInt(NPoint.safeInt(player.nPoint.hpMax));
-                msg.writer().writeInt(NPoint.safeInt(player.nPoint.mpMax));
-                msg.writer().writeInt(NPoint.safeInt(player.nPoint.hp));
-                msg.writer().writeInt(NPoint.safeInt(player.nPoint.mp));
+                msg.writer().writeLong(player.nPoint.hpg);
+                msg.writer().writeLong(player.nPoint.mpg);
+                msg.writer().writeLong(player.nPoint.dameg);
+                msg.writer().writeLong(player.nPoint.hpMax);
+                msg.writer().writeLong(player.nPoint.mpMax);
+                msg.writer().writeLong(player.nPoint.hp);
+                msg.writer().writeLong(player.nPoint.mp);
                 msg.writer().writeByte(player.nPoint.speed);
                 msg.writer().writeByte(20);
                 msg.writer().writeByte(20);
                 msg.writer().writeByte(1);
-                msg.writer().writeInt(NPoint.safeInt(player.nPoint.dame));
+                msg.writer().writeLong(player.nPoint.dame);
                 msg.writer().writeInt(NPoint.safeInt(player.nPoint.def));
                 msg.writer().writeByte((byte) Math.min(100, Math.max(0, player.nPoint.crit)));
                 msg.writer().writeLong(player.nPoint.tiemNang);
@@ -810,8 +809,8 @@ public class Service {
 
             msg = messageSubCommand((byte) 15);
             msg.writer().writeInt((int) pl.id);
-            msg.writer().writeInt(NPoint.safeInt(hp));
-            msg.writer().writeInt(NPoint.safeInt(mp));
+            msg.writer().writeLong(hp);
+            msg.writer().writeLong(mp);
             msg.writer().writeShort(pl.location.x);
             msg.writer().writeShort(pl.location.y);
             sendMessAllPlayerInMap(pl, msg);
@@ -1312,11 +1311,11 @@ public class Service {
                     }
                 }
 
-                msg.writer().writeInt(NPoint.safeInt(pl.pet.nPoint.hp)); //hp
-                msg.writer().writeInt(NPoint.safeInt(pl.pet.nPoint.hpMax)); //hpfull
-                msg.writer().writeInt(NPoint.safeInt(pl.pet.nPoint.mp)); //mp
-                msg.writer().writeInt(NPoint.safeInt(pl.pet.nPoint.mpMax)); //mpfull
-                msg.writer().writeInt(NPoint.safeInt(pl.pet.nPoint.dame)); //damefull
+                msg.writer().writeLong(pl.pet.nPoint.hp); //hp
+                msg.writer().writeLong(pl.pet.nPoint.hpMax); //hpfull
+                msg.writer().writeLong(pl.pet.nPoint.mp); //mp
+                msg.writer().writeLong(pl.pet.nPoint.mpMax); //mpfull
+                msg.writer().writeLong(pl.pet.nPoint.dame); //damefull
                 msg.writer().writeUTF(pl.pet.name); //name
                 msg.writer().writeUTF(getCurrStrLevel(pl.pet)); //curr level
                 msg.writer().writeLong(pl.pet.nPoint.power); //power
@@ -2118,8 +2117,8 @@ public class Service {
             msg.writer().writeByte(player.zone.getNotBosses().size()); // số player
             for (Player plM : player.zone.getNotBosses()) {
                 msg.writer().writeInt((int) plM.id);
-                int damage = plM.injured(player, player.nPoint.dame + plM.nPoint.hp / 10, true, false);
-                msg.writer().writeInt(damage);
+                long damage = plM.injured(player, player.nPoint.dame + plM.nPoint.hp / 10, true, false);
+                msg.writer().writeInt(NPoint.safeInt(damage));
             }
             sendMessAllPlayerInMap(player, msg);
             msg.cleanup();
@@ -2232,8 +2231,8 @@ public class Service {
             msg.writer().writeByte(pl.gender);
             msg.writer().writeShort(plHead);
             msg.writer().writeUTF(plName);
-            msg.writer().writeInt(NPoint.safeInt(pl.nPoint.hp));
-            msg.writer().writeInt(NPoint.safeInt(pl.nPoint.hpMax));
+            msg.writer().writeLong(pl.nPoint.hp);
+            msg.writer().writeLong(pl.nPoint.hpMax);
             msg.writer().writeShort(plBody);
             msg.writer().writeShort(plLeg);
             int flagbag = pl.getFlagBag();

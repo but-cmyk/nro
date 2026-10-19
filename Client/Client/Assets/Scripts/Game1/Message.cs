@@ -46,9 +46,9 @@ namespace Game1
     		return dos;
     	}
     
-    	public int readInt3Byte()
+    	public long readInt3Byte()
     	{
-    		return dis.readInt();
+    		return dis.readLong();
     	}
     
     	public void cleanup()

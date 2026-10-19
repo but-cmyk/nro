@@ -47,7 +47,7 @@ public class Raiti extends Boss {
     }
 
     @Override
-    public synchronized int injured(Player plAtt, long damage, boolean piercing, boolean isMobAttack) {
+    public synchronized long injured(Player plAtt, long damage, boolean piercing, boolean isMobAttack) {
         if (!this.isDie()) {
             // Khi nổi giận, giảm 20% sát thương nhận vào
             if (isEnraged) {

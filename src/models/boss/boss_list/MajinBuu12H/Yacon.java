@@ -127,7 +127,7 @@ public class Yacon extends Boss {
     }
 
     @Override
-    public synchronized int injured(Player plAtt, long damage, boolean piercing, boolean isMobAttack) {
+    public synchronized long injured(Player plAtt, long damage, boolean piercing, boolean isMobAttack) {
         if (!this.isDie()) {
             if (plAtt != null && plAtt.playerSkill != null && plAtt.playerSkill.skillSelect != null
                     && plAtt.playerSkill.skillSelect.template != null) {

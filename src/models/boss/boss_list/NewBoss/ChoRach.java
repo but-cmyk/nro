@@ -148,7 +148,7 @@ private void handleRewarding() {
     }
 
     @Override
-    public synchronized int injured(Player plAtt, long damage, boolean piercing, boolean isMobAttack) {
+    public synchronized long injured(Player plAtt, long damage, boolean piercing, boolean isMobAttack) {
         // Khi đang bận với cục xương, boss sẽ miễn nhiễm sát thương
         if (this.currentState != WolfState.HUNTING) {
             this.chat("Đừng làm phiền ta!");

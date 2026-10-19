@@ -47,7 +47,7 @@ public class Hatchiyack extends Boss {
     }
 
     @Override
-    public synchronized int injured(Player plAtt, long damage, boolean piercing, boolean isMobAttack) {
+    public synchronized long injured(Player plAtt, long damage, boolean piercing, boolean isMobAttack) {
         if (this.isDie()) {
             return 0;
         }

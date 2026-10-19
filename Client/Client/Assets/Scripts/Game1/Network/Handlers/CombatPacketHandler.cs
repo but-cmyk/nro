@@ -23,7 +23,7 @@ namespace Game1
                                 bool isFatal = false;
                                 Char myChar = Char.myCharz();
                                 myChar.cHP = msg.readInt3Byte();
-                                int damage = msg.readInt3Byte();
+                                long damage = msg.readInt3Byte();
                                 if (damage != 0)
                                 {
                                     myChar.doInjure();
@@ -61,7 +61,7 @@ namespace Game1
                             }
                             other.cHP = msg.readInt3Byte();
                             bool isFatalOther = false;
-                            int damageOther = msg.readInt3Byte();
+                            long damageOther = msg.readInt3Byte();
                             if (damageOther != 0)
                             {
                                 other.doInjure();

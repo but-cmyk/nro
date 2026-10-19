@@ -8,6 +8,7 @@ import models.mob.BigBoss;
 import models.mob.Mob;
 import network.io.Message;
 import models.player.Player;
+import models.player.NPoint;
 import services.ItemService;
 import services.Service;
 import utils.Util;
@@ -258,8 +259,10 @@ public class Hirudegarn extends BigBoss {
         try {
             msg = new Message(-9);
             msg.writer().writeByte(this.id);
-            msg.writer().writeInt(this.point.gethp());
-            msg.writer().writeInt(1);
+            msg.writer().writeLong(this.point.gethp());
+            msg.writer().writeLong(1L);
+            msg.writer().writeBoolean(false);
+            msg.writer().writeByte(-1);
             Service.gI().sendMessAllPlayerInMap(this.zone, msg);
         } catch (Exception e) {
             logError(e);
@@ -345,9 +348,9 @@ public class Hirudegarn extends BigBoss {
 
     private void handleTailWhipAttack(Message msg, Player targetPlayer) throws Exception {
         msg.writer().writeByte(1);
-        int damage = targetPlayer.injured(null, this.point.getDameAttack(), false, true);
+        long damage = targetPlayer.injured(null, this.point.getDameAttack(), false, true);
         msg.writer().writeInt((int) targetPlayer.id);
-        msg.writer().writeInt(damage);
+        msg.writer().writeInt(NPoint.safeInt(damage));
     }
 
     private void handleFlyAttack(Message msg, Player targetPlayer) throws Exception {
@@ -371,9 +374,9 @@ public class Hirudegarn extends BigBoss {
         msg.writer().writeByte(validTargets.size());
 
         for (Player player : validTargets) {
-            int damage = player.injured(null, this.point.getDameAttack(), false, true);
+            long damage = player.injured(null, this.point.getDameAttack(), false, true);
             msg.writer().writeInt((int) player.id);
-            msg.writer().writeInt(damage);
+            msg.writer().writeInt(NPoint.safeInt(damage));
         }
     }
 

@@ -88,7 +88,7 @@ public class IDMark {
 
     private boolean acpTrade;
 
-    private int damePST;
+    private long damePST;
 
     private long lastTimeRevenge;
 
@@ -274,8 +274,8 @@ public class IDMark {
     public boolean isAcpTrade() { return acpTrade; }
     public void setAcpTrade(boolean acpTrade) { this.acpTrade = acpTrade; }
 
-    public int getDamePST() { return damePST; }
-    public void setDamePST(int damePST) { this.damePST = damePST; }
+    public long getDamePST() { return damePST; }
+    public void setDamePST(long damePST) { this.damePST = damePST; }
 
     public long getLastTimeRevenge() { return lastTimeRevenge; }
     public void setLastTimeRevenge(long lastTimeRevenge) { this.lastTimeRevenge = lastTimeRevenge; }

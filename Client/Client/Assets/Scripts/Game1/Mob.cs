@@ -59,9 +59,9 @@ namespace Game1
     
     	public int holdEffID;
     
-    	public int hp;
+    	public long hp;
     
-    	public int maxHp;
+    	public long maxHp;
     
     	public int x;
     
@@ -91,7 +91,7 @@ namespace Game1
     
     	public int h;
     
-    	public int hpInjure;
+    	public long hpInjure;
     
     	public int charIndex;
     
@@ -129,9 +129,9 @@ namespace Game1
     
     	public Char cFocus;
     
-    	public int dame;
+    	public long dame;
     
-    	public int dameMp;
+    	public long dameMp;
     
     	public int sys;
     
@@ -254,7 +254,7 @@ namespace Game1
     	{
     	}
     
-    	public Mob(int mobId, bool isDisable, bool isDontMove, bool isFire, bool isIce, bool isWind, int templateId, int sys, int hp, sbyte level, int maxp, short pointx, short pointy, sbyte status, sbyte levelBoss)
+    	public Mob(int mobId, bool isDisable, bool isDontMove, bool isFire, bool isIce, bool isWind, int templateId, int sys, long hp, sbyte level, long maxp, short pointx, short pointy, sbyte status, sbyte levelBoss)
     	{
     		this.isDisable = isDisable;
     		this.isDontMove = isDontMove;

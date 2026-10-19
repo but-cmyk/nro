@@ -783,13 +783,13 @@ namespace Game1
     
     	public static int padSkill;
     
-    	public int dMP;
+    	public long dMP;
     
     	public int twMp;
     
     	public bool isInjureMp;
     
-    	public int dHP;
+    	public long dHP;
     
     	public int twHp;
     
@@ -4280,7 +4280,7 @@ namespace Game1
     				{
     					continue;
     				}
-    				int num = 0;
+    				long num = 0;
     				num = ((onScreenSkill[l].template.manaUseType == 2) ? 1 : ((onScreenSkill[l].template.manaUseType == 1) ? (onScreenSkill[l].manaUse * Char.myCharz().cMPFull / 100) : onScreenSkill[l].manaUse));
     				if (Char.myCharz().cMP >= num)
     				{
@@ -4307,7 +4307,7 @@ namespace Game1
     			{
     				continue;
     			}
-    			int num2 = 0;
+    			long num2 = 0;
     			num2 = ((keySkill[m].template.manaUseType == 2) ? 1 : ((keySkill[m].template.manaUseType == 1) ? (keySkill[m].manaUse * Char.myCharz().cMPFull / 100) : keySkill[m].manaUse));
     			if (Char.myCharz().cMP >= num2)
     			{
@@ -5217,7 +5217,7 @@ namespace Game1
     			}
     			else if (dHP > Char.myCharz().cHP)
     			{
-    				int num = dHP - Char.myCharz().cHP >> 1;
+    				long num = (dHP - Char.myCharz().cHP) >> 1;
     				if (num < 1)
     				{
     					num = 1;
@@ -5239,7 +5239,7 @@ namespace Game1
     			}
     			else if (dMP > Char.myCharz().cMP)
     			{
-    				int num2 = dMP - Char.myCharz().cMP >> 1;
+    				long num2 = (dMP - Char.myCharz().cMP) >> 1;
     				if (num2 < 1)
     				{
     					num2 = 1;
@@ -6294,9 +6294,9 @@ namespace Game1
     	public void paintImageBarRight(mGraphics g, Char c)
     	{
     		int num = (c.cHPFull > 0) ? (int)(c.cHP * hpBarW / c.cHPFull) : 0;
-    		int num2 = c.cMP * mpBarW;
+    		int num2 = (int)(c.cMP * mpBarW);
     		int num3 = (c.cHPFull > 0) ? (int)(dHP * hpBarW / c.cHPFull) : 0;
-    		int num4 = dMP * mpBarW;
+    		int num4 = (int)(dMP * mpBarW);
     		g.setClip(GameCanvas.w / 2 + 58 - mGraphics.getImageWidth(imgPanel), 0, 95, 100);
     		g.drawRegion(imgPanel, 0, 0, mGraphics.getImageWidth(imgPanel), mGraphics.getImageHeight(imgPanel), 2, GameCanvas.w / 2 + 60, 0, mGraphics.RIGHT | mGraphics.TOP);
     		g.setClip((int)(GameCanvas.w / 2 + 60 - 83 - hpBarW + hpBarW - num3), 5, num3, 10);
@@ -6324,9 +6324,9 @@ namespace Game1
     			if (c.charID == Char.myCharz().charID)
     			{
     				num = (c.cHPFull > 0) ? (int)(dHP * hpBarW / c.cHPFull) : 0;
-    				num2 = (c.cMPFull > 0) ? dMP * mpBarW / c.cMPFull : 0;
+    				num2 = (c.cMPFull > 0) ? (int)(dMP * mpBarW / c.cMPFull) : 0;
     				num3 = (c.cHPFull > 0) ? (int)(c.cHP * hpBarW / c.cHPFull) : 0;
-    				num4 = (c.cMPFull > 0) ? c.cMP * mpBarW / c.cMPFull : 0;
+    				num4 = (c.cMPFull > 0) ? (int)(c.cMP * mpBarW / c.cMPFull) : 0;
     			}
     			else
     			{
@@ -7939,7 +7939,7 @@ namespace Game1
     		int num3 = 0;
     		int width = imgHP_NEW.getWidth();
     		int num4 = imgHP_NEW.getHeight() / 2;
-    		num2 = (c.cHPFull > 0) ? (c.cHP * width / c.cHPFull) : 0;
+    		num2 = (c.cHPFull > 0) ? (int)(c.cHP * width / c.cHPFull) : 0;
     		if (num2 <= 0)
     		{
     			num2 = 1;
@@ -7949,7 +7949,7 @@ namespace Game1
     			num2 = width;
     		}
     		g.drawRegion(imgHP_NEW, 0, num4, num2, num4, 0, x2, num, 0);
-    		num3 = (c.cMPFull > 0) ? (c.cMP * width / c.cMPFull) : 0;
+    		num3 = (c.cMPFull > 0) ? (int)(c.cMP * width / c.cMPFull) : 0;
     		if (num3 <= 0)
     		{
     			num3 = 1;
@@ -8262,7 +8262,7 @@ namespace Game1
     		int num3 = 0;
     		int width = imgHP_NEW.getWidth();
     		int num4 = imgHP_NEW.getHeight() / 2;
-    		num2 = (c.cHPFull > 0) ? (c.cHP * width / c.cHPFull) : 0;
+    		num2 = (c.cHPFull > 0) ? (int)(c.cHP * width / c.cHPFull) : 0;
     		if (num2 <= 0)
     		{
     			num2 = 1;
@@ -8272,7 +8272,7 @@ namespace Game1
     			num2 = width;
     		}
     		g.drawRegion(imgHP_NEW, 0, num4, 80, num4, 0, x2, num, 0);
-    		num3 = (c.cMPFull > 0) ? (c.cMP * width / c.cMPFull) : 0;
+    		num3 = (c.cMPFull > 0) ? (int)(c.cMP * width / c.cMPFull) : 0;
     		if (num3 <= 0)
     		{
     			num3 = 1;

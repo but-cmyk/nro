@@ -81,7 +81,7 @@ public class PlayerService {
         Message msg;
         try {
             msg = Service.gI().messageSubCommand((byte) 5);
-            msg.writer().writeInt(NPoint.safeInt(player.nPoint.hp));
+            msg.writer().writeLong(player.nPoint.hp);
             player.sendMessage(msg);
             msg.cleanup();
         } catch (Exception e) {
@@ -93,7 +93,7 @@ public class PlayerService {
         Message msg;
         try {
             msg = Service.gI().messageSubCommand((byte) 6);
-            msg.writer().writeInt(NPoint.safeInt(player.nPoint.mp));
+            msg.writer().writeLong(player.nPoint.mp);
             player.sendMessage(msg);
             msg.cleanup();
         } catch (Exception e) {
@@ -131,8 +131,8 @@ public class PlayerService {
                 msg.writer().writeInt((int) gold);//xu
             }
             msg.writer().writeInt(player.inventory.gem);//luong
-            msg.writer().writeInt(NPoint.safeInt(player.nPoint.hp));//chp
-            msg.writer().writeInt(NPoint.safeInt(player.nPoint.mp));//cmp
+            msg.writer().writeLong(player.nPoint.hp);//chp
+            msg.writer().writeLong(player.nPoint.mp);//cmp
             msg.writer().writeInt(player.inventory.ruby);//ruby
             player.sendMessage(msg);
         } catch (IOException e) {

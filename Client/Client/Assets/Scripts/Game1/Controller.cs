@@ -292,7 +292,7 @@ namespace Game1
                             {
                                 int num61 = msg.reader().readInt();
                                 short templateId = msg.reader().readShort();
-                                int num62 = msg.readInt3Byte();
+                                long num62 = msg.readInt3Byte();
                                 SoundMn.gI().explode_1();
                                 if (num61 == Char.myCharz().charID)
                                 {
@@ -349,8 +349,8 @@ namespace Game1
                             {
                                 int num64 = msg.reader().readInt();
                                 int num65 = msg.reader().readInt();
-                                int num66 = msg.readInt3Byte();
-                                int cHPNew = msg.readInt3Byte();
+                                long num66 = msg.readInt3Byte();
+                                long cHPNew = msg.readInt3Byte();
                                 if (num64 == Char.myCharz().charID)
                                 {
                                     Res.outz("mob dame= " + num66);
@@ -411,8 +411,8 @@ namespace Game1
                             {
                                 int num67 = msg.reader().readInt();
                                 int mobId2 = msg.reader().readInt();
-                                int hp = msg.readInt3Byte();
-                                int num68 = msg.readInt3Byte();
+                                long hp = msg.readInt3Byte();
+                                long num68 = msg.readInt3Byte();
                                 @char = null;
                                 @char = ((Char.myCharz().charID != num67) ? GameScr.findCharInMap(num67) : Char.myCharz());
                                 if (@char != null)
@@ -447,8 +447,8 @@ namespace Game1
                                 int num69 = msg.reader().readInt();
                                 sbyte b30 = msg.reader().readByte();
                                 int mobId3 = msg.reader().readInt();
-                                int num70 = msg.readInt3Byte();
-                                int hp2 = msg.readInt3Byte();
+                                long num70 = msg.readInt3Byte();
+                                long hp2 = msg.readInt3Byte();
                                 @char = null;
                                 @char = ((num69 != Char.myCharz().charID) ? GameScr.findCharInMap(num69) : Char.myCharz());
                                 if (@char == null)
@@ -1744,7 +1744,7 @@ namespace Game1
                     case -42:
                         Char.myCharz().cHPGoc = msg.readInt3Byte();
                         Char.myCharz().cMPGoc = msg.readInt3Byte();
-                        Char.myCharz().cDamGoc = msg.reader().readInt();
+                        Char.myCharz().cDamGoc = msg.reader().readLong();
                         Char.myCharz().cHPFull = msg.readInt3Byte();
                         Char.myCharz().cMPFull = msg.readInt3Byte();
                         Char.myCharz().cHP = msg.readInt3Byte();
@@ -1753,7 +1753,7 @@ namespace Game1
                         Char.myCharz().hpFrom1000TiemNang = msg.reader().readByte();
                         Char.myCharz().mpFrom1000TiemNang = msg.reader().readByte();
                         Char.myCharz().damFrom1000TiemNang = msg.reader().readByte();
-                        Char.myCharz().cDamFull = msg.reader().readInt();
+                        Char.myCharz().cDamFull = msg.reader().readLong();
                         Char.myCharz().cDefull = msg.reader().readInt();
                         Char.myCharz().cCriticalFull = msg.reader().readByte();
                         Char.myCharz().cTiemNang = msg.reader().readLong();
@@ -2966,13 +2966,13 @@ namespace Game1
                                 bool flag4 = false;
                                 @char = Char.myCharz();
                                 @char.cHP = msg.readInt3Byte();
-                                int num41 = msg.readInt3Byte();
+                                long num41 = msg.readInt3Byte();
                                 Res.outz("dame hit = " + num41);
                                 if (num41 != 0)
                                 {
                                     @char.doInjure();
                                 }
-                                int num42 = 0;
+                                long num42 = 0;
                                 try
                                 {
                                     flag4 = msg.reader().readBoolean();
@@ -3007,12 +3007,12 @@ namespace Game1
                             }
                             @char.cHP = msg.readInt3Byte();
                             bool flag5 = false;
-                            int num43 = msg.readInt3Byte();
+                            long num43 = msg.readInt3Byte();
                             if (num43 != 0)
                             {
                                 @char.doInjure();
                             }
-                            int num44 = 0;
+                            long num44 = 0;
                             try
                             {
                                 flag5 = msg.reader().readBoolean();
@@ -3957,7 +3957,7 @@ namespace Game1
                                 {
                                     bool flag = false;
                                     @char = Char.myCharz();
-                                    int num5 = msg.readInt3Byte();
+                                    long num5 = msg.readInt3Byte();
                                     Res.outz("dame hit = " + num5);
                                     @char.isDie = msg.reader().readBoolean();
                                     if (@char.isDie)
@@ -3965,7 +3965,7 @@ namespace Game1
                                         Char.isLockKey = true;
                                     }
                                     Res.outz("isDie=" + @char.isDie + "---------------------------------------");
-                                    int num6 = 0;
+                                    long num6 = 0;
                                     flag = (@char.isCrit = msg.reader().readBoolean());
                                     @char.isMob = false;
                                     num5 = (@char.damHP = num5 + num6);
@@ -3982,11 +3982,11 @@ namespace Game1
                                         return;
                                     }
                                     bool flag2 = false;
-                                    int num7 = msg.readInt3Byte();
+                                    long num7 = msg.readInt3Byte();
                                     Res.outz("dame hit= " + num7);
                                     @char.isDie = msg.reader().readBoolean();
                                     Res.outz("isDie=" + @char.isDie + "---------------------------------------");
-                                    int num8 = 0;
+                                    long num8 = 0;
                                     flag2 = (@char.isCrit = msg.reader().readBoolean());
                                     @char.isMob = false;
                                     num7 = (@char.damHP = num7 + num8);
@@ -4297,7 +4297,7 @@ namespace Game1
                             mob9.y = mob9.yFirst;
                             mob9.status = 5;
                             mob9.injureThenDie = false;
-                            mob9.hp = msg.reader().readInt();
+                            mob9.hp = msg.reader().readLong();
                             mob9.maxHp = mob9.hp;
                             mob9.updateHp_bar();
                             ServerEffect.addServerEffect(60, mob9.x, mob9.y, 1);
@@ -4339,7 +4339,7 @@ namespace Game1
                             {
                                 mob9.hp = msg.readInt3Byte();
                                 mob9.updateHp_bar();
-                                int num183 = msg.readInt3Byte();
+                                long num183 = msg.readInt3Byte();
                                 if (num183 == 1)
                                 {
                                     return;
@@ -4420,7 +4420,7 @@ namespace Game1
                             mob9.startDie();
                             try
                             {
-                                int num192 = msg.readInt3Byte();
+                                long num192 = msg.readInt3Byte();
                                 if (msg.reader().readBool())
                                 {
                                     GameScr.startFlyText("-" + num192, mob9.x, mob9.y - mob9.h, 0, -2, mFont.FATAL);
@@ -4489,15 +4489,15 @@ namespace Game1
                             {
                                 Char.myCharz().isDie = false;
                                 Char.isLockKey = false;
-                                int num176 = msg.readInt3Byte();
-                                int num177;
+                                long num176 = msg.readInt3Byte();
+                                long num177;
                                 try
                                 {
                                     num177 = msg.readInt3Byte();
                                 }
                                 catch (Exception)
                                 {
-                                    num177 = 0;
+                                    num177 = 0L;
                                 }
                                 if (mob9.isBusyAttackSomeOne)
                                 {
@@ -4531,7 +4531,7 @@ namespace Game1
                                     return;
                                 }
                                 GameCanvas.debug("SA87x3", 2);
-                                int num185 = msg.readInt3Byte();
+                                long num185 = msg.readInt3Byte();
                                 mob9.dame = @char.cHP - num185;
                                 @char.cHPNew = num185;
                                 GameCanvas.debug("SA87x4", 2);
@@ -4621,7 +4621,7 @@ namespace Game1
                                 int charId = msg.reader().readInt();
                                 int cx = msg.reader().readShort();
                                 int cy = msg.reader().readShort();
-                                int cHPShow = msg.readInt3Byte();
+                                long cHPShow = msg.readInt3Byte();
                                 Char char13 = GameScr.findCharInMap(charId);
                                 if (char13 != null)
                                 {
@@ -5050,7 +5050,7 @@ namespace Game1
                 Mob.newMob.removeAllElements();
                 for (sbyte b = 0; b < num; b++)
                 {
-                    Mob mob = new Mob(b, msg.reader().readBoolean(), msg.reader().readBoolean(), msg.reader().readBoolean(), msg.reader().readBoolean(), msg.reader().readBoolean(), msg.reader().readByte(), msg.reader().readByte(), msg.reader().readInt(), msg.reader().readByte(), msg.reader().readInt(), msg.reader().readShort(), msg.reader().readShort(), msg.reader().readByte(), msg.reader().readByte());
+                    Mob mob = new Mob(b, msg.reader().readBoolean(), msg.reader().readBoolean(), msg.reader().readBoolean(), msg.reader().readBoolean(), msg.reader().readBoolean(), msg.reader().readByte(), msg.reader().readByte(), msg.reader().readLong(), msg.reader().readByte(), msg.reader().readLong(), msg.reader().readShort(), msg.reader().readShort(), msg.reader().readByte(), msg.reader().readByte());
                     mob.xSd = mob.x;
                     mob.ySd = mob.y;
                     mob.isBoss = msg.reader().readBoolean();
@@ -6067,7 +6067,7 @@ namespace Game1
                     case 5:
                         {
                             GameCanvas.debug("SA24", 2);
-                            int cHP = Char.myCharz().cHP;
+                            long cHP = Char.myCharz().cHP;
                             Char.myCharz().cHP = msg.readInt3Byte();
                             if (Char.myCharz().cHP > cHP && Char.myCharz().cTypePk != 4)
                             {
@@ -6102,7 +6102,7 @@ namespace Game1
                             {
                                 break;
                             }
-                            int cMP = Char.myCharz().cMP;
+                            long cMP = Char.myCharz().cMP;
                             Char.myCharz().cMP = msg.readInt3Byte();
                             if (Char.myCharz().cMP > cMP)
                             {

@@ -11,8 +11,8 @@ public class BossData {
     private String name;
     private byte gender;
     private short[] outfit;
-    private int dame;
-    private int[] hp;
+    private long dame;
+    private long[] hp;
     private int[] mapJoin;
     private int[][] skillTemp;
     private String[] textS;
@@ -25,7 +25,16 @@ public class BossData {
     public BossData() {
     }
 
-    private BossData(String name, byte gender, short[] outfit, int dame, int[] hp,
+    private static long[] toLongArray(int[] arr) {
+        if (arr == null) return null;
+        long[] res = new long[arr.length];
+        for (int i = 0; i < arr.length; i++) {
+            res[i] = arr[i];
+        }
+        return res;
+    }
+
+    public BossData(String name, byte gender, short[] outfit, long dame, long[] hp,
             int[] mapJoin, int[][] skillTemp, String[] textS, String[] textM,
             String[] textE) {
         this.name = name;
@@ -42,32 +51,62 @@ public class BossData {
         this.typeAppear = AppearType.DEFAULT_APPEAR;
     }
 
-    public BossData(String name, byte gender, short[] outfit, int dame, int[] hp,
+    public BossData(String name, byte gender, short[] outfit, long dame, int[] hp,
+            int[] mapJoin, int[][] skillTemp, String[] textS, String[] textM,
+            String[] textE) {
+        this(name, gender, outfit, dame, toLongArray(hp), mapJoin, skillTemp, textS, textM, textE);
+    }
+
+    public BossData(String name, byte gender, short[] outfit, long dame, long[] hp,
             int[] mapJoin, int[][] skillTemp, String[] textS, String[] textM,
             String[] textE, int secondsRest) {
         this(name, gender, outfit, dame, hp, mapJoin, skillTemp, textS, textM, textE);
         this.secondsRest = secondsRest;
     }
 
-    public BossData(String name, byte gender, short[] outfit, int dame, int[] hp,
+    public BossData(String name, byte gender, short[] outfit, long dame, int[] hp,
+            int[] mapJoin, int[][] skillTemp, String[] textS, String[] textM,
+            String[] textE, int secondsRest) {
+        this(name, gender, outfit, dame, toLongArray(hp), mapJoin, skillTemp, textS, textM, textE, secondsRest);
+    }
+
+    public BossData(String name, byte gender, short[] outfit, long dame, long[] hp,
             int[] mapJoin, int[][] skillTemp, String[] textS, String[] textM,
             String[] textE, int secondsRest, int[] bossesAppearTogether) {
         this(name, gender, outfit, dame, hp, mapJoin, skillTemp, textS, textM, textE, secondsRest);
         this.bossesAppearTogether = bossesAppearTogether;
     }
 
-    public BossData(String name, byte gender, short[] outfit, int dame, int[] hp,
+    public BossData(String name, byte gender, short[] outfit, long dame, int[] hp,
+            int[] mapJoin, int[][] skillTemp, String[] textS, String[] textM,
+            String[] textE, int secondsRest, int[] bossesAppearTogether) {
+        this(name, gender, outfit, dame, toLongArray(hp), mapJoin, skillTemp, textS, textM, textE, secondsRest, bossesAppearTogether);
+    }
+
+    public BossData(String name, byte gender, short[] outfit, long dame, long[] hp,
             int[] mapJoin, int[][] skillTemp, String[] textS, String[] textM,
             String[] textE, AppearType typeAppear) {
         this(name, gender, outfit, dame, hp, mapJoin, skillTemp, textS, textM, textE);
         this.typeAppear = typeAppear;
     }
 
-    public BossData(String name, byte gender, short[] outfit, int dame, int[] hp,
+    public BossData(String name, byte gender, short[] outfit, long dame, int[] hp,
+            int[] mapJoin, int[][] skillTemp, String[] textS, String[] textM,
+            String[] textE, AppearType typeAppear) {
+        this(name, gender, outfit, dame, toLongArray(hp), mapJoin, skillTemp, textS, textM, textE, typeAppear);
+    }
+
+    public BossData(String name, byte gender, short[] outfit, long dame, long[] hp,
             int[] mapJoin, int[][] skillTemp, String[] textS, String[] textM,
             String[] textE, int secondsRest, AppearType typeAppear) {
         this(name, gender, outfit, dame, hp, mapJoin, skillTemp, textS, textM, textE, secondsRest);
         this.typeAppear = typeAppear;
+    }
+
+    public BossData(String name, byte gender, short[] outfit, long dame, int[] hp,
+            int[] mapJoin, int[][] skillTemp, String[] textS, String[] textM,
+            String[] textE, int secondsRest, AppearType typeAppear) {
+        this(name, gender, outfit, dame, toLongArray(hp), mapJoin, skillTemp, textS, textM, textE, secondsRest, typeAppear);
     }
 
     // Getters and Setters
@@ -80,11 +119,12 @@ public class BossData {
     public short[] getOutfit() { return outfit; }
     public void setOutfit(short[] outfit) { this.outfit = outfit; }
 
-    public int getDame() { return dame; }
-    public void setDame(int dame) { this.dame = dame; }
+    public long getDame() { return dame; }
+    public void setDame(long dame) { this.dame = dame; }
 
-    public int[] getHp() { return hp; }
-    public void setHp(int[] hp) { this.hp = hp; }
+    public long[] getHp() { return hp; }
+    public void setHp(long[] hp) { this.hp = hp; }
+    public void setHp(int[] hp) { this.hp = toLongArray(hp); }
 
     public int[] getMapJoin() { return mapJoin; }
     public void setMapJoin(int[] mapJoin) { this.mapJoin = mapJoin; }

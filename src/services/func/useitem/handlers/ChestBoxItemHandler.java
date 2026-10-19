@@ -34,7 +34,7 @@ public class ChestBoxItemHandler implements ItemActionHandler {
             return false;
         }
         int id = item.template.id;
-        return id == 570 || id == 380 || id == 1426 || id == 1427 || id == 1428 || id == 1429
+        return id == 570 || id == 380 || id == 1484 || id == 1426 || id == 1427 || id == 1428 || id == 1429
                 || id == 648 || id == 1143 || id == 1198 || id == 1199 || id == 1200 || id == 736
                 || id == 1318 || id == 1319 || id == 2000 || id == 1324 || id == 574;
     }
@@ -51,6 +51,7 @@ public class ChestBoxItemHandler implements ItemActionHandler {
                 }
             }
             case 380 -> openCSKB(player, item);
+            case 1484 -> openCapsuleTanThu(player, item);
             case 574 -> openCapsuleVang(player, item);
             case 1426 -> open1426(player, item);
             case 1427 -> open1427(player, item);
@@ -308,5 +309,53 @@ public class ChestBoxItemHandler implements ItemActionHandler {
     public static void useHopQuaThanLinh(Player player, Item item) {
         NpcService.gI().createMenuConMeo(player, ConstNpc.HOP_QUA_THAN_LINH, -1,
                 "Chọn set Thần Linh bạn muốn nhận:", "Set Trái Đất", "Set Namếc", "Set Xayda", "Từ chối");
+    }
+
+    private void openCapsuleTanThu(Player pl, Item item) {
+        if (pl.isDie()) {
+            Service.gI().sendThongBao(pl, "Bạn đang kiệt sức, không thể mở vật phẩm!");
+            return;
+        }
+        if (InventoryService.gI().getCountEmptyBag(pl) < 3) {
+            Service.gI().sendThongBaoResetWait(pl, "Hành trang cần ít nhất 3 ô trống để mở Capsule Tân Thủ!");
+            return;
+        }
+
+        // 1. Cải trang Goku Tarzan (id 945): 20% HP, KI, Sức đánh, Tiềm năng sức mạnh khi đánh quái, HSD 3 ngày
+        Item itCaiTrang = ItemService.gI().createNewItem((short) 945);
+        itCaiTrang.itemOptions.clear();
+        itCaiTrang.itemOptions.add(new ItemOption(50, 20)); // Sức đánh+#%
+        itCaiTrang.itemOptions.add(new ItemOption(77, 20)); // HP+#%
+        itCaiTrang.itemOptions.add(new ItemOption(103, 20)); // KI +#%
+        itCaiTrang.itemOptions.add(new ItemOption(83, 20));  // Tăng 20% sức mạnh và tiềm năng nhận được khi đánh quái
+        itCaiTrang.itemOptions.add(new ItemOption(93, 3));   // HSD 3 ngày
+        itCaiTrang.itemOptions.add(new ItemOption(30, 0));   // Không thể giao dịch
+
+        // 2. Ván bay / Thú cưỡi cực VIP (id 396): HSD 7 ngày
+        Item itVanBay = ItemService.gI().createNewItem((short) 396);
+        itVanBay.itemOptions.clear();
+        itVanBay.itemOptions.add(new ItemOption(89, 0)); // Dùng để bay và phục hồi HP, KI
+        itVanBay.itemOptions.add(new ItemOption(93, 7));  // HSD 7 ngày
+        itVanBay.itemOptions.add(new ItemOption(30, 0));  // Không thể giao dịch
+
+        // 3. Đeo lưng (id 1332): Biến 10% tấn công quái thành HP, Biến 10% tấn công quái thành KI, HSD 3 ngày
+        Item itDeoLung = ItemService.gI().createNewItem((short) 1332);
+        itDeoLung.itemOptions.clear();
+        itDeoLung.itemOptions.add(new ItemOption(104, 10)); // Biến 10% tấn công quái thành HP
+        itDeoLung.itemOptions.add(new ItemOption(96, 10));  // Biến 10% tấn công thành KI (quái)
+        itDeoLung.itemOptions.add(new ItemOption(93, 3));   // HSD 3 ngày
+        itDeoLung.itemOptions.add(new ItemOption(30, 0));   // Không thể giao dịch
+
+        short icon1 = item.template.iconID;
+        short icon2 = itCaiTrang.template.iconID;
+
+        InventoryService.gI().subQuantityItemsBag(pl, item, 1);
+        InventoryService.gI().addItemBag(pl, itCaiTrang);
+        InventoryService.gI().addItemBag(pl, itVanBay);
+        InventoryService.gI().addItemBag(pl, itDeoLung);
+        InventoryService.gI().sendItemBags(pl);
+
+        CombineService.gI().sendEffectOpenItem(pl, icon1, icon2);
+        Service.gI().sendThongBao(pl, "Bạn nhận được Cải trang, Ván bay và Đeo lưng tân thủ!");
     }
 }

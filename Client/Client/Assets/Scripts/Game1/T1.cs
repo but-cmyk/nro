@@ -61,7 +61,7 @@ namespace Game1
     		mResources.inventory_Pass = "Mã bảo vệ";
     		mResources.input_Inventory_Pass = "Nhập mã bảo vệ";
     		mResources.input_Inventory_Pass_wrong = "Mã bảo vệ phải có độ dài là 6 số.";
-    		mResources.regNote = "Vui lòng nhập số điện thoại hoặc địa chỉ email,sau đó nhập mật khẩu để tạo tài khoản mới";
+    		mResources.regNote = "Vui lòng nhập tên tài khoản và mật khẩu để tạo tài khoản mới";
     		mResources.note = "Bạn sẽ mất tài khoản đang chơi và không thể khôi phục được nếu đổi tài khoản khác, bạn có đồng ý không ?";
     		mResources.REGISTOPROTECT = "Đăng kí để bảo vệ tài khoản";
     		mResources.finishBomong = "Bạn phải hoàn thành nhiệm vụ tìm ngọc 6 sao mới có thể nạp tiền";
@@ -100,11 +100,11 @@ namespace Game1
     		mResources.change_account = "Đổi tài khoản";
     		mResources.alreadyHadAccount1 = "Bạn đã từng chơi và có tài khoản Ngọc Rồng Online ở máy chủ ";
     		mResources.alreadyHadAccount2 = " từ trước ?";
-    		mResources.userBlank = "Bạn chưa nhập email hoặc số di động.";
+    		mResources.userBlank = "Bạn chưa nhập tên tài khoản.";
     		mResources.passwordBlank = "Bạn chưa nhập mật khẩu";
-    		mResources.accTooShort = "Tên tài khoản phải nhiều hơn 5 ký tự";
-    		mResources.phoneInvalid = "Số di động không hợp lệ. Xin nhập theo mẫu 0912345678 hoặc 84918765432";
-    		mResources.emailInvalid = "Email không hợp lệ. Xin nhập theo mẫu tencuaban@yahoo.com hoặc tencuaban@gmail.com";
+    		mResources.accTooShort = "Tên tài khoản phải từ 4 đến 16 ký tự";
+    		mResources.phoneInvalid = "Tên tài khoản không hợp lệ (từ 4 đến 16 ký tự, chỉ gồm chữ và số).";
+    		mResources.emailInvalid = "Tên tài khoản không hợp lệ (từ 4 đến 16 ký tự, chỉ gồm chữ và số).";
     		mResources.registerNewAcc = "Đăng ký\ntài khoản\nmới";
     		mResources.selectServer = "Chọn\nmáy chủ";
     		mResources.forgetPass = "Quên M.khẩu";
@@ -114,9 +114,9 @@ namespace Game1
     		mResources.msgg = new string[2] { "Tin", "nhắn" };
     		mResources.no_msg = "Không có tin nhắn";
     		mResources.cancelAccountProtection = "Bạn có muốn huỷ chức năng bảo vệ tài khoản không ?";
-    		mResources.plsCheckAcc = "Kiểm tra chính xác để lấy lại được tài khoản nếu sau này quên mật khẩu\n";
-    		mResources.phone = "Số di động";
-    		mResources.email = "Địa chỉ mail";
+    		mResources.plsCheckAcc = "Kiểm tra chính xác thông tin tài khoản\n";
+    		mResources.phone = "Tài khoản";
+    		mResources.email = "Tài khoản";
     		mResources.acc = "TK";
     		mResources.pwd = "MK";
     		mResources.goToWebForPassword = "Để lấy lại mật khẩu, xin vui lòng vào website http://ngocrongonline.com/matkhau";

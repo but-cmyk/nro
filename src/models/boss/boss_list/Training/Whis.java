@@ -60,7 +60,7 @@ public class Whis extends TrainingBoss {
     }
 
     @Override
-    public synchronized int injured(Player plAtt, long damage, boolean piercing, boolean isMobAttack) {
+    public synchronized long injured(Player plAtt, long damage, boolean piercing, boolean isMobAttack) {
         if (!piercing && Util.isTrue(400, 1000)) {
             this.chat("Xí hụt");
             return 0;

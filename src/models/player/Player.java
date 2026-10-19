@@ -903,7 +903,7 @@ public class Player extends Character {
     }
 
     @Override
-    public synchronized int injured(Player plAtt, long damage, boolean piercing, boolean isMobAttack) {
+    public synchronized long injured(Player plAtt, long damage, boolean piercing, boolean isMobAttack) {
         if (!this.isDie()) {
             if (plAtt != null && !plAtt.equals(this)) {
                 setTemporaryEnemies(plAtt);
@@ -991,7 +991,6 @@ public class Player extends Character {
 
             // Fix: Đảm bảo damage không âm và không quá lớn
             if (damage < 0) damage = 0;
-            damage = Math.min(damage, 2_000_000_000L);
 
             // ... (Logic Giáp Xên, Khiên...) ...
             boolean isUseGX = false;
@@ -1010,7 +1009,7 @@ public class Player extends Character {
                 }
             }
             if (!piercing && effectSkill.isShielding && !isMobAttack) {
-                if (this.idMark != null) this.idMark.setDamePST((int) Math.min(damage, 2_000_000_000L));
+                if (this.idMark != null) this.idMark.setDamePST(damage);
                 if (damage > nPoint.hpMax) EffectSkillService.gI().breakShield(this);
                 damage = 1;
             }
@@ -1058,7 +1057,7 @@ public class Player extends Character {
                     setDie(plAtt);
                 }
             }
-            return (int) damage;
+            return damage;
         } else {
             return 0;
         }

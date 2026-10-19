@@ -130,7 +130,7 @@ namespace Game1
     
     	public new bool sleepEff;
     
-    	public BigBoss2(int id, short px, short py, int templateID, int hp, int maxHp, int s)
+    	public BigBoss2(int id, short px, short py, int templateID, long hp, long maxHp, int s)
     	{
     		if (shadowBig == null)
     		{

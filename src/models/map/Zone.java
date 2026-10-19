@@ -792,9 +792,9 @@ msg.writer().writeByte(plInfo.idMark != null ? plInfo.idMark.getIdSpaceShip() : 
                     msg.writer().writeBoolean(false); //is wind
                     msg.writer().writeByte(mob.tempId);
                     msg.writer().writeByte(0); // sys
-                    msg.writer().writeInt(mob.point != null ? mob.point.gethp() : 0);
+                    msg.writer().writeLong(mob.point != null ? mob.point.gethp() : 0L);
                     msg.writer().writeByte(mob.level);
-                    msg.writer().writeInt(mob.point != null ? mob.point.getHpFull() : 0);
+                    msg.writer().writeLong(mob.point != null ? mob.point.getHpFull() : 0L);
                     msg.writer().writeShort(mob.location.x);
                     msg.writer().writeShort(mob.location.y);
                     msg.writer().writeByte(mob.status);

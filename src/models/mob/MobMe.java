@@ -42,7 +42,7 @@ public final class MobMe extends Mob {
         Message msg;
         try {
             if (pl != null) {
-                int dame = !miss ? this.point.dame : 0;
+                long dame = !miss ? this.point.dame : 0L;
                 boolean isTargetShielding = pl.effectSkill != null && pl.effectSkill.isShielding;
                 boolean hasPikkoro = this.player != null && this.player.setClothes != null && this.player.setClothes.pikkoroDaimao == 5;
 
@@ -57,10 +57,10 @@ public final class MobMe extends Mob {
                 if (canAttack) {
                     // Nếu không có set Pikkoro: giữ lại ít nhất 1 HP để không kết liễu người chơi
                     if (!hasPikkoro && dame >= pl.nPoint.hp) {
-                        dame = (int) Math.max(1, pl.nPoint.hp - 1);
+                        dame = Math.max(1L, pl.nPoint.hp - 1);
                     }
 
-                    int dameHit = pl.injured(this.player, dame, true, true);
+                    long dameHit = pl.injured(this.player, dame, true, true);
 
                     // Phá vỡ khiên năng lượng nếu mục tiêu dùng khiên bị pem xuống dưới 2% HP tối đa
                     if (isTargetShielding && !pl.isDie() && pl.nPoint.hp <= pl.nPoint.hpMax * 2 / 100) {
@@ -71,25 +71,25 @@ public final class MobMe extends Mob {
                     msg.writer().writeByte(2);
                     msg.writer().writeInt(this.id);
                     msg.writer().writeInt((int) pl.id);
-                    msg.writer().writeInt(dameHit);
-                    msg.writer().writeInt(NPoint.safeInt(pl.nPoint.hp));
+                    msg.writer().writeLong(dameHit);
+                    msg.writer().writeLong(pl.nPoint.hp);
                     Service.gI().sendMessAllPlayerInMap(this.player, msg);
                     msg.cleanup();
                 }
             }
 
             if (mob != null && !mob.isDie()) {
-                int dame = !miss ? this.point.dame : 0;
+                long dame = !miss ? this.point.dame : 0L;
                 if (dame > 0) {
-                    int mobHpBefore = mob.point.gethp();
+                    long mobHpBefore = mob.point.gethp();
                     mob.injured(this.player, dame, true);
-                    int realDamage = Math.max(0, mobHpBefore - mob.point.gethp());
+                    long realDamage = Math.max(0L, mobHpBefore - mob.point.gethp());
                     msg = new Message(-95);
                     msg.writer().writeByte(3);
                     msg.writer().writeInt(this.id);
                     msg.writer().writeInt((int) mob.id);
-                    msg.writer().writeInt(mob.point.gethp());
-                    msg.writer().writeInt(realDamage > 0 ? realDamage : dame);
+                    msg.writer().writeLong(mob.point.gethp());
+                    msg.writer().writeLong(realDamage > 0 ? realDamage : dame);
                     Service.gI().sendMessAllPlayerInMap(this.player, msg);
                     msg.cleanup();
                 }
@@ -106,7 +106,7 @@ public final class MobMe extends Mob {
             msg.writer().writeByte(0);//type
             msg.writer().writeInt((int) player.id);
             msg.writer().writeShort(this.tempId);
-            msg.writer().writeInt(this.point.hp);// hp mob
+            msg.writer().writeLong(this.point.hp);// hp mob
             Service.gI().sendMessAllPlayerInMap(this.player, msg);
             msg.cleanup();
         } catch (Exception e) {
@@ -158,8 +158,8 @@ public final class MobMe extends Mob {
             msg.writer().writeInt((int) plAtt.id);
             msg.writer().writeByte(plAtt.playerSkill.skillSelect.template.id); // id skill
             msg.writer().writeInt(id); //mob id
-            msg.writer().writeInt((int) damage);
-            msg.writer().writeInt(point.hp);
+            msg.writer().writeLong(damage);
+            msg.writer().writeLong(point.hp);
             Service.gI().sendMessAllPlayerInMap(this.player, msg);
             msg.cleanup();
             if (isDie()) {

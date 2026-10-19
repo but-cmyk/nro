@@ -104,7 +104,7 @@ namespace Game1
     
     	public int ccurrentAttack;
     
-    	public int cDamFull;
+    	public long cDamFull;
     
     	public int cDefull;
     
@@ -112,15 +112,15 @@ namespace Game1
     
     	public int clevel;
     
-    	public int cMP;
+    	public long cMP;
     
-    	public int cHP;
+    	public long cHP;
     
-    	public int cHPNew;
+    	public long cHPNew;
     
     	public int cMaxEXP;
     
-    	public int cHPShow;
+    	public long cHPShow;
     
     	public int xReload;
     
@@ -134,9 +134,9 @@ namespace Game1
     
     	public int eff5BuffMp;
     
-    	public int cHPFull;
+    	public long cHPFull;
     
-    	public int cMPFull;
+    	public long cMPFull;
     
     	public int cdameDown;
     
@@ -148,9 +148,9 @@ namespace Game1
     
     	public long cNangdong;
     
-    	public int damHP;
+    	public long damHP;
     
-    	public int damMP;
+    	public long damMP;
     
     	public bool isMob;
     
@@ -1050,11 +1050,11 @@ namespace Game1
     
     	public bool currentFireByShortcut;
     
-    	public int cDamGoc;
+    	public long cDamGoc;
     
-    	public int cHPGoc;
+    	public long cHPGoc;
     
-    	public int cMPGoc;
+    	public long cMPGoc;
     
     	public int cDefGoc;
     
@@ -1120,7 +1120,7 @@ namespace Game1
     
     	public int perCentMp = 100;
     
-    	public int dHP;
+    	public long dHP;
     
     	public int headTemp = -1;
     
@@ -1878,7 +1878,7 @@ namespace Game1
     		}
     		else if (dHP > cHP)
     		{
-    			int num = dHP - cHP >> 1;
+    			long num = (dHP - cHP) >> 1;
     			if (num < 1)
     			{
     				num = 1;
@@ -6049,7 +6049,7 @@ namespace Game1
     		{
     			return;
     		}
-    		int num = cHP * 100 / cHPFull / 10 - 1;
+    		int num = (int)(cHP * 100 / cHPFull / 10 - 1);
     		if (num < 0)
     		{
     			num = 0;
@@ -7566,7 +7566,7 @@ namespace Game1
     		}
     	}
     
-    	public void doInjure(int HPShow, int MPShow, bool isCrit, bool isMob)
+    	public void doInjure(long HPShow, long MPShow, bool isCrit, bool isMob)
     	{
     		this.isCrit = isCrit;
     		this.isMob = isMob;

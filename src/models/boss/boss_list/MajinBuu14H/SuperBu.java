@@ -78,7 +78,7 @@ public class SuperBu extends Boss {
     }
 
     @Override
-    public synchronized int injured(Player plAtt, long damage, boolean piercing, boolean isMobAttack) {
+    public synchronized long injured(Player plAtt, long damage, boolean piercing, boolean isMobAttack) {
         // Truyền sát thương sang Mabu (Boss chính ở map ngoài)
         Boss boss = FinalBossManager.gI().getBossById(BossID.MABU, 127, this.zone.zoneId);
         if (boss != null) {

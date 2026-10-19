@@ -65,7 +65,7 @@ public class Broly extends Boss {
     }
 
     @Override
-    public synchronized int injured(Player plAtt, long damage, boolean piercing, boolean isMobAttack) {
+    public synchronized long injured(Player plAtt, long damage, boolean piercing, boolean isMobAttack) {
         if (this.isDie()) return 0;
         if (!piercing && Util.isTrue(this.nPoint.tlNeDon, 1000)) {
             this.chat("Xí hụt");
