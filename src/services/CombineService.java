@@ -231,91 +231,101 @@ public class CombineService {
             return;
         }
         synchronized (player) {
-            if (System.currentTimeMillis() - player.combineNew.lastTimeCombine < 500) {
-                return;
+            try {
+                if (System.currentTimeMillis() - player.combineNew.lastTimeCombine < 500) {
+                    return;
+                }
+                player.combineNew.lastTimeCombine = System.currentTimeMillis();
+                int num = 0;
+                if (n.length > 0) {
+                    num = n[0];
+                }
+                switch (player.combineNew.typeCombine) {
+                    case GIAM_DINH_SACH:
+                        GiamDinhSach.GiamDinhsach(player);
+                        break;
+                    case TAY_SACH:
+                        TaySach.Taysach(player);
+                        break;
+                    case NANG_CAP_SACH_TUYET_KY:
+                        NangCapSachTuyetKi.NangCapSachTuyetki(player);
+                        break;
+                    case PHUC_HOI_SACH:
+                        PhucHoiSach.PhucHoisach(player);
+                        break;
+                    case PHAN_RA_SACH:
+                        PhanRaSach.PhanRasach(player);
+                        break;
+                    case CHUYEN_HOA_BANG_NGOC:
+                        ChuyenHoaBangNgoc.ChuyenHoaBangngoc(player);
+                        break;
+                    case CHUYEN_HOA_BANG_VANG:
+                        ChuyenHoaBangVang.ChuyenHoaBangvang(player);
+                        break;
+                    case NANG_HUY_DIET_LEN_SKH:
+                        NangCapSetKichHoat.nangCapSetKichHoat(player);
+                        break;
+                    case NANG_CAP_DO_THIEN_SU:
+                        CheTaoDoThienSu.startCombine(player);
+                        break;
+                    case LAM_PHEP_NHAP_DA:
+                        LamPhepNhapDa.LamPhepNhapda(player);
+                        break;
+                    case EP_SAO_TRANG_BI:
+                        EpSaoTrangBi.epSaoTrangBi(player);
+                        TaskService.gI().checkDoneSideTaskUpgrade(player);
+                        break;
+                    case PHA_LE_HOA_TRANG_BI:
+                        PhaLeHoaTrangBi.phaLeHoa(player, num);
+                        TaskService.gI().checkDoneSideTaskUpgrade(player);
+                        break;
+                    case NHAP_NGOC_RONG:
+                        NhapNgocRong.nhapNgocRong(player);
+                        break;
+                    case NANG_CAP_VAT_PHAM:
+                        NangCapVatPham.nangCapVatPham(player, num);
+                        TaskService.gI().checkDoneSideTaskUpgrade(player);
+                        break;
+                    case NANG_CAP_BONG_TAI:
+                        NangCapBongTai.nangCapBongTai(player);
+                        break;
+                    case NANG_CHI_SO_BONG_TAI:
+                        NangChiSoBongTai.nangChiSoBongTai(player);
+                        break;
+                    case NANG_CAP_SAO_PHA_LE:
+                        NangCapSaoPhaLe.nangSaoC2(player);
+                        TaskService.gI().checkDoneSideTaskUpgrade(player);
+                        break;
+                    case DANH_BONG_SAO_PHA_LE:
+                        NangCapSaoPhaLe.saoLapLanh(player);
+                        break;
+                    case TAO_DA_HEMATITE:
+                        NangCapSaoPhaLe.taoDaHematite(player);
+                        break;
+                    case CUONG_HOA_LO_SAO:
+                        CuongHoaLoSao.cuongHoa(player);
+                        TaskService.gI().checkDoneSideTaskUpgrade(player);
+                        break;
+                    case DOI_DO_THAN:
+                        DoiDoThan.doiVeNdung(player);
+                        break;
+                    case DOI_SKH_HD:
+                        DoiDoThan.skhHDNdung(player);
+                        break;
+                }
+            } catch (Exception e) {
+                Logger.logException(CombineService.class, e, "Lỗi startCombine cho player " + player.name);
+                Service.gI().sendThongBaoResetWait(player, "Đã xảy ra lỗi khi thực hiện kết hợp!");
+                reOpenItemCombine(player);
+            } finally {
+                if (player.idMark != null) {
+                    player.idMark.setIndexMenu(ConstNpc.IGNORE_MENU);
+                }
+                if (player.combineNew != null) {
+                    player.combineNew.clearParamCombine();
+                }
+                database.daos.PlayerDAO.updatePlayerAsync(player);
             }
-            player.combineNew.lastTimeCombine = System.currentTimeMillis();
-            int num = 0;
-            if (n.length > 0) {
-                num = n[0];
-            }
-            switch (player.combineNew.typeCombine) {
-            case GIAM_DINH_SACH:
-                GiamDinhSach.GiamDinhsach(player);
-                break;
-            case TAY_SACH:
-                TaySach.Taysach(player);
-                break;
-            case NANG_CAP_SACH_TUYET_KY:
-                NangCapSachTuyetKi.NangCapSachTuyetki(player);
-                break;
-            case PHUC_HOI_SACH:
-                PhucHoiSach.PhucHoisach(player);
-                break;
-            case PHAN_RA_SACH:
-                PhanRaSach.PhanRasach(player);
-                break;
-            case CHUYEN_HOA_BANG_NGOC:
-                ChuyenHoaBangNgoc.ChuyenHoaBangngoc(player);
-                break;
-            case CHUYEN_HOA_BANG_VANG:
-                ChuyenHoaBangVang.ChuyenHoaBangvang(player);
-                break;
-            case NANG_HUY_DIET_LEN_SKH:
-                NangCapSetKichHoat.nangCapSetKichHoat(player);
-                break;
-            case NANG_CAP_DO_THIEN_SU:
-                CheTaoDoThienSu.startCombine(player);
-                break;
-            case LAM_PHEP_NHAP_DA:
-                LamPhepNhapDa.LamPhepNhapda(player);
-                break;
-            case EP_SAO_TRANG_BI:
-                EpSaoTrangBi.epSaoTrangBi(player);
-                TaskService.gI().checkDoneSideTaskUpgrade(player);
-                break;
-            case PHA_LE_HOA_TRANG_BI:
-                PhaLeHoaTrangBi.phaLeHoa(player, num);
-                TaskService.gI().checkDoneSideTaskUpgrade(player);
-                break;
-            case NHAP_NGOC_RONG:
-                NhapNgocRong.nhapNgocRong(player);
-                break;
-            case NANG_CAP_VAT_PHAM:
-                NangCapVatPham.nangCapVatPham(player);
-                TaskService.gI().checkDoneSideTaskUpgrade(player);
-                break;
-            case NANG_CAP_BONG_TAI:
-                NangCapBongTai.nangCapBongTai(player);
-                break;
-            case NANG_CHI_SO_BONG_TAI:
-                NangChiSoBongTai.nangChiSoBongTai(player);
-                break;
-            case NANG_CAP_SAO_PHA_LE:
-                NangCapSaoPhaLe.nangSaoC2(player);
-                TaskService.gI().checkDoneSideTaskUpgrade(player);
-                break;
-            case DANH_BONG_SAO_PHA_LE:
-                NangCapSaoPhaLe.saoLapLanh(player);
-                break;
-            case TAO_DA_HEMATITE:
-                NangCapSaoPhaLe.taoDaHematite(player);
-                break;
-            case CUONG_HOA_LO_SAO:
-                CuongHoaLoSao.cuongHoa(player);
-                TaskService.gI().checkDoneSideTaskUpgrade(player);
-                break;
-            case DOI_DO_THAN:
-                DoiDoThan.doiVeNdung(player);
-                break;
-            case DOI_SKH_HD:
-                DoiDoThan.skhHDNdung(player);
-                break;
-        }
-
-            player.idMark.setIndexMenu(ConstNpc.IGNORE_MENU);
-            player.combineNew.clearParamCombine();
-            database.daos.PlayerDAO.updatePlayerAsync(player);
         }
     }
 
@@ -328,22 +338,32 @@ public class CombineService {
             return;
         }
         synchronized (player) {
-            if (System.currentTimeMillis() - player.combineNew.lastTimeCombine < 500) {
-                return;
+            try {
+                if (System.currentTimeMillis() - player.combineNew.lastTimeCombine < 500) {
+                    return;
+                }
+                player.combineNew.lastTimeCombine = System.currentTimeMillis();
+                switch (player.combineNew.typeCombine) {
+                    case PHA_LE_HOA_TRANG_BI:
+                        PhaLeHoaTrangBi.phaLeHoa(player, n);
+                        break;
+                    case NHAP_NGOC_RONG:
+                        NhapNgocRong.nhapNgocRong(player, n);
+                        break;
+                }
+            } catch (Exception e) {
+                Logger.logException(CombineService.class, e, "Lỗi startCombineVip cho player " + player.name);
+                Service.gI().sendThongBaoResetWait(player, "Đã xảy ra lỗi khi thực hiện kết hợp!");
+                reOpenItemCombine(player);
+            } finally {
+                if (player.idMark != null) {
+                    player.idMark.setIndexMenu(ConstNpc.IGNORE_MENU);
+                }
+                if (player.combineNew != null) {
+                    player.combineNew.clearParamCombine();
+                }
+                database.daos.PlayerDAO.updatePlayerAsync(player);
             }
-            player.combineNew.lastTimeCombine = System.currentTimeMillis();
-            switch (player.combineNew.typeCombine) {
-                case PHA_LE_HOA_TRANG_BI:
-                    PhaLeHoaTrangBi.phaLeHoa(player, n);
-                    break;
-                case NHAP_NGOC_RONG:
-                    NhapNgocRong.nhapNgocRong(player, n);
-                    break;
-            }
-
-            player.idMark.setIndexMenu(ConstNpc.IGNORE_MENU);
-            player.combineNew.clearParamCombine();
-            database.daos.PlayerDAO.updatePlayerAsync(player);
         }
     }
 
@@ -367,6 +387,7 @@ public class CombineService {
             }
             player.sendMessage(msg);
         } catch (Exception e) {
+            Logger.error(player, "openTabCombine error", e);
         } finally {
             if (msg != null) {
                 msg.cleanup();
@@ -383,6 +404,7 @@ public class CombineService {
             msg.writer().writeShort(icon2);
             player.sendMessage(msg);
         } catch (Exception e) {
+            Logger.error(player, "sendEffectOpenItem error", e);
         } finally {
             if (msg != null) {
                 msg.cleanup();
@@ -443,6 +465,7 @@ public class CombineService {
             msg.writer().writeByte(COMBINE_SUCCESS);
             player.sendMessage(msg);
         } catch (Exception e) {
+            Logger.error(player, "sendEffectSuccessCombine error", e);
         } finally {
             if (msg != null) {
                 msg.cleanup();
@@ -457,6 +480,7 @@ public class CombineService {
             msg.writer().writeByte(COMBINE_FAIL);
             player.sendMessage(msg);
         } catch (Exception e) {
+            Logger.error(player, "sendEffectFailCombine error", e);
         } finally {
             if (msg != null) {
                 msg.cleanup();
@@ -531,6 +555,7 @@ public class CombineService {
             msg.writer().writeShort(icon);
             player.sendMessage(msg);
         } catch (Exception e) {
+            Logger.error(player, "sendEffectCombineDB error", e);
         } finally {
             if (msg != null) {
                 msg.cleanup();

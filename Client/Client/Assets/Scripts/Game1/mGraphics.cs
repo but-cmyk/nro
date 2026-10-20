@@ -72,7 +72,46 @@ namespace Game1
     
     	public const int TRANS_ROT90 = 5;
     
-    	public static Hashtable cachedTextures = new Hashtable();
+        public struct DrawRegionKey : IEquatable<DrawRegionKey>
+        {
+            public int imageHash;
+            public short x0, y0, w, h;
+            public byte transform;
+
+            public DrawRegionKey(int imgHash, float x0, float y0, int w, int h, int transform)
+            {
+                this.imageHash = imgHash;
+                this.x0 = (short)x0;
+                this.y0 = (short)y0;
+                this.w = (short)w;
+                this.h = (short)h;
+                this.transform = (byte)transform;
+            }
+
+            public bool Equals(DrawRegionKey other)
+            {
+                return imageHash == other.imageHash && x0 == other.x0 && y0 == other.y0 && w == other.w && h == other.h && transform == other.transform;
+            }
+
+            public override bool Equals(object obj)
+            {
+                return obj is DrawRegionKey other && Equals(other);
+            }
+
+            public override int GetHashCode()
+            {
+                unchecked
+                {
+                    int hash = imageHash;
+                    hash = (hash * 397) ^ (x0 << 16 | (ushort)y0);
+                    hash = (hash * 397) ^ (w << 16 | (ushort)h);
+                    hash = (hash * 397) ^ transform;
+                    return hash;
+                }
+            }
+        }
+
+        public static Dictionary<DrawRegionKey, Texture2D> cachedTextures = new Dictionary<DrawRegionKey, Texture2D>();
     
     	public static int addYWhenOpenKeyBoard;
     
@@ -104,12 +143,11 @@ namespace Game1
 
     	public static void clearCachedTextures()
     	{
-    		foreach (DictionaryEntry entry in cachedTextures)
+    		foreach (KeyValuePair<DrawRegionKey, Texture2D> entry in cachedTextures)
     		{
-    			Texture tex = entry.Value as Texture;
-    			if (tex != null)
+    			if (entry.Value != null)
     			{
-    				UnityEngine.Object.Destroy(tex);
+    				UnityEngine.Object.Destroy(entry.Value);
     			}
     		}
     		cachedTextures.Clear();
@@ -147,7 +185,7 @@ namespace Game1
     		return tex;
     	}
 
-    	private void cache(string key, Texture value)
+    	private void cache(DrawRegionKey key, Texture2D value)
     	{
     		if (cachedTextures.Count > 400)
     		{
@@ -950,9 +988,9 @@ namespace Game1
     			x += translateX;
     			y += translateY;
     		}
-    		string key = "dg" + x0 + y0 + w + h + transform + image.GetHashCode();
-    		Texture2D texture2D = (Texture2D)cachedTextures[key];
-    		if (texture2D == null)
+    		DrawRegionKey key = new DrawRegionKey(image != null ? image.GetHashCode() : 0, x0, y0, w, h, transform);
+    		Texture2D texture2D;
+    		if (!cachedTextures.TryGetValue(key, out texture2D) || texture2D == null)
     		{
     			Image image2 = Image.createImage(image, (int)x0, (int)y0, w, h, transform);
     			texture2D = image2.texture;

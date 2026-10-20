@@ -76,49 +76,79 @@ public class NangCapBongTai {
     }
 
     public static void nangCapBongTai(Player player) {
-        if (player.combineNew.itemsCombine.size() == 2) {
-            int gold = player.combineNew.goldCombine;
-            if (player.inventory.gold < gold) {
-                Service.gI().sendThongBao(player, "Không đủ vàng để thực hiện");
-                return;
-            }
-            int gem = player.combineNew.gemCombine;
-            if (!player.inventory.checkGemAndRuby(gem)) {
-                Service.gI().sendThongBao(player, "Không đủ ngọc để thực hiện");
-                return;
-            }
-            Item bongTai = null;
-            Item manhVo = null;
-            for (Item item : player.combineNew.itemsCombine) {
+        if (player == null || player.combineNew == null || player.combineNew.itemsCombine == null || player.inventory == null) {
+            return;
+        }
+        if (player.combineNew.itemsCombine.size() != 2) {
+            Service.gI().sendThongBaoResetWait(player, "Nguyên liệu không hợp lệ!");
+            CombineService.gI().reOpenItemCombine(player);
+            return;
+        }
+
+        // --- BƯỚC 1: VALIDATE ---
+        Item bongTai = null;
+        Item manhVo = null;
+        for (Item item : player.combineNew.itemsCombine) {
+            if (item != null && item.isNotNullItem()) {
                 if (item.template.id == 454) {
                     bongTai = item;
                 } else if (item.template.id == 933) {
                     manhVo = item;
                 }
             }
-            if (bongTai != null && manhVo != null) {
-                Item findItemBag = InventoryService.gI().findItemBag(player, 921); //Khóa btc2
-                if (findItemBag != null) {
-                    Service.gI().sendThongBaoResetWait(player, "Ngươi đã có bông tai Porata cấp 2 trong hành trang rồi, không thể nâng cấp nữa.");
-                    return;
-                }
-                player.inventory.gold -= gold;
-                player.inventory.subGemAndRuby(gem);
-                if (Util.isTrue(player.combineNew.ratioCombine, 100)) {
-                    bongTai.template = ItemService.gI().getTemplate(921);
-                    bongTai.itemOptions.clear();
-                    bongTai.itemOptions.add(new Item.ItemOption(72, 2));
-                    CombineService.gI().sendEffectSuccessCombine(player);
-                    InventoryService.gI().subParamItemsBag(player, 933, 31, 9999);
-                } else {
-                    CombineService.gI().sendEffectFailCombine(player);
-                    InventoryService.gI().subParamItemsBag(player, 933, 31, 99);
-                }
-                InventoryService.gI().sendItemBags(player);
-                Service.gI().sendMoney(player);
-                CombineService.gI().reOpenItemCombine(player);
-            }
         }
+        if (bongTai == null || manhVo == null || bongTai.itemOptions == null) {
+            Service.gI().sendThongBaoResetWait(player, "Cần 1 Bông tai Porata cấp 1 và Mảnh vỡ bông tai");
+            CombineService.gI().reOpenItemCombine(player);
+            return;
+        }
+
+        if (InventoryService.gI().getParam(player, 31, 933) < 9999) {
+            Service.gI().sendThongBaoResetWait(player, "Không đủ 9999 Mảnh vỡ bông tai để nâng cấp!");
+            CombineService.gI().reOpenItemCombine(player);
+            return;
+        }
+
+        Item findItemBag = InventoryService.gI().findItemBag(player, 921);
+        if (findItemBag != null) {
+            Service.gI().sendThongBaoResetWait(player, "Ngươi đã có bông tai Porata cấp 2 trong hành trang rồi, không thể nâng cấp nữa.");
+            CombineService.gI().reOpenItemCombine(player);
+            return;
+        }
+
+        int gold = player.combineNew.goldCombine > 0 ? player.combineNew.goldCombine : GOLD_BONG_TAI;
+        if (player.inventory.gold < gold) {
+            Service.gI().sendThongBaoResetWait(player, "Không đủ vàng để thực hiện");
+            CombineService.gI().reOpenItemCombine(player);
+            return;
+        }
+
+        int gem = player.combineNew.gemCombine > 0 ? player.combineNew.gemCombine : GEM_BONG_TAI;
+        if (!player.inventory.checkGemAndRuby(gem)) {
+            Service.gI().sendThongBaoResetWait(player, "Không đủ ngọc để thực hiện");
+            CombineService.gI().reOpenItemCombine(player);
+            return;
+        }
+
+        // --- BƯỚC 2: MUTATE ---
+        player.inventory.gold -= gold;
+        player.inventory.subGemAndRuby(gem);
+
+        if (Util.isTrue(player.combineNew.ratioCombine, 100)) {
+            bongTai.template = ItemService.gI().getTemplate(921);
+            bongTai.itemOptions.clear();
+            bongTai.itemOptions.add(new Item.ItemOption(72, 2));
+            CombineService.gI().sendEffectSuccessCombine(player);
+            InventoryService.gI().subParamItemsBag(player, 933, 31, 9999);
+        } else {
+            CombineService.gI().sendEffectFailCombine(player);
+            InventoryService.gI().subParamItemsBag(player, 933, 31, 99);
+        }
+
+        // --- BƯỚC 3: NOTIFY ---
+        InventoryService.gI().sendItemBags(player);
+        Service.gI().sendMoney(player);
+        CombineService.gI().reOpenItemCombine(player);
     }
 
 }

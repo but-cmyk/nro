@@ -1053,13 +1053,22 @@ namespace Game1
                         }
                     }
                 }
-                if (img_bg != null && img_bg[GameCanvas.gameTick / 4 % img_bg.Count] != null)
+                if (img_bg != null && img_bg.Count > 0)
                 {
-                    var img = img_bg[GameCanvas.gameTick / 4 % img_bg.Count];
-                    gx.drawImage(img, x - 1, y - 1);
-                    if (img_frame != null && img_frame[GameCanvas.gameTick / 4 % img_frame.Count] != null)
+                    int bgIndex = System.Math.Abs(GameCanvas.gameTick / 4) % img_bg.Count;
+                    var img = img_bg[bgIndex];
+                    if (img != null)
                     {
-                        gx.drawImage(img_frame[GameCanvas.gameTick / 4 % img_frame.Count], x + img.getWidth() / 2, y + img.getHeight() / 2 - 1, 3);
+                        gx.drawImage(img, x - 1, y - 1);
+                        if (img_frame != null && img_frame.Count > 0)
+                        {
+                            int frameIndex = System.Math.Abs(GameCanvas.gameTick / 4) % img_frame.Count;
+                            var frameImg = img_frame[frameIndex];
+                            if (frameImg != null)
+                            {
+                                gx.drawImage(frameImg, x + img.getWidth() / 2, y + img.getHeight() / 2 - 1, 3);
+                            }
+                        }
                     }
                 }
             }
@@ -4266,6 +4275,17 @@ namespace Game1
             paintScrollArrow(g);
         }
     
+        private static long lastLogPanelPaintErrorTime;
+        private static void logPanelPaintErrorThrottled(string context, Exception ex)
+        {
+            long now = mSystem.currentTimeMillis();
+            if (now - lastLogPanelPaintErrorTime > 3000)
+            {
+                lastLogPanelPaintErrorTime = now;
+                Cout.LogWarning($"[Panel.{context}] Lỗi vẽ giao diện: {ex.Message}\n{ex.StackTrace}");
+            }
+        }
+
         public void paint(mGraphics g)
         {
             g.translate(-g.getTranslateX(), -g.getTranslateY() + mGraphics.addYWhenOpenKeyBoard);
@@ -4284,8 +4304,9 @@ namespace Game1
             {
                 paintTopInfo(g);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                logPanelPaintErrorThrottled("paintTopInfo", ex);
             }
             paintBottomMoneyInfo(g);
             paintTab(g);
@@ -4707,8 +4728,9 @@ namespace Game1
                                             mFont2.drawString(g, item.nameNguoiKyGui, num2 + num4, num3 + 1 + mFont.tahoma_7b_red.getHeight(), mFont.RIGHT);
                                         }
                                     }
-                                    catch (Exception)
+                                    catch (Exception ex)
                                     {
+                                        logPanelPaintErrorThrottled("paintConsignmentName", ex);
                                     }
                                 }
                             }
@@ -5467,8 +5489,9 @@ namespace Game1
                     }
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                logPanelPaintErrorThrottled("paintPetInventory", ex);
             }
             paintScrollArrow(g);
         }
@@ -6402,8 +6425,9 @@ namespace Game1
                                 text2 = cachedOptionFont.splitFontArray(text2, wScroll)[0];
                             }
                         }
-                        catch (Exception)
+                        catch (Exception ex)
                         {
+                            logPanelPaintErrorThrottled("paintItemOptionSplit", ex);
                         }
                         cachedOptionText = text2;
                     }
@@ -6587,7 +6611,10 @@ namespace Game1
                         mFont.tahoma_7_yellow.drawString(g, string.Empty + item3.quantity, num26 + num28, num27 + num29 - mFont.tahoma_7_yellow.getHeight(), 1);
                     }
                 }
-                catch (Exception) { }
+                catch (Exception ex)
+            {
+                logPanelPaintErrorThrottled("paintInventoryTab", ex);
+            }
             }
             paintScrollArrow(g);
         }
@@ -11431,8 +11458,9 @@ namespace Game1
                     }
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                logPanelPaintErrorThrottled("paintUpgradeEffect", ex);
             }
         }
     

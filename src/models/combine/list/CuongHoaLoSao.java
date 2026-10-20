@@ -109,8 +109,10 @@ public class CuongHoaLoSao {
             Service.gI().sendMoney(player);
             CombineService.gI().reOpenItemCombine(player);
         } else {
-            CombineService.gI().sendEffectSuccessCombine(player);
             CombineService.gI().sendEffectFailCombine(player);
+            InventoryService.gI().sendItemBags(player);
+            Service.gI().sendMoney(player);
+            CombineService.gI().reOpenItemCombine(player);
         }
     }
 }

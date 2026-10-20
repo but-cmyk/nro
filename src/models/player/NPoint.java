@@ -222,11 +222,32 @@ public class NPoint {
 
     public int levelBT;
 
+    public volatile boolean isDirty = true;
+    private long lastCalPointTime = 0;
+
+    public void setDirty() {
+        this.isDirty = true;
+    }
+
+    public boolean isDirty() {
+        return this.isDirty;
+    }
+
     /*-------------------------------------------------------------------------*/
     /**
      * Tính toán mọi chỉ số sau khi có thay đổi
      */
     public void calPoint() {
+        calPoint(false);
+    }
+
+    public void calPoint(boolean force) {
+        long now = System.currentTimeMillis();
+        if (!force && !this.isDirty && (now - this.lastCalPointTime < 150)) {
+            return;
+        }
+        this.isDirty = false;
+        this.lastCalPointTime = now;
         if (this.player.pet != null) {
             this.player.pet.nPoint.setPointWhenWearClothes();
         }
@@ -281,18 +302,20 @@ public class NPoint {
         }
 
         // Bông tai cấp 2
-        if (this.player.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA2) {
-            this.player.inventory.itemsBag.stream()
-                    .filter(it -> it.isNotNullItem() && it.template.id == 921)
-                    .findFirst()
-                    .ifPresent(btc2 -> {
-                        for (ItemOption io : btc2.itemOptions) {
+        if (this.player.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA2 && this.player.inventory != null && this.player.inventory.itemsBag != null) {
+            for (Item it : this.player.inventory.itemsBag) {
+                if (it != null && it.isNotNullItem() && it.template != null && it.template.id == 921) {
+                    if (it.itemOptions != null) {
+                        for (ItemOption io : it.itemOptions) {
                             addOption(io);
-                            if (io.optionTemplate.id == 72) {
+                            if (io.optionTemplate != null && io.optionTemplate.id == 72) {
                                 this.levelBT = io.param;
                             }
                         }
-                    });
+                    }
+                    break;
+                }
+            }
         }
 
         this.player.setClothes.worldcup = 0;
@@ -579,8 +602,23 @@ public class NPoint {
                     this.tlSubSD += ItemService.gI().getPercentTrainArmor(gtl);
                 } else {
                     if (this.player.inventory.trainArmor == null) {
-                        gtl = this.player.inventory.itemsBag.stream().filter(item -> item.isNotNullItem() && item.template.type == 32 && item.itemOptions != null
-                                && item.itemOptions.stream().filter(io -> io.optionTemplate.id == 9 && io.param > 0).findFirst().orElse(null) != null).findFirst().orElse(null);
+                        if (this.player.inventory.itemsBag != null) {
+                            for (Item item : this.player.inventory.itemsBag) {
+                                if (item != null && item.isNotNullItem() && item.template != null && item.template.type == 32 && item.itemOptions != null) {
+                                    boolean hasOpt9 = false;
+                                    for (ItemOption io : item.itemOptions) {
+                                        if (io != null && io.optionTemplate != null && io.optionTemplate.id == 9 && io.param > 0) {
+                                            hasOpt9 = true;
+                                            break;
+                                        }
+                                    }
+                                    if (hasOpt9) {
+                                        gtl = item;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
                         if (gtl == null) {
                             return;
                         }

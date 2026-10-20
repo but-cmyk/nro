@@ -2236,12 +2236,14 @@ namespace Game1
                             }
                             if (b51 == 1 && num135 != Char.myCharz().charID)
                             {
-                                try
+                                Char targetChar = GameScr.findCharInMap(num135);
+                                if (targetChar != null)
                                 {
-                                    GameScr.findCharInMap(num135).isCharge = true;
+                                    targetChar.isCharge = true;
                                 }
-                                catch (Exception)
+                                else
                                 {
+                                    Cout.LogWarning($"[Controller.onMessage] Không tìm thấy Char ID {num135} trên Map để bật isCharge");
                                 }
                             }
                             if (b51 == 3)

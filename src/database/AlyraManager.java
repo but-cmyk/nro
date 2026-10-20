@@ -37,6 +37,7 @@ public class AlyraManager {
     private static int MIN_CONN;
     private static int MAX_CONN;
     private static long MAX_LIFE_TIME;
+    private static long LEAK_THRESHOLD;
     public static boolean LOG_QUERY;
 
     private static HikariConfig config;
@@ -89,6 +90,7 @@ public class AlyraManager {
         MIN_CONN = getIntProperty(properties, "database.min", 5);
         MAX_CONN = getIntProperty(properties, "database.max", 20);
         MAX_LIFE_TIME = getLongProperty(properties, "database.lifetime", 1800000L);
+        LEAK_THRESHOLD = getLongProperty(properties, "database.leak.threshold", 30000L);
         LOG_QUERY = getBooleanProperty(properties, "database.log", false);
     }
 
@@ -454,7 +456,7 @@ public class AlyraManager {
 
         config.setConnectionTimeout(30000);
         config.setIdleTimeout(Math.min(30000, MAX_LIFE_TIME / 2));
-        config.setLeakDetectionThreshold(10000);
+        config.setLeakDetectionThreshold(LEAK_THRESHOLD);
         config.setValidationTimeout(5000);
 
         config.addDataSourceProperty("cachePrepStmts", "true");

@@ -311,22 +311,20 @@ namespace Game1
         {
             if (count >= 10)
             {
-                if (fps == 0)
-                {
-                    timefps = mSystem.currentTimeMillis();
-                }
-                else if (mSystem.currentTimeMillis() - timefps > 1000)
-                {
-                    max = fps;
-                    fps = 0;
-                    timefps = mSystem.currentTimeMillis();
-                }
-                fps++;
                 checkInput();
-                Session_ME.update();
-                Session_ME2.update();
                 if (Event.current.type == EventType.Repaint)
                 {
+                    if (fps == 0)
+                    {
+                        timefps = mSystem.currentTimeMillis();
+                    }
+                    else if (mSystem.currentTimeMillis() - timefps > 1000)
+                    {
+                        max = fps;
+                        fps = 0;
+                        timefps = mSystem.currentTimeMillis();
+                    }
+                    fps++;
                     GUI.color = Color.white;
                     GUI.backgroundColor = Color.white;
                     if (GameMidlet.gameCanvas != null)
@@ -347,6 +345,7 @@ namespace Game1
                 Screen.orientation = ScreenOrientation.AutoRotation;
                 Application.runInBackground = true;
                 Application.targetFrameRate = 120;
+                QualitySettings.vSyncCount = 0;
                 base.useGUILayout = false;
                 isCompactDevice = detectCompactDevice();
                 if (main == null)
@@ -503,11 +502,13 @@ namespace Game1
 
         private void Update()
         {
+            Session_ME.update();
+            Session_ME2.update();
         }
 
         internal void checkInput()
         {
-            if (GameMidlet.gameCanvas == null) return;
+            if (Event.current == null || GameMidlet.gameCanvas == null) return;
             if (Input.GetMouseButtonDown(0))
             {
                 Vector3 mousePosition = Input.mousePosition;

@@ -1613,6 +1613,8 @@ namespace Game1
     	public void readPart()
     	{
     		DataInputStream dataInputStream = null;
+    		int currentPartIndex = -1;
+    		int currentPartType = -1;
     		try
     		{
     			sbyte[] data = Rms.loadRMS("NR_part");
@@ -1625,8 +1627,15 @@ namespace Game1
     			parts = new Part[num];
     			for (int i = 0; i < num; i++)
     			{
+    				currentPartIndex = i;
     				int type = dataInputStream.readByte();
+    				currentPartType = type;
     				parts[i] = new Part(type);
+    				if (parts[i].pi == null || parts[i].pi.Length == 0)
+    				{
+    					Cout.LogError($"[readPart] LỖI CẤU TRÚC PART: Part index {i}/{num} có type không hợp lệ ({type}), pi bị rỗng! Byte stream có thể đã bị lệch (desync).");
+    					continue;
+    				}
     				for (int j = 0; j < parts[i].pi.Length; j++)
     				{
     					parts[i].pi[j] = new PartImage();
@@ -1638,7 +1647,7 @@ namespace Game1
     		}
     		catch (Exception ex)
     		{
-    			Cout.LogError("LOI TAI readPart " + ex.ToString());
+    			Cout.LogError($"[readPart] LỖI TẠI readPart: {ex.GetType().Name} - {ex.Message} tại Part Index {currentPartIndex} (Type={currentPartType}).\nStack: {ex.StackTrace}");
     		}
     		finally
     		{
@@ -1716,7 +1725,10 @@ namespace Game1
     				return efs[id - 1];
     			}
     		}
-    		catch (Exception) { }
+    		catch (Exception ex)
+    		{
+    			Cout.LogError($"[getEffect] Lỗi lấy effect ID={id}: {ex.Message}");
+    		}
     		return null;
     	}
     
@@ -1737,8 +1749,9 @@ namespace Game1
     				arrs[i].imgId[2] = dataInputStream.readShort();
     			}
     		}
-    		catch (Exception)
+    		catch (Exception ex)
     		{
+    			Cout.LogError($"[readArrow] Lỗi nạp NR_arrow: {ex.Message}\n{ex.StackTrace}");
     		}
     		finally
     		{
@@ -5033,6 +5046,28 @@ namespace Game1
     		}
     	}
     
+	private static long lastLogCharUpdateTime;
+	public static void logCharUpdateErrorThrottled(int charId, string charName, Exception ex)
+	{
+		long now = mSystem.currentTimeMillis();
+		if (now - lastLogCharUpdateTime > 3000)
+		{
+			lastLogCharUpdateTime = now;
+			Cout.LogError($"[GameScr.update] Lỗi cập nhật Char ID {charId} ('{charName}'): {ex.GetType().Name} - {ex.Message}\nStack: {ex.StackTrace}");
+		}
+	}
+
+	private static long lastLogMobUpdateTime;
+	public static void logMobUpdateErrorThrottled(int mobId, Exception ex)
+	{
+		long now = mSystem.currentTimeMillis();
+		if (now - lastLogMobUpdateTime > 3000)
+		{
+			lastLogMobUpdateTime = now;
+			Cout.LogError($"[GameScr.update] Lỗi cập nhật Mob ID {mobId}: {ex.GetType().Name} - {ex.Message}\nStack: {ex.StackTrace}");
+		}
+	}
+
     	public override void update()
         {
             ClientManager.getInstance().Update();
@@ -5102,7 +5137,7 @@ namespace Game1
     				Char c = (Char)vCharInMap.elementAt(i);
     				if (c != null)
     				{
-    					try { c.update(); } catch (Exception) { }
+    					try { c.update(); } catch (Exception ex) { logCharUpdateErrorThrottled(c.charID, c.cName, ex); }
     				}
     			}
     			for (int i = 0; i < Teleport.vTeleport.size(); i++)
@@ -5115,10 +5150,14 @@ namespace Game1
     			}
     			try
     			{
-    				Char.myCharz().update();
+    				if (Char.myCharz() != null)
+    				{
+    					Char.myCharz().update();
+    				}
     			}
-    			catch (Exception)
+    			catch (Exception ex)
     			{
+    				logCharUpdateErrorThrottled(Char.myCharz() != null ? Char.myCharz().charID : -1, Char.myCharz() != null ? Char.myCharz().cName : "myCharz", ex);
     			}
     			if (popUpYesNo != null)
     			{
@@ -5131,7 +5170,7 @@ namespace Game1
     				Mob mob = (Mob)vMob.elementAt(i);
     				if (mob != null)
     				{
-    					try { mob.update(); } catch (Exception) { }
+    					try { mob.update(); } catch (Exception ex) { logMobUpdateErrorThrottled(mob.mobId, ex); }
     				}
     			}
     			GameCanvas.debug("E6", 0);
@@ -5456,17 +5495,20 @@ namespace Game1
     		EffecMn.paintLayer1(g);
     		TileMap.paintTilemap(g);
     		TileMap.paintOutTilemap(g);
-    		for (int i = 0; i < vCharInMap.size(); i++)
+    		if (TileMap.mapID == 128)
     		{
-    			Char @char = (Char)vCharInMap.elementAt(i);
-    			if (@char.isMabuHold && TileMap.mapID == 128)
+    			for (int i = 0; i < vCharInMap.size(); i++)
     			{
-    				@char.paintHeadWithXY(g, @char.cx, @char.cy, 0);
+    				Char @char = (Char)vCharInMap.elementAt(i);
+    				if (@char != null && @char.isMabuHold)
+    				{
+    					@char.paintHeadWithXY(g, @char.cx, @char.cy, 0);
+    				}
     			}
-    		}
-    		if (Char.myCharz().isMabuHold && TileMap.mapID == 128)
-    		{
-    			Char.myCharz().paintHeadWithXY(g, Char.myCharz().cx, Char.myCharz().cy, 0);
+    			if (Char.myCharz().isMabuHold)
+    			{
+    				Char.myCharz().paintHeadWithXY(g, Char.myCharz().cx, Char.myCharz().cy, 0);
+    			}
     		}
     		paintBgItem(g, 2);
     		if (Char.myCharz().cmdMenu != null && GameCanvas.isTouch)
@@ -5508,20 +5550,16 @@ namespace Game1
     		g.translate(0, GameCanvas.transY);
     		GameCanvas.debug("PA7", 1);
     		GameCanvas.debug("PA8", 1);
-    		for (int i = 0; i < vCharInMap.size(); i++)
+    		bool canPaintChar = (!GameCanvas.panel.isShow || !GameCanvas.panel.isTypeShop());
+    		if (canPaintChar)
     		{
-    			Char char2 = null;
-    			try
+    			for (int i = 0; i < vCharInMap.size(); i++)
     			{
-    				char2 = (Char)vCharInMap.elementAt(i);
-    			}
-    			catch (Exception ex)
-    			{
-    				Cout.LogError("Loi ham paint char gamesc: " + ex.ToString());
-    			}
-    			if (char2 != null && (!GameCanvas.panel.isShow || !GameCanvas.panel.isTypeShop()) && char2.isShadown)
-    			{
-    				char2.paintShadow(g);
+    				Char char2 = (Char)vCharInMap.elementAt(i);
+    				if (char2 != null && char2.isShadown && char2.isPaint())
+    				{
+    					char2.paintShadow(g);
+    				}
     			}
     		}
     		Char.myCharz().paintShadow(g);
@@ -5534,19 +5572,15 @@ namespace Game1
     		{
     			((Teleport)Teleport.vTeleport.elementAt(i)).paint(g);
     		}
-    		for (int i = 0; i < vCharInMap.size(); i++)
+    		if (canPaintChar)
     		{
-    			Char char3 = null;
-    			try
+    			for (int i = 0; i < vCharInMap.size(); i++)
     			{
-    				char3 = (Char)vCharInMap.elementAt(i);
-    			}
-    			catch (Exception)
-    			{
-    			}
-    			if (char3 != null && (!GameCanvas.panel.isShow || !GameCanvas.panel.isTypeShop()))
-    			{
-    				char3.paint(g);
+    				Char char3 = (Char)vCharInMap.elementAt(i);
+    				if (char3 != null && char3.isPaint())
+    				{
+    					char3.paint(g);
+    				}
     			}
     		}
     		Char.myCharz().paint(g);
@@ -5555,26 +5589,25 @@ namespace Game1
     			Char.myCharz().paintCharWithSkill(g);
     			Char.myCharz().paintMount2(g);
     		}
-    		for (int i = 0; i < vCharInMap.size(); i++)
+    		if (canPaintChar)
     		{
-    			Char char4 = null;
-    			try
+    			for (int i = 0; i < vCharInMap.size(); i++)
     			{
-    				char4 = (Char)vCharInMap.elementAt(i);
-    			}
-    			catch (Exception ex3)
-    			{
-    				Cout.LogError("Loi ham paint char gamescr: " + ex3.ToString());
-    			}
-    			if (char4 != null && (!GameCanvas.panel.isShow || !GameCanvas.panel.isTypeShop()) && char4.skillPaint != null && char4.skillInfoPaint() != null && char4.indexSkill < char4.skillInfoPaint().Length)
-    			{
-    				char4.paintCharWithSkill(g);
-    				char4.paintMount2(g);
+    				Char char4 = (Char)vCharInMap.elementAt(i);
+    				if (char4 != null && char4.isPaint() && char4.skillPaint != null && char4.skillInfoPaint() != null && char4.indexSkill < char4.skillInfoPaint().Length)
+    				{
+    					char4.paintCharWithSkill(g);
+    					char4.paintMount2(g);
+    				}
     			}
     		}
     		for (int i = 0; i < vItemMap.size(); i++)
     		{
-    			((ItemMap)vItemMap.elementAt(i)).paint(g);
+    			ItemMap it = (ItemMap)vItemMap.elementAt(i);
+    			if (it != null && it.isInViewport())
+    			{
+    				it.paint(g);
+    			}
     		}
     		g.translate(0, -GameCanvas.transY);
     		GameCanvas.debug("PA9", 1);

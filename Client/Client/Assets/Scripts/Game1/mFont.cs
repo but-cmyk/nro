@@ -141,6 +141,49 @@ namespace Game1
     	private int height;
     
     	private int wO;
+
+        private GUIStyle styleLeft;
+        private GUIStyle styleRight;
+        private GUIStyle styleCenter;
+        private GUIStyle measureStyle;
+        private static readonly GUIContent sharedContent = new GUIContent();
+
+        private GUIStyle getStyle(int align)
+        {
+            GUIStyle style;
+            switch (align)
+            {
+                case 1:
+                    if (styleRight == null)
+                    {
+                        styleRight = new GUIStyle(GUI.skin.label);
+                        styleRight.font = myFont;
+                        styleRight.alignment = TextAnchor.UpperRight;
+                    }
+                    style = styleRight;
+                    break;
+                case 2:
+                case 3:
+                    if (styleCenter == null)
+                    {
+                        styleCenter = new GUIStyle(GUI.skin.label);
+                        styleCenter.font = myFont;
+                        styleCenter.alignment = TextAnchor.UpperCenter;
+                    }
+                    style = styleCenter;
+                    break;
+                default:
+                    if (styleLeft == null)
+                    {
+                        styleLeft = new GUIStyle(GUI.skin.label);
+                        styleLeft.font = myFont;
+                        styleLeft.alignment = TextAnchor.UpperLeft;
+                    }
+                    style = styleLeft;
+                    break;
+            }
+            return style;
+        }
     
     	public Color color1 = Color.white;
     
@@ -431,7 +474,7 @@ namespace Game1
     			}
     			for (int i = 0; i < length; i++)
     			{
-    				int num2 = strFont.IndexOf(st[i] + string.Empty);
+    				int num2 = strFont.IndexOf(st[i]);
     				if (num2 == -1)
     				{
     					num2 = 0;
@@ -744,11 +787,19 @@ namespace Game1
     
     	public int getWidthExactOf(string s)
     	{
+    		if (string.IsNullOrEmpty(s))
+    		{
+    			return 0;
+    		}
     		try
     		{
-    			GUIStyle gUIStyle = new GUIStyle();
-    			gUIStyle.font = myFont;
-    			return (int)gUIStyle.CalcSize(new GUIContent(s)).x / mGraphics.zoomLevel;
+    			if (measureStyle == null)
+    			{
+    				measureStyle = new GUIStyle();
+    				measureStyle.font = myFont;
+    			}
+    			sharedContent.text = s;
+    			return (int)measureStyle.CalcSize(sharedContent).x / mGraphics.zoomLevel;
     		}
     		catch (Exception ex)
     		{
@@ -772,11 +823,15 @@ namespace Game1
     		{
     			return height / mGraphics.zoomLevel;
     		}
-    		GUIStyle gUIStyle = new GUIStyle();
-    		gUIStyle.font = myFont;
     		try
     		{
-    			height = (int)gUIStyle.CalcSize(new GUIContent("Adg")).y + 2;
+    			if (measureStyle == null)
+    			{
+    				measureStyle = new GUIStyle();
+    				measureStyle.font = myFont;
+    			}
+    			sharedContent.text = "Adg";
+    			height = (int)measureStyle.CalcSize(sharedContent).y + 2;
     		}
     		catch (Exception ex)
     		{
@@ -789,8 +844,7 @@ namespace Game1
     	public void _drawString(mGraphics g, string st, int x0, int y0, int align)
     	{
     		y0 += yAddFont;
-    		GUIStyle gUIStyle = new GUIStyle(GUI.skin.label);
-    		gUIStyle.font = myFont;
+    		GUIStyle gUIStyle = getStyle(align);
     		float num = 0f;
     		float num2 = 0f;
     		switch (align)
@@ -812,14 +866,17 @@ namespace Game1
     			gUIStyle.alignment = TextAnchor.UpperCenter;
     			break;
     		}
-    		gUIStyle.normal.textColor = color1;
-    		gUIStyle.hover.textColor = color1;
-    		gUIStyle.active.textColor = color1;
-    		gUIStyle.focused.textColor = color1;
-    		gUIStyle.onNormal.textColor = color1;
-    		gUIStyle.onHover.textColor = color1;
-    		gUIStyle.onActive.textColor = color1;
-    		gUIStyle.onFocused.textColor = color1;
+    		if (gUIStyle.normal.textColor != color1)
+    		{
+    			gUIStyle.normal.textColor = color1;
+    			gUIStyle.hover.textColor = color1;
+    			gUIStyle.active.textColor = color1;
+    			gUIStyle.focused.textColor = color1;
+    			gUIStyle.onNormal.textColor = color1;
+    			gUIStyle.onHover.textColor = color1;
+    			gUIStyle.onActive.textColor = color1;
+    			gUIStyle.onFocused.textColor = color1;
+    		}
     		g.drawString(st, (int)num, (int)num2, gUIStyle);
     	}
     

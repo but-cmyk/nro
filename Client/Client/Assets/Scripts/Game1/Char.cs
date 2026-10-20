@@ -4811,6 +4811,10 @@ namespace Game1
     
     	public void paintMount2(mGraphics g)
     	{
+    		if (!isPaint())
+    		{
+    			return;
+    		}
     		checkLoadMount();
     		if (xMount <= GameScr.cmx || xMount >= GameScr.cmx + GameCanvas.w)
     		{
@@ -5646,11 +5650,11 @@ namespace Game1
     
     	public bool isOutX()
     	{
-    		if (cx < GameScr.cmx)
+    		if (cx < GameScr.cmx - 60)
     		{
     			return true;
     		}
-    		if (cx > GameScr.cmx + GameScr.gW)
+    		if (cx > GameScr.cmx + GameScr.gW + 60)
     		{
     			return true;
     		}
@@ -5659,11 +5663,11 @@ namespace Game1
     
     	public bool isPaint()
     	{
-    		if (cy < GameScr.cmy)
+    		if (cy < GameScr.cmy - 80)
     		{
     			return false;
     		}
-    		if (cy > GameScr.cmy + GameScr.gH + 30)
+    		if (cy > GameScr.cmy + GameScr.gH + 50)
     		{
     			return false;
     		}
@@ -6309,7 +6313,7 @@ namespace Game1
     
     	public void paintShadow(mGraphics g)
     	{
-    		if (isMabuHold || head == 377 || leg == 471 || isTeleport || isFlyUp)
+    		if (isMabuHold || head == 377 || leg == 471 || isTeleport || isFlyUp || !isPaint())
     		{
     			return;
     		}
@@ -6571,10 +6575,22 @@ namespace Game1
 		SmallImage.drawSmallImage(g, part.pi[CharInfo[0][0][0]].id, x + CharInfo[0][0][1] + part.pi[CharInfo[0][0][0]].dx - 3, y + 3, look, mGraphics.LEFT | mGraphics.BOTTOM);
 	}
 
+	private long lastLogPaintErrorTime;
+	private void logPaintErrorThrottled(string reason)
+	{
+		long now = mSystem.currentTimeMillis();
+		if (now - lastLogPaintErrorTime > 3000)
+		{
+			lastLogPaintErrorTime = now;
+			Cout.LogError($"[paintCharBody] LỖI KHÔNG THỂ VẼ NHÂN VẬT '{cName}' (charID={charID}, head={head}, body={body}, leg={leg}): {reason}");
+		}
+	}
+
 	public virtual void paintCharBody(mGraphics g, int cx, int cy, int cdir, int cf, bool isPaintBag)
 	{
 		if (GameScr.parts == null || head < 0 || head >= GameScr.parts.Length || leg < 0 || leg >= GameScr.parts.Length || body < 0 || body >= GameScr.parts.Length)
 		{
+			logPaintErrorThrottled($"Part ID vượt giới hạn mảng GameScr.parts (Length={(GameScr.parts != null ? GameScr.parts.Length : -1)})! head={head}, body={body}, leg={leg}");
 			return;
 		}
 		ph = GameScr.parts[head];
@@ -6582,6 +6598,7 @@ namespace Game1
 		pb = GameScr.parts[body];
 		if (ph == null || pl == null || pb == null || ph.pi == null || pl.pi == null || pb.pi == null)
 		{
+			logPaintErrorThrottled($"Part hoặc Part.pi bị NULL! head={head} (ph={(ph == null ? "NULL" : (ph.pi == null ? "pi=NULL" : "OK"))}), body={body} (pb={(pb == null ? "NULL" : (pb.pi == null ? "pi=NULL" : "OK"))}), leg={leg} (pl={(pl == null ? "NULL" : (pl.pi == null ? "pi=NULL" : "OK"))})");
 			return;
 		}
 		if (cf < 0 || cf >= CharInfo.Length || CharInfo[cf] == null || CharInfo[cf].Length < 3 || CharInfo[cf][0] == null || CharInfo[cf][0].Length < 3 || CharInfo[cf][1] == null || CharInfo[cf][1].Length < 3 || CharInfo[cf][2] == null || CharInfo[cf][2].Length < 3)
@@ -6590,6 +6607,7 @@ namespace Game1
 		}
 		if (CharInfo[cf][0][0] >= ph.pi.Length || CharInfo[cf][1][0] >= pl.pi.Length || CharInfo[cf][2][0] >= pb.pi.Length)
 		{
+			logPaintErrorThrottled($"Frame cf={cf} vượt độ dài mảng PartImage! Yêu cầu: headIdx={CharInfo[cf][0][0]}/{ph.pi.Length}, legIdx={CharInfo[cf][1][0]}/{pl.pi.Length}, bodyIdx={CharInfo[cf][2][0]}/{pb.pi.Length}");
 			return;
 		}
 		if (bag >= 0 && statusMe != 14)
@@ -6634,17 +6652,20 @@ namespace Game1
 			{
 				num3 = 23;
 			}
-			SmallImage.drawSmallImage(g, 834, cx, cy - CharInfo[cf][2][2] + pb.pi[CharInfo[cf][2][0]].dy - 2 + num3, num, StaticObj.TOP_CENTER);
+			SmallImage.drawSmallImage(g, 834, cx, cy - CharInfo[cf][2][2] + (pb.pi[CharInfo[cf][2][0]] != null ? pb.pi[CharInfo[cf][2][0]].dy : 0) - 2 + num3, num, StaticObj.TOP_CENTER);
 			SmallImage.drawSmallImage(g, 79, cx, cy - ch - 8, 0, mGraphics.HCENTER | mGraphics.BOTTOM);
-			SmallImage.drawSmallImage(g, ph.pi[CharInfo[cf][0][0]].id, cx + (CharInfo[cf][0][1] + ph.pi[CharInfo[cf][0][0]].dx) * num2, cy - CharInfo[cf][0][2] + ph.pi[CharInfo[cf][0][0]].dy, num, anchor);
-			paintHat_behind(g, cf, cy - CharInfo[cf][2][2] + pb.pi[CharInfo[cf][2][0]].dy);
+			if (ph.pi[CharInfo[cf][0][0]] != null)
+			{
+				SmallImage.drawSmallImage(g, ph.pi[CharInfo[cf][0][0]].id, cx + (CharInfo[cf][0][1] + ph.pi[CharInfo[cf][0][0]].dx) * num2, cy - CharInfo[cf][0][2] + ph.pi[CharInfo[cf][0][0]].dy, num, anchor);
+			}
+			paintHat_behind(g, cf, cy - CharInfo[cf][2][2] + (pb.pi[CharInfo[cf][2][0]] != null ? pb.pi[CharInfo[cf][2][0]].dy : 0));
 			if (isHead_2Fr(head))
 			{
 				int fHeadIdx = getFHead(head);
 				if (fHeadIdx >= 0 && fHeadIdx < GameScr.parts.Length && GameScr.parts[fHeadIdx] != null)
 				{
 					Part part = GameScr.parts[fHeadIdx];
-					if (part.pi != null && CharInfo[cf][0][0] < part.pi.Length)
+					if (part.pi != null && CharInfo[cf][0][0] < part.pi.Length && part.pi[CharInfo[cf][0][0]] != null)
 					{
 						SmallImage.drawSmallImage(g, part.pi[CharInfo[cf][0][0]].id, cx + (CharInfo[cf][0][1] + part.pi[CharInfo[cf][0][0]].dx) * num2, cy - CharInfo[cf][0][2] + part.pi[CharInfo[cf][0][0]].dy, num, anchor);
 					}
@@ -6652,21 +6673,27 @@ namespace Game1
 			}
 			else
 			{
-				SmallImage.drawSmallImage(g, ph.pi[CharInfo[cf][0][0]].id, cx + (CharInfo[cf][0][1] + ph.pi[CharInfo[cf][0][0]].dx) * num2, cy - CharInfo[cf][0][2] + ph.pi[CharInfo[cf][0][0]].dy, num, anchor);
+				if (ph.pi[CharInfo[cf][0][0]] != null)
+				{
+					SmallImage.drawSmallImage(g, ph.pi[CharInfo[cf][0][0]].id, cx + (CharInfo[cf][0][1] + ph.pi[CharInfo[cf][0][0]].dx) * num2, cy - CharInfo[cf][0][2] + ph.pi[CharInfo[cf][0][0]].dy, num, anchor);
+				}
 			}
-			paintHat_front(g, cf, cy - CharInfo[cf][2][2] + pb.pi[CharInfo[cf][2][0]].dy);
-			paintRedEye(g, cx + (CharInfo[cf][0][1] + ph.pi[CharInfo[cf][0][0]].dx) * num2, cy - CharInfo[cf][0][2] + ph.pi[CharInfo[cf][0][0]].dy, num, anchor);
+			paintHat_front(g, cf, cy - CharInfo[cf][2][2] + (pb.pi[CharInfo[cf][2][0]] != null ? pb.pi[CharInfo[cf][2][0]].dy : 0));
+			if (ph.pi[CharInfo[cf][0][0]] != null)
+			{
+				paintRedEye(g, cx + (CharInfo[cf][0][1] + ph.pi[CharInfo[cf][0][0]].dx) * num2, cy - CharInfo[cf][0][2] + ph.pi[CharInfo[cf][0][0]].dy, num, anchor);
+			}
 		}
 		else
 		{
-			paintHat_behind(g, cf, cy - CharInfo[cf][2][2] + pb.pi[CharInfo[cf][2][0]].dy);
+			paintHat_behind(g, cf, cy - CharInfo[cf][2][2] + (pb.pi[CharInfo[cf][2][0]] != null ? pb.pi[CharInfo[cf][2][0]].dy : 0));
 			if (isHead_2Fr(head))
 			{
 				int fHeadIdx = getFHead(head);
 				if (fHeadIdx >= 0 && fHeadIdx < GameScr.parts.Length && GameScr.parts[fHeadIdx] != null)
 				{
 					Part part2 = GameScr.parts[fHeadIdx];
-					if (part2.pi != null && CharInfo[cf][0][0] < part2.pi.Length)
+					if (part2.pi != null && CharInfo[cf][0][0] < part2.pi.Length && part2.pi[CharInfo[cf][0][0]] != null)
 					{
 						SmallImage.drawSmallImage(g, part2.pi[CharInfo[cf][0][0]].id, cx + (CharInfo[cf][0][1] + part2.pi[CharInfo[cf][0][0]].dx) * num2, cy - CharInfo[cf][0][2] + part2.pi[CharInfo[cf][0][0]].dy, num, anchor);
 					}
@@ -6674,14 +6701,27 @@ namespace Game1
 			}
 			else
 			{
-				SmallImage.drawSmallImage(g, ph.pi[CharInfo[cf][0][0]].id, cx + (CharInfo[cf][0][1] + ph.pi[CharInfo[cf][0][0]].dx) * num2, cy - CharInfo[cf][0][2] + ph.pi[CharInfo[cf][0][0]].dy, num, anchor);
+				if (ph.pi[CharInfo[cf][0][0]] != null)
+				{
+					SmallImage.drawSmallImage(g, ph.pi[CharInfo[cf][0][0]].id, cx + (CharInfo[cf][0][1] + ph.pi[CharInfo[cf][0][0]].dx) * num2, cy - CharInfo[cf][0][2] + ph.pi[CharInfo[cf][0][0]].dy, num, anchor);
+				}
 			}
-			SmallImage.drawSmallImage(g, pl.pi[CharInfo[cf][1][0]].id, cx + (CharInfo[cf][1][1] + pl.pi[CharInfo[cf][1][0]].dx) * num2, cy - CharInfo[cf][1][2] + pl.pi[CharInfo[cf][1][0]].dy, num, anchor);
-			SmallImage.drawSmallImage(g, pb.pi[CharInfo[cf][2][0]].id, cx + (CharInfo[cf][2][1] + pb.pi[CharInfo[cf][2][0]].dx) * num2, cy - CharInfo[cf][2][2] + pb.pi[CharInfo[cf][2][0]].dy, num, anchor);
-			paintRedEye(g, cx + (CharInfo[cf][0][1] + ph.pi[CharInfo[cf][0][0]].dx) * num2, cy - CharInfo[cf][0][2] + ph.pi[CharInfo[cf][0][0]].dy, num, anchor);
+			if (pl.pi[CharInfo[cf][1][0]] != null)
+			{
+				SmallImage.drawSmallImage(g, pl.pi[CharInfo[cf][1][0]].id, cx + (CharInfo[cf][1][1] + pl.pi[CharInfo[cf][1][0]].dx) * num2, cy - CharInfo[cf][1][2] + pl.pi[CharInfo[cf][1][0]].dy, num, anchor);
+			}
+			if (pb.pi[CharInfo[cf][2][0]] != null)
+			{
+				SmallImage.drawSmallImage(g, pb.pi[CharInfo[cf][2][0]].id, cx + (CharInfo[cf][2][1] + pb.pi[CharInfo[cf][2][0]].dx) * num2, cy - CharInfo[cf][2][2] + pb.pi[CharInfo[cf][2][0]].dy, num, anchor);
+			}
+			if (ph.pi[CharInfo[cf][0][0]] != null)
+			{
+				paintRedEye(g, cx + (CharInfo[cf][0][1] + ph.pi[CharInfo[cf][0][0]].dx) * num2, cy - CharInfo[cf][0][2] + ph.pi[CharInfo[cf][0][0]].dy, num, anchor);
+			}
 		}
-		ch = ((isMonkey != 1 && !isFusion) ? (CharInfo[0][0][2] + ph.pi[CharInfo[0][0][0]].dy + 10) : 60);
-		int num4 = ((Res.abs(ph.pi[CharInfo[cf][0][0]].dy) < 22) ? ph.pi[CharInfo[cf][0][0]].dy : ((ph.pi[CharInfo[cf][0][0]].dy >= 0) ? (ph.pi[CharInfo[cf][0][0]].dy - 5) : (ph.pi[CharInfo[cf][0][0]].dy + 5)));
+		ch = ((isMonkey != 1 && !isFusion) ? (CharInfo[0][0][2] + (ph.pi[CharInfo[0][0][0]] != null ? ph.pi[CharInfo[0][0][0]].dy : 0) + 10) : 60);
+		int phDy = (ph.pi[CharInfo[cf][0][0]] != null ? ph.pi[CharInfo[cf][0][0]].dy : 0);
+		int num4 = ((Res.abs(phDy) < 22) ? phDy : ((phDy >= 0) ? (phDy - 5) : (phDy + 5)));
 		cH_new = cy - CharInfo[cf][0][2] + num4;
 		if (statusMe == 1 && charID > 0 && !isMask && !isUseChargeSkill() && !isWaitMonkey && skillPaint == null && cf != 23 && bag < 0 && ((GameCanvas.gameTick + charID) % 30 == 0 || isFreez))
 		{
@@ -6704,8 +6744,17 @@ namespace Game1
     
     	public void paintCharWithSkill(mGraphics g)
     	{
+    		if (!isPaint())
+    		{
+    			return;
+    		}
     		ty = 0;
     		SkillInfoPaint[] array = skillInfoPaint();
+    		if (array == null || indexSkill < 0 || indexSkill >= array.Length || array[indexSkill] == null)
+    		{
+    			paintCharWithoutSkill(g);
+    			return;
+    		}
     		cf = array[indexSkill].status;
     		paintCharWithoutSkill(g);
     		if (cdir == 1)

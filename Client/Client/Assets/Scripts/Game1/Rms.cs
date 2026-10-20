@@ -1,6 +1,7 @@
 namespace Game1
 {
     using System;
+    using System.Collections.Generic;
     using System.IO;
     using System.Security.Cryptography;
     using System.Text;
@@ -16,23 +17,44 @@ namespace Game1
         public static string filename;
 
         private static readonly object rmsLock = new object();
+        private static readonly Dictionary<string, sbyte[]> rmsCache = new Dictionary<string, sbyte[]>();
 
         private static string cachedPath = null;
         public static string rootPersistentPath = null;
 
         public static void saveRMS(string filename, sbyte[] data)
         {
+            if (string.IsNullOrEmpty(filename)) return;
             lock (rmsLock)
             {
+                if (data != null)
+                {
+                    rmsCache[filename] = data;
+                }
+                else
+                {
+                    rmsCache.Remove(filename);
+                }
                 __saveRMS(filename, data);
             }
         }
     
         public static sbyte[] loadRMS(string filename)
         {
+            if (string.IsNullOrEmpty(filename)) return null;
             lock (rmsLock)
             {
-                return __loadRMS(filename);
+                sbyte[] cached;
+                if (rmsCache.TryGetValue(filename, out cached))
+                {
+                    return cached;
+                }
+                sbyte[] diskData = __loadRMS(filename);
+                if (diskData != null)
+                {
+                    rmsCache[filename] = diskData;
+                }
+                return diskData;
             }
         }
     
@@ -173,69 +195,17 @@ namespace Game1
     
         private static void _saveRMS(string filename, sbyte[] data)
         {
-            if (status != 0)
-            {
-                Debug.LogError("Cannot save RMS " + filename + " because current is saving " + Rms.filename);
-                return;
-            }
-            Rms.filename = filename;
-            Rms.data = data;
-            status = 2;
-            int i;
-            for (i = 0; i < 500; i++)
-            {
-                Thread.Sleep(5);
-                if (status == 0)
-                {
-                    break;
-                }
-            }
-            if (i == 500)
-            {
-                Debug.LogError("TOO LONG TO SAVE RMS " + filename);
-            }
+            saveRMS(filename, data);
         }
     
         private static sbyte[] _loadRMS(string filename)
         {
-            if (status != 0)
-            {
-                Debug.LogError("Cannot load RMS " + filename + " because current is loading " + Rms.filename);
-                return null;
-            }
-            Rms.filename = filename;
-            data = null;
-            status = 3;
-            int i;
-            for (i = 0; i < 500; i++)
-            {
-                Thread.Sleep(5);
-                if (status == 0)
-                {
-                    break;
-                }
-            }
-            if (i == 500)
-            {
-                Debug.LogError("TOO LONG TO LOAD RMS " + filename);
-            }
-            return data;
+            return loadRMS(filename);
         }
 
         public static void update()
         {
-            if (status == 2)
-            {
-                status = 1;
-                __saveRMS(filename, data);
-                status = 0;
-            }
-            else if (status == 3)
-            {
-                status = 1;
-                data = __loadRMS(filename);
-                status = 0;
-            }
+            // Direct thread-safe I/O with memory cache; no busy-wait polling required
         }
 
         public static int loadRMSInt(string file)
@@ -404,6 +374,10 @@ namespace Game1
         {
             try
             {
+                lock (rmsLock)
+                {
+                    rmsCache.Clear();
+                }
                 Cout.Log("clean rms");
                 string dirPath = GetiPhoneDocumentsPath();
                 if (Directory.Exists(dirPath))
@@ -558,14 +532,21 @@ namespace Game1
 
         public static void deleteRecord(string name)
         {
-            try
+            lock (rmsLock)
             {
-                DeleteStorage(name);
-                PlayerPrefs.DeleteKey("Game1_" + name);
-            }
-            catch (Exception ex)
-            {
-                Cout.println("loi xoa RMS --------------------------" + ex.ToString());
+                if (!string.IsNullOrEmpty(name))
+                {
+                    rmsCache.Remove(name);
+                }
+                try
+                {
+                    DeleteStorage(name);
+                    PlayerPrefs.DeleteKey("Game1_" + name);
+                }
+                catch (Exception ex)
+                {
+                    Cout.println("loi xoa RMS --------------------------" + ex.ToString());
+                }
             }
         }
 

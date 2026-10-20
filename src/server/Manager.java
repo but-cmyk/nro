@@ -386,9 +386,8 @@ public static final String queryTopWhis = "SELECT id, CAST(JSON_UNQUOTE(JSON_EXT
 
     public static List<TOP> realTop(String query, Connection con) {
         List<TOP> tops = new ArrayList<>();
-        try {
-            PreparedStatement ps = con.prepareStatement(query);
-            ResultSet rs = ps.executeQuery();
+        try (PreparedStatement ps = con.prepareStatement(query);
+             ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
                 TOP top = TOP.builder().id_player(rs.getInt("id")).build();
                 switch (query) {

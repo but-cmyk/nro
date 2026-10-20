@@ -390,7 +390,7 @@ public class Trade {
     }
 
     private void startTrade() {
-        if (this.isDisposed || player1 == null || player2 == null) {
+        if (this.isDisposed || player1 == null || player2 == null || player1.inventory == null || player2.inventory == null) {
             return;
         }
         Player firstLock = player1.id < player2.id ? player1 : player2;
@@ -400,6 +400,7 @@ public class Trade {
         secondLock.getTradeLock().lock();
         try {
             byte tradeStatus = SUCCESS;
+            boolean isTransCommitted = false;
             try {
                 if (player1.isDie() || player2.isDie() || player1.getSession() == null || player2.getSession() == null) {
                     tradeStatus = FAIL_ERROR;
@@ -442,6 +443,7 @@ public class Trade {
                     return;
                 }
 
+                // Phase 2: Hoán đổi tài sản trong bộ nhớ và đẩy lệnh lưu DB (Atomic Commit)
                 player1.inventory.subGold(goldTrade1);
                 player1.inventory.addGold(goldTrade2);
                 player2.inventory.subGold(goldTrade2);
@@ -449,28 +451,73 @@ public class Trade {
                 player1.inventory.itemsBag = itemsBag1;
                 player2.inventory.itemsBag = itemsBag2;
 
-                InventoryService.gI().sendItemBags(player1);
-                InventoryService.gI().sendItemBags(player2);
-                PlayerService.gI().sendInfoHpMpMoney(player1);
-                PlayerService.gI().sendInfoHpMpMoney(player2);
-
                 HistoryTransactionDAO.insertAsync(player1, player2, goldTrade1, goldTrade2, itemsTrade1, itemsTrade2,
                         bag1Before, bag2Before, this.player1.inventory.itemsBag, this.player2.inventory.itemsBag,
                         gold1Before, gold2Before, this.player1.inventory.gold, this.player2.inventory.gold);
 
                 database.daos.PlayerDAO.updatePlayersInTransactionAsync(player1, player2);
 
-                sendNotifyTrade(SUCCESS);
+                isTransCommitted = true;
             } catch (Exception e) {
-                Logger.logException(Trade.class, e);
-                sendNotifyTrade(FAIL_ERROR);
-            } finally {
-                closeTab();
-                dispose();
+                Logger.logException(Trade.class, e, "Lỗi xảy ra trong quá trình thực hiện giao dịch");
+                if (!isTransCommitted) {
+                    // Rollback tài sản về trạng thái trước giao dịch (deep clone bảo toàn 100%)
+                    try {
+                        if (player1 != null && player1.inventory != null) {
+                            player1.inventory.gold = gold1Before;
+                            if (bag1Before != null) {
+                                player1.inventory.itemsBag = InventoryService.gI().copyList(bag1Before);
+                            }
+                        }
+                        if (player2 != null && player2.inventory != null) {
+                            player2.inventory.gold = gold2Before;
+                            if (bag2Before != null) {
+                                player2.inventory.itemsBag = InventoryService.gI().copyList(bag2Before);
+                            }
+                        }
+                    } catch (Exception exRollback) {
+                        Logger.logException(Trade.class, exRollback, "Lỗi rollback giao dịch");
+                    }
+                    sendNotifyTrade(FAIL_ERROR);
+                }
+            }
+
+            // Phase 3: Tách biệt hoàn toàn việc gửi gói tin UI khi giao dịch đã commit thành công
+            if (isTransCommitted) {
+                try {
+                    sendNotifyTrade(SUCCESS);
+                } catch (Exception e) {
+                    Logger.logException(Trade.class, e, "Lỗi gửi thông báo giao dịch thành công");
+                }
+
+                try {
+                    if (player1 != null && player1.getSession() != null) {
+                        InventoryService.gI().sendItemBags(player1);
+                        PlayerService.gI().sendInfoHpMpMoney(player1);
+                    }
+                } catch (Exception e) {
+                    Logger.logException(Trade.class, e, "Lỗi gửi cập nhật UI sau giao dịch cho player1");
+                }
+
+                try {
+                    if (player2 != null && player2.getSession() != null) {
+                        InventoryService.gI().sendItemBags(player2);
+                        PlayerService.gI().sendInfoHpMpMoney(player2);
+                    }
+                } catch (Exception e) {
+                    Logger.logException(Trade.class, e, "Lỗi gửi cập nhật UI sau giao dịch cho player2");
+                }
             }
         } finally {
-            secondLock.getTradeLock().unlock();
-            firstLock.getTradeLock().unlock();
+            try {
+                closeTab();
+                dispose();
+            } catch (Exception e) {
+                Logger.logException(Trade.class, e, "Lỗi dọn dẹp phiên giao dịch");
+            } finally {
+                secondLock.getTradeLock().unlock();
+                firstLock.getTradeLock().unlock();
+            }
         }
     }
 

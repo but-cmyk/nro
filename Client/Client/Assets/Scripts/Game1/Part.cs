@@ -13,17 +13,21 @@ namespace Game1
     		{
     			pi = new PartImage[3];
     		}
-    		if (type == 1)
+    		else if (type == 1)
     		{
     			pi = new PartImage[17];
     		}
-    		if (type == 2)
+    		else if (type == 2)
     		{
     			pi = new PartImage[14];
     		}
-    		if (type == 3)
+    		else if (type == 3)
     		{
     			pi = new PartImage[2];
+    		}
+    		else
+    		{
+    			pi = new PartImage[0];
     		}
     	}
     }

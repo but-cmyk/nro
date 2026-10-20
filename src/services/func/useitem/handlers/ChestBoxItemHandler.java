@@ -2,6 +2,7 @@ package services.func.useitem.handlers;
 
 import consts.ConstItem;
 import consts.ConstNpc;
+import consts.ConstPlayer;
 import models.item.Item;
 import models.item.Item.ItemOption;
 import models.player.Inventory;
@@ -321,8 +322,16 @@ public class ChestBoxItemHandler implements ItemActionHandler {
             return;
         }
 
-        // 1. Cải trang Goku Tarzan (id 945): 20% HP, KI, Sức đánh, Tiềm năng sức mạnh khi đánh quái, HSD 3 ngày
-        Item itCaiTrang = ItemService.gI().createNewItem((short) 945);
+        // 1. Cải trang theo hành tinh: Trái Đất (1316), Namếc (1344), Xayda (1485)
+        short idCaiTrang;
+        if (pl.gender == ConstPlayer.TRAI_DAT) {
+            idCaiTrang = 1316;
+        } else if (pl.gender == ConstPlayer.NAMEC) {
+            idCaiTrang = 1344;
+        } else {
+            idCaiTrang = 1485;
+        }
+        Item itCaiTrang = ItemService.gI().createNewItem(idCaiTrang);
         itCaiTrang.itemOptions.clear();
         itCaiTrang.itemOptions.add(new ItemOption(50, 20)); // Sức đánh+#%
         itCaiTrang.itemOptions.add(new ItemOption(77, 20)); // HP+#%
@@ -347,7 +356,7 @@ public class ChestBoxItemHandler implements ItemActionHandler {
         itDeoLung.itemOptions.add(new ItemOption(30, 0));   // Không thể giao dịch
 
         short icon1 = item.template.iconID;
-        short icon2 = itCaiTrang.template.iconID;
+        short icon2 = (itCaiTrang.template != null) ? itCaiTrang.template.iconID : -1;
 
         InventoryService.gI().subQuantityItemsBag(pl, item, 1);
         InventoryService.gI().addItemBag(pl, itCaiTrang);

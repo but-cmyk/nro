@@ -66,11 +66,10 @@ public class NroPacketEncoder extends MessageToByteEncoder<Message> {
 
             // 3. Ghi Payload
             if (shouldEncrypt) {
-                byte[] encryptedData = new byte[size];
+                // Zero heap allocation: ghi trực tiếp từng byte đã mã hóa vào ByteBuf out
                 for (int i = 0; i < size; i++) {
-                    encryptedData[i] = this.writeKey(data[i]);
+                    out.writeByte(this.writeKey(data[i]));
                 }
-                out.writeBytes(encryptedData);
             } else {
                 out.writeBytes(data);
             }

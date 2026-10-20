@@ -19,9 +19,11 @@ public class Combine {
     public float ratioCombine;
     public int countDaNangCap;
     public short countDaBaoVe;
+    public List<Integer> quantities;
 
     public Combine() {
         this.itemsCombine = new ArrayList<>();
+        this.quantities = new ArrayList<>();
     }
 
     public void clearItemCombine() {
@@ -34,10 +36,16 @@ public class Combine {
         this.ratioCombine = 0;
         this.countDaNangCap = 0;
         this.countDaBaoVe = 0;
-
+        if (this.quantities != null) {
+            this.quantities.clear();
+        }
     }
 
     public void dispose() {
         this.itemsCombine = null;
+        if (this.quantities != null) {
+            this.quantities.clear();
+            this.quantities = null;
+        }
     }
 }

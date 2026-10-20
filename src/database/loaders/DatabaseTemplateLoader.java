@@ -68,15 +68,14 @@ public class DatabaseTemplateLoader {
         long st = System.currentTimeMillis();
         JSONArray dataArray;
         JSONObject dataObject;
-        PreparedStatement ps = null;
-        ResultSet rs = null;
 
-        try (Connection con = AlyraManager.getConnection()) {
+        try {
             // 1. Load part
-            ps = con.prepareStatement("select * from part ORDER BY id ASC");
-            rs = ps.executeQuery();
             List<Part> parts = new ArrayList<>();
-            while (rs.next()) {
+            try (Connection con = AlyraManager.getConnection();
+                 PreparedStatement ps = con.prepareStatement("select * from part ORDER BY id ASC");
+                 ResultSet rs = ps.executeQuery()) {
+while (rs.next()) {
                 Part part = new Part();
                 part.id = rs.getShort("id");
                 part.type = rs.getByte("type");
@@ -91,10 +90,23 @@ public class DatabaseTemplateLoader {
                 parts.add(part);
                 dataArray.clear();
             }
+                        }
             try (DataOutputStream dos = new DataOutputStream(new FileOutputStream("data/update_data/part"))) {
                 dos.writeShort(parts.size());
                 for (Part part : parts) {
                     dos.writeByte(part.type);
+                    int expected = (part.type == 0) ? 3 : (part.type == 1) ? 17 : (part.type == 2) ? 14 : (part.type == 3) ? 2 : part.partDetails.size();
+                    if (part.partDetails.size() < expected) {
+                        Logger.warning("[Part Export] Part ID " + part.id + " (type=" + part.type + ") thiếu frame (" + part.partDetails.size() + "/" + expected + "). Tự động thêm dummy detail [2955, 0, 0] để bảo toàn stream!");
+                        while (part.partDetails.size() < expected) {
+                            part.partDetails.add(new PartDetail((short) 2955, (byte) 0, (byte) 0));
+                        }
+                    } else if (part.partDetails.size() > expected && expected > 0) {
+                        Logger.warning("[Part Export] Part ID " + part.id + " (type=" + part.type + ") thừa frame (" + part.partDetails.size() + "/" + expected + "). Cắt bớt để khớp cấu trúc Client!");
+                        while (part.partDetails.size() > expected) {
+                            part.partDetails.remove(part.partDetails.size() - 1);
+                        }
+                    }
                     for (PartDetail partDetail : part.partDetails) {
                         dos.writeShort(partDetail.iconId);
                         dos.writeByte(partDetail.dx);
@@ -103,12 +115,14 @@ public class DatabaseTemplateLoader {
                 }
                 dos.flush();
             }
+            DataGame.reloadPart();
             Manager.logLoaded("Successfully loaded part (" + parts.size() + ")\n");
 
-            // 2. Load bg item template
-            ps = con.prepareStatement("select * from bg_item_template ORDER BY id ASC");
-            rs = ps.executeQuery();
-            while (rs.next()) {
+// 2. Load bg item template
+            try (Connection con = AlyraManager.getConnection();
+                 PreparedStatement ps = con.prepareStatement("select * from bg_item_template ORDER BY id ASC");
+                 ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
                 BgItem bgItem = new BgItem();
                 bgItem.id = rs.getInt("id");
                 bgItem.layer = rs.getByte("layer");
@@ -117,12 +131,14 @@ public class DatabaseTemplateLoader {
                 bgItem.idImage = rs.getShort("image_id");
                 Manager.BG_ITEMS.add(bgItem);
             }
+            }
             Manager.logLoaded("Successfully loaded bg item template (" + Manager.BG_ITEMS.size() + ")\n");
 
             // 3. Load array head 2 frames
-            ps = con.prepareStatement("select * from array_head_2_frames");
-            rs = ps.executeQuery();
-            while (rs.next()) {
+            try (Connection con = AlyraManager.getConnection();
+                 PreparedStatement ps = con.prepareStatement("select * from array_head_2_frames");
+                 ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
                 ArrHead2Frames arrHead2Frames = new ArrHead2Frames();
                 dataArray = (JSONArray) JSONValue.parse(rs.getString("data"));
                 for (int i = 0; i < dataArray.size(); i++) {
@@ -130,12 +146,14 @@ public class DatabaseTemplateLoader {
                 }
                 Manager.ARR_HEAD_2_FRAMES.add(arrHead2Frames);
             }
+            }
             Manager.logLoaded("Successfully loaded arr head 2 frames (" + Manager.ARR_HEAD_2_FRAMES.size() + ")\n");
 
             // 4. Load clan
-            ps = con.prepareStatement("select * from clan");
-            rs = ps.executeQuery();
-            while (rs.next()) {
+            try (Connection con = AlyraManager.getConnection()) {
+                try (PreparedStatement ps = con.prepareStatement("select * from clan");
+                     ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
                 Clan clan = new Clan();
                 clan.id = rs.getInt("id");
                 clan.name = rs.getString("name");
@@ -181,18 +199,21 @@ public class DatabaseTemplateLoader {
                 dataArray.clear();
                 Manager.CLANS.add(clan);
             }
-
-            ps = con.prepareStatement("select id from clan order by id desc limit 1");
-            rs = ps.executeQuery();
-            if (rs.next()) {
+                }
+                try (PreparedStatement ps = con.prepareStatement("select id from clan order by id desc limit 1");
+                     ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
                 Clan.NEXT_ID = rs.getInt("id") + 1;
+            }
+                }
             }
             Manager.logLoaded("Successfully loaded clan (" + Manager.CLANS.size() + "), clan next id: " + Clan.NEXT_ID + "\n");
 
             // 5. Load skill template
-            ps = con.prepareStatement("select * from skill_template order by nclass_id, slot");
-            rs = ps.executeQuery();
-            byte nClassId = -1;
+            try (Connection con = AlyraManager.getConnection();
+                 PreparedStatement ps = con.prepareStatement("select * from skill_template order by nclass_id, slot");
+                 ResultSet rs = ps.executeQuery()) {
+                byte nClassId = -1;
             NClass nClass = null;
             while (rs.next()) {
                 byte id = rs.getByte("nclass_id");
@@ -261,21 +282,25 @@ public class DatabaseTemplateLoader {
                     skillTemplate.skillss.add(skill);
                 }
             }
+            }
             Manager.logLoaded("Successfully loaded skill (" + Manager.NCLASS.size() + ")\n");
 
             // 6. Load head avatar
-            ps = con.prepareStatement("select * from head_avatar");
-            rs = ps.executeQuery();
-            while (rs.next()) {
+            try (Connection con = AlyraManager.getConnection();
+                 PreparedStatement ps = con.prepareStatement("select * from head_avatar");
+                 ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
                 HeadAvatar headAvatar = new HeadAvatar(rs.getInt("head_id"), rs.getInt("avatar_id"));
                 Manager.HEAD_AVATARS.add(headAvatar);
+            }
             }
             Manager.logLoaded("Successfully loaded head avatar (" + Manager.HEAD_AVATARS.size() + ")\n");
 
             // 7. Load flag bag
-            ps = con.prepareStatement("select * from flag_bag");
-            rs = ps.executeQuery();
-            while (rs.next()) {
+            try (Connection con = AlyraManager.getConnection();
+                 PreparedStatement ps = con.prepareStatement("select * from flag_bag");
+                 ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
                 FlagBag flagBag = new FlagBag();
                 flagBag.id = rs.getInt("id");
                 flagBag.name = rs.getString("name");
@@ -289,12 +314,14 @@ public class DatabaseTemplateLoader {
                 }
                 Manager.FLAGS_BAGS.add(flagBag);
             }
+            }
             Manager.logLoaded("Successfully loaded flag bag (" + Manager.FLAGS_BAGS.size() + ")\n");
 
             // 8. Load intrinsic
-            ps = con.prepareStatement("select * from intrinsic");
-            rs = ps.executeQuery();
-            while (rs.next()) {
+            try (Connection con = AlyraManager.getConnection();
+                 PreparedStatement ps = con.prepareStatement("select * from intrinsic");
+                 ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
                 Intrinsic intrinsic = new Intrinsic();
                 intrinsic.id = rs.getByte("id");
                 intrinsic.name = rs.getString("name") != null ? rs.getString("name").replace("\\r\\n", "\n").replace("\\n", "\n") : "";
@@ -316,15 +343,17 @@ public class DatabaseTemplateLoader {
                 }
                 Manager.INTRINSICS.add(intrinsic);
             }
+            }
             Manager.logLoaded("Successfully loaded intrinsic (" + Manager.INTRINSICS.size() + ")\n");
 
             // 9. Load task main
-            ps = con.prepareStatement("SELECT id, task_main_template.name, detail, "
+            try (Connection con = AlyraManager.getConnection();
+                 PreparedStatement ps = con.prepareStatement("SELECT id, task_main_template.name, detail, "
                     + "task_sub_template.name AS 'sub_name', max_count, notify, npc_id, map "
                     + "FROM task_main_template JOIN task_sub_template ON task_main_template.id = "
                     + "task_sub_template.task_main_id");
-            rs = ps.executeQuery();
-            int taskId = -1;
+                 ResultSet rs = ps.executeQuery()) {
+                int taskId = -1;
             TaskMain task = null;
             while (rs.next()) {
                 int id = rs.getInt("id");
@@ -356,12 +385,14 @@ public class DatabaseTemplateLoader {
                 }
                 task.subTasks.add(subTask);
             }
+            }
             Manager.logLoaded("Successfully loaded task (" + Manager.TASKS.size() + ")\n");
 
             // 10. Load side task
-            ps = con.prepareStatement("select * from side_task_template");
-            rs = ps.executeQuery();
-            while (rs.next()) {
+            try (Connection con = AlyraManager.getConnection();
+                 PreparedStatement ps = con.prepareStatement("select * from side_task_template");
+                 ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
                 SideTaskTemplate sideTask = new SideTaskTemplate();
                 sideTask.id = rs.getInt("id");
                 sideTask.name = rs.getString("name");
@@ -383,12 +414,14 @@ public class DatabaseTemplateLoader {
                 sideTask.count[4][1] = Integer.parseInt(mc5[1]) * multiplier;
                 Manager.SIDE_TASKS_TEMPLATE.add(sideTask);
             }
+            }
             Manager.logLoaded("Successfully loaded side task (" + Manager.SIDE_TASKS_TEMPLATE.size() + ")\n");
 
             // 11. Load clan task
-            ps = con.prepareStatement("select * from clan_task_template");
-            rs = ps.executeQuery();
-            while (rs.next()) {
+            try (Connection con = AlyraManager.getConnection();
+                 PreparedStatement ps = con.prepareStatement("select * from clan_task_template");
+                 ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
                 ClanTaskTemplate clanTask = new ClanTaskTemplate();
                 clanTask.id = rs.getInt("id");
                 clanTask.name = rs.getString("name");
@@ -409,20 +442,24 @@ public class DatabaseTemplateLoader {
                 clanTask.count[4][1] = Integer.parseInt(mc5[1]);
                 Manager.CLAN_TASKS_TEMPLATE.add(clanTask);
             }
+            }
             Manager.logLoaded("Successfully loaded clan task (" + Manager.CLAN_TASKS_TEMPLATE.size() + ")\n");
 
             // 12. Load achievement template
-            ps = con.prepareStatement("select * from achievement_template");
-            rs = ps.executeQuery();
-            while (rs.next()) {
+            try (Connection con = AlyraManager.getConnection();
+                 PreparedStatement ps = con.prepareStatement("select * from achievement_template");
+                 ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
                 Manager.ACHIEVEMENT_TEMPLATE.add(new AchievementTemplate(rs.getString("info1"), rs.getString("info2"), rs.getInt("money"), rs.getLong("max_count")));
+            }
             }
             Manager.logLoaded("Successfully loaded achievement (" + Manager.ACHIEVEMENT_TEMPLATE.size() + ")\n");
 
             // 13. Load item template
-            ps = con.prepareStatement("select * from item_template ORDER BY id ASC");
-            rs = ps.executeQuery();
-            while (rs.next()) {
+            try (Connection con = AlyraManager.getConnection();
+                 PreparedStatement ps = con.prepareStatement("select * from item_template ORDER BY id ASC");
+                 ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
                 ItemTemplate itemTemp = new ItemTemplate();
                 itemTemp.id = rs.getShort("id");
                 itemTemp.type = rs.getByte("type");
@@ -443,6 +480,7 @@ public class DatabaseTemplateLoader {
                 itemTemp.body = rs.getInt("body");
                 itemTemp.leg = rs.getInt("leg");
                 Manager.ITEM_TEMPLATES.add(itemTemp);
+            }
             }
             if (Manager.ITEM_TEMPLATES.size() <= consts.ConstItem.CHUOI) {
                 boolean hasChuoi = false;
@@ -475,33 +513,41 @@ public class DatabaseTemplateLoader {
             Manager.logLoaded("Successfully loaded map item template (" + Manager.ITEM_TEMPLATES.size() + ")\n");
 
             // 14. Load item option template
-            ps = con.prepareStatement("select id, name from item_option_template ORDER BY id ASC");
-            rs = ps.executeQuery();
-            while (rs.next()) {
+            try (Connection con = AlyraManager.getConnection();
+                 PreparedStatement ps = con.prepareStatement("select id, name from item_option_template ORDER BY id ASC");
+                 ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
                 ItemOptionTemplate optionTemp = new ItemOptionTemplate();
                 optionTemp.id = rs.getInt("id");
                 optionTemp.name = rs.getString("name");
                 Manager.ITEM_OPTION_TEMPLATES.add(optionTemp);
             }
+            }
             Manager.logLoaded("Successfully loaded map item option template (" + Manager.ITEM_OPTION_TEMPLATES.size() + ")\n");
 
             // 15. Load shop
-            Manager.SHOPS = ShopDAO.getShops(con);
+            try (Connection con = AlyraManager.getConnection()) {
+                Manager.SHOPS = ShopDAO.getShops(con);
+            }
             Manager.logLoaded("Successfully loaded shop (" + Manager.SHOPS.size() + ")\n");
 
-            // 16. Load notify
-            ps = con.prepareStatement("select * from notify order by id desc");
-            rs = ps.executeQuery();
-            while (rs.next()) {
+// 16. Load notify
+            try (Connection con = AlyraManager.getConnection();
+                 PreparedStatement ps = con.prepareStatement("select * from notify order by id desc");
+                 ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
                 Manager.NOTIFY.add(rs.getString("name") + "<>" + rs.getString("text"));
+            }
             }
             Manager.logLoaded("Successfully loaded notify (" + Manager.NOTIFY.size() + ")\n");
 
             // 17. Load image by name
-            ps = con.prepareStatement("select name, n_frame from img_by_name");
-            rs = ps.executeQuery();
-            while (rs.next()) {
+            try (Connection con = AlyraManager.getConnection();
+                 PreparedStatement ps = con.prepareStatement("select name, n_frame from img_by_name");
+                 ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
                 Manager.IMAGES_BY_NAME.put(rs.getString("name"), rs.getByte("n_frame"));
+            }
             }
             Manager.logLoaded("Successfully loaded images by name (" + Manager.IMAGES_BY_NAME.size() + ")\n");
 
@@ -514,9 +560,10 @@ public class DatabaseTemplateLoader {
             Manager.logLoaded("Successfully loaded mount (" + MAP_MOUNT_NUM.size() + ")\n");
 
             // 19. Load mob template
-            ps = con.prepareStatement("select * from mob_template ORDER BY id ASC");
-            rs = ps.executeQuery();
-            while (rs.next()) {
+            try (Connection con = AlyraManager.getConnection();
+                 PreparedStatement ps = con.prepareStatement("select * from mob_template ORDER BY id ASC");
+                 ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
                 MobTemplate mobTemp = new MobTemplate();
                 mobTemp.id = rs.getByte("id");
                 mobTemp.type = rs.getByte("type");
@@ -529,12 +576,14 @@ public class DatabaseTemplateLoader {
                 mobTemp.percentTiemNang = rs.getByte("percent_tiem_nang");
                 Manager.MOB_TEMPLATES.add(mobTemp);
             }
+            }
             Manager.logLoaded("Successfully loaded mob template (" + Manager.MOB_TEMPLATES.size() + ")\n");
 
             // 20. Load npc template
-            ps = con.prepareStatement("select * from npc_template ORDER BY id ASC");
-            rs = ps.executeQuery();
-            while (rs.next()) {
+            try (Connection con = AlyraManager.getConnection();
+                 PreparedStatement ps = con.prepareStatement("select * from npc_template ORDER BY id ASC");
+                 ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
                 NpcTemplate npcTemp = new NpcTemplate();
                 npcTemp.id = rs.getByte("id");
                 npcTemp.name = rs.getString("name");
@@ -544,12 +593,14 @@ public class DatabaseTemplateLoader {
                 npcTemp.avatar = rs.getInt("avatar");
                 Manager.NPC_TEMPLATES.add(npcTemp);
             }
+            }
             Manager.logLoaded("Successfully loaded npc template (" + Manager.NPC_TEMPLATES.size() + ")\n");
 
             // 21. Load item ki gui
-            ps = con.prepareStatement("SELECT * FROM shop_ky_gui");
-            rs = ps.executeQuery();
-            while (rs.next()) {
+            try (Connection con = AlyraManager.getConnection();
+                 PreparedStatement ps = con.prepareStatement("SELECT * FROM shop_ky_gui");
+                 ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
                 int i = rs.getInt("id");
                 int idPl = rs.getInt("player_id");
                 byte tab = rs.getByte("tab");
@@ -569,16 +620,22 @@ public class DatabaseTemplateLoader {
                 }
                 ConsignShopManager.gI().listItem.add(new ConsignItem(i, itemId, idPl, tab, gold, gem, quantity, isUp, op, isBuy));
             }
+            }
 
-            // 22. Load map template
-            ps = con.prepareStatement("select count(id) from map_template");
-            rs = ps.executeQuery();
-            if (rs.next()) {
-                int countRow = rs.getShort(1);
-                Manager.MAP_TEMPLATES = new MapTemplate[countRow];
-                ps = con.prepareStatement("select * from map_template ORDER BY id ASC");
-                rs = ps.executeQuery();
-                short i = 0;
+// 22. Load map template
+            try (Connection con = AlyraManager.getConnection()) {
+                int countRow = 0;
+                try (PreparedStatement ps = con.prepareStatement("select count(id) from map_template");
+                     ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        countRow = rs.getShort(1);
+                    }
+                }
+                if (countRow > 0) {
+                    Manager.MAP_TEMPLATES = new MapTemplate[countRow];
+                    try (PreparedStatement ps = con.prepareStatement("select * from map_template ORDER BY id ASC");
+                         ResultSet rs = ps.executeQuery()) {
+                        short i = 0;
                 while (rs.next()) {
                     MapTemplate mapTemplate = new MapTemplate();
                     int mapId = rs.getInt("id");
@@ -661,13 +718,16 @@ public class DatabaseTemplateLoader {
                     dataArray.clear();
                     Manager.MAP_TEMPLATES[i++] = mapTemplate;
                 }
-                Manager.logLoaded("Successfully loaded map template (" + Manager.MAP_TEMPLATES.length + ")\n");
+                    }
+                    Manager.logLoaded("Successfully loaded map template (" + Manager.MAP_TEMPLATES.length + ")\n");
+            }
             }
 
-            // 23. Load radar
-            ps = con.prepareStatement("select * from radar");
-            rs = ps.executeQuery();
-            while (rs.next()) {
+// 23. Load radar
+            try (Connection con = AlyraManager.getConnection();
+                 PreparedStatement ps = con.prepareStatement("select * from radar");
+                 ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
                 RadarCard rd = new RadarCard();
                 rd.Id = rs.getShort("id");
                 rd.IconId = rs.getShort("iconId");
@@ -701,12 +761,14 @@ public class DatabaseTemplateLoader {
                 RadarService.gI().RADAR_TEMPLATE.add(rd);
             }
             RadarService.gI().initCardsByRank();
+            }
             Manager.logLoaded("Successfully loaded radar template (" + RadarService.gI().RADAR_TEMPLATE.size() + ")\n");
 
             // 24. Load giftcode
-            ps = con.prepareStatement("SELECT * FROM giftcode");
-            rs = ps.executeQuery();
-            while (rs.next()) {
+            try (Connection con = AlyraManager.getConnection();
+                 PreparedStatement ps = con.prepareStatement("SELECT * FROM giftcode");
+                 ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
                 GiftCode giftcode = new GiftCode();
                 giftcode.code = rs.getString("code");
                 giftcode.id = rs.getInt("id");
@@ -740,6 +802,7 @@ public class DatabaseTemplateLoader {
                 }
                 GiftCodeManager.gI().listGiftCode.add(giftcode);
             }
+            }
             Manager.logLoaded("Successfully loaded giftcode (" + GiftCodeManager.gI().listGiftCode.size() + ")\n");
 
             // 25. Small version check
@@ -761,7 +824,8 @@ public class DatabaseTemplateLoader {
             }
 
             // 26. Real TOP tables
-            Manager.toplx = Manager.realTop(Manager.TOP_LIXI, con);
+            try (Connection con = AlyraManager.getConnection()) {
+                Manager.toplx = Manager.realTop(Manager.TOP_LIXI, con);
             Manager.logLoaded("LOAD TOP LIXI(" + Manager.toplx.size() + ")\n");
             Manager.toppb = Manager.realTop(Manager.TOP_PHAO_BONG, con);
             Manager.logLoaded("LOAD TOP PHAO BONG(" + Manager.toppb.size() + ")\n");
@@ -777,21 +841,11 @@ public class DatabaseTemplateLoader {
             Manager.logLoaded("LOAD SU KIEN (" + Manager.topArena.size() + ")\n");
             Manager.topLuckySpins = Manager.realTop(Manager.queryTopLuckySpins, con);
             Manager.logLoaded("LOAD SU KIEN (" + Manager.topLuckySpins.size() + ")\n");
+            }
 
         } catch (Exception e) {
             Logger.logException(Manager.class, e, "Database loading error");
             System.exit(0);
-        } finally {
-            try {
-                if (rs != null) {
-                    rs.close();
-                }
-                if (ps != null) {
-                    ps.close();
-                }
-                AlyraManager.close_data();
-            } catch (SQLException ignored) {
-            }
         }
 
         int mapCount = Manager.MAP_TEMPLATES != null ? Manager.MAP_TEMPLATES.length : 0;

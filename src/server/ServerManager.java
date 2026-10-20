@@ -184,7 +184,6 @@ public class ServerManager {
                                 PlayerDAO.updatePlayer(player);
                                 player.lastTimeSave = System.currentTimeMillis();
                                 savedCount.incrementAndGet();
-                                Thread.sleep(10);
                             } catch (Exception e) {
                                 Logger.error("Lỗi auto-save player: " + player.name);
                             }

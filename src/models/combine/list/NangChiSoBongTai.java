@@ -80,51 +80,67 @@ public class NangChiSoBongTai {
     }
 
     public static void nangChiSoBongTai(Player player) {
-        try {
-            if (!player.inventory.checkGemAndRuby(player.combineNew.gemCombine)) {
-                Service.gI().sendThongBao(player, "Bạn không đủ ngọc, còn thiếu " + Util.powerToString(player.combineNew.gemCombine - player.inventory.getGemAndRuby()) + " ngọc nữa!");
-                return;
-            }
-            player.inventory.subGemAndRuby(player.combineNew.gemCombine);
-            Service.gI().sendMoney(player);
-            Item BongTai2 = null,
-                    honBongTai = null,
-                    daXanhLam = null;
-            for (Item item : player.combineNew.itemsCombine) {
+        if (player == null || player.combineNew == null || player.combineNew.itemsCombine == null || player.inventory == null) {
+            return;
+        }
+        if (player.combineNew.itemsCombine.size() != 3) {
+            Service.gI().sendThongBaoResetWait(player, "Thiếu nguyên liệu!");
+            CombineService.gI().reOpenItemCombine(player);
+            return;
+        }
+
+        // --- BƯỚC 1: VALIDATE ---
+        Item BongTai2 = null;
+        Item honBongTai = null;
+        Item daXanhLam = null;
+        for (Item item : player.combineNew.itemsCombine) {
+            if (item != null && item.isNotNullItem()) {
                 if (item.template.id == 921) {
                     BongTai2 = item;
-                }
-                if (item.template.id == 934) {
+                } else if (item.template.id == 934) {
                     honBongTai = item;
-                }
-                if (item.template.id == 935) {
+                } else if (item.template.id == 935) {
                     daXanhLam = item;
                 }
             }
-            if (Util.isTrue(player.combineNew.ratioCombine, 100)) {
-                byte[] option = {77, 80, 81, 103, 50, 94, 5};
-                byte optionid = 0;
-                byte param = 0;
-                BongTai2.itemOptions.clear();
-                optionid = option[Util.nextInt(0, 6)];
-                param = (byte) Util.nextInt(5, 15);
-                BongTai2.itemOptions.add(new Item.ItemOption(optionid, param));
-                BongTai2.itemOptions.add(new Item.ItemOption(38, 0));
-                BongTai2.itemOptions.add(new Item.ItemOption(72, 2));
-                CombineService.gI().sendEffectSuccessCombine(player);
- 
-           
-
-            } else {
-                CombineService.gI().sendEffectFailCombine(player);
-            }
-            InventoryService.gI().subQuantityItemsBag(player, honBongTai, 99);
-            InventoryService.gI().subQuantityItemsBag(player, daXanhLam, 1);
-            InventoryService.gI().sendItemBags(player);
-            CombineService.gI().reOpenItemCombine(player);
-        } catch (Exception e) {
-            e.printStackTrace();
         }
+
+        if (BongTai2 == null || honBongTai == null || daXanhLam == null || BongTai2.itemOptions == null
+                || honBongTai.quantity < 99 || daXanhLam.quantity < 1) {
+            Service.gI().sendThongBaoResetWait(player, "Nguyên liệu không đủ hoặc không hợp lệ!");
+            CombineService.gI().reOpenItemCombine(player);
+            return;
+        }
+
+        int gem = player.combineNew.gemCombine > 0 ? player.combineNew.gemCombine : GEM_NANG_BT;
+        if (!player.inventory.checkGemAndRuby(gem)) {
+            Service.gI().sendThongBaoResetWait(player, "Bạn không đủ ngọc, còn thiếu " + Util.powerToString(gem - player.inventory.getGemAndRuby()) + " ngọc nữa!");
+            CombineService.gI().reOpenItemCombine(player);
+            return;
+        }
+
+        // --- BƯỚC 2: MUTATE ---
+        player.inventory.subGemAndRuby(gem);
+        InventoryService.gI().subQuantityItemsBag(player, honBongTai, 99);
+        InventoryService.gI().subQuantityItemsBag(player, daXanhLam, 1);
+
+        if (Util.isTrue(player.combineNew.ratioCombine, 100)) {
+            byte[] option = {77, 80, 81, 103, 50, 94, 5};
+            byte optionid = option[Util.nextInt(0, 6)];
+            byte param = (byte) Util.nextInt(5, 15);
+            BongTai2.itemOptions.clear();
+            BongTai2.itemOptions.add(new Item.ItemOption(optionid, param));
+            BongTai2.itemOptions.add(new Item.ItemOption(38, 0));
+            BongTai2.itemOptions.add(new Item.ItemOption(72, 2));
+            CombineService.gI().sendEffectSuccessCombine(player);
+        } else {
+            CombineService.gI().sendEffectFailCombine(player);
+        }
+
+        // --- BƯỚC 3: NOTIFY ---
+        InventoryService.gI().sendItemBags(player);
+        Service.gI().sendMoney(player);
+        CombineService.gI().reOpenItemCombine(player);
     }
 
 }

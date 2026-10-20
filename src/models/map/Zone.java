@@ -123,18 +123,14 @@ public class Zone {
                 }
             }
         }
-        synchronized (players) {
-            for (Player pl : players) {
-                if (pl.nPoint != null && !pl.isDie()) {
-                    total += pl.nPoint.hp;
-                }
+        for (Player pl : players) {
+            if (pl != null && pl.nPoint != null && !pl.isDie()) {
+                total += pl.nPoint.hp;
             }
         }
-        synchronized (pets) {
-            for (Player pl : pets) {
-                if (pl.nPoint != null && !pl.isDie()) {
-                    total += pl.nPoint.hp;
-                }
+        for (Player pl : pets) {
+            if (pl != null && pl.nPoint != null && !pl.isDie()) {
+                total += pl.nPoint.hp;
             }
         }
         return total;
@@ -244,46 +240,65 @@ public class Zone {
     }
 
     public void addPlayer(Player player) {
-        if (player != null) {
-            if (!this.humanoids.contains(player)) {
-                this.humanoids.add(player);
-            }
+        if (player == null) {
+            return;
+        }
 
-            if (player instanceof NonInteractiveNPC) {
+        if (!this.humanoids.contains(player)) {
+            this.humanoids.add(player);
+        }
+
+        if (player instanceof NonInteractiveNPC) {
+            if (!this.nonInteractiveNPCs.contains(player)) {
                 this.nonInteractiveNPCs.add(player);
             }
-
-            if (!player.isBoss && !this.notBosses.contains(player) && !player.isNewPet && !(player instanceof NonInteractiveNPC)) {
+        } else if (player.isBoss) {
+            if (!this.bosses.contains(player)) {
+                this.bosses.add(player);
+            }
+        } else if (player.isPet || player.isNewPet) {
+            if (!this.pets.contains(player)) {
+                this.pets.add(player);
+            }
+            if (!this.notBosses.contains(player)) {
                 this.notBosses.add(player);
             }
-
-            if (!player.isBoss && !player.isNewPet && !player.isPet && !this.players.contains(player) && !(player instanceof NonInteractiveNPC)) {
+        } else {
+            // Normal player
+            if (!this.players.contains(player)) {
                 this.players.add(player);
                 if (player.clan != null) {
                     updateClanPartyBuff(player.clan.id);
                 }
             }
-
-            if (player.isBoss) {
-                this.bosses.add(player);
+            if (!this.notBosses.contains(player)) {
+                this.notBosses.add(player);
             }
-            if (player.isPet || player.isNewPet) {
-                this.pets.add(player);
-            }
-
         }
     }
 
     public void removePlayer(Player player) {
-        this.nonInteractiveNPCs.remove(player);
+        if (player == null) {
+            return;
+        }
+
         this.humanoids.remove(player);
-        this.notBosses.remove(player);
-        this.players.remove(player);
-        this.bosses.remove(player);
-        this.pets.remove(player);
-        if (player != null && player.clan != null) {
-            services.ItemTimeService.gI().removeTextTime(player, (byte) 5);
-            updateClanPartyBuff(player.clan.id);
+
+        if (player instanceof NonInteractiveNPC) {
+            this.nonInteractiveNPCs.remove(player);
+        } else if (player.isBoss) {
+            this.bosses.remove(player);
+        } else if (player.isPet || player.isNewPet) {
+            this.pets.remove(player);
+            this.notBosses.remove(player);
+        } else {
+            // Normal player
+            this.players.remove(player);
+            this.notBosses.remove(player);
+            if (player.clan != null) {
+                services.ItemTimeService.gI().removeTextTime(player, (byte) 5);
+                updateClanPartyBuff(player.clan.id);
+            }
         }
     }
 
@@ -309,7 +324,15 @@ public class Zone {
     }
 
     public List<ItemMap> getSatellites() {
-        return items.stream().filter(i -> i instanceof Satellite).toList();
+        List<ItemMap> list = new ArrayList<>();
+        synchronized (this.items) {
+            for (ItemMap i : this.items) {
+                if (i instanceof Satellite) {
+                    list.add(i);
+                }
+            }
+        }
+        return list;
     }
 
     public ItemMap getItemMapByItemMapId(int itemId) {
@@ -977,6 +1000,8 @@ public void sendMessage(Message msg) {
     if (msg == null) {
         return;
     }
+    // Eagerly cache message payload bytes once before broadcast loop
+    msg.getData();
     // this.players là CopyOnWriteArrayList, duyệt trực tiếp thread-safe, loại bỏ cấp phát rác GC
     for (Player pl : this.players) {
         if (pl != null && pl.getSession() != null) {

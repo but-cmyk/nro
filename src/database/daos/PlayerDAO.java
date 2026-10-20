@@ -1175,10 +1175,18 @@ public class PlayerDAO {
             return;
         }
 
+        int currentHash = java.util.Arrays.deepHashCode(snapshot.params);
+        if (!snapshot.isOffline && player != null && player.lastSaveHash != 0 && player.lastSaveHash == currentHash) {
+            return;
+        }
+
         long st = System.currentTimeMillis();
         try {
             // Thực thi ghi JDBC hoàn toàn ở BÊN NGOÀI synchronized(player)
             AlyraManager.executeUpdate(QUERY_UPDATE_PLAYER, snapshot.params);
+            if (player != null) {
+                player.lastSaveHash = currentHash;
+            }
 
             if (snapshot.isOffline) {
                 Logger.log(Logger.PURPLE, TimeUtil.getCurrHour() + "h" + TimeUtil.getCurrMin() + "m: Player OFFLINE "
@@ -1226,6 +1234,9 @@ public class PlayerDAO {
                     ps.setObject(i + 1, snap.params[i]);
                 }
                 ps.executeUpdate();
+                if (snap.player != null) {
+                    snap.player.lastSaveHash = java.util.Arrays.deepHashCode(snap.params);
+                }
             }
 
             con.commit();

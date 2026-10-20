@@ -26,6 +26,19 @@ public class PhaLeHoaTrangBi {
         120_000_000, 150_000_000, 180_000_000
     };
 
+    // Mảng chi phí ngọc theo cấp sao (Từ 0 sao -> 8 sao)
+    // 0 -> 1, 1 -> 2, 2 -> 3 sao: 0 ngọc
+    // 3 -> 4 sao: 5 ngọc
+    // 4 -> 5 sao: 10 ngọc
+    // 5 -> 6 sao: 20 ngọc
+    // 6 -> 7 sao: 40 ngọc
+    // >= 7 sao: 40 ngọc
+    private static final int[] GEM_COSTS = {
+        0, 0, 0, 
+        5, 10, 20, 
+        40, 40, 40
+    };
+
     // --- HÀNG UTILS LẤY CHỈ SỐ ---
     private static float getRatio(int star) {
         return (star >= 0 && star < RATIOS.length) ? RATIOS[star] : 0;
@@ -40,9 +53,8 @@ public class PhaLeHoaTrangBi {
         return (star >= 0 && star < GOLD_COSTS.length) ? GOLD_COSTS[star] : 0;
     }
 
-    // Nếu sau này cần dùng ngọc thì sửa mảng này hoặc logic này
     private static int getGem(int star) {
-        return 0; 
+        return (star >= 0 && star < GEM_COSTS.length) ? GEM_COSTS[star] : 0;
     }
 
     // --- LOGIC CHÍNH ---
@@ -76,6 +88,7 @@ public class PhaLeHoaTrangBi {
         String ratioStr = getRatioStr(star);
         String goldStr = Util.powerToString(gold);
         boolean isEnoughGold = player.inventory.gold >= gold;
+        boolean isEnoughGem = gem <= 0 || player.inventory.checkGemAndRuby(gem);
 
         StringBuilder text = new StringBuilder();
         text.append(ConstFont.BOLD_BLUE).append(item.template.name).append("\n");
@@ -84,15 +97,40 @@ public class PhaLeHoaTrangBi {
         text.append(ConstFont.BOLD_BLUE).append("Tỉ lệ thành công: ").append(ratioStr).append("%\n");
         text.append(isEnoughGold ? ConstFont.BOLD_BLUE : ConstFont.BOLD_RED)
             .append("Cần ").append(goldStr).append(" vàng");
+        if (gem > 0) {
+            text.append("\n").append(isEnoughGem ? ConstFont.BOLD_BLUE : ConstFont.BOLD_RED)
+                .append("Cần ").append(gem).append(" ngọc (ưu tiên hồng ngọc)");
+        }
 
         if (!isEnoughGold) {
             CombineService.gI().baHatMit.createOtherMenu(player, ConstNpc.IGNORE_MENU, text.toString(),
                     "Còn thiếu\n" + Util.powerToString(gold - player.inventory.gold) + " vàng");
+        } else if (!isEnoughGem) {
+            CombineService.gI().baHatMit.createOtherMenu(player, ConstNpc.IGNORE_MENU, text.toString(),
+                    "Còn thiếu\n" + (gem - player.inventory.getGemAndRuby()) + " ngọc");
         } else {
+            long maxTimesGold = gold > 0 ? (player.inventory.gold / gold) : 999;
+            long maxTimesGem = gem > 0 ? (player.inventory.getGemAndRuby() / gem) : 999;
+            long maxTimes = Math.min(maxTimesGold, maxTimesGem);
+
+            java.util.List<String> menuSelects = new java.util.ArrayList<>();
+            player.combineNew.quantities.clear();
+
+            menuSelects.add("Nâng cấp");
+            player.combineNew.quantities.add(1);
+
+            if (maxTimes >= 5) {
+                menuSelects.add("Nâng cấp\n5 lần");
+                player.combineNew.quantities.add(5);
+            }
+            if (maxTimes >= 10) {
+                menuSelects.add("Nâng cấp\n10 lần");
+                player.combineNew.quantities.add(10);
+            }
+            menuSelects.add("Từ chối");
+
             CombineService.gI().baHatMit.createOtherMenu(player, ConstNpc.MENU_START_COMBINE, text.toString(),
-                    "Nâng cấp\n" + "10 lần", 
-                    "Nâng cấp\n", 
-                    "Từ chối");
+                    menuSelects.toArray(new String[0]));
         }
     }
 
@@ -122,15 +160,17 @@ public class PhaLeHoaTrangBi {
         boolean isSuccess = false;
 
         for (int i = 0; i < maxAttempts; i++) {
+            long neededGold = (long) goldCost * (attemptsDone + 1);
+            long neededGem = (long) gemCost * (attemptsDone + 1);
+
             // Kiểm tra tài nguyên trước mỗi lần đập
-            if (player.inventory.gold < goldCost || !player.inventory.checkGemAndRuby(gemCost)) {
-                Service.gI().sendServerMessage(player, "Dừng lại tại lần thứ " + i + " do không đủ tài nguyên.");
+            if (player.inventory.gold < neededGold || !player.inventory.checkGemAndRuby(neededGem)) {
+                if (i > 0) {
+                    Service.gI().sendServerMessage(player, "Dừng lại tại lần thứ " + i + " do không đủ tài nguyên.");
+                }
                 break;
             }
 
-            // Trừ tiền
-            player.inventory.gold -= goldCost;
-            player.inventory.subGemAndRuby(gemCost);
             attemptsDone++;
 
             // Check tỉ lệ
@@ -138,6 +178,12 @@ public class PhaLeHoaTrangBi {
                 isSuccess = true;
                 break; // Thành công thì dừng luôn (logic game thường là vậy)
             }
+        }
+
+        // Trừ tiền một lần dựa trên attemptsDone
+        if (attemptsDone > 0) {
+            player.inventory.subGold((long) goldCost * attemptsDone);
+            player.inventory.subGemAndRuby((long) gemCost * attemptsDone);
         }
 
         // Xử lý kết quả sau vòng lặp

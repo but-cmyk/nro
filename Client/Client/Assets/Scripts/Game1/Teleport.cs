@@ -127,6 +127,10 @@ namespace Game1
     
     	public void paintHole(mGraphics g)
     	{
+    		if (x < GameScr.cmx - 50 || x > GameScr.cmx + GameCanvas.w + 50)
+    		{
+    			return;
+    		}
     		if (planet > 2 && tHole)
     		{
     			g.drawImage(hole, x, y2 + 20, StaticObj.BOTTOM_HCENTER);

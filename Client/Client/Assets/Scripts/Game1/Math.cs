@@ -11,6 +11,11 @@ namespace Game1
     		return (i <= 0) ? (-i) : i;
     	}
     
+    	public static int Abs(int i)
+    	{
+    		return (i <= 0) ? (-i) : i;
+    	}
+    
     	public static int min(int x, int y)
     	{
     		return (x >= y) ? y : x;

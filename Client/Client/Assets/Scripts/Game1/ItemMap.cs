@@ -154,8 +154,18 @@ namespace Game1
     		}
     	}
     
+    	public bool isInViewport()
+    	{
+    		return x >= GameScr.cmx - 40 && x <= GameScr.cmx + GameScr.gW + 40 &&
+    		       y >= GameScr.cmy - 40 && y <= GameScr.cmy + GameScr.gH + 40;
+    	}
+
     	public void paint(mGraphics g)
     	{
+    		if (!isInViewport())
+    		{
+    			return;
+    		}
     		if (isAuraItem())
     		{
     			g.drawImage(TileMap.bong, x + 3, y, mGraphics.VCENTER | mGraphics.HCENTER);
@@ -249,7 +259,7 @@ namespace Game1
     
     	public void paintAuraItemEff(mGraphics g)
     	{
-    		if (GameCanvas.lowGraphic || !isAuraItem())
+    		if (GameCanvas.lowGraphic || !isAuraItem() || !isInViewport())
     		{
     			return;
     		}

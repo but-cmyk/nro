@@ -126,6 +126,16 @@ public class CombineUtil {
         return 0;
     }
 
+    public static int getGemNangCapDo(int level) {
+        return switch (level) {
+            case 3 -> 5;
+            case 4 -> 10;
+            case 5 -> 20;
+            case 6, 7 -> 40;
+            default -> 0;
+        };
+    }
+
     public static double getTileNangCapDo(int level) {
         switch (level) {
             case 0 -> {

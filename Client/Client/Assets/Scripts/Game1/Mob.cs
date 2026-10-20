@@ -1413,19 +1413,19 @@ namespace Game1
     
     	public bool isPaint()
     	{
-    		if (x < GameScr.cmx)
+    		if (x < GameScr.cmx - 50)
     		{
     			return false;
     		}
-    		if (x > GameScr.cmx + GameScr.gW)
+    		if (x > GameScr.cmx + GameScr.gW + 50)
     		{
     			return false;
     		}
-    		if (y < GameScr.cmy)
+    		if (y < GameScr.cmy - 50)
     		{
     			return false;
     		}
-    		if (y > GameScr.cmy + GameScr.gH + 30)
+    		if (y > GameScr.cmy + GameScr.gH + 50)
     		{
     			return false;
     		}

@@ -482,8 +482,20 @@ namespace Game1
     				recieveMsg.removeElementAt(0);
     				break;
     			}
-    			messageHandler.onMessage(message);
-    			recieveMsg.removeElementAt(0);
+    			sbyte cmd = message.command;
+    			try
+    			{
+    				messageHandler.onMessage(message);
+    			}
+    			catch (Exception ex)
+    			{
+    				Cout.LogError("Lỗi xử lý message2 cmd=" + cmd + ": " + ex.Message + "\n" + ex.StackTrace);
+    			}
+    			finally
+    			{
+    				message.cleanup();
+    				recieveMsg.removeElementAt(0);
+    			}
     		}
     	}
     

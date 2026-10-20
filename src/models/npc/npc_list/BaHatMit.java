@@ -182,11 +182,17 @@ public class BaHatMit extends Npc {
                         }
                     } else if (player.idMark.getIndexMenu() == ConstNpc.MENU_START_COMBINE) {
                         switch (player.combineNew.typeCombine) {
-                            // --- TÁCH PHA LÊ HÓA RA XỬ LÝ RIÊNG ---
-                            case CombineService.PHA_LE_HOA_TRANG_BI -> {
-                                switch (select) {
-                                    case 0 -> CombineService.gI().startCombine(player, 10); // Nút đầu (x10)
-                                    case 1 -> CombineService.gI().startCombine(player, 1); // Nút sau (x1)
+                            // --- TÁCH PHA LÊ HÓA VÀ NÂNG CẤP VẬT PHẨM SỬ DỤNG DYNAMIC QUANTITIES ---
+                            case CombineService.PHA_LE_HOA_TRANG_BI, CombineService.NANG_CAP_VAT_PHAM -> {
+                                if (player.combineNew.quantities != null && !player.combineNew.quantities.isEmpty()) {
+                                    if (select >= 0 && select < player.combineNew.quantities.size()) {
+                                        int num = player.combineNew.quantities.get(select);
+                                        CombineService.gI().startCombine(player, num);
+                                    }
+                                } else {
+                                    if (select == 0) {
+                                        CombineService.gI().startCombine(player, 1);
+                                    }
                                 }
                             }
 
@@ -211,8 +217,8 @@ public class BaHatMit extends Npc {
                                 }
                             }
 
-                            // --- CÁC CHỨC NĂNG KHÁC (Nâng cấp vật phẩm, bông tai...) ---
-                            case CombineService.NANG_CAP_VAT_PHAM, CombineService.NANG_CAP_BONG_TAI,
+                            // --- CÁC CHỨC NĂNG KHÁC (Bông tai, làm phép...) ---
+                            case CombineService.NANG_CAP_BONG_TAI,
                                     CombineService.NANG_CHI_SO_BONG_TAI, CombineService.LAM_PHEP_NHAP_DA,
                                     CombineService.NHAP_NGOC_RONG, CombineService.GIAM_DINH_SACH,
                                     CombineService.TAY_SACH, CombineService.NANG_CAP_SACH_TUYET_KY,
@@ -803,7 +809,19 @@ public class BaHatMit extends Npc {
                         }
                     } else if (player.idMark.getIndexMenu() == ConstNpc.MENU_START_COMBINE) {
                         switch (player.combineNew.typeCombine) {
-                            case CombineService.NANG_CAP_VAT_PHAM, CombineService.NANG_CAP_BONG_TAI,
+                            case CombineService.PHA_LE_HOA_TRANG_BI, CombineService.NANG_CAP_VAT_PHAM -> {
+                                if (player.combineNew.quantities != null && !player.combineNew.quantities.isEmpty()) {
+                                    if (select >= 0 && select < player.combineNew.quantities.size()) {
+                                        int num = player.combineNew.quantities.get(select);
+                                        CombineService.gI().startCombine(player, num);
+                                    }
+                                } else {
+                                    if (select == 0) {
+                                        CombineService.gI().startCombine(player, 1);
+                                    }
+                                }
+                            }
+                            case CombineService.NANG_CAP_BONG_TAI,
                                     CombineService.NANG_CHI_SO_BONG_TAI, CombineService.LAM_PHEP_NHAP_DA,
                                     CombineService.NHAP_NGOC_RONG, CombineService.GIAM_DINH_SACH,
                                     CombineService.TAY_SACH, CombineService.NANG_CAP_SACH_TUYET_KY,

@@ -25,7 +25,7 @@ import models.player.Player;
 
 public class DataGame {
 
-    public static byte vsData = 11;
+    public static byte vsData = 12;
     public static byte vsMap = 3;
     public static byte vsSkill = 5;
     public static byte vsItem = 12;
@@ -63,6 +63,11 @@ public class DataGame {
             e.printStackTrace();
             System.exit(1);
         }
+    }
+
+    public static void reloadPart() {
+        PART = FileIO.readFile("data/update_data/part");
+        Logger.success("Reloaded PART cache in DataGame (" + (PART != null ? PART.length : 0) + " bytes)");
     }
 
     public static void sendVersionGame(MySession session) {

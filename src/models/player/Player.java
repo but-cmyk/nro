@@ -64,6 +64,7 @@ import consts.ConstNpc;
 public class Player extends Character {
 
     public long lastTimeSave;
+    public int lastSaveHash = 0;
     public boolean isJoinMap = false;
     public boolean isCookingBanhDay = false;
     public boolean isCookingBanhChung = false;
@@ -408,8 +409,10 @@ public class Player extends Character {
                             cookingBanhDayTime--;
                             lastTimeUpdateCooking = System.currentTimeMillis();
                             if (cookingBanhDayTime > 0) {
-                                NpcService.gI().npcChat(this, ConstNpc.NOI_BANH,
-                                        "Đang nấu bánh dầy\n|7|Thời gian còn lại: " + cookingBanhDayTime + " giây.");
+                                if (cookingBanhDayTime % 5 == 0 || cookingBanhDayTime <= 3) {
+                                    NpcService.gI().npcChat(this, ConstNpc.NOI_BANH,
+                                            "Đang nấu bánh dầy\n|7|Thời gian còn lại: " + cookingBanhDayTime + " giây.");
+                                }
                             } else {
                                 finishCookingBanhDay();
                             }
@@ -421,8 +424,10 @@ public class Player extends Character {
                             cookingBanhChungTime--;
                             lastTimeUpdateCooking = System.currentTimeMillis();
                             if (cookingBanhChungTime > 0) {
-                                NpcService.gI().npcChat(this, ConstNpc.NOI_BANH,
-                                        "Đang nấu bánh chưng\n|7|Thời gian còn lại: " + cookingBanhChungTime + " giây.");
+                                if (cookingBanhChungTime % 5 == 0 || cookingBanhChungTime <= 3) {
+                                    NpcService.gI().npcChat(this, ConstNpc.NOI_BANH,
+                                            "Đang nấu bánh chưng\n|7|Thời gian còn lại: " + cookingBanhChungTime + " giây.");
+                                }
                             } else {
                                 finishCookingBanhChung();
                             }

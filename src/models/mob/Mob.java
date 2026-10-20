@@ -33,6 +33,7 @@ import models.skill.Skill;
 import services.ChatGlobalService;
 import services.RewardService;
 import utils.TimeUtil;
+import utils.Logger;
 import models.player.NPoint;
 
 public class Mob {
@@ -115,7 +116,7 @@ public class Mob {
     public synchronized void injured(Player plAtt, long damage, boolean dieWhenHpFull) {
         if (!this.isDie()) {
             if (plAtt != null) {
-                Player plCheck = (plAtt.isPet && ((Pet) plAtt).master != null) ? ((Pet) plAtt).master : plAtt;
+                Player plCheck = (plAtt.isPet && plAtt instanceof Pet && ((Pet) plAtt).master != null) ? ((Pet) plAtt).master : plAtt;
                 if (plCheck.clan != null) {
                     int percentDameMob = ClanService.getPercentDameMobByClanFlag(plCheck.clan.imgId);
                     if (percentDameMob > 0) {
@@ -313,8 +314,11 @@ public class Mob {
     }
 
     public void attack() {
+        if (isDie() || this.zone == null || this.zone.map == null) {
+            return;
+        }
         Player player = getPlayerCanAttack();
-        if (!isDie() && !effectSkill.isHaveEffectSkill() && tempId != ConstMob.MOC_NHAN  && tempId != ConstMob.MAY_DO_SUC_MANH && tempId != ConstMob.BU_NHIN_MA_QUAI && tempId != ConstMob.CO_MAY_HUY_DIET && !this.isBigBoss() && (this.lvMob < 1 || MapService.gI().isMapPhoBan(this.zone.map.mapId)) && Util.canDoWithTime(lastTimeAttackPlayer, timeAttack)) {
+        if (!effectSkill.isHaveEffectSkill() && tempId != ConstMob.MOC_NHAN && tempId != ConstMob.MAY_DO_SUC_MANH && tempId != ConstMob.BU_NHIN_MA_QUAI && tempId != ConstMob.CO_MAY_HUY_DIET && !this.isBigBoss() && (this.lvMob < 1 || MapService.gI().isMapPhoBan(this.zone.map.mapId)) && Util.canDoWithTime(lastTimeAttackPlayer, timeAttack)) {
             if (player != null) {
                 this.mobAttackPlayer(player);
             }
@@ -329,19 +333,40 @@ public class Mob {
         }
         int distance = 100;
         try {
+            if (this.zone == null) {
+                return null;
+            }
             List<Player> players = this.zone.getNotBosses();
-            for (Player pl : players) {
-                if (!pl.isDie() && !pl.isBoss && !pl.isNewPet && (pl.satellite == null || !pl.satellite.isDefend) && (pl.effectSkin == null || !pl.effectSkin.isVoHinh) && (this.tempId > 18 || (this.tempId > 9 && this.type == 4)) || isBigBoss()) {
-                    int dis = Util.getDistance(pl, this);
-                    if (dis <= distance || isBigBoss()) {
-                        plAttack = pl;
-                        distance = dis;
+            if (players != null) {
+                for (int i = 0; i < players.size(); i++) {
+                    try {
+                        if (i >= players.size()) {
+                            break;
+                        }
+                        Player pl = players.get(i);
+                        if (pl == null || pl.beforeDispose || pl.isOffline || pl.location == null || pl.nPoint == null || pl.isDie()) {
+                            continue;
+                        }
+                        if (pl.isBoss || pl.isNewPet) {
+                            continue;
+                        }
+                        if ((pl.satellite != null && pl.satellite.isDefend) || (pl.effectSkin != null && pl.effectSkin.isVoHinh)) {
+                            continue;
+                        }
+                        if ((this.tempId > 18 || (this.tempId > 9 && this.type == 4)) || isBigBoss()) {
+                            int dis = Util.getDistance(pl, this);
+                            if (dis <= distance || isBigBoss()) {
+                                plAttack = pl;
+                                distance = dis;
+                            }
+                        }
+                    } catch (Exception ignored) {
                     }
                 }
             }
             this.timeAttack = 2000;
         } catch (Exception e) {
-
+            Logger.logException(Mob.class, e, "Lỗi getPlayerCanAttack của mob: " + this.id);
         }
         return plAttack;
     }
@@ -349,36 +374,52 @@ public class Mob {
     private Player getFirstPlayerCanAttack() {
         Player plAtt = null;
         try {
+            if (zone == null) {
+                return null;
+            }
             List<Player> playersMap = zone.getHumanoids();
             int dis = 300;
             if (playersMap != null) {
-                for (Player plAttt : playersMap) {
-                    if (plAttt.isDie() || plAttt.isBoss || (plAttt.satellite != null && plAttt.satellite.isDefend) || (plAttt.effectSkin != null && plAttt.effectSkin.isVoHinh) || !this.temporaryEnemies.contains(plAttt)) {
-                        continue;
-                    }
-                    int d = Util.getDistance(plAttt, this);
-                    if (d <= dis) {
-                        dis = d;
-                        plAtt = plAttt;
+                for (int i = 0; i < playersMap.size(); i++) {
+                    try {
+                        if (i >= playersMap.size()) {
+                            break;
+                        }
+                        Player plAttt = playersMap.get(i);
+                        if (plAttt == null || plAttt.beforeDispose || plAttt.isOffline || plAttt.location == null || plAttt.nPoint == null || plAttt.isDie()) {
+                            continue;
+                        }
+                        if (plAttt.isBoss || (plAttt.satellite != null && plAttt.satellite.isDefend) || (plAttt.effectSkin != null && plAttt.effectSkin.isVoHinh) || !this.temporaryEnemies.contains(plAttt)) {
+                            continue;
+                        }
+                        int d = Util.getDistance(plAttt, this);
+                        if (d <= dis) {
+                            dis = d;
+                            plAtt = plAttt;
+                        }
+                    } catch (Exception ignored) {
                     }
                 }
             }
             this.timeAttack = 1000;
         } catch (Exception e) {
-
+            Logger.logException(Mob.class, e, "Lỗi getFirstPlayerCanAttack của mob: " + this.id);
         }
         return plAtt;
     }
 
     private void mobAttackPlayer(Player player) {
+        if (player == null || player.beforeDispose || player.isOffline || player.nPoint == null || player.location == null || player.isDie()) {
+            return;
+        }
         long dameMob = this.point.getDameAttack();
-        if (this.lvMob > 0 && !MapService.gI().isMapPhoBan(this.zone.map.mapId)) {
+        if (this.lvMob > 0 && this.zone != null && this.zone.map != null && !MapService.gI().isMapPhoBan(this.zone.map.mapId)) {
             dameMob = (long) (player.nPoint.hpMax * (10.0 / 100));
         }
         if (player.charms != null && player.charms.tdDaTrau > System.currentTimeMillis()) {
             dameMob -= (dameMob * 30 / 100);
         }
-        if (player.isPet && ((Pet) player).master != null && ((Pet) player).master.charms != null && ((Pet) player).master.charms.tdDeTu > System.currentTimeMillis()) {
+        if (player.isPet && player instanceof Pet && ((Pet) player).master != null && ((Pet) player).master.charms != null && ((Pet) player).master.charms.tdDeTu > System.currentTimeMillis()) {
             dameMob /= 2;
         }
         if (player.satellite != null && player.satellite.isDefend) {
@@ -399,28 +440,36 @@ public class Mob {
 
     private void sendMobAttackMe(Player player, long dame) {
         if (!player.isPet && !player.isNewPet && !player.isBot) {
-            Message msg;
+            Message msg = null;
             try {
                 msg = new Message(-11);
                 msg.writer().writeByte(this.id);
                 msg.writer().writeInt(NPoint.safeInt(dame)); //dame
                 player.sendMessage(msg);
-                msg.cleanup();
             } catch (Exception e) {
+                Logger.logException(Mob.class, e, "Lỗi gửi mob tấn công tôi: player=" + player.name);
+            } finally {
+                if (msg != null) {
+                    msg.cleanup();
+                }
             }
         }
     }
 
     private void sendMobAttackPlayer(Player player) {
-        Message msg;
+        Message msg = null;
         try {
             msg = new Message(-10);
             msg.writer().writeByte(this.id);
             msg.writer().writeInt((int) player.id);
             msg.writer().writeInt(NPoint.safeInt(player.nPoint.hp));
             Service.gI().sendMessAnotherNotMeInMap(player, msg);
-            msg.cleanup();
         } catch (Exception e) {
+            Logger.logException(Mob.class, e, "Lỗi gửi mob tấn công player khác: player=" + (player != null ? player.name : "null"));
+        } finally {
+            if (msg != null) {
+                msg.cleanup();
+            }
         }
     }
 
@@ -456,6 +505,7 @@ public class Mob {
             Service.gI().sendMessAllPlayerInMap(this.zone, msg);
             this.sendMobMaxHp(this.point.hp);
         } catch (Exception e) {
+            Logger.logException(Mob.class, e, "Lỗi gửi gói tin mob hồi sinh: mobId=" + this.id);
         } finally {
             if (msg != null) {
                 msg.cleanup();
@@ -476,6 +526,7 @@ public class Mob {
             msg.writer().writeByte(-1);
             Service.gI().sendMessAllPlayerInMap(this.zone, msg);
         } catch (Exception e) {
+            Logger.logException(Mob.class, e, "Lỗi gửi gói tin mob hồi hp: mobId=" + this.id);
         } finally {
             if (msg != null) {
                 msg.cleanup();
@@ -495,6 +546,7 @@ public class Mob {
             msg.writer().writeByte(Effect);
             Service.gI().sendMessAllPlayerInMap(this.zone, msg);
         } catch (Exception e) {
+            Logger.logException(Mob.class, e, "Lỗi gửi effect mob: mobId=" + this.id + ", effect=" + Effect);
         } finally {
             if (msg != null) {
                 msg.cleanup();
@@ -504,31 +556,47 @@ public class Mob {
     }
 
     private void sendMobDieAffterAttacked(Player plKill, long dameHit) {
-        Message msg;
+        Message msg = null;
         try {
             msg = new Message(-12);
             msg.writer().writeByte(this.id);
             msg.writer().writeInt(NPoint.safeInt(dameHit));
-            msg.writer().writeBoolean(plKill.nPoint.isCrit); // crit
+            msg.writer().writeBoolean(plKill != null && plKill.nPoint != null && plKill.nPoint.isCrit); // crit
             List<ItemMap> items = mobReward(plKill, this.dropItemTask(plKill), msg);
-            Service.gI().sendMessAllPlayerInMap(this.zone, msg);
-            msg.cleanup();
-            hutItem(plKill, items);
+            try {
+                Service.gI().sendMessAllPlayerInMap(this.zone, msg);
+            } catch (Exception ex) {
+                Logger.logException(Mob.class, ex, "Lỗi gửi gói tin mob die tới zone " + (this.zone != null ? this.zone.zoneId : "null"));
+            } finally {
+                msg.cleanup();
+                msg = null;
+            }
+            if (plKill != null && items != null && !items.isEmpty()) {
+                hutItem(plKill, items);
+            }
         } catch (Exception e) {
+            Logger.logException(Mob.class, e, "Lỗi xử lý mob chết sau tấn công: mobId=" + this.id + ", plKill=" + (plKill != null ? plKill.name : "null"));
+        } finally {
+            if (msg != null) {
+                msg.cleanup();
+            }
         }
     }
 
     private void hutItem(Player player, List<ItemMap> items) {
-        if (!player.isPet && !player.isBot && !player.isNewPet) {
-            if (player.charms.tdThuHut > System.currentTimeMillis()) {
-                for (ItemMap item : items) {
-                    ItemMapService.gI().pickItem(player, item.itemMapId, true);
-                }
-            }
-        } else {
-            if (((Pet) player).master.charms.tdThuHut > System.currentTimeMillis()) {
-                for (ItemMap item : items) {
-                    ItemMapService.gI().pickItem(((Pet) player).master, item.itemMapId, true);
+        if (player == null || items == null || items.isEmpty() || player.isBot) {
+            return;
+        }
+        Player plMaster = player;
+        if (player.isPet && player instanceof Pet) {
+            plMaster = ((Pet) player).master;
+        } else if (player.isNewPet && player instanceof models.player.NewPet) {
+            plMaster = ((models.player.NewPet) player).master;
+        }
+        if (plMaster != null && plMaster.charms != null && plMaster.charms.tdThuHut > System.currentTimeMillis()) {
+            for (ItemMap item : items) {
+                if (item != null) {
+                    ItemMapService.gI().pickItem(plMaster, item.itemMapId, true);
                 }
             }
         }
@@ -572,7 +640,7 @@ public class Mob {
             return list;
         }
 
-        Player plReward = player.isPet ? ((Pet) player).master : player;
+        Player plReward = (player.isPet && player instanceof Pet) ? ((Pet) player).master : player;
         if (plReward != null && !plReward.isBot && !plReward.isNewPet && plReward.canReceiveDailyMobRuby()) {
             list.add(new ItemMap(this.zone, 861, 30, x, yEnd, plReward.id));
             plReward.lastTimeRewardDailyMobRuby = System.currentTimeMillis();
@@ -790,7 +858,7 @@ public class Mob {
          //========================ĐỒ THẦN MAP COLD========================
         if (MapService.gI().isMapCold(mapid)) {
             // Lấy player gốc nếu là pet
-            if (player.isPet) {
+            if (player.isPet && player instanceof Pet) {
                 player = ((Pet) player).master;
             }
 
@@ -948,7 +1016,7 @@ public class Mob {
 
 
         //========================CHUỐI (ĐÃ TẮT RƠI CÀ CHUA & CÀ RỐT)========================
-        Player plOwner = player.isPet ? ((Pet) player).master : player;
+        Player plOwner = (player.isPet && player instanceof Pet) ? ((Pet) player).master : player;
         if (plOwner != null && plOwner.nPoint != null) {
             boolean isOver1B5 = plOwner.nPoint.power > 1_500_000_000L;
             if (player.isPet && player.nPoint != null && player.nPoint.power > 1_500_000_000L) {
@@ -1027,7 +1095,7 @@ public class Mob {
     }
 
     private void sendMobStillAliveAffterAttacked(long dameHit, boolean crit) {
-        Message msg;
+        Message msg = null;
         try {
             msg = new Message(-9);
             msg.writer().writeByte(this.id);
@@ -1036,15 +1104,19 @@ public class Mob {
             msg.writer().writeBoolean(crit); // chí mạng
             msg.writer().writeInt(-1);
             Service.gI().sendMessAllPlayerInMap(this.zone, msg);
-            msg.cleanup();
         } catch (Exception e) {
+            Logger.logException(Mob.class, e, "Lỗi gửi thông báo mob còn sống sau tấn công: mobId=" + this.id);
+        } finally {
+            if (msg != null) {
+                msg.cleanup();
+            }
         }
     }
 
     public void hoiSinhMobPhoBan() {
         this.point.hp = this.point.maxHp;
         this.setTiemNang();
-        Message msg;
+        Message msg = null;
         try {
             msg = new Message(-13);
             msg.writer().writeByte(this.id);
@@ -1052,15 +1124,19 @@ public class Mob {
             msg.writer().writeByte(this.lvMob); //level mob
             msg.writer().writeInt(NPoint.safeInt(this.point.hp));
             Service.gI().sendMessAllPlayerInMap(this.zone, msg);
-            msg.cleanup();
         } catch (Exception e) {
+            Logger.logException(Mob.class, e, "Lỗi gửi gói tin hồi sinh mob phó bản: mobId=" + this.id);
+        } finally {
+            if (msg != null) {
+                msg.cleanup();
+            }
         }
     }
 
     public void hoiSinhMobTayKarin() {
         this.point.hp = this.point.maxHp;
         this.maxTiemNang = 1;
-        Message msg;
+        Message msg = null;
         try {
             msg = new Message(-13);
             msg.writer().writeByte(this.id);
@@ -1068,8 +1144,12 @@ public class Mob {
             msg.writer().writeByte(this.lvMob); //level mob
             msg.writer().writeInt(NPoint.safeInt(this.point.hp));
             Service.gI().sendMessAllPlayerInMap(this.zone, msg);
-            msg.cleanup();
-        } catch (IOException e) {
+        } catch (Exception e) {
+            Logger.logException(Mob.class, e, "Lỗi gửi gói tin hồi sinh mob tháp Karin: mobId=" + this.id);
+        } finally {
+            if (msg != null) {
+                msg.cleanup();
+            }
         }
     }
 

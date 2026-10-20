@@ -928,7 +928,7 @@ public class SkillService {
     }
 
     public void phanSatThuong(Player plAtt, Player plTarget, long dame) {
-        if (plAtt == null || plTarget == null || plAtt.nPoint == null || plTarget.nPoint == null) {
+        if (plAtt == null || plTarget == null || plAtt.nPoint == null || plTarget.nPoint == null || plAtt.zone == null) {
             return;
         }
         // Kiểm tra nếu là GoldFide, không áp dụng phản sát thương
@@ -938,35 +938,35 @@ public class SkillService {
         int percentPST = plTarget.nPoint.tlPST;
         if (percentPST != 0) {
             long damePST = (long) dame * percentPST / 100L;
+            if (plAtt.nPoint != null && damePST >= plAtt.nPoint.hp) {
+                damePST = plAtt.nPoint.hp - 1;
+            }
+            if (plAtt.isBoss && !(plAtt instanceof Broly || plAtt instanceof SuperBroly)) {
+                if (plAtt.nPoint != null && damePST > plAtt.nPoint.hpMax / 100) {
+                    long giamdame = 0;
+                    long maxBound = plAtt.nPoint.hpMax / 200;
+                    if (maxBound > 1) {
+                        giamdame = Util.nextInt(NPoint.safeInt(maxBound));
+                    }
+                    damePST = plAtt.nPoint.hpMax / 100 - giamdame;
+                }
+            }
+            long dameInflicted = plAtt.injured(plAtt, damePST, true, false);
+
             Message msg = null;
             try {
                 msg = new Message(56);
                 msg.writer().writeInt((int) plAtt.id);
-                if (plAtt.nPoint != null && damePST >= plAtt.nPoint.hp) {
-                    damePST = plAtt.nPoint.hp - 1;
-                }
-                if (plAtt.isBoss && !(plAtt instanceof Broly || plAtt instanceof SuperBroly)) {
-                    if (plAtt.nPoint != null && damePST > plAtt.nPoint.hpMax / 100) {
-                        long giamdame = 0;
-                        long maxBound = plAtt.nPoint.hpMax / 200;
-                        if (maxBound > 1) {
-                            giamdame = Util.nextInt(NPoint.safeInt(maxBound));
-                        }
-                        damePST = plAtt.nPoint.hpMax / 100 - giamdame;
-                    }
-                }
-                long dameInflicted = plAtt.injured(plAtt, damePST, true, false);
-                if (plAtt.nPoint != null) {
-                    msg.writer().writeInt(NPoint.safeInt(plAtt.nPoint.hp));
-                } else {
-                    msg.writer().writeInt(0);
-                }
-                msg.writer().writeInt(NPoint.safeInt(dameInflicted));
+                int hp = (plAtt.nPoint != null) ? NPoint.safeInt(plAtt.nPoint.hp) : 0;
+                msg.writer().writeInt(hp);
+                msg.writeFix(dameInflicted);
                 msg.writer().writeBoolean(false);
                 msg.writer().writeByte(36);
-                Service.gI().sendMessAllPlayerInMap(plAtt, msg);
+                if (plAtt.zone != null) {
+                    Service.gI().sendMessAllPlayerInMap(plAtt, msg);
+                }
             } catch (Exception e) {
-                Logger.logException(SkillService.class, e);
+                Logger.logException(SkillService.class, e, "Lỗi gửi packet phản sát thương");
             } finally {
                 if (msg != null) {
                     msg.cleanup();

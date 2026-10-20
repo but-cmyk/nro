@@ -514,7 +514,19 @@ namespace Game1
     			{
     				break;
     			}
-    			messageHandler.onMessage(message);
+    			sbyte cmd = message.command;
+    			try
+    			{
+    				messageHandler.onMessage(message);
+    			}
+    			catch (Exception ex)
+    			{
+    				Cout.LogError("Lỗi xử lý message cmd=" + cmd + ": " + ex.Message + "\n" + ex.StackTrace);
+    			}
+    			finally
+    			{
+    				message.cleanup();
+    			}
     		}
     	}
     

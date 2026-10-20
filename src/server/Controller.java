@@ -64,7 +64,7 @@ import utils.PlayerAuditLogger;
 
 public class Controller implements IMessageHandler {
 
-    private int errors;
+    private final java.util.concurrent.ConcurrentHashMap<Byte, Long> lastErrorLogTime = new java.util.concurrent.ConcurrentHashMap<>();
 
     private static Controller instance;
 
@@ -866,14 +866,14 @@ public class Controller implements IMessageHandler {
                     break;
             }
         } catch (Exception e) {
-            if (errors < 5) {
-                errors++;
-                Logger.logException(Controller.class, e);
-                if (player != null) {
-                    Logger.warning("Player: " + player.name + "\n");
-                }
-                Logger.warning("Lỗi function: 'onMessage'\n");
-                Logger.warning("Lỗi controller message command: " + _msg.command + "\n");
+            byte cmd = _msg != null ? _msg.command : -1;
+            long now = System.currentTimeMillis();
+            Long lastLog = lastErrorLogTime.get(cmd);
+            if (lastLog == null || now - lastLog > 5000) {
+                lastErrorLogTime.put(cmd, now);
+                Logger.logException(Controller.class, e,
+                        String.format("Lỗi onMessage [Cmd: %d, Player: %s, IP: %s]",
+                                cmd, (player != null ? player.name : "null"), (_session != null ? _session.getIP() : "null")));
             }
         } finally {
             long elapsedNs = System.nanoTime() - startNs;
