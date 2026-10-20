@@ -71,16 +71,16 @@ public class SuperDivineWaterService {
         for (Mob mob : zone.mobs) {
             switch (mob.tempId) {
                 case 26:
-                    mob.point.dame = (int) Math.min(totalHp * 150 / 100, 2_000_000_000L);
-                    mob.point.maxHp = (int) Math.min(totalDamage * 150 / 100, 2_000_000_000L);
+                    mob.point.dame = totalHp * 150 / 100;
+                    mob.point.maxHp = totalDamage * 150 / 100;
                     break;
                 case 25:
-                    mob.point.dame = (int) Math.min(totalHp * 2, 2_000_000_000L);
-                    mob.point.maxHp = (int) Math.min(totalDamage * 2, 2_000_000_000L);
+                    mob.point.dame = totalHp * 2;
+                    mob.point.maxHp = totalDamage * 2;
                     break;
                 default:
-                    mob.point.dame = (int) Math.min(totalHp, 2_000_000_000L);
-                    mob.point.maxHp = (int) Math.min(totalDamage, 2_000_000_000L);
+                    mob.point.dame = totalHp;
+                    mob.point.maxHp = totalDamage;
                     break;
             }
             mob.lvMob = 0;
@@ -102,13 +102,13 @@ public class SuperDivineWaterService {
                     }
                     if (allCharactersDead) {
                         try {
-                            long bossDamage = Math.min((long) (player.nPoint.dame), 200_000_000L);
-                            long bossMaxHealth = Math.min(((long) player.nPoint.hpMax * 5), 2_000_000_000L);
+                            long bossDamage = player.nPoint.dame;
+                            long bossMaxHealth = (long) player.nPoint.hpMax * 5;
                             new Pocolo(
                                     player.zone,
                                     player,
-                                    (int) bossDamage,
-                                    (int) bossMaxHealth
+                                    bossDamage,
+                                    bossMaxHealth
                             );
                         } catch (Exception e) {
                         }

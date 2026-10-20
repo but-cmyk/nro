@@ -30,13 +30,13 @@ public class CADICH extends Boss {
     private boolean gongBienKhi;
     private boolean bienKhi;
 
-    public CADICH(Zone zone, Clan clan,int level, int dame, int hp) throws Exception {
+    public CADICH(Zone zone, Clan clan,int level, long dame, long hp) throws Exception {
         super(PHOBANCDRD, BossID.CADICH, new BossData(
                 "Cađích",
                 ConstPlayer.XAYDA,
                 new short[]{645, 646, 647, -1, -1, -1},
-                ((10000 + dame)),
-                new int[]{((500000 + hp))},
+                ((10000L + dame)),
+                new long[]{((500000L + hp))},
                 new int[]{144},
                 new int[][]{
                     {Skill.GALICK, 7, 1000},
@@ -217,7 +217,7 @@ public class CADICH extends Boss {
                     this.effectSkill.lastTimeUpMonkey = System.currentTimeMillis();
                     this.effectSkill.levelMonkey = 1;
                     long hpmax = (long) this.nPoint.hpMax * 2L;
-                    this.nPoint.hpMax = (int) Math.min(hpmax, 2_000_000_000);
+                    this.nPoint.hpMax = hpmax;
                     this.nPoint.setHp(((long) this.nPoint.hpMax));
                     EffectSkillService.gI().sendEffectMonkey(this);
                     Service.gI().Send_Caitrang(this);

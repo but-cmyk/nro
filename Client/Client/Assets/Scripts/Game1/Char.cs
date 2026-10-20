@@ -242,7 +242,7 @@ namespace Game1
     
     	public long xu;
     
-    	public int xuInBox;
+    	public long xuInBox;
     
     	public int yen;
     

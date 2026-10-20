@@ -519,7 +519,7 @@ public class WhisArenaService {
                             plTarget.getAura(),
                             Math.max(10_000_000L, plTarget.nPoint.hpMax),
                             Math.max(10_000_000L, plTarget.nPoint.hpMax),
-                            (int) Math.min(Integer.MAX_VALUE, Math.max(10_000L, plTarget.nPoint.dame)),
+                            Math.max(10_000L, plTarget.nPoint.dame),
                             plTarget.arenaWins);
                     cloneBot.rank = randomEntry.rank;
                     String statusMsg = (onlinePl != null && onlinePl.isPKDHVT)
@@ -664,7 +664,7 @@ public class WhisArenaService {
                     rivalPlayer.getAura(),
                     Math.max(10_000_000L, rivalPlayer.nPoint.hpMax),
                     Math.max(10_000_000L, rivalPlayer.nPoint.hpMax),
-                    (int) Math.min(Integer.MAX_VALUE, Math.max(10_000L, rivalPlayer.nPoint.dame)),
+                    Math.max(10_000L, rivalPlayer.nPoint.dame),
                     rivalPlayer.arenaWins);
             cloneBot.rank = WhisArenaBotManager.gI().getPlayerRank(rivalPlayer);
             String statusMsg = (onlineRival != null && onlineRival.isPKDHVT)

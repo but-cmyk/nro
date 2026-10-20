@@ -233,7 +233,7 @@ public class WhisArenaBotManager {
 
             // Sức mạnh & Chỉ số theo thứ hạng
             long hpMax;
-            int dame;
+            long dame;
             if (i < 5) {
                 // Top 1 - 5 cực mạnh
                 hpMax = 300_000_000L + (5 - i) * 50_000_000L;

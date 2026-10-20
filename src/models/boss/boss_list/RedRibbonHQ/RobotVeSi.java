@@ -19,13 +19,13 @@ import utils.Util;
 
 public class RobotVeSi extends Boss {
 
-    public RobotVeSi(Zone zone, int id, int dame, int hp) throws Exception {
+    public RobotVeSi(Zone zone, int id, long dame, long hp) throws Exception {
         super(PHOBANDT, BossID.ROBOT_VE_SI - id, new BossData(
                 "Rôbốt Vệ Sĩ 0" + id, //name
                 ConstPlayer.TRAI_DAT, //gender
                 new short[]{138, 139, 140, -1, -1, -1}, //outfit {head, body, leg, bag, aura, eff}
                 ((dame)), //dame
-                new int[]{((hp))}, //hp
+                new long[]{((hp))}, //hp
                 new int[]{57}, //map join
                 new int[][]{
                     {Skill.KAMEJOKO, 7, 6}, {Skill.KAMEJOKO, 6, 7}, {Skill.KAMEJOKO, 5, 8}, {Skill.KAMEJOKO, 4, 9}, {Skill.KAMEJOKO, 3, 10}, {Skill.KAMEJOKO, 2, 11}, {Skill.KAMEJOKO, 1, 12},

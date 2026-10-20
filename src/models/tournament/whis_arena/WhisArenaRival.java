@@ -44,14 +44,12 @@ public class WhisArenaRival extends SuperRank {
             };
         }
 
-        int safeHp = (int) Math.min(2_000_000_000L, bot.hpMax);
-
         return new BossData(
                 bot.name,
                 bot.gender,
                 new short[]{bot.head, bot.body, bot.leg, bot.flagBag, bot.aura, -1},
                 bot.dame,
-                new int[]{safeHp},
+                new long[]{bot.hpMax},
                 new int[]{186},
                 skills,
                 new String[]{"Ta là " + bot.name + " của Vũ Đài Whis!", "Hãy xem bản lĩnh của ngươi ra sao!"},

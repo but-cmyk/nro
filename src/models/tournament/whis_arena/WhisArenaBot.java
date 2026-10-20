@@ -12,14 +12,14 @@ public class WhisArenaBot {
     public short aura;
     public long hpMax;
     public long mpMax;
-    public int dame;
+    public long dame;
     public int arenaWins; // Điểm xếp hạng võ đài
     public int rank;
     public WhisArenaLobbyBot lobbyBot;
     public boolean isCompeting;
 
     public WhisArenaBot(int id, String name, byte gender, short head, short body, short leg, 
-                        short flagBag, short aura, long hpMax, long mpMax, int dame, int arenaWins) {
+                        short flagBag, short aura, long hpMax, long mpMax, long dame, int arenaWins) {
         this.id = id;
         this.name = name;
         this.gender = gender;

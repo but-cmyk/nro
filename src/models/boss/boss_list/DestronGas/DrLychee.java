@@ -27,13 +27,13 @@ public class DrLychee extends Boss {
             {Skill.DEMON, 4}, {Skill.DEMON, 5}, {Skill.DEMON, 6}, {Skill.DEMON, 7}
     };
 
-    public DrLychee(Zone zone, Clan clan, int level, int dame, int hp) throws Exception {
+    public DrLychee(Zone zone, Clan clan, int level, long dame, long hp) throws Exception {
         super(PHOBANKGHD, BossID.DR_LYCHEE, new BossData(
                 "Dr Lychee",
                 ConstPlayer.TRAI_DAT,
                 new short[]{742, 743, 744, -1, -1, -1},
                 dame, // Đã bỏ cộng cứng 10000 để linh hoạt hơn
-                new int[]{hp}, // Đã bỏ cộng cứng 1tr hp
+                new long[]{hp}, // Đã bỏ cộng cứng 1tr hp
                 new int[]{148},
                 (int[][]) Util.addArray(FULL_DEMON),
                 new String[]{"|-1|Ta đợi các ngươi mãi", "|-1|Bọn xayda các ngươi mau đền tội đi"},
@@ -150,17 +150,13 @@ public class DrLychee extends Boss {
         long bossDamage = this.nPoint.dame * 150L / 100L;
         long bossMaxHealth = this.nPoint.hpMax * 150L / 100L;
 
-        // Cap giới hạn
-        if (bossDamage > 200_000_000L) bossDamage = 200_000_000L;
-        if (bossMaxHealth > 2_000_000_000L) bossMaxHealth = 2_000_000_000L;
-
         try {
             clan.KhiGasHuyDiet.bosses.add(new Hatchiyack(
                     zone,
                     clan,
                     level,
-                    (int) bossDamage,
-                    (int) bossMaxHealth
+                    bossDamage,
+                    bossMaxHealth
             ));
         } catch (Exception ex) {
             ex.printStackTrace();

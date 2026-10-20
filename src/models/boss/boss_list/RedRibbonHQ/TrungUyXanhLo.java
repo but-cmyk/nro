@@ -19,13 +19,13 @@ import utils.Util;
 
 public class TrungUyXanhLo extends Boss {
 
-    public TrungUyXanhLo(Zone zone, int dame, int hp) throws Exception {
+    public TrungUyXanhLo(Zone zone, long dame, long hp) throws Exception {
         super(PHOBANDT, BossID.TRUNG_UY_XANH_LO, new BossData(
                 "Trung uý Xanh Lơ", //name
                 ConstPlayer.TRAI_DAT, //gender
                 new short[]{135, 136, 137, -1, -1, -1}, //outfit {head, body, leg, bag, aura, eff}
                 ((dame)), //dame
-                new int[]{((hp))}, //hp
+                new long[]{((hp))}, //hp
                 new int[]{62}, //map join
                 new int[][]{
                     {Skill.DEMON, 3, 1}, {Skill.DEMON, 6, 2}, {Skill.DRAGON, 7, 3}, {Skill.DRAGON, 1, 4}, {Skill.GALICK, 5, 5},

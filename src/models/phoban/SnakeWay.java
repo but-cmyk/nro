@@ -142,31 +142,31 @@ public class SnakeWay {
 
                     // SAIBAMEN (6 con) - HP giảm 20 lần
                     for (int i = 6; i > 0; i--) {
-                        long saibamenDamage = Math.min(baseDamage, 200000000L);
-                        long saibamenHP = Math.min(baseHP / 20, 2000000000L); // Giảm 20 lần
+                        long saibamenDamage = baseDamage;
+                        long saibamenHP = baseHP / 20; // Giảm 20 lần
 
                         bosses.add(new SAIBAMEN(
                                 zone,
                                 clan,
                                 i,
-                                (int) saibamenDamage,
-                                (int) saibamenHP
+                                saibamenDamage,
+                                saibamenHP
                         ));
                     }
 
                     // NADIC - HP giảm 3 lần so với base x2
-                    long nadicDamage = Math.min((long)(baseDamage * 1.5), 200000000L);
-                    long nadicHP = Math.min((long)(baseHP * 0.67), 2000000000L);
+                    long nadicDamage = (long)(baseDamage * 1.5);
+                    long nadicHP = (long)(baseHP * 0.67);
 
                     bosses.add(new NADIC(
                             zone,
                             clan,
-                            (int) nadicDamage,
-                            (int) nadicHP
+                            nadicDamage,
+                            nadicHP
                     ));
 
                     // CADICH - Boss chính
-                    long cadichDamage = Math.min(baseDamage * 2, 200000000L);
+                    long cadichDamage = baseDamage * 2;
                     long cadichHP;
 
                     if (level <= 50) {
@@ -175,14 +175,12 @@ public class SnakeWay {
                         cadichHP = 60000000 + (long)((level - 50) * (level - 50) * 538888);
                     }
 
-                    cadichHP = Math.min(cadichHP, 2000000000L);
-
                     bosses.add(new CADICH(
                             zone,
                             clan,
                             level,
-                            (int) cadichDamage,
-                            (int) cadichHP
+                            cadichDamage,
+                            cadichHP
                     ));
 
                 } catch (Exception exception) {

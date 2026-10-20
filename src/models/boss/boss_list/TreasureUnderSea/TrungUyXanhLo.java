@@ -25,13 +25,13 @@ public class TrungUyXanhLo extends Boss {
 
     private static final int[][] FULL_DEMON = new int[][]{{Skill.DEMON, 1}, {Skill.DEMON, 2}, {Skill.DEMON, 3}, {Skill.DEMON, 4}, {Skill.DEMON, 5}, {Skill.DEMON, 6}, {Skill.DEMON, 7}};
 
-    public TrungUyXanhLo(Zone zone, int level, int dame, int hp) throws Exception {
+    public TrungUyXanhLo(Zone zone, int level, long dame, long hp) throws Exception {
         super(PHOBANBDKB, BossID.TRUNG_UY_XANH_LO, new BossData(
                 "Trung úy Xanh Lơ",
                 ConstPlayer.TRAI_DAT,
                 new short[]{135, 136, 137, -1, -1, -1},
                 (dame),
-                new int[]{hp},
+                new long[]{hp},
                 new int[]{103},
                 (int[][]) Util.addArray(FULL_DEMON),
                 new String[]{},

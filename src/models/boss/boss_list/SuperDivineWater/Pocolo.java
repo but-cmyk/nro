@@ -35,13 +35,13 @@ public class Pocolo extends Boss {
     private long lastTimeMove;
     private int indexChat = 0;
 
-    public Pocolo(Zone zone, Player player, int dame, int hp) throws Exception {
+    public Pocolo(Zone zone, Player player, long dame, long hp) throws Exception {
         super(PHOBAN, BossID.POCOLO, new BossData(
                 "Ma vương Pôcôlô",
                 ConstPlayer.NAMEC,
                 new short[]{739, 740, 741, -1, -1, -1},
                 dame,
-                new int[]{hp},
+                new long[]{hp},
                 new int[]{146},
                 new int[][]{
                     {Skill.DEMON, 7, 1000},
@@ -274,7 +274,7 @@ public class Pocolo extends Boss {
         this.moveTo(820, 336);
         this.lastTimeJoin = System.currentTimeMillis();
         this.nPoint.mp = 100;
-        this.nPoint.mpMax = 2_000_000_000;
+        this.nPoint.mpMax = 2_000_000_000L;
         this.changeStatus(BossStatus.AFK);
     }
 

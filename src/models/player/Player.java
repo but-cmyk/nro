@@ -914,7 +914,7 @@ public class Player extends Character {
                 if (isDie()) {
                     setDie(plAtt);
                 }
-                return (int) damage;
+                return damage;
             }
             if (this.isPl() && this.effectSkill != null && this.effectSkill.isMabuHold && this.zone != null && this.zone.map.mapId == 128) {
                 this.precentMabuHold++;
@@ -1005,7 +1005,7 @@ public class Player extends Character {
                     damage /= 2;
                 }
                 if (this.itemTime.isUseGiapXen2) {
-                    damage = damage / 100 * 40;
+                    damage = damage * 40 / 100;
                 }
             }
             if (!piercing && effectSkill.isShielding && !isMobAttack) {

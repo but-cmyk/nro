@@ -229,7 +229,7 @@ public class DeathOrAliveArena {
                         int tongPhieu = pl.binhChonPlayer + pl.binhChonHatMit;
                         if (tongPhieu > 0 && pl.zoneBinhChon != null && pl.zoneBinhChon.equals(zone)) {
                             long vangHoan = (long) tongPhieu * 1_000_000L;
-                            pl.inventory.gold = Math.min(pl.inventory.gold + vangHoan, 2_000_000_000L);
+                            pl.inventory.gold = Math.min(pl.inventory.gold + vangHoan, models.player.Inventory.LIMIT_GOLD);
                             pl.binhChonPlayer = 0;
                             pl.binhChonHatMit = 0;
                             Service.gI().sendMoney(pl);
@@ -258,7 +258,7 @@ public class DeathOrAliveArena {
                             int cuoc = pl.binhChonPlayer;
                             if (cuoc > 0 && pl.zoneBinhChon != null && pl.zoneBinhChon.equals(zone)) {
                                 long vangNhan = cuoc * tongCuoc;
-                                pl.inventory.gold = Math.min(pl.inventory.gold + vangNhan, 2_000_000_000L);
+                                pl.inventory.gold = Math.min(pl.inventory.gold + vangNhan, models.player.Inventory.LIMIT_GOLD);
                                 pl.binhChonPlayer = 0;
                                 pl.binhChonHatMit = 0;
                                 Service.gI().sendMoney(pl);
@@ -268,7 +268,7 @@ public class DeathOrAliveArena {
                             int cuoc = pl.binhChonHatMit;
                             if (cuoc > 0 && pl.zoneBinhChon != null && pl.zoneBinhChon.equals(zone)) {
                                 long vangNhan = cuoc * tongCuoc;
-                                pl.inventory.gold = Math.min(pl.inventory.gold + vangNhan, 2_000_000_000L);
+                                pl.inventory.gold = Math.min(pl.inventory.gold + vangNhan, models.player.Inventory.LIMIT_GOLD);
                                 pl.binhChonPlayer = 0;
                                 pl.binhChonHatMit = 0;
                                 Service.gI().sendMoney(pl);

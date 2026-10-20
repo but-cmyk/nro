@@ -203,28 +203,28 @@ public class TreasureUnderSea {
                     continue;
                 }
                 boolean isBigMob = (mob.lvMob == 1 || mob.tempId == 71 || mob.tempId == 72);
-                int newDame;
-                int newMaxHp;
+                long newDame;
+                long newMaxHp;
 
                 if (isBigMob) {
                     // Quái lớn / Thủ lĩnh: Mạnh gấp ~5 lần Doanh trại
                     // Dame gấp 4.3 lần DT (totalHp / 7 so với totalHp / 30)
                     // HP gấp 6 lần DT (totalDame * 150 so với totalDame * 25)
-                    newDame = (int) Math.max(1500, Math.min(totalHp / 7, 2_000_000_000L));
-                    newMaxHp = (int) Math.max(150_000, Math.min(totalDame * 150, 2_000_000_000L));
+                    newDame = Math.max(1500L, totalHp / 7);
+                    newMaxHp = Math.max(150_000L, totalDame * 150);
                 } else {
                     // Quái nhỏ: Mạnh gấp 3 lần Doanh trại
                     // Dame gấp 3 lần DT (totalHp / 10 so với totalHp / 30)
                     // HP gấp 3 lần DT (totalDame * 75 so với totalDame * 25)
-                    newDame = (int) Math.max(500, Math.min(totalHp / 10, 2_000_000_000L));
-                    newMaxHp = (int) Math.max(30_000, Math.min(totalDame * 75, 2_000_000_000L));
+                    newDame = Math.max(500L, totalHp / 10);
+                    newMaxHp = Math.max(30_000L, totalDame * 75);
                 }
 
                 mob.point.dame = newDame;
                 if (mob.point.hp >= mob.point.maxHp) {
                     mob.point.hp = newMaxHp;
                 } else if (mob.point.maxHp > 0) {
-                    mob.point.hp = (int) Math.max(1, (long) mob.point.hp * newMaxHp / mob.point.maxHp);
+                    mob.point.hp = Math.max(1L, (long) mob.point.hp * newMaxHp / mob.point.maxHp);
                 }
                 mob.point.maxHp = newMaxHp;
                 mob.setTiemNang();
@@ -235,17 +235,17 @@ public class TreasureUnderSea {
         // Dame gấp 4 lần Boss DT (totalHp / 5 so với totalHp / 20)
         // HP gấp 5 lần Boss DT (totalDame * 250 so với totalDame * 50)
         if (this.boss != null && !this.boss.isDie() && this.boss.zone != null && this.boss.nPoint != null) {
-            long bossDamage = Math.max(5000, Math.min(totalHp / 5, 200_000_000L));
-            long bossMaxHealth = Math.max(500_000, Math.min(totalDame * 250, 2_000_000_000L));
+            long bossDamage = Math.max(5000L, totalHp / 5);
+            long bossMaxHealth = Math.max(500_000L, totalDame * 250);
 
             try {
                 if (this.boss.nPoint.hp >= this.boss.nPoint.hpMax) {
-                    this.boss.nPoint.hp = (int) bossMaxHealth;
+                    this.boss.nPoint.hp = bossMaxHealth;
                 } else if (this.boss.nPoint.hpMax > 0) {
-                    this.boss.nPoint.hp = (int) Math.max(1, (long) this.boss.nPoint.hp * bossMaxHealth / this.boss.nPoint.hpMax);
+                    this.boss.nPoint.hp = Math.max(1L, (long) this.boss.nPoint.hp * bossMaxHealth / this.boss.nPoint.hpMax);
                 }
-                this.boss.nPoint.hpMax = (int) bossMaxHealth;
-                this.boss.nPoint.dame = (int) bossDamage;
+                this.boss.nPoint.hpMax = bossMaxHealth;
+                this.boss.nPoint.dame = bossDamage;
             } catch (Exception e) {
             }
         }

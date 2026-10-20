@@ -1544,13 +1544,13 @@ public class NPoint {
         return getTiLeHutMp(false);
     }
 
-    public int subDameInjureWithDeff(long dame) {
+    public long subDameInjureWithDeff(long dame) {
         long def = this.def;
         dame -= def;
         if (dame < 0) {
             dame = 1;
         }
-        return (int) dame;
+        return dame;
     }
 
     /*------------------------------------------------------------------------*/
@@ -1872,13 +1872,6 @@ public class NPoint {
                         && (hp < hpMax || mp < mpMax)) {
                     long hpRecovered = hpMax / 100 * tiLeHoiPhuc;
                     long mpRecovered = mpMax / 100 * tiLeHoiPhuc;
-
-                    if (hp + hpRecovered > 2_000_000_000) {
-                        hpRecovered = 2_000_000_000 - hp;
-                    }
-                    if (mp + mpRecovered > 2_000_000_000) {
-                        mpRecovered = 2_000_000_000 - mp;
-                    }
 
                     PlayerService.gI().hoiPhuc(player, hpRecovered, mpRecovered);
 

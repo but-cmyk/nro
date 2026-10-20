@@ -21,8 +21,8 @@ public final class MobMe extends Mob {
         this.id = (int) player.id;
         int level = player.playerSkill.getSkillbyId(12).point;
         this.tempId = SkillUtil.getTempMobMe(level);
-        this.point.maxHp = (int) Math.min(SkillUtil.getHPMobMe(player.nPoint.hpMax, level), 2_000_000_000);
-        this.point.dame = (int) Math.min(SkillUtil.getHPMobMe(player.nPoint.getDameAttack(false), level), 2_000_000_000);
+        this.point.maxHp = SkillUtil.getHPMobMe(player.nPoint.hpMax, level);
+        this.point.dame = SkillUtil.getHPMobMe(player.nPoint.getDameAttack(false), level);
         this.point.hp = this.point.maxHp;
         this.zone = player.zone;
         this.lastTimeSpawn = System.currentTimeMillis();

@@ -23,13 +23,13 @@ public class NADIC extends Boss {
 
     private long lastTimeTTNL;
 
-    public NADIC(Zone zone, Clan clan, int dame, int hp) throws Exception {
+    public NADIC(Zone zone, Clan clan, long dame, long hp) throws Exception {
         super(PHOBANCDRD, BossID.NADIC, new BossData(
                 "Nađíc",
                 ConstPlayer.XAYDA,
                 new short[]{648, 649, 650, -1, -1, -1},
-                ((10000 + dame)),
-                new int[]{((500000 + hp))},
+                ((10000L + dame)),
+                new long[]{((500000L + hp))},
                 new int[]{144},
                 new int[][]{
                     {Skill.GALICK, 7, 1000},

@@ -27,13 +27,13 @@ public class Hatchiyack extends Boss {
             {Skill.DEMON, 4}, {Skill.DEMON, 5}, {Skill.DEMON, 6}, {Skill.DEMON, 7}
     };
 
-    public Hatchiyack(Zone zone, Clan clan, int level, int dame, int hp) throws Exception {
+    public Hatchiyack(Zone zone, Clan clan, int level, long dame, long hp) throws Exception {
         super(PHOBANKGHD, BossID.HATCHIYACK, new BossData(
                 "Hatchiyack",
                 ConstPlayer.TRAI_DAT,
                 new short[]{639, 640, 641, -1, -1, -1},
                 dame,
-                new int[]{hp},
+                new long[]{hp},
                 new int[]{148},
                 (int[][]) Util.addArray(FULL_DEMON),
                 new String[]{"|-1|Các ngươi dám hạ sư phụ ta", "|-1|Ta sẽ tiêu diệt hết các ngươi"},

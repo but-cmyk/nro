@@ -223,8 +223,7 @@ public class Mob {
         }
         
         if (pl.nPoint != null) {
-            tiemNang = Math.min(tiemNang, 2_000_000_000L);
-            tiemNang = (int) pl.nPoint.calSucManhTiemNang(tiemNang);
+            tiemNang = pl.nPoint.calSucManhTiemNang(tiemNang);
         } else {
             return 0;
         }
@@ -246,7 +245,7 @@ public class Mob {
         if (tiemNang <= 0) {
             tiemNang = 1;
         }
-        return Math.min(tiemNang, 2_000_000_000L);
+        return tiemNang;
     }
 
     public void update() {

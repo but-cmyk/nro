@@ -167,8 +167,8 @@ public class Broly extends Boss {
         long hpMax = this.nPoint.hpMax;
         hpMax += hpMax / 8;
         if (hpMax > 16_070_777) hpMax = 16_070_777;
-        this.nPoint.hpMax = (int)hpMax;
-        this.nPoint.dame = (int)(hpMax / 10);
+        this.nPoint.hpMax = hpMax;
+        this.nPoint.dame = hpMax / 10;
 
         if (this.nPoint.hpMax >= 16_070_777) this.leaveMap();
     }

@@ -2926,15 +2926,15 @@ namespace Game1
     		dir_ = -1;
     	}
     
-    	public static string getMoneys(int m)
+    	public static string getMoneys(long m)
     	{
     		string text = string.Empty;
-    		int num = m / 1000 + 1;
+    		long num = m / 1000 + 1;
     		for (int i = 0; i < num; i++)
     		{
     			if (m >= 1000)
     			{
-    				int num2 = m % 1000;
+    				long num2 = m % 1000;
     				text = ((num2 != 0) ? ((num2 >= 10) ? ((num2 >= 100) ? ("." + num2 + text) : (".0" + num2 + text)) : (".00" + num2 + text)) : (".000" + text));
     				m /= 1000;
     				continue;
