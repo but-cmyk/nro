@@ -647,11 +647,14 @@ public class Player extends Character {
             return -1;
         }
         for (Card card : this.Cards) {
-            if (card != null && card.Used == 1 && card.Level > 1) {
+            if (card != null && card.Used == 1 && card.Level >= 1) {
+                if (card.Id == 859 && !RadarService.isCompletedDocNhanRequirement(this)) {
+                    continue;
+                }
                 // Kiểm tra Service trước khi gọi
                 if (RadarService.gI() != null && RadarService.gI().RADAR_TEMPLATE != null) {
                     for (RadarCard r : RadarService.gI().RADAR_TEMPLATE) {
-                        if (r.Id == card.Id) {
+                        if (r.Id == card.Id && r.AuraId >= 0) {
                             return (byte) r.AuraId;
                         }
                     }

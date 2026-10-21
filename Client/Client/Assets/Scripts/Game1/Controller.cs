@@ -1208,13 +1208,16 @@ namespace Game1
                             {
                                 Service.gI().getResource(3, null);
                                 SmallImage.loadBigRMS();
-                                SplashScr.imgLogo = null;
-                                if (Rms.loadRMSString("acc") != null || Rms.loadRMSString("userAo" + ServerListScreen.ipSelect) != null)
+                                if (!(GameCanvas.currentScreen is SplashScr))
                                 {
-                                    LoginScr.isContinueToLogin = true;
+                                    SplashScr.imgLogo = null;
+                                    if (Rms.loadRMSString("acc") != null || Rms.loadRMSString("userAo" + ServerListScreen.ipSelect) != null)
+                                    {
+                                        LoginScr.isContinueToLogin = true;
+                                    }
+                                    GameCanvas.loginScr = new LoginScr();
+                                    GameCanvas.loginScr.switchToMe();
                                 }
-                                GameCanvas.loginScr = new LoginScr();
-                                GameCanvas.loginScr.switchToMe();
                                 return;
                             }
                             bool flag7 = true;
@@ -1242,19 +1245,22 @@ namespace Game1
                                     {
                                         Res.outz("login ngay");
                                         SmallImage.loadBigRMS();
-                                        SplashScr.imgLogo = null;
                                         ServerListScreen.loadScreen = true;
-                                        if (GameCanvas.currentScreen != GameCanvas.loginScr)
+                                        if (!(GameCanvas.currentScreen is SplashScr))
                                         {
-                                            GameCanvas.serverScreen.switchToMe();
-                                        }
-                                        else
-                                        {
-                                            if (GameCanvas.loginScr == null)
+                                            SplashScr.imgLogo = null;
+                                            if (GameCanvas.currentScreen != GameCanvas.loginScr)
                                             {
-                                                GameCanvas.loginScr = new LoginScr();
+                                                GameCanvas.serverScreen.switchToMe();
                                             }
-                                            GameCanvas.loginScr.doLogin();
+                                            else
+                                            {
+                                                if (GameCanvas.loginScr == null)
+                                                {
+                                                    GameCanvas.loginScr = new LoginScr();
+                                                }
+                                                GameCanvas.loginScr.doLogin();
+                                            }
                                         }
                                     }
                                 }
@@ -1311,7 +1317,10 @@ namespace Game1
                                 Rms.saveRMSString("ResVersion", num94 + string.Empty);
                                 Service.gI().getResource(3, null);
                                 GameCanvas.endDlg();
-                                SplashScr.imgLogo = null;
+                                if (!(GameCanvas.currentScreen is SplashScr))
+                                {
+                                    SplashScr.imgLogo = null;
+                                }
                                 SmallImage.loadBigRMS();
                                 mSystem.gcc();
                                 ServerListScreen.bigOk = true;

@@ -106,6 +106,13 @@ namespace Game1
     
     	public static bool isAutoConect;
     
+    	public static float transitionAlpha = 0f;
+
+    	public static void startTransitionIn()
+    	{
+    		transitionAlpha = 1.0f;
+    	}
+
     	public ServerListScreen()
     	{
     		int num = 4;
@@ -386,8 +393,8 @@ namespace Game1
 		int num3 = ((GameCanvas.w < 200) ? 160 : 180);
 		if (cmdDeleteRMS != null)
 		{
-			int btnW = 76;
-			int btnH = 22;
+			int btnW = 68;
+			int btnH = 20;
 			int btnX = GameCanvas.w - btnW - 6;
 			int btnY = GameCanvas.h - btnH - 6;
 			cmdDeleteRMS.x = btnX;
@@ -409,7 +416,7 @@ namespace Game1
 				g.setColor(isHover ? 0xf58e38 : 0xe67824);
 				g.fillRect(btnX + 2, btnY + 2, btnW - 4, btnH - 4, 3);
 			}
-			mFont.tahoma_7b_dark.drawString(g, mResources.xoadulieu, btnX + btnW / 2, btnY + 5, 2);
+			mFont.tahoma_7b_dark.drawString(g, mResources.xoadulieu, btnX + btnW / 2, btnY + 4, 2);
 		}
 		if (GameCanvas.currentDialog == null)
 		{
@@ -417,65 +424,61 @@ namespace Game1
 			{
 				if (!bigOk)
 				{
-					g.drawImage(LoginScr.imgTitle, GameCanvas.hw, GameCanvas.hh - 50, 3);
+					if (LoginScr.imgTitle != null)
+					{
+						g.drawImage(LoginScr.imgTitle, GameCanvas.hw, GameCanvas.hh - 45, 3);
+					}
 					
-					int cardW = (GameCanvas.w < 280) ? (GameCanvas.w - 24) : 260;
-					int cardH = 94;
-					int cardX = GameCanvas.hw - cardW / 2;
-					int cardY = GameCanvas.hh - 12;
-
-					g.setColor(0x6d1f05);
-					g.fillRect(cardX, cardY, cardW, cardH, 6);
-					g.setColor(0xfcd34d);
-					g.fillRect(cardX + 2, cardY + 2, cardW - 4, cardH - 4, 5);
-					g.setColor(0xf58e38);
-					g.fillRect(cardX + 3, cardY + 3, cardW - 6, (cardH - 6) / 2, 4);
-					g.setColor(0xd66412);
-					g.fillRect(cardX + 3, cardY + 3 + (cardH - 6) / 2, cardW - 6, (cardH - 6) / 2, 4);
+					GameCanvas.paintShukiren(GameCanvas.hw, GameCanvas.hh + 8, g);
 
 					if (!isGetData)
 					{
-						mFont.tahoma_7b_dark.drawString(g, "TÀI NGUYÊN CHƯA TẢI", cardX + cardW / 2, cardY + 12, 2);
-						mFont.tahoma_7b_dark.drawString(g, mResources.taidulieudechoi, cardX + cardW / 2, cardY + 30, 2);
 						if (cmdDownload != null)
 						{
 							cmdDownload.x = GameCanvas.hw - cmdDownload.w / 2;
-							cmdDownload.y = cardY + 52;
+							cmdDownload.y = GameCanvas.hh + 24;
 							cmdDownload.paint(g);
 						}
 					}
 					else
 					{
-						mFont.tahoma_7b_dark.drawString(g, "ĐANG ĐỒNG BỘ TÀI NGUYÊN...", cardX + cardW / 2, cardY + 10, 2);
-						int totalFiles = (nBig > 0) ? nBig : 100;
-						mFont.tahoma_7b_dark.drawString(g, "Đã tải: " + demPercent + "/" + totalFiles + " tệp (" + percent + "%)", cardX + cardW / 2, cardY + 28, 2);
-						
-						int barW = cardW - 36;
-						int barH = 11;
-						int barX = cardX + 18;
-						int barY = cardY + 46;
+						int barW = (GameCanvas.w < 150) ? (GameCanvas.w - 30) : 88;
+						int barH = 6;
+						int barX = GameCanvas.hw - barW / 2;
+						int barY = GameCanvas.hh + 24;
 
-						g.setColor(0x4a1403);
-						g.fillRect(barX, barY, barW, barH, 4);
-						g.setColor(0x8c2b06);
-						g.drawRect(barX, barY, barW, barH);
+						// Viền ngoài bo tròn dạng viên thuốc
+						g.setColor(0x0e4f66);
+						g.fillRect(barX - 1, barY - 1, barW + 2, barH + 2, 4);
+
+						// Nền track xanh biển dịu mắt (thay thế màu đen u ám)
+						g.setColor(0x155e75);
+						g.fillRect(barX, barY, barW, barH, 3);
 
 						int fillW = (int)((float)barW * (float)percent / 100f);
-						if (fillW > barW) fillW = barW;
+						if (fillW > barW)
+						{
+							fillW = barW;
+						}
 						if (fillW > 0)
 						{
-							g.setColor(0x00d2d3);
-							g.fillRect(barX, barY, fillW, barH, 4);
-							g.setColor(0xffffff);
-							g.fillRect(barX, barY + 1, fillW, 2);
+							int fillRadius = (fillW >= barH) ? 3 : (fillW / 2);
+							// Thanh tiến trình xanh cyan sáng rực rỡ
+							g.setColor(0x00f2fe);
+							g.fillRect(barX, barY, fillW, barH, fillRadius);
+
+							// Highlight nhẹ bên trong, thụt lề 2px để bảo toàn góc bo tròn
+							if (fillW > 4)
+							{
+								g.setColor(0xa5f3fc);
+								g.fillRect(barX + 2, barY + 1, fillW - 4, 1, 1);
+							}
 						}
 
-						mFont.tahoma_7b_dark.drawString(g, "Vui lòng giữ kết nối mạng ổn định", cardX + cardW / 2, cardY + 68, 2);
-						
 						if (cmdDownload != null)
 						{
 							cmdDownload.x = GameCanvas.hw - cmdDownload.w / 2;
-							cmdDownload.y = cardY + cardH + 8;
+							cmdDownload.y = barY + barH + 16;
 							cmdDownload.paint(g);
 						}
 					}
@@ -511,6 +514,15 @@ namespace Game1
 			}
 		}
 		base.paint(g);
+		if (transitionAlpha > 0.01f)
+		{
+			float a = UnityEngine.Mathf.Clamp01(UnityEngine.Mathf.Round(transitionAlpha * 25f) / 25f);
+			if (a > 0.01f)
+			{
+				g.setColor(0x000000, a);
+				g.fillRect(0, 0, GameCanvas.w, GameCanvas.h);
+			}
+		}
     	}
     
     	public void selectServer()
@@ -537,6 +549,14 @@ namespace Game1
     
     	public override void update()
     	{
+    		if (transitionAlpha > 0f)
+    		{
+    			transitionAlpha -= 0.065f;
+    			if (transitionAlpha < 0f)
+    			{
+    				transitionAlpha = 0f;
+    			}
+    		}
     		if (waitToLogin)
     		{
     			tWaitToLogin++;
@@ -850,6 +870,10 @@ namespace Game1
 		}
 		Char.isLoadingMap = false;
 		mSystem.resetCurInapp();
+		if (GameCanvas.currentScreen is SplashScr)
+		{
+			startTransitionIn();
+		}
 		base.switchToMe();
 	}
     

@@ -275,6 +275,9 @@ public class ItemService {
         } else if (tempId == ConstItem.CHUOI) {
             item.itemOptions.add(new ItemOption(83, 20));
             item.itemOptions.add(new ItemOption(30, 0));
+        } else if (item.template != null && item.template.type == 33) {
+            item.itemOptions.add(new ItemOption(87, 0)); // Ký gửi ngọc
+            item.itemOptions.add(new ItemOption(30, 0)); // Không thể giao dịch
         }
 
         if (item.template != null) {
@@ -391,6 +394,13 @@ public class ItemService {
             item.itemOptions.clear();
             item.itemOptions.add(new ItemOption(83, 20));
             item.itemOptions.add(new ItemOption(30, 0));
+        } else if (item.template.type == 33) {
+            if (!item.isHaveOption(87)) {
+                item.itemOptions.add(new ItemOption(87, 0)); // Ký gửi ngọc
+            }
+            if (!item.isHaveOption(30)) {
+                item.itemOptions.add(new ItemOption(30, 0)); // Không thể giao dịch
+            }
         }
     }
 

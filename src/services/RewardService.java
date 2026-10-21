@@ -758,11 +758,28 @@ public class RewardService {
     }
 
     public Item createRandomCardItem(byte rank, int quantity) {
-        RadarCard rd = RadarService.gI().getRandomCardByRank(rank);
-        if (rd == null) {
-            return ItemService.gI().createNewItem((short) 828, quantity);
+        Item it;
+        if (rank == 5) {
+            // Rank 5 độc quyền trong Vòng Quay Thượng Đế: Thẻ Oozaru SSJ 3 (ID 1277)
+            it = ItemService.gI().createNewItem((short) 1277, quantity);
+        } else if (rank == 4) {
+            // Rank 4 độc quyền trong Vòng Quay Thượng Đế: Thẻ Đội Trưởng Vàng (ID 956)
+            it = ItemService.gI().createNewItem((short) 956, quantity);
+        } else {
+            RadarCard rd = RadarService.gI().getRandomCardByRank(rank);
+            if (rd == null) {
+                it = ItemService.gI().createNewItem((short) 828, quantity);
+            } else {
+                it = ItemService.gI().createNewItem(rd.Id, quantity);
+            }
         }
-        return ItemService.gI().createNewItem(rd.Id, quantity);
+        if (!it.isHaveOption(87)) {
+            it.itemOptions.add(new Item.ItemOption(87, 0)); // Ký gửi ngọc
+        }
+        if (!it.isHaveOption(30)) {
+            it.itemOptions.add(new Item.ItemOption(30, 0)); // Khóa giao dịch
+        }
+        return it;
     }
 
     public List<Item> getListItemLuckyRound(Player player, int num, byte typeRound) {

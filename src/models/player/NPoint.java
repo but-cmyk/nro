@@ -278,23 +278,32 @@ public class NPoint {
 
         if (this.player.Cards != null && !this.player.Cards.isEmpty()) {
             for (Card c : this.player.Cards) {
-                if (c == null || c.Options == null) {
+                if (c == null) {
                     continue;
                 }
-                // Tầng 1: Mở Khóa (Passive Unlock - active == 0) cho tất cả thẻ đã mở
-                if (c.Level >= 1 || c.Level == -1) {
-                    for (OptionCard io : c.Options) {
-                        if (io != null && io.active == 0) {
-                            addCardOption(io);
-                        }
+                List<OptionCard> options = c.Options;
+                if (services.RadarService.gI() != null && services.RadarService.gI().RADAR_TEMPLATE != null) {
+                    models.radar.RadarCard rTemplate = services.RadarService.gI().RADAR_TEMPLATE.stream()
+                            .filter(t -> t != null && t.Id == c.Id).findFirst().orElse(null);
+                    if (rTemplate != null && rTemplate.Options != null && !rTemplate.Options.isEmpty()) {
+                        options = rTemplate.Options;
                     }
                 }
-                // Tầng 2: Trang Bị (Active Equip - active > 0) cho thẻ đang dùng
-                if (c.Used == 1) {
-                    int effLevel = c.Level <= 0 ? 1 : c.Level;
-                    for (OptionCard io : c.Options) {
-                        if (io != null && io.active > 0 && io.active <= effLevel) {
-                            addCardOption(io);
+                if (options == null) {
+                    continue;
+                }
+                // Cơ chế Sổ Sưu Tầm Codex: Toàn bộ thẻ đã mở khóa trong c.Cards đều cộng dồn vĩnh viễn
+                // theo cấp độ hiện tại của thẻ (active <= c.Level).
+                // Ở Lv.0 (mới mở khóa 1-59 thẻ): chỉ kích hoạt chỉ số cơ bản [Mở khóa] (active == 0).
+                // Khi đạt Lv.1 (đủ 60 thẻ): kích hoạt thêm chỉ số [Cấp độ Lv.1] (active == 1) và mở khóa Aura.
+                // Thẻ Độc Nhãn (859) chỉ kích hoạt khi đã dùng đủ 120 thẻ của 5 loại thẻ Doanh Trại
+                if (c.Id == 859 && !services.RadarService.isCompletedDocNhanRequirement(this.player)) {
+                    continue;
+                }
+                if (c.Level >= 0) {
+                    for (OptionCard io : options) {
+                        if (io != null && io.active <= c.Level) {
+                            addOption(io.id, io.param);
                         }
                     }
                 }

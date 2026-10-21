@@ -67,6 +67,7 @@ namespace Game1
     	{
     		this.amount = amount;
     		this.max_amount = max_amount;
+    		addItemDetail();
     	}
     
     	public void SetLevel(sbyte level)
@@ -140,8 +141,12 @@ namespace Game1
     		cp = new ChatPopup();
     		string empty = string.Empty;
     		string empty2 = string.Empty;
-    		empty2 = empty2 + "\n|6|" + info;
-    		empty2 += "\n--";
+
+    		if (!string.IsNullOrEmpty(info))
+    		{
+    			empty2 += "\n|3|0|" + info.Trim() + "\n--";
+    		}
+
     		if (itemOption != null)
     		{
     			int num = 0;
@@ -165,38 +170,50 @@ namespace Game1
     				}
     				if (num == 0)
     				{
-    					empty2 = empty2 + "\n|6|2|--" + mResources.unlock + "--";
+    					if (level > 0 || amount > 0)
+    					{
+    						empty2 += "\n|3|0|[Mở khóa - Đã mở khóa]";
+    					}
+    					else
+    					{
+    						empty2 += "\n|3|0|[Mở khóa - Chưa mở khóa]";
+    					}
     				}
     				else
     				{
-    					string text = empty2;
-    					empty2 = text + "\n|6|2|--" + mResources.equip + " Lv." + num + "--";
+    					if (level >= num)
+    					{
+    						empty2 += "\n|3|0|[Cấp độ Lv." + num + " - Đã mở khóa]";
+    					}
+    					else
+    					{
+    						empty2 += "\n|3|0|[Cấp độ Lv." + num + " - Chưa mở khóa]";
+    					}
     				}
     				for (int j = 0; j < itemOption.Length; j++)
     				{
-    					empty = itemOption[j].getOptionString();
-    					if (empty.Equals(string.Empty) || num != itemOption[j].activeCard)
+    					if (num != itemOption[j].activeCard)
     					{
     						continue;
     					}
-    					string text2 = "1";
-    					if (level == 0)
+    					int effParam = itemOption[j].param;
+    					empty = itemOption[j].getOptionString(effParam);
+    					if (empty.Equals(string.Empty))
     					{
-    						text2 = "2";
+    						continue;
     					}
-    					else if (itemOption[j].activeCard != 0)
+    					bool isActivated = false;
+    					if (itemOption[j].activeCard == 0)
     					{
-    						if (isUse == 0)
-    						{
-    							text2 = "2";
-    						}
-    						else if (level < itemOption[j].activeCard)
-    						{
-    							text2 = "2";
-    						}
+    						isActivated = (level > 0 || amount > 0);
     					}
-    					string text = empty2;
-    					empty2 = text + "\n|" + text2 + "|1|" + empty;
+    					else
+    					{
+    						isActivated = (level >= itemOption[j].activeCard);
+    					}
+
+    					string colorTag = isActivated ? "1" : "2"; // 1: Xanh lá, 2: Xám
+    					empty2 = empty2 + "\n|" + colorTag + "|0| • " + empty;
     				}
     				if (num2 != 0)
     				{
@@ -204,6 +221,7 @@ namespace Game1
     				}
     			}
     		}
+
     		popUpDetailInit(cp, empty2);
     	}
     
@@ -270,6 +288,29 @@ namespace Game1
     				}
     			}
     		}
+    	}
+
+    	public bool hasAura()
+    	{
+    		return this.id == 859 || this.id == 956 || this.id == 1278 || this.id == 1276 || this.id == 1277;
+    	}
+
+    	public static bool isDocNhanUnlocked(MyVector list)
+    	{
+    		if (list == null) return false;
+    		bool hasLinh = isCardMaxed(list, 837) || isCardMaxed(list, 838);
+    		bool hasSoi = isCardMaxed(list, 839);
+    		bool hasTrang = isCardMaxed(list, 840);
+    		bool hasTim = isCardMaxed(list, 841);
+    		bool hasXanhLo = isCardMaxed(list, 842);
+    		return hasLinh && hasSoi && hasTrang && hasTim && hasXanhLo;
+    	}
+
+    	public static bool isCardMaxed(MyVector list, int cardId)
+    	{
+    		Info_RadaScr info = GetInfo(list, cardId);
+    		if (info == null) return false;
+    		return info.level >= 2 || (info.level == 1 && info.amount >= info.max_amount);
     	}
     }
 }

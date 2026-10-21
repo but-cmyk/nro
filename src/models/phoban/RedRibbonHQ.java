@@ -23,6 +23,9 @@ import services.Service;
 import utils.Logger;
 import utils.Util;
 import services.player.PlayerService;
+import models.item.Item;
+import services.ItemService;
+import services.player.InventoryService;
 
 public class RedRibbonHQ {
 
@@ -49,6 +52,7 @@ public class RedRibbonHQ {
     public boolean isTimePicking;
     public long lastTimePick;
     public boolean winDT;
+    public boolean isRewardedDocNhan;
     public List<Boss> bosses = new ArrayList<>();
 
     public RedRibbonHQ(int id) {
@@ -265,6 +269,35 @@ public class RedRibbonHQ {
         }
     }
 
+    public void rewardCardDocNhan() {
+        if (this.isRewardedDocNhan) {
+            return;
+        }
+        this.isRewardedDocNhan = true;
+        for (Zone zone : this.zones) {
+            if (zone != null) {
+                List<Player> players = zone.getPlayers();
+                for (Player pl : players) {
+                    if (pl != null && !pl.isBoss && !pl.isBot && !pl.isNewPet) {
+                        Item card = ItemService.gI().createNewItem((short) 859, 1);
+                        if (!card.isHaveOption(87)) {
+                            card.itemOptions.add(new Item.ItemOption(87, 0)); // Ký gửi ngọc
+                        }
+                        if (!card.isHaveOption(30)) {
+                            card.itemOptions.add(new Item.ItemOption(30, 0)); // Khóa giao dịch
+                        }
+                        if (!InventoryService.gI().addItemBag(pl, card)) {
+                            Service.gI().dropItemMap(pl.zone, new ItemMap(pl.zone, 859, 1, pl.location.x, pl.location.y, pl.id));
+                        } else {
+                            InventoryService.gI().sendItemBags(pl);
+                        }
+                        Service.gI().sendThongBao(pl, "Chúc mừng! Bạn nhận được 1 Thẻ Độc Nhãn khi phá đảo Doanh Trại!");
+                    }
+                }
+            }
+        }
+    }
+
     public void finish() {
         for (Zone zone : zones) {
             for (int i = zone.getPlayers().size() - 1; i >= 0; i--) {
@@ -418,6 +451,7 @@ public class RedRibbonHQ {
             }
             this.clan = null;
             this.isTimePicking = false;
+            this.isRewardedDocNhan = false;
         }
     }
 }

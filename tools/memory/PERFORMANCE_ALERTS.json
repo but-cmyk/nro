@@ -1,19 +1,19 @@
 {
   "version": "1.0.0",
-  "updated_at": "2026-10-04 11:42:23.957",
+  "updated_at": "2026-10-21 17:38:49.262",
   "alerts": [
     {
-      "cmd": -67,
-      "command_name": "CMD_-67",
-      "max_latency_ms": 124,
-      "avg_latency_ms": 1,
-      "call_count": 279,
-      "slow_count": 1,
-      "severity": "HIGH",
-      "status": "ACK",
-      "slowest_context": "Player admin (ID: 1023302, Map 20)",
-      "detected_at": "2026-10-04 11:42:23.946",
-      "acked_at": "2026-10-16 10:44:42"
+      "cmd": -74,
+      "command_name": "CMD_-74",
+      "max_latency_ms": 1363,
+      "avg_latency_ms": 449,
+      "call_count": 35,
+      "slow_count": 12,
+      "severity": "CRITICAL",
+      "status": "RESOLVED",
+      "slowest_context": "Non-login session",
+      "detected_at": "2026-10-21 17:38:49.262",
+      "acked_at": "2026-10-21 17:44:55"
     }
   ]
 }

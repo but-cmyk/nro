@@ -76,6 +76,12 @@ public class TrungUyXanhLo extends Boss {
         int splId = Util.nextInt(441, 447);
         ItemMap itSpl = new ItemMap(this.zone, splId, 1, this.location.x - 35, dropY, plId);
         Service.gI().dropItemMap(this.zone, itSpl);
+
+        // 5. Rơi 1 - 2 Thẻ Trung Úy Xanh Lơ (Item 842)
+        ItemMap itCard = new ItemMap(this.zone, 842, Util.nextInt(1, 2), this.location.x + 15, dropY, plId);
+        itCard.options.add(new models.item.Item.ItemOption(87, 0));
+        itCard.options.add(new models.item.Item.ItemOption(30, 0));
+        Service.gI().dropItemMap(this.zone, itCard);
     }
 
     @Override

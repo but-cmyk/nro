@@ -25,6 +25,7 @@ public class DocNhan extends Npc {
                         player.clan.doanhTrai.isTimePicking = true;
                         player.clan.doanhTrai.lastTimePick = System.currentTimeMillis();
                         player.clan.doanhTrai.randomNR();
+                        player.clan.doanhTrai.rewardCardDocNhan();
                         player.clan.doanhTrai.sendTextTimePickDoanhTrai();
                     }
                 }

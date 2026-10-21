@@ -103,6 +103,11 @@ namespace Game1
 
     	public string getOptionString()
     	{
+    		return getOptionString(param);
+    	}
+
+    	public string getOptionString(int customParam)
+    	{
     		if (optionTemplateId == 73 || optionTemplateId == 206)
     		{
     			return string.Empty;
@@ -119,7 +124,7 @@ namespace Game1
     			{
     				return string.Empty;
     			}
-    			string val = (param >= 10000 || param <= -10000) ? Res.formatNumberWithCommas(param) : (param + string.Empty);
+    			string val = (customParam >= 10000 || customParam <= -10000) ? Res.formatNumberWithCommas(customParam) : (customParam + string.Empty);
     			return NinjaUtil.replace(templateName, "#", val);
     		}
     		return string.Empty;

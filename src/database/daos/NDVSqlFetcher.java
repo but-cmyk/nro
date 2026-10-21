@@ -1259,7 +1259,31 @@ public class NDVSqlFetcher {
             dataArray = (JSONArray) JSONValue.parse(rs.getString("data_card"));
             for (int i = 0; i < dataArray.size(); i++) {
                 JSONObject obj = (JSONObject) dataArray.get(i);
-                player.Cards.add(new Card(Short.parseShort(obj.get("id").toString()), Byte.parseByte(obj.get("amount").toString()), Byte.parseByte(obj.get("max").toString()), Byte.parseByte(obj.get("level").toString()), loadOptionCard((JSONArray) JSONValue.parse(obj.get("option").toString())), Byte.parseByte(obj.get("used").toString())));
+                Card c = new Card(Short.parseShort(obj.get("id").toString()), Byte.parseByte(obj.get("amount").toString()), Byte.parseByte(obj.get("max").toString()), Byte.parseByte(obj.get("level").toString()), loadOptionCard((JSONArray) JSONValue.parse(obj.get("option").toString())), Byte.parseByte(obj.get("used").toString()));
+                models.radar.RadarCard rTemplate = services.RadarService.gI() != null && services.RadarService.gI().RADAR_TEMPLATE != null
+                        ? services.RadarService.gI().RADAR_TEMPLATE.stream().filter(t -> t != null && t.Id == c.Id).findFirst().orElse(null)
+                        : null;
+                int maxLevel = rTemplate != null ? rTemplate.getMaxLevel() : 2;
+                int maxPerLevel = rTemplate != null ? (rTemplate.Max / (maxLevel > 0 ? maxLevel : 1)) : 60;
+                if (maxPerLevel <= 0) maxPerLevel = 60;
+
+                if (c.MaxAmount > maxPerLevel && c.Level == 1) {
+                    if (c.Amount < maxPerLevel) {
+                        c.Level = 0;
+                        c.Used = 0;
+                    } else if (c.Amount < c.MaxAmount) {
+                        c.Level = 1;
+                        c.Amount = (byte) (c.Amount - maxPerLevel);
+                    } else {
+                        c.Level = (byte) maxLevel;
+                        c.Amount = (byte) maxPerLevel;
+                    }
+                }
+                c.MaxAmount = (byte) maxPerLevel;
+                if (c.Level >= maxLevel) {
+                    c.Amount = (byte) maxPerLevel;
+                }
+                player.Cards.add(c);
             }
             dataArray.clear();
 

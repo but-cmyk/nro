@@ -34,6 +34,7 @@ public class UseItem {
     private static final byte DO_THROW_ITEM = 1;
     private static final byte ACCEPT_THROW_ITEM = 2;
     private static final byte ACCEPT_USE_ITEM = 3;
+    public static final byte DO_USE_ITEM_MANY = 4;
 
     private static UseItem instance;
 
@@ -209,6 +210,20 @@ public class UseItem {
                 case ACCEPT_USE_ITEM -> {
                     if (index >= 0 && index < player.inventory.itemsBag.size()) {
                         useItem(player, player.inventory.itemsBag.get(index), index);
+                    }
+                }
+                case DO_USE_ITEM_MANY -> {
+                    if (player != null && player.inventory != null) {
+                        if (index >= 0 && index < player.inventory.itemsBag.size()) {
+                            Item item = player.inventory.itemsBag.get(index);
+                            if (item != null && item.isNotNullItem()) {
+                                if (item.template.type == 33) {
+                                    SpecialItemHandler.openUseCardManyForm(player, item);
+                                } else {
+                                    Service.gI().sendThongBao(player, "Vật phẩm này không thể sử dụng nhiều!");
+                                }
+                            }
+                        }
                     }
                 }
             }

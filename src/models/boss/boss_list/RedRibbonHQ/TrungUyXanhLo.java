@@ -7,6 +7,7 @@ import managers.boss.RedRibbonHQManager;
 import models.boss.*;
 import static consts.BossType.PHOBANDT;
 import models.map.ItemMap;
+import models.item.Item;
 import models.map.Zone;
 import models.player.Player;
 import models.skill.Skill;
@@ -73,6 +74,11 @@ public class TrungUyXanhLo extends Boss {
         int nrY = this.zone.map.yPhysicInTop(nrX, this.location.y - 24);
         ItemMap itNr = new ItemMap(this.zone, nrId, 1, nrX, nrY, plId);
         Service.gI().dropItemMap(this.zone, itNr);
+
+        // Rơi 1-2 Thẻ Trung Úy Xanh Lơ (Item 842)
+        ItemMap itCard = new ItemMap(this.zone, 842, Util.nextInt(1, 2), nrX + 15, nrY, plId);
+        itCard.options.add(new Item.ItemOption(30, 0));
+        Service.gI().dropItemMap(this.zone, itCard);
 
         // Rơi 10 cục vàng, mỗi cục 31k vàng (Item 190)
         for (int i = 0; i < 10; i++) {

@@ -80,8 +80,13 @@ namespace Game1
     		ServerListScreen.loadScreen = true;
     		ServerListScreen.createDeleteRMS();
 
-    		GameCanvas.currentScreen = GameCanvas.serverScreen;
-    		GameCanvas.serverScreen.switchToMe();
+    		if (SplashScr.instance == null)
+    		{
+    			SplashScr.instance = new SplashScr();
+    		}
+    		SplashScr.loadImg();
+    		SplashScr.loadSplashScr();
+    		SplashScr.instance.switchToMe();
     	}
     
     	public void exit()

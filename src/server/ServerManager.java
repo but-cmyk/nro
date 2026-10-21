@@ -137,7 +137,7 @@ public class ServerManager {
 
         new Thread(TopService.gI(), "Top Service Thread").start();
 
-        executorService.submit(() -> CSMM.gI().run());
+        // executorService.submit(() -> CSMM.gI().run());
         new Thread(BotManager.gI(), "Bot Manager").start();
 
         // Tạo 10 Bot thông minh test

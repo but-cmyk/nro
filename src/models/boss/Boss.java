@@ -82,6 +82,15 @@ public class Boss extends Player implements IBoss {
     protected long lastTimeJoinMap;
     protected long lastTimeHadPlayer;
 
+    // --- DYNAMIC COMBAT & SOUL ENGINE ---
+    public boolean isLastStandEnabled = true; // Cho phép kích hoạt cơ chế Hơi Thở Cuối Cùng
+    public byte countHealLastStand;           // Đếm số lần hồi máu Last Stand (tối đa 1 lần duy nhất trong cả trận)
+    public boolean isBerserk;                 // Trạng thái Cuồng Nộ sau khi thức tỉnh
+    protected long lastTimeCounterAttack;     // Cooldown phản xạ đỡ đòn & phản kích (ms)
+    protected long lastTimeFlashStep;         // Cooldown dịch chuyển áp sát sau lưng (ms)
+    protected int rangedAttacksReceived;      // Đếm số lần bị chưởng từ xa liên tiếp
+    protected long lastTimeSoulChat;          // Hạn chế tần suất phát ngôn để không spam chat
+
     // ================= CONSTRUCTORS (Tối ưu DRY) =================
     public Boss(int id, boolean isNotifyDisabled, boolean isZone01SpawnDisabled, BossData... data) throws Exception {
         this(id, data);
@@ -235,6 +244,12 @@ public class Boss extends Player implements IBoss {
         this.indexChatS = 0;
         this.indexChatE = 0;
         this.prepareBom = false; // Reset bom state
+        this.countHealLastStand = 0;
+        this.isBerserk = false;
+        this.lastTimeCounterAttack = 0;
+        this.lastTimeFlashStep = 0;
+        this.rangedAttacksReceived = 0;
+        this.lastTimeSoulChat = 0;
     }
 
     // ================= SAFE OUTFIT & DATA GETTERS =================
@@ -804,9 +819,13 @@ public class Boss extends Player implements IBoss {
                 return;
             }
 
+            // Tốc độ ra đòn và di chuyển: bình thường 1300ms/600ms, khi Berserk (sau Last Stand) tăng tốc lên 800ms/400ms
+            int attackCooldown = this.isBerserk ? 800 : 1300;
+            int moveSpeed = this.isBerserk ? 400 : 600;
+
             // --- Logic Di chuyển ---
             if (Util.getDistance(this, pl) > 80) {
-                if (Util.canDoWithTime(this.lastTimeMove, 600)) {
+                if (Util.canDoWithTime(this.lastTimeMove, moveSpeed)) {
                     this.lastTimeMove = System.currentTimeMillis();
                     this.moveToPlayer(pl);
                 }
@@ -814,7 +833,7 @@ public class Boss extends Player implements IBoss {
             }
 
             // --- Logic Tấn công ---
-            if (Util.canDoWithTime(this.lastTimeAttack, 1300)) {//time ra đòn
+            if (Util.canDoWithTime(this.lastTimeAttack, attackCooldown)) {//time ra đòn
                 this.lastTimeAttack = System.currentTimeMillis();
                 this.playerSkill.skillSelect = this.playerSkill.skills.get(Util.nextInt(0, this.playerSkill.skills.size() - 1));
 
@@ -836,6 +855,10 @@ public class Boss extends Player implements IBoss {
 
     @Override
     public void checkPlayerDie(Player player) {
+        if (player != null && player.isDie() && Util.canDoWithTime(this.lastTimeSoulChat, 6000)) {
+            this.lastTimeSoulChat = System.currentTimeMillis();
+            this.chat(getRandomKillPlayerChat());
+        }
     }
 
     protected int getRangeCanAttackWithSkillSelect() {
@@ -911,8 +934,9 @@ public class Boss extends Player implements IBoss {
             return 0; // Đang gồng bom tự sát, miễn nhiễm sát thương
         }
 
+        // --- 1. THOẠI NÉ ĐÒN CÓ HỒN ---
         if (!piercing && Util.isTrue(this.nPoint.tlNeDon, 1000)) {
-            this.chat("Xí hụt");
+            chatDodge();
             return 0;
         }
 
@@ -929,7 +953,61 @@ public class Boss extends Player implements IBoss {
             damage = 1;
         }
 
+        // --- 2. CƠ CHẾ PHẢN XẠ ĐỠ ĐÒN & PHẢN KÍCH (PARRY & COUNTER) ---
+        // Khi bị cận chiến dồn dập, có 12% tỷ lệ Boss đỡ đòn (giảm 70% sát thương) và phản kích đẩy lùi
+        if (plAtt != null && !piercing && Util.getDistance(this, plAtt) <= 120
+                && Util.canDoWithTime(this.lastTimeCounterAttack, 7000) && Util.isTrue(12, 100)) {
+            this.lastTimeCounterAttack = System.currentTimeMillis();
+            damage = Math.max(1, damage * 30 / 100); // Giảm 70% sát thương
+            this.chat(getRandomCounterChat());
+            // Đẩy lùi nhẹ player tấn công
+            if (plAtt.location != null && this.zone != null && this.zone.map != null) {
+                int pushDist = 70;
+                int newX = plAtt.location.x + (plAtt.location.x < this.location.x ? -pushDist : pushDist);
+                newX = Math.max(50, Math.min(this.zone.map.mapWidth - 50, newX));
+                Service.gI().setPos(plAtt, newX, plAtt.location.y);
+            }
+        }
+
+        // --- 3. ĐẾM SỐ LẦN BỊ BẮN TỪ XA ĐỂ KÍCH HOẠT FLASH STEP ---
+        if (plAtt != null && Util.getDistance(this, plAtt) > 220) {
+            this.rangedAttacksReceived++;
+            if (this.rangedAttacksReceived >= 3 && Util.canDoWithTime(this.lastTimeFlashStep, 8000)) {
+                this.rangedAttacksReceived = 0;
+                this.lastTimeFlashStep = System.currentTimeMillis();
+                triggerFlashStep(plAtt);
+            }
+        } else {
+            this.rangedAttacksReceived = 0;
+        }
+
+        // --- 4. THOẠI KHI DÍNH ĐÒN NẶNG (> 15% HP) ---
+        if (damage >= this.nPoint.hpMax * 15 / 100 && Util.canDoWithTime(this.lastTimeSoulChat, 6000)) {
+            this.lastTimeSoulChat = System.currentTimeMillis();
+            this.chat(getRandomHeavyDamageChat());
+        }
+
+        // --- 5. CƠ CHẾ "HƠI THỞ CUỐI CÙNG" (LAST STAND & AWAKENING) ---
+        // Ngưỡng HP < 20% và chưa từng hồi lần nào (tối đa 1 lần duy nhất trong cả trận)
+        if (this.isLastStandEnabled && this.countHealLastStand < 1 && (this.nPoint.hp - damage <= this.nPoint.hpMax * 20 / 100)) {
+            // Nếu đòn này làm chết boss, giữ lại 1 HP để thức tỉnh
+            if (this.nPoint.hp - damage <= 0) {
+                this.nPoint.hp = 1;
+                damage = 0;
+            } else {
+                this.nPoint.subHP(damage);
+            }
+            triggerLastStand(plAtt);
+            return damage;
+        }
+
         this.nPoint.subHP(damage);
+
+        // --- 6. THOẠI KHI HP HẤP HỐI (< 5% HP) ---
+        if (this.nPoint.hp > 0 && this.nPoint.hp <= this.nPoint.hpMax * 5 / 100 && Util.canDoWithTime(this.lastTimeSoulChat, 10000)) {
+            this.lastTimeSoulChat = System.currentTimeMillis();
+            this.chat(getRandomNearDeathChat());
+        }
 
         // --- AI Phản Ứng Khi Bị Tấn Công (Threat / Aggro) ---
         if (plAtt != null && !plAtt.isDie() && this.zone != null && this.zone.equals(plAtt.zone)) {
@@ -1146,5 +1224,139 @@ public class Boss extends Player implements IBoss {
             }
         }
         return false;
+    }
+
+    // ================= DYNAMIC COMBAT & SOUL HELPER METHODS =================
+
+    /**
+     * Kích hoạt cơ chế Hơi Thở Cuối Cùng (Last Stand):
+     * - Chỉ kích hoạt duy nhất 1 lần trong cả trận (countHealLastStand = 1)
+     * - Hồi 35% HP tối đa (không bao giờ hồi đầy 100%)
+     * - Sóng xung kích hất văng người chơi xung quanh ra cự ly an toàn
+     * - Giải trừ toàn bộ các hiệu ứng khống chế đang dính
+     * - Bật trạng thái Cuồng Nộ (Berserk) tăng tốc độ ra đòn
+     */
+    protected void triggerLastStand(Player plAtt) {
+        this.countHealLastStand++;
+        this.isBerserk = true;
+
+        // 1. Giải trừ các hiệu ứng khống chế nếu đang dính
+        if (this.effectSkill != null) {
+            EffectSkillService.gI().removeAnTroi(this);
+            EffectSkillService.gI().removeThoiMien(this);
+            EffectSkillService.gI().removeStun(this);
+            EffectSkillService.gI().removeBlindDCTT(this);
+            EffectSkillService.gI().removeMabuHold(this);
+        }
+
+        // 2. Hồi phục 35% HP tối đa
+        long hpHeal = this.nPoint.hpMax * 35 / 100;
+        PlayerService.gI().hoiPhuc(this, hpHeal, 0);
+
+        // 3. Sóng xung kích hất văng người chơi xung quanh (trong bán kính 160px)
+        if (this.zone != null) {
+            List<Player> players = new ArrayList<>(this.zone.getPlayers());
+            for (int i = 0; i < players.size(); i++) {
+                Player pl = players.get(i);
+                if (pl != null && !pl.isDie() && !pl.equals(this) && Util.getDistance(this, pl) <= 160) {
+                    if (pl.location != null && this.zone.map != null) {
+                        int pushX = pl.location.x + (pl.location.x < this.location.x ? -120 : 120);
+                        pushX = Math.max(50, Math.min(this.zone.map.mapWidth - 50, pushX));
+                        Service.gI().setPos(pl, pushX, pl.location.y);
+                    }
+                }
+            }
+        }
+
+        // 4. Lời thoại thức tỉnh đầy khí chất
+        this.chat(getRandomAwakeningChat());
+    }
+
+    /**
+     * Dịch chuyển áp sát tức thời ra sau lưng mục tiêu khi bị xả chưởng từ xa liên tục
+     */
+    protected void triggerFlashStep(Player pl) {
+        if (pl == null || pl.location == null || this.zone == null || this.zone.map == null) {
+            return;
+        }
+        int behindX = pl.location.x + (pl.location.x >= this.location.x ? -45 : 45);
+        behindX = Math.max(50, Math.min(this.zone.map.mapWidth - 50, behindX));
+        this.moveTo(behindX, pl.location.y);
+        this.playerTarger = pl;
+        this.lastTimeTargetPlayer = System.currentTimeMillis();
+        this.timeTargetPlayer = Util.nextInt(6000, 8000);
+        this.chat(getRandomFlashStepChat());
+    }
+
+    // ================= SOUL DIALOGUE SYSTEM =================
+    private void chatDodge() {
+        String[] dodgeChats = {
+            "Ngươi chỉ đánh trúng cái bóng của ta thôi!",
+            "Còn non và xanh lắm!",
+            "Gió thoảng qua thôi à?",
+            "Xí hụt rồi nhé!",
+            "Chậm như rùa bò vậy!"
+        };
+        this.chat(dodgeChats[Util.nextInt(0, dodgeChats.length - 1)]);
+    }
+
+    private String getRandomCounterChat() {
+        String[] counterChats = {
+            "Quá chậm!",
+            "Đòn đánh gãi ngứa!",
+            "Chỉ có thế thôi sao?",
+            "Ngươi sơ hở rồi!",
+            "Trả lại ngươi đòn này!"
+        };
+        return counterChats[Util.nextInt(0, counterChats.length - 1)];
+    }
+
+    private String getRandomFlashStepChat() {
+        String[] flashChats = {
+            "Ngươi nhìn đi đâu thế?",
+            "Ta ở ngay sau lưng ngươi này!",
+            "Bắn lén từ xa thế là đủ rồi!",
+            "Chạy đi đâu cho thoát?"
+        };
+        return flashChats[Util.nextInt(0, flashChats.length - 1)];
+    }
+
+    private String getRandomHeavyDamageChat() {
+        String[] heavyChats = {
+            "Hự... Cú đánh khá đấy, nhưng chưa đủ đâu!",
+            "Khá khen cho đòn đánh vừa rồi!",
+            "Ngươi làm ta bắt đầu thấy đau rồi đấy!",
+            "Gan lắm! Dám làm ta trầy xước!"
+        };
+        return heavyChats[Util.nextInt(0, heavyChats.length - 1)];
+    }
+
+    private String getRandomAwakeningChat() {
+        String[] awakeningChats = {
+            "Các ngươi nghĩ có thể dễ dàng hạ gục ta sao? Chưa đâu!",
+            "Khốn kiếp... Ta sẽ cho các ngươi thấy cơn thịnh nộ thực sự!",
+            "Sức mạnh thực sự của ta... bây giờ mới bắt đầu bộc phát!",
+            "Đừng vội mừng, trò chơi sinh tử chỉ mới bắt đầu thôi!"
+        };
+        return awakeningChats[Util.nextInt(0, awakeningChats.length - 1)];
+    }
+
+    private String getRandomNearDeathChat() {
+        String[] nearDeathChats = {
+            "Không thể nào... Ta không thể gục ngã ở đây...!",
+            "Khốn kiếp... Lũ sâu bọ các ngươi...!",
+            "Ta sẽ kéo theo các ngươi chôn cùng!"
+        };
+        return nearDeathChats[Util.nextInt(0, nearDeathChats.length - 1)];
+    }
+
+    private String getRandomKillPlayerChat() {
+        String[] killChats = {
+            "Một kẻ ngáng đường đã ngã xuống! Ai là người tiếp theo?",
+            "Yếu ớt đến thảm hại!",
+            "Biết lượng sức mình chưa?",
+            "Ngươi còn phải luyện tập thêm nhiều năm nữa!"
+        };
+        return killChats[Util.nextInt(0, killChats.length - 1)];
     }
 }

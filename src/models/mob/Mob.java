@@ -1034,7 +1034,73 @@ public class Mob {
             }
         }
 
+        //========================THẺ SỔ SƯU TẦM (RADAR CARD)========================
+        rollCardMobReward(plOwner, x, yEnd, co4LaRate, list);
+
         return list;
+    }
+
+    private void rollCardMobReward(Player plOwner, int x, int yEnd, int co4LaRate, List<ItemMap> list) {
+        if (plOwner == null || plOwner.isBoss || plOwner.isBot || plOwner.isNewPet) {
+            return;
+        }
+
+        short cardId = -1;
+        int chance = 0;       // Xác suất
+        int totalChance = 10000;
+        boolean isRare = false;
+
+        switch (this.tempId) {
+            // Rank 0: Quái sơ cấp (3 / 10.000 = 0.03% ~ 1/3.333 con)
+            case ConstMob.KHUNG_LONG -> { cardId = 828; chance = 3; }
+            case ConstMob.LON_LOI -> { cardId = 829; chance = 3; }
+            case ConstMob.QUY_DAT -> { cardId = 830; chance = 3; }
+
+            // Rank 1: Quái mẹ tinh anh (60 / 10.000 = 0.60% ~ 1/166 con mẹ)
+            case ConstMob.KHUNG_LONG_ME -> { cardId = 831; chance = 60; }
+            case ConstMob.LON_LOI_ME -> { cardId = 832; chance = 60; }
+            case ConstMob.QUY_DAT_ME -> { cardId = 833; chance = 60; }
+
+            // Rank 2: Quái bay (4 / 10.000 = 0.04% ~ 1/2.500 con)
+            case ConstMob.THAN_LAN_BAY, ConstMob.THAN_LAN_BAY_2 -> { cardId = 834; chance = 4; }
+            case ConstMob.PHI_LONG, ConstMob.PHI_LONG_2 -> { cardId = 835; chance = 4; }
+            case ConstMob.QUY_BAY, ConstMob.QUY_BAY_2 -> { cardId = 836; chance = 4; }
+
+            // Rank 3: Lính Red Ribbon, Sói xám, Quái BDKB (25 / 10.000 = 0.25% ~ 1/400 con)
+            case ConstMob.LINH_DOC_NHAN -> { cardId = 837; chance = 25; }
+            case ConstMob.LINH_DOC_NHAN2 -> { cardId = 838; chance = 25; }
+            case ConstMob.SOI_XAM, ConstMob.ROBOT_BAY, ConstMob.ROBOT_THEP -> { cardId = 839; chance = 25; }
+
+            // Rank 5: Thẻ Khỉ VIP (Rất hiếm - Tạo giá trị cực phẩm)
+            case ConstMob.KHI_LONG_DEN -> {
+                cardId = 1278; // Thẻ Oozaru Khỉ Đen (Aura 2)
+                chance = 1;    // 1 / 10.000 = 0.01%
+                isRare = true;
+            }
+            case ConstMob.KHI_LONG_VANG -> {
+                cardId = 1276; // Thẻ Oozaru SSJ Khỉ Vàng (Aura 3 - Siêu Cực Phẩm)
+                chance = 1;
+                totalChance = 20000; // 1 / 20.000 = 0.005%
+                isRare = true;
+            }
+            default -> {}
+        }
+
+        if (cardId != -1) {
+            int finalChance = chance * co4LaRate;
+            if (Util.isTrue(finalChance, totalChance)) {
+                ItemMap itCard = new ItemMap(this.zone, cardId, 1, x, yEnd, plOwner.id);
+                itCard.options.add(new Item.ItemOption(87, 0)); // Ký gửi ngọc
+                itCard.options.add(new Item.ItemOption(30, 0)); // Khóa giao dịch
+                list.add(itCard);
+
+                if (isRare && itCard.itemTemplate != null && this.zone != null && this.zone.map != null) {
+                    ChatGlobalService.gI().sendThongBaoTheGioi(plOwner,
+                            "[ Hệ Thống ] " + plOwner.name + " vừa săn được "
+                            + itCard.itemTemplate.name + " tại " + this.zone.map.mapName + "!");
+                }
+            }
+        }
     }
 
 

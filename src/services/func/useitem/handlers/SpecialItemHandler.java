@@ -137,7 +137,68 @@ public class SpecialItemHandler implements ItemActionHandler {
         }
     }
 
+    public static void openUseCardManyForm(Player pl, Item item) {
+        if (pl == null || item == null) {
+            return;
+        }
+        RadarCard radarTemplate = RadarService.gI().RADAR_TEMPLATE.stream()
+                .filter(c -> c.Id == item.template.id)
+                .findFirst().orElse(null);
+        if (radarTemplate == null) {
+            Service.gI().sendThongBao(pl, "Thẻ bài không tồn tại!");
+            return;
+        }
+
+        if (radarTemplate.Require != -1) {
+            RadarCard radarRequireTemplate = RadarService.gI().RADAR_TEMPLATE.stream()
+                    .filter(r -> r.Id == radarTemplate.Require)
+                    .findFirst().orElse(null);
+            if (radarRequireTemplate != null) {
+                Card cardRequire = pl.Cards.stream()
+                        .filter(r -> r.Id == radarRequireTemplate.Id)
+                        .findFirst().orElse(null);
+                if (cardRequire == null || cardRequire.Level < radarTemplate.RequireLevel) {
+                    Service.gI().sendThongBao(pl, "Bạn cần sưu tầm " + radarRequireTemplate.Name + " ở cấp độ "
+                            + radarTemplate.RequireLevel + " mới có thể sử dụng thẻ này");
+                    return;
+                }
+            }
+        }
+
+        if (item.template.id == 859 && !RadarService.isCompletedDocNhanRequirement(pl)) {
+            Service.gI().sendThongBao(pl, RadarService.getDocNhanRequirementProgress(pl));
+            return;
+        }
+
+        Card card = pl.Cards.stream()
+                .filter(r -> r.Id == item.template.id)
+                .findFirst().orElse(null);
+        int maxLevel = radarTemplate.getMaxLevel();
+        if (card != null && card.Level >= maxLevel) {
+            Service.gI().sendThongBao(pl, "Thẻ " + radarTemplate.Name + " đã đạt cấp tối đa (Lv." + card.Level + ")!");
+            return;
+        }
+
+        services.func.Input.gI().createFormUseCardQuantity(pl, item);
+    }
+
     public static void useCard(Player pl, Item item) {
+        useCardBatch(pl, item, 1);
+    }
+
+    public static void useCardBatch(Player pl, Item item, int quantity) {
+        if (pl == null || item == null || !item.isNotNullItem()) {
+            return;
+        }
+        if (quantity <= 0) {
+            Service.gI().sendThongBao(pl, "Số lượng phải lớn hơn 0!");
+            return;
+        }
+        if (item.quantity < quantity) {
+            Service.gI().sendThongBao(pl, "Bạn chỉ có " + item.quantity + " " + item.template.name + "!");
+            return;
+        }
+
         RadarCard radarTemplate = RadarService.gI().RADAR_TEMPLATE.stream()
                 .filter(c -> c.Id == item.template.id)
                 .findFirst().orElse(null);
@@ -149,70 +210,108 @@ public class SpecialItemHandler implements ItemActionHandler {
             RadarCard radarRequireTemplate = RadarService.gI().RADAR_TEMPLATE.stream()
                     .filter(r -> r.Id == radarTemplate.Require)
                     .findFirst().orElse(null);
-            if (radarRequireTemplate == null) {
-                return;
+            if (radarRequireTemplate != null) {
+                Card cardRequire = pl.Cards.stream()
+                        .filter(r -> r.Id == radarRequireTemplate.Id)
+                        .findFirst().orElse(null);
+                if (cardRequire == null || cardRequire.Level < radarTemplate.RequireLevel) {
+                    Service.gI().sendThongBao(pl, "Bạn cần sưu tầm " + radarRequireTemplate.Name + " ở cấp độ "
+                            + radarTemplate.RequireLevel + " mới có thể sử dụng thẻ này");
+                    return;
+                }
             }
+        }
 
-            Card cardRequire = pl.Cards.stream()
-                    .filter(r -> r.Id == radarRequireTemplate.Id)
-                    .findFirst().orElse(null);
-            if (cardRequire == null || cardRequire.Level < radarTemplate.RequireLevel) {
-                Service.gI().sendThongBao(pl, "Bạn cần sưu tầm " + radarRequireTemplate.Name + " ở cấp độ "
-                        + radarTemplate.RequireLevel + " mới có thể sử dụng thẻ này");
-                return;
-            }
+        if (item.template.id == 859 && !RadarService.isCompletedDocNhanRequirement(pl)) {
+            Service.gI().sendThongBao(pl, RadarService.getDocNhanRequirementProgress(pl));
+            return;
         }
 
         Card card = pl.Cards.stream()
                 .filter(r -> r.Id == item.template.id)
                 .findFirst().orElse(null);
 
+        int maxLevel = radarTemplate.getMaxLevel();
+        int maxPerLevel = radarTemplate.Max / (maxLevel > 0 ? maxLevel : 1);
+        if (maxPerLevel <= 0) {
+            maxPerLevel = radarTemplate.Max > 0 ? radarTemplate.Max : 60;
+        }
+
+        if (card != null && card.Level >= maxLevel) {
+            Service.gI().sendThongBao(pl, "Thẻ này đã đạt cấp tối đa");
+            return;
+        }
+
+        int actualConsumed = 0;
+        boolean justUnlocked = false;
+        byte initialLevel = 0;
+
         if (card == null) {
-            Card newCard = new Card(item.template.id, (byte) 1, radarTemplate.Max, (byte) 1, radarTemplate.Options);
-            boolean hasUsed = false;
-            for (Card c : pl.Cards) {
-                if (c != null && c.Used == 1) {
-                    hasUsed = true;
-                    break;
-                }
-            }
-            if (!hasUsed) {
-                newCard.Used = 1;
-            } else {
-                newCard.Used = 0;
-            }
-            pl.Cards.add(newCard);
-            RadarService.gI().RadarSetAmount(pl, newCard.Id, newCard.Amount, newCard.MaxAmount);
-            RadarService.gI().RadarSetLevel(pl, newCard.Id, newCard.Level);
-            if (newCard.Used == 1) {
-                RadarService.gI().Radar1(pl, newCard.Id, (byte) 1);
-            }
-            InventoryService.gI().subQuantityItemsBag(pl, item, 1);
-            InventoryService.gI().sendItemBags(pl);
-            Service.gI().point(pl);
-            RadarService.gI().sendAura(pl, pl.getAura(), 0);
-            Service.gI().sendThongBao(pl, "Đã mở khóa " + radarTemplate.Name + " trong Sổ Sưu Tầm!");
+            card = new Card(item.template.id, (byte) 0, (byte) maxPerLevel, (byte) 0, radarTemplate.Options, (byte) 0);
+            pl.Cards.add(card);
+            justUnlocked = true;
+            initialLevel = 0;
         } else {
-            if (card.Level < 1) {
-                card.Level = 1;
-            }
-            int maxLevel = radarTemplate.getMaxLevel();
-            if (card.Level >= maxLevel) {
-                Service.gI().sendThongBao(pl, "Thẻ này đã đạt cấp tối đa");
-                return;
-            }
-            card.Amount++;
-            if (card.Amount >= card.MaxAmount) {
-                card.Amount = 0;
+            card.MaxAmount = (byte) maxPerLevel;
+            initialLevel = card.Level;
+        }
+
+        while (actualConsumed < quantity && card.Level < maxLevel) {
+            int neededForNextLevel = card.MaxAmount - card.Amount;
+            if (neededForNextLevel <= 0) {
                 card.Level++;
-                Service.gI().sendThongBao(pl, "Thẻ " + radarTemplate.Name + " đã nâng cấp lên Lv." + card.Level + "!");
+                if (card.Level >= maxLevel) {
+                    card.Amount = card.MaxAmount;
+                    break;
+                } else {
+                    card.Amount = 0;
+                }
+                continue;
             }
-            RadarService.gI().RadarSetAmount(pl, card.Id, card.Amount, card.MaxAmount);
-            RadarService.gI().RadarSetLevel(pl, card.Id, card.Level);
-            InventoryService.gI().subQuantityItemsBag(pl, item, 1);
-            InventoryService.gI().sendItemBags(pl);
-            Service.gI().point(pl);
-            RadarService.gI().sendAura(pl, pl.getAura(), 0);
+            int remainingToUse = quantity - actualConsumed;
+            if (remainingToUse >= neededForNextLevel) {
+                actualConsumed += neededForNextLevel;
+                card.Level++;
+                if (card.Level >= maxLevel) {
+                    card.Amount = card.MaxAmount;
+                    break;
+                } else {
+                    card.Amount = 0;
+                }
+            } else {
+                card.Amount += (byte) remainingToUse;
+                actualConsumed += remainingToUse;
+            }
+        }
+
+        if (actualConsumed <= 0) {
+            Service.gI().sendThongBao(pl, "Thẻ đã đạt cấp tối đa, không thể dùng thêm!");
+            return;
+        }
+
+        RadarService.gI().RadarSetAmount(pl, card.Id, card.Amount, card.MaxAmount);
+        RadarService.gI().RadarSetLevel(pl, card.Id, card.Level);
+        RadarService.gI().sendRadar(pl, pl.Cards);
+
+        InventoryService.gI().subQuantityItemsBag(pl, item, actualConsumed);
+        InventoryService.gI().sendItemBags(pl);
+        Service.gI().point(pl);
+        RadarService.gI().sendAura(pl, pl.getAura(), 0);
+
+        if (justUnlocked) {
+            if (card.Level >= 1) {
+                Service.gI().sendThongBao(pl, "Đã mở khóa " + radarTemplate.Name + " và nâng cấp lên Lv." + card.Level + " (" + card.Amount + "/" + card.MaxAmount + ")!");
+            } else {
+                Service.gI().sendThongBao(pl, "Đã mở khóa " + radarTemplate.Name + " trong Sổ Sưu Tầm! Tiến trình: " + card.Amount + "/" + card.MaxAmount);
+            }
+        } else if (card.Level > initialLevel) {
+            Service.gI().sendThongBao(pl, "Đã dùng " + actualConsumed + " thẻ " + radarTemplate.Name + "! Thẻ đã nâng cấp lên Lv." + card.Level + (card.Level >= maxLevel ? " (Tối đa)!" : "!"));
+        } else {
+            if (actualConsumed > 1) {
+                Service.gI().sendThongBao(pl, "Đã sử dụng " + actualConsumed + " " + radarTemplate.Name + " (Lv." + card.Level + ": " + card.Amount + "/" + card.MaxAmount + ")");
+            } else {
+                Service.gI().sendThongBao(pl, "Đã sử dụng 1 " + radarTemplate.Name + " (Lv." + card.Level + ": " + card.Amount + "/" + card.MaxAmount + ")");
+            }
         }
     }
 

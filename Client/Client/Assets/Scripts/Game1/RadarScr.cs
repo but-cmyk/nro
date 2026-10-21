@@ -264,7 +264,7 @@ namespace Game1
     		for (int i = 0; i < list.size(); i++)
     		{
     			Info_RadaScr info_RadaScr = (Info_RadaScr)list.elementAt(i);
-    			if (info_RadaScr != null && info_RadaScr.isUse == 1)
+    			if (info_RadaScr != null && (info_RadaScr.level > 0 || info_RadaScr.amount > 0))
     			{
     				listUse.addElement(info_RadaScr);
     			}
@@ -504,7 +504,25 @@ namespace Game1
     		case 1:
     			if (focus_card != null)
     			{
-    				Service.gI().SendRada(1, focus_card.id);
+    				if (focus_card.hasAura())
+    				{
+    					if (focus_card.id == 859 && !Info_RadaScr.isDocNhanUnlocked(list))
+    					{
+    						GameScr.info1.addInfo("Cần dùng đủ 120 thẻ của 5 loại thẻ Doanh Trại để có thể sử dụng Thẻ Độc Nhãn!", 0);
+    					}
+    					else if (focus_card.level >= 1)
+    					{
+    						Service.gI().SendRada(1, focus_card.id);
+    					}
+    					else
+    					{
+    						GameScr.info1.addInfo("Cần nâng cấp thẻ lên Lv.1 để mở khóa Hào Quang!", 0);
+    					}
+    				}
+    				else
+    				{
+    					GameScr.info1.addInfo("Thẻ này có chỉ số cộng dồn vĩnh viễn, không có Hào Quang.", 0);
+    				}
     			}
     			break;
     		case 2:
@@ -641,18 +659,68 @@ namespace Game1
     			{
     				g.drawRegion(imgUse, 0, 0, 17, 17, 1, xCmd[1], yCmd + dxCmd[1], 0);
     			}
+    			mFont.tahoma_7b_white.drawString(g, TYPE_UI ? "Tất cả" : "Đã có", xCmd[0] + 8, yCmd - 13, 2);
+    			if (focus_card != null)
+    			{
+    				if (focus_card.level <= 0 && focus_card.amount <= 0)
+    				{
+    					mFont.tahoma_7b_white.drawString(g, "Chưa mở", xCmd[1] + 8, yCmd - 13, 2);
+    				}
+    				else if (focus_card.level <= 0)
+    				{
+    					mFont.tahoma_7b_white.drawString(g, "Cần Lv.1", xCmd[1] + 8, yCmd - 13, 2);
+    				}
+    				else if (focus_card.hasAura())
+    				{
+    					if (focus_card.id == 859 && !Info_RadaScr.isDocNhanUnlocked(list))
+    					{
+    						mFont.tahoma_7b_white.drawString(g, "Chưa đủ ĐK", xCmd[1] + 8, yCmd - 13, 2);
+    					}
+    					else if (focus_card.isUse == 1)
+    					{
+    						mFont.tahoma_7b_green.drawString(g, "Tắt Aura", xCmd[1] + 8, yCmd - 13, 2);
+    					}
+    					else
+    					{
+    						mFont.tahoma_7b_yellow.drawString(g, "Bật Aura", xCmd[1] + 8, yCmd - 13, 2);
+    					}
+    				}
+    			}
     			if (focus_card != null)
     			{
     				g.setClip(xUi + 30, yUi + 13, wUi - 60, hUi / 2);
     				focus_card.paintInfo(g, xMon, yMon);
     				GameScr.resetTranslate(g);
-    				mFont.tahoma_7b_yellow.drawString(g, ((focus_card.level <= 0) ? " " : ("Lv." + focus_card.level + " ")) + focus_card.name, xUi + wUi / 2, yUi + 15, 2);
+    				string cardTitle;
+    				if (focus_card.level <= 0 && focus_card.amount <= 0)
+    				{
+    					cardTitle = "[Chưa Mở Khóa] " + focus_card.name;
+    				}
+    				else if (focus_card.id == 859 && !Info_RadaScr.isDocNhanUnlocked(list))
+    				{
+    					cardTitle = "[CHƯA ĐỦ ĐIỀU KIỆN] " + focus_card.name;
+    				}
+    				else if (focus_card.hasAura() && focus_card.isUse == 1)
+    				{
+    					cardTitle = "[AURA ĐANG BẬT - Lv." + focus_card.level + "] " + focus_card.name;
+    				}
+    				else if (focus_card.level <= 0)
+    				{
+    					cardTitle = "[Mở Khóa] " + focus_card.name;
+    				}
+    				else
+    				{
+    					cardTitle = "[Lv." + focus_card.level + "] " + focus_card.name;
+    				}
+    				mFont.tahoma_7b_yellow.drawString(g, cardTitle, xUi + wUi / 2, yUi + 15, 2);
     				mFont.tahoma_7_white.drawString(g, "no." + focus_card.no, xUi + 30, yText - 2, 0);
     				g.drawImage(imgBar_0, xUi + 36, yText + 10, 0);
     				g.setClip(xUi + 36, yClip - hClip, 7, hClip);
     				g.drawImage(imgBar_1, xUi + 36, yText + 10, 0);
     				GameScr.resetTranslate(g);
     				g.drawImage(imgRank[focus_card.rank], xUi + 39 - 5 + 14, yText + 12, 0);
+    				string strProgress = focus_card.amount + "/" + focus_card.max_amount;
+    				mFont.tahoma_7b_white.drawString(g, strProgress, xUi + 48, yText + 26, 0);
     			}
     			g.setClip(xText, yText, wText + 5, hText + 8);
     			if (focus_card != null)

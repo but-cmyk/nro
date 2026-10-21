@@ -595,7 +595,19 @@ namespace Game1
     				mFont2 = mFont.tahoma_7b_green;
     				break;
     			case 2:
+    				mFont2 = mFont.tahoma_7_grey;
+    				break;
+    			case 3:
+    				mFont2 = mFont.tahoma_7b_yellow;
+    				break;
+    			case 4:
+    				mFont2 = mFont.tahoma_7_yellow;
+    				break;
+    			case 5:
     				mFont2 = mFont.tahoma_7b_red;
+    				break;
+    			default:
+    				mFont2 = mFont.tahoma_7_white;
     				break;
     			}
     			if (says[i].StartsWith("<"))

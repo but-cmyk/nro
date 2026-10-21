@@ -207,8 +207,19 @@ public class Controller implements IMessageHandler {
                             Card card = player.Cards.stream().filter(r -> r != null && r.Id == idC).findFirst()
                                     .orElse(null);
                             if (card != null) {
-                                if (card.Level <= 0) {
-                                    card.Level = 1;
+                                models.radar.RadarCard rTemplate = RadarService.gI().RADAR_TEMPLATE.stream()
+                                        .filter(t -> t != null && t.Id == idC).findFirst().orElse(null);
+                                if (rTemplate == null || rTemplate.AuraId < 0) {
+                                    Service.gI().sendThongBao(player, "Thẻ này có chỉ số cộng dồn vĩnh viễn, không có Hào Quang để kích hoạt.");
+                                    return;
+                                }
+                                if (idC == 859 && !RadarService.isCompletedDocNhanRequirement(player)) {
+                                    Service.gI().sendThongBao(player, RadarService.getDocNhanRequirementProgress(player));
+                                    return;
+                                }
+                                if (card.Level < 1) {
+                                    Service.gI().sendThongBao(player, "Cần nâng cấp thẻ lên Lv.1 mới có thể kích hoạt Hào Quang!");
+                                    return;
                                 }
                                 if (card.Used == 0) {
                                     // Tắt tất cả thẻ khác trước khi bật thẻ mới
@@ -528,13 +539,13 @@ public class Controller implements IMessageHandler {
                 // }
                 // break;
                 case -74:
-                    String ip = _session.ipAddress;
-                    Logger.warning(ip + " dang tai du lieu\n");
                     byte type = _msg.reader().readByte();
                     if (type == 1) {
                         DataGame.sendSizeRes(_session);
                     } else if (type == 2) {
-                        DataGame.sendRes(_session);
+                        String ip = _session.ipAddress;
+                        Logger.warning(ip + " dang tai du lieu\n");
+                        new Thread(() -> DataGame.sendRes(_session), "SendRes-" + ip).start();
                     }
                     break;
                 case -81:

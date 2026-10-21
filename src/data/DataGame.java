@@ -3,7 +3,9 @@ package data;
 import models.Template.HeadAvatar;
 import models.Template.MapTemplate;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -42,6 +44,36 @@ public class DataGame {
     private static final Map<String, byte[]> EFFECT_IMG_CACHE = new ConcurrentHashMap<>();
     private static final Map<String, byte[]> MOB_CACHE = new ConcurrentHashMap<>();
     private static final Map<String, byte[]> BG_ITEM_CACHE = new ConcurrentHashMap<>();
+
+    public static class ResFile {
+        public final String name;
+        public final byte[] data;
+
+        public ResFile(String name, byte[] data) {
+            this.name = name;
+            this.data = data;
+        }
+    }
+
+    private static final Map<Integer, List<ResFile>> RES_CACHE = new ConcurrentHashMap<>();
+
+    public static List<ResFile> getResFiles(int zoom) {
+        return RES_CACHE.computeIfAbsent(zoom, z -> {
+            List<ResFile> list = new ArrayList<>();
+            File dir = new File("data/res/x" + z);
+            File[] files = dir.listFiles();
+            if (files != null) {
+                for (File f : files) {
+                    byte[] data = FileIO.readFile(f.getAbsolutePath());
+                    if (data != null) {
+                        list.add(new ResFile(f.getName(), data));
+                    }
+                }
+            }
+            Logger.success("Đã nạp bộ nhớ đệm " + list.size() + " tệp tài nguyên x" + z + " vào RAM!");
+            return list;
+        });
+    }
 
     private static final long[] SM_TIEU_CHUAN = {
         1000L, 3000L, 15000L, 40000L, 90000L, 170000L, 340000L, 700000L,
@@ -594,12 +626,8 @@ public class DataGame {
             msg = new Message(-74);
             msg.writer().writeByte(1);
             int zoom = (session.zoomLevel > 0 && session.zoomLevel <= 4) ? session.zoomLevel : 2;
-            final File[] files = new File("data/res/x" + zoom).listFiles();
-            if (files != null) {
-                msg.writer().writeShort(files.length);
-            } else {
-                msg.writer().writeShort(0);
-            }
+            List<ResFile> files = getResFiles(zoom);
+            msg.writer().writeShort(files.size());
             session.sendMessage(msg);
         } catch (Exception e) {
             // Ignore
@@ -614,18 +642,15 @@ public class DataGame {
         Message msg = null;
         try {
             int zoom = (session.zoomLevel > 0 && session.zoomLevel <= 4) ? session.zoomLevel : 2;
-            File dir = new File("data/res/x" + zoom);
-            File[] files = dir.listFiles();
-            if (files == null) {
+            List<ResFile> files = getResFiles(zoom);
+            if (files.isEmpty()) {
                 return;
             }
 
             int count = 0;
-            for (final File fileEntry : files) {
-                String original = fileEntry.getName();
-                byte[] res = FileIO.readFile(fileEntry.getAbsolutePath());
-                if (res == null) {
-                    continue;
+            for (final ResFile fileEntry : files) {
+                if (session == null || !session.isConnected()) {
+                    break;
                 }
 
                 if (session instanceof network.netty.NettySession nettySession) {
@@ -638,11 +663,11 @@ public class DataGame {
 
                 msg = new Message(-74);
                 msg.writer().writeByte(2);
-                msg.writer().writeUTF(original);
-                msg.writer().writeInt(res.length);
-                msg.writer().write(res);
+                msg.writer().writeUTF(fileEntry.name);
+                msg.writer().writeInt(fileEntry.data.length);
+                msg.writer().write(fileEntry.data);
                 session.sendMessage(msg);
-                msg.cleanup(); // Cleanup sau mỗi lần gửi loop
+                msg.cleanup();
 
                 count++;
                 if (count % 20 == 0) {

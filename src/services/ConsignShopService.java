@@ -93,7 +93,10 @@ public class ConsignShopService {
 
             Item item = ItemService.gI().createNewItem(it.itemId);
             item.quantity = it.quantity;
-            item.itemOptions.addAll(it.options);
+            if (it.options != null && !it.options.isEmpty()) {
+                item.itemOptions.clear();
+                item.itemOptions.addAll(it.options);
+            }
             List<Item> previewBag = InventoryService.gI().copyItemsBag(pl);
             if (!InventoryService.gI().addItemList(previewBag, ItemService.gI().copyItem(item))) {
                 Service.gI().sendThongBao(pl, "Hành trang không đủ chỗ trống");
@@ -282,7 +285,10 @@ public class ConsignShopService {
                     }
                     Item item = ItemService.gI().createNewItem(it.itemId);
                     item.quantity = it.quantity;
-                    item.itemOptions.addAll(it.options);
+                    if (it.options != null && !it.options.isEmpty()) {
+                        item.itemOptions.clear();
+                        item.itemOptions.addAll(it.options);
+                    }
                     List<Item> previewBag = InventoryService.gI().copyItemsBag(pl);
                     if (!InventoryService.gI().addItemList(previewBag, ItemService.gI().copyItem(item))) {
                         Service.gI().sendThongBao(pl, "Hành trang không đủ chỗ trống");
@@ -369,16 +375,15 @@ public class ConsignShopService {
 
     public boolean itemCanConsign(Item it) {
         if (it != null && it.template != null) {
-            // Chặn tuyệt đối nếu vật phẩm có Option 30 (Không thể giao dịch)
+            boolean hasConsignOption = it.itemOptions.stream()
+                    .anyMatch(op -> op != null && op.optionTemplate != null
+                            && (op.optionTemplate.id == 86 || op.optionTemplate.id == 87));
+            if (hasConsignOption || it.template.type == 14 || it.template.type == 15) {
+                return true;
+            }
+            // Chặn nếu vật phẩm có Option 30 (Không thể giao dịch) mà không có Option ký gửi
             if (it.isHaveOption(30)) {
                 return false;
-            }
-            if (it.itemOptions.stream()
-                    .anyMatch(op -> op != null && op.optionTemplate != null
-                            && (op.optionTemplate.id == 86 || op.optionTemplate.id == 87))
-                    || it.template.type == 14
-                    || it.template.type == 15) {
-                return true;
             }
         }
         return false;
@@ -540,6 +545,19 @@ public class ConsignShopService {
             // Check if item can be consigned
             if (!itemCanConsign(it)) {
                 Service.gI().sendThongBao(pl, "Vật phẩm này không thể ký gửi.");
+                openShopKyGui(pl);
+                return;
+            }
+
+            // Chặn ký gửi vàng nếu chỉ có Option 87 (Ký gửi ngọc)
+            if (it.isHaveOption(87) && !it.isHaveOption(86) && moneyType == 0) {
+                Service.gI().sendThongBao(pl, "Vật phẩm này chỉ có thể ký gửi bằng ngọc.");
+                openShopKyGui(pl);
+                return;
+            }
+            // Chặn ký gửi ngọc nếu chỉ có Option 86 (Ký gửi vàng)
+            if (it.isHaveOption(86) && !it.isHaveOption(87) && moneyType == 1) {
+                Service.gI().sendThongBao(pl, "Vật phẩm này chỉ có thể ký gửi bằng vàng.");
                 openShopKyGui(pl);
                 return;
             }

@@ -926,12 +926,8 @@ namespace Game1
     				}
     				else
     				{
-    					startOK(mResources.pls_restart_game_error, 8885, null);
+    					ServerListScreen.hasConnected = null;
     				}
-    			}
-    			else
-    			{
-    				startOK(mResources.pls_restart_game_error, 8885, null);
     			}
     			return;
     		}

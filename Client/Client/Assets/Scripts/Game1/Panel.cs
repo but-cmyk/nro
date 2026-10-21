@@ -8512,6 +8512,10 @@ namespace Game1
                     else
                     {
                         myVector.addElement(new Command(mResources.USE, this, 2001, currItem));
+                        if (currItem != null && currItem.template.type == 33)
+                        {
+                            myVector.addElement(new Command("Dùng nhiều", this, 2026, currItem));
+                        }
                     }
                 }
                 else if (!GetInventorySelect_isbody(selected, newSelected, Char.myCharz().arrItemBody))
@@ -8539,6 +8543,10 @@ namespace Game1
                         else
                         {
                             myVector.addElement(new Command(mResources.USE, this, 2001, currItem));
+                            if (currItem != null && currItem.template.type == 33)
+                            {
+                                myVector.addElement(new Command("Dùng nhiều", this, 2026, currItem));
+                            }
                             if ((currItem.template.type == 29 || Items.isItemTimeBuff(currItem.template.id)) && currItem.template.id != 457)
                             {
                                 if (!Items.getInstance().checkContains(currItem.template.id))
@@ -9688,6 +9696,10 @@ namespace Game1
                             else
                             {
                                 myVector.addElement(new Command(mResources.USE, this, 2001, item2));
+                                if (item2 != null && item2.template.type == 33)
+                                {
+                                    myVector.addElement(new Command("Dùng nhiều", this, 2026, item2));
+                                }
                             }
                             currItem = item2;
                         }
@@ -9936,10 +9948,11 @@ namespace Game1
                 }
                 Service.gI().getItem(BAG_BODY, id2);
             }
-            if (idAction == 2001)
+            if (idAction == 2001 || idAction == 2026)
             {
                 Res.outz("use item");
                 Item item9 = (Item)p;
+                sbyte useType = (sbyte)(idAction == 2026 ? 4 : 0);
                 bool inventorySelect_isbody = GetInventorySelect_isbody(selected, newSelected, Char.myCharz().arrItemBody);
                 sbyte b = 0;
                 b = (inventorySelect_isbody ? ((sbyte)GetInventorySelect_body(selected, newSelected)) : ((sbyte)GetInventorySelect_bag(selected, newSelected, Char.myCharz().arrItemBody)));
@@ -9951,11 +9964,11 @@ namespace Game1
                     {
                         where = 1;
                     }
-                    Service.gI().useItem(0, where, b, -1);
+                    Service.gI().useItem(useType, where, b, -1);
                 }
                 else
                 {
-                    Service.gI().useItem(0, (!inventorySelect_isbody) ? ((sbyte)1) : ((sbyte)0), b, -1);
+                    Service.gI().useItem(useType, (!inventorySelect_isbody) ? ((sbyte)1) : ((sbyte)0), b, -1);
                 }
                 if (item9.template.id == 193 || item9.template.id == 194)
                 {

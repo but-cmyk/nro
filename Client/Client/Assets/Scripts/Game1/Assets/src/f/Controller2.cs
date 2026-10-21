@@ -1155,7 +1155,7 @@ namespace Game1.Assets.src.f
 						info_RadaScr.SetUse(use);
 						info_RadaScr.SetAmount(amount, max_amount);
 						myVector.addElement(info_RadaScr);
-						if (b3 > 0)
+						if (b3 > 0 || amount > 0)
 						{
 							num2++;
 						}
@@ -1187,7 +1187,7 @@ namespace Game1.Assets.src.f
 							{
 								info_RadaScr2.SetLevel(level);
 							}
-							if (info_RadaScr2.level > 0)
+							if (info_RadaScr2.level > 0 || info_RadaScr2.amount > 0)
 							{
 								num5++;
 							}
@@ -1212,6 +1212,7 @@ namespace Game1.Assets.src.f
 					{
 						Info_RadaScr.GetInfo(RadarScr.listUse, id3).SetAmount(amount2, max_amount2);
 					}
+					RadarScr.SetListUse();
 				}
 				else if (b == 4)
 				{

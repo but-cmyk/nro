@@ -468,6 +468,8 @@ while (rs.next()) {
                 itemTemp.description = rs.getString("description");
                 if (itemTemp.id == 191 || itemTemp.id == 192) {
                     itemTemp.description = "Tác dụng trong 10 phút";
+                } else {
+                    itemTemp.description = getCardDescription(itemTemp.id, itemTemp.description);
                 }
                 itemTemp.level = rs.getByte("level");
                 itemTemp.iconID = rs.getShort("icon_id");
@@ -748,11 +750,16 @@ while (rs.next()) {
                     }
                 }
                 rd.Options.clear();
-                arr = (JSONArray) JSONValue.parse(rs.getString("options"));
-                for (int i = 0; i < arr.size(); i++) {
-                    JSONObject ob = (JSONObject) arr.get(i);
-                    if (ob != null) {
-                        rd.Options.add(new OptionCard(Integer.parseInt(ob.get("id").toString()), Short.parseShort(ob.get("param").toString()), Byte.parseByte(ob.get("activeCard").toString())));
+                List<OptionCard> balancedOpts = getBalancedRadarOptions(rd.Id);
+                if (balancedOpts != null && !balancedOpts.isEmpty()) {
+                    rd.Options.addAll(balancedOpts);
+                } else {
+                    arr = (JSONArray) JSONValue.parse(rs.getString("options"));
+                    for (int i = 0; i < arr.size(); i++) {
+                        JSONObject ob = (JSONObject) arr.get(i);
+                        if (ob != null) {
+                            rd.Options.add(new OptionCard(Integer.parseInt(ob.get("id").toString()), Short.parseShort(ob.get("param").toString()), Byte.parseByte(ob.get("activeCard").toString())));
+                        }
                     }
                 }
                 rd.Require = rs.getShort("require");
@@ -867,5 +874,156 @@ while (rs.next()) {
         } catch (Exception e) {
             Logger.logException(DatabaseTemplateLoader.class, e);
         }
+    }
+
+    public static String getCardDescription(short id, String defaultDesc) {
+        return switch (id) {
+            case 828 -> "Hai chi trước của Khủng long rất ngắn nên chúng không thể cầm thức ăn được.";
+            case 829 -> "Lợn lòi có sở thích mài răng nanh dưới đất, vô tình tạo ra những rãnh đất để người Namec trồng trọt.";
+            case 830 -> "Bản tính của Quỷ đất khá nhút nhát, chúng thường núp vào cây khi gặp người lạ.";
+            case 831 -> "Khủng long mẹ với bản năng bảo vệ con hung dữ, nhưng hai chi trước vẫn quá ngắn để bế con.";
+            case 832 -> "Lợn lòi mẹ cày xới đất cực khỏe, được coi là 'máy cày đất' tự nhiên của hành tinh Namec.";
+            case 833 -> "Quỷ đất mẹ to lớn nhưng vẫn giữ tính nhút nhát, hễ nghe tiếng động lạ là cố trốn sau bụi cây.";
+            case 834 -> "Thằn lằn bay dùng mỏ dài và cứng để tấn công kẻ thù, đôi khi chúng vẫn dùng để gõ hạt óc chó ăn.";
+            case 835 -> "Dùng tốc độ cực nhanh để tiếp cận mục tiêu. Phi long khi bay luôn há to miệng để đón gió.";
+            case 836 -> "Sở trường tấn công chớp nhoáng kẻ thù từ trên cao, nhưng đâu ai ngờ Quỷ bay lại sợ độ cao.";
+            case 837 -> "Quân lính Red Ribbon được huấn luyện nghiêm ngặt, nhưng ra trận chưa đầy 5 phút là đã đầu hàng.";
+            case 838 -> "Lính Red Ribbon trang bị súng ống tối tân nhưng độ chính xác lại phụ thuộc vào... may rủi.";
+            case 839 -> "Được lính độc nhãn thuần hóa để giữ doanh trại, nhưng sở thích lớn nhất lại là chơi nhặt bóng.";
+            case 840 -> "Thân hình hơi béo, luôn đeo chiếc khăn quàng đỏ và thường hay mơ mộng làm thơ giữa trận chiến.";
+            case 841 -> "Được xưng là ninja bậc thầy, nhưng kỹ thuật ẩn thân lại không có nên không thể làm sát thủ.";
+            case 842 -> "Sĩ quan sở hữu đôi mắt thôi miên cực mạnh, nhưng điểm yếu chết người là cực kỳ sợ chuột.";
+            case 859 -> "Cần dùng đủ 120 thẻ của 5 loại thẻ : Lính Độc Nhãn, Sói Xám, Trung Úy Trắng, Ninja Áo Tím, Trung Úy Xanh Lơ để có thể sử dụng thẻ này";
+            case 956 -> "Đội trưởng Vàng là con hổ hình người chắc nịch, từng bị Goku đấm văng ra khỏi máy bay giữa trời.";
+            case 1278 -> "Oozaru là sinh vật khổng lồ của người Xayda khi nhìn thấy trăng tròn, sức tàn phá kinh thiên động địa.";
+            case 1276 -> "Hình thái Khỉ Đột Siêu Saiyan huyền thoại với bộ lông hoàng kim rực sáng, sức mạnh bùng nổ vô tiền khoáng hậu.";
+            case 1277 -> "Hình thái Siêu Saiyan 3 tối thượng của Khỉ Đột khổng lồ, bao bọc bởi luồng hào quang sấm sét hủy diệt.";
+            default -> (defaultDesc != null) ? defaultDesc : "";
+        };
+    }
+
+    public static List<OptionCard> getBalancedRadarOptions(short cardId) {
+        List<OptionCard> list = new ArrayList<>();
+        switch (cardId) {
+            // Rank 0: Quái sơ cấp (Hỗ trợ tân thủ đầu game - Flat stats)
+            case 828 -> { // Thẻ Khủng long (Tấn công flat)
+                list.add(new OptionCard(0, 100, (byte) 0));
+                list.add(new OptionCard(0, 200, (byte) 1));
+                list.add(new OptionCard(0, 300, (byte) 2));
+            }
+            case 829 -> { // Thẻ Lợn lòi (KI flat)
+                list.add(new OptionCard(7, 1000, (byte) 0));
+                list.add(new OptionCard(7, 2000, (byte) 1));
+                list.add(new OptionCard(7, 3000, (byte) 2));
+            }
+            case 830 -> { // Thẻ Quỷ đất (HP flat)
+                list.add(new OptionCard(6, 1000, (byte) 0));
+                list.add(new OptionCard(6, 2000, (byte) 1));
+                list.add(new OptionCard(6, 3000, (byte) 2));
+            }
+            // Rank 1: Quái mẹ (Flat stats tầm trung)
+            case 831 -> { // Thẻ Khủng long mẹ (Tấn công flat)
+                list.add(new OptionCard(0, 200, (byte) 0));
+                list.add(new OptionCard(0, 400, (byte) 1));
+                list.add(new OptionCard(0, 600, (byte) 2));
+            }
+            case 832 -> { // Thẻ Lợn lòi mẹ (KI flat)
+                list.add(new OptionCard(7, 2000, (byte) 0));
+                list.add(new OptionCard(7, 4000, (byte) 1));
+                list.add(new OptionCard(7, 6000, (byte) 2));
+            }
+            case 833 -> { // Thẻ Quỷ đất mẹ (HP flat)
+                list.add(new OptionCard(6, 2000, (byte) 0));
+                list.add(new OptionCard(6, 4000, (byte) 1));
+                list.add(new OptionCard(6, 6000, (byte) 2));
+            }
+            // Rank 2: Quái bay (Chỉ số % HP/KI & Giáp flat)
+            case 834 -> { // Thẻ Thằn lằn bay (HP %)
+                list.add(new OptionCard(77, 1, (byte) 0));
+                list.add(new OptionCard(77, 1, (byte) 1));
+                list.add(new OptionCard(77, 2, (byte) 2));
+            }
+            case 835 -> { // Thẻ Phi long (KI %)
+                list.add(new OptionCard(103, 1, (byte) 0));
+                list.add(new OptionCard(103, 1, (byte) 1));
+                list.add(new OptionCard(103, 2, (byte) 2));
+            }
+            case 836 -> { // Thẻ Quỷ bay (Giáp flat)
+                list.add(new OptionCard(47, 150, (byte) 0));
+                list.add(new OptionCard(47, 250, (byte) 1));
+                list.add(new OptionCard(47, 400, (byte) 2));
+            }
+            // Rank 3: Lính Red Ribbon & Sói xám (Flat stats nâng cao)
+            case 837 -> { // Thẻ Lính Độc Nhãn 1 (Tấn công flat)
+                list.add(new OptionCard(0, 300, (byte) 0));
+                list.add(new OptionCard(0, 700, (byte) 1));
+                list.add(new OptionCard(0, 1000, (byte) 2));
+            }
+            case 838 -> { // Thẻ Lính Độc Nhãn 2 (KI flat)
+                list.add(new OptionCard(7, 3000, (byte) 0));
+                list.add(new OptionCard(7, 7000, (byte) 1));
+                list.add(new OptionCard(7, 10000, (byte) 2));
+            }
+            case 839 -> { // Thẻ Sói xám (HP flat)
+                list.add(new OptionCard(6, 3000, (byte) 0));
+                list.add(new OptionCard(6, 7000, (byte) 1));
+                list.add(new OptionCard(6, 10000, (byte) 2));
+            }
+            // Rank 4: Boss Doanh Trại & Vòng Quay (% Sức đánh / HP / Giáp / Né / Chí mạng)
+            case 840 -> { // Thẻ Trung Úy Trắng (Giáp % / HP % / Dame %)
+                list.add(new OptionCard(94, 1, (byte) 0));
+                list.add(new OptionCard(77, 2, (byte) 1));
+                list.add(new OptionCard(50, 3, (byte) 2));
+            }
+            case 841 -> { // Thẻ Ninja Áo Tím (Né đòn % / Dame % / Crit %)
+                list.add(new OptionCard(108, 2, (byte) 0));
+                list.add(new OptionCard(50, 2, (byte) 1));
+                list.add(new OptionCard(14, 2, (byte) 2));
+            }
+            case 842 -> { // Thẻ Trung Úy Xanh Lơ (KI % / HP % / Giáp %)
+                list.add(new OptionCard(103, 2, (byte) 0));
+                list.add(new OptionCard(77, 2, (byte) 1));
+                list.add(new OptionCard(94, 2, (byte) 2));
+            }
+            case 859 -> { // Thẻ Độc Nhãn (Dame % / HP % / Dame %)
+                list.add(new OptionCard(50, 2, (byte) 0));
+                list.add(new OptionCard(77, 3, (byte) 1));
+                list.add(new OptionCard(50, 3, (byte) 2));
+            }
+            case 956 -> { // Thẻ Đội Trưởng Vàng (Dame % / HP % - Aura Vàng Hoàng Kim 0)
+                list.add(new OptionCard(50, 2, (byte) 0));
+                list.add(new OptionCard(50, 3, (byte) 1));
+                list.add(new OptionCard(77, 4, (byte) 2));
+            }
+            // Rank 5: Thần Thoại Oozaru (Aura 2, 3, 4)
+            case 1278 -> { // Thẻ Oozaru Khỉ Đen (Chí mạng / Sức đánh % / HP % / Giáp % - Aura 2)
+                list.add(new OptionCard(14, 1, (byte) 0));
+                list.add(new OptionCard(50, 3, (byte) 1));
+                list.add(new OptionCard(77, 5, (byte) 2));
+                list.add(new OptionCard(50, 4, (byte) 2));
+                list.add(new OptionCard(94, 2, (byte) 2));
+            }
+            case 1276 -> { // Thẻ Oozaru SSJ Khỉ Vàng (Dame % / HP % / Crit % - Aura 3)
+                list.add(new OptionCard(50, 2, (byte) 0));
+                list.add(new OptionCard(77, 3, (byte) 1));
+                list.add(new OptionCard(50, 5, (byte) 2));
+                list.add(new OptionCard(14, 2, (byte) 2));
+                list.add(new OptionCard(77, 4, (byte) 2));
+            }
+            case 1277 -> { // Thẻ Oozaru SSJ3 Siêu VIP (Jackpot Vòng Quay Thần Thoại - Aura 4)
+                list.add(new OptionCard(50, 3, (byte) 0));
+                list.add(new OptionCard(77, 3, (byte) 0));
+                list.add(new OptionCard(50, 4, (byte) 1));
+                list.add(new OptionCard(77, 4, (byte) 1));
+                list.add(new OptionCard(14, 3, (byte) 2));
+                list.add(new OptionCard(94, 3, (byte) 2));
+                list.add(new OptionCard(50, 6, (byte) 2));
+                list.add(new OptionCard(77, 6, (byte) 2));
+            }
+            default -> {
+                return null;
+            }
+        }
+        return list;
     }
 }

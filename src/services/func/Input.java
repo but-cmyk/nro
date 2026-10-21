@@ -22,6 +22,7 @@ import services.GiftCodeService;
 import services.player.InventoryService;
 import services.ItemService;
 import services.map.NpcService;
+import services.func.useitem.handlers.SpecialItemHandler;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -54,6 +55,7 @@ public class Input {
     public static final int CHOOSE_LEVEL_CDRD = 511;
     public static final int DISSOLUTION_CLAN = 513;
     public static final int DUNGLOA = 517;
+    public static final int USE_CARD_QUANTITY = 518;
 
     public static final byte NUMERIC = 0;
     public static final byte ANY = 1;
@@ -696,6 +698,26 @@ public class Input {
                     }
                     break;
 
+                case USE_CARD_QUANTITY: {
+                    Item itemCard = (Item) PLAYER_ID_OBJECT.remove((int) player.id);
+                    if (itemCard == null || player.inventory == null || !player.inventory.itemsBag.contains(itemCard) || itemCard.template.type != 33) {
+                        Service.gI().sendThongBao(player, "Vật phẩm không hợp lệ hoặc không còn trong hành trang!");
+                        break;
+                    }
+                    String inputCard = text[0];
+                    if (inputCard == null || !inputCard.matches("^[0-9]+$")) {
+                        Service.gI().sendThongBao(player, "Vui lòng nhập số nguyên hợp lệ!");
+                        break;
+                    }
+                    try {
+                        int cardQuantity = Integer.parseInt(inputCard);
+                        SpecialItemHandler.useCardBatch(player, itemCard, cardQuantity);
+                    } catch (Exception e) {
+                        Service.gI().sendThongBao(player, "Số lượng không hợp lệ!");
+                    }
+                    break;
+                }
+
                 case BANGHOI:
                     Clan clan = player.clan;
                     if (clan != null) {
@@ -921,6 +943,12 @@ public class Input {
 
     public void createFormGiaiTanBangHoi(Player pl) {
         createForm(pl, DISSOLUTION_CLAN, "Nhập OK để xác nhận giải tán bang hội.", new SubInput("", ANY));
+    }
+
+    public void createFormUseCardQuantity(Player pl, Item item) {
+        PLAYER_ID_OBJECT.put((int) pl.id, item);
+        createForm(pl, USE_CARD_QUANTITY, "Dùng Nhiều " + item.template.name,
+                new SubInput("Số lượng muốn dùng (Hiện có: " + item.quantity + ")", NUMERIC));
     }
 
     public static class SubInput {
