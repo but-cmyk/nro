@@ -264,7 +264,7 @@ namespace Game1
     		{
     			return;
     		}
-    		int limit = Math.Min(arg2, data.Length - arg1);
+    		int limit = (arg2 < data.Length - arg1) ? arg2 : (data.Length - arg1);
     		for (int i = 0; i < limit; i++)
     		{
     			if (posRead >= buffer.Length)
