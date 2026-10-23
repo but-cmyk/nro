@@ -175,7 +175,17 @@ public class TestZoneSerialExecutor {
         boolean finished = latch.await(5, TimeUnit.SECONDS);
         assertCondition(finished, "Toan bo 200 tasks hoan tat bat chap ngoai le lien tuc");
         assertCondition(successCounter.get() == 160, "So task thanh cong dung 160 (40 tasks gap exception da duoc isolate an toan)");
-        assertCondition(!executor.isRunning(), "Executor drain het sach va WIP tro ve 0 sau khi ket thuc");
+
+        // Doi drain loop tren Virtual Thread hoan tat decrement WIP ve 0
+        boolean isDrainDone = false;
+        for (int i = 0; i < 50; i++) {
+            if (!executor.isRunning()) {
+                isDrainDone = true;
+                break;
+            }
+            Thread.sleep(10);
+        }
+        assertCondition(isDrainDone, "Executor drain het sach va WIP tro ve 0 sau khi ket thuc");
     }
 
     /**
@@ -186,8 +196,9 @@ public class TestZoneSerialExecutor {
     private static void testZoneIntegrationConcurrency() throws Exception {
         System.out.println("\n--- [Test 4] Zone Integration Concurrency (30 Players Pick 1 Item + Zone.update) ---");
 
-        // Tao Zone dummy (map = null, zoneId = 0, maxPlayer = 20)
-        Zone zone = new Zone(null, 0, 20);
+        // Tao Map va Zone dummy (map != null de tranh NullPointerException khi item.update() doc map.mapId)
+        models.map.Map dummyMap = new models.map.Map(1, "Dummy Map", (byte) 0, (byte) 0, (byte) 0, (byte) 0, (byte) 0, new int[1][1], new int[1], 0, 20, new ArrayList<>(), new ArrayList<>());
+        Zone zone = new Zone(dummyMap, 0, 20);
 
         // Tao 1 item duy nhat trong zone
         ItemTemplate template = new ItemTemplate();
