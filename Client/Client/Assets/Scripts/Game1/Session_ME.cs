@@ -117,6 +117,11 @@ namespace Game1
     
     				}
     			}
+    			catch (ThreadAbortException)
+    			{
+    				Thread.ResetAbort();
+    				return;
+    			}
     			catch (Exception ex3)
     			{
     				Debug.Log("error read message!");
@@ -368,15 +373,23 @@ namespace Game1
     	{
     		isCancel = false;
     		connecting = true;
+    		connected = false;
     		Thread.CurrentThread.Priority = System.Threading.ThreadPriority.Highest;
-    		connected = true;
     		try
     		{
     			doConnect(host, port);
     			messageHandler.onConnectOK(isMainSession);
     		}
+    		catch (ThreadAbortException)
+    		{
+    			connected = false;
+    			connecting = false;
+    			Thread.ResetAbort();
+    		}
     		catch (Exception ex)
     		{
+    			connected = false;
+    			connecting = false;
     			Debug.LogError("Connect failed: " + ex.Message);
     			if (messageHandler != null)
     			{
@@ -392,7 +405,7 @@ namespace Game1
     		sc.NoDelay = true;
     		sc.Connect(host, port);
     		Stream stream = sc.GetStream();
-    		if (TlsConfig.Enabled)
+    		if (TlsConfig.ShouldUseTls(port))
     		{
     			SslStream ssl = new SslStream(stream, false, new RemoteCertificateValidationCallback(ValidateServerCertificate));
     			ssl.ReadTimeout = 30000;
@@ -413,6 +426,7 @@ namespace Game1
     		collectorThread.Start();
     		timeConnected = currentTimeMillis();
     		connecting = false;
+    		connected = true;
     		doSendMessage(new Message(-27));
     		key = null;
     	}

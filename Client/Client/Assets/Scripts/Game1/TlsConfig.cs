@@ -30,5 +30,25 @@ namespace Game1
 
         /// <summary>CHỈ dùng cho dev local. Production phải để false.</summary>
         public static readonly bool AllowUntrustedForDev = true;
+
+        /// <summary>Cổng plaintext truyền thống trong kiến trúc dual-port (không chạy TLS).</summary>
+        public const int LegacyPlaintextPort = 14445;
+
+        /// <summary>
+        /// Xác định xem cổng được chỉ định có nên dùng mã hóa TLS hay không.
+        /// Cổng 14445 là cổng plaintext truyền thống trong kiến trúc dual-port.
+        /// </summary>
+        public static bool ShouldUseTls(int port)
+        {
+            if (!Enabled)
+            {
+                return false;
+            }
+            if (port == LegacyPlaintextPort)
+            {
+                return false;
+            }
+            return true;
+        }
     }
 }

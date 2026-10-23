@@ -1292,7 +1292,7 @@ namespace Game1
     
     	static ServerListScreen()
     	{
-            smartPhoneVN = "Localhost:127.0.0.1:14445:0:0:0,0,0";
+            smartPhoneVN = "Localhost:127.0.0.1:14445:0:0:0,Localhost TLS:127.0.0.1:14446:0:0:0,0,0";
     		javaVN = smartPhoneVN;
     		smartPhoneIn = "Naga:dragon.indonaga.com:14446:2:0:0,2,0";
     		javaIn = "Naga:52.74.230.22:14446:2:0:0,2,0";
