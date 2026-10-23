@@ -77,6 +77,7 @@ public final class Manager {
 
     /** TLS is opt-in: enable only after cert/key are mounted on the server. */
     public static boolean TLS_ENABLED = false;
+    public static int TLS_PORT = 0;
     public static String TLS_CERT = "certs/fullchain.pem";
     public static String TLS_KEY = "certs/privkey.pem";
 
@@ -349,6 +350,12 @@ public static final String queryTopWhis = "SELECT id, CAST(JSON_UNQUOTE(JSON_EXT
         }
         if ((value = properties.get("server.tls.enabled")) != null) {
             TLS_ENABLED = String.valueOf(value).equalsIgnoreCase("true");
+        }
+        if ((value = properties.get("server.tls.port")) != null) {
+            try {
+                TLS_PORT = Integer.parseInt(String.valueOf(value).trim());
+            } catch (NumberFormatException ignored) {
+            }
         }
         if ((value = properties.get("server.tls.cert")) != null) {
             TLS_CERT = String.valueOf(value);

@@ -33,6 +33,8 @@ public class MySession extends Session {
 
     public byte timeWait = 0;
     public String ipAddress;
+    /** True if this session connection is TLS encrypted. */
+    public boolean isTls;
     /** True while this session is counted in ServerManager.CLIENTS for its IP. */
     public boolean ipCounted;
     public boolean isAdmin;
@@ -170,6 +172,9 @@ public class MySession extends Session {
                             if (this.player.notify != null && !this.player.notify.equals("null") && !this.player.notify.isEmpty() && this.player.notify.length() > 0) {
                                 Service.gI().sendThongBao(this.player, this.player.notify);
                                 this.player.notify = null;
+                            }
+                            if (!this.isTls && Manager.TLS_PORT > 0) {
+                                Service.gI().sendThongBao(this.player, "Cảnh báo: Bạn đang dùng phiên bản cũ (không mã hóa TLS). Vui lòng cập nhật game sớm để bảo vệ tài khoản!");
                             }
                         }
                     } catch (Exception e) {

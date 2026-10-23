@@ -252,13 +252,16 @@ public class ServerManager {
         int maxRetries = 3;
         for (int attempt = 1; attempt <= maxRetries; attempt++) {
             try {
-                NettyServer.gI().start(PORT, Manager.TLS_ENABLED);
+                NettyServer.gI().start(PORT, Manager.TLS_ENABLED, Manager.TLS_PORT);
                 return;
             } catch (Exception e) {
                 Logger.error("Lỗi khi khởi chạy Netty Server (lần " + attempt + "/" + maxRetries + "): " + e.getMessage());
                 if (attempt < maxRetries) {
                     Logger.warning(">> Đang tự động giải phóng port " + PORT + " và thử khởi động lại sau 1.5 giây...");
                     freePort(PORT);
+                    if (Manager.TLS_PORT > 0) {
+                        freePort(Manager.TLS_PORT);
+                    }
                     try {
                         Thread.sleep(1500);
                     } catch (InterruptedException ignored) {

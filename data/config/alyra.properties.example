@@ -21,8 +21,10 @@ server.debug=0
 
 #TLS
 # Bật sau khi đã đặt cert/key vào certs/ (xem certs/README.md).
-# Client bản mới mặc định dùng TLS; bản cũ sẽ không kết nối được.
+# Single-port mode: server.tls.enabled=true (cổng 14445 mã hóa TLS)
+# Dual-port mode: server.tls.port=14446 (cổng 14445 chạy legacy plaintext, 14446 chạy TLS song song 30 ngày)
 server.tls.enabled=false
+server.tls.port=0
 server.tls.cert=certs/fullchain.pem
 server.tls.key=certs/privkey.pem
 

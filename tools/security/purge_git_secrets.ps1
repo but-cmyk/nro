@@ -54,15 +54,45 @@ Write-Host "Creating backup bundle: $bundle"
 git bundle create $bundle --all
 if ($LASTEXITCODE -ne 0) { throw "git bundle failed" }
 
-$indexFilter = 'git rm --cached --ignore-unmatch ' + ($Paths -join ' ')
-Write-Host "Rewriting history with index-filter: $indexFilter"
-git filter-branch --force --index-filter $indexFilter --prune-empty --tag-name-filter cat -- --all
-if ($LASTEXITCODE -ne 0) { throw "git filter-branch failed" }
+$originUrl = (git config --get remote.origin.url)
 
-Write-Host "Expiring reflog and garbage collecting..."
-git for-each-ref --format='delete %(refname)' refs/original | git update-ref --stdin
-git reflog expire --expire=now --all
-git gc --prune=now --aggressive
+$hasFilterRepo = $false
+try {
+    $check = & python -m git_filter_repo --version 2>&1
+    if ($LASTEXITCODE -eq 0) { $hasFilterRepo = $true }
+} catch {
+    $hasFilterRepo = $false
+}
+
+if ($hasFilterRepo) {
+    Write-Host "Using git-filter-repo (fast & safe)..." -ForegroundColor Cyan
+    $filterArgs = @("-m", "git_filter_repo", "--force")
+    foreach ($p in $Paths) {
+        $filterArgs += @("--path", $p)
+    }
+    $filterArgs += "--invert-paths"
+    & python $filterArgs
+    if ($LASTEXITCODE -ne 0) { throw "git-filter-repo failed" }
+
+    if ($originUrl) {
+        Write-Host "Restoring remote origin: $originUrl"
+        git remote add origin $originUrl 2>$null
+        if ($LASTEXITCODE -ne 0) {
+            git remote set-url origin $originUrl
+        }
+    }
+} else {
+    Write-Host "git-filter-repo not found. Falling back to git filter-branch..." -ForegroundColor Yellow
+    $indexFilter = 'git rm --cached --ignore-unmatch ' + ($Paths -join ' ')
+    Write-Host "Rewriting history with index-filter: $indexFilter"
+    git filter-branch --force --index-filter $indexFilter --prune-empty --tag-name-filter cat -- --all
+    if ($LASTEXITCODE -ne 0) { throw "git filter-branch failed" }
+
+    Write-Host "Expiring reflog and garbage collecting..."
+    git for-each-ref --format='delete %(refname)' refs/original | git update-ref --stdin
+    git reflog expire --expire=now --all
+    git gc --prune=now --aggressive
+}
 
 Write-Host ""
 Write-Host "Local history rewritten. Backup: $bundle" -ForegroundColor Green

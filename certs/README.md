@@ -52,26 +52,46 @@ server.tls.key=certs/dev-key.pem
 
 ## 3. Tính pin SHA-256 cho client
 
+### Cách A: Pin Public Key (Khuyến nghị — không bị đổi khi renew cert cùng key pair)
+```bash
+openssl x509 -in certs/fullchain.pem -pubkey -noout \
+  | openssl rsa -pubin -outform DER 2>/dev/null \
+  | openssl dgst -sha256 -binary \
+  | openssl base64 -A
+```
+
+### Cách B: Pin toàn bộ DER certificate
 ```bash
 openssl x509 -in certs/fullchain.pem -outform DER \
   | openssl dgst -sha256 -binary \
   | openssl base64 -A
 ```
 
-Copy chuỗi base64 vào `Client/Client/Assets/Scripts/Game1/TlsConfig.cs`
-(`PinnedSha256`). Khi renew cert, thêm pin mới vào mảng trước, giữ pin cũ
-30 ngày để client cũ còn kết nối được.
+Copy chuỗi base64 vào `Client/Client/Assets/Scripts/Game1/TlsConfig.cs` (`PinnedSha256`).
+Client hỗ trợ cả 2 cách: nếu khớp với 1 trong 2 hash, kết nối được chấp thuận.
 
-## 4. Rollout
+## 4. Kịch Bản Rollout (Dual-Port Transition)
 
-1. Phát hành client có TLS + pin (client mới).
-2. Bật `server.tls.enabled=true`, restart server.
-3. Client cũ sẽ không kết nối được — thông báo bắt buộc cập nhật.
-4. Nếu cần rollback: đặt `server.tls.enabled=false` và phát hành lại client cũ.
+1. **Giai đoạn chuyển tiếp (30 ngày)**:
+   - Trong `data/config/alyra.properties`:
+     ```properties
+     server.port=14445
+     server.tls.enabled=true
+     server.tls.port=14446
+     server.tls.cert=certs/fullchain.pem
+     server.tls.key=certs/privkey.pem
+     ```
+   - Server lắng nghe song song:
+     - Cổng `14445`: Plaintext cho client cũ (khi đăng nhập sẽ nhận thông báo yêu cầu tải bản mới).
+     - Cổng `14446`: TLS 1.2/1.3 cho client mới đã cấu hình TLS.
+   - Phát hành client mới mặc định trỏ cổng 14446.
+2. **Giai đoạn chính thức**:
+   - Tắt cổng plaintext: đặt `server.port=14446` (hoặc chuyển hẳn 14445 sang TLS bằng `server.tls.port=0` và `server.tls.enabled=true`).
+   - Mọi kết nối plaintext bị từ chối 100%.
 
 ## 5. Lưu ý
 
 - Server dùng `SslProvider.JDK` (TLS 1.2/1.3), không phụ thuộc OpenSSL native.
-- Client Unity/Mono dùng `SslProtocols.Tls12` để tương thích rộng.
-- Pin là SHA-256 của toàn bộ DER certificate (không phải SPKI). Renew → đổi pin.
+- Client Unity/Mono dùng `SslProtocols.Tls12` để tương thích rộng trên Windows/Android/iOS.
 - Không dùng `AllowUntrustedForDev=true` trên production.
+- Để tạo nhanh chứng chỉ dev local, chạy: `pwsh tools/security/gen_dev_cert.ps1`.

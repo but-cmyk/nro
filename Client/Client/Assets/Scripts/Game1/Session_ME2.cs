@@ -361,9 +361,10 @@ namespace Game1
     			SslStream ssl = new SslStream(stream, false, new RemoteCertificateValidationCallback(ValidateServerCertificate));
     			ssl.ReadTimeout = 30000;
     			ssl.WriteTimeout = 30000;
-    			ssl.AuthenticateAsClient(TlsConfig.ServerName, null, SslProtocols.Tls12, false);
+    			string targetHost = !string.IsNullOrEmpty(TlsConfig.ServerName) ? TlsConfig.ServerName : host;
+    			ssl.AuthenticateAsClient(targetHost, null, SslProtocols.Tls12, false);
     			stream = ssl;
-    			Debug.Log("TLS connected (ME2): " + TlsConfig.ServerName);
+    			Debug.Log("TLS connected (ME2): " + targetHost);
     		}
     		dataStream = stream;
     		dis = new BinaryReader(dataStream, new UTF8Encoding());
@@ -395,14 +396,21 @@ namespace Game1
     		{
     			using (SHA256 sha = SHA256.Create())
     			{
-    				byte[] hash = sha.ComputeHash(certificate.GetRawCertData());
-    				string pin = Convert.ToBase64String(hash);
+    				byte[] rawCert = certificate.GetRawCertData();
+    				string certPin = Convert.ToBase64String(sha.ComputeHash(rawCert));
+
+    				byte[] pubKey = certificate.GetPublicKey();
+    				string pubKeyPin = pubKey != null ? Convert.ToBase64String(sha.ComputeHash(pubKey)) : null;
+
     				for (int i = 0; i < TlsConfig.PinnedSha256.Length; i++)
     				{
     					string expected = TlsConfig.PinnedSha256[i];
-    					if (!string.IsNullOrEmpty(expected) && expected == pin)
+    					if (!string.IsNullOrEmpty(expected))
     					{
-    						return true;
+    						if (expected == certPin || (pubKeyPin != null && expected == pubKeyPin))
+    						{
+    							return true;
+    						}
     					}
     				}
     			}
