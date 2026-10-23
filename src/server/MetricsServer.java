@@ -45,6 +45,8 @@ public final class MetricsServer {
 
             httpServer.createContext("/health", new HealthHandler());
             httpServer.createContext("/metrics", new MetricsHandler());
+            httpServer.createContext("/assets/manifest", new services.AssetHttpService.ManifestHandler());
+            httpServer.createContext("/assets/download", new services.AssetHttpService.AssetDownloadHandler());
             httpServer.createContext("/", new RootHandler());
 
             // Tận dụng Java 21 LTS Virtual Threads cho zero-cost HTTP request dispatching
@@ -52,7 +54,7 @@ public final class MetricsServer {
             httpServer.start();
             isRunning.set(true);
 
-            Logger.success(String.format(">> [MetricsServer] Đang lắng nghe Health & Metrics tại http://127.0.0.1:%d/ (GET /health, GET /metrics)", port));
+            Logger.success(String.format(">> [MetricsServer] Đang lắng nghe Health, Metrics & Assets tại http://127.0.0.1:%d/ (GET /health, GET /metrics, GET /assets/manifest)", port));
         } catch (Throwable t) {
             Logger.warning(">> [MetricsServer] Không thể khởi động trên 127.0.0.1:" + port + " (" + t.getMessage() + "). Server game vẫn hoạt động bình thường.");
         }

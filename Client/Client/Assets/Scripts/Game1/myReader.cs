@@ -181,26 +181,26 @@ namespace Game1
     
     	public int read(ref sbyte[] data)
     	{
-    		if (data == null)
+    		if (data == null || buffer == null)
     		{
     			return 0;
     		}
     		int num = 0;
     		for (int i = 0; i < data.Length; i++)
     		{
-    			data[i] = readSByte();
-    			if (posRead > buffer.Length)
+    			if (posRead >= buffer.Length)
     			{
-    				return -1;
+    				return (num > 0) ? num : -1;
     			}
+    			data[i] = readSByte();
     			num++;
     		}
     		return num;
     	}
-    
+
     	public void readFully(ref sbyte[] data)
     	{
-    		if (data != null && data.Length + posRead <= buffer.Length)
+    		if (data != null && buffer != null && data.Length + posRead <= buffer.Length)
     		{
     			for (int i = 0; i < data.Length; i++)
     			{
@@ -208,12 +208,19 @@ namespace Game1
     			}
     		}
     	}
-    
+
+    	public sbyte[] readBytesSafe(int len, int maxAllowed = ArrayCast.DEFAULT_MAX_ALLOC)
+    	{
+    		sbyte[] data = ArrayCast.SafeAllocSByte(len, maxAllowed);
+    		read(ref data, 0, len);
+    		return data;
+    	}
+
     	public int available()
     	{
     		return (buffer != null) ? (buffer.Length - posRead) : 0;
     	}
-    
+
     	public static byte convertSbyteToByte(sbyte var)
     	{
     		if (var > 0)
@@ -222,9 +229,10 @@ namespace Game1
     		}
     		return (byte)(var + 256);
     	}
-    
+
     	public static byte[] convertSbyteToByte(sbyte[] var)
     	{
+    		if (var == null) return null;
     		byte[] array = new byte[var.Length];
     		for (int i = 0; i < var.Length; i++)
     		{
@@ -239,30 +247,31 @@ namespace Game1
     		}
     		return array;
     	}
-    
+
     	public void Close()
     	{
     		buffer = null;
     	}
-    
+
     	public void close()
     	{
     		buffer = null;
     	}
-    
+
     	public void read(ref sbyte[] data, int arg1, int arg2)
     	{
-    		if (data == null)
+    		if (data == null || buffer == null || arg1 < 0 || arg2 < 0)
     		{
     			return;
     		}
-    		for (int i = 0; i < arg2; i++)
+    		int limit = Math.Min(arg2, data.Length - arg1);
+    		for (int i = 0; i < limit; i++)
     		{
-    			data[i + arg1] = readSByte();
-    			if (posRead > buffer.Length)
+    			if (posRead >= buffer.Length)
     			{
     				break;
     			}
+    			data[i + arg1] = readSByte();
     		}
     	}
     }

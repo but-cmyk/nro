@@ -65,6 +65,33 @@ public class Player extends Character {
 
     public long lastTimeSave;
     public int lastSaveHash = 0;
+
+    // Dirty tracking flags (Nhóm B3)
+    public static final int DIRTY_POINT       = 1 << 0;
+    public static final int DIRTY_INVENTORY   = 1 << 1;
+    public static final int DIRTY_TASK        = 1 << 2;
+    public static final int DIRTY_PET         = 1 << 3;
+    public static final int DIRTY_MAGIC_TREE  = 1 << 4;
+    public static final int DIRTY_ALL         = 0x7FFFFFFF;
+
+    private volatile int dirtyMask = DIRTY_ALL;
+
+    public void markDirty(int flag) {
+        this.dirtyMask |= flag;
+    }
+
+    public boolean isDirty(int flag) {
+        return (this.dirtyMask & flag) != 0;
+    }
+
+    public void clearDirty() {
+        this.dirtyMask = 0;
+    }
+
+    public int getDirtyMask() {
+        return this.dirtyMask;
+    }
+
     public boolean isJoinMap = false;
     public boolean isCookingBanhDay = false;
     public boolean isCookingBanhChung = false;

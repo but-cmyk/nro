@@ -791,7 +791,7 @@ namespace Game1
                             {
                                 int num167 = msg.reader().readUnsignedShort();
                                 Res.outz("lent =" + num167);
-                                sbyte[] data5 = new sbyte[num167];
+                                sbyte[] data5 = ArrayCast.SafeAllocSByte(num167, 1048576);
                                 msg.reader().read(ref data5, 0, num167);
                                 GameScr.imgCapcha = Image.createImage(data5, 0, num167);
                                 GameScr.gI().keyInput = "-----";
@@ -1299,7 +1299,7 @@ namespace Game1
                                     string[] array9 = Res.split(original, "/", 0);
                                     string filename = "x" + mGraphics.zoomLevel + array9[array9.Length - 1];
                                     int num93 = msg.reader().readInt();
-                                    sbyte[] data = new sbyte[num93];
+                                    sbyte[] data = ArrayCast.SafeAllocSByte(num93, 10485760);
                                     msg.reader().read(ref data, 0, num93);
                                     Rms.saveRMS(filename, data);
                                 }
@@ -2824,7 +2824,7 @@ namespace Game1
                             Image image = null;
                             try
                             {
-                                array11 = new sbyte[num157];
+                                array11 = ArrayCast.SafeAllocSByte(num157, 1048576);
                                 for (int num158 = 0; num158 < num157; num158++)
                                 {
                                     array11[num158] = msg.reader().readByte();
@@ -6326,7 +6326,8 @@ namespace Game1
                     case 61:
                         {
                             string text = msg.reader().readUTF();
-                            sbyte[] data = new sbyte[msg.reader().readInt()];
+                            int kSkillLen = msg.reader().readInt();
+                            sbyte[] data = ArrayCast.SafeAllocSByte(kSkillLen, 2097152);
                             msg.reader().read(ref data);
                             if (data.Length == 0)
                             {

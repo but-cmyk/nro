@@ -3,6 +3,8 @@ src/sql/*.sql
 docker/initdb/*.bak
 docker/initdb/*.sql.gz
 docker/initdb/*.dump
+backups/
+*.sql.gz
 
 # Ignore local configuration files with passwords/API keys
 data/config/alyra.properties

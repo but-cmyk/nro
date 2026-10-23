@@ -187,7 +187,7 @@ namespace Game1
     			{
     				throw new IOException("Message2 frame size vượt ngưỡng cho phép (2MB): " + num4);
     			}
-    			sbyte[] array = new sbyte[num4];
+    			sbyte[] array = ArrayCast.SafeAllocSByte(num4, 2097152);
     			byte[] src = dis.ReadBytes(num4);
     			if (src == null || src.Length < num4)
     			{
@@ -237,7 +237,7 @@ namespace Game1
     				{
     					throw new IOException("Frame size vượt ngưỡng cho phép (64KB): " + num);
     				}
-    				sbyte[] array = new sbyte[num];
+    				sbyte[] array = ArrayCast.SafeAllocSByte(num, 65536);
     				byte[] src = dis.ReadBytes(num);
     				if (src == null || src.Length < num)
     				{

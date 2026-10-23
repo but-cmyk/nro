@@ -492,6 +492,9 @@ public class ServerManager {
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
+
+            // Xả toàn bộ hàng đợi Outbox retry trước khi ngắt kết nối database
+            PlayerDAO.flushOutboxNow();
         }
     }
 

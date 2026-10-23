@@ -76,8 +76,13 @@ public class MemoryOptimizer implements Runnable {
         try {
             Logger.log("[MemoryOptimizer] Quy trình Idempotent Shutdown được kích hoạt trước khi restart...");
             ServerManager.gI().shutdown();
-            FileRunner.runBatchFile("run.bat");
-            Logger.log("[MemoryOptimizer] Server se tat de restart an toan...");
+            if (!FileRunner.isContainerOrLinux()) {
+                Logger.log("[MemoryOptimizer] Native Windows Host: Chạy lại run.bat...");
+                FileRunner.runBatchFile("run.bat");
+            } else {
+                Logger.log("[MemoryOptimizer] Docker/Linux environment: Server thoát để container supervisor tự động restart...");
+            }
+            Logger.log("[MemoryOptimizer] Server sẽ tắt để restart an toàn...");
             scheduler.shutdownNow(); // dung scheduler truoc khi thoat
             System.exit(0);
         } catch (Exception e) {

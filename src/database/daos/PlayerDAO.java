@@ -25,6 +25,11 @@ import org.json.simple.JSONValue;
 import services.map.ChangeMapService;
 import utils.TimeUtil;
 import utils.Util;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 public class PlayerDAO {
 
@@ -421,6 +426,11 @@ public class PlayerDAO {
 
     public static PlayerSaveSnapshot extractSnapshot(Player player) {
         if (player == null || player.idMark == null || !player.idMark.isLoadedAllDataPlayer()) {
+            return null;
+        }
+
+        // Fast dirty check: nếu nhân vật online, đã từng lưu và không có cờ dirty nào, bỏ qua serialize
+        if (!player.isOffline && player.lastSaveHash != 0 && player.getDirtyMask() == 0) {
             return null;
         }
 
@@ -1169,6 +1179,83 @@ public class PlayerDAO {
         }
     }
 
+    public static class OutboxEntry {
+        public final PlayerSaveSnapshot snapshot;
+        public final long firstFailedTime;
+        public int retryCount;
+
+        public OutboxEntry(PlayerSaveSnapshot snapshot) {
+            this.snapshot = snapshot;
+            this.firstFailedTime = System.currentTimeMillis();
+            this.retryCount = 0;
+        }
+    }
+
+    private static final BlockingQueue<OutboxEntry> OUTBOX_QUEUE = new LinkedBlockingQueue<>(5000);
+    private static final int MAX_OUTBOX_RETRIES = 5;
+    private static final ScheduledExecutorService OUTBOX_EXECUTOR = Executors.newSingleThreadScheduledExecutor(r -> {
+        Thread t = new Thread(r, "PlayerDAO-Outbox-Worker");
+        t.setDaemon(true);
+        return t;
+    });
+
+    static {
+        OUTBOX_EXECUTOR.scheduleWithFixedDelay(PlayerDAO::processOutboxQueue, 5, 5, TimeUnit.SECONDS);
+    }
+
+    public static int getOutboxQueueSize() {
+        return OUTBOX_QUEUE.size();
+    }
+
+    public static void processOutboxQueue() {
+        if (OUTBOX_QUEUE.isEmpty()) {
+            return;
+        }
+        int processed = 0;
+        int maxBatch = 50;
+        while (!OUTBOX_QUEUE.isEmpty() && processed < maxBatch) {
+            OutboxEntry entry = OUTBOX_QUEUE.poll();
+            if (entry == null) {
+                break;
+            }
+            try {
+                AlyraManager.executeUpdate(QUERY_UPDATE_PLAYER, entry.snapshot.params);
+                Logger.success("[PlayerDAO Outbox] Đã retry thành công player ID " + entry.snapshot.playerId 
+                        + " (" + entry.snapshot.playerName + ") sau " + entry.retryCount + " lần thử.");
+            } catch (Exception e) {
+                entry.retryCount++;
+                if (entry.retryCount < MAX_OUTBOX_RETRIES) {
+                    OUTBOX_QUEUE.offer(entry);
+                    Logger.warning("[PlayerDAO Outbox] Retry lần " + entry.retryCount + " thất bại cho player " 
+                            + entry.snapshot.playerName + ": " + e.getMessage());
+                } else {
+                    Logger.error("[PlayerDAO Outbox CRITICAL] Vượt quá " + MAX_OUTBOX_RETRIES 
+                            + " lần retry cho player " + entry.snapshot.playerName + ". Ghi nhận thất bại!");
+                }
+            }
+            processed++;
+        }
+    }
+
+    public static void flushOutboxNow() {
+        if (OUTBOX_QUEUE.isEmpty()) {
+            return;
+        }
+        Logger.log("[PlayerDAO Outbox] Đang xả toàn bộ " + OUTBOX_QUEUE.size() + " bản ghi tồn đọng trong outbox trước khi tắt server...");
+        while (!OUTBOX_QUEUE.isEmpty()) {
+            OutboxEntry entry = OUTBOX_QUEUE.poll();
+            if (entry == null) {
+                break;
+            }
+            try {
+                AlyraManager.executeUpdate(QUERY_UPDATE_PLAYER, entry.snapshot.params);
+                Logger.success("[PlayerDAO Outbox Shutdown] Đã lưu thành công player " + entry.snapshot.playerName);
+            } catch (Exception e) {
+                Logger.error("[PlayerDAO Outbox Shutdown] Không thể lưu player " + entry.snapshot.playerName + ": " + e.getMessage());
+            }
+        }
+    }
+
     public static void updatePlayer(Player player) {
         PlayerSaveSnapshot snapshot = extractSnapshot(player);
         if (snapshot == null) {
@@ -1186,6 +1273,7 @@ public class PlayerDAO {
             AlyraManager.executeUpdate(QUERY_UPDATE_PLAYER, snapshot.params);
             if (player != null) {
                 player.lastSaveHash = currentHash;
+                player.clearDirty();
             }
 
             if (snapshot.isOffline) {
@@ -1200,6 +1288,13 @@ public class PlayerDAO {
             }
         } catch (Exception e) {
             Logger.logException(PlayerDAO.class, e, "Lỗi save player " + snapshot.playerName);
+            if (OUTBOX_QUEUE.size() < 5000) {
+                OUTBOX_QUEUE.offer(new OutboxEntry(snapshot));
+                Logger.warning("[PlayerDAO Outbox] Đã enqueue dữ liệu player " + snapshot.playerName 
+                        + " vào Outbox Retry Queue (hàng đợi: " + OUTBOX_QUEUE.size() + ").");
+            } else {
+                Logger.error("[PlayerDAO Outbox CRITICAL] Outbox queue đã đầy (>5000)! Không thể enqueue player " + snapshot.playerName);
+            }
         }
     }
 
