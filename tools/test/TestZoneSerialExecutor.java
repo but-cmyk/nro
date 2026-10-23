@@ -206,7 +206,11 @@ public class TestZoneSerialExecutor {
         template.name = "Ngoc Rong 1 Sao";
         template.type = 12; // Do quy
         ItemMap item = new ItemMap(zone, template, 1, 500, 300, -1);
-        zone.items.add(item);
+        // new ItemMap da tu dong dang ky vao Zone qua zone.addItem() tren SerialExecutor.
+        // Cho task addItem khoi tao hoan tat tren SerialExecutor de tranh race condition lam trung lap item trong zone.items.
+        CountDownLatch initLatch = new CountDownLatch(1);
+        zone.execute(initLatch::countDown);
+        initLatch.await(2, TimeUnit.SECONDS);
 
         int playerCount = 30;
         CountDownLatch startLatch = new CountDownLatch(1);
