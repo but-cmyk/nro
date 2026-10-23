@@ -28,6 +28,7 @@ public class Message implements IMessage {
 
     public Message(byte command, byte[] data) {
         this.command = command;
+        this.cachedData = data;
         this.is = new ByteArrayInputStream(data);
         this.dis = new DataInputStream(this.is);
     }
@@ -50,6 +51,34 @@ public class Message implements IMessage {
     @Override
     public DataInputStream reader() {
         return this.dis;
+    }
+
+    /**
+     * Lấy số byte còn lại có thể đọc được từ payload.
+     */
+    public int available() {
+        try {
+            return this.dis != null ? this.dis.available() : 0;
+        } catch (IOException e) {
+            return 0;
+        }
+    }
+
+    /**
+     * Xác thực số lượng byte tối thiểu cần thiết trước khi đọc.
+     * Ném IOException("Packet underflow") nếu stream không đủ byte, bảo vệ an toàn luồng decode.
+     *
+     * @param bytesNeeded Số lượng byte tối thiểu cần đọc
+     * @throws IOException Khi reader null hoặc stream không đủ số byte yêu cầu
+     */
+    public void ensure(int bytesNeeded) throws IOException {
+        if (this.dis == null) {
+            throw new IOException("Message reader is null (cmd " + command + ")");
+        }
+        int avail = this.dis.available();
+        if (avail < bytesNeeded) {
+            throw new IOException("Packet underflow: cần " + bytesNeeded + " bytes nhưng chỉ còn " + avail + " bytes (cmd " + command + ")");
+        }
     }
 
     private byte[] cachedData;

@@ -945,21 +945,33 @@ public class ShopService {
                 Service.gI().sendThongBao(pl, "Vàng sau khi bán vượt quá giới hạn");
                 return;
             }
-            pl.inventory.addGold(totalCost);
-            Service.gI().sendMoney(pl);
-            Service.gI().sendThongBao(pl, "Đã bán " + item.template.name
-                    + " thu được " + Util.powerToString(totalCost) + " vàng");
+
+            boolean subSuccess;
+            if (where == 0) {
+                subSuccess = InventoryService.gI().trySubQuantityItemsBody(pl, item, quantity);
+            } else {
+                subSuccess = InventoryService.gI().trySubQuantityItemsBag(pl, item, quantity);
+            }
+
+            if (!subSuccess) {
+                Service.gI().sendThongBao(pl, "Số lượng vật phẩm không hợp lệ để bán!");
+                return;
+            }
 
             // Add vật phẩm đã bán
             if (item.template.id != 457) {
                 BuyBackService.gI().addItem(pl, item);
             }
+
+            pl.inventory.addGold(totalCost);
+            Service.gI().sendMoney(pl);
+            Service.gI().sendThongBao(pl, "Đã bán " + item.template.name
+                    + " thu được " + Util.powerToString(totalCost) + " vàng");
+
             if (where == 0) {
-                InventoryService.gI().subQuantityItemsBody(pl, item, quantity);
                 InventoryService.gI().sendItemBody(pl);
                 Service.gI().Send_Caitrang(pl);
             } else {
-                InventoryService.gI().subQuantityItemsBag(pl, item, quantity);
                 InventoryService.gI().sendItemBags(pl);
             }
             if ("BUNMA".equals(pl.idMark.getTagNameShop())

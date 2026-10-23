@@ -36,12 +36,14 @@ public class Trade {
     private int goldTrade1;
     private int goldTrade2;
 
+    public final String tradeId = java.util.UUID.randomUUID().toString();
     public byte accept;
     public boolean player1Locked;
     public boolean player2Locked;
     private boolean player1Accepted;
     private boolean player2Accepted;
     private volatile boolean isDisposed;
+    private volatile boolean isTradeExecuted;
 
     private long lastTimeStart;
     private boolean start;
@@ -393,6 +395,12 @@ public class Trade {
         if (this.isDisposed || player1 == null || player2 == null || player1.inventory == null || player2.inventory == null) {
             return;
         }
+        synchronized (this) {
+            if (this.isTradeExecuted) {
+                return;
+            }
+            this.isTradeExecuted = true;
+        }
         Player firstLock = player1.id < player2.id ? player1 : player2;
         Player secondLock = player1.id < player2.id ? player2 : player1;
 
@@ -470,7 +478,7 @@ public class Trade {
                 isTransCommitted = true;
 
                 // Audit sau khi commit; lỗi audit không được làm hỏng giao dịch.
-                HistoryTransactionDAO.insertAsync(player1, player2, goldTrade1, goldTrade2, itemsTrade1, itemsTrade2,
+                HistoryTransactionDAO.insertAsync(this.tradeId, player1, player2, goldTrade1, goldTrade2, itemsTrade1, itemsTrade2,
                         bag1Before, bag2Before, this.player1.inventory.itemsBag, this.player2.inventory.itemsBag,
                         gold1Before, gold2Before, this.player1.inventory.gold, this.player2.inventory.gold);
             } catch (Exception e) {

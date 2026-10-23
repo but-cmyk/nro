@@ -751,11 +751,11 @@ public class NpcFactory {
                                         ConsignShopService.gI().openShopKyGui(player);
                                         return;
                                     }
-                                    player.inventory.gem -= 5;
+                                    player.inventory.subGemDirect(5);
                                     Service.gI().sendMoney(player);
                                     it.isUpTop = (byte) Math.min(100, it.isUpTop + 1);
                                     ConsignShopManager.gI().updateItemUpTopAsync(it.id, it.isUpTop);
-                                    database.daos.PlayerDAO.updatePlayerAsync(player);
+                                    database.daos.PlayerDAO.updatePlayer(player);
                                     Service.gI().sendThongBao(player, "Đưa vật phẩm lên trang đầu thành công!");
                                     ConsignShopService.gI().openShopKyGui(player);
                                 } else {

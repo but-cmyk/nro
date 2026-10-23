@@ -55,9 +55,10 @@ public class MemoryOptimizer implements Runnable {
             long usedMemoryMb = (totalMemory - freeMemory) / (1024 * 1024);
             long maxMemoryMb = maxMemory / (1024 * 1024);
 
-            if (usedMemoryMb > maxRamMb) {
+            long alertThreshold = Math.min(maxRamMb, maxMemoryMb * 85 / 100);
+            if (usedMemoryMb > alertThreshold) {
                 if (server.Manager.DEBUG) {
-                    Logger.warning("[MemoryOptimizer] High Memory Alert: " + usedMemoryMb + " MB / " + maxMemoryMb + " MB");
+                    Logger.warning("[MemoryOptimizer] High Memory Alert: " + usedMemoryMb + " MB / " + maxMemoryMb + " MB\n" + data.DataGame.getCacheReport());
                 }
 
                 // Chi thuc hien restart neu bo nho can kiet sat nguong toi da (>95% max heap) de bao ve server khoi OutOfMemory
@@ -73,8 +74,8 @@ public class MemoryOptimizer implements Runnable {
 
     private void restartServer() {
         try {
-            Logger.log("[MemoryOptimizer] Luu toan bo du lieu nguoi choi truoc khi restart...");
-            ServerManager.gI().saveAllPlayersData();
+            Logger.log("[MemoryOptimizer] Quy trình Idempotent Shutdown được kích hoạt trước khi restart...");
+            ServerManager.gI().shutdown();
             FileRunner.runBatchFile("run.bat");
             Logger.log("[MemoryOptimizer] Server se tat de restart an toan...");
             scheduler.shutdownNow(); // dung scheduler truoc khi thoat

@@ -27,6 +27,9 @@ public class TestSecurityFixes {
         check("remaining > 0", a.getRemainingLockMillis() > 0);
         a.reset();
         check("reset unlocks", a.canLogin());
+
+        // Kiểm tra Semaphore CPU Throttling bảo toàn permits
+        check("semaphore permits restored", PasswordUtils.getAvailablePermits() == PasswordUtils.getMaxConcurrentBcrypt());
         System.out.println("ALL SECURITY CHECKS PASSED");
     }
 

@@ -178,8 +178,16 @@ namespace Game1
     			int num2 = readKey(dis.ReadSByte()) + 128;
     			int num3 = readKey(dis.ReadSByte()) + 128;
     			int num4 = (num3 * 256 + num2) * 256 + num;
+    			if (num4 < 0 || num4 > 2097152)
+    			{
+    				throw new IOException("Message2 frame size vượt ngưỡng cho phép (2MB): " + num4);
+    			}
     			sbyte[] array = new sbyte[num4];
     			byte[] src = dis.ReadBytes(num4);
+    			if (src == null || src.Length < num4)
+    			{
+    				throw new IOException("Message2 underflow: không đủ byte frame (cần " + num4 + ", nhận " + (src != null ? src.Length : 0) + ")");
+    			}
     			array = ArrayCast.cast(src);
     			recvByteCount += 5 + num4;
     			int num6 = recvByteCount + sendByteCount;
@@ -220,8 +228,16 @@ namespace Game1
     					sbyte b5 = dis.ReadSByte();
     					num = ((b4 & 0xFF) << 8) | (b5 & 0xFF);
     				}
+    				if (num < 0 || num > 65536)
+    				{
+    					throw new IOException("Frame size vượt ngưỡng cho phép (64KB): " + num);
+    				}
     				sbyte[] array = new sbyte[num];
     				byte[] src = dis.ReadBytes(num);
+    				if (src == null || src.Length < num)
+    				{
+    					throw new IOException("Packet underflow: không đủ byte frame (cần " + num + ", nhận " + (src != null ? src.Length : 0) + ")");
+    				}
                     array = ArrayCast.cast(src);
                     recvByteCount += 5 + num;
     				int num4 = recvByteCount + sendByteCount;

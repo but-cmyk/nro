@@ -27,9 +27,11 @@ import utils.Util;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicBoolean;
 import models.map.EffectMap;
 import models.map.vetinh.Satellite;
 import models.npc.NonInteractiveNPC;
+import utils.SerialExecutor;
 
 public class Zone {
 
@@ -42,6 +44,19 @@ public class Zone {
     public int zoneId;
     public int maxPlayer;
     public int shenronType = -1;
+
+    private final SerialExecutor executor;
+    private final AtomicBoolean isUpdating = new AtomicBoolean(false);
+
+    public void execute(Runnable task) {
+        if (task != null) {
+            this.executor.execute(task);
+        }
+    }
+
+    public SerialExecutor getExecutor() {
+        return this.executor;
+    }
 
     public List<Player> getNonInteractiveNPCs() { return this.nonInteractiveNPCs; }
     public List<Player> getHumanoids() { return this.humanoids; }
@@ -201,12 +216,25 @@ public class Zone {
     }
 
     public void update() {
+        if (isUpdating.compareAndSet(false, true)) {
+            this.executor.execute(() -> {
+                try {
+                    updateActual();
+                } finally {
+                    isUpdating.set(false);
+                }
+            });
+        }
+    }
+
+    public void updateActual() {
         udMob();
         udItem();
         udNonInteractiveNPC();
     }
 
     public Zone(Map map, int zoneId, int maxPlayer) {
+        this.executor = new SerialExecutor();
         this.map = map;
         this.zoneId = zoneId;
         this.maxPlayer = maxPlayer;
@@ -407,6 +435,13 @@ public ItemMap getItemMapByTempId(int tempId) {
     }
 
     public void pickItem(Player player, int itemMapId, boolean isThuHut) {
+        if (player == null) {
+            return;
+        }
+        this.executor.execute(() -> pickItemActual(player, itemMapId, isThuHut));
+    }
+
+    public void pickItemActual(Player player, int itemMapId, boolean isThuHut) {
         if (player.isTrade || services.func.TransactionService.gI().check(player)) {
             Service.gI().sendThongBao(player, "Không thể nhặt vật phẩm khi đang giao dịch!");
             return;
@@ -553,17 +588,23 @@ public ItemMap getItemMapByTempId(int tempId) {
 
     public void addItem(ItemMap itemMap) {
         if (itemMap != null) {
-            synchronized (this.items) {
-                if (!items.contains(itemMap)) {
-                    items.add(0, itemMap);
+            this.executor.execute(() -> {
+                synchronized (this.items) {
+                    if (!items.contains(itemMap)) {
+                        items.add(0, itemMap);
+                    }
                 }
-            }
+            });
         }
     }
 
     public void removeItemMap(ItemMap itemMap) {
-        synchronized (this.items) {
-            this.items.remove(itemMap);
+        if (itemMap != null) {
+            this.executor.execute(() -> {
+                synchronized (this.items) {
+                    this.items.remove(itemMap);
+                }
+            });
         }
     }
 

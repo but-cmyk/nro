@@ -81,6 +81,10 @@ public final class Manager {
     public static String TLS_CERT = "certs/fullchain.pem";
     public static String TLS_KEY = "certs/privkey.pem";
 
+    /** Health Check & Metrics HTTP Server (Nhóm F) */
+    public static boolean METRICS_ENABLED = true;
+    public static int METRICS_PORT = 8081;
+
     public static MapTemplate[] MAP_TEMPLATES;
     public static final List<models.map.Map> MAPS = new ArrayList<>();
     public static final List<ItemOptionTemplate> ITEM_OPTION_TEMPLATES = new ArrayList<>();

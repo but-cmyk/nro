@@ -72,8 +72,8 @@ public class NroChannelHandler extends SimpleChannelInboundHandler<Message> {
         NettySession session = ctx.channel().attr(SESSION_ATTR).get();
         if (session != null) {
             try {
+                // Client.gI().remove() bên trong đã xử lý disconnect(session) an toàn và idempotent
                 Client.gI().remove(session);
-                ServerManager.gI().disconnect(session);
             } catch (Exception e) {
                 Logger.logException(NroChannelHandler.class, e, "Lỗi disconnect session: " + session.getIP());
             } finally {

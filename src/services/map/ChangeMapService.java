@@ -326,6 +326,11 @@ public class ChangeMapService {
     }
 
     private void changeMap(Player pl, Zone zoneJoin, int mapId, int zoneId, int x, int y, byte typeSpace) {
+        if (pl == null) {
+            return;
+        }
+        pl.isChangingMap = true;
+        try {
         if (pl.idNRNM != -1 && !Util.canDoWithTime(pl.lastTimePickNRNM, 30000)) {
             resetPoint(pl);
             Service.gI().sendThongBao(pl, "Không thể chuyển map quá nhanh khi đeo Ngọc Rồng Namếc");
@@ -478,6 +483,9 @@ public class ChangeMapService {
             Service.gI().resetPoint(pl, plX, pl.location.y);
             String reason = getReasonCannotJoinMap(pl, targetZone);
             Service.gI().sendThongBao(pl, reason != null ? reason : "Bạn chưa thể đến khu vực này");
+        }
+        } finally {
+            pl.isChangingMap = false;
         }
 
     }

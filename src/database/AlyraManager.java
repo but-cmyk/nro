@@ -4,6 +4,8 @@ import java.sql.ResultSet;
 import java.sql.PreparedStatement;
 import java.io.FileInputStream;
 import java.util.Properties;
+import java.util.Map;
+import java.util.HashMap;
 import java.sql.SQLException;
 import java.sql.Connection;
 import com.zaxxer.hikari.HikariDataSource;
@@ -44,16 +46,26 @@ public class AlyraManager {
     private static HikariDataSource ds;
 
     static {
-        loadProperties();
-        config = createConfig("NRO Game Database", DB_NAME);
-        ds = new HikariDataSource(config);
+        try {
+            loadProperties();
+            config = createConfig("NRO Game Database", DB_NAME);
+            ds = new HikariDataSource(config);
+        } catch (Throwable t) {
+            Logger.error("Không thể kết nối Database khi nạp AlyraManager: " + t.getMessage());
+        }
     }
 
     public static Connection getConnection() throws SQLException {
+        if (ds == null || ds.isClosed()) {
+            throw new SQLException("HikariDataSource chưa được khởi tạo hoặc đã đóng.");
+        }
         return ds.getConnection();
     }
 
     public static Connection getConnection_Data() throws SQLException {
+        if (ds == null || ds.isClosed()) {
+            throw new SQLException("HikariDataSource chưa được khởi tạo hoặc đã đóng.");
+        }
         return ds.getConnection();
     }
 
@@ -500,5 +512,27 @@ public class AlyraManager {
         ds = new HikariDataSource(config);
 
         Logger.log(Logger.GREEN, "Tải lại cấu hình database thành công!");
+    }
+
+    public static Map<String, Object> getPoolStats() {
+        Map<String, Object> stats = new HashMap<>();
+        try {
+            if (ds != null && !ds.isClosed()) {
+                stats.put("status", "UP");
+                com.zaxxer.hikari.HikariPoolMXBean poolBean = ds.getHikariPoolMXBean();
+                if (poolBean != null) {
+                    stats.put("activeConnections", poolBean.getActiveConnections());
+                    stats.put("idleConnections", poolBean.getIdleConnections());
+                    stats.put("totalConnections", poolBean.getTotalConnections());
+                    stats.put("threadsAwaiting", poolBean.getThreadsAwaitingConnection());
+                }
+            } else {
+                stats.put("status", "CLOSED");
+            }
+        } catch (Throwable t) {
+            stats.put("status", "OFFLINE");
+            stats.put("error", t.getMessage());
+        }
+        return stats;
     }
 }

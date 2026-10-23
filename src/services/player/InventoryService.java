@@ -244,13 +244,30 @@ public class InventoryService {
      * @return true if the exact amount was removed
      */
     public boolean trySubQuantityItemsBag(Player player, Item item, int quantity) {
-        if (player == null || player.inventory == null || item == null || quantity <= 0) {
+        if (player == null || player.inventory == null || player.inventory.itemsBag == null || item == null || quantity <= 0) {
             return false;
         }
         if (item.quantity < quantity) {
             return false;
         }
+        if (!player.inventory.itemsBag.contains(item)) {
+            return false;
+        }
         subQuantityItem(player.inventory.itemsBag, item, quantity);
+        return true;
+    }
+
+    public boolean trySubQuantityItemsBody(Player player, Item item, int quantity) {
+        if (player == null || player.inventory == null || player.inventory.itemsBody == null || item == null || quantity <= 0) {
+            return false;
+        }
+        if (item.quantity < quantity) {
+            return false;
+        }
+        if (!player.inventory.itemsBody.contains(item)) {
+            return false;
+        }
+        subQuantityItem(player.inventory.itemsBody, item, quantity);
         return true;
     }
 
@@ -840,6 +857,9 @@ public class InventoryService {
     }
 
     public boolean addItemList(List<Item> items, Item itemAdd) {
+        if (items == null || itemAdd == null || itemAdd.quantity <= 0 || itemAdd.template == null) {
+            return false;
+        }
         // Chuẩn hóa trước đối với cà chua & cà rốt (tránh lỗi lặp option hoặc không gộp được ô)
         ItemService.gI().normalizeVeggiesOptions(itemAdd);
         //nếu item ko có option, add option rỗng vào
@@ -879,7 +899,7 @@ public class InventoryService {
                 //========================ITEM TĂNG SỐ LƯỢNG========================
                 if ((itemAdd.template.id >= 1066 && itemAdd.template.id <= 1070) || itemAdd.template.id == 457
                         || itemAdd.template.id == 610 || itemAdd.template.type == 14 || itemAdd.template.id == 821) {
-                    long total = (long) it.quantity + itemAdd.quantity;
+                    long total = (long) it.quantity + (long) itemAdd.quantity;
                     if (total > 2_000_000_000L) {
                         it.quantity = 2_000_000_000;
                         itemAdd.quantity = (int) (total - 2_000_000_000L);
@@ -891,14 +911,14 @@ public class InventoryService {
                 }
 
                 if (it.quantity < 99999) {
-                    int add = 99999 - it.quantity;
-                    if (itemAdd.quantity <= add) {
-                        it.quantity += itemAdd.quantity;
+                    long total = (long) it.quantity + (long) itemAdd.quantity;
+                    if (total <= 99999L) {
+                        it.quantity = (int) total;
                         itemAdd.quantity = 0;
                         return true;
                     } else {
                         it.quantity = 99999;
-                        itemAdd.quantity -= add;
+                        itemAdd.quantity = (int) (total - 99999L);
                     }
                 }
             }

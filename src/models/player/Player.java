@@ -395,6 +395,8 @@ public class Player extends Character {
         return isPlayer && !isPet && !isBoss && !isBot && !isNewPet && !isNewPet1 && !(this instanceof NonInteractiveNPC);
     }
 
+    public volatile boolean isChangingMap = false;
+
 
 
     public void update() {

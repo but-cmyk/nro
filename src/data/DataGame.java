@@ -7,8 +7,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.Set;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
+import utils.BoundedMemoryCache;
 import utils.FileIO;
 import services.Service;
 import models.skill.NClass;
@@ -38,12 +41,20 @@ public class DataGame {
 
     private static byte[] DART, ARROW, EFFECT, IMAGE, PART, SKILL;
 
-    private static final Map<String, byte[]> ICON_CACHE = new ConcurrentHashMap<>();
-    private static final Map<String, byte[]> IMG_BY_NAME_CACHE = new ConcurrentHashMap<>();
-    private static final Map<String, byte[]> EFFECT_DATA_CACHE = new ConcurrentHashMap<>();
-    private static final Map<String, byte[]> EFFECT_IMG_CACHE = new ConcurrentHashMap<>();
-    private static final Map<String, byte[]> MOB_CACHE = new ConcurrentHashMap<>();
-    private static final Map<String, byte[]> BG_ITEM_CACHE = new ConcurrentHashMap<>();
+    // --- Bounded Memory Caches (Nhóm D2) ---
+    // Giới hạn ngân sách RAM nghiêm ngặt với giải thuật LRU, chống tràn heap OOM
+    private static final BoundedMemoryCache<String, byte[]> ICON_CACHE =
+            new BoundedMemoryCache<>("ICON_CACHE", 64 * 1024 * 1024L, 16384, b -> (long) b.length);
+    private static final BoundedMemoryCache<String, byte[]> IMG_BY_NAME_CACHE =
+            new BoundedMemoryCache<>("IMG_BY_NAME_CACHE", 20 * 1024 * 1024L, 2048, b -> (long) b.length);
+    private static final BoundedMemoryCache<String, byte[]> EFFECT_DATA_CACHE =
+            new BoundedMemoryCache<>("EFFECT_DATA_CACHE", 15 * 1024 * 1024L, 2048, b -> (long) b.length);
+    private static final BoundedMemoryCache<String, byte[]> EFFECT_IMG_CACHE =
+            new BoundedMemoryCache<>("EFFECT_IMG_CACHE", 20 * 1024 * 1024L, 2048, b -> (long) b.length);
+    private static final BoundedMemoryCache<String, byte[]> MOB_CACHE =
+            new BoundedMemoryCache<>("MOB_CACHE", 10 * 1024 * 1024L, 1024, b -> (long) b.length);
+    private static final BoundedMemoryCache<String, byte[]> BG_ITEM_CACHE =
+            new BoundedMemoryCache<>("BG_ITEM_CACHE", 15 * 1024 * 1024L, 1024, b -> (long) b.length);
 
     public static class ResFile {
         public final String name;
@@ -55,7 +66,68 @@ public class DataGame {
         }
     }
 
-    private static final Map<Integer, List<ResFile>> RES_CACHE = new ConcurrentHashMap<>();
+    private static final BoundedMemoryCache<Integer, List<ResFile>> RES_CACHE =
+            new BoundedMemoryCache<>("RES_CACHE", 80 * 1024 * 1024L, 4, list -> {
+                long total = 0;
+                if (list != null) {
+                    for (ResFile rf : list) {
+                        if (rf != null && rf.data != null) {
+                            total += rf.data.length;
+                        }
+                    }
+                }
+                return total;
+            });
+
+    // --- CMD -74 Bounded Executor & Deduplication (Nhóm D1) ---
+    private static final ExecutorService RES_DOWNLOAD_EXECUTOR = new ThreadPoolExecutor(
+            2, 4,
+            60L, TimeUnit.SECONDS,
+            new LinkedBlockingQueue<>(100),
+            new ThreadFactory() {
+                private final AtomicInteger threadCount = new AtomicInteger(1);
+                @Override
+                public Thread newThread(Runnable r) {
+                    Thread t = new Thread(r, "ResDownload-Worker-" + threadCount.getAndIncrement());
+                    t.setDaemon(true);
+                    t.setPriority(Thread.NORM_PRIORITY - 1);
+                    return t;
+                }
+            },
+            new ThreadPoolExecutor.DiscardPolicy()
+    );
+
+    private static final Set<MySession> ACTIVE_RES_DOWNLOADS = ConcurrentHashMap.newKeySet();
+
+    /**
+     * Tiếp nhận yêu cầu tải tài nguyên CMD -74 type 2 một cách an toàn.
+     * Áp dụng Single-flight per session và Bounded ThreadPool, ngăn chặn DoS và cạn kiệt tài nguyên.
+     */
+    public static void requestSendRes(MySession session) {
+        if (session == null || !session.isConnected()) {
+            return;
+        }
+
+        // 1. Single-flight deduplication: Chặn nếu session này đang tải res
+        if (!ACTIVE_RES_DOWNLOADS.add(session)) {
+            Logger.warning("[CMD -74] Session IP: " + session.ipAddress + " đang tải dữ liệu, từ chối request trùng lặp.");
+            return;
+        }
+
+        // 2. Thực thi qua Bounded Executor
+        try {
+            RES_DOWNLOAD_EXECUTOR.submit(() -> {
+                try {
+                    sendRes(session);
+                } finally {
+                    ACTIVE_RES_DOWNLOADS.remove(session);
+                }
+            });
+        } catch (Exception e) {
+            ACTIVE_RES_DOWNLOADS.remove(session);
+            Logger.error("[CMD -74] Lỗi submit tác vụ tải tài nguyên: " + e.getMessage());
+        }
+    }
 
     public static List<ResFile> getResFiles(int zoom) {
         return RES_CACHE.computeIfAbsent(zoom, z -> {
@@ -75,6 +147,17 @@ public class DataGame {
         });
     }
 
+    public static String getCacheReport() {
+        return "=== DATAGAME BOUNDED CACHE STATS ===\n"
+                + ICON_CACHE.getStats() + "\n"
+                + IMG_BY_NAME_CACHE.getStats() + "\n"
+                + EFFECT_DATA_CACHE.getStats() + "\n"
+                + EFFECT_IMG_CACHE.getStats() + "\n"
+                + MOB_CACHE.getStats() + "\n"
+                + BG_ITEM_CACHE.getStats() + "\n"
+                + RES_CACHE.getStats();
+    }
+
     private static final long[] SM_TIEU_CHUAN = {
         1000L, 3000L, 15000L, 40000L, 90000L, 170000L, 340000L, 700000L,
         1500000L, 15000000L, 150000000L, 1500000000L, 5000000000L, 10000000000L, 40000000000L,
@@ -90,6 +173,15 @@ public class DataGame {
             PART = FileIO.readFile("data/update_data/part");
             SKILL = FileIO.readFile("data/update_data/skill");
             Logger.success("Load DataGame (Cache) thành công!");
+
+            // Pre-warm tệp tài nguyên zoom 2 chuẩn vào RAM qua Virtual Thread để loại bỏ disk latency khi login (D1)
+            Thread.ofVirtual().name("res-prewarm").start(() -> {
+                try {
+                    getResFiles(2);
+                } catch (Exception ex) {
+                    Logger.error("Lỗi nạp trước tài nguyên zoom 2: " + ex.getMessage());
+                }
+            });
         } catch (Exception e) {
             Logger.error("Lỗi load DataGame: " + e.getMessage());
             e.printStackTrace();
@@ -655,9 +747,12 @@ public class DataGame {
 
                 if (session instanceof network.netty.NettySession nettySession) {
                     int waitCount = 0;
-                    while (!nettySession.getChannel().isWritable() && nettySession.isConnected() && waitCount < 100) {
+                    while (!nettySession.getChannel().isWritable() && nettySession.isConnected() && waitCount < 40) {
                         Thread.sleep(5);
                         waitCount++;
+                    }
+                    if (!nettySession.isConnected()) {
+                        break;
                     }
                 }
 
@@ -668,28 +763,35 @@ public class DataGame {
                 msg.writer().write(fileEntry.data);
                 session.sendMessage(msg);
                 msg.cleanup();
+                msg = null;
 
                 count++;
-                if (count % 20 == 0) {
-                    Thread.sleep(2);
+                if (count % 25 == 0) {
+                    Thread.sleep(2); // Pacing nhịp gửi để Netty event loop flush buffer mượt mà
                 }
             }
 
-            if (session instanceof network.netty.NettySession nettySession) {
-                int waitCount = 0;
-                while (!nettySession.getChannel().isWritable() && nettySession.isConnected() && waitCount < 100) {
-                    Thread.sleep(5);
-                    waitCount++;
+            if (session != null && session.isConnected()) {
+                if (session instanceof network.netty.NettySession nettySession) {
+                    int waitCount = 0;
+                    while (!nettySession.getChannel().isWritable() && nettySession.isConnected() && waitCount < 40) {
+                        Thread.sleep(5);
+                        waitCount++;
+                    }
                 }
+                msg = new Message(-74);
+                msg.writer().writeByte(3);
+                msg.writer().writeInt(vsRes);
+                session.sendMessage(msg);
+                msg.cleanup();
+                msg = null;
             }
-
-            msg = new Message(-74);
-            msg.writer().writeByte(3);
-            msg.writer().writeInt(vsRes);
-            session.sendMessage(msg);
-            msg.cleanup();
         } catch (Exception e) {
             Logger.logException(DataGame.class, e);
+        } finally {
+            if (msg != null) {
+                msg.cleanup();
+            }
         }
     }
 

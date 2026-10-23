@@ -20,9 +20,14 @@ import utils.TimeUtil;
 
 public class MySession extends Session {
 
+    private static final class RefCountLock {
+        private final java.util.concurrent.locks.ReentrantLock lock = new java.util.concurrent.locks.ReentrantLock();
+        private int refCount = 0;
+    }
+
     private static final Map<String, AntiLogin> ACCOUNT_GUARD = new ConcurrentHashMap<>();
     private static final Map<String, AntiLogin> IP_GUARD = new ConcurrentHashMap<>();
-    private static final Map<String, Object> ACCOUNT_LOCKS = new ConcurrentHashMap<>();
+    private static final Map<String, RefCountLock> ACCOUNT_LOCKS = new ConcurrentHashMap<>();
     private static final AtomicInteger LOGIN_ATTEMPTS = new AtomicInteger();
     private static final long LOGIN_GUARD_TTL = 30 * 60 * 1000L;
     private static final int ACCOUNT_MAX_FAILS = 5;
@@ -136,57 +141,66 @@ public class MySession extends Session {
             return;
         }
 
-        Object accountLock = ACCOUNT_LOCKS.computeIfAbsent(username, k -> new Object());
+        RefCountLock rLock;
+        synchronized (ACCOUNT_LOCKS) {
+            rLock = ACCOUNT_LOCKS.computeIfAbsent(username, k -> new RefCountLock());
+            rLock.refCount++;
+        }
+        rLock.lock.lock();
         try {
-            synchronized (accountLock) {
-                if (this.player == null) {
-                    Player pl = null;
-                    try {
-                        this.uu = username;
-                        this.pp = password;
-                        pl = NDVSqlFetcher.login(this, al);
-                        if (pl != null) {
-                            DataGame.sendSmallVersion(this);
-                            DataGame.sendBgItemVersion(this);
+            if (this.player == null) {
+                Player pl = null;
+                try {
+                    this.uu = username;
+                    this.pp = password;
+                    pl = NDVSqlFetcher.login(this, al);
+                    if (pl != null) {
+                        DataGame.sendSmallVersion(this);
+                        DataGame.sendBgItemVersion(this);
 
-                            this.timeWait = 0;
-                            this.joinedGame = true;
-                            pl.nPoint.calPoint();
-                            pl.nPoint.setHp(pl.nPoint.hp);
-                            pl.nPoint.setMp(pl.nPoint.mp);
-                            pl.zone.addPlayer(pl);
-                            if (pl.pet != null) {
-                                pl.pet.nPoint.calPoint();
-                                pl.pet.nPoint.setHp(pl.pet.nPoint.hp);
-                                pl.pet.nPoint.setMp(pl.pet.nPoint.mp);
-                            }
+                        this.timeWait = 0;
+                        this.joinedGame = true;
+                        pl.nPoint.calPoint();
+                        pl.nPoint.setHp(pl.nPoint.hp);
+                        pl.nPoint.setMp(pl.nPoint.mp);
+                        pl.zone.addPlayer(pl);
+                        if (pl.pet != null) {
+                            pl.pet.nPoint.calPoint();
+                            pl.pet.nPoint.setHp(pl.pet.nPoint.hp);
+                            pl.pet.nPoint.setMp(pl.pet.nPoint.mp);
+                        }
 
-                            pl.setSession(this);
-                            Client.gI().put(pl);
-                            this.player = pl;
-                            al.reset();
-                            DataGame.sendVersionGame(this);
-                            DataGame.sendDataItemBG(this);
-                            Controller.gI().sendInfo(this);
-                            Logger.log("[" + TimeUtil.getCurrHour() + ":" + TimeUtil.getCurrMin() + "] - Player Login: " + this.player.name + "\n");
-                            if (this.player.notify != null && !this.player.notify.equals("null") && !this.player.notify.isEmpty() && this.player.notify.length() > 0) {
-                                Service.gI().sendThongBao(this.player, this.player.notify);
-                                this.player.notify = null;
-                            }
-                            if (!this.isTls && Manager.TLS_PORT > 0) {
-                                Service.gI().sendThongBao(this.player, "Cảnh báo: Bạn đang dùng phiên bản cũ (không mã hóa TLS). Vui lòng cập nhật game sớm để bảo vệ tài khoản!");
-                            }
+                        pl.setSession(this);
+                        Client.gI().put(pl);
+                        this.player = pl;
+                        al.reset();
+                        DataGame.sendVersionGame(this);
+                        DataGame.sendDataItemBG(this);
+                        Controller.gI().sendInfo(this);
+                        Logger.log("[" + TimeUtil.getCurrHour() + ":" + TimeUtil.getCurrMin() + "] - Player Login: " + this.player.name + "\n");
+                        if (this.player.notify != null && !this.player.notify.equals("null") && !this.player.notify.isEmpty() && this.player.notify.length() > 0) {
+                            Service.gI().sendThongBao(this.player, this.player.notify);
+                            this.player.notify = null;
                         }
-                    } catch (Exception e) {
-                        Logger.error(pl, "Player login initialization failed for account: " + username, e);
-                        if (pl != null) {
-                            pl.dispose();
+                        if (!this.isTls && Manager.TLS_PORT > 0) {
+                            Service.gI().sendThongBao(this.player, "Cảnh báo: Bạn đang dùng phiên bản cũ (không mã hóa TLS). Vui lòng cập nhật game sớm để bảo vệ tài khoản!");
                         }
+                    }
+                } catch (Exception e) {
+                    Logger.error(pl, "Player login initialization failed for account: " + username, e);
+                    if (pl != null) {
+                        pl.dispose();
                     }
                 }
             }
         } finally {
-            ACCOUNT_LOCKS.remove(username, accountLock);
+            rLock.lock.unlock();
+            synchronized (ACCOUNT_LOCKS) {
+                rLock.refCount--;
+                if (rLock.refCount <= 0) {
+                    ACCOUNT_LOCKS.remove(username);
+                }
+            }
         }
     }
 

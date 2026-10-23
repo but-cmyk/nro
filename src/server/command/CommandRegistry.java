@@ -17,7 +17,10 @@ public class CommandRegistry {
 
     static {
         // Register all commands
-        commands.put("baotri", args -> Maintenance.gI().start(5));
+        commands.put("baotri", args -> {
+            database.daos.AdminAuditDAO.log("CONSOLE", "MAINTENANCE", "SERVER", "{\"minutes\":5}");
+            Maintenance.gI().start(5);
+        });
         
         commands.put("athread", args -> ServerNotify.gI().notify("ACTIVE THREADS: " + Thread.activeCount()));
         
@@ -47,6 +50,7 @@ public class CommandRegistry {
         });
         
         commands.put("admin", args -> {
+            database.daos.AdminAuditDAO.log("CONSOLE", "KICK_ALL_CLOSE", "SERVER", "{}");
             ServerManager.gI().getExecutorService().submit(() -> Client.gI().close());
         });
         
@@ -76,6 +80,8 @@ public class CommandRegistry {
         commands.put("a", args -> {
             if (args.length > 0) {
                 String message = String.join(" ", args);
+                database.daos.AdminAuditDAO.log("CONSOLE", "BROADCAST", "ALL_PLAYERS",
+                        String.format("{\"message\":\"%s\"}", message.replace("\"", "\\\"")));
                 Service.gI().sendThongBaoAllPlayer(message);
             }
         });

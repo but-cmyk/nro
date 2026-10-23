@@ -46,6 +46,11 @@ namespace Game1
     		return dos;
     	}
     
+    	/// <summary>
+    	/// Đọc giá trị số nguyên 4 bytes (int).
+    	/// Ghi chú kiến trúc: Đặt tên 'readInt3Byte' theo chuẩn protocol cũ của NRO để giữ tương thích gọi hàm,
+    	/// nhưng triển khai thực tế gọi dis.readInt() (4 bytes) hỗ trợ dải giá trị HP/dame lớn.
+    	/// </summary>
     	public int readInt3Byte()
     	{
     		return dis.readInt();

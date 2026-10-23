@@ -15,6 +15,14 @@ import java.util.List;
  */
 public class NroPacketDecoder extends ByteToMessageDecoder {
 
+    public static final int MAX_STANDARD_PACKET_SIZE = 65536;  // 64 KB cho gói tin thông thường
+    public static final int MAX_EXTENDED_PACKET_SIZE = 204800; // 200 KB cho gói tin tài nguyên đặc thù
+
+    public static boolean isExtendedCommand(byte cmd) {
+        // -74: GET_IMAGE_SOURCE tải tài nguyên hình ảnh
+        return cmd == -74;
+    }
+
     private int curR = 0;
     private final ISession session;
 
@@ -68,9 +76,10 @@ public class NroPacketDecoder extends ByteToMessageDecoder {
             size = in.readUnsignedShort();
         }
 
-        // Kiểm tra kích thước an toàn chống crash/flood (tối đa 200KB)
-        if (size < 0 || size > 200000) {
-            throw new IOException("Goi tin khong hop le hoac vuot qua kich thuoc cho phep: " + size);
+        // Kiểm tra kích thước an toàn chống crash/flood (Hạ ngưỡng Decoder - E1)
+        int maxAllowedSize = isExtendedCommand(cmd) ? MAX_EXTENDED_PACKET_SIZE : MAX_STANDARD_PACKET_SIZE;
+        if (size < 0 || size > maxAllowedSize) {
+            throw new IOException("Goi tin vuot qua kich thuoc cho phep: size=" + size + ", max=" + maxAllowedSize + " cho cmd=" + cmd);
         }
 
         // 3. Kiểm tra xem toàn bộ Payload đã tới đủ trong buffer chưa

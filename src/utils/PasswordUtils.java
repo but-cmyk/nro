@@ -22,14 +22,42 @@ public final class PasswordUtils {
     /** BCrypt work factor. 12 is strong but ~250ms/login; rate-limit login. */
     private static final int BCRYPT_COST = 12;
 
+    /** Giới hạn số lượng phép toán BCrypt chạy song song để bảo vệ CPU máy chủ (2 x số CPU cores) */
+    private static final int MAX_CONCURRENT_BCRYPT = Math.max(4, Runtime.getRuntime().availableProcessors() * 2);
+    private static final java.util.concurrent.Semaphore BCRYPT_SEMAPHORE = new java.util.concurrent.Semaphore(MAX_CONCURRENT_BCRYPT);
+    private static final long ACQUIRE_TIMEOUT_MS = 2000L;
+
     private PasswordUtils() {
+    }
+
+    public static int getAvailablePermits() {
+        return BCRYPT_SEMAPHORE.availablePermits();
+    }
+
+    public static int getMaxConcurrentBcrypt() {
+        return MAX_CONCURRENT_BCRYPT;
     }
 
     public static String hashPassword(String password) {
         if (password == null) {
             return null;
         }
-        return BCrypt.hashpw(password, BCrypt.gensalt(BCRYPT_COST));
+        boolean acquired = false;
+        try {
+            acquired = BCRYPT_SEMAPHORE.tryAcquire(ACQUIRE_TIMEOUT_MS, java.util.concurrent.TimeUnit.MILLISECONDS);
+            if (!acquired) {
+                Logger.warning("[BCrypt Throttling] Quá tải CPU khi băm mật khẩu (> " + MAX_CONCURRENT_BCRYPT + " luồng). Tạm thời dùng cost 10.");
+                return BCrypt.hashpw(password, BCrypt.gensalt(10));
+            }
+            return BCrypt.hashpw(password, BCrypt.gensalt(BCRYPT_COST));
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return BCrypt.hashpw(password, BCrypt.gensalt(10));
+        } finally {
+            if (acquired) {
+                BCRYPT_SEMAPHORE.release();
+            }
+        }
     }
 
     public static boolean isBcrypt(String stored) {
@@ -44,10 +72,23 @@ public final class PasswordUtils {
         if (password == null || stored == null || !isBcrypt(stored)) {
             return false;
         }
+        boolean acquired = false;
         try {
+            acquired = BCRYPT_SEMAPHORE.tryAcquire(ACQUIRE_TIMEOUT_MS, java.util.concurrent.TimeUnit.MILLISECONDS);
+            if (!acquired) {
+                Logger.warning("[BCrypt Throttling] Quá tải CPU xác thực mật khẩu (> " + MAX_CONCURRENT_BCRYPT + " luồng). Tạm thời từ chối login!");
+                return false;
+            }
             return BCrypt.checkpw(password, stored);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return false;
         } catch (IllegalArgumentException e) {
             return false;
+        } finally {
+            if (acquired) {
+                BCRYPT_SEMAPHORE.release();
+            }
         }
     }
 

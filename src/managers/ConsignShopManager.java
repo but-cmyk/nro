@@ -264,6 +264,58 @@ public class ConsignShopManager {
         }
     }
 
+    // Atomic DB operations - Cập nhật trạng thái đã mua nguyên tử (Chống race condition nhiều người mua cùng lúc)
+    public boolean claimItemAtomic(int itemId) {
+        String sql = "UPDATE `shop_ky_gui` SET `isBuy` = 1 WHERE `id` = ? AND `isBuy` = 0";
+        try (Connection con = AlyraManager.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, itemId);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            Logger.logException(ConsignShopManager.class, e, "Lỗi claimItemAtomic ID: " + itemId);
+            return false;
+        }
+    }
+
+    // Hoàn lại trạng thái chưa mua nếu giao dịch phía sau gặp lỗi
+    public void revertItemClaim(int itemId) {
+        String sql = "UPDATE `shop_ky_gui` SET `isBuy` = 0 WHERE `id` = ? AND `isBuy` = 1";
+        try (Connection con = AlyraManager.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, itemId);
+            ps.executeUpdate();
+        } catch (Exception e) {
+            Logger.logException(ConsignShopManager.class, e, "Lỗi revertItemClaim ID: " + itemId);
+        }
+    }
+
+    // Xóa item nguyên tử theo quyền sở hữu và trạng thái đã mua/chưa mua
+    public boolean deleteItemAtomic(int itemId, int playerId, boolean isBuy) {
+        String sql = "DELETE FROM `shop_ky_gui` WHERE `id` = ? AND `player_id` = ? AND `isBuy` = ?";
+        try (Connection con = AlyraManager.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, itemId);
+            ps.setInt(2, playerId);
+            ps.setBoolean(3, isBuy);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            Logger.logException(ConsignShopManager.class, e, "Lỗi deleteItemAtomic ID: " + itemId);
+            return false;
+        }
+    }
+
+    public boolean deleteItemSync(int itemId) {
+        String sql = "DELETE FROM `shop_ky_gui` WHERE `id` = ?";
+        try (Connection con = AlyraManager.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, itemId);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            Logger.logException(ConsignShopManager.class, e, "Lỗi deleteItemSync ID: " + itemId);
+            return false;
+        }
+    }
+
     // Atomic DB operations - Cập nhật trạng thái đã mua
     public void updateItemBoughtAsync(int itemId) {
         Thread.ofVirtual().name("db-consign-bought").start(() -> {
@@ -281,14 +333,7 @@ public class ConsignShopManager {
     // Atomic DB operations - Xóa item khi hủy hoặc nhận tiền
     public void deleteItemAsync(int itemId) {
         Thread.ofVirtual().name("db-consign-delete").start(() -> {
-            String sql = "DELETE FROM `shop_ky_gui` WHERE `id` = ?";
-            try (Connection con = AlyraManager.getConnection();
-                 PreparedStatement ps = con.prepareStatement(sql)) {
-                ps.setInt(1, itemId);
-                ps.executeUpdate();
-            } catch (Exception e) {
-                Logger.logException(ConsignShopManager.class, e, "Lỗi deleteItemAsync ID: " + itemId);
-            }
+            deleteItemSync(itemId);
         });
     }
 

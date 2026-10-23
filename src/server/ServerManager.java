@@ -37,6 +37,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class ServerManager {
@@ -62,6 +63,9 @@ public class ServerManager {
     private ScheduledFuture<?> autoSaveTask;
     private ScheduledFuture<?> dailyResetTask;
 
+    // Idempotent Shutdown (C1)
+    private final AtomicBoolean isShutdown = new AtomicBoolean(false);
+
     public void init() {
         Manager.gI();
         HistoryTransactionDAO.deleteHistory();
@@ -70,7 +74,7 @@ public class ServerManager {
         executorService = Executors.newFixedThreadPool(corePoolSize * 2);
         scheduledExecutorService = Executors.newScheduledThreadPool(5);
 
-        Runtime.getRuntime().addShutdownHook(new Thread(this::cleanupResources));
+        Runtime.getRuntime().addShutdownHook(new Thread(this::shutdown, "ServerManager-ShutdownHook"));
     }
 
     public ExecutorService getExecutorService() {
@@ -159,6 +163,11 @@ public class ServerManager {
         Logger.log("Mở cổng kết nối máy chủ Netty 4.x...");
         activeServerSocket();
         activeCommandLine();
+
+        // 7. Khởi động HTTP Health & Metrics Server (Nhóm F - 127.0.0.1:8081)
+        if (Manager.METRICS_ENABLED) {
+            MetricsServer.start(Manager.METRICS_PORT);
+        }
 
         Logger.success("Máy chủ Netty khởi động thành công trên PORT: " + PORT);
     }
@@ -343,49 +352,7 @@ public class ServerManager {
     }
 
     public void close() {
-        isRunning = false;
-
-        try {
-            if (autoSaveTask != null && !autoSaveTask.isCancelled()) {
-                autoSaveTask.cancel(true);
-            }
-
-            Logger.log("Saving clan data...");
-            ClanService.gI().close();
-        } catch (Exception e) {
-            Logger.error("Error saving clan data: " + e.getMessage());
-        }
-
-        try {
-            Logger.log("Stopping GameLoopManager...");
-            GameLoopManager.gI().stop();
-        } catch (Exception e) {
-            Logger.error("Error stopping GameLoopManager: " + e.getMessage());
-        }
-
-        try {
-            Logger.log("Closing client connections...");
-            Client.gI().close();
-        } catch (Exception e) {
-            Logger.error("Error closing clients: " + e.getMessage());
-        }
-
-        try {
-            Logger.log("Closing Netty Server...");
-            NettyServer.gI().close();
-        } catch (Exception e) {
-            Logger.error("Error closing NettyServer: " + e.getMessage());
-        }
-
-        try {
-            Logger.log("Saving consign shop...");
-            ConsignShopManager.gI().save();
-            EventDAO.save();
-        } catch (Exception e) {
-            Logger.error("Error saving shop data: " + e.getMessage());
-        }
-
-        cleanupResources();
+        shutdown();
 
         Logger.success("SUCCESSFULLY MAINTENANCE!\n");
 
@@ -401,67 +368,135 @@ public class ServerManager {
         System.exit(0);
     }
 
-    private void cleanupResources() {
-        Logger.log("Cleaning up server resources...");
-        try {
-            if (isRunning) {
-                isRunning = false;
-                Logger.log("Saving all online players before shutdown (Parallel Flush)...");
-                List<Player> players = new ArrayList<>(Client.gI().getPlayers());
-                List<Player> validPlayers = new ArrayList<>();
-                for (Player pl : players) {
-                    if (pl != null && pl.isPl()) {
-                        try {
-                            if (pl.zone != null && pl.zone.map != null) {
-                                pl.mapIdBeforeLogout = pl.zone.map.mapId;
-                            }
-                            validPlayers.add(pl);
-                        } catch (Exception ignored) {
-                        }
-                    }
-                }
+    /**
+     * Quy trình tắt máy chủ tập trung, đồng bộ và idempotent (C1).
+     * Đảm bảo an toàn tuyệt đối khi được gọi từ close(), admin lệnh hoặc JVM ShutdownHook.
+     */
+    public void shutdown() {
+        if (!isShutdown.compareAndSet(false, true)) {
+            return;
+        }
+        isRunning = false;
+        Logger.log(">> [ServerManager] Bắt đầu quy trình tắt máy chủ an toàn (Idempotent Shutdown)...");
 
-                if (!validPlayers.isEmpty()) {
-                    CountDownLatch latch = new CountDownLatch(validPlayers.size());
-                    AtomicInteger savedCount = new AtomicInteger(0);
-                    for (Player pl : validPlayers) {
-                        Thread.ofVirtual().name("shutdown-save-" + pl.id).start(() -> {
-                            try {
-                                PlayerDAO.updatePlayer(pl);
-                                savedCount.incrementAndGet();
-                            } catch (Exception ex) {
-                                Logger.error("Error saving player on shutdown: " + (pl != null ? pl.name : "unknown"));
-                            } finally {
-                                latch.countDown();
-                            }
-                        });
-                    }
-                    try {
-                        if (!latch.await(30, TimeUnit.SECONDS)) {
-                            Logger.warning("Shutdown save timeout: " + (validPlayers.size() - savedCount.get()) + " players could not finish saving in 30s!");
-                        } else {
-                            Logger.success("Shutdown save completed: " + savedCount.get() + "/" + validPlayers.size() + " players saved successfully.");
-                        }
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
-                    }
-                }
-                try {
-                    ConsignShopManager.gI().save();
-                    ClanService.gI().close();
-                } catch (Exception ignored) {
-                }
+        // 1. Ngừng nhận kết nối mới từ Client & đóng HTTP Metrics Server
+        try {
+            Logger.log("Đang đóng cổng kết nối Netty Server...");
+            NettyServer.gI().close();
+            MetricsServer.stop();
+        } catch (Throwable t) {
+            Logger.error("Lỗi đóng NettyServer / MetricsServer: " + t.getMessage());
+        }
+
+        // 2. Dừng AutoSave task và GameLoop
+        try {
+            if (autoSaveTask != null && !autoSaveTask.isCancelled()) {
+                autoSaveTask.cancel(true);
             }
+            if (dailyResetTask != null && !dailyResetTask.isCancelled()) {
+                dailyResetTask.cancel(true);
+            }
+            Logger.log("Đang dừng GameLoopManager...");
+            GameLoopManager.gI().stop();
+        } catch (Throwable t) {
+            Logger.error("Lỗi dừng GameLoopManager: " + t.getMessage());
+        }
+
+        // 3. Flush lưu toàn bộ dữ liệu người chơi online (Parallel Virtual Thread Flush)
+        try {
+            saveAllPlayersDataOnShutdown();
+        } catch (Throwable t) {
+            Logger.error("Lỗi lưu dữ liệu người chơi khi shutdown: " + t.getMessage());
+        }
+
+        // 4. Ngắt kết nối toàn bộ client
+        try {
+            Logger.log("Đang đóng các phiên kết nối Client...");
+            Client.gI().close();
+        } catch (Throwable t) {
+            Logger.error("Lỗi đóng clients: " + t.getMessage());
+        }
+
+        // 5. Lưu dữ liệu Clan, Consign Shop, Event
+        try {
+            Logger.log("Đang lưu Clan, Consign Shop và Event...");
+            ClanService.gI().close();
+            ConsignShopManager.gI().save();
+            EventDAO.save();
+        } catch (Throwable t) {
+            Logger.error("Lỗi lưu dữ liệu Clan/Shop/Event: " + t.getMessage());
+        }
+
+        // 6. Đóng các Thread Pool
+        try {
             if (executorService != null && !executorService.isShutdown()) {
                 executorService.shutdown();
             }
             if (scheduledExecutorService != null && !scheduledExecutorService.isShutdown()) {
                 scheduledExecutorService.shutdown();
             }
-            CLIENTS.clear();
-        } catch (Exception e) {
-            Logger.error("Error during cleanup: " + e.getMessage());
+        } catch (Throwable ignored) {
         }
+
+        // 7. Dọn dẹp map đếm kết nối IP
+        CLIENTS.clear();
+
+        // 8. Đóng kết nối Database pool HikariCP
+        try {
+            Logger.log("Đang đóng kết nối cơ sở dữ liệu HikariCP...");
+            database.AlyraManager.close();
+        } catch (Throwable t) {
+            Logger.error("Lỗi đóng database connection pool: " + t.getMessage());
+        }
+
+        Logger.success(">> [ServerManager] Tắt máy chủ và giải phóng tài nguyên hoàn tất an toàn 100%.");
+    }
+
+    private void saveAllPlayersDataOnShutdown() {
+        Logger.log("Saving all online players before shutdown (Parallel Flush)...");
+        List<Player> players = new ArrayList<>(Client.gI().getPlayers());
+        List<Player> validPlayers = new ArrayList<>();
+        for (Player pl : players) {
+            if (pl != null && pl.isPl()) {
+                try {
+                    if (pl.zone != null && pl.zone.map != null) {
+                        pl.mapIdBeforeLogout = pl.zone.map.mapId;
+                    }
+                    validPlayers.add(pl);
+                } catch (Exception ignored) {
+                }
+            }
+        }
+
+        if (!validPlayers.isEmpty()) {
+            CountDownLatch latch = new CountDownLatch(validPlayers.size());
+            AtomicInteger savedCount = new AtomicInteger(0);
+            for (Player pl : validPlayers) {
+                Thread.ofVirtual().name("shutdown-save-" + pl.id).start(() -> {
+                    try {
+                        PlayerDAO.updatePlayer(pl);
+                        savedCount.incrementAndGet();
+                    } catch (Exception ex) {
+                        Logger.error("Error saving player on shutdown: " + (pl != null ? pl.name : "unknown"));
+                    } finally {
+                        latch.countDown();
+                    }
+                });
+            }
+            try {
+                if (!latch.await(30, TimeUnit.SECONDS)) {
+                    Logger.warning("Shutdown save timeout: " + (validPlayers.size() - savedCount.get()) + " players could not finish saving in 30s!");
+                } else {
+                    Logger.success("Shutdown save completed: " + savedCount.get() + "/" + validPlayers.size() + " players saved successfully.");
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+    }
+
+    private void cleanupResources() {
+        shutdown();
     }
 
     private void activeCommandLine() {

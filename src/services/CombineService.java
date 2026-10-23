@@ -324,7 +324,7 @@ public class CombineService {
                 if (player.combineNew != null) {
                     player.combineNew.clearParamCombine();
                 }
-                database.daos.PlayerDAO.updatePlayerAsync(player);
+                database.daos.PlayerDAO.updatePlayer(player);
             }
         }
     }
@@ -362,7 +362,7 @@ public class CombineService {
                 if (player.combineNew != null) {
                     player.combineNew.clearParamCombine();
                 }
-                database.daos.PlayerDAO.updatePlayerAsync(player);
+                database.daos.PlayerDAO.updatePlayer(player);
             }
         }
     }

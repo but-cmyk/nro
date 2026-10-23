@@ -207,6 +207,7 @@ public class AdminToolFrame extends JFrame {
                 try {
                     ServerManager.isReloading = true;
                     Logger.log(Logger.YELLOW, "[AdminTool] Bắt đầu RELOAD DATA...");
+                    database.daos.AdminAuditDAO.log("ADMIN_TOOL", "RELOAD_DATA", "SERVER", "{}");
                     Thread.sleep(1000);
                     AlyraManager.reloadData();
                     Manager.gI().reloadData();
@@ -311,6 +312,8 @@ public class AdminToolFrame extends JFrame {
 
                     // Bước 5: Lưu vào database (BẮT BUỘC cho cả online và offline)
                     PlayerDAO.updatePlayer(playerToBuff);
+                    database.daos.AdminAuditDAO.log("ADMIN_TOOL", "BUFF_ITEM", name,
+                            String.format("{\"itemId\":%d,\"quantity\":%d,\"options\":\"%s\"}", itemId, quantity, optionsStr));
 
                     SwingUtilities.invokeLater(() -> JOptionPane.showMessageDialog(this, "Buff vật phẩm thành công cho " + name + "!", "Thành Công", JOptionPane.INFORMATION_MESSAGE));
 
@@ -356,7 +359,11 @@ public class AdminToolFrame extends JFrame {
 
                 // Bước 2: Cộng tiền
                 playerToBuff.inventory.addGold(gold);
-                playerToBuff.inventory.gem += gem;
+                if (gem >= 0) {
+                    playerToBuff.inventory.addGem(gem);
+                } else {
+                    playerToBuff.inventory.subGemDirect(-gem);
+                }
 
                 // Bước 3: Xử lý online/offline
                 if (isOnline) {
@@ -365,6 +372,8 @@ public class AdminToolFrame extends JFrame {
 
                 // Bước 4: Lưu vào database
                 PlayerDAO.updatePlayer(playerToBuff);
+                database.daos.AdminAuditDAO.log("ADMIN_TOOL", "BUFF_MONEY", name,
+                        String.format("{\"gold\":%d,\"gem\":%d}", gold, gem));
 
                 SwingUtilities.invokeLater(() -> JOptionPane.showMessageDialog(this, "Đã thêm " + gold + " vàng và " + gem + " ngọc cho " + name));
 
@@ -377,6 +386,7 @@ public class AdminToolFrame extends JFrame {
 
     private void kickSelectedPlayer() {
         if (selectedPlayer != null) {
+            database.daos.AdminAuditDAO.log("ADMIN_TOOL", "KICK_PLAYER", selectedPlayer.name, "{}");
             Client.gI().kickSession(selectedPlayer.getSession());
             JOptionPane.showMessageDialog(this, "Đã kick player: " + selectedPlayer.name);
         } else {
@@ -386,6 +396,7 @@ public class AdminToolFrame extends JFrame {
 
     private void banSelectedPlayer() {
         if (selectedPlayer != null) {
+            database.daos.AdminAuditDAO.log("ADMIN_TOOL", "BAN_PLAYER", selectedPlayer.name, "{}");
             // PlayerService.gI().banPlayer(selectedPlayer); // Logic ban thực sự
             Client.gI().kickSession(selectedPlayer.getSession());
             JOptionPane.showMessageDialog(this, "Đã ban (kick) player: " + selectedPlayer.name);
@@ -415,6 +426,7 @@ public class AdminToolFrame extends JFrame {
                     kickCount++;
                 }
             }
+            database.daos.AdminAuditDAO.log("ADMIN_TOOL", "KICK_ALL_PLAYERS", "SERVER", String.format("{\"kickCount\":%d}", kickCount));
             JOptionPane.showMessageDialog(this, "Đã kick " + kickCount + " người chơi.");
         }
     }
@@ -451,6 +463,8 @@ public class AdminToolFrame extends JFrame {
                     ServerNotify.gI().notify(message);
                 }
                 Logger.success("[AdminTool] Đã gửi thông báo server: " + message);
+                database.daos.AdminAuditDAO.log("ADMIN_TOOL", "SERVER_ANNOUNCEMENT", type,
+                        String.format("{\"message\":\"%s\"}", message.replace("\"", "\\\"")));
                 JOptionPane.showMessageDialog(this, "Đã gửi thông báo.");
             }
         }
@@ -477,7 +491,11 @@ public class AdminToolFrame extends JFrame {
 
             // Code logic chính không thay đổi
             pl.inventory.addGold(gold);
-            pl.inventory.gem += gem;
+            if (gem >= 0) {
+                pl.inventory.addGem(gem);
+            } else {
+                pl.inventory.subGemDirect(-gem);
+            }
 
             // Chỉ gửi packet nếu người chơi đang online và có session
             if (pl.getSession() != null) {
@@ -489,6 +507,8 @@ public class AdminToolFrame extends JFrame {
             // Gợi ý: Nếu muốn thay đổi có hiệu lực ngay cả khi người chơi offline,
             // bạn cần gọi hàm lưu dữ liệu người chơi vào database ở đây.
             PlayerDAO.updatePlayer(pl);
+            database.daos.AdminAuditDAO.log("ADMIN_TOOL", "BUFF_MONEY", pl.name,
+                    String.format("{\"gold\":%d,\"gem\":%d}", gold, gem));
 
         } catch (NumberFormatException e) {
             JOptionPane.showMessageDialog(this, "Giá trị không hợp lệ. Vui lòng nhập số.");

@@ -111,16 +111,20 @@ public class Controller implements IMessageHandler {
                         Service.gI().sendThongBaoResetWait(player, "Không thể mở Siêu thị/Ký gửi khi đang giao dịch!");
                         return;
                     }
+                    ensure(_msg, 1);
                     byte action = _msg.reader().readByte();
                     switch (action) {
                         case 0:
+                            ensure(_msg, 7);
                             short idItem = _msg.reader().readShort();
                             byte moneyType = _msg.reader().readByte();
                             int money = _msg.reader().readInt();
                             int quantity;
                             if (player.getSession().version >= 222) {
+                                ensure(_msg, 4);
                                 quantity = _msg.reader().readInt();
                             } else {
+                                ensure(_msg, 1);
                                 quantity = _msg.reader().readByte();
                             }
                             if (quantity > 0) {
@@ -129,21 +133,25 @@ public class Controller implements IMessageHandler {
                             break;
                         case 1:
                         case 2:
+                            ensure(_msg, 2);
                             idItem = _msg.reader().readShort();
                             ConsignShopService.gI().claimOrDel(player, action, idItem);
                             break;
                         case 3:
+                            ensure(_msg, 7);
                             idItem = _msg.reader().readShort();
                             _msg.reader().readByte();
                             _msg.reader().readInt();
                             ConsignShopService.gI().buyItem(player, idItem);
                             break;
                         case 4:
+                            ensure(_msg, 2);
                             moneyType = _msg.reader().readByte();
                             money = _msg.reader().readByte();
                             ConsignShopService.gI().openShopKyGui(player, moneyType, money);
                             break;
                         case 5:
+                            ensure(_msg, 2);
                             idItem = _msg.reader().readShort();
                             ConsignShopService.gI().upItemToTop(player, idItem);
                             break;
@@ -302,6 +310,7 @@ public class Controller implements IMessageHandler {
                     break;
                 case -34:
                     if (player != null) {
+                        ensure(_msg, 1);
                         switch (_msg.reader().readByte()) {
                             case 1:
                                 if (player.magicTree != null) {
@@ -359,6 +368,7 @@ public class Controller implements IMessageHandler {
                     break;
                 case -108:
                     if (player != null && player.pet != null) {
+                        ensure(_msg, 1);
                         player.pet.changeStatus(_msg.reader().readByte());
                     }
                     break;
@@ -368,13 +378,9 @@ public class Controller implements IMessageHandler {
                             Service.gI().sendThongBaoResetWait(player, "Không thể mua vật phẩm khi đang trong phiên giao dịch!");
                             return;
                         }
+                        ensure(_msg, 3);
                         byte typeBuy = _msg.reader().readByte();
                         int tempId = _msg.reader().readShort();
-                        // int quantity = 0;
-                        // try {
-                        // quantity = _msg.reader().readShort();
-                        // } catch (Exception e) {
-                        // }
                         ShopService.gI().takeItem(player, typeBuy, tempId);
                     }
                     break;
@@ -383,11 +389,14 @@ public class Controller implements IMessageHandler {
                         if (player.isTrade) {
                             return;
                         }
+                        ensure(_msg, 1);
                         int typeSell = _msg.reader().readByte();
                         if (typeSell == 0) {
+                            ensure(_msg, 3);
                             ShopService.gI().showConfirmSellItem(player, _msg.reader().readByte(),
                                     _msg.reader().readShort());
                         } else {
+                            ensure(_msg, 3);
                             ShopService.gI().sellItem(player, _msg.reader().readByte(),
                                     _msg.reader().readShort());
                         }
@@ -400,6 +409,7 @@ public class Controller implements IMessageHandler {
                     break;
                 case 21:
                     if (player != null) {
+                        ensure(_msg, 1);
                         int zoneId = _msg.reader().readByte();
                         ChangeMapService.gI().changeZone(player, zoneId);
                     }
@@ -410,11 +420,13 @@ public class Controller implements IMessageHandler {
                             Service.gI().sendThongBao(player, "Không thể chat kênh thế giới khi đang giao dịch!");
                             return;
                         }
+                        ensure(_msg, 2);
                         ChatGlobalService.gI().chat(player, _msg.reader().readUTF());
                     }
                     break;
                 case -79:
                     if (player != null) {
+                        ensure(_msg, 4);
                         Service.gI().getPlayerMenu(player, _msg.reader().readInt());
                     }
                     break;
@@ -435,17 +447,23 @@ public class Controller implements IMessageHandler {
                     break;
                 case -103:
                     if (player != null) {
+                        ensure(_msg, 1);
                         byte act = _msg.reader().readByte();
                         switch (act) {
                             case 0 ->
                                 Service.gI().openFlagUI(player);
-                            case 1 ->
+                            case 1 -> {
+                                ensure(_msg, 1);
                                 Service.gI().chooseFlag(player, _msg.reader().readByte());
+                            }
                         }
                     }
                     break;
                 case -7:
                     if (player != null) {
+                        if (player.isChangingMap) {
+                            return;
+                        }
                         if (player.isDie()) {
                             Service.gI().charDie(player);
                             return;
@@ -458,14 +476,11 @@ public class Controller implements IMessageHandler {
                         int toX = player.location.x;
                         int toY = player.location.y;
                         byte b = 0;
-                        try {
-                            b = _msg.reader().readByte();
-                            toX = _msg.reader().readShort();
-                            try {
-                                toY = _msg.reader().readShort();
-                            } catch (IOException ex) {
-                            }
-                        } catch (IOException e) {
+                        ensure(_msg, 3);
+                        b = _msg.reader().readByte();
+                        toX = _msg.reader().readShort();
+                        if (_msg.reader().available() >= 2) {
+                            toY = _msg.reader().readShort();
                         }
 
                         // Cho phép dịch chuyển nhanh đến quái trong map (TDLT hoặc Tàn Sát tiếp cận quái)
@@ -525,40 +540,45 @@ public class Controller implements IMessageHandler {
                 // }
                 // break;
                 case -74:
+                    ensure(_msg, 1);
                     byte type = _msg.reader().readByte();
                     if (type == 1) {
                         DataGame.sendSizeRes(_session);
                     } else if (type == 2) {
-                        String ip = _session.ipAddress;
-                        Logger.warning(ip + " dang tai du lieu\n");
-                        new Thread(() -> DataGame.sendRes(_session), "SendRes-" + ip).start();
+                        DataGame.requestSendRes(_session);
                     }
                     break;
                 case -81:
                     if (player != null) {
-                        try {
-                            _msg.reader().readByte();
-                            int[] indexItem = new int[_msg.reader().readByte()];
-                            for (int i = 0; i < indexItem.length; i++) {
-                                indexItem[i] = _msg.reader().readByte();
-                            }
-                            CombineService.gI().showInfoCombine(player, indexItem);
-                        } catch (IOException e) {
+                        ensure(_msg, 2);
+                        _msg.reader().readByte();
+                        int count = _msg.reader().readByte();
+                        if (count < 0 || count > 30) {
+                            throw new IOException("Invalid combine items count: " + count);
                         }
+                        ensure(_msg, count);
+                        int[] indexItem = new int[count];
+                        for (int i = 0; i < indexItem.length; i++) {
+                            indexItem[i] = _msg.reader().readByte();
+                        }
+                        CombineService.gI().showInfoCombine(player, indexItem);
                     }
                     break;
                 case -87:
                     DataGame.updateData(_session);
                     break;
                 case -67:
+                    ensure(_msg, 4);
                     int id = _msg.reader().readInt();
                     DataGame.sendIcon(_session, id);
                     break;
                 case 66:
+                    ensure(_msg, 2);
                     DataGame.sendImageByName(_session, _msg.reader().readUTF());
                     break;
                 case -66:
                     if (player != null) {
+                        ensure(_msg, 2);
                         int effId = _msg.reader().readShort();
                         int idT = effId;
                         if (player.zone == null) {
@@ -578,22 +598,26 @@ public class Controller implements IMessageHandler {
                     break;
                 case -62:
                     if (player != null) {
+                        ensure(_msg, 1);
                         FlagBagService.gI().sendIconFlagChoose(player, _msg.reader().readByte());
                     }
                     break;
                 case -63:
                     if (player != null) {
+                        ensure(_msg, 1);
                         byte fbid = _msg.reader().readByte();
                         int fbidz = fbid & 0xFF; // Chuyển sang byte không dấu
                         FlagBagService.gI().sendIconEffectFlag(player, fbidz);
                     }
                     break;
                 case -32:
+                    ensure(_msg, 2);
                     int bgId = _msg.reader().readShort();
                     DataGame.sendItemBGTemplate(_session, bgId);
                     break;
                 case 22:
                     if (player != null) {
+                        ensure(_msg, 2);
                         _msg.reader().readByte();
                         NpcManager.getNpc(ConstNpc.DAU_THAN).confirmMenu(player, _msg.reader().readByte());
                     }
@@ -612,6 +636,7 @@ public class Controller implements IMessageHandler {
                             PlayerAuditLogger.logAction(player, "CMD_SKILL_NOT_FOCUS", "Blocked: TransactionService check");
                             return;
                         }
+                        ensure(_msg, 1);
                         byte status = _msg.reader().readByte();
                         String curSkill = (player.playerSkill != null && player.playerSkill.skillSelect != null && player.playerSkill.skillSelect.template != null)
                                 ? (player.playerSkill.skillSelect.template.name + " (ID:" + player.playerSkill.skillSelect.template.id + ")") : "null";
@@ -641,6 +666,7 @@ public class Controller implements IMessageHandler {
                     break;
                 case -50:
                     if (player != null) {
+                        ensure(_msg, 4);
                         ClanService.gI().sendListMemberClan(player, _msg.reader().readInt());
                     }
                     break;
@@ -651,6 +677,7 @@ public class Controller implements IMessageHandler {
                     break;
                 case -47:
                     if (player != null) {
+                        ensure(_msg, 2);
                         ClanService.gI().sendListClan(player, _msg.reader().readUTF());
                     }
                     break;
@@ -674,6 +701,7 @@ public class Controller implements IMessageHandler {
                     }
                     break;
                 case -41:
+                    ensure(_msg, 1);
                     Service.gI().sendCaption(_session, _msg.reader().readByte());
                     break;
                 case -43:
@@ -687,6 +715,7 @@ public class Controller implements IMessageHandler {
                     break;
                 case -91:
                     if (player != null) {
+                        ensure(_msg, 1);
                         switch (player.idMark.getTypeChangeMap()) {
                             case ConstMap.CHANGE_CAPSULE -> {
                                 UseItem.gI().choseMapCapsule(player, _msg.reader().readByte());
@@ -703,6 +732,7 @@ public class Controller implements IMessageHandler {
                     }
                     break;
                 case 11:
+                    ensure(_msg, 1);
                     byte modId = _msg.reader().readByte();
                     DataGame.requestMobTemplate(_session, modId);
                     break;
@@ -712,11 +742,13 @@ public class Controller implements IMessageHandler {
                             Service.gI().sendThongBao(player, "Không thể sử dụng lệnh này khi đang giao dịch!");
                             return;
                         }
+                        ensure(_msg, 2);
                         Command.gI().chat(player, _msg.reader().readUTF());
                     }
                     break;
                 case 32:
                     if (player != null) {
+                        ensure(_msg, 3);
                         int npcId = _msg.reader().readShort();
                         int select = _msg.reader().readByte();
                         MenuController.gI().doSelectMenu(player, npcId, select);
@@ -724,12 +756,14 @@ public class Controller implements IMessageHandler {
                     break;
                 case 33:
                     if (player != null) {
+                        ensure(_msg, 2);
                         int npcId = _msg.reader().readShort();
                         MenuController.gI().openMenuNPC(_session, npcId, player);
                     }
                     break;
                 case 34:
                     if (player != null) {
+                        ensure(_msg, 2);
                         int selectSkill = _msg.reader().readShort();
                         PlayerAuditLogger.logAction(player, "CMD_SELECT_SKILL", "Request select skillTemplateId=" + selectSkill);
                         SkillService.gI().selectSkill(player, selectSkill);
@@ -744,10 +778,12 @@ public class Controller implements IMessageHandler {
                             PlayerAuditLogger.logAttackMob(player, -1, false, -1, "BLOCKED", "Spam rate limit (<" + minInterval + "ms, diff=" + (nowAttack - player.lastTimeAttack) + "ms)");
                             break;
                         }
+                        ensure(_msg, 1);
                         int mobId = _msg.reader().readByte();
                         int masterId = -1;
                         boolean isMobMe = mobId == -1;
                         if (isMobMe) {
+                            ensure(_msg, 4);
                             masterId = _msg.reader().readInt();
                         }
                         // _msg.reader().readByte();
@@ -763,6 +799,7 @@ public class Controller implements IMessageHandler {
                             PlayerAuditLogger.logAttackPlayer(player, -1, "BLOCKED", "Spam rate limit (<300ms, diff=" + (nowAttack - player.lastTimeAttack) + "ms)");
                             break;
                         }
+                        ensure(_msg, 4);
                         int playerId = _msg.reader().readInt();
                         // _msg.reader().readByte();
                         PlayerAuditLogger.logAttackPlayer(player, playerId, "DISPATCH", "Service.attackPlayer");
@@ -777,7 +814,8 @@ public class Controller implements IMessageHandler {
                     DataGame.sendDataImageVersion(_session);
                     break;
                 case -20:
-                    if (player != null && !player.isDie()) {
+                    if (player != null && !player.isDie() && !player.isChangingMap) {
+                        ensure(_msg, 2);
                         int itemMapId = _msg.reader().readShort();
                         ItemMapService.gI().pickItem(player, itemMapId, false);
                     }
@@ -804,11 +842,13 @@ public class Controller implements IMessageHandler {
                     break;
                 case -104:
                     if (player != null) {
+                        ensure(_msg, 4);
                         Service.gI().mabaove(player, _msg.reader().readInt());
                     }
                     break;
                 case -118:
                     if (player != null) {
+                        ensure(_msg, 4);
                         int _id = _msg.reader().readInt();
                         if (_id <= 0) {
                             break;
@@ -844,6 +884,7 @@ public class Controller implements IMessageHandler {
                 case 126: // androidPack2
                     break;
                 case -78: // checkMMove
+                    ensure(_msg, 4);
                     _msg.reader().readInt(); // second
                     break;
                 case -114: // RequestPean
@@ -852,10 +893,18 @@ public class Controller implements IMessageHandler {
                     // short menuid
                     break;
                 case -76:
+                    ensure(_msg, 1);
                     AchievementService.gI().confirmAchievement(player, _msg.reader().readByte());
                     break;
                 default:
                     break;
+            }
+        } catch (IOException e) {
+            byte cmd = _msg != null ? _msg.command : -1;
+            Logger.warning(String.format("[Packet Validation] Gói tin không hợp lệ hoặc thiếu byte: cmd=%d, player=%s, IP=%s, lỗi: %s",
+                    cmd, (player != null ? player.name : "null"), (_session != null ? _session.getIP() : "null"), e.getMessage()));
+            if (_session != null) {
+                _session.disconnect();
             }
         } catch (Exception e) {
             byte cmd = _msg != null ? _msg.command : -1;
@@ -1212,6 +1261,17 @@ public class Controller implements IMessageHandler {
 
         // 5. Gửi thông báo cuối cùng cho người chơi
         NpcService.gI().createTutorial(player, 1139, message);
+    }
+
+    /**
+     * Xác thực số lượng byte tối thiểu cần thiết trước khi đọc payload (E1).
+     * Ngăn chặn EOFException và phát hiện sớm các gói tin malformed/cắt vụn.
+     */
+    private static void ensure(Message msg, int bytesNeeded) throws IOException {
+        if (msg == null) {
+            throw new IOException("Message is null");
+        }
+        msg.ensure(bytesNeeded);
     }
 
     private String getCommandName(byte cmd) {

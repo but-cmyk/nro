@@ -69,30 +69,52 @@ public class Inventory {
         return amount;
     }
 
-    public void subRuby(int num) {
-        this.ruby -= num;
+    public void subRuby(long num) {
+        if (num <= 0) {
+            return;
+        }
+        this.ruby = (int) Math.max(0, (long) this.ruby - num);
     }
 
-    public void addRuby(int num) {
+    public void subRuby(int num) {
+        this.subRuby((long) num);
+    }
+
+    public void addRuby(long num) {
         if (num <= 0) {
             return;
         }
         this.ruby = (int) Math.min((long) this.ruby + num, 2_000_000_000L);
     }
 
+    public void addRuby(int num) {
+        this.addRuby((long) num);
+    }
+
     public void subGem(int num) {
         this.subGemAndRuby((long) num);
     }
 
-    public void subGemDirect(int num) {
-        this.gem -= num;
+    public void subGemDirect(long num) {
+        if (num <= 0) {
+            return;
+        }
+        this.gem = (int) Math.max(0, (long) this.gem - num);
     }
 
-    public void addGem(int num) {
+    public void subGemDirect(int num) {
+        this.subGemDirect((long) num);
+    }
+
+    public void addGem(long num) {
         if (num <= 0) {
             return;
         }
         this.gem = (int) Math.min((long) this.gem + num, 2_000_000_000L);
+    }
+
+    public void addGem(int num) {
+        this.addGem((long) num);
     }
 
     /**

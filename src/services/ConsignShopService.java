@@ -103,45 +103,58 @@ public class ConsignShopService {
                 return;
             }
 
-            boolean paid = false;
             if (it.goldSell > 0) {
                 if (pl.inventory.gold < it.goldSell) {
                     Service.gI().sendThongBao(pl, "Bạn không đủ vàng để mua vật phẩm");
                     return;
                 }
-                pl.inventory.subGold(it.goldSell);
-                paid = true;
             } else if (it.gemSell > 0) {
                 if (pl.inventory.gem < it.gemSell) {
                     Service.gI().sendThongBao(pl, "Bạn không đủ Ngọc Xanh để mua vật phẩm này!");
                     return;
                 }
-                pl.inventory.subGemDirect(it.gemSell);
-                paid = true;
-            }
-
-            if (!paid) {
+            } else {
                 Service.gI().sendThongBao(pl, "Giá bán không hợp lệ");
                 return;
             }
 
+            // B2: Atomic DB claim - chiếm quyền mua độc quyền chống race condition 2 người mua cùng lúc
+            boolean claimed = manager.claimItemAtomic(it.id);
+            if (!claimed) {
+                it.isBuy = true;
+                Service.gI().sendThongBao(pl, "Vật phẩm đã được người khác mua hoặc không còn tồn tại!");
+                openShopKyGui(pl);
+                return;
+            }
+
+            // Trừ tiền sau khi đã claim thành công trong DB
+            if (it.goldSell > 0) {
+                pl.inventory.subGold(it.goldSell);
+            } else {
+                pl.inventory.subGemDirect(it.gemSell);
+            }
+
             if (!InventoryService.gI().addItemBag(pl, item)) {
+                // Hoàn lại tiền và revert claim nếu không thể add vào túi
                 if (it.goldSell > 0) {
                     pl.inventory.addGold(it.goldSell);
                 } else {
                     pl.inventory.addGem(it.gemSell);
                 }
+                manager.revertItemClaim(it.id);
                 Service.gI().sendThongBao(pl, "Không thể nhận vật phẩm, giao dịch đã được hoàn lại");
                 return;
             }
 
             it.isBuy = true;
-            manager.updateItemBoughtAsync(it.id);
-            database.daos.PlayerDAO.updatePlayerAsync(pl);
+            // B3: Lưu trữ người mua ĐỒNG BỘ để đảm bảo ACID và chống rollback dữ liệu
+            database.daos.PlayerDAO.updatePlayer(pl);
+
             Player seller = server.Client.gI().getPlayer(it.player_sell);
             if (seller != null) {
-                database.daos.PlayerDAO.updatePlayerAsync(seller);
+                database.daos.PlayerDAO.updatePlayer(seller);
             }
+
             Service.gI().sendMoney(pl);
             InventoryService.gI().sendItemBags(pl);
             Service.gI().sendThongBao(pl, "Bạn đã nhận được " + item.template.name);
@@ -241,25 +254,6 @@ public class ConsignShopService {
                 "Đồng ý", "Từ Chối");
     }
 
-    // public void StartupItemToTop(Player pl) {
-    // // Changed "Ngọc Xanh" requirement to "thỏi vàng" based on SubThoiVang
-    // if (!SubThoiVang(pl, 2)) {
-    // Service.gI().sendThongBao(pl, "Bạn cần có ít nhất 2 thỏi vàng đưa vật phẩm
-    // lên trang đầu");
-    // return;
-    // }
-    // for (ConsignItem its : ConsignShopManager.gI().listItem) {
-    // if (its.id == pl.idMark.getIdItemUpTop()) {
-    // its.isUpTop = 1;
-    // Service.gI().sendThongBao(pl, "Đưa vật phẩm lên trang đầu thành công");
-    // break;
-    // }
-    // }
-    //
-    // ConsignShopManager.gI().save();
-    // openShopKyGui(pl);
-    // }
-
     public void claimOrDel(Player pl, byte action, int id) {
         if (pl == null || pl.getSession() == null) {
             return;
@@ -294,19 +288,29 @@ public class ConsignShopService {
                         Service.gI().sendThongBao(pl, "Hành trang không đủ chỗ trống");
                         return;
                     }
-                    if (manager.listItem.remove(it)) {
-                        if (!InventoryService.gI().addItemBag(pl, item)) {
-                            manager.listItem.add(it);
-                            Service.gI().sendThongBao(pl, "Không thể nhận lại vật phẩm");
-                            return;
-                        }
-                        InventoryService.gI().sendItemBags(pl);
-                        Service.gI().sendMoney(pl);
-                        manager.deleteItemAsync(it.id);
-                        database.daos.PlayerDAO.updatePlayerAsync(pl);
-                        Service.gI().sendThongBao(pl, "Hủy bán vật phẩm thành công");
+
+                    // B2: Xóa DB nguyên tử trước khi hoàn item vào túi
+                    boolean deletedFromDb = manager.deleteItemAtomic(it.id, (int) pl.id, false);
+                    if (!deletedFromDb) {
+                        Service.gI().sendThongBao(pl, "Không thể hủy vật phẩm (có thể đã được mua hoặc đã bị xử lý)");
                         openShopKyGui(pl);
+                        return;
                     }
+
+                    manager.listItem.remove(it);
+                    if (!InventoryService.gI().addItemBag(pl, item)) {
+                        // Nếu add túi thất bại bất thường, chèn lại DB
+                        manager.insertItem(it);
+                        Service.gI().sendThongBao(pl, "Không thể nhận lại vật phẩm");
+                        return;
+                    }
+
+                    InventoryService.gI().sendItemBags(pl);
+                    Service.gI().sendMoney(pl);
+                    // B3: Lưu đồng bộ người chơi
+                    database.daos.PlayerDAO.updatePlayer(pl);
+                    Service.gI().sendThongBao(pl, "Hủy bán vật phẩm thành công");
+                    openShopKyGui(pl);
                     break;
                 case 2: // nhận tiền
                     if (it == null || !it.isBuy) {
@@ -335,20 +339,27 @@ public class ConsignShopService {
                         receivedAmount = it.gemSell - fee;
                     }
 
-                    if (manager.listItem.remove(it)) {
-                        if (it.goldSell > 0) {
-                            pl.inventory.addGold(receivedAmount);
-                        } else {
-                            pl.inventory.addGem((int) receivedAmount);
-                        }
-                        Service.gI().sendMoney(pl);
-                        InventoryService.gI().sendItemBags(pl); // Send updated inventory to player
-                        manager.deleteItemAsync(it.id);
-                        database.daos.PlayerDAO.updatePlayerAsync(pl);
-                        Service.gI().sendThongBao(pl, String.format("Bạn đã nhận được %s (đã trừ %s phí)",
-                                utils.Util.powerToString(receivedAmount), utils.Util.powerToString(fee)));
+                    // B2: Xóa DB nguyên tử trước khi cộng tiền (chống claim 2 lần)
+                    boolean deletedClaim = manager.deleteItemAtomic(it.id, (int) pl.id, true);
+                    if (!deletedClaim) {
+                        Service.gI().sendThongBao(pl, "Vật phẩm không tồn tại hoặc tiền đã được nhận trước đó!");
                         openShopKyGui(pl);
+                        return;
                     }
+
+                    manager.listItem.remove(it);
+                    if (it.goldSell > 0) {
+                        pl.inventory.addGold(receivedAmount);
+                    } else {
+                        pl.inventory.addGem(receivedAmount);
+                    }
+                    Service.gI().sendMoney(pl);
+                    InventoryService.gI().sendItemBags(pl);
+                    // B3: Lưu đồng bộ người chơi
+                    database.daos.PlayerDAO.updatePlayer(pl);
+                    Service.gI().sendThongBao(pl, String.format("Bạn đã nhận được %s (đã trừ %s phí)",
+                            utils.Util.powerToString(receivedAmount), utils.Util.powerToString(fee)));
+                    openShopKyGui(pl);
                     break;
             }
         } finally {
