@@ -92,6 +92,8 @@ namespace Game1
     
     	public static bool isGetData;
     
+    	public static int tDownloadTimeout;
+    
     	public static Command cmdDownload;
     
     	private Command cmdStart;
@@ -611,6 +613,23 @@ namespace Game1
     		if (!loadScreen && (bigOk || percent == 100))
     		{
     			cmdDownload = null;
+    		}
+    		if (!loadScreen && isGetData)
+    		{
+    			tDownloadTimeout++;
+    			if (tDownloadTimeout > 450 && percent == 0)
+    			{
+    				tDownloadTimeout = 0;
+    				isGetData = false;
+    				loadScreen = true;
+    				Session_ME.gI().close();
+    				GameCanvas.startOK("Không thể kết nối đến máy chủ để tải dữ liệu.\nVui lòng kiểm tra Server đã bật chưa và thử lại!", 8885, null);
+    				return;
+    			}
+    		}
+    		else
+    		{
+    			tDownloadTimeout = 0;
     		}
     		base.update();
     		if (Char.isLoadingMap || !loadScreen || !isAutoConect || GameCanvas.currentScreen != this || testConnect == 2)
@@ -1140,6 +1159,7 @@ namespace Game1
     			GameCanvas.endDlg();
     			Rms.clearAll();
     			Rms.clearLoginData();
+    			loadIP();
     			if (GameCanvas.loginScr != null)
     			{
     				if (GameCanvas.loginScr.tfUser != null)
@@ -1232,6 +1252,7 @@ namespace Game1
 		stopDownload = false;
 		p = 0;
 		demPercent = 0;
+		tDownloadTimeout = 0;
 		strWait = mResources.downloading_data;
 		Char.isLoadingMap = false;
 		TileMap.lastBgID = -1;
@@ -1241,6 +1262,16 @@ namespace Game1
 		cmdDownload.x = GameCanvas.w / 2 - mScreen.cmdW / 2;
 		cmdDownload.y = GameCanvas.hh + 65;
 		base.switchToMe();
+		if (nameServer == null || address == null || ipSelect < 0 || ipSelect >= address.Length)
+		{
+			getServerList(linkDefault);
+			ipSelect = 0;
+		}
+		if (address != null && ipSelect >= 0 && ipSelect < address.Length)
+		{
+			GameMidlet.IP = address[ipSelect];
+			GameMidlet.PORT = port[ipSelect];
+		}
 		GameCanvas.connect();
 		Service.gI().getResource(1, null);
 	}
