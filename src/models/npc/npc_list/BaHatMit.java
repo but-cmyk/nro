@@ -63,7 +63,7 @@ public class BaHatMit extends Npc {
                     }
                     if (player.haveRewardVDST) {
                         this.createOtherMenu(player, ConstNpc.BASE_MENU,
-                                "Chúc mừng con đã xuất sắc vô địch Võ Đài Sinh Tử!\nTa có phần thưởng giá trị gồm Vàng, Tiềm năng, 3 Vệ tinh, Đá nâng cấp và cơ hội nhận Cải trang Boss Võ Đài quý hiếm!",
+                                "Chúc mừng con đã xuất sắc vô địch Võ Đài Sinh Tử!\nTa có phần thưởng giá trị gồm Vàng, Hồng ngọc, Tiềm năng, 3 Vệ tinh, Đá nâng cấp và cơ hội nhận Cải trang Boss Võ Đài quý hiếm!",
                                 "Nhận thưởng", "Từ chối");
                         return;
                     }
@@ -257,8 +257,12 @@ public class BaHatMit extends Npc {
                                     long goldReward = Util.nextInt(300_000, 500_000);
                                     player.inventory.gold = Math.min(player.inventory.gold + goldReward,
                                             2_000_000_000L);
+                                    // 1.1. Hồng ngọc (10 hồng ngọc vô địch)
+                                    int rubyReward = 10;
+                                    player.inventory.ruby = Math.min(player.inventory.ruby + rubyReward, 2_000_000_000);
                                     Service.gI().sendMoney(player);
                                     thongBao.append("- ").append(Util.format(goldReward)).append(" vàng\n");
+                                    thongBao.append("- ").append(rubyReward).append(" hồng ngọc\n");
 
                                     // 2. Tiềm năng / Sức mạnh: Phương Án 1 - Phân đoạn theo từng cột mốc sức mạnh
                                     // (Tier Pacing)
@@ -570,21 +574,21 @@ public class BaHatMit extends Npc {
                             case 0 -> {
                                 Item trangSachCu = InventoryService.gI().findItemBagByTemp(player, 1188);
                                 Item biaSach = InventoryService.gI().findItemBagByTemp(player, 1154);
-                                if ((trangSachCu != null && trangSachCu.quantity >= 9999)
+                                if ((trangSachCu != null && trangSachCu.quantity >= 999)
                                         && (biaSach != null && biaSach.quantity >= 1)) {
                                     createOtherMenu(player, ConstNpc.DONG_THANH_SACH_CU,
                                             "|2|Chế tạo Cuốn sách cũ\n"
-                                                    + "|1|Trang sách cũ " + trangSachCu.quantity + "/9999\n"
+                                                    + "|1|Trang sách cũ " + trangSachCu.quantity + "/999\n"
                                                     + "Bìa sách " + biaSach.quantity + "/1\n"
-                                                    + "|4|Tỉ lệ thành công: 20%\n"
+                                                    + "|4|Tỉ lệ thành công: 50%\n"
                                                     + "Thất bại mất 99 trang sách và 1 bìa sách",
                                             "Đồng ý", "Từ chối");
                                 } else {
                                     String NpcSay = "|2|Chế tạo Cuốn sách cũ\n";
                                     if (trangSachCu == null) {
-                                        NpcSay += "|7|Trang sách cũ " + "0/9999\n";
+                                        NpcSay += "|7|Trang sách cũ " + "0/999\n";
                                     } else {
-                                        NpcSay += "|1|Trang sách cũ " + trangSachCu.quantity + "/9999\n";
+                                        NpcSay += "|1|Trang sách cũ " + trangSachCu.quantity + "/999\n";
                                     }
                                     if (biaSach == null) {
                                         NpcSay += "|7|Bìa sách " + "0/1\n";
@@ -592,7 +596,7 @@ public class BaHatMit extends Npc {
                                         NpcSay += "|1|Bìa sách " + biaSach.quantity + "/1\n";
                                     }
 
-                                    NpcSay += "|7|Tỉ lệ thành công: 20%\n";
+                                    NpcSay += "|7|Tỉ lệ thành công: 50%\n";
                                     NpcSay += "|7|Thất bại mất 99 trang sách và 1 bìa sách";
                                     createOtherMenu(player, ConstNpc.DONG_THANH_SACH_CU_2,
                                             NpcSay, "Từ chối");
@@ -608,7 +612,7 @@ public class BaHatMit extends Npc {
                                             "|2|Đổi sách tuyệt kỹ 1\n"
                                                     + "|1|Cuốn sách cũ " + cuonSachCu.quantity + "/10\n"
                                                     + "Kìm bấm giấy " + kimBam.quantity + "/1\n"
-                                                    + "|4|Tỉ lệ thành công: 20%\n",
+                                                    + "|4|Tỉ lệ thành công: 30%\n",
                                             "Đồng ý", "Từ chối");
                                 } else {
                                     String NpcSay = "|2|Đổi sách Tuyệt kỹ 1\n";
@@ -622,7 +626,7 @@ public class BaHatMit extends Npc {
                                     } else {
                                         NpcSay += "|1|Kìm bấm giấy " + kimBam.quantity + "/1\n";
                                     }
-                                    NpcSay += "|7|Tỉ lệ thành công: 20%\n";
+                                    NpcSay += "|7|Tỉ lệ thành công: 30%\n";
                                     createOtherMenu(player, ConstNpc.DOI_SACH_TUYET_KY_2,
                                             NpcSay, "Từ chối");
                                 }
@@ -649,7 +653,7 @@ public class BaHatMit extends Npc {
                                 Item trangSachCu = InventoryService.gI().findItemBagByTemp(player, 1188);
                                 Item biaSach = InventoryService.gI().findItemBagByTemp(player, 1154);
                                 Item cuonSachCu = ItemService.gI().createNewItem((short) 1187);
-                                if (Util.isTrue(20, 100)) {
+                                if (Util.isTrue(50, 100)) {
                                     cuonSachCu.itemOptions.add(new ItemOption(30, 0));
                                     try { // send effect success
                                         Message msg = new Message(-81);
@@ -682,7 +686,7 @@ public class BaHatMit extends Npc {
                                     }
 
                                     InventoryService.gI().addItemList(player.inventory.itemsBag, cuonSachCu);
-                                    InventoryService.gI().subQuantityItemsBag(player, trangSachCu, 9999);
+                                    InventoryService.gI().subQuantityItemsBag(player, trangSachCu, 999);
                                     InventoryService.gI().subQuantityItemsBag(player, biaSach, 1);
                                     InventoryService.gI().sendItemBags(player);
                                 } else {
@@ -729,7 +733,7 @@ public class BaHatMit extends Npc {
 
                                 Item sachTuyetKy = ItemService.gI().createNewItem((short) (baseValue + genderModifier));
 
-                                if (Util.isTrue(20, 100)) {
+                                if (Util.isTrue(30, 100)) {
                                     sachTuyetKy.itemOptions.add(new ItemOption(224, 0));
                                     sachTuyetKy.itemOptions.add(new ItemOption(21, 40));
                                     sachTuyetKy.itemOptions.add(new ItemOption(30, 0));
@@ -844,14 +848,14 @@ public class BaHatMit extends Npc {
 
     private void nhanTicketVDSTFree(Player player) {
         if (Util.isAfterMidnight(player.lastTimeNhanBinhNuocFree)) {
-            player.ticketVDST = 3;
+            player.ticketVDST = 5;
             player.lastTimeResetTicketVDST = System.currentTimeMillis();
             player.lastTimeNhanBinhNuocFree = System.currentTimeMillis();
             PlayerDAO.updatePlayer(player);
             Service.gI().sendThongBao(player,
-                    "Bà tặng con 3 Vé ưu tiên đấu ngay hôm nay! Con được thi đấu miễn phí 3 lượt không tốn bình nước giống Giải Siêu Hạng!");
+                    "Bà tặng con 5 Vé ưu tiên đấu ngay hôm nay! Con được thi đấu miễn phí 5 lượt không tốn bình nước giống Giải Siêu Hạng!");
         } else {
-            Service.gI().sendThongBao(player, "Hôm nay con đã nhận 3 Vé ưu tiên rồi (Hiện còn: " + player.getTicketVDST() + " vé). Hãy quay lại sau 0h nhé!");
+            Service.gI().sendThongBao(player, "Hôm nay con đã nhận 5 Vé ưu tiên rồi (Hiện còn: " + player.getTicketVDST() + " vé). Hãy quay lại sau 0h nhé!");
         }
     }
 
@@ -895,8 +899,8 @@ public class BaHatMit extends Npc {
                 + "Mỗi hiệp tối đa 3 phút, có 5 giây nghỉ ngơi chuẩn bị\b"
                 + "Hạ gục cả 5 Boss để Vô Địch! Hết HP, hết giờ là Thua\n"
                 + "2. LƯỢT THI ĐẤU\b"
-                + "Mỗi ngày tự động nhận MIỄN PHÍ 3 lượt thi đấu (reset lúc 0h đêm giống Giải Siêu Hạng)\b"
-                + "Sau khi dùng hết 3 lượt miễn phí, mỗi lượt thi đấu sẽ cần Bình Nước Phép (mua thêm tại NPC Santa tab Đặc Biệt)\n"
+                + "Mỗi ngày tự động nhận MIỄN PHÍ 5 lượt thi đấu (reset lúc 0h đêm giống Giải Siêu Hạng)\b"
+                + "Sau khi dùng hết 5 lượt miễn phí, mỗi lượt thi đấu sẽ cần Bình Nước Phép (mua thêm tại NPC Santa tab Đặc Biệt)\n"
                 + "3. CƠ CHẾ BÌNH CHỌN CHO KHÁN GIẢ\b"
                 + "Khán giả có thể cược 1.000.000 Vàng cho Người Chơi hoặc Bà Hạt Mít\b"
                 + "Cược Người Chơi: Thắng khi võ sĩ vô địch cả 5 hiệp\b"
@@ -905,7 +909,7 @@ public class BaHatMit extends Npc {
                 + "Hoàn trả 100% tiền cược nếu chỉ có 1 bên cược\n"
                 + "4. PHẦN THƯỞNG MỖI TRẬN THẮNG\b"
                 + "Chiến thắng cả 5 Hiệp đấu sẽ nhận được:\b"
-                + "300.000 đến 500.000 Vàng, Tiềm Năng & Sức Mạnh khủng\b"
+                + "300.000 đến 500.000 Vàng, 10 Hồng ngọc, Tiềm Năng & Sức Mạnh khủng\b"
                 + "3 Vệ Tinh ngẫu nhiên + 1 đến 3 Đá Nâng Cấp trang bị\b"
                 + "May mắn nhận: Bùa 1h (30%), Thỏi Vàng (3%), Cải Trang (15%)\b"
                 + "ĐẶC BIỆT: Cơ hội nhận CẢI TRANG BOSS VĨNH VIỄN!\n"

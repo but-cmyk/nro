@@ -86,7 +86,7 @@ for /f "tokens=5" %%a in ('netstat -ano ^| findstr :14445 ^| findstr LISTENING')
 )
 timeout /t 1 /nobreak >nul 2>&1
 
-java -server -Xms128M -Xmx1024M -XX:+UseG1GC --sun-misc-unsafe-memory-access=allow --add-opens java.base/jdk.internal.misc=ALL-UNNAMED --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.nio=ALL-UNNAMED "-Dio.netty.tryReflectionSetAccessible=true" "-Dfile.encoding=UTF-8" -cp "build\classes;dist\NROK.jar;lib\*" server.ServerManager
+java -server -Xms128M -Xmx1024M -XX:+UseG1GC --add-opens java.base/jdk.internal.misc=ALL-UNNAMED --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.nio=ALL-UNNAMED "-Dio.netty.tryReflectionSetAccessible=true" "-Dfile.encoding=UTF-8" -cp "build\classes;dist\NROK.jar;lib\*" server.ServerManager
 
 if %errorlevel% neq 0 (
     echo.

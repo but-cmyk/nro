@@ -24,7 +24,7 @@ import java.util.List;
 public class ThoDaiKa extends Boss {
 
     // Constants
-    private static final long TIME_CHANGE_MAP = 600000; // Tăng từ 3p lên 10p
+    private static final long TIME_CHANGE_MAP = 300000; // 5 phút đổi map tìm player
     private static final long TIME_MOVE_AWAY = 1500;
     private static final long TIME_RETURN = 5000;
     private static final long CHAT_COOLDOWN = 5000;
@@ -61,7 +61,7 @@ public class ThoDaiKa extends Boss {
                 new String[]{"|-1|Carrot-chan! Ta đến để tìm người mạnh!", "|-1|Các ngươi có phải là những chiến binh mạnh mẽ không?"},
                 new String[]{"|-1|Haha! Thật thú vị! Chiến đấu thôi!", "|-1|Ta muốn xem sức mạnh thực sự của các ngươi!", "|-2|Đây là lúc để thể hiện bản lĩnh chiến binh!", "|-2|Hãy cho ta thấy các ngươi mạnh đến đâu!"},
                 new String[]{"|-1|Tuyệt vời! Các ngươi thật sự rất mạnh!", "|-2|Ta sẽ còn mạnh hơn nữa! Hẹn gặp lại!"},
-                900 // Tăng thời gian hồi sinh từ 300s (5 phút) lên 900s (15 phút)
+                600 // Thời gian hồi sinh 600s (10 phút)
         ));
         initializeVariables();
     }
@@ -85,8 +85,11 @@ public class ThoDaiKa extends Boss {
 
     @Override
     public Zone getMapJoin() {
-        int mapId = this.data[this.currentLevel].getMapJoin()[Util.nextInt(0, this.data[this.currentLevel].getMapJoin().length - 1)];
-        return MapService.gI().getMapById(mapId).zones.get(0);
+        Zone target = managers.boss.BossManager.getRoamingZoneWithPlayer(this.zone, ThoDaiKa.class);
+        if (target != null) {
+            return target;
+        }
+        return managers.boss.BossManager.getRandomOutdoorZone();
     }
 
     @Override
@@ -219,57 +222,30 @@ public class ThoDaiKa extends Boss {
     }
 
     private void handleMapChange() {
-        List<Player> players = Client.gI().getPlayers();
-        int playerCount = players.size();
-        
-        if (playerCount > 0) {
-            Player randomPlayer = players.get(Util.nextInt(playerCount));
-            
-            if (shouldChangeMap(randomPlayer)) {
-                changeToRandomMap();
+        if (this.zone != null && (System.currentTimeMillis() > this.lastTimeJoinMap 
+                || (this.zone.getNumOfPlayers() == 0 && Util.canDoWithTime(this.lastTimeJoinMap - TIME_CHANGE_MAP, 25000)))) {
+            Zone targetZone = managers.boss.BossManager.getRoamingZoneWithPlayer(this.zone, ThoDaiKa.class);
+            if (targetZone == null && this.zone.getNumOfPlayers() == 0) {
+                targetZone = managers.boss.BossManager.getRandomOutdoorZone();
+            }
+            if (targetZone != null && targetZone != this.zone) {
+                lastTimeJoinMap = System.currentTimeMillis() + TIME_CHANGE_MAP;
+                chatWithCooldown("|-1|Ta sẽ tìm kiếm chiến binh mạnh ở nơi khác!");
+                ChangeMapService.gI().spaceShipArrive(this, (byte) 2, ChangeMapService.DEFAULT_SPACE_SHIP);
+                ChangeMapService.gI().exitMap(this);
+
+                this.zone = targetZone;
+                this.location.x = Util.nextInt(100, Math.max(100, zone.map.mapWidth - 100));
+                this.location.y = zone.map.yPhysicInTop(this.location.x, 100);
+
+                this.joinMap();
             }
         }
     }
 
-    private boolean shouldChangeMap(Player player) {
-        return player != null 
-                && player.zone != null 
-                && player.zone.isKhongCoTrongTaiTrongKhu()
-                && !isInForbiddenMap(player.zone.map.mapId)
-                && this.zone.getPlayers().size() <= MAX_PLAYERS_IN_ZONE
-                && System.currentTimeMillis() > this.lastTimeJoinMap
-                && player.id != -1000000;
-    }
-
-    private boolean isInForbiddenMap(int mapId) {
-        for (int forbiddenId : FORBIDDEN_MAP_IDS) {
-            if (mapId == forbiddenId) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private void changeToRandomMap() {
-        int randomMapId;
-
-        // Vòng lặp random lại nếu trúng vào map 21, 22, 23
-        do {
-            randomMapId = Util.nextInt(0, MAX_MAP_ID);
-        } while (randomMapId == 21 || randomMapId == 22 || randomMapId == 23);
-
-        lastTimeJoinMap = System.currentTimeMillis() + TIME_CHANGE_MAP;
-
-        // ... (Phần còn lại giữ nguyên) ...
-        chatWithCooldown("|-1|Ta sẽ tìm kiếm chiến binh mạnh ở nơi khác!");
-        ChangeMapService.gI().spaceShipArrive(this, (byte) 2, ChangeMapService.DEFAULT_SPACE_SHIP);
-        ChangeMapService.gI().exitMap(this);
-
-        this.zone = MapService.gI().getMapById(randomMapId).zones.get(0);
-        this.location.x = Util.nextInt(Math.max(100, zone.map.mapWidth - 100));
-        this.location.y = zone.map.yPhysicInTop(this.location.x, 100);
-
-        this.joinMap();
+    @Override
+    public void reward(Player plKill) {
+        managers.boss.BossManager.dropGoldAndSPL(this, plKill);
     }
 
     private void updatePlayerTarget() {

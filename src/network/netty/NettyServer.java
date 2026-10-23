@@ -6,9 +6,15 @@ import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.handler.ssl.SslContext;
+import io.netty.handler.ssl.SslContextBuilder;
+import io.netty.handler.ssl.SslHandler;
+import io.netty.handler.ssl.SslProvider;
 import io.netty.handler.timeout.IdleStateHandler;
+import server.Manager;
 import utils.Logger;
 
+import java.io.File;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -37,9 +43,29 @@ public class NettyServer {
     }
 
     public synchronized void start(int port) throws Exception {
+        start(port, false);
+    }
+
+    public synchronized void start(int port, boolean tls) throws Exception {
         if (this.isRunning) {
             Logger.warning("NettyServer đã đang chạy!");
             return;
+        }
+
+        final SslContext sslContext;
+        if (tls) {
+            File cert = new File(Manager.TLS_CERT);
+            File key = new File(Manager.TLS_KEY);
+            if (!cert.isFile() || !key.isFile()) {
+                throw new IllegalStateException("TLS đang bật nhưng không thấy cert/key: "
+                        + cert.getAbsolutePath() + " / " + key.getAbsolutePath());
+            }
+            sslContext = SslContextBuilder.forServer(cert, key)
+                    .sslProvider(SslProvider.JDK)
+                    .protocols("TLSv1.3", "TLSv1.2")
+                    .build();
+        } else {
+            sslContext = null;
         }
 
         // 1 Boss thread để accept kết nối, Worker threads để xử lý I/O
@@ -64,6 +90,12 @@ public class NettyServer {
                             ch.attr(NroChannelHandler.SESSION_ATTR).set(session);
 
                             ChannelPipeline pipeline = ch.pipeline();
+                            // 0. TLS phải là handler đầu tiên để giải mã toàn bộ traffic.
+                            if (sslContext != null) {
+                                SslHandler sslHandler = sslContext.newHandler(ch.alloc());
+                                sslHandler.setHandshakeTimeout(10, TimeUnit.SECONDS);
+                                pipeline.addLast("ssl", sslHandler);
+                            }
                             // 1. Kiểm tra Zombie Connection (ngắt nếu không có data sau 180s)
                             pipeline.addLast("idleStateHandler", new IdleStateHandler(180, 0, 0, TimeUnit.SECONDS));
                             // 2. Decoder & Encoder theo từng Session riêng biệt (Thread-safe XOR keys)
@@ -79,7 +111,8 @@ public class NettyServer {
             ChannelFuture f = b.bind(port).sync();
             this.serverChannel = f.channel();
             this.isRunning = true;
-            Logger.success(">> [Netty 4.x] Server đã khởi động thành công và lắng nghe trên PORT: " + port + "\n");
+            Logger.success(">> [Netty 4.x] Server đã khởi động thành công và lắng nghe trên PORT: "
+                    + port + (sslContext != null ? " (TLS 1.2/1.3)" : " (plaintext)") + "\n");
         } catch (Exception e) {
             this.close();
             throw e;

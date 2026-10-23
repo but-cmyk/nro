@@ -589,103 +589,138 @@ public class Boss extends Player implements IBoss {
     }
 
     /**
-     * Chọn zone tốt nhất theo logic cũ
+     * Kiểm tra xem khu vực (Zone) có khả dụng cho Boss này vào hay không.
+     * Quy tắc Độc Quyền Khu: Mỗi khu chỉ cho phép tối đa 1 loại Boss (trừ trường hợp kịch bản đi chung/cha-con).
      */
-    private Zone selectBestZone() {
-        List<Zone> zones = this.zone.map.zones;
-
-        if (zones == null || zones.isEmpty()) {
-            return null;
+    public boolean isZoneAvailableForBoss(Zone targetZone) {
+        if (targetZone == null || targetZone.map == null) {
+            return false;
+        }
+        List<Player> livingBosses = targetZone.getBosses();
+        if (livingBosses == null || livingBosses.isEmpty()) {
+            return true;
         }
 
-        // --- CASE 1: BOSS ĐẶC BIỆT (isZone01SpawnDisabled) ---
-        if (this.isZone01SpawnDisabled) {
-            List<Zone> zonesWithPlayers = new ArrayList<>();
-            List<Zone> zonesWithoutBoss = new ArrayList<>();
-
-            for (Zone z : zones) {
-                if (z == null) {
-                    continue;
+        for (Player pl : livingBosses) {
+            if (pl != null && !pl.isDie() && pl instanceof Boss otherBoss) {
+                if (otherBoss.equals(this)) {
+                    continue; // Bỏ qua chính bản thân
                 }
-
-                boolean hasBoss = z.getBosses() != null && !z.getBosses().isEmpty();
-                boolean hasPlayers = z.getNumOfPlayers() > 0;
-
-                if (!hasBoss) {
-                    zonesWithoutBoss.add(z);
-                    if (hasPlayers) {
-                        zonesWithPlayers.add(z);
-                    }
+                // Nếu khu đã có Boss và không thuộc cùng một nhóm/kịch bản -> TỪ CHỐI
+                if (!isSameBossGroup(this, otherBoss)) {
+                    return false;
                 }
             }
-
-            // Ưu tiên 1: Khu có người + không có boss
-            if (!zonesWithPlayers.isEmpty()) {
-                return zonesWithPlayers.get(Util.nextInt(0, zonesWithPlayers.size() - 1));
-            }
-
-            // Ưu tiên 2: Khu không có boss (dù trống người)
-            if (!zonesWithoutBoss.isEmpty()) {
-                return zonesWithoutBoss.get(Util.nextInt(0, zonesWithoutBoss.size() - 1));
-            }
-
-            // Không tìm được zone phù hợp, return null để fallback
-            return null;
-        } // --- CASE 2: BOSS THƯỜNG (PHÂN BỔ ĐỀU CÁC ZONE HỢP LỆ) ---
-        else {
-            List<Zone> validZones = new ArrayList<>();
-            List<Zone> zonesWithPlayers = new ArrayList<>();
-
-            for (Zone z : zones) {
-                if (z == null) {
-                    continue;
-                }
-                // Loại trừ zone đã có Boss cùng loại đang sống hoặc zone quá đông (>= 15 người)
-                boolean hasSameBoss = z.getBosses() != null && z.getBosses().stream().anyMatch(b -> b.id == this.id);
-                if (!hasSameBoss && z.getNumOfPlayers() < 15) {
-                    validZones.add(z);
-                    if (z.getNumOfPlayers() > 0) {
-                        zonesWithPlayers.add(z);
-                    }
-                }
-            }
-
-            // Ưu tiên 1: Zone có người chơi và không bị trùng boss
-            if (!zonesWithPlayers.isEmpty()) {
-                return zonesWithPlayers.get(Util.nextInt(0, zonesWithPlayers.size() - 1));
-            }
-
-            // Ưu tiên 2: Zone hợp lệ bất kỳ
-            if (!validZones.isEmpty()) {
-                return validZones.get(Util.nextInt(0, validZones.size() - 1));
-            }
-
-            // Không tìm được zone phù hợp => fallback
-            return null;
         }
+        return true;
     }
 
     /**
-     * Fallback zone khi không tìm được zone phù hợp
+     * Kiểm tra hai Boss có thuộc cùng một kịch bản/nhóm (Cha-con, phân thân, boss xuất hiện cùng nhau) hay không.
      */
-    private Zone getFallbackZone() {
-        List<Zone> zones = this.zone.map.zones;
+    private boolean isSameBossGroup(Boss b1, Boss b2) {
+        if (b1 == null || b2 == null) {
+            return false;
+        }
+        // 1. Cùng quan hệ cha - con (ví dụ: Xên & Xên con, Ninja & Phân thân, Broly & Đệ tử)
+        if (b1.parentBoss != null && (b1.parentBoss.equals(b2) || b1.parentBoss.equals(b2.parentBoss))) {
+            return true;
+        }
+        if (b2.parentBoss != null && (b2.parentBoss.equals(b1) || b2.parentBoss.equals(b1.parentBoss))) {
+            return true;
+        }
 
+        // 2. Cùng kịch bản xuất hiện chung (bossAppearTogether, vd Tiểu đội sát thủ)
+        if (b1.bossAppearTogether != null) {
+            for (Boss[] group : b1.bossAppearTogether) {
+                if (group != null) {
+                    for (Boss b : group) {
+                        if (b != null && b.equals(b2)) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        if (b2.bossAppearTogether != null) {
+            for (Boss[] group : b2.bossAppearTogether) {
+                if (group != null) {
+                    for (Boss b : group) {
+                        if (b != null && b.equals(b1)) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Chọn zone tốt nhất đảm bảo độc quyền 1 loại Boss mỗi khu
+     */
+    private Zone selectBestZone() {
+        if (this.zone == null || this.zone.map == null) {
+            return null;
+        }
+        List<Zone> zones = this.zone.map.zones;
         if (zones == null || zones.isEmpty()) {
             return null;
         }
 
-        // Chọn ngẫu nhiên 1 zone hợp lệ thay vì chỉ ghim zone 1 hoặc 0
-        int randIndex = Util.nextInt(0, zones.size() - 1);
-        Zone randZone = zones.get(randIndex);
-        if (randZone != null) {
-            return randZone;
-        }
+        List<Zone> validZones = new ArrayList<>();
+        List<Zone> zonesWithPlayers = new ArrayList<>();
 
         for (Zone z : zones) {
-            if (z != null) {
-                return z;
+            if (z == null || !isZoneAvailableForBoss(z)) {
+                continue; // Bỏ qua nếu khu đã bị chiếm bởi loại Boss khác
             }
+
+            // Loại bỏ khu quá tải người chơi (>= 15 người)
+            if (z.getNumOfPlayers() < 15) {
+                validZones.add(z);
+                if (z.getNumOfPlayers() > 0) {
+                    zonesWithPlayers.add(z);
+                }
+            }
+        }
+
+        // Ưu tiên 1: Khu có người chơi và chưa có loại Boss nào khác
+        if (!zonesWithPlayers.isEmpty()) {
+            return zonesWithPlayers.get(Util.nextInt(0, zonesWithPlayers.size() - 1));
+        }
+
+        // Ưu tiên 2: Khu hợp lệ bất kỳ (chưa có Boss nào)
+        if (!validZones.isEmpty()) {
+            return validZones.get(Util.nextInt(0, validZones.size() - 1));
+        }
+
+        // Không tìm được zone phù hợp => fallback
+        return null;
+    }
+
+    /**
+     * Fallback zone: Chỉ chọn zone trống Boss, tuyệt đối không thả vào khu đã có Boss khác
+     */
+    private Zone getFallbackZone() {
+        if (this.zone == null || this.zone.map == null) {
+            return null;
+        }
+        List<Zone> zones = this.zone.map.zones;
+        if (zones == null || zones.isEmpty()) {
+            return null;
+        }
+
+        List<Zone> emptyBossZones = new ArrayList<>();
+        for (Zone z : zones) {
+            if (z != null && isZoneAvailableForBoss(z)) {
+                emptyBossZones.add(z);
+            }
+        }
+
+        if (!emptyBossZones.isEmpty()) {
+            return emptyBossZones.get(Util.nextInt(0, emptyBossZones.size() - 1));
         }
 
         return null;

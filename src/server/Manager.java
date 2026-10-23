@@ -75,6 +75,11 @@ public final class Manager {
     public static long timeRealTop = 0;
     public static boolean DEBUG = true;
 
+    /** TLS is opt-in: enable only after cert/key are mounted on the server. */
+    public static boolean TLS_ENABLED = false;
+    public static String TLS_CERT = "certs/fullchain.pem";
+    public static String TLS_KEY = "certs/privkey.pem";
+
     public static MapTemplate[] MAP_TEMPLATES;
     public static final List<models.map.Map> MAPS = new ArrayList<>();
     public static final List<ItemOptionTemplate> ITEM_OPTION_TEMPLATES = new ArrayList<>();
@@ -202,6 +207,14 @@ public static final String queryTopWhis = "SELECT id, CAST(JSON_UNQUOTE(JSON_EXT
     }
 
     public void reloadData() {
+        int online = Client.gI().getPlayers().size();
+        if (online > 0) {
+            // Clearing MAPS/CLANS/SHOPS while players hold references causes
+            // NPEs and item loss. Require maintenance mode first.
+            Logger.warning("Reload bị từ chối: còn " + online
+                    + " người chơi online. Hãy bật bảo trì và kick hết trước khi reload.");
+            return;
+        }
         Logger.log(Logger.YELLOW, "Bắt đầu xóa dữ liệu game cũ...");
 
         // Xóa sạch dữ liệu cũ trong bộ nhớ
@@ -333,6 +346,15 @@ public static final String queryTopWhis = "SELECT id, CAST(JSON_UNQUOTE(JSON_EXT
         }
         if ((value = properties.get("server.daoautoupdater")) != null) {
             DAO_AUTO_UPDATER = String.valueOf(value).equalsIgnoreCase("true");
+        }
+        if ((value = properties.get("server.tls.enabled")) != null) {
+            TLS_ENABLED = String.valueOf(value).equalsIgnoreCase("true");
+        }
+        if ((value = properties.get("server.tls.cert")) != null) {
+            TLS_CERT = String.valueOf(value);
+        }
+        if ((value = properties.get("server.tls.key")) != null) {
+            TLS_KEY = String.valueOf(value);
         }
     }
 

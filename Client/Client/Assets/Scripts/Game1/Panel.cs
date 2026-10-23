@@ -182,9 +182,8 @@ namespace Game1
             (mGraphics.zoomLevel <= 1) ? mResources.x2Screen : mResources.x1Screen
         };
     
-        public static string[] strAccount = new string[5]
+        public static string[] strAccount = new string[4]
         {
-            mResources.inventory_Pass,
             mResources.friend,
             mResources.enemy,
             mResources.msg,
@@ -10382,30 +10381,10 @@ namespace Game1
             }
             if (chatTField.strChat.Equals(mResources.input_Inventory_Pass))
             {
-                try
-                {
-                    int lockInventory = int.Parse(chatTField.tfChat.getText());
-                    chatTField.isShow = false;
-                    chatTField.tfChat.setIputType(TField.INPUT_TYPE_ANY);
-                    hide();
-                    if (chatTField.tfChat.getText().Length != 6 || chatTField.tfChat.getText().Equals(string.Empty))
-                    {
-                        GameCanvas.startOKDlg(mResources.input_Inventory_Pass_wrong);
-                    }
-                    else
-                    {
-                        Service.gI().setLockInventory(lockInventory);
-                        chatTField.isShow = false;
-                        chatTField.tfChat.setIputType(TField.INPUT_TYPE_ANY);
-                        hide();
-                    }
-                    return;
-                }
-                catch (Exception)
-                {
-                    GameCanvas.startOKDlg(mResources.ALERT_PRIVATE_PASS_2);
-                    return;
-                }
+                chatTField.isShow = false;
+                chatTField.tfChat.setIputType(TField.INPUT_TYPE_ANY);
+                hide();
+                return;
             }
             if (chatTField.strChat.Equals(mResources.world_channel_5_luong))
             {
@@ -11197,18 +11176,16 @@ namespace Game1
         {
             if (Main.IphoneVersionApp)
             {
-                strAccount = new string[4]
+                strAccount = new string[3]
                 {
-                    mResources.inventory_Pass,
                     mResources.friend,
                     mResources.enemy,
                     mResources.msg
                 };
                 if (GameScr.canAutoPlay)
                 {
-                    strAccount = new string[5]
+                    strAccount = new string[4]
                     {
-                        mResources.inventory_Pass,
                         mResources.friend,
                         mResources.enemy,
                         mResources.msg,
@@ -11218,9 +11195,8 @@ namespace Game1
             }
             else
             {
-                strAccount = new string[5]
+                strAccount = new string[4]
                 {
-                    mResources.inventory_Pass,
                     mResources.friend,
                     mResources.enemy,
                     mResources.msg,
@@ -11228,9 +11204,8 @@ namespace Game1
                 };
                 if (GameScr.canAutoPlay)
                 {
-                    strAccount = new string[6]
+                    strAccount = new string[5]
                     {
-                        mResources.inventory_Pass,
                         mResources.friend,
                         mResources.enemy,
                         mResources.msg,
@@ -11240,9 +11215,8 @@ namespace Game1
                 }
                 if ((mSystem.clientType == 2 || mSystem.clientType == 7) && mResources.language != 2)
                 {
-                    strAccount = new string[5]
+                    strAccount = new string[4]
                     {
-                        mResources.inventory_Pass,
                         mResources.friend,
                         mResources.enemy,
                         mResources.msg,
@@ -11250,9 +11224,8 @@ namespace Game1
                     };
                     if (GameScr.canAutoPlay)
                     {
-                        strAccount = new string[6]
+                        strAccount = new string[5]
                         {
-                            mResources.inventory_Pass,
                             mResources.friend,
                             mResources.enemy,
                             mResources.msg,
@@ -11303,88 +11276,62 @@ namespace Game1
     
         private void doFireAccount()
         {
-            if (selected < 0)
+            if (selected < 0 || selected >= strAccount.Length)
             {
                 return;
             }
-            switch (selected)
+            string item = strAccount[selected];
+            if (item == mResources.friend)
             {
-                case 0:
-                    GameCanvas.endDlg();
-                    if (chatTField == null)
-                    {
-                        chatTField = new ChatTextField();
-                        chatTField.tfChat.y = GameCanvas.h - 35 - ChatTextField.gI().tfChat.height;
-                        chatTField.initChatTextField();
-                        chatTField.parentScreen = GameCanvas.panel;
-                    }
-                    chatTField.tfChat.setText(string.Empty);
-                    chatTField.strChat = mResources.input_Inventory_Pass;
-                    chatTField.tfChat.name = mResources.input_Inventory_Pass;
-                    chatTField.to = string.Empty;
-                    chatTField.isShow = true;
-                    chatTField.tfChat.isFocus = true;
-                    chatTField.tfChat.setIputType(TField.INPUT_TYPE_NUMERIC);
-                    if (GameCanvas.isTouch)
-                    {
-                        chatTField.tfChat.doChangeToTextBox();
-                    }
-                    if (!Main.isPC)
-                    {
-                        chatTField.startChat2(this, string.Empty);
-                    }
-                    if (Main.isWindowsPhone)
-                    {
-                        chatTField.tfChat.strInfo = chatTField.strChat;
-                    }
-                    break;
-                case 1:
-                    Service.gI().friend(0, -1);
-                    InfoDlg.showWait();
-                    break;
-                case 2:
-                    Service.gI().enemy(0, -1);
-                    InfoDlg.showWait();
-                    break;
-                case 3:
-                    setTypeMessage();
-                    if (chatTField == null)
-                    {
-                        chatTField = new ChatTextField();
-                        chatTField.tfChat.y = GameCanvas.h - 35 - ChatTextField.gI().tfChat.height;
-                        chatTField.initChatTextField();
-                        chatTField.parentScreen = GameCanvas.panel;
-                    }
-                    break;
-                case 4:
-                    if (mResources.language == 2)
-                    {
-                        string url = "http://dragonball.indonaga.com/coda/?username=" + GameCanvas.loginScr.tfUser.getText();
-                        hideNow();
-                        try
-                        {
-                            GameMidlet.instance.platformRequest(url);
-                            break;
-                        }
-                        catch (Exception ex)
-                        {
-                            ex.StackTrace.ToString();
-                            break;
-                        }
-                    }
+                Service.gI().friend(0, -1);
+                InfoDlg.showWait();
+            }
+            else if (item == mResources.enemy)
+            {
+                Service.gI().enemy(0, -1);
+                InfoDlg.showWait();
+            }
+            else if (item == mResources.msg)
+            {
+                setTypeMessage();
+                if (chatTField == null)
+                {
+                    chatTField = new ChatTextField();
+                    chatTField.tfChat.y = GameCanvas.h - 35 - ChatTextField.gI().tfChat.height;
+                    chatTField.initChatTextField();
+                    chatTField.parentScreen = GameCanvas.panel;
+                }
+            }
+            else if (item == mResources.charger)
+            {
+                if (mResources.language == 2)
+                {
+                    string url = "http://dragonball.indonaga.com/coda/?username=" + GameCanvas.loginScr.tfUser.getText();
                     hideNow();
-                    if (Char.myCharz().taskMaint.taskId <= 10)
+                    try
                     {
-                        GameCanvas.startOKDlg(mResources.finishBomong);
+                        GameMidlet.instance.platformRequest(url);
+                        return;
                     }
-                    else
+                    catch (Exception ex)
                     {
-                        MoneyCharge.gI().switchToMe();
+                        ex.StackTrace.ToString();
+                        return;
                     }
-                    break;
-                case 5:
-                    setTypeAuto();
-                    break;
+                }
+                hideNow();
+                if (Char.myCharz().taskMaint.taskId <= 10)
+                {
+                    GameCanvas.startOKDlg(mResources.finishBomong);
+                }
+                else
+                {
+                    MoneyCharge.gI().switchToMe();
+                }
+            }
+            else if (item == mResources.autoFunction)
+            {
+                setTypeAuto();
             }
         }
     

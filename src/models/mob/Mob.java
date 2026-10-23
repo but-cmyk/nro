@@ -642,9 +642,9 @@ public class Mob {
 
         Player plReward = (player.isPet && player instanceof Pet) ? ((Pet) player).master : player;
         if (plReward != null && !plReward.isBot && !plReward.isNewPet && plReward.canReceiveDailyMobRuby()) {
-            list.add(new ItemMap(this.zone, 861, 30, x, yEnd, plReward.id));
+            list.add(new ItemMap(this.zone, 861, 10, x, yEnd, plReward.id));
             plReward.lastTimeRewardDailyMobRuby = System.currentTimeMillis();
-            Service.gI().sendThongBao(plReward, "Bạn đã nhận được 30 Hồng ngọc từ quái vật đầu tiên trong ngày!");
+            Service.gI().sendThongBao(plReward, "Bạn đã nhận được 10 Hồng ngọc từ quái vật đầu tiên trong ngày!");
             database.daos.PlayerDAO.updatePlayerAsync(plReward);
         }
 
@@ -741,7 +741,8 @@ public class Mob {
         }
 
       //========================VÀNG RƠI========================
-        if (this.lvMob > 0 || Util.isTrue(5 * co4LaRate, 100)) { // 10% mặc định, 20% khi có cỏ 4 lá, siêu quái luôn rơi vàng
+        int mobMayMan = (player.nPoint != null) ? player.nPoint.tlMayMan : 0;
+        if (this.lvMob > 0 || Util.isTrue(5 * co4LaRate + mobMayMan, 100)) { // 10% mặc định, 20% khi có cỏ 4 lá, cộng thêm may mắn, siêu quái luôn rơi vàng
             int vang = MapService.gI().isMapNappa(mapid) ? Util.nextInt(5000, 10000)
                     : MapService.gI().isMap3Planets(mapid) ? Util.nextInt(500, 1000)
                     : MapService.gI().isMapTuongLai(mapid) ? Util.nextInt(9000, 15000)
@@ -839,15 +840,16 @@ public class Mob {
 
 
          //========================SAO PHA LÊ========================
-        if (Util.isTrue(1, 2000) || (player.nPoint.isDoSPL && Util.isTrue(5, 1000))) {
+        int splLuckBonus = (mobMayMan > 0) ? (mobMayMan / 5) : 0;
+        if (Util.isTrue(1 + splLuckBonus, 2000) || (player.nPoint.isDoSPL && Util.isTrue(5 + splLuckBonus, 1000))) {
             int rand = Util.nextInt(0, 6);
-            ItemMap it = new ItemMap(zone, 441 + rand, 1, x, yEnd, player.id);
-            it.options.add(new Item.ItemOption(95 + rand, (rand == 3 || rand == 4) ? 3 : 5));
+            ItemMap it = utils.ItemUtil.saoPhaLe(zone, 441 + rand, 1, x, yEnd, player.id);
             list.add(it);
         }
 
          //========================ĐÁ NÂNG CẤP========================
-        if (Util.isTrue(1, 2000) || (Util.isTrue(5, 2000) && MapService.gI().isMapCold(mapid))) {
+        int daLuckBonus = (mobMayMan > 0) ? (mobMayMan / 10) : 0;
+        if (Util.isTrue(1 + daLuckBonus, 2000) || (Util.isTrue(5 + daLuckBonus, 2000) && MapService.gI().isMapCold(mapid))) {
             int rand = Util.nextInt(0, 4);
             ItemMap it = new ItemMap(zone, 220 + rand, 1, x, yEnd, player.id);
             it.options.add(new Item.ItemOption(71 - rand, 0));
@@ -863,7 +865,8 @@ public class Mob {
             }
 
             if (player != null && !player.isPet) { // đảm bảo không bị null hoặc là pet tiếp
-                if (Util.isTrue(1 * co4LaRate, 2000)) { // 0.05% mặc định, 0.1% khi có cỏ 4 lá
+                int doThanRate = 1 * co4LaRate + (mobMayMan >= 10 ? 1 : 0);
+                if (Util.isTrue(doThanRate, 2000)) { // 0.05% mặc định, 0.1% khi có cỏ 4 lá
                     ItemMap it = ItemService.gI().randDoTL(this.zone, 1, x, yEnd, player.id);
                     list.add(it);
 
@@ -1029,6 +1032,42 @@ public class Mob {
             if (isDrop) {
                 ItemMap it = new ItemMap(zone, ConstItem.CHUOI, 1, x, yEnd, plOwner.id);
                 it.options.add(new Item.ItemOption(83, 20));
+                it.options.add(new Item.ItemOption(30, 0));
+                list.add(it);
+            }
+        }
+
+        //========================TRANG SÁCH CŨ (SÁCH TUYỆT KĨ)========================
+        boolean isHighLevelMap = MapService.gI().isMapCold(mapid)
+                || MapService.gI().isMapTuongLai(mapid)
+                || MapService.gI().isMapNappa(mapid)
+                || MapService.gI().isMapHanhTinhThucVat(mapid)
+                || (mapid >= 147 && mapid <= 152);
+
+        boolean isQuaiMe = (this.tempId == ConstMob.KHUNG_LONG_ME
+                || this.tempId == ConstMob.LON_LOI_ME
+                || this.tempId == ConstMob.QUY_DAT_ME);
+
+        if (isQuaiMe) {
+            // Quái mẹ: 50% rơi từ 3 đến 5 Trang sách cũ
+            if (Util.isTrue(50, 100)) {
+                int dropCount = Util.nextInt(3, 5);
+                ItemMap it = new ItemMap(zone, 1188, dropCount, x, yEnd, player.id);
+                it.options.add(new Item.ItemOption(30, 0));
+                list.add(it);
+            }
+        } else if (isHighLevelMap) {
+            // Quái thường map cấp cao (Cold, Tương lai, Nappa, Thực vật, Sa mạc): 2% rơi 1-2 Trang sách cũ
+            if (Util.isTrue(20 * co4LaRate, 1000)) {
+                int dropCount = Util.nextInt(1, 2);
+                ItemMap it = new ItemMap(zone, 1188, dropCount, x, yEnd, player.id);
+                it.options.add(new Item.ItemOption(30, 0));
+                list.add(it);
+            }
+        } else if (MapService.gI().isMap3Planets(mapid)) {
+            // Map 3 hành tinh sơ cấp: 0.5% rơi 1 Trang sách cũ
+            if (Util.isTrue(5, 1000)) {
+                ItemMap it = new ItemMap(zone, 1188, 1, x, yEnd, player.id);
                 it.options.add(new Item.ItemOption(30, 0));
                 list.add(it);
             }

@@ -12,9 +12,13 @@ Repository chứa toàn bộ mã nguồn máy chủ (Server Netty Java) và Clie
 - `run.bat`: Script khởi chạy Game Server.
 
 ## Yêu Cầu Môi Trường
-- **Java**: JDK 8 hoặc JDK 21 LTS.
+- **Java**: JDK 21 LTS (bắt buộc; build.bat dùng `--release 21`).
 - **Cơ sở dữ liệu**: MySQL 8.0+ (hoặc dùng Docker Compose tại cổng 3308).
 - **Client**: Unity Editor hỗ trợ C# .NET.
+
+> **Bảo mật trước khi chạy thật:** copy `.env.example` → `.env`, đặt mật khẩu mạnh;
+> copy `data/config/alyra.properties.example` → `data/config/alyra.properties`.
+> Không commit hai file này (đã có trong `.gitignore`).
 
 ## Hướng Dẫn Khởi Chạy Nhanh
 1. **Khởi động Database qua Docker**:

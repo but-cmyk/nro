@@ -155,6 +155,11 @@ public class NPoint {
     public short tlGold;
 
     /**
+     * Tỉ lệ may mắn nhặt vật phẩm
+     */
+    public short tlMayMan;
+
+    /**
      * Tỉ lệ né đòn
      */
     public short tlNeDon;
@@ -566,6 +571,9 @@ public class NPoint {
                 break;
             case 153: //% phát nổ sau khi chết
                 this.tlBom += param;
+                break;
+            case 229: // May mắn nhặt vật phẩm từ quái
+                this.tlMayMan += param;
                 break;
         }
     }
@@ -1104,6 +1112,7 @@ public class NPoint {
         this.tlTNSM.clear();
         this.tlDameAttMob.clear();
         this.tlGold = 0;
+        this.tlMayMan = 0;
         this.tlNeDon = 0;
         this.tlBom = 0;
         this.tlGiap = 0;
@@ -1324,6 +1333,36 @@ public class NPoint {
             case Skill.MAKANKOSAPPO:
                 percentDameSkill = skillSelect.damage;
                 long dameSkill = (long) this.mpMax * (long) percentDameSkill / 100L;
+                if (player.inventory != null && player.inventory.itemsBody != null && player.inventory.itemsBody.size() > 10) {
+                    Item sach = player.inventory.itemsBody.get(10);
+                    if (sach != null && sach.isNotNullItem() && sach.template.type == 35 && sach.itemOptions != null) {
+                        int doBen = 0;
+                        Item.ItemOption optionDoBen = null;
+                        for (Item.ItemOption io : sach.itemOptions) {
+                            if (io.optionTemplate.id == 226) {
+                                doBen = io.param;
+                                optionDoBen = io;
+                                break;
+                            }
+                        }
+                        if (doBen > 0) {
+                            for (Item.ItemOption io : sach.itemOptions) {
+                                if (io.optionTemplate.id == 232) {
+                                    long bonusPercent = io.param > 0 ? io.param : 30L;
+                                    dameSkill = dameSkill * (100L + bonusPercent) / 100L;
+                                    break;
+                                }
+                            }
+                            if (optionDoBen != null) {
+                                optionDoBen.param = Math.max(0, optionDoBen.param - 5);
+                                if (optionDoBen.param == 0) {
+                                    Service.gI().sendThongBao(player, "Sách tuyệt kỹ đã hỏng độ bền, hãy phục hồi!");
+                                }
+                                services.player.InventoryService.gI().sendItemBody(player);
+                            }
+                        }
+                    }
+                }
                 if (player.inventory != null && player.inventory.itemsBody != null && player.inventory.itemsBody.size() > 5) {
                     Item TrangBi = player.inventory.itemsBody.get(5);
                     if (TrangBi != null && TrangBi.isNotNullItem() && TrangBi.itemOptions != null) {
@@ -1356,6 +1395,32 @@ public class NPoint {
 
                 if (this.player.setClothes.kirin == 5) {
                     dameqckk *= 2L;
+                }
+
+                if (player.inventory != null && player.inventory.itemsBody != null && player.inventory.itemsBody.size() > 10) {
+                    Item sach = player.inventory.itemsBody.get(10);
+                    if (sach != null && sach.isNotNullItem() && sach.template.type == 35 && sach.itemOptions != null) {
+                        int doBen = 0;
+                        Item.ItemOption optionDoBen = null;
+                        for (Item.ItemOption io : sach.itemOptions) {
+                            if (io.optionTemplate.id == 226) {
+                                doBen = io.param;
+                                optionDoBen = io;
+                                break;
+                            }
+                        }
+                        if (doBen > 0) {
+                            // Tăng thêm 20% sát thương QCKK khi mang Sách Tuyệt Kĩ Trái Đất còn độ bền
+                            dameqckk = dameqckk * 120L / 100L;
+                            if (optionDoBen != null) {
+                                optionDoBen.param = Math.max(0, optionDoBen.param - 5);
+                                if (optionDoBen.param == 0) {
+                                    Service.gI().sendThongBao(player, "Sách tuyệt kỹ đã hỏng độ bền, hãy phục hồi!");
+                                }
+                                services.player.InventoryService.gI().sendItemBody(player);
+                            }
+                        }
+                    }
                 }
 
                 dameqckk = dameqckk + (Util.nextInt(-5, 5) * dameqckk / 100L);

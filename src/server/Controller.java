@@ -111,10 +111,6 @@ public class Controller implements IMessageHandler {
                         Service.gI().sendThongBaoResetWait(player, "Không thể mở Siêu thị/Ký gửi khi đang giao dịch!");
                         return;
                     }
-                    if (player.baovetaikhoan) {
-                        Service.gI().sendThongBao(player, "Chức năng bảo vệ đã được bật. Bạn vui lòng kiểm tra lại");
-                        return;
-                    }
                     byte action = _msg.reader().readByte();
                     switch (action) {
                         case 0:
@@ -347,11 +343,6 @@ public class Controller implements IMessageHandler {
                     break;
                 case -59:
                     if (player != null) {
-                        if (player.baovetaikhoan) {
-                            Service.gI().sendThongBao(player,
-                                    "Chức năng bảo vệ đã được bật. Bạn vui lòng kiểm tra lại");
-                            return;
-                        }
                         PVPService.gI().controllerThachDau(player, _msg);
                     }
                     break;
@@ -375,11 +366,6 @@ public class Controller implements IMessageHandler {
                     if (player != null && !Maintenance.isRunning) {
                         if (TransactionService.gI().check(player)) {
                             Service.gI().sendThongBaoResetWait(player, "Không thể mua vật phẩm khi đang trong phiên giao dịch!");
-                            return;
-                        }
-                        if (player.baovetaikhoan) {
-                            Service.gI().sendThongBao(player,
-                                    "Chức năng bảo vệ đã được bật. Bạn vui lòng kiểm tra lại");
                             return;
                         }
                         byte typeBuy = _msg.reader().readByte();
@@ -696,11 +682,6 @@ public class Controller implements IMessageHandler {
                             Service.gI().sendThongBaoResetWait(player, "Không thể sử dụng vật phẩm khi đang giao dịch!");
                             return;
                         }
-                        if (player.baovetaikhoan) {
-                            Service.gI().sendThongBao(player,
-                                    "Chức năng bảo vệ đã được bật. Bạn vui lòng kiểm tra lại");
-                            return;
-                        }
                         UseItem.gI().doItem(player, _msg);
                     }
                     break;
@@ -900,18 +881,6 @@ public class Controller implements IMessageHandler {
     public void messageNotLogin(MySession session, Message msg) {
         if (msg != null) {
             try {
-                if (false) {
-                    String key;
-                    try {
-                        key = msg.reader().readUTF();
-                    } catch (IOException e) {
-                        key = "";
-                    }
-                    if (!key.equals("dungdeptraivcl2024")) {
-                        session.disconnect();
-                        return;
-                    }
-                }
                 byte cmd = msg.reader().readByte();
                 switch (cmd) {
                     case 0:
@@ -1143,7 +1112,7 @@ public class Controller implements IMessageHandler {
                         + "Nhiệm vụ đầu tiên của bạn là di chuyển\n"
                         + "Bạn hãy di chuyển nhân vật theo mũi tên chỉ hướng";
                 if (player.canReceiveDailyMobRuby()) {
-                    welcomeMsg += "\n|2|Hôm nay bạn có thể nhận 30 Hồng ngọc khi tiêu diệt quái!";
+                    welcomeMsg += "\n|2|Hôm nay bạn có thể nhận 10 Hồng ngọc khi tiêu diệt quái!";
                 }
                 NpcService.gI().createTutorial(player, -1, welcomeMsg);
             } else {
@@ -1157,13 +1126,13 @@ public class Controller implements IMessageHandler {
             if (player.canReceiveDailyMobRuby()) {
                 utils.Util.setTimeout(() -> {
                     if (player != null && player.isPl() && player.canReceiveDailyMobRuby()) {
-                        Service.gI().sendThongBao(player, "Hôm nay bạn có thể nhận 30 Hồng ngọc khi tiêu diệt quái!");
+                        Service.gI().sendThongBao(player, "Hôm nay bạn có thể nhận 10 Hồng ngọc khi tiêu diệt quái!");
                     }
                 }, 5000);
             }
 
             if (player.inventory != null && player.inventory.itemsBody != null
-                    && player.inventory.itemsBody.size() > 11 && player.inventory.itemsBody.get(11).isNotNullItem()) {
+                    && player.inventory.itemsBody.size() > 7 && player.inventory.itemsBody.get(7).isNotNullItem()) {
                 Service.gI().sendChibi(player);
             }
 
@@ -1238,7 +1207,7 @@ public class Controller implements IMessageHandler {
         // --- KẾT THÚC LẤY THÔNG TIN NHIỆM VỤ ---
 
         if (player != null && player.canReceiveDailyMobRuby()) {
-            message += "\n|2|Hôm nay bạn có thể nhận 30 Hồng ngọc khi tiêu diệt quái!";
+            message += "\n|2|Hôm nay bạn có thể nhận 10 Hồng ngọc khi tiêu diệt quái!";
         }
 
         // 5. Gửi thông báo cuối cùng cho người chơi

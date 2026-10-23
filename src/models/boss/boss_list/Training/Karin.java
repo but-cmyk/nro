@@ -42,8 +42,12 @@ public class Karin extends TrainingBoss {
         this.chatE();
         this.lastTimeAFK = System.currentTimeMillis();
         Service.gI().sendPlayerVS(playerAtt, null, (byte) 0);
-        if (playerAtt.isThachDau) {
+        if (playerAtt != null && playerAtt.isThachDau) {
             TaskService.gI().doneTask(plKill, ConstTask.TASK_10_0);
+            if (playerAtt.levelLuyenTap == 0) {
+                playerAtt.levelLuyenTap = 1;
+                Service.gI().sendThongBao(playerAtt, "Bạn đã vượt qua Thần Mèo Karin! Hãy thách đấu Yajirô.");
+            }
         }
     }
 

@@ -4,6 +4,7 @@ import java.net.InetSocketAddress;
 import java.io.IOException;
 import java.net.Socket;
 import java.net.SocketException;
+import java.util.concurrent.atomic.AtomicInteger;
 import interfaces.IKeySessionHandler;
 import interfaces.IMessageHandler;
 import interfaces.IMessageSendCollect;
@@ -17,7 +18,7 @@ import network.io.Message;
 public class Session implements ISession {
 
     private static ISession instance;
-    private static int ID_INIT = 1;
+    private static final AtomicInteger ID_INIT = new AtomicInteger(1);
     private SocketType socketType = SocketType.SERVER;
     private volatile byte[] KEYS;
     private volatile boolean sentKey;
@@ -42,7 +43,7 @@ public class Session implements ISession {
 
     public Session() {
         this.KEYS = "NguyenDucVuEntertainment".getBytes();
-        this.id = ID_INIT++;
+        this.id = ID_INIT.getAndIncrement();
         this.socketType = SocketType.SERVER;
         this.connected = true;
     }
@@ -54,7 +55,7 @@ public class Session implements ISession {
 
     public Session(Socket socket) {
         this.KEYS = "NguyenDucVuEntertainment".getBytes();
-        this.id = ID_INIT++;
+        this.id = ID_INIT.getAndIncrement();
         this.socket = socket;
         try {
             this.socket.setSendBufferSize(0x100000);

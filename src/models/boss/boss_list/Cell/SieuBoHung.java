@@ -111,6 +111,17 @@ public class SieuBoHung extends Boss {
             ItemMap itTL = services.ItemService.gI().randDoTL(this.zone, 1, this.location.x + Util.nextInt(-20, 20), this.zone.map.yPhysicInTop(this.location.x, this.location.y - 24), plKill.id);
             Service.gI().dropItemMap(this.zone, itTL);
         }
+        // Rơi nguyên liệu Sách Tuyệt Kĩ
+        if (Util.isTrue(30, 100)) {
+            ItemMap itKim = new ItemMap(this.zone, 1153, Util.nextInt(1, 2), this.location.x + 20, this.zone.map.yPhysicInTop(this.location.x, this.location.y - 24), plKill.id);
+            itKim.options.add(new models.item.Item.ItemOption(30, 0));
+            Service.gI().dropItemMap(this.zone, itKim);
+        }
+        if (Util.isTrue(40, 100)) {
+            ItemMap itBia = new ItemMap(this.zone, 1154, 1, this.location.x - 20, this.zone.map.yPhysicInTop(this.location.x, this.location.y - 24), plKill.id);
+            itBia.options.add(new models.item.Item.ItemOption(30, 0));
+            Service.gI().dropItemMap(this.zone, itBia);
+        }
         if (plKill.playerTask.taskdh.Hagucboss < 30) {
             int required = 30;
             int percentDone = (int) ((double) plKill.playerTask.taskdh.Hagucboss / required * 100);

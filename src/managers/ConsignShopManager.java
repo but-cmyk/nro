@@ -390,21 +390,21 @@ public class ConsignShopManager {
             if (affected > 0) {
                 try (ResultSet rs = ps.getGeneratedKeys()) {
                     if (rs.next()) {
-                        int newId = rs.getInt(1);
-                        item.id = newId;
-                        nextItemId.accumulateAndGet(newId, Math::max);
-                        addItem(item);
-                        return newId;
+                        item.id = rs.getInt(1);
                     }
                 }
+                // Generated key may be unavailable on some drivers; the
+                // pre-assigned id is still valid for the in-memory list.
+                nextItemId.accumulateAndGet(item.id, Math::max);
+                addItem(item);
+                return item.id;
             }
         } catch (Exception e) {
             Logger.logException(ConsignShopManager.class, e, "Lỗi insertItem");
         }
-        int fallbackId = nextItemId();
-        item.id = fallbackId;
-        addItem(item);
-        return fallbackId;
+        // Do not add to memory when the DB insert failed: callers treat a
+        // negative result as failure and roll back the player's item.
+        return -1;
     }
 
     public void lockItems() {

@@ -2456,7 +2456,7 @@ public class BossesData {
                 "|-1|Ư a ư a đói quá",
                 "|-1|Thèm núc xương quá"}, //text chat 2
             new String[]{}, //text chat 3
-            REST_5_M //second rest
+            600 //second rest (600s = 10 phút)
     );
     public static BossData RAITI = new BossData(
             "Raiti", //name
@@ -2471,7 +2471,7 @@ public class BossesData {
                 "|-1|Hahaha, thật nực cười",
                 "|-1|Ta là Raiti bất bại"}, //text chat 2
             new String[]{}, //text chat 3
-            REST_5_M //second rest
+            600 //second rest (600s = 10 phút)
     );
 
     public static BossData O_DO_NEW = new BossData(
@@ -2485,7 +2485,7 @@ public class BossesData {
             new String[]{}, //text chat 1
             new String[]{}, //text chat 2
             new String[]{}, //text chat 3
-            REST_5_M //second rest
+            600 //second rest (600s = 10 phút)
     );
 
     public static BossData XINBATO_NEW = new BossData(
@@ -2501,6 +2501,6 @@ public class BossesData {
                 "|-1|Ư a ư a khát nước quá",
                 "|-1|Phân tâm quá"}, //text chat 2
             new String[]{}, //text chat 3
-            REST_5_M //second rest
+            600 //second rest (600s = 10 phút)
     );
 }

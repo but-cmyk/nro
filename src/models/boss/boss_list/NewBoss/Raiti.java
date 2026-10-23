@@ -1,20 +1,49 @@
 package models.boss.boss_list.NewBoss;
 
+import consts.BossStatus;
 import models.boss.Boss;
 import models.boss.BossesData;
+import models.map.Zone;
 import models.player.Player;
-import services.EffectSkillService;
-import services.Service;
-import utils.ItemUtil;
+import services.map.ChangeMapService;
 import utils.Util;
 
 public class Raiti extends Boss {
 
     private boolean isEnraged; // Cờ trạng thái nổi giận
+    private long lastTimeJoinMap;
+    private static final long TIME_CHANGE_MAP = 300000; // 5 phút đổi map tìm player
+    private long lastTimeTargetPlayer;
+    private int timeTargetPlayer;
 
     public Raiti() throws Exception {
         super(-Util.nextInt(1000, 1000000), true, false, BossesData.RAITI);
         this.isEnraged = false;
+        this.lastTimeJoinMap = System.currentTimeMillis() + TIME_CHANGE_MAP;
+    }
+
+    @Override
+    public Zone getMapJoin() {
+        Zone target = managers.boss.BossManager.getRoamingZoneWithPlayer(this.zone, Raiti.class);
+        if (target != null) {
+            return target;
+        }
+        return managers.boss.BossManager.getRandomOutdoorZone();
+    }
+
+    @Override
+    public void joinMap() {
+        if (this.zone == null) {
+            this.zone = getMapJoin();
+        }
+        if (this.zone != null) {
+            int x = Util.nextInt(100, Math.max(100, this.zone.map.mapWidth - 100));
+            int y = this.zone.map.yPhysicInTop(x, 100);
+            ChangeMapService.gI().changeMap(this, this.zone, x, y);
+            this.changeStatus(BossStatus.CHAT_S);
+            this.lastTimeJoinMap = System.currentTimeMillis() + TIME_CHANGE_MAP;
+            this.lastTimeHadPlayer = System.currentTimeMillis();
+        }
     }
 
     @Override
@@ -22,6 +51,34 @@ public class Raiti extends Boss {
         super.update();
         if (this.isDie()) {
             return;
+        }
+
+        // Đổi map tìm đến người chơi
+        if (this.zone != null && (System.currentTimeMillis() > this.lastTimeJoinMap 
+                || (this.zone.getNumOfPlayers() == 0 && Util.canDoWithTime(this.lastTimeJoinMap - TIME_CHANGE_MAP, 25000)))) {
+            Zone targetZone = managers.boss.BossManager.getRoamingZoneWithPlayer(this.zone, Raiti.class);
+            if (targetZone == null && this.zone.getNumOfPlayers() == 0) {
+                targetZone = managers.boss.BossManager.getRandomOutdoorZone();
+            }
+            if (targetZone != null && targetZone != this.zone) {
+                this.lastTimeJoinMap = System.currentTimeMillis() + TIME_CHANGE_MAP;
+                this.chat("|-1|Ở đây chán quá, ta đi tìm đối thủ mạnh hơn!");
+                ChangeMapService.gI().spaceShipArrive(this, (byte) 2, ChangeMapService.DEFAULT_SPACE_SHIP);
+                ChangeMapService.gI().exitMap(this);
+                this.zone = targetZone;
+                this.location.x = Util.nextInt(100, Math.max(100, zone.map.mapWidth - 100));
+                this.location.y = zone.map.yPhysicInTop(this.location.x, 100);
+                this.joinMap();
+            }
+        }
+
+        // Tìm mục tiêu tấn công người chơi trong khu
+        if (this.zone != null) {
+            if (this.playerTarger == null || Util.canDoWithTime(this.lastTimeTargetPlayer, this.timeTargetPlayer)) {
+                this.playerTarger = this.zone.getRandomPlayerInMap();
+                this.lastTimeTargetPlayer = System.currentTimeMillis();
+                this.timeTargetPlayer = Util.nextInt(3000, 6000);
+            }
         }
 
         // Kiểm tra điều kiện nổi giận
@@ -38,8 +95,6 @@ public class Raiti extends Boss {
         this.nPoint.dameg *= 1.3;
         // Tăng tốc độ tấn công (giảm thời gian nghỉ)
         this.data[this.currentLevel].setSecondsRest(1);
-        // Tạo hiệu ứng aura đỏ
-
     }
 
     @Override
@@ -68,4 +123,8 @@ public class Raiti extends Boss {
         return 0;
     }
 
+    @Override
+    public void reward(Player plKill) {
+        managers.boss.BossManager.dropGoldAndSPL(this, plKill);
+    }
 }

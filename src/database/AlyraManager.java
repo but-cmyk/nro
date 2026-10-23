@@ -285,7 +285,19 @@ public class AlyraManager {
             rsAccount.gotoFirst();
 
             String storedHash = rsAccount.getString("password");
-            if (!utils.PasswordUtils.verifyPassword(session.pp, storedHash)) {
+            boolean passwordOk = utils.PasswordUtils.verifyPassword(session.pp, storedHash);
+            if (!passwordOk && utils.PasswordUtils.verifyLegacyPlaintext(session.pp, storedHash)) {
+                passwordOk = true;
+                try {
+                    String rehashed = utils.PasswordUtils.hashPassword(session.pp);
+                    executeUpdate("UPDATE account SET password = ? WHERE id = ?",
+                            rehashed, rsAccount.getInt("id"));
+                } catch (Exception migrationError) {
+                    Logger.logException(AlyraManager.class, migrationError,
+                            "Legacy password re-hash failed for account: " + session.uu);
+                }
+            }
+            if (!passwordOk) {
                 Service.gI().sendThongBaoOK(session, "Thông tin tài khoản hoặc mật khẩu không chính xác");
                 Service.gI().sendLoginFail(session, false);
                 al.wrong();

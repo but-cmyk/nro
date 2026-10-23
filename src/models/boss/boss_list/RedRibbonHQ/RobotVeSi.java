@@ -64,6 +64,26 @@ public class RobotVeSi extends Boss {
             Service.gI().dropItemMap(this.zone, itGold);
         }
 
+        // Rơi nguyên liệu Sách Tuyệt Kĩ
+        // 1. Rơi 1 - 2 Bìa Sách (Item 1154)
+        int biaSachCount = Util.nextInt(1, 2);
+        ItemMap itBia = new ItemMap(this.zone, 1154, biaSachCount, this.location.x - 25, this.zone.map.yPhysicInTop(this.location.x - 25, this.location.y - 24), plId);
+        itBia.options.add(new models.item.Item.ItemOption(30, 0));
+        Service.gI().dropItemMap(this.zone, itBia);
+
+        // 2. Rơi 1 - 2 Bùa Giám Định (Item 1152)
+        int buaCount = Util.nextInt(1, 2);
+        ItemMap itBua = new ItemMap(this.zone, 1152, buaCount, this.location.x + 25, this.zone.map.yPhysicInTop(this.location.x + 25, this.location.y - 24), plId);
+        itBua.options.add(new models.item.Item.ItemOption(30, 0));
+        Service.gI().dropItemMap(this.zone, itBua);
+
+        // 3. 25% rơi 1 Kìm Bấm Giấy (Item 1153)
+        if (Util.isTrue(25, 100)) {
+            ItemMap itKim = new ItemMap(this.zone, 1153, 1, this.location.x, this.zone.map.yPhysicInTop(this.location.x, this.location.y - 24), plId);
+            itKim.options.add(new models.item.Item.ItemOption(30, 0));
+            Service.gI().dropItemMap(this.zone, itKim);
+        }
+
         if (plKill != null) {
             services.TaskService.gI().checkDoneTaskKillBoss(plKill, this);
         }

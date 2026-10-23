@@ -74,7 +74,7 @@ public class TrungUyXanhLo extends Boss {
 
         // 4. Sao Pha Lê ngẫu nhiên (441 - 447)
         int splId = Util.nextInt(441, 447);
-        ItemMap itSpl = new ItemMap(this.zone, splId, 1, this.location.x - 35, dropY, plId);
+        ItemMap itSpl = utils.ItemUtil.saoPhaLe(this.zone, splId, 1, this.location.x - 35, dropY, plId);
         Service.gI().dropItemMap(this.zone, itSpl);
 
         // 5. Rơi 1 - 2 Thẻ Trung Úy Xanh Lơ (Item 842)
@@ -82,6 +82,24 @@ public class TrungUyXanhLo extends Boss {
         itCard.options.add(new models.item.Item.ItemOption(87, 0));
         itCard.options.add(new models.item.Item.ItemOption(30, 0));
         Service.gI().dropItemMap(this.zone, itCard);
+
+        // 6. Rơi nguyên liệu Sách Tuyệt Kĩ
+        // Rơi 1 - 2 Bìa Sách (Item 1154)
+        ItemMap itBia = new ItemMap(this.zone, 1154, Util.nextInt(1, 2), this.location.x - 50, dropY, plId);
+        itBia.options.add(new models.item.Item.ItemOption(30, 0));
+        Service.gI().dropItemMap(this.zone, itBia);
+
+        // Rơi 1 - 2 Bùa Giám Định (Item 1152)
+        ItemMap itBua = new ItemMap(this.zone, 1152, Util.nextInt(1, 2), this.location.x + 50, dropY, plId);
+        itBua.options.add(new models.item.Item.ItemOption(30, 0));
+        Service.gI().dropItemMap(this.zone, itBua);
+
+        // 25% rơi 1 Kìm Bấm Giấy (Item 1153)
+        if (Util.isTrue(25, 100)) {
+            ItemMap itKim = new ItemMap(this.zone, 1153, 1, this.location.x, dropY, plId);
+            itKim.options.add(new models.item.Item.ItemOption(30, 0));
+            Service.gI().dropItemMap(this.zone, itKim);
+        }
     }
 
     @Override

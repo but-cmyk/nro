@@ -10,7 +10,7 @@ import static utils.Util.highlightsItem;
 
 public class ItemUtil {
 
-    public static ItemMap saoPhaLe(Zone zone, int tempId, int quantity, int x, int y, int playerId) {
+    public static ItemMap saoPhaLe(Zone zone, int tempId, int quantity, int x, int y, long playerId) {
         ItemMap it = new ItemMap(zone, tempId, quantity, x, y, playerId);
         switch (tempId) {
             case 441 ->
@@ -20,9 +20,9 @@ public class ItemUtil {
             case 443 ->
                 it.options.add(new Item.ItemOption(97, 5));
             case 444 ->
-                it.options.add(new Item.ItemOption(99, 3));
+                it.options.add(new Item.ItemOption(19, 2));
             case 445 ->
-                it.options.add(new Item.ItemOption(98, 3));
+                it.options.add(new Item.ItemOption(229, 5));
             case 446 ->
                 it.options.add(new Item.ItemOption(100, 5));
             case 447 ->

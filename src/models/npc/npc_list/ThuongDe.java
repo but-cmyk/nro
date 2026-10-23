@@ -94,8 +94,13 @@ public class ThuongDe extends Npc {
                                                 "Đồng ý\nluyện tập", "Không\nđồng ý");
                                 }
                             }
-                            case 3 ->
+                            case 3 -> {
+                                if (player.levelLuyenTap < 4) {
+                                    Service.gI().sendThongBao(player, "Con phải đánh bại Mr. PôPô và Thượng Đế mới có thể đến gặp Thần Kaio!");
+                                    return;
+                                }
                                 ChangeMapService.gI().changeMapBySpaceShip(player, 48, -1, 354);
+                            }
                             case 4 -> // Quay ngọc May mắn
                             this.createOtherMenu(player, ConstNpc.MENU_CHOOSE_LUCKY_ROUND,
                                     "Con muốn làm gì nào?",

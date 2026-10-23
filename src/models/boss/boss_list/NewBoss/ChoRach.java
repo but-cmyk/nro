@@ -1,6 +1,7 @@
 // File: ChoRach.java
 package models.boss.boss_list.NewBoss;
 
+import consts.BossStatus;
 import models.boss.Boss;
 import models.boss.BossesData;
 import models.map.ItemMap;
@@ -27,11 +28,38 @@ public class ChoRach extends Boss {
     private long stateTimer; // Biến hẹn giờ cho các trạng thái
     private ItemMap targetBone;
     private int rewardPlayerId;
+    private long lastTimeJoinMap;
+    private static final long TIME_CHANGE_MAP = 300000; // 5 phút đổi map tìm player
 
     public ChoRach() throws Exception {
         super(-Util.nextInt(1000, 1000000), true, false, BossesData.SOI_HEC_QUYN_NEW);
         // Trạng thái ban đầu là đi săn
         this.currentState = WolfState.HUNTING;
+        this.lastTimeJoinMap = System.currentTimeMillis() + TIME_CHANGE_MAP;
+    }
+
+    @Override
+    public Zone getMapJoin() {
+        Zone target = managers.boss.BossManager.getRoamingZoneWithPlayer(this.zone, ChoRach.class);
+        if (target != null) {
+            return target;
+        }
+        return managers.boss.BossManager.getRandomOutdoorZone();
+    }
+
+    @Override
+    public void joinMap() {
+        if (this.zone == null) {
+            this.zone = getMapJoin();
+        }
+        if (this.zone != null) {
+            int x = Util.nextInt(100, Math.max(100, this.zone.map.mapWidth - 100));
+            int y = this.zone.map.yPhysicInTop(x, 100);
+            ChangeMapService.gI().changeMap(this, this.zone, x, y);
+            this.changeStatus(BossStatus.CHAT_S);
+            this.lastTimeJoinMap = System.currentTimeMillis() + TIME_CHANGE_MAP;
+            this.lastTimeHadPlayer = System.currentTimeMillis();
+        }
     }
 
     // Kiểm tra xem có cục xương nào trong map không
@@ -52,6 +80,26 @@ public class ChoRach extends Boss {
         super.update();
         if (this.isDie()) {
             return;
+        }
+
+        // Đổi map tìm đến người chơi khi đang ở trạng thái đi săn
+        if (this.currentState == WolfState.HUNTING && this.zone != null 
+                && (System.currentTimeMillis() > this.lastTimeJoinMap 
+                || (this.zone.getNumOfPlayers() == 0 && Util.canDoWithTime(this.lastTimeJoinMap - TIME_CHANGE_MAP, 25000)))) {
+            Zone targetZone = managers.boss.BossManager.getRoamingZoneWithPlayer(this.zone, ChoRach.class);
+            if (targetZone == null && this.zone.getNumOfPlayers() == 0) {
+                targetZone = managers.boss.BossManager.getRandomOutdoorZone();
+            }
+            if (targetZone != null && targetZone != this.zone) {
+                this.lastTimeJoinMap = System.currentTimeMillis() + TIME_CHANGE_MAP;
+                this.chat("|-1|Ở đây không có ai, ta đi tìm con mồi khác đây!");
+                ChangeMapService.gI().spaceShipArrive(this, (byte) 2, ChangeMapService.DEFAULT_SPACE_SHIP);
+                ChangeMapService.gI().exitMap(this);
+                this.zone = targetZone;
+                this.location.x = Util.nextInt(100, Math.max(100, zone.map.mapWidth - 100));
+                this.location.y = zone.map.yPhysicInTop(this.location.x, 100);
+                this.joinMap();
+            }
         }
 
         // Luôn kiểm tra xem có xương không để thay đổi hành vi
@@ -105,13 +153,8 @@ private void handleRewarding() {
         int[] itemne = {441, 442, 443, 444, 445, 446, 447, 459};
         int itemId = Util.isTrue(80, 100) ? itemne[Util.nextInt(0, itemne.length - 1)] : itemne[itemne.length - 1];
 
-        // 2. Tự tạo đối tượng ItemMap
-        ItemMap itemMap = new ItemMap(this.zone,
-                                      (short) itemId, // ID của vật phẩm
-                                      1, // Số lượng
-                                      this.location.x, // Tọa độ rơi X
-                                      this.zone.map.yPhysicInTop(this.location.x, this.location.y), // Tọa độ rơi Y
-                                      rewardPlayerId); // ID người chơi sở hữu
+        // 2. Tự tạo đối tượng ItemMap với options chuẩn
+        ItemMap itemMap = utils.ItemUtil.saoPhaLe(this.zone, itemId, 1, this.location.x, this.zone.map.yPhysicInTop(this.location.x, this.location.y), rewardPlayerId);
 
         // 3. Gọi service để thả vật phẩm ra đất
         Service.gI().dropItemMap(this.zone, itemMap);
@@ -132,8 +175,18 @@ private void handleRewarding() {
     private void handleLeaving() {
         if (Util.canDoWithTime(stateTimer, 3000)) { // Sau 3 giây nữa
             this.chat("Ta đi đây! Húuuu!");
-            Zone newZone = Util.randomAllMap();
-            ChangeMapService.gI().changeMap(this, newZone, Util.nextInt(50, newZone.map.mapWidth - 50), 5);
+            Zone targetZone = managers.boss.BossManager.getRoamingZoneWithPlayer(this.zone, ChoRach.class);
+            if (targetZone == null) {
+                targetZone = managers.boss.BossManager.getRandomOutdoorZone();
+            }
+            if (targetZone != null) {
+                ChangeMapService.gI().spaceShipArrive(this, (byte) 2, ChangeMapService.DEFAULT_SPACE_SHIP);
+                ChangeMapService.gI().exitMap(this);
+                this.zone = targetZone;
+                this.location.x = Util.nextInt(100, Math.max(100, zone.map.mapWidth - 100));
+                this.location.y = zone.map.yPhysicInTop(this.location.x, 100);
+                this.joinMap();
+            }
             this.currentState = WolfState.HUNTING; // Reset trạng thái về đi săn cho lần xuất hiện sau
         }
     }
@@ -169,8 +222,7 @@ private void handleRewarding() {
 
     @Override
     public void reward(Player plKill) {
-        int[] itemne = {441, 442, 443, 444, 445, 446, 447, 459};
-        Service.gI().dropItemMap(this.zone, ItemUtil.saoPhaLe(zone, Util.isTrue(95, 100) ? itemne[Util.nextInt(0, itemne.length - 1)] : itemne[itemne.length - 1], 1, this.location.x, this.zone.map.yPhysicInTop(this.location.x, this.location.y), (int) plKill.id));
+        managers.boss.BossManager.dropGoldAndSPL(this, plKill);
     }
 
     @Override

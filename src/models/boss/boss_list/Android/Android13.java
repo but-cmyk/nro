@@ -32,6 +32,17 @@ public class Android13 extends Boss {
             this.zone.map.yPhysicInTop(this.location.x, this.location.y - 24), plKill.id);
     Service.gI().dropItemMap(this.zone, itNew);
 
+    // Rơi nguyên liệu Sách Tuyệt Kĩ
+    if (Util.isTrue(25, 100)) {
+        ItemMap itKim = new ItemMap(this.zone, 1153, 1, this.location.x + 20, this.zone.map.yPhysicInTop(this.location.x, this.location.y - 24), plKill.id);
+        itKim.options.add(new models.item.Item.ItemOption(30, 0));
+        Service.gI().dropItemMap(this.zone, itKim);
+    }
+    if (Util.isTrue(30, 100)) {
+        ItemMap itBua = new ItemMap(this.zone, 1152, 1, this.location.x - 20, this.zone.map.yPhysicInTop(this.location.x, this.location.y - 24), plKill.id);
+        itBua.options.add(new models.item.Item.ItemOption(30, 0));
+        Service.gI().dropItemMap(this.zone, itBua);
+    }
 
     TaskService.gI().checkDoneTaskKillBoss(plKill, this);
 }

@@ -28,7 +28,7 @@ import services.map.NpcService;
             if (!TaskService.gI().checkDoneTaskTalkNpc(player, this)) {
                 this.createOtherMenu(player, ConstNpc.BASE_MENU,
                         "Chào con , Đến với thế giới Ngọc Rồng Mobi \nGift-code : tanthu , caitrang , nromobi , nromobi1 , nromobi2\n Server miễn phí , chịu khó cày cuốc nhé , Cơ chế như Teamobi.",
-                        "Nhập\nGiftcode", "Quên Mã\nBảo Vệ", "Quy Đổi\nThỏi Vàng\nHồng Ngọc", "Đổi Mật\nKhẩu", "Bỏ Qua\nNhiệm Vụ");
+                        "Nhập\nGiftcode", "Quy Đổi\nThỏi Vàng\nHồng Ngọc", "Đổi Mật\nKhẩu", "Bỏ Qua\nNhiệm Vụ");
 
             }
         }
@@ -39,26 +39,18 @@ import services.map.NpcService;
         if (canOpenNpc(player)) {
             if (player.idMark.isBaseMenu()) {
                 switch (select) {
-                    case 3 ->
-                        Input.gI().createFormChangePassword(player);
                     case 0 -> {
                         Input.gI().createFormGiftCode(player);
                     }
                     case 1 -> {
-                        Input.gI().createFormMBV(player);
-                    }
-                    case 2 -> {
                         this.createOtherMenu(player, ConstNpc.MENU_OPEN_VND,
                                 "Con muốn đổi vnd thành gì ?\n"
                                 + "|7|Số tiền của bạn còn : " + dcm.format(player.getSession().sotien) + " VND",
                                 "Mua Hồng Ngọc", "Mua Thỏi Vàng", "Đóng");
                     }
-                    // case 5 -> {
-                    // this.createOtherMenu(player, ConstNpc.MENU_MTV,
-                    // "Mở thành viên 1đ hoặc đạt 15 tỷ sức mạnh ?\n",
-                    // "Mở thành viên\n10k", "Đạt 15 tỷ\nSức Mạnh");
-                    // }
-                    case 4 -> {
+                    case 2 ->
+                        Input.gI().createFormChangePassword(player);
+                    case 3 -> {
                         switch (player.playerTask.taskMain.id) {
                             case 10 -> {
                                 if (player.playerTask.taskMain.index == 1) {

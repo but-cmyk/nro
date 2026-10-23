@@ -35,10 +35,14 @@ public class RewardService {
                 optionId = 96;
             case 443 -> //phản sát thương
                 optionId = 97;
-            case 444 -> //xuyên giáp chưởng
-                optionId = 98;
-            case 445 -> //xuyên giáp cận chiến
-                optionId = 99;
+            case 444 -> { // Tím: Tấn công quái
+                optionId = 19;
+                param = 2;
+            }
+            case 445 -> { // Cam: May mắn nhặt đồ
+                optionId = 229;
+                param = 5;
+            }
             case 446 -> //vàng
                 optionId = 100;
             case 447 -> //tnsm
@@ -49,10 +53,14 @@ public class RewardService {
                 optionId = 96;
             case 1354 -> //phản sát thương
                 optionId = 97;
-            case 1355 -> //xuyên giáp chưởng
-                optionId = 98;
-            case 1356 -> //xuyên giáp cận chiến
-                optionId = 99;
+            case 1355 -> { // Tím cấp 2
+                optionId = 19;
+                param = 3;
+            }
+            case 1356 -> { // Cam cấp 2
+                optionId = 229;
+                param = 6;
+            }
             case 1357 -> //vàng
                 optionId = 100;
             case 1358 -> //tnsm
@@ -75,13 +83,13 @@ public class RewardService {
                 return;
             }
             case 1362 -> {
-                //xuyên giáp chưởng
-                itemReward.itemOptions.add(new Item.ItemOption(98, 6));
+                // Tím lấp lánh: Tấn công quái
+                itemReward.itemOptions.add(new Item.ItemOption(19, 4));
                 return;
             }
             case 1363 -> {
-                //xuyên giáp cận chiến
-                itemReward.itemOptions.add(new Item.ItemOption(99, 6));
+                // Cam lấp lánh: May mắn nhặt đồ
+                itemReward.itemOptions.add(new Item.ItemOption(229, 7));
                 return;
             }
             case 1364 -> {

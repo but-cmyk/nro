@@ -20,15 +20,21 @@ import utils.TimeUtil;
 
 public class MySession extends Session {
 
-    private static final Map<String, AntiLogin> ANTILOGIN = new ConcurrentHashMap<>();
+    private static final Map<String, AntiLogin> ACCOUNT_GUARD = new ConcurrentHashMap<>();
+    private static final Map<String, AntiLogin> IP_GUARD = new ConcurrentHashMap<>();
     private static final Map<String, Object> ACCOUNT_LOCKS = new ConcurrentHashMap<>();
     private static final AtomicInteger LOGIN_ATTEMPTS = new AtomicInteger();
-    private static final long LOGIN_GUARD_TTL = 10 * 60 * 1000L;
+    private static final long LOGIN_GUARD_TTL = 30 * 60 * 1000L;
+    private static final int ACCOUNT_MAX_FAILS = 5;
+    private static final int IP_MAX_FAILS = 20;
+    private static final int LOGIN_LOCK_MS = 15 * 60 * 1000;
 
     public Player player;
 
     public byte timeWait = 0;
     public String ipAddress;
+    /** True while this session is counted in ServerManager.CLIENTS for its IP. */
+    public boolean ipCounted;
     public boolean isAdmin;
     public int userId;
     public String uu;
@@ -93,15 +99,21 @@ public class MySession extends Session {
             return;
         }
         username = username.trim().toLowerCase(Locale.ROOT);
-        if (username.isEmpty() || username.length() > 50 || password.length() > 128) {
+        if (username.isEmpty() || username.length() > 50 || password.isEmpty() || password.length() > 128) {
             Service.gI().sendThongBaoOK(this, "Thông tin tài khoản không hợp lệ");
             return;
         }
         if ((LOGIN_ATTEMPTS.incrementAndGet() & 255) == 0) {
             long now = System.currentTimeMillis();
-            ANTILOGIN.entrySet().removeIf(entry -> entry.getValue().isExpired(now, LOGIN_GUARD_TTL));
+            ACCOUNT_GUARD.entrySet().removeIf(entry -> entry.getValue().isExpired(now, LOGIN_GUARD_TTL));
+            IP_GUARD.entrySet().removeIf(entry -> entry.getValue().isExpired(now, LOGIN_GUARD_TTL));
         }
-        AntiLogin al = ANTILOGIN.computeIfAbsent(this.ipAddress, k -> new AntiLogin());
+        String ipKey = (this.ipAddress == null || this.ipAddress.isEmpty()) ? "unknown" : this.ipAddress;
+        AntiLogin accountGuard = ACCOUNT_GUARD.computeIfAbsent(username,
+                k -> new AntiLogin(ACCOUNT_MAX_FAILS, LOGIN_LOCK_MS));
+        AntiLogin ipGuard = IP_GUARD.computeIfAbsent(ipKey,
+                k -> new AntiLogin(IP_MAX_FAILS, LOGIN_LOCK_MS));
+        AntiLogin al = new CompositeAntiLogin(accountGuard, ipGuard);
         if (!al.canLogin()) {
             Service.gI().sendThongBaoOK(this, al.getNotifyCannotLogin());
             return;
@@ -150,6 +162,7 @@ public class MySession extends Session {
                             pl.setSession(this);
                             Client.gI().put(pl);
                             this.player = pl;
+                            al.reset();
                             DataGame.sendVersionGame(this);
                             DataGame.sendDataItemBG(this);
                             Controller.gI().sendInfo(this);
@@ -169,6 +182,46 @@ public class MySession extends Session {
             }
         } finally {
             ACCOUNT_LOCKS.remove(username, accountLock);
+        }
+    }
+
+    /**
+     * Combines the account-keyed and IP-keyed guards: both must allow the
+     * attempt, and a failure counts against both.
+     */
+    private static final class CompositeAntiLogin extends AntiLogin {
+        private final AntiLogin accountGuard;
+        private final AntiLogin ipGuard;
+
+        CompositeAntiLogin(AntiLogin accountGuard, AntiLogin ipGuard) {
+            this.accountGuard = accountGuard;
+            this.ipGuard = ipGuard;
+        }
+
+        @Override
+        public synchronized boolean canLogin() {
+            boolean accountOk = accountGuard.canLogin();
+            boolean ipOk = ipGuard.canLogin();
+            return accountOk && ipOk;
+        }
+
+        @Override
+        public synchronized void wrong() {
+            accountGuard.wrong();
+            ipGuard.wrong();
+        }
+
+        @Override
+        public synchronized void reset() {
+            accountGuard.reset();
+            ipGuard.reset();
+        }
+
+        @Override
+        public synchronized String getNotifyCannotLogin() {
+            return accountGuard.canLogin()
+                    ? ipGuard.getNotifyCannotLogin()
+                    : accountGuard.getNotifyCannotLogin();
         }
     }
 }

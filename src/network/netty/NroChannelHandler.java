@@ -43,6 +43,8 @@ public class NroChannelHandler extends SimpleChannelInboundHandler<Message> {
             ctx.close();
             return;
         }
+        // Đánh dấu đã được đếm để disconnect() chỉ trừ đúng một lần.
+        session.ipCounted = true;
 
         // 2. Gán KeyHandler và thêm Session vào Manager
         session.setKeyHandler(new MyKeyHandler());

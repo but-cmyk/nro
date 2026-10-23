@@ -220,6 +220,8 @@ public class BossManager {
         BOSS_REGISTRY.put(BossID.BIMA, BiMa::new);
         BOSS_REGISTRY.put(BossID.MATROI, MaTroi::new);
         BOSS_REGISTRY.put(BossID.DOI, Doi::new);
+        BOSS_REGISTRY.put(BossID.AN_TROM, AnTrom::new);
+        BOSS_REGISTRY.put(BossID.THO_DAI_KA, ThoDaiKa::new);
     }
 
     public void loadBoss() {
@@ -255,14 +257,12 @@ public class BossManager {
         this.createBoss(BossID.AN_TROM, 1);
         this.createBoss(BossID.THO_DAI_KA, 1);
 
-        for (int i = 2; i >= 0; i--) {// Giảm số lượng boss lang thang sự kiện từ 21 xuống 3 mỗi loại
-            try {
-                new ChoRach().zoneFinal = Util.randomAllMap();
-                new Raiti().zoneFinal = Util.randomAllMap();
-                new Xibachao().zoneFinal = Util.randomAllMap();
-                new BaDo().zoneFinal = Util.randomAllMap();
-            } catch (Exception e) {
-            }
+        try {
+            new ChoRach();
+            new Raiti();
+            new Xibachao();
+            new BaDo();
+        } catch (Exception e) {
         }
     }
 
@@ -456,4 +456,116 @@ public class BossManager {
                 this.bosses.size(), aliveCount, deadCount, status);
     }
 
+    public static boolean isSafeMapForRoamingBoss(int mapId) {
+        if (mapId == 0 || mapId == 7 || mapId == 14) return true; // Làng Aru, Mori, Kakarot
+        if (mapId >= 21 && mapId <= 26) return true; // Nhà riêng và trạm tàu vũ trụ 3 hành tinh
+        if (mapId == 5 || mapId == 13 || mapId == 20) return true; // Đảo Kame, Guru, Bunma
+        if (mapId >= 39 && mapId <= 62) return true; // Tương lai, địa ngục, phó bản
+        if (mapId >= 111 && mapId <= 130) return true; // Mabu, gas, doanh trại
+        if (mapId == 102 || mapId == 103 || mapId == 112) return true;
+        return MapService.gI().isMapDoanhTrai(mapId) 
+                || MapService.gI().isMapMaBu(mapId) 
+                || MapService.gI().isMapBlackBallWar(mapId)
+                || MapService.gI().isMapPhoBan(mapId);
+    }
+
+    public static Zone getRoamingZoneWithPlayer(Zone currentZone, Class<? extends Boss> bossClass) {
+        List<Player> players = server.Client.gI().getPlayers();
+        List<Zone> candidateZones = new java.util.ArrayList<>();
+        for (Player pl : players) {
+            if (pl != null && pl.isPl() && !pl.isBot && !pl.isPet && !pl.isNewPet) {
+                Zone z = pl.zone;
+                if (z != null && z.map != null && z.isKhongCoTrongTaiTrongKhu() 
+                        && !isSafeMapForRoamingBoss(z.map.mapId)
+                        && (currentZone == null || !currentZone.equals(z))
+                        && pl.id != -1000000) {
+                    // Kiểm tra độc quyền khu: Nếu khu đã có bất kỳ Boss nào đang sống -> KHÔNG CHỌN
+                    boolean hasLivingBoss = false;
+                    List<Player> bosses = z.getBosses();
+                    if (bosses != null && !bosses.isEmpty()) {
+                        for (Player b : bosses) {
+                            if (b != null && !b.isDie()) {
+                                hasLivingBoss = true;
+                                break;
+                            }
+                        }
+                    }
+                    if (!hasLivingBoss) {
+                        candidateZones.add(z);
+                    }
+                }
+            }
+        }
+        if (!candidateZones.isEmpty()) {
+            return candidateZones.get(Util.nextInt(0, candidateZones.size() - 1));
+        }
+        return null;
+    }
+
+    public static Zone getRandomOutdoorZone() {
+        int[] outdoorMaps = {
+            1, 2, 3, 4, 6, 27, 28, 29, 30, // Trái Đất
+            8, 9, 10, 11, 12, 31, 32, 33, 34, // Namek
+            15, 16, 17, 18, 19, 35, 36, 37, 38, // Sayian
+            63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 84 // Vùng lân cận/Fide
+        };
+        // Tìm zone ngoài trời trống Boss (thử tối đa 15 lần để tìm map/zone hợp lệ)
+        for (int i = 0; i < 15; i++) {
+            int mapId = outdoorMaps[Util.nextInt(0, outdoorMaps.length - 1)];
+            models.map.Map map = MapService.gI().getMapById(mapId);
+            if (map != null && !map.zones.isEmpty()) {
+                List<Zone> emptyBossZones = new java.util.ArrayList<>();
+                for (Zone z : map.zones) {
+                    if (z != null) {
+                        boolean hasLivingBoss = false;
+                        List<Player> bosses = z.getBosses();
+                        if (bosses != null && !bosses.isEmpty()) {
+                            for (Player b : bosses) {
+                                if (b != null && !b.isDie()) {
+                                    hasLivingBoss = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if (!hasLivingBoss) {
+                            emptyBossZones.add(z);
+                        }
+                    }
+                }
+                if (!emptyBossZones.isEmpty()) {
+                    return emptyBossZones.get(Util.nextInt(0, emptyBossZones.size() - 1));
+                }
+            }
+        }
+        return null;
+    }
+
+    public static void dropGoldAndSPL(Boss boss, Player plKill) {
+        if (boss == null || boss.zone == null || boss.zone.map == null) {
+            return;
+        }
+        long plId = (plKill != null) ? plKill.id : -1;
+
+        // 1. Rơi vàng: 3 - 5 cọc (mỗi cọc 30.000 - 80.000 vàng)
+        int numPiles = Util.nextInt(3, 5);
+        for (int i = 0; i < numPiles; i++) {
+            int goldAmount = Util.nextInt(30_000, 80_000);
+            int offsetX = (i % 2 == 0 ? 1 : -1) * ((i / 2 + 1) * 20);
+            int dropX = Math.max(24, Math.min(boss.zone.map.mapWidth - 24, boss.location.x + offsetX));
+            int dropY = boss.zone.map.yPhysicInTop(dropX, boss.location.y - 24);
+            models.map.ItemMap itGold = new models.map.ItemMap(boss.zone, 190, goldAmount, dropX, dropY, plId);
+            Service.gI().dropItemMap(boss.zone, itGold);
+        }
+
+        // 2. Rơi random Sao Pha Lê: 1 - 2 viên (Item 441 - 447)
+        int[] splIds = {441, 442, 443, 444, 445, 446, 447};
+        int numSpl = Util.nextInt(1, 2);
+        for (int i = 0; i < numSpl; i++) {
+            int splId = splIds[Util.nextInt(0, splIds.length - 1)];
+            int offsetX = (i == 0 ? 0 : 25);
+            int dropX = Math.max(24, Math.min(boss.zone.map.mapWidth - 24, boss.location.x + offsetX));
+            int dropY = boss.zone.map.yPhysicInTop(dropX, boss.location.y - 24);
+            Service.gI().dropItemMap(boss.zone, utils.ItemUtil.saoPhaLe(boss.zone, splId, 1, dropX, dropY, plId));
+        }
+    }
 }

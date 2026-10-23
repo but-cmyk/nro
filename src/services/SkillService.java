@@ -795,6 +795,36 @@ public class SkillService {
         } else if (player.setClothes.cadicM == 5) {
             dame += player.nPoint.hpMax * 50 / 100;
         }
+        if (player.inventory != null && player.inventory.itemsBody != null && player.inventory.itemsBody.size() > 10) {
+            Item sach = player.inventory.itemsBody.get(10);
+            if (sach != null && sach.isNotNullItem() && sach.template.type == 35 && sach.itemOptions != null) {
+                int doBen = 0;
+                Item.ItemOption optionDoBen = null;
+                for (Item.ItemOption io : sach.itemOptions) {
+                    if (io.optionTemplate.id == 226) {
+                        doBen = io.param;
+                        optionDoBen = io;
+                        break;
+                    }
+                }
+                if (doBen > 0) {
+                    for (Item.ItemOption io : sach.itemOptions) {
+                        if (io.optionTemplate.id == 231) {
+                            long bonusPercent = io.param > 0 ? io.param : 20L;
+                            dame = dame * (100L + bonusPercent) / 100L;
+                            break;
+                        }
+                    }
+                    if (optionDoBen != null) {
+                        optionDoBen.param = Math.max(0, optionDoBen.param - 5);
+                        if (optionDoBen.param == 0) {
+                            Service.gI().sendThongBao(player, "Sách tuyệt kỹ đã hỏng độ bền, hãy phục hồi!");
+                        }
+                        services.player.InventoryService.gI().sendItemBody(player);
+                    }
+                }
+            }
+        }
         if (player.inventory != null && player.inventory.itemsBody != null && player.inventory.itemsBody.size() > 5) {
             Item TrangBi = player.inventory.itemsBody.get(5);
             if (TrangBi != null && TrangBi.isNotNullItem() && TrangBi.itemOptions != null) {

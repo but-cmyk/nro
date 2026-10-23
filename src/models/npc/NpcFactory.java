@@ -708,29 +708,7 @@ public class NpcFactory {
                         }
                     }
                     case ConstNpc.MA_BAO_VE -> {
-                        if (select == 0) {
-                            if (player.mbv == 0) {
-                                if (player.inventory.gold >= 30000) {
-                                    player.inventory.gold -= 30000;
-                                    Service.gI().sendMoney(player);
-                                    player.mbv = player.idMark.getMbv();
-                                    player.baovetaikhoan = true;
-                                    Service.gI().sendThongBao(player,
-                                            "Kích hoạt thành công, tài khoản đang được bảo vệ");
-                                } else {
-                                    Service.gI().sendThongBao(player,
-                                            "Bạn không đủ tiền để kích hoạt bảo vệ tài khoản");
-                                }
-                            } else {
-                                if (player.baovetaikhoan) {
-                                    player.baovetaikhoan = false;
-                                    Service.gI().sendThongBao(player, "Chức năng bảo vệ tài khoản đang tắt");
-                                } else {
-                                    player.baovetaikhoan = true;
-                                    Service.gI().sendThongBao(player, "Tài khoản đang được bảo vệ");
-                                }
-                            }
-                        }
+                        Service.gI().sendThongBao(player, "Chức năng mã bảo vệ đã được xóa bỏ!");
                     }
                     case ConstNpc.RUONG_GO -> {
                         int size = player.textRuongGo.size();

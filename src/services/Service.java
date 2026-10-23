@@ -163,8 +163,8 @@ public class Service {
         if (player == null) {
             return;
         }
-        Item linhThu = (player.inventory != null && player.inventory.itemsBody != null && player.inventory.itemsBody.size() > 11) ? player.inventory.itemsBody.get(11) : null;
-        short smallId = (short) (player.effectSkill.isChibi ? player.typeChibi + 5000 : (linhThu != null && linhThu.isNotNullItem()) ? linhThu.template.iconID - 1 : 0);
+        Item linhThu = (player.inventory != null && player.inventory.itemsBody != null && player.inventory.itemsBody.size() > 7) ? player.inventory.itemsBody.get(7) : null;
+        short smallId = (short) (player.effectSkill.isChibi ? player.typeChibi + 5000 : (linhThu != null && linhThu.isNotNullItem() && (linhThu.template.type == 21 || linhThu.template.type == 27)) ? linhThu.template.iconID - 1 : 0);
         if (!player.effectSkill.isChibi) {
             sendPetFollow(player, smallId);
             return;
@@ -207,8 +207,8 @@ public class Service {
         if (me == null || pl == null) {
             return;
         }
-        Item linhThu = (pl.inventory != null && pl.inventory.itemsBody != null && pl.inventory.itemsBody.size() > 11) ? pl.inventory.itemsBody.get(11) : null;
-        short smallId = (short) (pl.effectSkill.isChibi ? pl.typeChibi + 5000 : (linhThu != null && linhThu.isNotNullItem()) ? linhThu.template.iconID - 1 : 0);
+        Item linhThu = (pl.inventory != null && pl.inventory.itemsBody != null && pl.inventory.itemsBody.size() > 7) ? pl.inventory.itemsBody.get(7) : null;
+        short smallId = (short) (pl.effectSkill.isChibi ? pl.typeChibi + 5000 : (linhThu != null && linhThu.isNotNullItem() && (linhThu.template.type == 21 || linhThu.template.type == 27)) ? linhThu.template.iconID - 1 : 0);
         Message msg;
         try {
             msg = new Message(31);
@@ -1614,20 +1614,7 @@ public class Service {
     }
 
     public void mabaove(Player player, int mbv) {
-        if (Integer.toString(mbv).length() != 6) {
-            Service.gI().sendThongBaoOK(player, "Mã bảo vệ phải có độ dài là 6 số.");
-        } else if (player.mbv == 0) {
-            player.idMark.setMbv(mbv);
-            NpcService.gI().createMenuConMeo(player, ConstNpc.MA_BAO_VE, -1, "Bạn chưa từng kích hoạt chức năng mã bảo vệ để kích hoạt bạn cần có 30K vàng, mật khẩu của bạn là: " + mbv, "Đồng ý", "Từ chối");
-        } else if (player.mbv != mbv) {
-            Service.gI().sendThongBao(player, "Mật khẩu không đúng. Vui lòng kiểm tra lại");
-        } else {
-            if (player.baovetaikhoan) {
-                NpcService.gI().createMenuConMeo(player, ConstNpc.MA_BAO_VE, -1, "Tài khoản đang được bảo vệ\nBạn có muốn tắt bảo vệ không?", "Đồng ý", "Từ chối");
-            } else {
-                NpcService.gI().createMenuConMeo(player, ConstNpc.MA_BAO_VE, -1, "Tài khoản không được bảo vệ\nBạn muốn bật chứ năng bảo vệ tài khoản?", "Đồng ý", "Từ chối");
-            }
-        }
+        Service.gI().sendThongBao(player, "Chức năng mã bảo vệ đã được xóa bỏ!");
     }
 
     public void sendEffPlayer(Player pl, Player plReceive, int idEff, int layer, int loop, int loopCount) {
@@ -1712,12 +1699,6 @@ public class Service {
     }
 
     public void sendEffPlayer(Player pl) {
-        if (pl != null && pl.isPl() && pl.inventory != null && pl.inventory.itemsBody != null && pl.inventory.itemsBody.size() > 10) {
-            Item danhhieu = pl.inventory.itemsBody.get(10);
-            if (danhhieu != null && danhhieu.isNotNullItem() && danhhieu.template != null) {
-                Service.gI().sendEffAllPlayer(pl, danhhieu.template.part, 1, -1, 1);
-            }
-        }
     }
     public void addEffectChar(Player pl, int id, int layer, int loop, int loopcount, int stand) {
         if (!pl.idEffChar.contains(id)) {
@@ -1739,21 +1720,6 @@ public class Service {
     }
 
     public void sendEffAllPlayerMapToMe(Player pl) {
-        if (pl == null || pl.zone == null) {
-            return;
-        }
-        try {
-            for (Player plM : pl.zone.getPlayers()) {
-                if (plM != null && plM.isPl() && plM.inventory != null && plM.inventory.itemsBody != null && plM.inventory.itemsBody.size() > 10) {
-                    Item danhhieu = plM.inventory.itemsBody.get(10);
-                    if (danhhieu != null && danhhieu.isNotNullItem() && danhhieu.template != null) {
-                        Service.gI().sendEffPlayer(plM, pl, danhhieu.template.part, 1, -1, 1);
-                    }
-                }
-            }
-        } catch (Exception e) {
-            Logger.logException(Service.class, e, "Lỗi sendEffAllPlayerMapToMe");
-        }
     }
 
     public void Send_Body_Mob(Mob mob, int type, int idIcon) {

@@ -1,0 +1,41 @@
+# ============================================================
+# NRO Server - local configuration EXAMPLE
+# Copy to data/config/alyra.properties and fill real values.
+# NEVER commit the real file (it is gitignored).
+# ============================================================
+
+#SERVER
+server.local=false
+server.test=true
+server.daoautoupdater=true
+server.sv=1
+server.name=Ngoc Rong Online
+server.ip=0.0.0.0
+server.port=14445
+server.sv1=Server Test:127.0.0.1:14445:0:0:0,0,0
+server.waitlogin=0
+server.maxperip=10
+server.maxplayer=2000
+server.expserver=1
+server.debug=0
+
+#TLS
+# Bật sau khi đã đặt cert/key vào certs/ (xem certs/README.md).
+# Client bản mới mặc định dùng TLS; bản cũ sẽ không kết nối được.
+server.tls.enabled=false
+server.tls.cert=certs/fullchain.pem
+server.tls.key=certs/privkey.pem
+
+#DATABASE
+database.driver=com.mysql.cj.jdbc.Driver
+database.host=127.0.0.1
+database.port=3308
+database.name=nro_data
+# Use a least-privilege user, NOT root.
+database.user=nro_app
+database.pass=CHANGE_ME
+database.min=5
+database.max=25
+database.lifetime=120000
+# Optional: DISABLED for localhost, VERIFY_IDENTITY for remote DB
+#database.ssl.mode=VERIFY_IDENTITY

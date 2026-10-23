@@ -16,25 +16,25 @@ public class NangCapSachTuyetKi {
             Item sachTuyetKy = null;
             Item kimBamGiay = null;
             for (Item item : player.combineNew.itemsCombine) {
-                if (CombineService.gI().issachTuyetKy(item) && (item.template.id == 1181 || item.template.id == 1182 || item.template.id == 1183)) {
+                if (CombineService.gI().issachTuyetKy(item) && (item.template.id == 1181 || item.template.id == 1183 || item.template.id == 1185)) {
                     sachTuyetKy = item;
                 } else if (item.template.id == 1153) {
                     kimBamGiay = item;
                 }
             }
             if (sachTuyetKy != null && kimBamGiay != null) {
-                String npcSay = "|2|Nâng cấp sách tuyệt kỹ\n";
+                String npcSay = "|2|Nâng cấp " + sachTuyetKy.getName() + "\n";
                 npcSay += "Cần 10 Kìm bấm giấy\n"
                         + "Tỉ lệ thành công: 10%\n"
                         + "Nâng cấp thất bại sẽ mất 10 Kìm bấm giấy";
                 CombineService.gI().baHatMit.createOtherMenu(player, ConstNpc.MENU_START_COMBINE, npcSay,
                         "Nâng cấp", "Từ chối");
             } else {
-                Service.gI().sendThongBaoOK(player, "Cần Sách Tuyệt Kỹ 1 và 10 Kìm bấm giấy.");
+                Service.gI().sendThongBaoOK(player, "Cần Sách Tuyệt Kỹ Cấp 1 và 10 Kìm bấm giấy.");
                 return;
             }
         } else {
-            Service.gI().sendThongBaoOK(player, "Cần Sách Tuyệt Kỹ 1 và 10 Kìm bấm giấy.");
+            Service.gI().sendThongBaoOK(player, "Cần Sách Tuyệt Kỹ Cấp 1 và 10 Kìm bấm giấy.");
             return;
         }
     }
@@ -50,23 +50,42 @@ public class NangCapSachTuyetKi {
                     kimBamGiay = item;
                 }
             }
-            Item sachTuyetKy_2 = ItemService.gI().createNewItem((short) ((short) sachTuyetKy.template.id + 1));
             if (sachTuyetKy != null && kimBamGiay != null) {
+                if (sachTuyetKy.template.id != 1181 && sachTuyetKy.template.id != 1183 && sachTuyetKy.template.id != 1185) {
+                    Service.gI().sendThongBao(player, "Chỉ có thể nâng cấp Sách Tuyệt Kỹ Cấp 1!");
+                    return;
+                }
                 if (kimBamGiay.quantity < 10) {
-                    Service.gI().sendThongBao(player, "Không đủ Kìm bấm giấy");
+                    Service.gI().sendThongBao(player, "Không đủ Kìm bấm giấy (cần 10 cái)");
                     return;
                 }
                 if (CombineService.gI().checkHaveOption(sachTuyetKy, 0, 224)) {
-                    Service.gI().sendThongBao(player, "Chưa giám định");
+                    Service.gI().sendThongBao(player, "Sách chưa được giám định!");
                     return;
                 }
-                for (int i = 0; i < sachTuyetKy.itemOptions.size(); i++) {
-                    sachTuyetKy_2.itemOptions.add(new ItemOption(sachTuyetKy.itemOptions.get(i).optionTemplate.id, sachTuyetKy.itemOptions.get(i).param));
+
+                if (Util.isTrue(10, 100)) {
+                    // Thành công: Nâng cấp lên Cấp 2
+                    Item sachTuyetKy_2 = ItemService.gI().createNewItem((short) (sachTuyetKy.template.id + 1));
+                    for (int i = 0; i < sachTuyetKy.itemOptions.size(); i++) {
+                        ItemOption io = sachTuyetKy.itemOptions.get(i);
+                        int param = io.param;
+                        if (io.optionTemplate.id == 87) {
+                            param = 2; // Cập nhật lên Cấp 2
+                        }
+                        sachTuyetKy_2.itemOptions.add(new ItemOption(io.optionTemplate.id, param));
+                    }
+                    CombineService.gI().sendEffectSuccessCombine(player);
+                    InventoryService.gI().addItemBag(player, sachTuyetKy_2);
+                    InventoryService.gI().subQuantityItemsBag(player, sachTuyetKy, 1);
+                    InventoryService.gI().subQuantityItemsBag(player, kimBamGiay, 10);
+                    Service.gI().sendThongBao(player, "Nâng cấp Sách Tuyệt Kỹ Cấp 2 thành công!");
+                } else {
+                    // Thất bại: Trừ 10 kìm bấm giấy
+                    CombineService.gI().sendEffectFailCombine(player);
+                    InventoryService.gI().subQuantityItemsBag(player, kimBamGiay, 10);
+                    Service.gI().sendThongBao(player, "Nâng cấp thất bại, bạn bị mất 10 Kìm bấm giấy!");
                 }
-                CombineService.gI().sendEffectSuccessCombine(player);
-                InventoryService.gI().addItemBag(player, sachTuyetKy_2);
-                InventoryService.gI().subQuantityItemsBag(player, sachTuyetKy, 1);
-                InventoryService.gI().subQuantityItemsBag(player, kimBamGiay, 10);
                 InventoryService.gI().sendItemBags(player);
                 CombineService.gI().reOpenItemCombine(player);
             }

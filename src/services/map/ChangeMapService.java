@@ -625,7 +625,7 @@ public class ChangeMapService {
                 player.idMark.setLastTimeNotifyDailyMobRuby(System.currentTimeMillis());
                 utils.Util.setTimeout(() -> {
                     if (player != null && player.isPl() && player.canReceiveDailyMobRuby()) {
-                        Service.gI().sendThongBao(player, "Hôm nay bạn có thể nhận 30 Hồng ngọc khi tiêu diệt quái!");
+                        Service.gI().sendThongBao(player, "Hôm nay bạn có thể nhận 10 Hồng ngọc khi tiêu diệt quái!");
                     }
                 }, 1500);
             }
@@ -1145,6 +1145,21 @@ public class ChangeMapService {
                         return null;
                     }
                     break;
+                case 45: // Thần Điện
+                    if (player.levelLuyenTap < 2) {
+                        return null;
+                    }
+                    break;
+                case 48: // Hành tinh Kaio
+                    if (player.levelLuyenTap < 4) {
+                        return null;
+                    }
+                    break;
+                case 50: // Thánh địa Kaio
+                    if (player.levelLuyenTap < 6) {
+                        return null;
+                    }
+                    break;
                 case 169: // Map Thần Kaio / Hủy Diệt
                 case 170:
                 case 171:
@@ -1333,6 +1348,21 @@ public class ChangeMapService {
             case 163:
                 if (idTask < ConstTask.TASK_23_0 || player.nPoint.power < 1500000L) {
                     return "Yêu cầu sức mạnh trên 1,5 triệu và hoàn thành nhiệm vụ tương ứng để vào " + mapName + "!";
+                }
+                break;
+            case 45:
+                if (player.levelLuyenTap < 2) {
+                    return "Cần đánh bại tất cả đối thủ ở Tháp Karin (Thần Mèo và Yajirô) để đến " + mapName + "!";
+                }
+                break;
+            case 48:
+                if (player.levelLuyenTap < 4) {
+                    return "Cần đánh bại tất cả đối thủ ở Thần Điện (Mr. PôPô và Thượng Đế) để đến " + mapName + "!";
+                }
+                break;
+            case 50:
+                if (player.levelLuyenTap < 6) {
+                    return "Cần đánh bại tất cả đối thủ ở Hành tinh Kaio (Khỉ Bubbles và Thần Vũ Trụ) để đến " + mapName + "!";
                 }
                 break;
             case 169:

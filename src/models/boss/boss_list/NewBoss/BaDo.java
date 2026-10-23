@@ -1,11 +1,14 @@
 package models.boss.boss_list.NewBoss;
 
+import consts.BossStatus;
 import models.boss.Boss;
 import models.boss.BossesData;
+import models.map.Zone;
 import models.player.Player;
 import services.player.PlayerService;
 import services.Service;
 import services.SkillService;
+import services.map.ChangeMapService;
 import utils.Util;
 
 public class BaDo extends Boss {
@@ -20,6 +23,8 @@ public class BaDo extends Boss {
     private long lastTimeAttack;
     private long moveAwayTime;
     private boolean isMovingAway;
+    private long lastTimeJoinMap;
+    private static final long TIME_CHANGE_MAP = 300000; // 5 phút đổi map tìm player
 
     private static final long SMELL_AURA_COOLDOWN = 10000;
     private static final long MOVE_AWAY_DURATION = 1500;
@@ -29,6 +34,31 @@ public class BaDo extends Boss {
         // Tắt thông báo khi xuất hiện
         super(-Util.nextInt(1000, 1000000), true, false, BossesData.O_DO_NEW);
         this.isMovingAway = false;
+        this.lastTimeJoinMap = System.currentTimeMillis() + TIME_CHANGE_MAP;
+    }
+
+    @Override
+    public Zone getMapJoin() {
+        Zone target = managers.boss.BossManager.getRoamingZoneWithPlayer(this.zone, BaDo.class);
+        if (target != null) {
+            return target;
+        }
+        return managers.boss.BossManager.getRandomOutdoorZone();
+    }
+
+    @Override
+    public void joinMap() {
+        if (this.zone == null) {
+            this.zone = getMapJoin();
+        }
+        if (this.zone != null) {
+            int x = Util.nextInt(100, Math.max(100, this.zone.map.mapWidth - 100));
+            int y = this.zone.map.yPhysicInTop(x, 100);
+            ChangeMapService.gI().changeMap(this, this.zone, x, y);
+            this.changeStatus(BossStatus.CHAT_S);
+            this.lastTimeJoinMap = System.currentTimeMillis() + TIME_CHANGE_MAP;
+            this.lastTimeHadPlayer = System.currentTimeMillis();
+        }
     }
 
     // Kỹ năng hào quang hôi thối (hành vi đặc trưng, giữ lại ở lớp con)
@@ -52,6 +82,26 @@ public class BaDo extends Boss {
     public void update() {
         super.update();
         if (this.isDie()) return;
+
+        // Đổi map tìm đến người chơi
+        if (this.zone != null && (System.currentTimeMillis() > this.lastTimeJoinMap 
+                || (this.zone.getNumOfPlayers() == 0 && Util.canDoWithTime(this.lastTimeJoinMap - TIME_CHANGE_MAP, 25000)))) {
+            Zone targetZone = managers.boss.BossManager.getRoamingZoneWithPlayer(this.zone, BaDo.class);
+            if (targetZone == null && this.zone.getNumOfPlayers() == 0) {
+                targetZone = managers.boss.BossManager.getRandomOutdoorZone();
+            }
+            if (targetZone != null && targetZone != this.zone) {
+                this.lastTimeJoinMap = System.currentTimeMillis() + TIME_CHANGE_MAP;
+                this.chat("|-1|Khu này sạch quá, ta đi tìm chỗ khác bốc mùi hơn!");
+                ChangeMapService.gI().spaceShipArrive(this, (byte) 2, ChangeMapService.DEFAULT_SPACE_SHIP);
+                ChangeMapService.gI().exitMap(this);
+                this.zone = targetZone;
+                this.location.x = Util.nextInt(100, Math.max(100, zone.map.mapWidth - 100));
+                this.location.y = zone.map.yPhysicInTop(this.location.x, 100);
+                this.joinMap();
+            }
+        }
+
         activateSmellAura();
     }
 
@@ -100,7 +150,7 @@ public class BaDo extends Boss {
 
     @Override
     public void reward(Player plKill) {
-        // Thêm phần thưởng khi bị tiêu diệt (nếu có)
+        managers.boss.BossManager.dropGoldAndSPL(this, plKill);
     }
 
     @Override

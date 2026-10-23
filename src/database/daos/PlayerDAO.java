@@ -94,7 +94,7 @@ public class PlayerDAO {
             JSONArray item = new JSONArray();
             JSONArray options = new JSONArray();
             JSONArray opt = new JSONArray();
-            for (int i = 0; i < 10; i++) {// lặp qua 10 ô đồ
+            for (int i = 0; i < 11; i++) {// lặp qua 11 ô đồ
                 switch (i) {
                     case 0:
                         // áo
@@ -959,10 +959,10 @@ public class PlayerDAO {
                 String dataBlackBall = dataArray.toJSONString();
                 dataArray.clear();
 
-                // Ma Bao Ve
-                dataArray.add(player.mbv);
-                dataArray.add(player.baovetaikhoan);
-                dataArray.add(player.mbvtime);
+                // Ma Bao Ve (đã xóa bỏ)
+                dataArray.add(0);
+                dataArray.add(false);
+                dataArray.add(0L);
                 String dataBVTK = dataArray.toJSONString();
                 dataArray.clear();
 

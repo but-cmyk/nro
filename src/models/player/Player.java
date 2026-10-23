@@ -279,12 +279,12 @@ public class Player extends Character {
     public int thoiVangVoDaiSinhTu;
     public long timePKVDST;
     public long lastTimeNhanBinhNuocFree;
-    public int ticketVDST = 3;
+    public int ticketVDST = 5;
     public long lastTimeResetTicketVDST;
 
     public int getTicketVDST() {
         if (utils.Util.isAfterMidnight(this.lastTimeResetTicketVDST)) {
-            this.ticketVDST = 3;
+            this.ticketVDST = 5;
             this.lastTimeResetTicketVDST = System.currentTimeMillis();
         }
         return this.ticketVDST;
@@ -443,7 +443,7 @@ public class Player extends Character {
                     if (this.isPl() && this.canReceiveDailyMobRuby()) {
                         if (this.idMark != null && Util.canDoWithTime(this.idMark.getLastTimeNotifyDailyMobRuby(), 15 * 60 * 1000L)) {
                             this.idMark.setLastTimeNotifyDailyMobRuby(System.currentTimeMillis());
-                            services.Service.gI().sendThongBao(this, "Hôm nay bạn có thể nhận 30 Hồng ngọc khi tiêu diệt quái!");
+                            services.Service.gI().sendThongBao(this, "Hôm nay bạn có thể nhận 10 Hồng ngọc khi tiêu diệt quái!");
                         }
                     }
                 }

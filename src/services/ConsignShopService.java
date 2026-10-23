@@ -609,19 +609,39 @@ public class ConsignShopService {
                         false,
                         pl.name);
 
-                manager.addItem(newConsignItem);
+                // Trừ túi TRƯỚC khi đưa lên shop. Giữ bản copy để hoàn nếu
+                // bước ghi DB thất bại (tránh item "ma").
+                Item refundItem = ItemService.gI().copyItem(it);
+                refundItem.quantity = quantity;
+                if (!InventoryService.gI().trySubQuantityItemsBag(pl, it, quantity)) {
+                    pl.inventory.addGold(feeGold);
+                    feeCharged = false;
+                    Service.gI().sendMoney(pl);
+                    Service.gI().sendThongBao(pl, "Số lượng vật phẩm không hợp lệ.");
+                    return;
+                }
 
-                // Subtract item from player's inventory
-                InventoryService.gI().subQuantityItemsBag(pl, it, quantity);
+                try {
+                    // Lưu túi đã trừ trước, rồi mới insert shop — cả hai đồng bộ.
+                    database.daos.PlayerDAO.updatePlayer(pl);
+                    int insertedId = manager.insertItem(newConsignItem);
+                    if (insertedId <= 0) {
+                        throw new IOException("Không thể lưu vật phẩm ký gửi vào database");
+                    }
+                } catch (Exception persistError) {
+                    InventoryService.gI().addItemBag(pl, refundItem);
+                    database.daos.PlayerDAO.updatePlayer(pl);
+                    pl.inventory.addGold(feeGold);
+                    feeCharged = false;
+                    Service.gI().sendMoney(pl);
+                    throw persistError;
+                }
+
                 InventoryService.gI().sendItemBags(pl);
-                database.daos.PlayerDAO.updatePlayerAsync(pl);
 
                 // GIẢI PHÓNG GLOBAL LOCK NGAY LẬP TỨC để các người chơi khác không bị chặn
                 manager.unlockItems();
                 lockHeld = false;
-
-                // Đẩy ghi DB bất đồng bộ qua Virtual Thread (không block Netty)
-                manager.insertItemAsync(newConsignItem);
 
                 Service.gI().sendThongBao(pl, "Ký gửi vật phẩm thành công!");
                 openShopKyGui(pl);

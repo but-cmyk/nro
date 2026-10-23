@@ -3,7 +3,11 @@ namespace Game1
     using System;
     using System.Collections.Generic;
     using System.IO;
+    using System.Net.Security;
     using System.Net.Sockets;
+    using System.Security.Authentication;
+    using System.Security.Cryptography;
+    using System.Security.Cryptography.X509Certificates;
     using System.Text;
     using System.Threading;
     using UnityEngine;
@@ -226,7 +230,7 @@ namespace Game1
     
     	protected static Session_ME2 instance = new Session_ME2();
     
-    	private static NetworkStream dataStream;
+    	private static Stream dataStream;
     
     	private static BinaryReader dis;
     
@@ -335,8 +339,9 @@ namespace Game1
     			doConnect(host, port);
     			messageHandler.onConnectOK(isMainSession);
     		}
-    		catch (Exception)
+    		catch (Exception ex)
     		{
+    			Debug.LogError("Connect failed (ME2): " + ex.Message);
     			if (messageHandler != null)
     			{
     				close();
@@ -348,8 +353,19 @@ namespace Game1
     	public void doConnect(string host, int port)
     	{
     		sc = new TcpClient();
+    		sc.NoDelay = true;
     		sc.Connect(host, port);
-    		dataStream = sc.GetStream();
+    		Stream stream = sc.GetStream();
+    		if (TlsConfig.Enabled)
+    		{
+    			SslStream ssl = new SslStream(stream, false, new RemoteCertificateValidationCallback(ValidateServerCertificate));
+    			ssl.ReadTimeout = 30000;
+    			ssl.WriteTimeout = 30000;
+    			ssl.AuthenticateAsClient(TlsConfig.ServerName, null, SslProtocols.Tls12, false);
+    			stream = ssl;
+    			Debug.Log("TLS connected (ME2): " + TlsConfig.ServerName);
+    		}
+    		dataStream = stream;
     		dis = new BinaryReader(dataStream, new UTF8Encoding());
     		dos = new BinaryWriter(dataStream, new UTF8Encoding());
     		sendThread = new Thread(sender.run);
@@ -361,6 +377,42 @@ namespace Game1
     		timeConnected = currentTimeMillis();
     		connecting = false;
     		doSendMessage(new Message(-27));
+    	}
+
+    	private static bool ValidateServerCertificate(object sender, X509Certificate certificate,
+    	        X509Chain chain, SslPolicyErrors errors)
+    	{
+    		if (certificate == null)
+    		{
+    			return false;
+    		}
+    		if (TlsConfig.AllowUntrustedForDev)
+    		{
+    			Debug.LogWarning("TLS (ME2): AllowUntrustedForDev=true, certificate is NOT pinned!");
+    			return true;
+    		}
+    		try
+    		{
+    			using (SHA256 sha = SHA256.Create())
+    			{
+    				byte[] hash = sha.ComputeHash(certificate.GetRawCertData());
+    				string pin = Convert.ToBase64String(hash);
+    				for (int i = 0; i < TlsConfig.PinnedSha256.Length; i++)
+    				{
+    					string expected = TlsConfig.PinnedSha256[i];
+    					if (!string.IsNullOrEmpty(expected) && expected == pin)
+    					{
+    						return true;
+    					}
+    				}
+    			}
+    		}
+    		catch (Exception ex)
+    		{
+    			Debug.LogError("TLS pin check failed (ME2): " + ex.Message);
+    		}
+    		Debug.LogError("TLS certificate pin mismatch (ME2). Check TlsConfig.PinnedSha256.");
+    		return false;
     	}
     
     	public void sendMessage(Message message)

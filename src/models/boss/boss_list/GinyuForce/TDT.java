@@ -63,6 +63,18 @@ public class TDT extends Boss {
                     Service.gI().dropItemMap(this.zone, itDNC);
                 }
             }
+
+            // Rơi nguyên liệu Sách Tuyệt Kĩ
+            if (Util.isTrue(30, 100)) {
+                ItemMap itBua = new ItemMap(this.zone, 1152, 1, this.location.x + 20, this.zone.map.yPhysicInTop(this.location.x, this.location.y - 24), plKill.id);
+                itBua.options.add(new models.item.Item.ItemOption(30, 0));
+                Service.gI().dropItemMap(this.zone, itBua);
+            }
+            if (Util.isTrue(20, 100)) {
+                ItemMap itBia = new ItemMap(this.zone, 1154, 1, this.location.x - 20, this.zone.map.yPhysicInTop(this.location.x, this.location.y - 24), plKill.id);
+                itBia.options.add(new models.item.Item.ItemOption(30, 0));
+                Service.gI().dropItemMap(this.zone, itBia);
+            }
         }
     }
 

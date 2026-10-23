@@ -434,23 +434,6 @@ namespace Game1
     			}
     			break;
     		case 16:
-    			sum = 30;
-    			x = new int[sum];
-    			y = new int[sum];
-    			vx = new int[sum];
-    			vy = new int[sum];
-    			t = new int[sum];
-    			frame = new int[sum];
-    			activeEff = new bool[sum];
-    			for (int i = 0; i < sum; i++)
-    			{
-    				x[i] = Res.random(0, GameCanvas.w) + GameScr.cmx;
-    				y[i] = Res.random(50, GameCanvas.h - 50) + GameScr.cmy;
-    				vx[i] = Res.random(-1, 2);
-    				vy[i] = Res.random(-1, 2);
-    				t[i] = Res.random(0, 100);
-    				frame[i] = Res.random(2, 4);
-    			}
     			break;
     		case 17:
     			sum = 40;
@@ -962,29 +945,6 @@ namespace Game1
     				updateFog();
     				break;
     			case 16:
-    				for (int i = 0; i < sum; i++)
-    				{
-    					if (GameCanvas.gameTick % 2 == 0)
-    					{
-    						x[i] += vx[i];
-    						y[i] += vy[i];
-    					}
-    					if (GameCanvas.gameTick % 15 == 0 && Res.random(0, 4) == 0)
-    					{
-    						vx[i] = Res.random(-1, 2);
-    						vy[i] = Res.random(-1, 2);
-    					}
-    					t[i] += 4;
-    					if (t[i] > 100)
-    					{
-    						t[i] = 0;
-    					}
-    					if (x[i] < GameScr.cmx - 20 || x[i] > GameScr.cmx + GameCanvas.w + 20 || y[i] < GameScr.cmy - 20 || y[i] > GameScr.cmy + GameCanvas.h + 20)
-    					{
-    						x[i] = Res.random(0, GameCanvas.w) + GameScr.cmx;
-    						y[i] = Res.random(50, GameCanvas.h - 50) + GameScr.cmy;
-    					}
-    				}
     				break;
     			case 17:
     				for (int i = 0; i < sum; i++)
@@ -1073,17 +1033,7 @@ namespace Game1
     			case 9:
     			case 10:
     			case 14:
-    				break;
     			case 16:
-    				for (int i = 0; i < sum; i++)
-    				{
-    					if (x[i] >= GameScr.cmx && x[i] <= GameScr.cmx + GameCanvas.w && y[i] >= GameScr.cmy && y[i] <= GameScr.cmy + GameCanvas.h)
-    					{
-    						float alpha = (float)System.Math.Abs(System.Math.Sin((double)t[i] * System.Math.PI / 50.0)) * 0.8f;
-    						g.setColor(16776960, alpha);
-    						g.fillRect(x[i], y[i], frame[i], frame[i]);
-    					}
-    				}
     				break;
     			case 17:
     				for (int i = 0; i < sum; i++)
@@ -1222,6 +1172,10 @@ namespace Game1
     
     	public static void addEffect(int id)
     	{
+    		if (id == TYPE_DOMDOM)
+    		{
+    			return;
+    		}
     		if (!GameCanvas.lowGraphic)
     		{
     			BackgroudEffect o = new BackgroudEffect(id);

@@ -236,6 +236,24 @@ public class InventoryService {
         subQuantityItem(player.inventory.itemsBag, item, quantity);
     }
 
+    /**
+     * Safe variant for client-driven quantities: validates ownership and
+     * quantity before mutating, so a bad packet can never create negative
+     * stacks or "phantom" items.
+     *
+     * @return true if the exact amount was removed
+     */
+    public boolean trySubQuantityItemsBag(Player player, Item item, int quantity) {
+        if (player == null || player.inventory == null || item == null || quantity <= 0) {
+            return false;
+        }
+        if (item.quantity < quantity) {
+            return false;
+        }
+        subQuantityItem(player.inventory.itemsBag, item, quantity);
+        return true;
+    }
+
     public void subQuantityItemsBody(Player player, Item item, int quantity) {
         subQuantityItem(player.inventory.itemsBody, item, quantity);
     }
@@ -340,7 +358,6 @@ public class InventoryService {
             case 23:
             case 24:
             case 11:
-            case 36:
             case 35:
             //   case 75:
             // case 72:
@@ -388,32 +405,19 @@ public class InventoryService {
             case 11:
                 index = 8;
                 break;
-            case 36:
+            case 35:
                 index = 10;
                 break;
-            case 35:
-                index = 11;
-                break;
-//            case 75:
-//            case 72:
-//                index = 10;
-//                break;
             case 21:
             case 27:
                 index = 7;
                 break;
-//            case 98:
-//                index = 12;
-//                break;
-//            case 99:
-//                index = 11;
-//                break;
         }
         if (index < 0 || index >= player.inventory.itemsBody.size()) {
             return sItem;
         }
         sItem = player.inventory.itemsBody.get(index);
-        if (index == 8 || index == 10) {
+        if (index == 8) {
             if (sItem.isNotNullItem()) {
                 Service.gI().removeEffPlayer(player, sItem.template.part);
             }
@@ -433,16 +437,12 @@ public class InventoryService {
         }
         Item item = player.inventory.itemsBag.get(index);
         if (item.isNotNullItem()) {
-            boolean isTitle = (item.template != null && item.template.type == 36);
             Item swapped = putItemBody(player, item);
             player.inventory.itemsBag.set(index, swapped);
             sendItemBags(player);
             sendItemBody(player);
             Service.gI().point(player);
             Service.gI().Send_Caitrang(player);
-            if (isTitle || (swapped != null && swapped.isNotNullItem() && swapped.template != null && swapped.template.type == 36)) {
-                Service.gI().sendEffPlayer(player);
-            }
         }
     }
 
@@ -456,9 +456,6 @@ public class InventoryService {
         }
         Item item = player.inventory.itemsBody.get(index);
         if (item.isNotNullItem()) {
-            if (index == 10) {
-                Service.gI().sendPetFollow(player, (short) 0);
-            }
             if (index == 7 && !player.isPet) {
                 if (player.newPet != null) {
                     ChangeMapService.gI().exitMap(player.newPet);
@@ -469,7 +466,7 @@ public class InventoryService {
             player.inventory.itemsBody.set(index, putItemBag(player, item));
             sendItemBags(player);
             sendItemBody(player);
-            if (index == 8 || index == 10) {
+            if (index == 8) {
                 if (item.isNotNullItem()) {
                     Service.gI().removeEffPlayer(player, item.template.part);
                 }

@@ -38,7 +38,7 @@ public class PhucHoiSach {
     public static void PhucHoisach(Player player) {
         if (player.combineNew.itemsCombine.size() == 1) {
             Item cuonSachCu = InventoryService.gI().findItemBagByTemp(player, (short) 1187);
-            int goldPhanra = 200_000_000;
+            int goldPhucHoi = 10_000_000;
             Item sachTuyetKy = null;
             for (Item item : player.combineNew.itemsCombine) {
                 if (CombineService.gI().issachTuyetKy(item)) {
@@ -47,41 +47,36 @@ public class PhucHoiSach {
             }
             if (sachTuyetKy != null) {
                 int doBen = 0;
-                ItemOption optionLevel = null;
                 for (ItemOption io : sachTuyetKy.itemOptions) {
                     if (io.optionTemplate.id == 226) {
                         doBen = io.param;
-                        optionLevel = io;
                         break;
                     }
                 }
-                if (cuonSachCu == null) {
+                if (cuonSachCu == null || cuonSachCu.quantity < 10) {
                     Service.gI().sendThongBaoOK(player, "Cần sách tuyệt kỹ và 10 cuốn sách cũ");
                     return;
                 }
-                if (cuonSachCu.quantity < 10) {
-                    Service.gI().sendThongBaoOK(player, "Cần sách tuyệt kỹ và 10 cuốn sách cũ");
+                if (player.inventory.gold < goldPhucHoi) {
+                    Service.gI().sendThongBao(player, "Không đủ 10 triệu vàng");
                     return;
                 }
-                if (player.inventory.gold < goldPhanra) {
-                    Service.gI().sendThongBao(player, "Không đủ 200tr vàng");
-                    return;
-                }
-                if (doBen != 1000) {
+                if (doBen < 1000) {
                     for (int i = 0; i < sachTuyetKy.itemOptions.size(); i++) {
                         if (sachTuyetKy.itemOptions.get(i).optionTemplate.id == 226) {
                             sachTuyetKy.itemOptions.get(i).param = 1000;
                             break;
                         }
                     }
-                    player.inventory.gold -= 200_000_000;
+                    player.inventory.gold -= goldPhucHoi;
                     InventoryService.gI().subQuantityItemsBag(player, cuonSachCu, 10);
                     InventoryService.gI().sendItemBags(player);
                     Service.gI().sendMoney(player);
+                    Service.gI().sendThongBao(player, "Phục hồi độ bền sách thành công (1000/1000)!");
                     CombineService.gI().sendEffectSuccessCombine(player);
                     CombineService.gI().reOpenItemCombine(player);
                 } else {
-                    Service.gI().sendThongBao(player, "Sách còn dùng được");
+                    Service.gI().sendThongBao(player, "Độ bền sách vẫn còn tối đa, không cần phục hồi");
                     return;
                 }
             }

@@ -9,7 +9,8 @@ import services.player.InventoryService;
 
 /**
  * Xử lý sử dụng trang bị vào Body: Thú cưỡi (Type 23, 24), Flag Bag (Type 11),
- * Thú cưng Pet2 (Type 21), Pet Follow (Type 72), Danh hiệu hiệu ứng (Type 36, 35).
+ * Thú cưng Pet2 (Type 21), Pet Follow (Type 72), Danh hiệu hiệu ứng (Type 36,
+ * 35).
  */
 public class MountPetItemHandler implements ItemActionHandler {
 
@@ -22,7 +23,7 @@ public class MountPetItemHandler implements ItemActionHandler {
         if (type == 27 && (item.template.head != -1 || item.template.name.toLowerCase().contains("pet"))) {
             return true;
         }
-        return type == 23 || type == 24 || type == 11 || type == 21 || type == 72 || type == 36 || type == 35;
+        return type == 23 || type == 24 || type == 11 || type == 21 || type == 72 || type == 35;
     }
 
     @Override
@@ -41,10 +42,6 @@ public class MountPetItemHandler implements ItemActionHandler {
             case 72 -> {
                 InventoryService.gI().itemBagToBody(player, bagIndex);
                 Service.gI().sendPetFollow(player, (short) (item.template.iconID - 1));
-            }
-            case 36 -> {
-                InventoryService.gI().itemBagToBody(player, bagIndex);
-                Service.gI().sendEffPlayer(player);
             }
         }
     }

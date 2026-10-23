@@ -30,7 +30,7 @@ public class BoMong extends Npc {
                 if (this.mapId == 47 || this.mapId == 84) {
                     this.createOtherMenu(player, ConstNpc.BASE_MENU,
                             "Ta có nhiệm vụ phù hợp với sức mạnh của ngươi. Hãy nhận và hoàn thành để được trọng thưởng!",
-                            "Nhận nhiệm\nvụ hàng ngày", "Nhiệm vụ\ntích lũy", "Nhập\nGiftcode", "Quên Mã\nBảo Vệ", "Đổi Mật\nKhẩu", "Từ chối");
+                            "Nhận nhiệm\nvụ hàng ngày", "Nhiệm vụ\ntích lũy", "Nhập\nGiftcode", "Đổi Mật\nKhẩu", "Từ chối");
                 }
             }
         }
@@ -76,9 +76,6 @@ public class BoMong extends Npc {
                         case 2 ->
                             Input.gI().createFormGiftCode(player);
                         case 3 ->
-                            Input.gI().createFormMBV(player);
-
-                        case 4 ->
                             Input.gI().createFormChangePassword(player);
 
                     }

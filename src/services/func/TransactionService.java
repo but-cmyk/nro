@@ -50,10 +50,6 @@ public class TransactionService implements Runnable {
             int playerId = -1;
             Player plMap = null;
             Trade trade = PLAYER_TRADE.get(pl);
-            if (pl.baovetaikhoan) {
-                Service.gI().sendThongBao(pl, "Chức năng bảo vệ đã được bật. Bạn vui lòng kiểm tra lại");
-                return;
-            }
 
             if (action == SEND_INVITE_TRADE) {
                 pl.idMark.setTransactionWP(false);

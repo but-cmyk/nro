@@ -124,6 +124,7 @@
     <Compile Include="Assets\Scripts\Game1\ChatBox.cs" />
     <Compile Include="Assets\Scripts\Game1\Message.cs" />
     <Compile Include="Assets\Scripts\Game1\MovePoint.cs" />
+    <Compile Include="Assets\Scripts\Game1\TlsConfig.cs" />
     <Compile Include="Assets\Scripts\Game1\GamePad.cs" />
     <Compile Include="Assets\Scripts\Game1\Network\Handlers\TaskNpcPacketHandler.cs" />
     <Compile Include="Assets\Scripts\Game1\ServerEffect.cs" />

@@ -9,6 +9,7 @@ import models.npc.Npc;
 import static models.npc.NpcFactory.PLAYERID_OBJECT;
 import models.player.Player;
 import services.map.NpcService;
+import services.Service;
 import services.map.ChangeMapService;
 import services.func.Input;
 import utils.TimeUtil;
@@ -115,8 +116,13 @@ public class ThanVuTru extends Npc {
                     switch (select) {
                         case 0 ->
                             ChangeMapService.gI().changeMapBySpaceShip(player, 45, -1, 354);
-                        case 1 ->
+                        case 1 -> {
+                            if (player.levelLuyenTap < 6) {
+                                Service.gI().sendThongBao(player, "Con phải đánh bại Khỉ Bubbles và Thần Vũ Trụ mới có thể đến Thánh địa Kaio!");
+                                return;
+                            }
                             ChangeMapService.gI().changeMap(player, 50, -1, 318, 336);
+                        }
                         case 2 -> {
                             if (player.clan != null) {
                                 if (player.clan.ConDuongRanDoc != null) {

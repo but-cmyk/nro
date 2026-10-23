@@ -212,9 +212,25 @@ public class NDVSqlFetcher {
             );
 
             if (rsAccount.first()) {
-                // Verify BCrypt password hash
+                // Verify password. Legacy plaintext rows are accepted once and
+                // immediately re-hashed (lazy migration); BCrypt is the only
+                // long-term format.
                 String storedHash = rsAccount.getString("password");
-                if (!utils.PasswordUtils.verifyPassword(session.pp, storedHash)) {
+                boolean passwordOk = utils.PasswordUtils.verifyPassword(session.pp, storedHash);
+                if (!passwordOk && utils.PasswordUtils.verifyLegacyPlaintext(session.pp, storedHash)) {
+                    passwordOk = true;
+                    try {
+                        String rehashed = utils.PasswordUtils.hashPassword(session.pp);
+                        int accountId = rsAccount.getInt("account.id");
+                        AlyraManager.executeUpdate(
+                                "UPDATE account SET password = ? WHERE id = ?", rehashed, accountId);
+                        Logger.warning("Migrated legacy plaintext password to BCrypt for account: " + session.uu);
+                    } catch (Exception migrationError) {
+                        Logger.logException(NDVSqlFetcher.class, migrationError,
+                                "Legacy password re-hash failed for account: " + session.uu);
+                    }
+                }
+                if (!passwordOk) {
                     Service.gI().sendThongBaoOK(session, "Thông tin tài khoản hoặc mật khẩu không chính xác");
                     Service.gI().sendLoginFail(session, false);
                     al.wrong();
@@ -680,11 +696,24 @@ public class NDVSqlFetcher {
             for (int i = 0; i < dataArray.size(); i++) {
                 player.inventory.itemsBody.add(parseItemSafe(dataArray.get(i)));
             }
-            if (player.inventory.itemsBody.size() == 10) {
-                player.inventory.itemsBody.add(ItemService.gI().createItemNull());
-            }
-            if (player.inventory.itemsBody.size() == 11) {
-                player.inventory.itemsBody.add(ItemService.gI().createItemNull());
+            // Đã bỏ Chân mệnh/Danh hiệu (slot 10 cũ). Sách Tuyệt Kĩ (slot 11 cũ) chuyển lên slot 10
+            if (player.inventory.itemsBody.size() >= 12) {
+                Item itemSlot11 = player.inventory.itemsBody.get(11);
+                if (itemSlot11 != null && itemSlot11.isNotNullItem() && itemSlot11.template != null && itemSlot11.template.type == 35) {
+                    player.inventory.itemsBody.set(10, itemSlot11);
+                } else {
+                    Item itemSlot10 = player.inventory.itemsBody.get(10);
+                    if (itemSlot10 != null && itemSlot10.isNotNullItem() && itemSlot10.template != null && itemSlot10.template.type == 36) {
+                        player.inventory.itemsBody.set(10, ItemService.gI().createItemNull());
+                    }
+                }
+                while (player.inventory.itemsBody.size() > 11) {
+                    player.inventory.itemsBody.remove(player.inventory.itemsBody.size() - 1);
+                }
+            } else if (player.inventory.itemsBody.size() < 11) {
+                while (player.inventory.itemsBody.size() < 11) {
+                    player.inventory.itemsBody.add(ItemService.gI().createItemNull());
+                }
             }
             dataArray.clear();
 
@@ -1243,17 +1272,10 @@ public class NDVSqlFetcher {
                 Logger.logException(NDVSqlFetcher.class, e, "Lỗi load pet cho player " + player.name);
             }
 
-            //Data bảo vệ tài khoản
-            try {
-                dataArray = (JSONArray) JSONValue.parse(rs.getString("baovetaikhoan"));
-                player.mbv = Integer.parseInt(dataArray.get(0).toString());
-                player.baovetaikhoan = Boolean.parseBoolean(dataArray.get(1).toString());
-                player.mbvtime = Long.parseLong(dataArray.get(2).toString());
-            } catch (Exception e) {
-                player.mbv = 0;
-                player.baovetaikhoan = false;
-                player.mbvtime = System.currentTimeMillis();
-            }
+            //Data bảo vệ tài khoản (đã xóa bỏ chức năng)
+            player.mbv = 0;
+            player.baovetaikhoan = false;
+            player.mbvtime = 0;
 
             // data rada card
             dataArray = (JSONArray) JSONValue.parse(rs.getString("data_card"));

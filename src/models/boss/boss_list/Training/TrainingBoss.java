@@ -11,6 +11,7 @@ import consts.ConstRatio;
 import models.boss.Boss;
 import models.boss.BossData;
 import managers.boss.OtherBossManager;
+import consts.BossID;
 import consts.BossStatus;
 import consts.BossType;
 import network.io.Message;
@@ -203,8 +204,51 @@ public abstract class TrainingBoss extends Boss {
         this.chatE();
         this.lastTimeAFK = System.currentTimeMillis();
         Service.gI().sendPlayerVS(playerAtt, null, (byte) 0);
-        if (playerAtt.isThachDau) {
-            playerAtt.levelLuyenTap++;
+        if (playerAtt != null && playerAtt.isThachDau) {
+            switch ((int) this.id) {
+                case BossID.KARIN -> {
+                    if (playerAtt.levelLuyenTap == 0) {
+                        playerAtt.levelLuyenTap = 1;
+                        Service.gI().sendThongBao(playerAtt, "Bạn đã vượt qua Thần Mèo Karin! Hãy thách đấu Yajirô.");
+                    }
+                }
+                case BossID.YAJIRO -> {
+                    if (playerAtt.levelLuyenTap == 1) {
+                        playerAtt.levelLuyenTap = 2;
+                        Service.gI().sendThongBao(playerAtt, "Chúc mừng bạn đã đánh bại toàn bộ đối thủ ở Tháp Karin! Bạn đã có thể lên Thần Điện.");
+                    }
+                }
+                case BossID.MRPOPO -> {
+                    if (playerAtt.levelLuyenTap == 2) {
+                        playerAtt.levelLuyenTap = 3;
+                        Service.gI().sendThongBao(playerAtt, "Bạn đã vượt qua Mr. PôPô! Hãy thách đấu Thượng Đế.");
+                    }
+                }
+                case BossID.THUONG_DE -> {
+                    if (playerAtt.levelLuyenTap == 3) {
+                        playerAtt.levelLuyenTap = 4;
+                        Service.gI().sendThongBao(playerAtt, "Chúc mừng bạn đã đánh bại toàn bộ đối thủ ở Thần Điện! Bạn đã có thể lên Hành tinh Kaio.");
+                    }
+                }
+                case BossID.KHI_BUBBLES -> {
+                    if (playerAtt.levelLuyenTap == 4) {
+                        playerAtt.levelLuyenTap = 5;
+                        Service.gI().sendThongBao(playerAtt, "Bạn đã vượt qua Khỉ Bubbles! Hãy thách đấu Thần Vũ Trụ.");
+                    }
+                }
+                case BossID.THAN_VU_TRU -> {
+                    if (playerAtt.levelLuyenTap == 5) {
+                        playerAtt.levelLuyenTap = 6;
+                        Service.gI().sendThongBao(playerAtt, "Chúc mừng bạn đã đánh bại toàn bộ đối thủ ở Hành tinh Kaio! Bạn đã có thể đến Thánh địa Kaio.");
+                    }
+                }
+                case BossID.TO_SU_KAIO -> {
+                    if (playerAtt.levelLuyenTap == 6) {
+                        playerAtt.levelLuyenTap = 7;
+                        Service.gI().sendThongBao(playerAtt, "Chúc mừng bạn đã hoàn thành thử thách tại Thánh địa Kaio!");
+                    }
+                }
+            }
         }
     }
 

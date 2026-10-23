@@ -642,21 +642,7 @@ public class Input {
                     }
                     break;
                 case MBV:
-                    int mbv = Integer.parseInt(text[0]);
-                    int nmbv = Integer.parseInt(text[1]);
-                    int rembv = Integer.parseInt(text[2]);
-                    if ((mbv + "").length() != 6 || (nmbv + "").length() != 6 || (rembv + "").length() != 6) {
-                        Service.gI().sendThongBaoResetWait(player, "Mã bảo vệ bắt buộc phải gồm đúng 6 chữ số!");
-                    } else if (player.mbv == 0) {
-                        Service.gI().sendThongBaoResetWait(player, "Bạn chưa cài mã bảo vệ!");
-                    } else if (player.mbv != mbv) {
-                        Service.gI().sendThongBaoResetWait(player, "Mã bảo vệ không đúng");
-                    } else if (nmbv != rembv) {
-                        Service.gI().sendThongBaoResetWait(player, "Mã bảo vệ không trùng khớp");
-                    } else {
-                        player.mbv = nmbv;
-                        Service.gI().sendThongBaoResetWait(player, "Đổi mã bảo vệ thành công!");
-                    }
+                    Service.gI().sendThongBaoResetWait(player, "Chức năng mã bảo vệ đã được xóa bỏ!");
                     break;
 
                 case BANSLL:
@@ -893,8 +879,7 @@ public class Input {
     }
 
     public void createFormMBV(Player pl) {
-        createForm(pl, MBV, "Đồ ngu! Đồ ăn hại! Cút mẹ mày đi!", new SubInput("Nhập Mã Bảo Vệ Đã Quên", NUMERIC),
-                new SubInput("Nhập Mã Bảo Vệ Mới", NUMERIC), new SubInput("Nhập Lại Mã Bảo Vệ Mới", NUMERIC));
+        Service.gI().sendThongBao(pl, "Chức năng quên mã bảo vệ đã được xóa bỏ!");
     }
 
     public void createFormBangHoi(Player pl) {

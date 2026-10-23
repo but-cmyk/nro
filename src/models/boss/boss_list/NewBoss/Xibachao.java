@@ -1,12 +1,15 @@
 package models.boss.boss_list.NewBoss;
 
+import consts.BossStatus;
 import models.boss.Boss;
 import models.boss.BossesData;
 import models.map.ItemMap;
+import models.map.Zone;
 import models.player.Player;
 import server.Client;
 import services.Service;
 import services.SkillService;
+import services.map.ChangeMapService;
 import services.map.ItemMapService;
 import utils.ItemUtil;
 import utils.Util;
@@ -18,6 +21,8 @@ public class Xibachao extends Boss {
     private long lastAttackTime;
     private static final int ATTACK_COOLDOWN = 2000;
     private static final int SPECIAL_ITEM_ID = 456;
+    private long lastTimeJoinMap;
+    private static final long TIME_CHANGE_MAP = 300000; // 5 phút đổi map tìm player
 
     private enum TricksterState {
         TRICKSTER, SEEKING_ITEM, CONSUMING_ITEM, LEAVING
@@ -27,12 +32,57 @@ public class Xibachao extends Boss {
         // Tắt thông báo khi xuất hiện
         super(-Util.nextInt(1000, 1000000), true, false, BossesData.XINBATO_NEW);
         this.currentState = TricksterState.TRICKSTER;
+        this.lastTimeJoinMap = System.currentTimeMillis() + TIME_CHANGE_MAP;
+    }
+
+    @Override
+    public Zone getMapJoin() {
+        Zone target = managers.boss.BossManager.getRoamingZoneWithPlayer(this.zone, Xibachao.class);
+        if (target != null) {
+            return target;
+        }
+        return managers.boss.BossManager.getRandomOutdoorZone();
+    }
+
+    @Override
+    public void joinMap() {
+        if (this.zone == null) {
+            this.zone = getMapJoin();
+        }
+        if (this.zone != null) {
+            int x = Util.nextInt(100, Math.max(100, this.zone.map.mapWidth - 100));
+            int y = this.zone.map.yPhysicInTop(x, 100);
+            ChangeMapService.gI().changeMap(this, this.zone, x, y);
+            this.changeStatus(BossStatus.CHAT_S);
+            this.lastTimeJoinMap = System.currentTimeMillis() + TIME_CHANGE_MAP;
+            this.lastTimeHadPlayer = System.currentTimeMillis();
+        }
     }
 
     @Override
     public void update() {
         super.update();
         if (this.isDie()) return;
+
+        // Đổi map tìm đến người chơi khi đang ở trạng thái mặc định
+        if (this.currentState == TricksterState.TRICKSTER && this.zone != null 
+                && (System.currentTimeMillis() > this.lastTimeJoinMap 
+                || (this.zone.getNumOfPlayers() == 0 && Util.canDoWithTime(this.lastTimeJoinMap - TIME_CHANGE_MAP, 25000)))) {
+            Zone targetZone = managers.boss.BossManager.getRoamingZoneWithPlayer(this.zone, Xibachao.class);
+            if (targetZone == null && this.zone.getNumOfPlayers() == 0) {
+                targetZone = managers.boss.BossManager.getRandomOutdoorZone();
+            }
+            if (targetZone != null && targetZone != this.zone) {
+                this.lastTimeJoinMap = System.currentTimeMillis() + TIME_CHANGE_MAP;
+                this.chat("|-1|Ở đây không có ai, ta đi tìm người khác trêu đây!");
+                ChangeMapService.gI().spaceShipArrive(this, (byte) 2, ChangeMapService.DEFAULT_SPACE_SHIP);
+                ChangeMapService.gI().exitMap(this);
+                this.zone = targetZone;
+                this.location.x = Util.nextInt(100, Math.max(100, zone.map.mapWidth - 100));
+                this.location.y = zone.map.yPhysicInTop(this.location.x, 100);
+                this.joinMap();
+            }
+        }
 
         // Chỉ kiểm tra item khi đang ở trạng thái mặc định
         if (this.currentState == TricksterState.TRICKSTER) {
@@ -124,7 +174,7 @@ public class Xibachao extends Boss {
             this.chat("Của ngươi đây, ta không lấy không đâu!");
             int[] itemne = {441, 442, 443, 444, 445, 446, 447, 459};
             int itemId = Util.isTrue(80, 100) ? itemne[Util.nextInt(0, itemne.length - 1)] : itemne[itemne.length - 1];
-            ItemMap itemMap = new ItemMap(this.zone, (short) itemId, 1, this.location.x, this.zone.map.yPhysicInTop(this.location.x, this.location.y), rewardPlayerId);
+            ItemMap itemMap = utils.ItemUtil.saoPhaLe(this.zone, itemId, 1, this.location.x, this.zone.map.yPhysicInTop(this.location.x, this.location.y), rewardPlayerId);
             Service.gI().dropItemMap(this.zone, itemMap);
             Player pl = Client.gI().getPlayer(rewardPlayerId);
             if (pl != null && pl.playerTask.taskdh.ChoNuoc < 5) {
@@ -138,15 +188,26 @@ public class Xibachao extends Boss {
     
     private void handleLeaving() {
         if (Util.canDoWithTime(stateTimer, 3000)) {
-            leaveMapAfter("Xin cảm ơn bạn, tôi đi đây!"); // Kế thừa
+            this.chat("Xin cảm ơn bạn, tôi đi đây!");
+            Zone targetZone = managers.boss.BossManager.getRoamingZoneWithPlayer(this.zone, Xibachao.class);
+            if (targetZone == null) {
+                targetZone = managers.boss.BossManager.getRandomOutdoorZone();
+            }
+            if (targetZone != null) {
+                ChangeMapService.gI().spaceShipArrive(this, (byte) 2, ChangeMapService.DEFAULT_SPACE_SHIP);
+                ChangeMapService.gI().exitMap(this);
+                this.zone = targetZone;
+                this.location.x = Util.nextInt(100, Math.max(100, zone.map.mapWidth - 100));
+                this.location.y = zone.map.yPhysicInTop(this.location.x, 100);
+                this.joinMap();
+            }
             this.currentState = TricksterState.TRICKSTER;
         }
     }
 
     @Override
     public void reward(Player plKill) {
-        int[] itemne = {441, 442, 443, 444, 445, 446, 447, 459};
-        Service.gI().dropItemMap(this.zone, ItemUtil.saoPhaLe(zone, Util.isTrue(95, 100) ? itemne[Util.nextInt(0, itemne.length - 1)] : itemne[itemne.length - 1], 1, this.location.x, this.zone.map.yPhysicInTop(this.location.x, this.location.y), (int) plKill.id));
+        managers.boss.BossManager.dropGoldAndSPL(this, plKill);
     }
 
     @Override

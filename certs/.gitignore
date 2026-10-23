@@ -1,0 +1,6 @@
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+dev-openssl.cnf

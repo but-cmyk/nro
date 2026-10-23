@@ -471,6 +471,7 @@ while (rs.next()) {
                 } else {
                     itemTemp.description = getCardDescription(itemTemp.id, itemTemp.description);
                 }
+                normalizeSaoPhaLeTemplate(itemTemp);
                 itemTemp.level = rs.getByte("level");
                 itemTemp.iconID = rs.getShort("icon_id");
                 itemTemp.part = rs.getShort("part");
@@ -900,6 +901,54 @@ while (rs.next()) {
             case 1277 -> "Hình thái Siêu Saiyan 3 tối thượng của Khỉ Đột khổng lồ, bao bọc bởi luồng hào quang sấm sét hủy diệt.";
             default -> (defaultDesc != null) ? defaultDesc : "";
         };
+    }
+
+    private static void normalizeSaoPhaLeTemplate(ItemTemplate itemTemp) {
+        switch (itemTemp.id) {
+            case 441 -> {
+                itemTemp.name = "Sao pha lê đỏ";
+                itemTemp.description = "Ép vào đồ sao pha lê để tăng 5% hút máu";
+            }
+            case 442 -> {
+                itemTemp.name = "Sao pha lê xanh dương";
+                itemTemp.description = "Ép vào đồ sao pha lê để tăng 5% hút KI";
+            }
+            case 443 -> {
+                itemTemp.name = "Sao pha lê đỏ hồng";
+                itemTemp.description = "Ép vào đồ sao pha lê để phản lại 5% sát thương nhận vào";
+            }
+            case 444 -> {
+                itemTemp.name = "Sao pha lê tím";
+                itemTemp.description = "Ép vào đồ sao pha lê để tăng 2% sát thương khi đánh quái";
+            }
+            case 445 -> {
+                itemTemp.name = "Sao pha lê cam";
+                itemTemp.description = "Ép vào đồ sao pha lê để tăng 5% may mắn nhặt vật phẩm từ quái";
+            }
+            case 446 -> {
+                itemTemp.name = "Sao pha lê vàng";
+                itemTemp.description = "Ép vào đồ sao pha lê để tăng 5% vàng từ quái";
+            }
+            case 447 -> {
+                itemTemp.name = "Sao pha lê xanh lá";
+                itemTemp.description = "Ép vào đồ sao pha lê để tăng 5% sức mạnh, tiềm năng";
+            }
+            case 1352 -> itemTemp.description = "Ép vào đồ sao pha lê để tăng 5% hút máu";
+            case 1353 -> itemTemp.description = "Ép vào đồ sao pha lê để tăng 5% hút KI";
+            case 1354 -> itemTemp.description = "Ép vào đồ sao pha lê để phản lại 5% sát thương nhận vào";
+            case 1355 -> itemTemp.description = "Ép vào đồ sao pha lê để tăng 3% sát thương khi đánh quái";
+            case 1356 -> itemTemp.description = "Ép vào đồ sao pha lê để tăng 6% may mắn nhặt vật phẩm từ quái";
+            case 1357 -> itemTemp.description = "Ép vào đồ sao pha lê để tăng 5% vàng từ quái";
+            case 1358 -> itemTemp.description = "Ép vào đồ sao pha lê để tăng 5% sức mạnh, tiềm năng";
+            case 1359 -> itemTemp.description = "Ép vào đồ sao pha lê để tăng 6% hút máu";
+            case 1360 -> itemTemp.description = "Ép vào đồ sao pha lê để tăng 6% hút KI";
+            case 1361 -> itemTemp.description = "Ép vào đồ sao pha lê để phản lại 6% sát thương nhận vào";
+            case 1362 -> itemTemp.description = "Ép vào đồ sao pha lê để tăng 4% sát thương khi đánh quái";
+            case 1363 -> itemTemp.description = "Ép vào đồ sao pha lê để tăng 7% may mắn nhặt vật phẩm từ quái";
+            case 1364 -> itemTemp.description = "Ép vào đồ sao pha lê để tăng 6% vàng từ quái";
+            case 1365 -> itemTemp.description = "Ép vào đồ sao pha lê để tăng 6% sức mạnh, tiềm năng";
+            default -> {}
+        }
     }
 
     public static List<OptionCard> getBalancedRadarOptions(short cardId) {

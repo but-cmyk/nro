@@ -133,36 +133,17 @@ public class TrainingService {
 }
 
 
- public void tangTnsmLuyenTap(Player player, long tnsm) {
-    if (player.isPl()) {
-        // Cộng tnsmLuyenTap mỗi lần train quái
-        player.tnsmLuyenTap += Math.max(100, tnsm / (100 * (Service.gI().getCurrLevel(player) + 1)));
+    public void tangTnsmLuyenTap(Player player, long tnsm) {
+        if (player.isPl()) {
+            // Cộng tnsmLuyenTap mỗi lần train quái
+            player.tnsmLuyenTap += Math.max(100, tnsm / (100 * (Service.gI().getCurrLevel(player) + 1)));
 
-        // Tự động tăng level luyện tập khi đủ mốc
-        while (player.levelLuyenTap < 5) {
-            long required = switch (player.levelLuyenTap) {
-                case 0 -> 1_000_000;   // yêu cầu 1 triệu để lên level 1
-                case 1 -> 3_000_000;   // 3 triệu để lên level 2
-                case 2 -> 5_000_000;   // 6 triệu để lên level 3
-                case 3 -> 10_000_000;  // 12 triệu để lên level 4
-                case 4 -> 20_000_000;  // 20 triệu để lên level 5
-                default -> Long.MAX_VALUE;
-            };
-            if (player.tnsmLuyenTap >= required) {
-                player.tnsmLuyenTap -= required;
-                player.levelLuyenTap++;
-              //  Service.gI().sendThongBao(player, "Bạn đã tăng cấp luyện tập lên cấp " + player.levelLuyenTap + "!");
-            } else {
-                break;
+            // Giới hạn tránh bug số lớn
+            if (player.tnsmLuyenTap > 50_000_000) {
+                player.tnsmLuyenTap = 50_000_000;
             }
         }
-
-        // Giới hạn tránh bug số lớn
-        if (player.tnsmLuyenTap > 50_000_000) {
-            player.tnsmLuyenTap = 50_000_000;
-        }
     }
-}
 
 
 

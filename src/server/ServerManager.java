@@ -101,9 +101,11 @@ public class ServerManager {
     public static void main(String[] args) {
         timeStart = TimeUtil.getTimeNow("dd/MM/yyyy HH:mm:ss");
         ServerManager.gI().run();
-        SwingUtilities.invokeLater(() -> {
-            new AdminToolFrame().setVisible(true);
-        });
+        // Admin GUI is opt-in: a production/game server must not depend on a
+        // display. Enable with -Dnro.admin.gui=true on a trusted admin machine.
+        if (Boolean.getBoolean("nro.admin.gui")) {
+            SwingUtilities.invokeLater(() -> new AdminToolFrame().setVisible(true));
+        }
     }
 
     public void run() {
@@ -227,11 +229,13 @@ public class ServerManager {
                                 Logger.error("Lỗi reset task cho player " + player.name + ": " + ex.getMessage());
                             }
                         }
+                        player.ticketVDST = 5;
+                        player.lastTimeResetTicketVDST = System.currentTimeMillis();
                         if (player.canReceiveDailyMobRuby()) {
                             if (player.idMark != null) {
                                 player.idMark.setLastTimeNotifyDailyMobRuby(System.currentTimeMillis());
                             }
-                            services.Service.gI().sendThongBao(player, "Hôm nay bạn có thể nhận 30 Hồng ngọc khi tiêu diệt quái!");
+                            services.Service.gI().sendThongBao(player, "Hôm nay bạn có thể nhận 10 Hồng ngọc khi tiêu diệt quái!");
                         }
                     }
                 }
@@ -248,7 +252,7 @@ public class ServerManager {
         int maxRetries = 3;
         for (int attempt = 1; attempt <= maxRetries; attempt++) {
             try {
-                NettyServer.gI().start(PORT);
+                NettyServer.gI().start(PORT, Manager.TLS_ENABLED);
                 return;
             } catch (Exception e) {
                 Logger.error("Lỗi khi khởi chạy Netty Server (lần " + attempt + "/" + maxRetries + "): " + e.getMessage());
@@ -324,9 +328,11 @@ public class ServerManager {
     }
 
     public void disconnect(MySession session) {
-        if (session == null || session.ipAddress == null) {
+        if (session == null || session.ipAddress == null || !session.ipCounted) {
             return;
         }
+        // Idempotent: channelInactive and Client.remove may both call this.
+        session.ipCounted = false;
         CLIENTS.computeIfPresent(session.ipAddress, (ip, count) -> {
             int newCount = count - 1;
             return newCount <= 0 ? null : newCount;
@@ -530,7 +536,7 @@ public class ServerManager {
             while (rs.next()) {
                 int id = rs.getInt("id");
                 String password = rs.getString("password");
-                if (password != null && !password.startsWith("$2a$") && !password.startsWith("$2b$") && !password.startsWith("$2y$")) {
+                if (password != null && !utils.PasswordUtils.isBcrypt(password)) {
                     toUpdate.put(id, utils.PasswordUtils.hashPassword(password));
                 }
             }

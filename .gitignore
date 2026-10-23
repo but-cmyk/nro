@@ -1,8 +1,19 @@
 # Ignore SQL dumps with sensitive data
 src/sql/*.sql
+docker/initdb/*.bak
+docker/initdb/*.sql.gz
+docker/initdb/*.dump
 
 # Ignore local configuration files with passwords/API keys
 data/config/alyra.properties
+data/config/redis.properties
+.env
+.env.*
+!.env.example
+
+# Logs may contain player PII
+log/
+logs/
 
 # IDE files
 .idea/

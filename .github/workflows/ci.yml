@@ -1,0 +1,29 @@
+name: build
+
+on:
+  push:
+    branches: [main, fix/security-p0]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Build server jar
+        run: mvn -B -ntp -DskipTests package
+
+      # Enable this gate after the Git-history purge (tools/security/purge_git_secrets.ps1)
+      # is complete, otherwise the historical dumps make it fail by design.
+      # - name: Secret scan
+      #   uses: gitleaks/gitleaks-action@v2
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

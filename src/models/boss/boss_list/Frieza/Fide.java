@@ -38,6 +38,18 @@ public class Fide extends Boss {
             int gold = Util.nextInt(100_000, 200_000);
             ItemMap itGold = new ItemMap(this.zone, 190, gold, this.location.x + Util.nextInt(-15, 15), this.zone.map.yPhysicInTop(this.location.x, this.location.y - 24), plKill.id);
             Service.gI().dropItemMap(this.zone, itGold);
+
+            // Rơi nguyên liệu Sách Tuyệt Kĩ
+            if (Util.isTrue(35, 100)) {
+                ItemMap itBua = new ItemMap(this.zone, 1152, 1, this.location.x + 20, this.zone.map.yPhysicInTop(this.location.x, this.location.y - 24), plKill.id);
+                itBua.options.add(new models.item.Item.ItemOption(30, 0));
+                Service.gI().dropItemMap(this.zone, itBua);
+            }
+            if (Util.isTrue(25, 100)) {
+                ItemMap itBia = new ItemMap(this.zone, 1154, 1, this.location.x - 20, this.zone.map.yPhysicInTop(this.location.x, this.location.y - 24), plKill.id);
+                itBia.options.add(new models.item.Item.ItemOption(30, 0));
+                Service.gI().dropItemMap(this.zone, itBia);
+            }
         }
     }
 

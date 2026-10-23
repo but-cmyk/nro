@@ -443,7 +443,7 @@ public class Trade {
                     return;
                 }
 
-                // Phase 2: Hoán đổi tài sản trong bộ nhớ và đẩy lệnh lưu DB (Atomic Commit)
+                // Phase 2: Hoán đổi tài sản trong bộ nhớ.
                 player1.inventory.subGold(goldTrade1);
                 player1.inventory.addGold(goldTrade2);
                 player2.inventory.subGold(goldTrade2);
@@ -451,13 +451,28 @@ public class Trade {
                 player1.inventory.itemsBag = itemsBag1;
                 player2.inventory.itemsBag = itemsBag2;
 
+                // Ghi DB ĐỒNG BỘ trong một transaction trước khi báo thành công.
+                // Nếu crash sau bước này, DB đã nhất quán; nếu thất bại, rollback RAM.
+                boolean committed = database.daos.PlayerDAO.updatePlayersInTransaction(player1, player2);
+                if (!committed) {
+                    if (bag1Before != null) {
+                        player1.inventory.itemsBag = InventoryService.gI().copyList(bag1Before);
+                    }
+                    if (bag2Before != null) {
+                        player2.inventory.itemsBag = InventoryService.gI().copyList(bag2Before);
+                    }
+                    player1.inventory.gold = gold1Before;
+                    player2.inventory.gold = gold2Before;
+                    sendNotifyTrade(FAIL_ERROR);
+                    return;
+                }
+
+                isTransCommitted = true;
+
+                // Audit sau khi commit; lỗi audit không được làm hỏng giao dịch.
                 HistoryTransactionDAO.insertAsync(player1, player2, goldTrade1, goldTrade2, itemsTrade1, itemsTrade2,
                         bag1Before, bag2Before, this.player1.inventory.itemsBag, this.player2.inventory.itemsBag,
                         gold1Before, gold2Before, this.player1.inventory.gold, this.player2.inventory.gold);
-
-                database.daos.PlayerDAO.updatePlayersInTransactionAsync(player1, player2);
-
-                isTransCommitted = true;
             } catch (Exception e) {
                 Logger.logException(Trade.class, e, "Lỗi xảy ra trong quá trình thực hiện giao dịch");
                 if (!isTransCommitted) {

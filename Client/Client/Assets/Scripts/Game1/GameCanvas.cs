@@ -1788,7 +1788,6 @@ namespace Game1
     				transY = 7;
     				layerSpeed[2] = 0;
     				nBg = 3;
-    				BackgroudEffect.addEffect(16);
     				break;
     			case 12:
     				SetMoveX(1, 1, 0, 0, 0);
@@ -2099,11 +2098,7 @@ namespace Game1
     			{
     				BackgroudEffect.addEffect(11);
     			}
-    			if (TileMap.mapID == 0)
-    			{
-    				BackgroudEffect.addEffect(16);
-    			}
-    			else if (TileMap.mapID == 1)
+    			if (TileMap.mapID == 1)
     			{
     				BackgroudEffect.addEffect(17);
     			}
@@ -2220,7 +2215,6 @@ namespace Game1
     			{
     				if (TileMap.bgType == TileMap.SAYAI_NIGHT)
     				{
-    					BackgroudEffect.addEffect(16); // Đom đóm đêm Xayda
     					BackgroudEffect.addEffect(4);  // Sao trời
     				}
     				else
