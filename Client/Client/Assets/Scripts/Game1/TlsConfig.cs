@@ -14,7 +14,7 @@ namespace Game1
         public static readonly bool Enabled = true;
 
         /// <summary>SNI/hostname dùng cho handshake (domain của server hoặc để rỗng nếu dùng IP trực tiếp).</summary>
-        public static readonly string ServerName = "nro.example.com";
+        public static readonly string ServerName = "localhost";
 
         /// <summary>
         /// Danh sách pin SHA-256 (base64) của DER certificate HOẶC Public Key.
@@ -24,10 +24,11 @@ namespace Game1
         /// </summary>
         public static readonly string[] PinnedSha256 = new string[]
         {
-            "REPLACE_WITH_BASE64_SHA256_OF_CERT_OR_PUBKEY"
+            "b7eoU5lqeLP6eujxoRyRlWnTymBtIMxIPjh/rjZUzcU=", // Public Key SPKI SHA-256 (dev-cert)
+            "ODy4mo5gIfpiG7k3N8Y3fEeeZ5dNWIt8IV8rzEVkVsc="  // DER Cert SHA-256 (dev-cert)
         };
 
         /// <summary>CHỈ dùng cho dev local. Production phải để false.</summary>
-        public static readonly bool AllowUntrustedForDev = false;
+        public static readonly bool AllowUntrustedForDev = true;
     }
 }
