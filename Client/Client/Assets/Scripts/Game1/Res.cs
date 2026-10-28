@@ -1,5 +1,6 @@
 namespace Game1
 {
+    using System;
     using UnityEngine;
     
     public class Res
@@ -221,12 +222,104 @@ namespace Game1
     	{
     	}
     
+    	public static string[] debugLogs = new string[6];
+    	public static int debugLogCount = 0;
+    	public static string debugLastFile = string.Empty;
+    	public static string debugLastError = string.Empty;
+    	public static bool showDebugHUD = true;
+
     	public static void onScreenDebug(string s)
     	{
+    		if (s == null) return;
+    		try
+    		{
+    			UnityEngine.Debug.Log("[NRO_HUD] " + s);
+    			// Đẩy vào circular log array (tối đa 6 dòng)
+    			for (int i = debugLogs.Length - 1; i > 0; i--)
+    			{
+    				debugLogs[i] = debugLogs[i - 1];
+    			}
+    			debugLogs[0] = s;
+    			if (debugLogCount < debugLogs.Length)
+    			{
+    				debugLogCount++;
+    			}
+    		}
+    		catch (Exception)
+    		{
+    		}
     	}
     
     	public static void paintOnScreenDebug(mGraphics g)
     	{
+    		if (!showDebugHUD || g == null)
+    		{
+    			return;
+    		}
+    		try
+    		{
+    			g.reset();
+    			int hudW = 280;
+    			if (hudW > GameCanvas.w - 8)
+    			{
+    				hudW = GameCanvas.w - 8;
+    			}
+    			int hudH = 100;
+    			int hudX = 4;
+    			int hudY = 4;
+
+    			// Khung nền đen mờ bo tròn
+    			g.setColor(0x0a1128, 0.82f);
+    			g.fillRect(hudX, hudY, hudW, hudH, 4);
+    			g.setColor(0x00f2fe, 0.9f);
+    			g.drawRect(hudX, hudY, hudW, hudH);
+
+    			// Tiêu đề HUD
+    			mFont.tahoma_7b_white.drawString(g, "=== NRO DIAGNOSTIC HUD ===", hudX + 4, hudY + 3, 0);
+
+    			// Dòng 1: Màn hình & State
+    			string scrName = (GameCanvas.currentScreen != null) ? GameCanvas.currentScreen.GetType().Name : "null";
+    			string s1 = "SCR: " + scrName + " | LoadScr: " + ServerListScreen.loadScreen + " | BigOk: " + ServerListScreen.bigOk;
+    			mFont.tahoma_7_white.drawString(g, s1, hudX + 4, hudY + 15, 0);
+
+    			// Dòng 2: Mạng & Key
+    			string s2 = "NET: " + GameMidlet.IP + ":" + GameMidlet.PORT + " | Conn: " + Session_ME.connected + " | Key: " + Session_ME.getKeyComplete;
+    			mFont.tahoma_7_white.drawString(g, s2, hudX + 4, hudY + 27, 0);
+
+    			// Dòng 3: Tải dữ liệu CMD -74
+    			string s3 = "DOWN: isGet: " + ServerListScreen.isGetData + " | " + ServerListScreen.demPercent + "/" + ServerListScreen.nBig + " (" + ServerListScreen.percent + "%)";
+    			mFont.tahoma_7_yellow.drawString(g, s3, hudX + 4, hudY + 39, 0);
+
+    			// Dòng 4: Tệp gần nhất
+    			if (!string.IsNullOrEmpty(debugLastFile))
+    			{
+    				mFont.tahoma_7_grey.drawString(g, "FILE: " + debugLastFile, hudX + 4, hudY + 51, 0);
+    			}
+    			else
+    			{
+    				mFont.tahoma_7_grey.drawString(g, "FILE: (none)", hudX + 4, hudY + 51, 0);
+    			}
+
+    			// Dòng 5: Lỗi gần nhất (màu đỏ nếu có)
+    			if (!string.IsNullOrEmpty(debugLastError))
+    			{
+    				mFont.tahoma_7_red.drawString(g, "ERR: " + debugLastError, hudX + 4, hudY + 63, 0);
+    			}
+
+    			// Dòng 6+: Log dòng gần nhất
+    			int logY = hudY + 75;
+    			if (debugLogs[0] != null)
+    			{
+    				mFont.tahoma_7_white.drawString(g, "> " + debugLogs[0], hudX + 4, logY, 0);
+    			}
+    			if (debugLogs[1] != null && hudH >= 100)
+    			{
+    				mFont.tahoma_7_grey.drawString(g, "> " + debugLogs[1], hudX + 4, logY + 11, 0);
+    			}
+    		}
+    		catch (Exception)
+    		{
+    		}
     	}
     
     	public static void updateOnScreenDebug()

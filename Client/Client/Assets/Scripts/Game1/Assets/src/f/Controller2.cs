@@ -956,11 +956,20 @@ namespace Game1.Assets.src.f
 				case -102:
 				{
 					sbyte b11 = msg.reader().readByte();
-					if (b11 != 0 && b11 == 1)
+					LoginScr.isLoggingIn = false;
+					Char.isLoadingMap = false;
+					GameCanvas.endDlg();
+					if (b11 == 1)
 					{
-						GameCanvas.loginScr.isLogin2 = false;
-						Service.gI().login(Rms.loadRMSString("acc"), Rms.loadRMSString("pass"), GameMidlet.VERSION, 0);
-						LoginScr.isLoggingIn = true;
+						if (GameCanvas.loginScr != null)
+						{
+							GameCanvas.loginScr.isLogin2 = false;
+						}
+						GameCanvas.startOKDlg("Phiên đăng nhập trước đang được đóng. Vui lòng thử đăng nhập lại!");
+					}
+					else
+					{
+						GameCanvas.startOKDlg("Đăng nhập thất bại. Vui lòng kiểm tra lại tài khoản hoặc mật khẩu!");
 					}
 					break;
 				}

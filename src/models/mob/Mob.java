@@ -1,4 +1,5 @@
 package models.mob;
+import consts.Cmd_message;
 import consts.ConstItem;
 import services.player.InventoryService;
 import services.player.ClanService;
@@ -1333,7 +1334,7 @@ public class Mob {
     public void sendMobMaxHp(long maxHp) {
         Message msg;
         try {
-            msg = new Message(87);
+            msg = new Message(Cmd_message.MOB_MAX_HP);
             msg.writer().writeByte(this.id);
             msg.writer().writeInt(NPoint.safeInt(maxHp));
             Service.gI().sendMessAllPlayerInMap(this.zone, msg);

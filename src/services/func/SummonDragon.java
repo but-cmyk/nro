@@ -203,17 +203,13 @@ public class SummonDragon {
                     for (int i = begin; i <= NGOC_RONG_7_SAO; i++) {
                         try {
                             InventoryService.gI().subQuantityItemsBag(pl, InventoryService.gI().findItemBag(pl, i), 1);
-                            if (playerSummonShenron.playerTask.taskdh.Shenron < 10) {
-                                int required = 10;
-                                int percentDone = (int) ((double) playerSummonShenron.playerTask.taskdh.Shenron
-                                        / required * 100);
-                                playerSummonShenron.playerTask.taskdh.Shenron++;
-                                playerSummonShenron.playerTask.taskdh.ResetTime = System.currentTimeMillis();
-//                                Service.gI().sendThongBao(playerSummonShenron,
-//                                        "Tiến độ hiện tại: " + percentDone + "%");
-
-                            }
                         } catch (Exception ex) {
+                        }
+                    }
+                    if (playerSummonShenron != null && playerSummonShenron.playerTask != null && playerSummonShenron.playerTask.taskdh != null) {
+                        if (playerSummonShenron.playerTask.taskdh.Shenron < 10) {
+                            playerSummonShenron.playerTask.taskdh.Shenron++;
+                            playerSummonShenron.playerTask.taskdh.ResetTime = System.currentTimeMillis();
                         }
                     }
                     InventoryService.gI().sendItemBags(pl);

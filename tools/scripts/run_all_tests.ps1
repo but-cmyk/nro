@@ -25,6 +25,7 @@ javac -encoding UTF-8 -cp $cp -d $out `
     tools/test/TestAuditAndShutdown.java `
     tools/test/TestGroupD.java `
     tools/test/TestPacketValidationAndFuzz.java `
+    tools/test/TestHandshakeFraming.java `
     tools/test/TestMetricsAndHealthEndpoint.java `
     tools/test/TestZoneSerialExecutor.java
 if ($LASTEXITCODE -ne 0) { throw "Test compilation failed" }
@@ -52,6 +53,10 @@ if ($LASTEXITCODE -ne 0) { throw "Group D tests failed" }
 
 java -cp "$out;$cp" test.TestPacketValidationAndFuzz
 if ($LASTEXITCODE -ne 0) { throw "Packet Validation and Fuzz tests failed" }
+
+Write-Host "`n[*] Running Handshake Framing Regression Test..." -ForegroundColor Yellow
+java -cp "$out;$cp" test.TestHandshakeFraming
+if ($LASTEXITCODE -ne 0) { throw "Handshake framing regression test failed" }
 
 java -cp "$out;$cp" test.TestMetricsAndHealthEndpoint
 if ($LASTEXITCODE -ne 0) { throw "Group F Health & Metrics tests failed" }

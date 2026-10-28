@@ -191,6 +191,10 @@ public class MySession extends Session {
                     if (pl != null) {
                         pl.dispose();
                     }
+                    try {
+                        Service.gI().sendThongBaoOK(this, "Có lỗi xảy ra khi đăng nhập. Vui lòng thử lại!");
+                        Service.gI().sendLoginFail(this, false);
+                    } catch (Exception ignored) {}
                 }
             }
         } finally {

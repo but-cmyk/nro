@@ -772,6 +772,11 @@ namespace Game1
     					GameMidlet.IP = ServerListScreen.address[ServerListScreen.ipSelect];
     					GameMidlet.PORT = ServerListScreen.port[ServerListScreen.ipSelect];
     					ServerListScreen.testConnect = 2;
+    					ServerListScreen.isAutoConect = false;
+    					if (currentDialog != null && currentDialog == msgdlg)
+    					{
+    						endDlg();
+    					}
     					Rms.saveRMSInt("svselect", ServerListScreen.ipSelect);
     					Rms.saveIP(GameMidlet.IP + ":" + GameMidlet.PORT);
     					Service.gI().setClientType();
@@ -812,7 +817,11 @@ namespace Game1
     					if (currentScreen == serverScreen && ServerListScreen.isGetData && !Service.reciveFromMainSession)
     					{
     						ServerListScreen.testConnect = 0;
+    						ServerListScreen.isGetData = false;
+    						ServerListScreen.loadScreen = true;
+    						endDlg();
     						serverScreen.cancel();
+    						startOK(mResources.maychutathoacmatsong, 8882, null);
     					}
     					if (currentScreen == loginScr && !Service.reciveFromMainSession)
     					{
@@ -908,18 +917,19 @@ namespace Game1
     			if (ServerListScreen.hasConnected != null)
     			{
     				ServerListScreen.getServerList(ServerListScreen.linkDefault);
-    				if (!ServerListScreen.hasConnected[0])
+    				int nextSv = -1;
+    				for (int i = 0; i < ServerListScreen.hasConnected.Length; i++)
     				{
-    					ServerListScreen.hasConnected[0] = true;
-    					ServerListScreen.ipSelect = 0;
-    					GameMidlet.IP = ServerListScreen.address[ServerListScreen.ipSelect];
-    					Rms.saveRMSInt("svselect", ServerListScreen.ipSelect);
-    					connect();
+    					if (!ServerListScreen.hasConnected[i] && ServerListScreen.address != null && i < ServerListScreen.address.Length)
+    					{
+    						nextSv = i;
+    						break;
+    					}
     				}
-    				else if (!ServerListScreen.hasConnected[2])
+    				if (nextSv != -1)
     				{
-    					ServerListScreen.hasConnected[2] = true;
-    					ServerListScreen.ipSelect = 2;
+    					ServerListScreen.hasConnected[nextSv] = true;
+    					ServerListScreen.ipSelect = nextSv;
     					GameMidlet.IP = ServerListScreen.address[ServerListScreen.ipSelect];
     					Rms.saveRMSInt("svselect", ServerListScreen.ipSelect);
     					connect();
@@ -942,6 +952,20 @@ namespace Game1
     		}
     		isResume = true;
     		LoginScr.isContinueToLogin = false;
+    		LoginScr.isLoggingIn = false;
+    		Char.isLoadingMap = false;
+    		endDlg();
+    		if (ServerListScreen.isGetData)
+    		{
+    			ServerListScreen.isGetData = false;
+    			ServerListScreen.loadScreen = true;
+    			startOK(mResources.maychutathoacmatsong, 8882, null);
+    			if (serverScreen != null)
+    			{
+    				serverScreen.switchToMe();
+    			}
+    			return;
+    		}
     		if (loginScr != null)
     		{
     			instance.resetToLoginScrz();
@@ -950,18 +974,20 @@ namespace Game1
     		{
     			loginScr = new LoginScr();
     		}
-    		LoginScr.serverName = ServerListScreen.nameServer[ServerListScreen.ipSelect];
+    		if (ServerListScreen.nameServer != null && ServerListScreen.ipSelect >= 0 && ServerListScreen.ipSelect < ServerListScreen.nameServer.Length)
+    		{
+    			LoginScr.serverName = ServerListScreen.nameServer[ServerListScreen.ipSelect];
+    		}
     		if (currentScreen != serverScreen)
     		{
     			ServerListScreen.countDieConnect = 0;
+    			startOK(mResources.maychutathoacmatsong, 8882, null);
     		}
     		else
     		{
-    			endDlg();
     			ServerListScreen.loadScreen = true;
     			serverScreen.switchToMe();
     		}
-    		Char.isLoadingMap = false;
     		if (Controller.isMain)
     		{
     			ServerListScreen.testConnect = 0;
@@ -980,11 +1006,12 @@ namespace Game1
     
     	public static void connect()
     	{
-    		Debug.Log(">>connect:" + GameMidlet.IP + ":" + GameMidlet.PORT);
-    		if (!Session_ME.gI().isConnected())
+    		if (Session_ME.gI().isConnected() || Session_ME.connecting)
     		{
-    			Session_ME.gI().connect(GameMidlet.IP, GameMidlet.PORT);
+    			return;
     		}
+    		Debug.Log(">>connect:" + GameMidlet.IP + ":" + GameMidlet.PORT);
+    		Session_ME.gI().connect(GameMidlet.IP, GameMidlet.PORT);
     	}
     
     	public static void connect2()
@@ -2789,17 +2816,19 @@ namespace Game1
     				}
     				if (mSystem.currentTimeMillis() > timeBreakLoading)
     				{
-    					timeBreakLoading = mSystem.currentTimeMillis() + 30000;
+    					timeBreakLoading = mSystem.currentTimeMillis() + 15000;
     					if (currentScreen != null && !(currentScreen is GameScr) && !(currentScreen is SplashScr))
     					{
-    						if (!(currentScreen is LoginScr) || currentDialog != null || isLoading)
+    						Char.isLoadingMap = false;
+    						LoginScr.isContinueToLogin = false;
+    						LoginScr.isLoggingIn = false;
+    						LoginScr.timeLogin = 0;
+    						ServerListScreen.waitToLogin = false;
+    						ServerListScreen.isWait = false;
+    						isLoading = false;
+    						endDlg();
+    						if (currentScreen != serverScreen)
     						{
-    							Char.isLoadingMap = false;
-    							LoginScr.isContinueToLogin = false;
-    							ServerListScreen.waitToLogin = false;
-    							ServerListScreen.isWait = false;
-    							isLoading = false;
-    							endDlg();
     							try
     							{
     								Session_ME.gI().close();
@@ -2808,7 +2837,7 @@ namespace Game1
     							{
     							}
     							instance.resetToLoginScrz();
-    							startOKDlg("Đăng nhập quá lâu hoặc dữ liệu bị lỗi, vui lòng thử lại!");
+    							startOKDlg("Đăng nhập quá lâu hoặc mất kết nối, vui lòng thử lại!");
     						}
     					}
     				}
@@ -2851,11 +2880,15 @@ namespace Game1
     		}
     		currentDialog = null;
     		InfoDlg.hide();
+    		Char.isLoadingMap = false;
+    		LoginScr.isLoggingIn = false;
     	}
     
     	public static void startOKDlg(string info)
     	{
     		closeKeyBoard();
+    		Char.isLoadingMap = false;
+    		LoginScr.isLoggingIn = false;
     		msgdlg.setInfo(info, null, new Command(mResources.OK, instance, 8882, null), null);
     		currentDialog = msgdlg;
     	}
@@ -2871,6 +2904,8 @@ namespace Game1
     	public static void startOKDlg(string info, bool isError)
     	{
     		closeKeyBoard();
+    		Char.isLoadingMap = false;
+    		LoginScr.isLoggingIn = false;
     		msgdlg.setInfo(info, null, new Command(mResources.CANCEL, instance, 8882, null), null);
     		currentDialog = msgdlg;
     		msgdlg.isWait = true;
@@ -2891,6 +2926,8 @@ namespace Game1
     	public static void startOK(string info, int actionID, object p)
     	{
     		closeKeyBoard();
+    		Char.isLoadingMap = false;
+    		LoginScr.isLoggingIn = false;
     		msgdlg.setInfo(info, null, new Command(mResources.OK, instance, actionID, p), null);
     		msgdlg.show();
     	}
@@ -2898,6 +2935,8 @@ namespace Game1
     	public static void startYesNoDlg(string info, int iYes, object pYes, int iNo, object pNo)
     	{
     		closeKeyBoard();
+    		Char.isLoadingMap = false;
+    		LoginScr.isLoggingIn = false;
     		msgdlg.setInfo(info, new Command(mResources.YES, instance, iYes, pYes), new Command(string.Empty, instance, iYes, pYes), new Command(mResources.NO, instance, iNo, pNo));
     		msgdlg.show();
     	}
@@ -2905,6 +2944,8 @@ namespace Game1
     	public static void startYesNoDlg(string info, Command cmdYes, Command cmdNo)
     	{
     		closeKeyBoard();
+    		Char.isLoadingMap = false;
+    		LoginScr.isLoggingIn = false;
     		msgdlg.setInfo(info, cmdYes, null, cmdNo);
     		msgdlg.show();
     	}

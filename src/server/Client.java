@@ -145,6 +145,9 @@ public class Client implements Runnable {
                 removePlayerFromGame(session.player);
                 session.player = null;
             }
+            if (session.userId != 0) {
+                this.playersByUserId.remove(session.userId);
+            }
 
             if (session.joinedGame) {
                 updateLastLogoutTime(session);
@@ -155,6 +158,15 @@ public class Client implements Runnable {
 
         } catch (Exception e) {
             Logger.logException(Client.class, e, "Error removing session for user: " + session.userId);
+        }
+    }
+
+    public void removePlayerByUserId(int userId) {
+        Player p = this.playersByUserId.remove(userId);
+        if (p != null) {
+            this.players.remove(p);
+            this.playersById.remove(p.id);
+            this.playersByName.remove(p.name);
         }
     }
 

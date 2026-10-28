@@ -293,6 +293,7 @@ namespace Game1
     		{
     			tfUser.isFocus = false;
     		}
+    		setUserPass();
     		GameCanvas.loadBG(0);
     		base.switchToMe();
     	}
@@ -436,6 +437,25 @@ namespace Game1
     				text2 = "a";
     			}
     		}
+    		if (string.IsNullOrEmpty(text))
+    		{
+    			text = Rms.loadRMSString("acc");
+    			text2 = Rms.loadRMSPassword("pass");
+    			if (string.IsNullOrEmpty(text) && Rms.loadRMSString("userAo" + ServerListScreen.ipSelect) != null)
+    			{
+    				text = Rms.loadRMSString("userAo" + ServerListScreen.ipSelect);
+    				text2 = "a";
+    				isLogin2 = true;
+    			}
+    			if (tfUser != null && !string.IsNullOrEmpty(text))
+    			{
+    				tfUser.setText(text);
+    			}
+    			if (tfPass != null && !string.IsNullOrEmpty(text2))
+    			{
+    				tfPass.setText(text2);
+    			}
+    		}
     		if (text == null || text.Trim().Equals(string.Empty))
     		{
     			focus = 0;
@@ -494,7 +514,7 @@ namespace Game1
     			GameCanvas.connect();
     		}
 		Service.gI().login(text, text2, GameMidlet.VERSION, (sbyte)(isLogin2 ? 1 : 0));
-    		if (Session_ME.connected)
+    		if (Session_ME.connected || Session_ME.connecting)
     		{
     			GameCanvas.startWaitDlg();
     		}
@@ -507,7 +527,7 @@ namespace Game1
     		{
     			actRegisterLeft();
     		}
-    		GameCanvas.timeBreakLoading = mSystem.currentTimeMillis() + 30000;
+    		GameCanvas.timeBreakLoading = mSystem.currentTimeMillis() + 15000;
     	}
     
     	public void savePass()
@@ -549,13 +569,14 @@ namespace Game1
     		}
     		if (timeLogin > 0)
     		{
-    			GameCanvas.startWaitDlg();
     			currTimeLogin = mSystem.currentTimeMillis();
     			if (currTimeLogin - lastTimeLogin >= 1000)
     			{
     				timeLogin--;
-    				if (timeLogin == 0)
+    				if (timeLogin <= 0)
     				{
+    					timeLogin = 0;
+    					GameCanvas.endDlg();
     					GameCanvas.loginScr.doLogin();
     				}
     				lastTimeLogin = currTimeLogin;

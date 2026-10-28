@@ -142,6 +142,11 @@ import services.map.NpcService;
         if (player.getSession().sotien >= MONEY) {
             if (PlayerDAO.subvnd(player, MONEY)) {
                 player.inventory.ruby += RUBY;
+                if (player.playerTask != null && player.playerTask.taskdh != null) {
+                    player.playerTask.taskdh.renew();
+                    player.playerTask.taskdh.Nap += RUBY;
+                    player.playerTask.taskdh.ResetTime = System.currentTimeMillis();
+                }
                 Service.gI().sendMoney(player);
                 Service.gI().sendThongBao(player,
                         "Bạn đổi thành công " + dcm.format(MONEY) + " thành " + RUBY + " hồng ngọc !");

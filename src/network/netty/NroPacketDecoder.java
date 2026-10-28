@@ -79,7 +79,9 @@ public class NroPacketDecoder extends ByteToMessageDecoder {
         // Kiểm tra kích thước an toàn chống crash/flood (Hạ ngưỡng Decoder - E1)
         int maxAllowedSize = isExtendedCommand(cmd) ? MAX_EXTENDED_PACKET_SIZE : MAX_STANDARD_PACKET_SIZE;
         if (size < 0 || size > maxAllowedSize) {
-            throw new IOException("Goi tin vuot qua kich thuoc cho phep: size=" + size + ", max=" + maxAllowedSize + " cho cmd=" + cmd);
+            String err = "[NET-3-DISCONNECT] Gói tin vượt quá kích thước cho phép: size=" + size + ", max=" + maxAllowedSize + " cho cmd=" + cmd + " (rawCmd=" + rawCmd + ", encrypted=" + isEncrypted + ") từ IP=" + session.getIP();
+            utils.Logger.error(err);
+            throw new IOException(err);
         }
 
         // 3. Kiểm tra xem toàn bộ Payload đã tới đủ trong buffer chưa

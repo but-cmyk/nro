@@ -14,10 +14,11 @@ namespace Game1
     
     public class Session_ME : ISession
     {
+    	public static readonly object sendLock = new object();
+
     	public class Sender
     	{
     		public List<Message> sendingMessage;
-    		private readonly object sendLock = new object();
     
     		public Sender()
     		{
@@ -47,30 +48,27 @@ namespace Game1
     			{
     				try
     				{
-    					Message m = null;
-    					if (getKeyComplete)
+    					if (!getKeyComplete)
     					{
-    						lock (sendLock)
+    						Thread.Sleep(5);
+    						continue;
+    					}
+    					Message m = null;
+    					lock (sendLock)
+    					{
+    						if (sendingMessage.Count > 0)
     						{
-    							if (sendingMessage.Count > 0)
-    							{
-    								m = sendingMessage[0];
-    								sendingMessage.RemoveAt(0);
-    							}
-    							else
-    							{
-    								Monitor.Wait(sendLock, 50);
-    							}
+    							m = sendingMessage[0];
+    							sendingMessage.RemoveAt(0);
     						}
-    						if (m != null)
+    						else
     						{
-    							doSendMessage(m);
-    							continue;
+    							Monitor.Wait(sendLock, 50);
     						}
     					}
-    					else
+    					if (m != null)
     					{
-    						Thread.Sleep(10);
+    						doSendMessage(m);
     					}
     				}
     				catch (ThreadAbortException)
@@ -163,7 +161,17 @@ namespace Game1
     					ref sbyte reference = ref key[j + 1];
     					reference ^= key[j];
     				}
+    				curR = 0;
+    				curW = 0;
     				getKeyComplete = true;
+    				ServerListScreen.testConnect = 2;
+    				ServerListScreen.isAutoConect = false;
+    				Debug.Log("[NET-2] [CLIENT Handshake -27] Nhận Session Key thành công (len=" + key.Length + ")");
+    				Res.onScreenDebug("SESSION_KEY_OK (len=" + key.Length + ")");
+    				lock (sendLock)
+    				{
+    					Monitor.PulseAll(sendLock);
+    				}
     				GameMidlet.IP2 = message.reader().readUTF();
     				GameMidlet.PORT2 = message.reader().readInt();
     				GameMidlet.isConnect2 = ((message.reader().readByte() != 0) ? true : false);
@@ -172,11 +180,33 @@ namespace Game1
     					GameCanvas.connect2();
     				}
     			}
-    			catch (Exception)
+    			catch (Exception exKey)
     			{
+    				Res.debugLastError = "getKey ex: " + exKey.Message;
+    				Res.onScreenDebug("GET_KEY_ERR: " + exKey.Message);
     			}
     		}
     
+    		private static byte[] ReadFully(Stream stream, int count)
+    		{
+    			if (count <= 0)
+    			{
+    				return new byte[0];
+    			}
+    			byte[] buffer = new byte[count];
+    			int offset = 0;
+    			while (offset < count)
+    			{
+    				int read = stream.Read(buffer, offset, count - offset);
+    				if (read <= 0)
+    				{
+    					throw new IOException("Stream closed unexpectedly: expected " + count + " bytes, read " + offset);
+    				}
+    				offset += read;
+    			}
+    			return buffer;
+    		}
+
     		private Message readMessage2(sbyte cmd)
     		{
     			int num = readKey(dis.ReadSByte()) + 128;
@@ -188,11 +218,7 @@ namespace Game1
     				throw new IOException("Message2 frame size vượt ngưỡng cho phép (2MB): " + num4);
     			}
     			sbyte[] array = ArrayCast.SafeAllocSByte(num4, 2097152);
-    			byte[] src = dis.ReadBytes(num4);
-    			if (src == null || src.Length < num4)
-    			{
-    				throw new IOException("Message2 underflow: không đủ byte frame (cần " + num4 + ", nhận " + (src != null ? src.Length : 0) + ")");
-    			}
+    			byte[] src = ReadFully(dataStream, num4);
     			array = ArrayCast.cast(src);
     			recvByteCount += 5 + num4;
     			int num6 = recvByteCount + sendByteCount;
@@ -238,11 +264,7 @@ namespace Game1
     					throw new IOException("Frame size vượt ngưỡng cho phép (64KB): " + num);
     				}
     				sbyte[] array = ArrayCast.SafeAllocSByte(num, 65536);
-    				byte[] src = dis.ReadBytes(num);
-    				if (src == null || src.Length < num)
-    				{
-    					throw new IOException("Packet underflow: không đủ byte frame (cần " + num + ", nhận " + (src != null ? src.Length : 0) + ")");
-    				}
+    				byte[] src = ReadFully(dataStream, num);
                     array = ArrayCast.cast(src);
                     recvByteCount += 5 + num;
     				int num4 = recvByteCount + sendByteCount;
@@ -293,7 +315,7 @@ namespace Game1
     
     	public static int recvByteCount;
     
-    	private static bool getKeyComplete;
+    	public static bool getKeyComplete;
     
     	public static sbyte[] key = null;
     
@@ -364,6 +386,8 @@ namespace Game1
     			Debug.Log("connecting...!");
     			Debug.Log("host: " + host);
     			Debug.Log("port: " + port);
+    			Res.onScreenDebug("NET_CONNECTING: " + host + ":" + port);
+    			connecting = true;
     			initThread = new Thread(NetworkInit);
     			initThread.Start();
     		}
@@ -390,7 +414,9 @@ namespace Game1
     		{
     			connected = false;
     			connecting = false;
-    			Debug.LogError("Connect failed: " + ex.Message);
+    			Debug.LogError("[NET-1] [CLIENT Connect] Kết nối thất bại tới " + host + ":" + port + " - Lý do: " + ex.Message);
+    			Res.debugLastError = "NetInit: " + ex.Message;
+    			Res.onScreenDebug("CONNECT_FAIL: " + ex.Message);
     			if (messageHandler != null)
     			{
     				close();
@@ -401,6 +427,7 @@ namespace Game1
     
     	public void doConnect(string host, int port)
     	{
+    		Debug.Log("[NET-1] [CLIENT Connect] Đang mở socket tới " + host + ":" + port + (TlsConfig.ShouldUseTls(port) ? " (TLS)" : " (Plaintext)"));
     		sc = new TcpClient();
     		sc.NoDelay = true;
     		sc.Connect(host, port);
@@ -413,11 +440,24 @@ namespace Game1
     			string targetHost = !string.IsNullOrEmpty(TlsConfig.ServerName) ? TlsConfig.ServerName : host;
     			ssl.AuthenticateAsClient(targetHost, null, SslProtocols.Tls12, false);
     			stream = ssl;
-    			Debug.Log("TLS connected: " + targetHost);
+    			Debug.Log("[NET-1] [CLIENT Connect] TLS Handshake THÀNH CÔNG với host=" + targetHost + " trên port=" + port);
+    		}
+    		else
+    		{
+    			Debug.Log("[NET-1] [CLIENT Connect] TCP Plaintext kết nối THÀNH CÔNG tới port=" + port);
     		}
     		dataStream = stream;
     		dis = new BinaryReader(dataStream, new UTF8Encoding());
     		dos = new BinaryWriter(dataStream, new UTF8Encoding());
+    		key = null;
+    		getKeyComplete = false;
+    		curR = 0;
+    		curW = 0;
+
+    		// [NET-2] Gửi Handshake -27 đầu tiên ngay sau khi mở Stream thành công
+    		Debug.Log("[NET-2] [CLIENT Handshake -27] Gửi gói xin Session Key (-27) tới Server...");
+    		doSendMessage(new Message(-27));
+
     		sendThread = new Thread(sender.run);
     		sendThread.Start();
     		MessageCollector @object = new MessageCollector();
@@ -427,8 +467,7 @@ namespace Game1
     		timeConnected = currentTimeMillis();
     		connecting = false;
     		connected = true;
-    		doSendMessage(new Message(-27));
-    		key = null;
+    		Res.onScreenDebug("TCP_OK: " + host + ":" + port);
     	}
 
     	/// <summary>
@@ -441,11 +480,12 @@ namespace Game1
     	{
     		if (certificate == null)
     		{
+    			Debug.LogError("[NET-1] [CLIENT Pinning] Thất bại: Chứng chỉ máy chủ rỗng (null)!");
     			return false;
     		}
     		if (TlsConfig.AllowUntrustedForDev)
     		{
-    			Debug.LogWarning("TLS: AllowUntrustedForDev=true, certificate is NOT pinned!");
+    			Debug.LogWarning("[NET-1] [CLIENT Pinning] AllowUntrustedForDev=true, bỏ qua kiểm tra Pinning cho Dev!");
     			return true;
     		}
     		try
@@ -465,6 +505,7 @@ namespace Game1
     					{
     						if (expected == certPin || (pubKeyPin != null && expected == pubKeyPin))
     						{
+    							Debug.Log("[NET-1] [CLIENT Pinning] Xác thực Public Key / Cert Pinning THÀNH CÔNG: " + expected);
     							return true;
     						}
     					}
@@ -473,9 +514,9 @@ namespace Game1
     		}
     		catch (Exception ex)
     		{
-    			Debug.LogError("TLS pin check failed: " + ex.Message);
+    			Debug.LogError("[NET-1] [CLIENT Pinning] Lỗi kiểm tra TLS pin: " + ex.Message);
     		}
-    		Debug.LogError("TLS certificate pin mismatch. Check TlsConfig.PinnedSha256 (certs/README.md).");
+    		Debug.LogError("[NET-1] [CLIENT Pinning] Thất bại: Mã pin không khớp! Vui lòng cập nhật TlsConfig.PinnedSha256.");
     		return false;
     	}
     
@@ -490,6 +531,13 @@ namespace Game1
     		sbyte[] data = m.getData();
     		try
     		{
+    			lock (sendLock)
+    			{
+    				if (dos == null)
+    				{
+    					return;
+    				}
+    				Debug.Log("[NET-SEND] Gửi gói cmd=" + m.command + ", len=" + ((data != null) ? data.Length : 0));
     			if (getKeyComplete)
     			{
     				sbyte value = writeKey(m.command);
@@ -511,7 +559,8 @@ namespace Game1
     				}
     				else
     				{
-    					dos.Write((ushort)num);
+    					dos.Write((sbyte)(num >> 8));
+    					dos.Write((sbyte)(num & 0xFF));
     				}
     				if (getKeyComplete)
     				{
@@ -539,17 +588,21 @@ namespace Game1
     				}
     				sendByteCount += 5;
     			}
-    			dos.Flush();
+    				dos.Flush();
+    			}
     		}
     		catch (Exception ex)
     		{
     			Debug.Log(ex.StackTrace);
-    			dos.Flush();
     		}
     	}
     
     	public static sbyte readKey(sbyte b)
     	{
+    		if (key == null || key.Length == 0)
+    		{
+    			return b;
+    		}
     		sbyte[] array = key;
     		sbyte num = curR;
     		curR = (sbyte)(num + 1);
@@ -563,6 +616,10 @@ namespace Game1
     
     	public static sbyte writeKey(sbyte b)
     	{
+    		if (key == null || key.Length == 0)
+    		{
+    			return b;
+    		}
     		sbyte[] array = key;
     		sbyte num = curW;
     		curW = (sbyte)(num + 1);
@@ -635,10 +692,19 @@ namespace Game1
     		key = null;
     		curR = 0;
     		curW = 0;
+    		getKeyComplete = false;
     		try
     		{
     			connected = false;
     			connecting = false;
+    			if (sender != null)
+    			{
+    				sender.Clear();
+    			}
+    			lock (recieveMsg)
+    			{
+    				recieveMsg.Clear();
+    			}
     			if (sc != null)
     			{
     				sc.Close();

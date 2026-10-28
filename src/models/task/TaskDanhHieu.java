@@ -39,11 +39,13 @@ public class TaskDanhHieu {
     }
 
     public void renew() {
-        if (utils.Util.isAfterMidnight(ResetTime)) {
+        if (ResetTime != 0 && utils.Util.isAfterMidnight(ResetTime)) {
             this.Nap = 0;
             this.DapDo = 0;
             this.NhatDo = 0;
             this.DungLoa = 0;
+            this.ResetTime = System.currentTimeMillis();
+        } else if (ResetTime == 0) {
             this.ResetTime = System.currentTimeMillis();
         }
     }
@@ -56,9 +58,9 @@ public class TaskDanhHieu {
             case 1290 -> 10;   // Trùm ước rồng
             case 1291 -> 30;   // Trùm săn Boss
             case 1292 -> 3;    // Thánh đập đồ +7
-            case 1293 -> 3;    // Cao thủ siêu hạng
-            case 1294 -> 1;    // Nông dân chăm chỉ
-            case 1295 -> 500;  // Ông thần ve chai
+            case 1293 -> 1;    // Cao thủ siêu hạng (Top 1 Siêu Hạng)
+            case 1294 -> 10;   // Nông dân chăm chỉ (10 nhiệm vụ Bò Mộng)
+            case 1295 -> 100;  // Ông thần ve chai (Bán ve chai hoặc nhặt đồ 100 lần trong ngày)
             case 1296 -> 30;   // Bị móc sạch túi
             case 1300 -> 30;   // Thánh ở dơ
             default -> 0;

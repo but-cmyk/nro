@@ -26,7 +26,7 @@ namespace Game1
 		private const int FADE_IN_TICKS = 15;   // ~0.5s mờ dần bóng đen -> hiện rõ logo
 		private const int HOLD_TICKS = 35;      // ~1.1s logo rõ ràng, viên ngọc rồng xoay
 		private const int FADE_OUT_TICKS = 15;  // ~0.5s mờ dần logo -> tối đen hoàn toàn
-		private const int TOTAL_SPLASH_TICKS = FADE_IN_TICKS + HOLD_TICKS + FADE_OUT_TICKS; // 65 ticks (~2.1s)
+		public const int TOTAL_SPLASH_TICKS = FADE_IN_TICKS + HOLD_TICKS + FADE_OUT_TICKS; // 65 ticks (~2.1s)
 
 		private float fadeAlpha = 1.0f;
 
@@ -112,10 +112,30 @@ namespace Game1
 			splashScrStat++;
 			ServerListScreen.updateDeleteData();
 
+			// Nếu ServerListScreen đang tải dữ liệu (CMD -74), SplashScr nhường quyền điều khiển ngay lập tức
+			if (ServerListScreen.isGetData || !ServerListScreen.loadScreen)
+			{
+				if (GameCanvas.serverScreen == null)
+				{
+					GameCanvas.serverScreen = new ServerListScreen();
+				}
+				if (GameCanvas.currentScreen is SplashScr)
+				{
+					GameCanvas.currentScreen = GameCanvas.serverScreen;
+				}
+				return;
+			}
+
 			// Nếu đang trong chế độ tải dữ liệu gói của server
 			if (nData != -1)
 			{
 				return;
+			}
+
+			// Cho phép click hoặc bấm phím để bỏ qua thời gian chờ logo
+			if (splashScrStat > FADE_IN_TICKS && (GameCanvas.isPointerClick || GameCanvas.keyPressed[5] || GameCanvas.keyPressed[15]))
+			{
+				splashScrStat = TOTAL_SPLASH_TICKS;
 			}
 
 			// Quản lý chuyển cảnh dần (Fade in -> Giữ sáng & tải -> Fade out)
@@ -135,21 +155,20 @@ namespace Game1
 			}
 			else
 			{
-				if (!isFinished)
+				fadeAlpha = 1.0f;
+				if (pendingScreen != null)
 				{
-					isFinished = true;
-					fadeAlpha = 1.0f;
-					if (pendingScreen != null)
-					{
-						mScreen next = pendingScreen;
-						pendingScreen = null;
-						next.switchToMe();
-						return;
-					}
-					if (GameCanvas.serverScreen == null)
-					{
-						GameCanvas.serverScreen = new ServerListScreen();
-					}
+					mScreen next = pendingScreen;
+					pendingScreen = null;
+					next.switchToMe();
+					return;
+				}
+				if (GameCanvas.serverScreen == null)
+				{
+					GameCanvas.serverScreen = new ServerListScreen();
+				}
+				if (GameCanvas.currentScreen is SplashScr)
+				{
 					ServerListScreen.startTransitionIn();
 					GameCanvas.serverScreen.switchToMe();
 				}

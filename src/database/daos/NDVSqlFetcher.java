@@ -240,10 +240,22 @@ public class NDVSqlFetcher {
                 session.userId = rsAccount.getInt("account.id");
 
                 if ((plInGame = Client.gI().getPlayerByUser(session.userId)) != null) {
-                    Client.gI().kickSession(plInGame.getSession());
-                    Client.gI().kickSession(session);
-                    Service.gI().sendLoginFail(session, true);
-                    return null;
+                    MySession oldSession = plInGame.getSession();
+                    if (oldSession != null && oldSession != session) {
+                        try {
+                            Service.gI().sendThongBaoOK(oldSession, "Tài khoản của bạn đã được đăng nhập từ một thiết bị khác.");
+                        } catch (Exception ignored) {}
+                        Client.gI().kickSession(oldSession);
+                    }
+                    long startWait = System.currentTimeMillis();
+                    while (Client.gI().getPlayerByUser(session.userId) != null && System.currentTimeMillis() - startWait < 300) {
+                        try {
+                            Thread.sleep(50);
+                        } catch (InterruptedException ignored) {
+                            break;
+                        }
+                    }
+                    Client.gI().removePlayerByUserId(session.userId);
                 }
 
                 session.isAdmin = rsAccount.getBoolean("is_admin");
@@ -269,9 +281,12 @@ public class NDVSqlFetcher {
                 session.lastTimeReceivedVIP1 = rsAccount.getLong("lastTimeReceivedVIP1");
                 session.lastTimeReceivedVIP2 = rsAccount.getLong("lastTimeReceivedVIP2");
 
-                long lastTimeLogin = rsAccount.getTimestamp("last_time_login").getTime();
-                long lastTimeLogout = rsAccount.getTimestamp("last_time_logout").getTime();
-                long createTime = rsAccount.getTimestamp("create_time").getTime();
+                Timestamp lLoginTs = rsAccount.getTimestamp("last_time_login");
+                Timestamp lLogoutTs = rsAccount.getTimestamp("last_time_logout");
+                Timestamp cTimeTs = rsAccount.getTimestamp("create_time");
+                long lastTimeLogin = (lLoginTs != null) ? lLoginTs.getTime() : 0L;
+                long lastTimeLogout = (lLogoutTs != null) ? lLogoutTs.getTime() : 0L;
+                long createTime = (cTimeTs != null) ? cTimeTs.getTime() : 0L;
 
                 int secondsPassLogin = (int) ((System.currentTimeMillis() - lastTimeLogin) / 1000);
                 int secondsPassLogout = (int) ((System.currentTimeMillis() - lastTimeLogout) / 1000);
@@ -289,14 +304,6 @@ public class NDVSqlFetcher {
 
                 if (Manager.DEBUG && !session.isAdmin) {
                     Service.gI().sendThongBaoOK(session, "Máy chủ đang bảo trì, vui lòng quay lại sau!");
-                    return null;
-                }
-
-                if (Client.gI().getPlayerByUser(session.userId) != null) {
-                    plInGame = Client.gI().getPlayerByUser(session.userId);
-                    Client.gI().kickSession(plInGame.getSession());
-                    Client.gI().kickSession(session);
-                    Service.gI().sendThongBaoOK(session, "Ai đó đang đăng nhập tài khoản?");
                     return null;
                 }
 

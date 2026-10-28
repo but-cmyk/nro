@@ -32,7 +32,7 @@ public class RateLimiterHandler extends SimpleChannelInboundHandler<Message> {
 
         int count = packetCounter.incrementAndGet();
         if (count > maxPacketsPerSecond) {
-            Logger.warning("Phát hiện spam packet (" + count + " pkts/s) từ " + ctx.channel().remoteAddress() + " -> Đóng kết nối!");
+            Logger.warning("[NET-3] Phát hiện spam packet (" + count + " pkts/s) từ " + ctx.channel().remoteAddress() + " -> Đóng kết nối!");
             msg.cleanup();
             ctx.close();
             return;

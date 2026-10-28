@@ -71,14 +71,17 @@ public class NroChannelHandler extends SimpleChannelInboundHandler<Message> {
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         NettySession session = ctx.channel().attr(SESSION_ATTR).get();
         if (session != null) {
+            Logger.log("[NET-3-DISCONNECT] Channel Inactive (Socket đóng) cho Session ID=" + session.getID() + ", IP=" + session.getIP());
             try {
                 // Client.gI().remove() bên trong đã xử lý disconnect(session) an toàn và idempotent
                 Client.gI().remove(session);
             } catch (Exception e) {
-                Logger.logException(NroChannelHandler.class, e, "Lỗi disconnect session: " + session.getIP());
+                Logger.logException(NroChannelHandler.class, e, "[NET-3-DISCONNECT] Lỗi disconnect session: " + session.getIP());
             } finally {
                 session.dispose();
             }
+        } else {
+            Logger.log("[NET-3-DISCONNECT] Channel Inactive trên unassigned socket: " + ctx.channel().remoteAddress());
         }
         super.channelInactive(ctx);
     }
@@ -87,7 +90,7 @@ public class NroChannelHandler extends SimpleChannelInboundHandler<Message> {
     public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
         if (evt instanceof IdleStateEvent idleEvent) {
             if (idleEvent.state() == IdleState.READER_IDLE) {
-                Logger.warning("Đóng kết nối Zombie/Idle quá 3 phút từ " + ctx.channel().remoteAddress());
+                Logger.warning("[NET-3-DISCONNECT] Đóng kết nối Zombie/Idle quá 3 phút từ " + ctx.channel().remoteAddress());
                 ctx.close();
             }
         } else {
@@ -97,12 +100,9 @@ public class NroChannelHandler extends SimpleChannelInboundHandler<Message> {
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-        if (cause instanceof IOException) {
-            // Ngắt kết nối socket thông thường (đóng app, mất mạng)
-            ctx.close();
-        } else {
-            Logger.error("Netty Exception trên " + ctx.channel().remoteAddress(), cause);
-            ctx.close();
-        }
+        NettySession session = ctx.channel().attr(SESSION_ATTR).get();
+        String sessionInfo = (session != null ? "Session ID=" + session.getID() + ", IP=" + session.getIP() : ctx.channel().remoteAddress().toString());
+        Logger.error("[NET-3-DISCONNECT] Exception caught trên " + sessionInfo + " -> Lý do: " + cause.getMessage(), cause);
+        ctx.close();
     }
 }

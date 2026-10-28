@@ -136,6 +136,27 @@ namespace Game1
                 }
                 switch (msg.command)
                 {
+                    case 42:
+                        GameCanvas.endDlg();
+                        LoginScr.isContinueToLogin = false;
+                        Char.isLoadingMap = false;
+                        try
+                        {
+                            sbyte haveName = msg.reader().readByte();
+                            if (GameCanvas.registerScr == null)
+                            {
+                                GameCanvas.registerScr = new Game1.Assets.src.g.RegisterScreen(haveName);
+                            }
+                        }
+                        catch (Exception)
+                        {
+                            if (GameCanvas.registerScr == null)
+                            {
+                                GameCanvas.registerScr = new Game1.Assets.src.g.RegisterScreen(0);
+                            }
+                        }
+                        GameCanvas.registerScr.switchToMe();
+                        break;
                     case 0:
                         readLogin(msg);
                         break;
@@ -1222,11 +1243,13 @@ namespace Game1
                             }
                             bool flag7 = true;
                             sbyte b36 = msg.reader().readByte();
+                            Res.onScreenDebug("RECV_CMD-74 type=" + b36);
                             if (b36 == 0)
                             {
                                 int num91 = msg.reader().readInt();
                                 string text3 = Rms.loadRMSString("ResVersion");
                                 int num92 = ((text3 == null || !(text3 != string.Empty)) ? (-1) : int.Parse(text3));
+                                Res.onScreenDebug("RES_VER: Sv=" + num91 + ", RMS=" + num92);
                                 if (text3 != null)
                                 {
                                     mSystem.println(num91 + ">>>strVersion: " + text3 + " >> " + num92);
@@ -1237,29 +1260,77 @@ namespace Game1
                                 }
                                 if (Session_ME.gI().isCompareIPConnect())
                                 {
-                                    if (num92 == -1 || num92 != num91)
+                                    if (ServerListScreen.isGetData)
                                     {
+                                        Res.onScreenDebug("isGetData=true -> Requesting resource...");
+                                        ServerListScreen.tDownloadTimeout = 0;
+                                        Service.gI().setClientType();
+                                        Service.gI().getResource(1, null);
+                                    }
+                                    else if (num92 == -1 || num92 != num91)
+                                    {
+                                        Res.onScreenDebug("Res outdated -> show2()");
                                         GameCanvas.serverScreen.show2();
                                     }
                                     else
                                     {
                                         Res.outz("login ngay");
+                                        Res.onScreenDebug("Res match! Skip download -> Login");
                                         SmallImage.loadBigRMS();
+                                        ServerListScreen.isGetData = false;
+                                        ServerListScreen.tDownloadTimeout = 0;
                                         ServerListScreen.loadScreen = true;
-                                        if (!(GameCanvas.currentScreen is SplashScr))
+                                        ServerListScreen.testConnect = 2;
+                                        ServerListScreen.isAutoConect = false;
+                                        Char.isLoadingMap = false;
+                                        LoginScr.isContinueToLogin = false;
+                                        ServerListScreen.waitToLogin = false;
+                                        ServerListScreen.isWait = false;
+                                        GameCanvas.endDlg();
+                                        SplashScr.imgLogo = null;
+
+                                        string savedAcc = Rms.loadRMSString("acc");
+                                        string savedPass = Rms.loadRMSPassword("pass");
+                                        bool hasSavedAccount = !string.IsNullOrEmpty(savedAcc) && !string.IsNullOrEmpty(savedPass);
+
+                                        if (hasSavedAccount)
                                         {
-                                            SplashScr.imgLogo = null;
-                                            if (GameCanvas.currentScreen != GameCanvas.loginScr)
+                                            if (GameCanvas.loginScr == null)
                                             {
-                                                GameCanvas.serverScreen.switchToMe();
+                                                GameCanvas.loginScr = new LoginScr();
                                             }
-                                            else
+                                            GameCanvas.loginScr.setUserPass();
+                                            GameCanvas.loginScr.switchToMe();
+                                            GameCanvas.loginScr.doLogin();
+                                        }
+                                        else
+                                        {
+                                            string userAo = Rms.loadRMSString("userAo" + ServerListScreen.ipSelect);
+                                            if (!string.IsNullOrEmpty(userAo))
                                             {
                                                 if (GameCanvas.loginScr == null)
                                                 {
                                                     GameCanvas.loginScr = new LoginScr();
                                                 }
-                                                GameCanvas.loginScr.doLogin();
+                                                GameCanvas.loginScr.isLogin2 = true;
+                                                GameCanvas.loginScr.switchToMe();
+                                                Service.gI().login(userAo, string.Empty, GameMidlet.VERSION, 1);
+                                                GameCanvas.startWaitDlg();
+                                            }
+                                            else if (ServerListScreen.waitToLogin || (GameCanvas.loginScr != null && GameCanvas.loginScr.isLogin2))
+                                            {
+                                                Res.onScreenDebug("Auto Login2 (Chơi mới)...");
+                                                Service.gI().login2(string.Empty);
+                                                GameCanvas.startWaitDlg();
+                                            }
+                                            else
+                                            {
+                                                if (GameCanvas.serverScreen == null)
+                                                {
+                                                    GameCanvas.serverScreen = new ServerListScreen();
+                                                }
+                                                GameCanvas.serverScreen.switchToMe();
+                                                GameCanvas.endDlg();
                                             }
                                         }
                                     }
@@ -1280,6 +1351,7 @@ namespace Game1
                                 ServerListScreen.nBig = nBig;
                                 ServerListScreen.demPercent = 0;
                                 ServerListScreen.percent = 0;
+                                Res.onScreenDebug("SIZE_RES: total=" + nBig + " files -> req type 2");
                                 Service.gI().getResource(2, null);
                             }
                             if (b36 == 2)
@@ -1302,9 +1374,16 @@ namespace Game1
                                     sbyte[] data = ArrayCast.SafeAllocSByte(num93, 10485760);
                                     msg.reader().read(ref data, 0, num93);
                                     Rms.saveRMS(filename, data);
+                                    Res.debugLastFile = filename + " (" + num93 + "B)";
+                                    if (ServerListScreen.demPercent % 100 == 0 || ServerListScreen.demPercent == 1 || ServerListScreen.demPercent == ServerListScreen.nBig)
+                                    {
+                                        Res.onScreenDebug("DOWN: " + ServerListScreen.demPercent + "/" + totalFiles + " (" + ServerListScreen.percent + "%) " + filename);
+                                    }
                                 }
-                                catch (Exception)
+                                catch (Exception exFile)
                                 {
+                                    Res.debugLastError = "File err: " + exFile.Message;
+                                    Res.onScreenDebug("ERR_SAVE_FILE: " + exFile.Message);
                                     GameCanvas.startOK(mResources.pls_restart_game_error, 8885, null);
                                 }
                             }
@@ -1312,22 +1391,44 @@ namespace Game1
                             {
                                 isLoadingData = false;
                                 ServerListScreen.isGetData = false;
+                                ServerListScreen.stopDownload = false;
+                                ServerListScreen.percent = 100;
                                 int num94 = msg.reader().readInt();
                                 Res.outz("last version= " + num94);
+                                Res.onScreenDebug("FINISH_RES: vs=" + num94 + "! Loading BigRMS...");
                                 Rms.saveRMSString("ResVersion", num94 + string.Empty);
                                 Service.gI().getResource(3, null);
+                                Char.isLoadingMap = false;
+                                LoginScr.isContinueToLogin = false;
+                                ServerListScreen.waitToLogin = false;
+                                ServerListScreen.isWait = false;
                                 GameCanvas.endDlg();
-                                if (!(GameCanvas.currentScreen is SplashScr))
-                                {
-                                    SplashScr.imgLogo = null;
-                                }
+                                SplashScr.imgLogo = null;
                                 SmallImage.loadBigRMS();
                                 mSystem.gcc();
                                 ServerListScreen.bigOk = true;
                                 ServerListScreen.loadScreen = true;
                                 GameScr.gI().loadGameScr();
-                                if (GameCanvas.currentScreen != GameCanvas.loginScr)
+
+                                string savedAccAfterDl = Rms.loadRMSString("acc");
+                                string savedPassAfterDl = Rms.loadRMSPassword("pass");
+                                bool hasAccAfterDl = !string.IsNullOrEmpty(savedAccAfterDl) && !string.IsNullOrEmpty(savedPassAfterDl);
+                                if (hasAccAfterDl)
                                 {
+                                    if (GameCanvas.loginScr == null)
+                                    {
+                                        GameCanvas.loginScr = new LoginScr();
+                                    }
+                                    GameCanvas.loginScr.setUserPass();
+                                    GameCanvas.loginScr.switchToMe();
+                                    GameCanvas.loginScr.doLogin();
+                                }
+                                else
+                                {
+                                    if (GameCanvas.serverScreen == null)
+                                    {
+                                        GameCanvas.serverScreen = new ServerListScreen();
+                                    }
                                     GameCanvas.serverScreen.switchToMe();
                                 }
                             }
@@ -2889,6 +2990,12 @@ namespace Game1
                             }
                             break;
                         }
+                    case Cmd.LOGINFAIL: // -102
+                        LoginScr.isLoggingIn = false;
+                        Char.isLoadingMap = false;
+                        GameCanvas.endDlg();
+                        GameCanvas.startOKDlg("Đăng nhập thất bại, vui lòng kiểm tra lại tài khoản hoặc thử lại!");
+                        break;
                     case -26:
                         ServerListScreen.testConnect = 2;
                         GameCanvas.debug("SA2", 2);
@@ -2921,40 +3028,68 @@ namespace Game1
                     case 81:
                         {
                             GameCanvas.debug("SXX4", 2);
-                            Mob mob8 = (Mob)GameScr.vMob.elementAt(msg.reader().readUnsignedByte());
-                            mob8.isDisable = msg.reader().readBool();
+                            int mobIdx = msg.reader().readUnsignedByte();
+                            bool isDisable = msg.reader().readBool();
+                            if (GameScr.vMob != null && mobIdx >= 0 && mobIdx < GameScr.vMob.size())
+                            {
+                                Mob mob8 = (Mob)GameScr.vMob.elementAt(mobIdx);
+                                if (mob8 != null) mob8.isDisable = isDisable;
+                            }
                             break;
                         }
                     case 82:
                         {
                             GameCanvas.debug("SXX5", 2);
-                            Mob mob8 = (Mob)GameScr.vMob.elementAt(msg.reader().readUnsignedByte());
-                            mob8.isDontMove = msg.reader().readBool();
+                            int mobIdx = msg.reader().readUnsignedByte();
+                            bool isDontMove = msg.reader().readBool();
+                            if (GameScr.vMob != null && mobIdx >= 0 && mobIdx < GameScr.vMob.size())
+                            {
+                                Mob mob8 = (Mob)GameScr.vMob.elementAt(mobIdx);
+                                if (mob8 != null) mob8.isDontMove = isDontMove;
+                            }
                             break;
                         }
                     case 85:
                         {
                             GameCanvas.debug("SXX5", 2);
-                            Mob mob8 = (Mob)GameScr.vMob.elementAt(msg.reader().readUnsignedByte());
-                            mob8.isFire = msg.reader().readBool();
+                            int mobIdx = msg.reader().readUnsignedByte();
+                            bool isFire = msg.reader().readBool();
+                            if (GameScr.vMob != null && mobIdx >= 0 && mobIdx < GameScr.vMob.size())
+                            {
+                                Mob mob8 = (Mob)GameScr.vMob.elementAt(mobIdx);
+                                if (mob8 != null) mob8.isFire = isFire;
+                            }
                             break;
                         }
                     case 86:
                         {
                             GameCanvas.debug("SXX5", 2);
-                            Mob mob8 = (Mob)GameScr.vMob.elementAt(msg.reader().readUnsignedByte());
-                            mob8.isIce = msg.reader().readBool();
-                            if (!mob8.isIce)
+                            int mobIdx = msg.reader().readUnsignedByte();
+                            bool isIce = msg.reader().readBool();
+                            if (GameScr.vMob != null && mobIdx >= 0 && mobIdx < GameScr.vMob.size())
                             {
-                                ServerEffect.addServerEffect(77, mob8.x, mob8.y - 9, 1);
+                                Mob mob8 = (Mob)GameScr.vMob.elementAt(mobIdx);
+                                if (mob8 != null)
+                                {
+                                    mob8.isIce = isIce;
+                                    if (!mob8.isIce)
+                                    {
+                                        ServerEffect.addServerEffect(77, mob8.x, mob8.y - 9, 1);
+                                    }
+                                }
                             }
                             break;
                         }
                     case 87:
                         {
                             GameCanvas.debug("SXX5", 2);
-                            Mob mob8 = (Mob)GameScr.vMob.elementAt(msg.reader().readUnsignedByte());
-                            mob8.isWind = msg.reader().readBool();
+                            int mobIdx = msg.reader().readUnsignedByte();
+                            bool isWind = msg.reader().readBool();
+                            if (GameScr.vMob != null && mobIdx >= 0 && mobIdx < GameScr.vMob.size())
+                            {
+                                Mob mob8 = (Mob)GameScr.vMob.elementAt(mobIdx);
+                                if (mob8 != null) mob8.isWind = isWind;
+                            }
                             break;
                         }
                     case 56:
@@ -2962,10 +3097,11 @@ namespace Game1
                             GameCanvas.debug("SXX6", 2);
                             @char = null;
                             int num18 = msg.reader().readInt();
-                            if (num18 == Char.myCharz().charID)
+                            Char myChar = Char.myCharz();
+                            if (myChar != null && num18 == myChar.charID)
                             {
                                 bool flag4 = false;
-                                @char = Char.myCharz();
+                                @char = myChar;
                                 @char.cHP = msg.readInt3Byte();
                                 long num41 = msg.readInt3Byte();
                                 Res.outz("dame hit = " + num41);
@@ -3043,34 +3179,39 @@ namespace Game1
                         }
                     case 83:
                         {
-                            GameCanvas.debug("SXX8", 2);
-                            int num18 = msg.reader().readInt();
-                            @char = ((num18 != Char.myCharz().charID) ? GameScr.findCharInMap(num18) : Char.myCharz());
+                                                      int num18 = msg.reader().readInt();
+                            Char myChar = Char.myCharz();
+                            @char = (myChar != null && num18 == myChar.charID) ? myChar : GameScr.findCharInMap(num18);
                             if (@char == null)
                             {
                                 return;
                             }
-                            Mob mobToAttack = (Mob)GameScr.vMob.elementAt(msg.reader().readUnsignedByte());
-                            if (@char.mobMe != null)
+                            int mobIdx = msg.reader().readUnsignedByte();
+                            if (GameScr.vMob != null && mobIdx >= 0 && mobIdx < GameScr.vMob.size())
                             {
-                                @char.mobMe.attackOtherMob(mobToAttack);
+                                Mob mobToAttack = (Mob)GameScr.vMob.elementAt(mobIdx);
+                                if (@char.mobMe != null && mobToAttack != null)
+                                {
+                                    @char.mobMe.attackOtherMob(mobToAttack);
+                                }
                             }
                             break;
                         }
                     case 84:
                         {
                             int num18 = msg.reader().readInt();
-                            if (num18 == Char.myCharz().charID)
+                            Char myChar = Char.myCharz();
+                            if (myChar != null && num18 == myChar.charID)
                             {
-                                @char = Char.myCharz();
+                                @char = myChar;
                             }
                             else
                             {
                                 @char = GameScr.findCharInMap(num18);
-                                if (@char == null)
-                                {
-                                    return;
-                                }
+                            }
+                            if (@char == null)
+                            {
+                                return;
                             }
                             @char.cHP = @char.cHPFull;
                             @char.cMP = @char.cMPFull;
@@ -3083,7 +3224,12 @@ namespace Game1
                         GameCanvas.debug("SA5", 2);
                         Cout.LogWarning("Controler RESET_POINT  " + Char.ischangingMap);
                         Char.isLockKey = false;
-                        Char.myCharz().setResetPoint(msg.reader().readShort(), msg.reader().readShort());
+                        short rX = msg.reader().readShort();
+                        short rY = msg.reader().readShort();
+                        if (Char.myCharz() != null)
+                        {
+                            Char.myCharz().setResetPoint(rX, rY);
+                        }
                         break;
                     case -29:
                         messageNotLogin(msg);
@@ -4621,15 +4767,19 @@ namespace Game1
                             break;
                         }
                     case 19:
-                        Char.myCharz().countKill = msg.reader().readUnsignedShort();
-                        Char.myCharz().countKillMax = msg.reader().readUnsignedShort();
+                        if (Char.myCharz() != null)
+                        {
+                            Char.myCharz().countKill = msg.reader().readUnsignedShort();
+                            Char.myCharz().countKillMax = msg.reader().readUnsignedShort();
+                        }
                         break;
                 }
                 GameCanvas.debug("SA92", 2);
             }
             catch (Exception ex41)
             {
-                Res.err("[Controller] [error] " + ex41.StackTrace + " msg: " + ex41.Message + " cause " + ex41.Data);
+                sbyte cmdErr = (msg != null) ? msg.command : (sbyte)0;
+                Res.err("[Controller] [error] cmd=" + cmdErr + " " + ex41.StackTrace + " msg: " + ex41.Message + " cause " + ex41.Data);
             }
             finally
             {
@@ -4655,6 +4805,9 @@ namespace Game1
                 long ppoint = msg.reader().readLong();
                 ChooseCharScr.playerData[i] = new PlayerData(playerID, name, head, body, leg, ppoint);
             }
+            GameCanvas.endDlg();
+            Char.isLoadingMap = false;
+            LoginScr.isContinueToLogin = false;
             GameCanvas.chooseCharScr.switchToMe();
             GameCanvas.chooseCharScr.updateChooseCharacter((byte)b);
         }

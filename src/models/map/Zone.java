@@ -295,6 +295,8 @@ public class Zone {
             // Normal player
             if (!this.players.contains(player)) {
                 this.players.add(player);
+                Logger.log(String.format("[NET-4] [Zone] Player '%s' (ID: %d) vào Zone %d của Map %d (Total players: %d)",
+                        player.name, player.id, this.zoneId, (this.map != null ? this.map.mapId : -1), this.players.size()));
                 if (player.clan != null) {
                     updateClanPartyBuff(player.clan.id);
                 }
@@ -539,6 +541,11 @@ public ItemMap getItemMapByTempId(int tempId) {
                                 }
                                 InventoryService.gI().sendItemBags(player);
                                 player.effect.addPointOngThanVeChai();
+                                if (player.playerTask != null && player.playerTask.taskdh != null) {
+                                    player.playerTask.taskdh.renew();
+                                    player.playerTask.taskdh.NhatDo++;
+                                    player.playerTask.taskdh.ResetTime = System.currentTimeMillis();
+                                }
                             }
                         }
                         if (item.template.id == 73) {

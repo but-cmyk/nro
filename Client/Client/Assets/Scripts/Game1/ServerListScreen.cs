@@ -88,11 +88,14 @@ namespace Game1
     
     	public static int demPercent;
     
+    	public static int lastDemPercent = -1;
+    
     	public static int maxBg;
     
     	public static bool isGetData;
     
     	public static int tDownloadTimeout;
+    	public static int tDownloadGrace = 0;
     
     	public static Command cmdDownload;
     
@@ -616,22 +619,75 @@ namespace Game1
     		}
     		if (!loadScreen && isGetData)
     		{
-    			tDownloadTimeout++;
-    			if (tDownloadTimeout > 450 && percent == 0)
+    			if (tDownloadGrace > 0)
+    			{
+    				tDownloadGrace--;
+    			}
+    			else if (!Session_ME.gI().isConnected() && !Session_ME.connecting)
     			{
     				tDownloadTimeout = 0;
     				isGetData = false;
     				loadScreen = true;
+    				bigOk = true;
     				Session_ME.gI().close();
-    				GameCanvas.startOK("Không thể kết nối đến máy chủ để tải dữ liệu.\nVui lòng kiểm tra Server đã bật chưa và thử lại!", 8885, null);
+    				GameCanvas.startOK("Mất kết nối máy chủ khi đang tải dữ liệu.\nVui lòng kiểm tra Server và thử lại!", 8885, null);
+    				return;
+    			}
+    			if (lastDemPercent != demPercent)
+    			{
+    				lastDemPercent = demPercent;
+    				tDownloadTimeout = 0;
+    			}
+    			else
+    			{
+    				tDownloadTimeout++;
+    				if (tDownloadTimeout > 450)
+    				{
+    					tDownloadTimeout = 0;
+    					isGetData = false;
+    					loadScreen = true;
+    					bigOk = true;
+    					Session_ME.gI().close();
+    					GameCanvas.startOK("Quá trình tải dữ liệu bị gián đoạn.\nVui lòng kiểm tra kết nối Server và thử lại!", 8885, null);
+    					return;
+    				}
+    			}
+    		}
+    		else if (!loadScreen && !bigOk)
+    		{
+    			// Cứu hộ an toàn: Ngăn chặn shuriken xoay vô tận khi bị kẹt ngoài luồng isGetData
+    			tDownloadTimeout++;
+    			if (tDownloadTimeout > 300)
+    			{
+    				tDownloadTimeout = 0;
+    				isGetData = false;
+    				loadScreen = true;
+    				bigOk = true;
+    				Session_ME.gI().close();
+    				GameCanvas.startOK("Không thể tải tài nguyên game.\nVui lòng kiểm tra Server và thử lại!", 8885, null);
     				return;
     			}
     		}
     		else
     		{
     			tDownloadTimeout = 0;
+    			lastDemPercent = -1;
     		}
     		base.update();
+    		if (Session_ME.gI().isConnected() || Session_ME.connecting)
+    		{
+    			if (Session_ME.gI().isConnected())
+    			{
+    				testConnect = 2;
+    				isAutoConect = false;
+    				flagServer = 0;
+    				if (GameCanvas.currentDialog != null && GameCanvas.currentDialog == GameCanvas.msgdlg)
+    				{
+    					GameCanvas.endDlg();
+    				}
+    			}
+    			return;
+    		}
     		if (Char.isLoadingMap || !loadScreen || !isAutoConect || GameCanvas.currentScreen != this || testConnect == 2)
     		{
     			return;
@@ -888,6 +944,10 @@ namespace Game1
 			cmd[3 + nCmdPlay].caption = mResources.option;
 		}
 		Char.isLoadingMap = false;
+		LoginScr.timeLogin = 0;
+		LoginScr.isLoggingIn = false;
+		LoginScr.isContinueToLogin = false;
+		GameCanvas.endDlg();
 		mSystem.resetCurInapp();
 		if (GameCanvas.currentScreen is SplashScr)
 		{
@@ -906,6 +966,11 @@ namespace Game1
 		initCommand();
 		isWait = false;
 		GameCanvas.loginScr = null;
+		Char.isLoadingMap = false;
+		LoginScr.timeLogin = 0;
+		LoginScr.isLoggingIn = false;
+		LoginScr.isContinueToLogin = false;
+		GameCanvas.endDlg();
 		string text = Rms.loadRMSString("ResVersion");
 		int num = ((text == null || !(text != string.Empty)) ? (-1) : int.Parse(text));
 		if (num > 0)
@@ -935,18 +1000,19 @@ namespace Game1
     
     	public void cancel()
     	{
+    		demPercent = 0;
+    		percent = 0;
+    		stopDownload = false;
+    		isGetData = false;
+    		loadScreen = true;
+    		bigOk = true;
+    		GameCanvas.endDlg();
+    		Session_ME.gI().close();
     		if (GameCanvas.serverScreen == null)
     		{
     			GameCanvas.serverScreen = new ServerListScreen();
     		}
-    		demPercent = 0;
-    		percent = 0;
-    		stopDownload = true;
-    		GameCanvas.serverScreen.show2();
-    		isGetData = false;
-    		mSystem.println(">>>>>isGetData: " + isGetData);
-    		cmdDownload.isFocus = true;
-    		center = new Command(string.Empty, this, 2, null);
+    		GameCanvas.serverScreen.switchToMe();
     	}
     
     	public void perform(int idAction, object p)
@@ -962,6 +1028,8 @@ namespace Game1
     			isAutoConect = false;
     			countDieConnect = 0;
     			loadScreen = true;
+    			bigOk = true;
+    			stopDownload = false;
     			testConnect = 0;
     			isGetData = false;
     			mSystem.println(">>>>>isGetData: " + isGetData);
@@ -1000,25 +1068,36 @@ namespace Game1
     			{
     				GameCanvas.loginScr = new LoginScr();
     			}
+    			GameCanvas.loginScr.setUserPass();
     			GameCanvas.loginScr.switchToMe();
     			bool flag = Rms.loadRMSString("acc") != null && !Rms.loadRMSString("acc").Equals(string.Empty);
     			bool flag2 = Rms.loadRMSString("userAo" + ipSelect) != null && !Rms.loadRMSString("userAo" + ipSelect).Equals(string.Empty);
+    			waitToLogin = true;
     			if (!flag && !flag2)
     			{
-    				GameCanvas.connect();
-    				string text = Rms.loadRMSString("userAo" + ipSelect);
-    				if (text == null || text.Equals(string.Empty))
+    				if (GameCanvas.loginScr != null)
     				{
-    					Service.gI().login2(string.Empty);
+    					GameCanvas.loginScr.isLogin2 = true;
+    				}
+    				string text = Rms.loadRMSString("userAo" + ipSelect);
+    				if (!Session_ME.gI().isConnected())
+    				{
+    					GameCanvas.connect();
     				}
     				else
     				{
-    					GameCanvas.loginScr.isLogin2 = true;
-    					GameCanvas.connect();
-    					Service.gI().setClientType();
-    					Service.gI().login(text, string.Empty, GameMidlet.VERSION, 1);
+    					if (text == null || text.Equals(string.Empty))
+    					{
+    						Service.gI().login2(string.Empty);
+    					}
+    					else
+    					{
+    						GameCanvas.loginScr.isLogin2 = true;
+    						Service.gI().setClientType();
+    						Service.gI().login(text, string.Empty, GameMidlet.VERSION, 1);
+    					}
     				}
-    				if (Session_ME.connected)
+    				if (Session_ME.connected || Session_ME.connecting)
     				{
     					GameCanvas.startWaitDlg();
     				}
@@ -1075,6 +1154,7 @@ namespace Game1
     			{
     				GameCanvas.loginScr = new LoginScr();
     			}
+    			GameCanvas.loginScr.setUserPass();
     			GameCanvas.loginScr.switchToMe();
     		}
     		if (idAction == 8)
@@ -1157,9 +1237,21 @@ namespace Game1
     		if (idAction == 15)
     		{
     			GameCanvas.endDlg();
+    			Res.onScreenDebug("ACTION 15: Xóa dữ liệu RMS -> Bắt đầu tải lại...");
     			Rms.clearAll();
     			Rms.clearLoginData();
-    			loadIP();
+    			Rms.saveRMSString("ResVersion", "-1");
+
+    			// Reset toàn bộ biến phiên bản lưu trong RAM
+    			GameScr.vcData = -1;
+    			GameScr.vcMap = -1;
+    			GameScr.vcSkill = -1;
+    			GameScr.vcItem = -1;
+    			GameScr.vsData = -1;
+    			GameScr.vsMap = -1;
+    			GameScr.vsSkill = -1;
+    			GameScr.vsItem = -1;
+
     			if (GameCanvas.loginScr != null)
     			{
     				if (GameCanvas.loginScr.tfUser != null)
@@ -1178,6 +1270,7 @@ namespace Game1
     			SmallImage.imgNew = null;
     			BgItem.clearHashTable();
     			TileMap.vItemBg.removeAllElements();
+    			Session_ME.gI().close();
     			startDownloadData();
     		}
     		if (idAction == 16)
@@ -1241,6 +1334,11 @@ namespace Game1
     
     	public void startDownloadData()
 	{
+		if (isGetData && !loadScreen && Session_ME.gI().isConnected())
+		{
+			// Đang trong tiến trình download, bỏ qua request gọi trùng lặp
+			return;
+		}
 		GameScr.loadCamera(true, -1, -1);
 		GameScr.cmx = 100;
 		GameScr.cmy = 200;
@@ -1252,7 +1350,9 @@ namespace Game1
 		stopDownload = false;
 		p = 0;
 		demPercent = 0;
+		lastDemPercent = -1;
 		tDownloadTimeout = 0;
+		tDownloadGrace = 90;
 		strWait = mResources.downloading_data;
 		Char.isLoadingMap = false;
 		TileMap.lastBgID = -1;
@@ -1273,11 +1373,14 @@ namespace Game1
 			GameMidlet.PORT = port[ipSelect];
 		}
 		GameCanvas.connect();
+		Res.onScreenDebug("START_DL -> " + GameMidlet.IP + ":" + GameMidlet.PORT);
+		Service.gI().setClientType();
 		Service.gI().getResource(1, null);
 	}
 
     	public void show2()
 	{
+		Res.onScreenDebug("CALL_show2()");
 		startDownloadData();
 	}
     

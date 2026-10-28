@@ -328,6 +328,10 @@ namespace Game1
                 }
                 if (!File.Exists(text))
                 {
+                    if (filename == "ResVersion" || filename == "vsRes" || filename.StartsWith("NR"))
+                    {
+                        return null;
+                    }
                     try
                     {
                         string userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
@@ -379,6 +383,41 @@ namespace Game1
                     rmsCache.Clear();
                 }
                 Cout.Log("clean rms");
+                string userProfile = string.Empty;
+                try
+                {
+                    userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+                }
+                catch
+                {
+                }
+                string[] folders = new string[]
+                {
+                    GetiPhoneDocumentsPath(),
+                    rootPersistentPath,
+                    Application.persistentDataPath,
+                    (rootPersistentPath != null) ? (rootPersistentPath + "/Game1") : null,
+                    !string.IsNullOrEmpty(userProfile) ? (userProfile + "/AppData/LocalLow/Team/NgocRongOnline/Game1") : null,
+                    !string.IsNullOrEmpty(userProfile) ? (userProfile + "/AppData/LocalLow/Team/NgocRongOnline") : null,
+                    !string.IsNullOrEmpty(userProfile) ? (userProfile + "/AppData/LocalLow/Team/Nro6Tab/Game1") : null,
+                    !string.IsNullOrEmpty(userProfile) ? (userProfile + "/AppData/LocalLow/Team/Nro6Tab") : null,
+                    "Game1",
+                    "."
+                };
+                foreach (string folder in folders)
+                {
+                    if (string.IsNullOrEmpty(folder) || !Directory.Exists(folder)) continue;
+                    try
+                    {
+                        string resVerPath = folder + "/ResVersion";
+                        if (File.Exists(resVerPath)) File.Delete(resVerPath);
+                        string vsResPath = folder + "/vsRes";
+                        if (File.Exists(vsResPath)) File.Delete(vsResPath);
+                    }
+                    catch
+                    {
+                    }
+                }
                 string dirPath = GetiPhoneDocumentsPath();
                 if (Directory.Exists(dirPath))
                 {
@@ -413,7 +452,7 @@ namespace Game1
         {
             try
             {
-                string[] filesToDelete = new string[] { "acc", "pass", "check", "NRIPlink", "svselect" };
+                string[] filesToDelete = new string[] { "acc", "pass", "check", "NRIPlink", "svselect", "ResVersion", "vsRes" };
                 string userProfile = string.Empty;
                 try
                 {
@@ -480,9 +519,11 @@ namespace Game1
                     PlayerPrefs.DeleteKey("Game1_acc");
                     PlayerPrefs.DeleteKey("Game1_pass");
                     PlayerPrefs.DeleteKey("Game1_check");
+                    PlayerPrefs.DeleteKey("Game1_ResVersion");
                     PlayerPrefs.DeleteKey("acc");
                     PlayerPrefs.DeleteKey("pass");
                     PlayerPrefs.DeleteKey("check");
+                    PlayerPrefs.DeleteKey("ResVersion");
                     for (int i = 0; i <= 30; i++)
                     {
                         PlayerPrefs.DeleteKey("Game1_userAo" + i);

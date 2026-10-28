@@ -19,6 +19,7 @@
 - **Protocol Sync 1:1**:
   - Khi Server gọi `msg.writer().writeByte(a); msg.writer().writeInt(b);`, Client tại `Controller.cs` bắt buộc phải đọc đúng thứ tự: `msg.reader().readByte(); msg.reader().readInt();`.
   - Mọi trường chuỗi UTF-8 (`writeUTF`) nếu giá trị `null` phải ghi chuỗi rỗng `""`, tránh ném ngoại lệ stream.
+- **Khung Handshake -27 là 3 byte**: Client gửi `Message(-27)` rỗng => `[cmd][sizeHi=0][sizeLo=0]`. Decoder tuyệt đối không được đọc riêng 1 byte cho `-27` (2 byte size còn lại sẽ làm lệch mọi frame sau, gây treo loading vô tận). Regression test: `tools/test/TestHandshakeFraming.java`.
 - **Backpressure & Flush an toàn**:
   - Kiểm tra `channel.isWritable()` trước khi gửi khối dữ liệu lớn (như dữ liệu data game `-74` hay danh sách item).
   - Không drop hoặc đóng socket đột ngột khi đang trong tiến trình truyền tải dữ liệu ban đầu.

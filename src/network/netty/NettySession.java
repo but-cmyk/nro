@@ -75,11 +75,7 @@ public class NettySession extends MySession {
                     Message currentMsg;
                     while ((currentMsg = messageMailbox.poll()) != null) {
                         try {
-                            if (currentMsg.command == -27) { // Cmd_message.GET_SESSION_ID
-                                this.sendKey();
-                            } else {
-                                Controller.gI().onMessage(this, currentMsg);
-                            }
+                            Controller.gI().onMessage(this, currentMsg);
                         } catch (Exception e) {
                             Logger.logException(NettySession.class, e, "Lỗi xử lý packet cmd " + currentMsg.command + " cho IP " + this.getIP());
                         } finally {
@@ -120,6 +116,7 @@ public class NettySession extends MySession {
         if (!this.isConnected()) {
             return;
         }
+        Logger.log("[NET-3-DISCONNECT] NettySession.disconnect() được gọi cho Session ID=" + this.getID() + ", IP=" + this.getIP());
         this.setConnected(false);
         this.setSentKey(false);
         if (this.channel != null) {
@@ -130,6 +127,7 @@ public class NettySession extends MySession {
 
     @Override
     public void dispose() {
+        data.DataGame.removeActiveDownload(this);
         SessionManager.gI().removeSession(this);
         // Dọn sạch các packet còn tồn đọng trong mailbox khi disconnect
         Message remainingMsg;

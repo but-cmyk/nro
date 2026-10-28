@@ -4,6 +4,8 @@ import models.Template.HeadAvatar;
 import models.Template.MapTemplate;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -94,7 +96,7 @@ public class DataGame {
                     return t;
                 }
             },
-            new ThreadPoolExecutor.DiscardPolicy()
+            new ThreadPoolExecutor.AbortPolicy()
     );
 
     private static final Set<MySession> ACTIVE_RES_DOWNLOADS = ConcurrentHashMap.newKeySet();
@@ -129,12 +131,24 @@ public class DataGame {
         }
     }
 
+    public static void removeActiveDownload(MySession session) {
+        if (session != null) {
+            ACTIVE_RES_DOWNLOADS.remove(session);
+        }
+    }
+
     public static List<ResFile> getResFiles(int zoom) {
         return RES_CACHE.computeIfAbsent(zoom, z -> {
             List<ResFile> list = new ArrayList<>();
             File dir = new File("data/res/x" + z);
             File[] files = dir.listFiles();
+            if (files == null || files.length == 0) {
+                Logger.warning("Thư mục data/res/x" + z + " rỗng hoặc không tồn tại, fallback sang x2.");
+                dir = new File("data/res/x2");
+                files = dir.listFiles();
+            }
             if (files != null) {
+                Arrays.sort(files, Comparator.comparing(File::getName));
                 for (File f : files) {
                     byte[] data = FileIO.readFile(f.getAbsolutePath());
                     if (data != null) {
@@ -719,10 +733,11 @@ public class DataGame {
             msg.writer().writeByte(1);
             int zoom = (session.zoomLevel > 0 && session.zoomLevel <= 4) ? session.zoomLevel : 2;
             List<ResFile> files = getResFiles(zoom);
+            Logger.log("[SERVER CMD -74] Gửi SizeRes: IP=" + session.getIP() + ", ZoomLevel=" + session.zoomLevel + " -> filesCount=" + files.size());
             msg.writer().writeShort(files.size());
             session.sendMessage(msg);
         } catch (Exception e) {
-            // Ignore
+            Logger.error("[SERVER CMD -74] Lỗi sendSizeRes: " + e.getMessage());
         } finally {
             if (msg != null) {
                 msg.cleanup();
@@ -735,7 +750,12 @@ public class DataGame {
         try {
             int zoom = (session.zoomLevel > 0 && session.zoomLevel <= 4) ? session.zoomLevel : 2;
             List<ResFile> files = getResFiles(zoom);
+            Logger.log("[SERVER CMD -74] Bắt đầu sendRes: IP=" + session.getIP() + ", ZoomLevel=" + zoom + ", Tổng files=" + files.size());
             if (files.isEmpty()) {
+                // Không có file nào: vẫn phải gửi frame hoàn tất (type 3),
+                // nếu không client sẽ treo vô hạn ở màn hình "Đang tải dữ liệu".
+                Logger.warning("[CMD -74] Danh sách tài nguyên x" + zoom + " rỗng, gửi frame hoàn tất để client không bị treo.");
+                sendResComplete(session);
                 return;
             }
 
@@ -747,7 +767,7 @@ public class DataGame {
 
                 if (session instanceof network.netty.NettySession nettySession) {
                     int waitCount = 0;
-                    while (!nettySession.getChannel().isWritable() && nettySession.isConnected() && waitCount < 40) {
+                    while (!nettySession.getChannel().isWritable() && nettySession.isConnected() && waitCount < 200) {
                         Thread.sleep(5);
                         waitCount++;
                     }
@@ -766,26 +786,45 @@ public class DataGame {
                 msg = null;
 
                 count++;
-                if (count % 25 == 0) {
-                    Thread.sleep(2); // Pacing nhịp gửi để Netty event loop flush buffer mượt mà
+                if (count % 20 == 0) {
+                    Thread.sleep(3); // Pacing nhịp gửi để Netty event loop flush buffer mượt mà
                 }
             }
 
             if (session != null && session.isConnected()) {
                 if (session instanceof network.netty.NettySession nettySession) {
                     int waitCount = 0;
-                    while (!nettySession.getChannel().isWritable() && nettySession.isConnected() && waitCount < 40) {
+                    while (!nettySession.getChannel().isWritable() && nettySession.isConnected() && waitCount < 200) {
                         Thread.sleep(5);
                         waitCount++;
                     }
                 }
-                msg = new Message(-74);
-                msg.writer().writeByte(3);
-                msg.writer().writeInt(vsRes);
-                session.sendMessage(msg);
-                msg.cleanup();
-                msg = null;
+                sendResComplete(session);
             }
+        } catch (Exception e) {
+            Logger.logException(DataGame.class, e);
+        } finally {
+            if (msg != null) {
+                msg.cleanup();
+            }
+        }
+    }
+
+    /**
+     * Frame kết thúc quá trình tải resource (-74 type 3).
+     * Client chỉ thoát màn hình loading khi nhận được frame này,
+     * nên mọi nhánh (kể cả danh sách rỗng) đều phải gửi nó.
+     */
+    private static void sendResComplete(MySession session) {
+        if (session == null || !session.isConnected()) {
+            return;
+        }
+        Message msg = null;
+        try {
+            msg = new Message(-74);
+            msg.writer().writeByte(3);
+            msg.writer().writeInt(vsRes);
+            session.sendMessage(msg);
         } catch (Exception e) {
             Logger.logException(DataGame.class, e);
         } finally {

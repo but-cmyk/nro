@@ -1976,7 +1976,7 @@ public class TaskService {
                 int goldReward = 100_000;
                 int rubyReward = 5;
 
-                if (level == ConstTask.VERY_HARD || level == ConstTask.HELL) {
+                if (player.playerTask != null && player.playerTask.taskdh != null) {
                     if (player.playerTask.taskdh.TaskBoMong < 10) {
                         player.playerTask.taskdh.TaskBoMong++;
                         player.playerTask.taskdh.ResetTime = System.currentTimeMillis();

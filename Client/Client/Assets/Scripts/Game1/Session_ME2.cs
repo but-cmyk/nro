@@ -28,6 +28,11 @@ namespace Game1
     			sendingMessage.Add(message);
     		}
     
+    		public void Clear()
+    		{
+    			sendingMessage.Clear();
+    		}
+    
     		public void run()
     		{
     			while (connected)
@@ -148,6 +153,8 @@ namespace Game1
     					ref sbyte reference = ref key[j + 1];
     					reference ^= key[j];
     				}
+    				curR = 0;
+    				curW = 0;
     				getKeyComplete = true;
     				GameMidlet.IP2 = message.reader().readUTF();
     				GameMidlet.PORT2 = message.reader().readInt();
@@ -162,6 +169,26 @@ namespace Game1
     			}
     		}
     
+    		private static byte[] ReadFully(Stream stream, int count)
+    		{
+    			if (count <= 0)
+    			{
+    				return new byte[0];
+    			}
+    			byte[] buffer = new byte[count];
+    			int offset = 0;
+    			while (offset < count)
+    			{
+    				int read = stream.Read(buffer, offset, count - offset);
+    				if (read <= 0)
+    				{
+    					throw new IOException("Stream closed unexpectedly: expected " + count + " bytes, read " + offset);
+    				}
+    				offset += read;
+    			}
+    			return buffer;
+    		}
+
     		private Message readMessage2(sbyte cmd)
     		{
     			int num = readKey(dis.ReadSByte()) + 128;
@@ -173,11 +200,7 @@ namespace Game1
     				throw new IOException("Message2 frame size vuot nguong cho phep (2MB): " + num4);
     			}
     			sbyte[] array = ArrayCast.SafeAllocSByte(num4, 2097152);
-    			byte[] src = dis.ReadBytes(num4);
-    			if (src == null || src.Length < num4)
-    			{
-    				throw new IOException("Message2 underflow: khong du byte frame (can " + num4 + ", nhan " + (src != null ? src.Length : 0) + ")");
-    			}
+    			byte[] src = ReadFully(dataStream, num4);
                 array = ArrayCast.cast(src);
                 recvByteCount += 5 + num4;
     			int num6 = recvByteCount + sendByteCount;
@@ -223,11 +246,7 @@ namespace Game1
     					throw new IOException("Frame size vuot nguong cho phep (64KB): " + num);
     				}
     				sbyte[] array = ArrayCast.SafeAllocSByte(num, 65536);
-    				byte[] src = dis.ReadBytes(num);
-    				if (src == null || src.Length < num)
-    				{
-    					throw new IOException("Packet underflow: khong du byte frame (can " + num + ", nhan " + (src != null ? src.Length : 0) + ")");
-    				}
+    				byte[] src = ReadFully(dataStream, num);
                     array = ArrayCast.cast(src);
                     recvByteCount += 5 + num;
     				int num4 = recvByteCount + sendByteCount;
@@ -344,6 +363,7 @@ namespace Game1
     			Debug.Log("connecting...!");
     			Debug.Log("host: " + host);
     			Debug.Log("port: " + port);
+    			connecting = true;
     			initThread = new Thread(NetworkInit);
     			initThread.Start();
     		}
@@ -522,6 +542,10 @@ namespace Game1
     
     	public static sbyte readKey(sbyte b)
     	{
+    		if (key == null || key.Length == 0)
+    		{
+    			return b;
+    		}
     		sbyte[] array = key;
     		sbyte num = curR;
     		curR = (sbyte)(num + 1);
@@ -535,6 +559,10 @@ namespace Game1
     
     	public static sbyte writeKey(sbyte b)
     	{
+    		if (key == null || key.Length == 0)
+    		{
+    			return b;
+    		}
     		sbyte[] array = key;
     		sbyte num = curW;
     		curW = (sbyte)(num + 1);
@@ -599,10 +627,19 @@ namespace Game1
     		key = null;
     		curR = 0;
     		curW = 0;
+    		getKeyComplete = false;
     		try
     		{
     			connected = false;
     			connecting = false;
+    			if (sender != null)
+    			{
+    				sender.Clear();
+    			}
+    			if (recieveMsg != null)
+    			{
+    				recieveMsg.removeAllElements();
+    			}
     			if (sc != null)
     			{
     				sc.Close();

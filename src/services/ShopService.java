@@ -323,7 +323,12 @@ public class ShopService {
                         int required = player.playerTask.taskdh.getRequired(itemShop.temp.id);
                         if (required > 0) {
                             int current = player.playerTask.taskdh.getCurrent(itemShop.temp.id);
-                            int percentDone = Math.min(100, (int) ((double) current / required * 100));
+                            int percentDone = 0;
+                            if (current >= required) {
+                                percentDone = 100;
+                            } else if (current > 0) {
+                                percentDone = Math.max(1, (int) Math.round((double) current / required * 100));
+                            }
                             sendOptions.removeIf(option -> option.optionTemplate.id == 228);
                             sendOptions.add(new ItemOption(228, percentDone));
                         }
@@ -976,8 +981,14 @@ public class ShopService {
             }
             if ("BUNMA".equals(pl.idMark.getTagNameShop())
                     || "DENDE".equals(pl.idMark.getTagNameShop())
-                    || "APPULE".equals(pl.idMark.getTagNameShop())) {
+                    || "APPULE".equals(pl.idMark.getTagNameShop())
+                    || "SANTA_DANH_HIEU".equals(pl.idMark.getTagNameShop())) {
                 AchievementService.gI().checkDoneTask(pl, ConstAchievement.TRUM_NHAT_VE_CHAI);
+            }
+            if (pl.playerTask != null && pl.playerTask.taskdh != null) {
+                pl.playerTask.taskdh.renew();
+                pl.playerTask.taskdh.NhatDo += (quantity > 0 ? quantity : 1);
+                pl.playerTask.taskdh.ResetTime = System.currentTimeMillis();
             }
         } else {
             Service.gI().sendThongBao(pl, "Vật phẩm không hợp lệ để bán!");

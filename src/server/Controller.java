@@ -83,12 +83,14 @@ public class Controller implements IMessageHandler {
         try {
             player = _session.player;
             byte cmd = _msg.command;
+            utils.Logger.log("[NET-RECV] Server nhận cmd=" + cmd + ", len=" + (_msg.getData() != null ? _msg.getData().length : 0) + " từ Session ID=" + _session.id);
             if (player != null && cmd != -7) {
                 PlayerAuditLogger.logPacket(player, cmd, getCommandName(cmd), "");
             }
             if (player != null && cmd == -86) {
                 long now = System.currentTimeMillis();
                 if (now - player.idMark.getLastTimeTrade() < 300) {
+                    Logger.warning("[NET-3] Chặn gói giao dịch spam cmd=-86: player=" + player.name);
                     return;
                 }
             }
@@ -98,6 +100,7 @@ public class Controller implements IMessageHandler {
             switch (cmd) {
                 case -100:
                     if (player == null) {
+                        Logger.warning("[NET-3] Chặn gói cmd=-100: session chưa đăng nhập (player==null), IP=" + _session.getIP());
                         return;
                     }
                     if (player.idMark != null) {
@@ -542,6 +545,7 @@ public class Controller implements IMessageHandler {
                 case -74:
                     ensure(_msg, 1);
                     byte type = _msg.reader().readByte();
+                    Logger.log("[SERVER CMD -74] Nhận request type=" + type + " từ IP: " + _session.getIP());
                     if (type == 1) {
                         DataGame.sendSizeRes(_session);
                     } else if (type == 2) {
@@ -807,8 +811,8 @@ public class Controller implements IMessageHandler {
                     }
                     break;
                 case -27:
+                    Logger.log("[NET-2] [SERVER Handshake -27] Nhận từ IP: " + _session.getIP() + " -> Gửi Session Key & vsRes=" + DataGame.vsRes);
                     _session.sendKey();
-                    DataGame.sendVersionRes(_session);
                     break;
                 case -111:
                     DataGame.sendDataImageVersion(_session);
@@ -901,8 +905,8 @@ public class Controller implements IMessageHandler {
             }
         } catch (IOException e) {
             byte cmd = _msg != null ? _msg.command : -1;
-            Logger.warning(String.format("[Packet Validation] Gói tin không hợp lệ hoặc thiếu byte: cmd=%d, player=%s, IP=%s, lỗi: %s",
-                    cmd, (player != null ? player.name : "null"), (_session != null ? _session.getIP() : "null"), e.getMessage()));
+            Logger.warning(String.format("[NET-3] [Packet Guard] Gói tin bị chặn/lỗi: cmd=%d, player=%s, IP=%s, lỗi: %s",
+                    cmd, (player != null ? player.name : "null (pre-login)"), (_session != null ? _session.getIP() : "null"), e.getMessage()));
             if (_session != null) {
                 _session.disconnect();
             }

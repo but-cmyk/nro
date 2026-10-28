@@ -64,7 +64,7 @@ public final class Manager {
     public static String SERVER_NAME = "";
 
     public static byte SERVER = 1;
-    public static byte SECOND_WAIT_LOGIN = 5;
+    public static byte SECOND_WAIT_LOGIN = 0;
     public static int MAX_PER_IP = 10;
     public static int MAX_PLAYER = 2000;
     public static int RATE_EXP_SERVER = 1;

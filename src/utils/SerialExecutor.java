@@ -53,7 +53,7 @@ public final class SerialExecutor implements Executor {
                     r.run();
                 } catch (Throwable t) {
                     Exception ex = (t instanceof Exception e) ? e : new Exception(t);
-                    Logger.logException(SerialExecutor.class, ex, "Lỗi thực thi task trong SerialExecutor");
+                    Logger.logException(SerialExecutor.class, ex, "[NET-4] Lỗi thực thi task trong SerialExecutor");
                 }
             }
         } while (wip.decrementAndGet() != 0);

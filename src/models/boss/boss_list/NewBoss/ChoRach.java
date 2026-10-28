@@ -223,6 +223,10 @@ private void handleRewarding() {
     @Override
     public void reward(Player plKill) {
         managers.boss.BossManager.dropGoldAndSPL(this, plKill);
+        if (plKill != null && plKill.playerTask != null && plKill.playerTask.taskdh != null && plKill.playerTask.taskdh.ChoSuong < 20) {
+            plKill.playerTask.taskdh.ChoSuong++;
+            plKill.playerTask.taskdh.ResetTime = System.currentTimeMillis();
+        }
     }
 
     @Override
