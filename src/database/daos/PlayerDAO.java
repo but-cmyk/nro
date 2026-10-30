@@ -1222,54 +1222,40 @@ public class PlayerDAO {
             return false;
         }
 
-        Connection con = null;
-        PreparedStatement ps = null;
-        try {
-            con = AlyraManager.getConnection();
+        try (Connection con = AlyraManager.getConnection();
+             PreparedStatement ps = con.prepareStatement(QUERY_UPDATE_PLAYER)) {
             con.setAutoCommit(false);
-            ps = con.prepareStatement(QUERY_UPDATE_PLAYER);
-
-            for (PlayerSaveSnapshot snap : snapshots) {
-                for (int i = 0; i < snap.params.length; i++) {
-                    ps.setObject(i + 1, snap.params[i]);
+            try {
+                for (PlayerSaveSnapshot snap : snapshots) {
+                    for (int i = 0; i < snap.params.length; i++) {
+                        ps.setObject(i + 1, snap.params[i]);
+                    }
+                    ps.executeUpdate();
+                    if (snap.player != null) {
+                        snap.player.lastSaveHash = java.util.Arrays.deepHashCode(snap.params);
+                    }
                 }
-                ps.executeUpdate();
-                if (snap.player != null) {
-                    snap.player.lastSaveHash = java.util.Arrays.deepHashCode(snap.params);
-                }
-            }
 
-            con.commit();
-            con.setAutoCommit(true);
+                con.commit();
+                con.setAutoCommit(true);
 
-            for (PlayerSaveSnapshot snap : snapshots) {
-                if (snap.isOffline && snap.player != null) {
-                    snap.player.dispose();
+                for (PlayerSaveSnapshot snap : snapshots) {
+                    if (snap.isOffline && snap.player != null) {
+                        snap.player.dispose();
+                    }
                 }
-            }
-            return true;
-        } catch (Exception e) {
-            if (con != null) {
+                return true;
+            } catch (Exception e) {
                 try {
                     con.rollback();
                 } catch (SQLException ignored) {
                 }
+                Logger.logException(PlayerDAO.class, e, "Lỗi updatePlayersInTransaction");
+                return false;
             }
-            Logger.logException(PlayerDAO.class, e, "Lỗi updatePlayersInTransaction");
+        } catch (Exception e) {
+            Logger.logException(PlayerDAO.class, e, "Lỗi kết nối database updatePlayersInTransaction");
             return false;
-        } finally {
-            if (ps != null) {
-                try {
-                    ps.close();
-                } catch (Exception ignored) {
-                }
-            }
-            if (con != null) {
-                try {
-                    con.close();
-                } catch (Exception ignored) {
-                }
-            }
         }
     }
 
@@ -1295,8 +1281,7 @@ public class PlayerDAO {
 
     public static boolean addPointEvent(Player player, int num) {
         try (Connection con = AlyraManager.getConnection();
-                PreparedStatement ps = con
-                        .prepareStatement("update account set diem_da_nhan = (diem_da_nhan + ?) where id = ?")) {
+             PreparedStatement ps = con.prepareStatement("update account set diem_da_nhan = (diem_da_nhan + ?) where id = ?")) {
             ps.setInt(1, num);
             ps.setInt(2, player.getSession().userId);
             ps.executeUpdate();
@@ -1712,8 +1697,7 @@ public class PlayerDAO {
     public static boolean Addvnd(String username, int num) {
         username = username.trim();
         try (Connection con = AlyraManager.getConnection();
-                PreparedStatement ps = con
-                        .prepareStatement("update account set sotien = (sotien + ?) where username = ? ")) {
+             PreparedStatement ps = con.prepareStatement("update account set sotien = (sotien + ?) where username = ? ")) {
             ps.setInt(1, num);
             ps.setString(2, username);
             ps.executeUpdate();
@@ -1727,8 +1711,7 @@ public class PlayerDAO {
     public static boolean Addtotalvnd(String username, int num) {
         username = username.trim();
         try (Connection con = AlyraManager.getConnection();
-                PreparedStatement ps = con
-                        .prepareStatement("update account set danap = (danap + ?) where username = ?")) {
+             PreparedStatement ps = con.prepareStatement("update account set danap = (danap + ?) where username = ?")) {
             ps.setInt(1, num);
             ps.setString(2, username);
             ps.executeUpdate();
@@ -1742,8 +1725,7 @@ public class PlayerDAO {
     public static boolean Addtotalvnd2(String username, int num) {
         username = username.trim();
         try (Connection con = AlyraManager.getConnection();
-                PreparedStatement ps = con
-                        .prepareStatement("update account set danap = (danap + ?) where username = ?")) {
+             PreparedStatement ps = con.prepareStatement("update account set danap = (danap + ?) where username = ?")) {
             ps.setInt(1, num);
             ps.setString(2, username);
             ps.executeUpdate();

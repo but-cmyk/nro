@@ -31,6 +31,7 @@ public class Bot extends Player {
     public BotTuonglai bottuonglai;
     public BotCold1 botcold;
     public GenericBotAI ai;
+    public NamecImitationAI namecAi;
 
     private Player plAttack;
 
@@ -92,7 +93,7 @@ public class Bot extends Player {
         if (zone != null) {
             ChangeMapService.gI().goToMap(this, zone);
             this.zone.load_Me_To_Another(this);
-            this.mo1.lastTimeChanM = System.currentTimeMillis();
+            if (this.mo1 != null) { this.mo1.lastTimeChanM = System.currentTimeMillis(); }
         }
     }
 
@@ -378,7 +379,9 @@ public class Bot extends Player {
     public void update() {
         super.update();
         this.increasePoint();
-        if (this.ai != null) {
+        if (this.namecAi != null) {
+            this.namecAi.update();
+        } else if (this.ai != null) {
             this.ai.update();
         } else {
             switch (this.type) {

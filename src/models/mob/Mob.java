@@ -1105,12 +1105,7 @@ public class Mob {
 
 
     private void updateTaskDopDo(Player player) {
-        if (player.playerTask.taskdh.NhatDo < 500) {
-            int percentDone = (int) ((double) player.playerTask.taskdh.NhatDo / 500 * 100);
-            player.playerTask.taskdh.NhatDo++;
-            player.playerTask.taskdh.ResetTime = System.currentTimeMillis();
-           // Service.gI().sendThongBao(player, "Tiến độ hiện tại:  " + percentDone + "%");
-        }
+        services.TaskService.gI().checkDoneTaskVeChai(player, 1);
     }
 
     private ItemMap dropItemTask(Player player) {

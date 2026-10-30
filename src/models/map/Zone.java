@@ -503,7 +503,7 @@ public ItemMap getItemMapByTempId(int tempId) {
                                     InventoryService.gI().subQuantityItemsBag(player, InventoryService.gI().findItemBag(player, 649), 1);
                                 }
                                 InventoryService.gI().sendItemBags(player);
-                                player.effect.addPointOngThanVeChai();
+                                services.TaskService.gI().checkDoneTaskVeChai(player, 1);
                             }
                         }
                         if (item.template.id == 73) {

@@ -100,6 +100,7 @@ public class ConsumableItemHandler implements ItemActionHandler {
             player.nPoint.setMp(player.nPoint.mp + hpKiHoiPhuc);
             PlayerService.gI().sendInfoHpMp(player);
             Service.gI().sendInfoPlayerEatPea(player);
+            telemetry.TrajectoryLogger.gI().logEatPea(player, hpKiHoiPhuc);
             if (player.pet != null && player.zone.equals(player.pet.zone) && !player.pet.isDie()) {
                 int stamina = 100 * lvPea;
                 player.pet.nPoint.stamina += stamina;

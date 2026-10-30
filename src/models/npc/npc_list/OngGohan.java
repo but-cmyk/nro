@@ -102,7 +102,8 @@ import services.map.NpcService;
 
             } else if (player.idMark.getIndexMenu() == ConstNpc.MENU_OPEN_HONG_NGOC) {
                 int required = 5000;
-                int percentDone = (int) ((double) player.playerTask.taskdh.Nap / required * 100);
+                int percentDone = (int) Math.round((double) player.playerTask.taskdh.Nap / required * 100);
+                if (player.playerTask.taskdh.Nap > 0 && percentDone == 0) percentDone = 1;
                 if (InventoryService.gI().getCountEmptyBag(player) < 2) {
                     Service.gI().sendThongBaoOK(player, "Cần ít nhất 2 ô trống hành trang!");
                     return;
@@ -151,6 +152,7 @@ import services.map.NpcService;
             if (PlayerDAO.subvnd(player, MONEY)) {
                 player.inventory.ruby += RUBY;
                 Service.gI().sendMoney(player);
+                TaskService.gI().checkDoneTaskNapNgoc(player, RUBY);
                 Service.gI().sendThongBao(player,
                         "Bạn đổi thành công " + dcm.format(MONEY) + " thành " + RUBY + " hồng ngọc !");
             } else {

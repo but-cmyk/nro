@@ -25,7 +25,13 @@ public class BotManager implements Runnable {
                 long st = System.currentTimeMillis();
                 // Vòng lặp này bây giờ an toàn dù bot có bị xóa giữa chừng
                 for (Bot bot : this.bot) {
-                    bot.update();
+                    if (bot != null) {
+                        try {
+                            bot.update();
+                        } catch (Exception ex) {
+                            // Bảo vệ 1,000 bots không bị gián đoạn khi 1 bot gặp lỗi cục bộ
+                        }
+                    }
                 }
                 long sleepTime = 150 - (System.currentTimeMillis() - st);
                 if (sleepTime > 0) {

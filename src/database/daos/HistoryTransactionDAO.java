@@ -6,6 +6,10 @@ import models.player.Player;
 import utils.TimeUtil;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.util.HashMap;
+import java.util.Map;
+
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -113,4 +117,59 @@ public class HistoryTransactionDAO {
         }
     }
 
+
+    public static List<Map<String, Object>> searchTransactions(String keyword, int limit) {
+        List<Map<String, Object>> list = new ArrayList<>();
+        String sql;
+        boolean hasKeyword = keyword != null && !keyword.trim().isEmpty();
+        if (hasKeyword) {
+            sql = "SELECT * FROM history_transaction WHERE player_1 LIKE ? OR player_2 LIKE ? OR item_player_1 LIKE ? OR item_player_2 LIKE ? ORDER BY id DESC LIMIT ?";
+        } else {
+            sql = "SELECT * FROM history_transaction ORDER BY id DESC LIMIT ?";
+        }
+        int maxLimit = Math.min(Math.max(limit, 1), 200);
+        try (Connection con = AlyraManager.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            if (hasKeyword) {
+                String pattern = "%" + keyword.trim() + "%";
+                ps.setString(1, pattern);
+                ps.setString(2, pattern);
+                ps.setString(3, pattern);
+                ps.setString(4, pattern);
+                ps.setInt(5, maxLimit);
+            } else {
+                ps.setInt(1, maxLimit);
+            }
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("id", rs.getInt("id"));
+                    map.put("player1", rs.getString("player_1"));
+                    map.put("player2", rs.getString("player_2"));
+                    map.put("itemPlayer1", rs.getString("item_player_1"));
+                    map.put("itemPlayer2", rs.getString("item_player_2"));
+                    map.put("bag1Before", rs.getString("bag_1_before_tran"));
+                    map.put("bag2Before", rs.getString("bag_2_before_tran"));
+                    map.put("bag1After", rs.getString("bag_1_after_tran"));
+                    map.put("bag2After", rs.getString("bag_2_after_tran"));
+                    Timestamp ts = rs.getTimestamp("time_tran");
+                    map.put("timeTran", ts != null ? ts.toString() : "");
+                    list.add(map);
+                }
+            }
+        } catch (Exception e) {
+            utils.Logger.logException(HistoryTransactionDAO.class, e, "Lỗi tìm kiếm lịch sử giao dịch");
+        }
+        return list;
+    }
+
+    public static boolean deleteTransaction(int id) {
+        try {
+            AlyraManager.executeUpdate("DELETE FROM history_transaction WHERE id = ?", id);
+            return true;
+        } catch (Exception e) {
+            utils.Logger.logException(HistoryTransactionDAO.class, e, "Lỗi xóa giao dịch id " + id);
+            return false;
+        }
+    }
 }

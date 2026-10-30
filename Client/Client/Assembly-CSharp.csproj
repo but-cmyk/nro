@@ -92,9 +92,9 @@
     <Compile Include="Assets\Scripts\Game1\Assets\src\e\SmallSave.cs" />
     <Compile Include="Assets\Scripts\Game1\GameCanvas.cs" />
     <Compile Include="Assets\Scripts\Game1\Constants\NetworkOpcodes.cs" />
+    <Compile Include="Assets\Scripts\Game1\Archivement.cs" />
     <Compile Include="Assets\Scripts\Game1\mGraphics.cs" />
     <Compile Include="Assets\Scripts\Game1\MobCapcha.cs" />
-    <Compile Include="Assets\Scripts\Game1\Archivement.cs" />
     <Compile Include="Assets\Scripts\Game1\ItemTime.cs" />
     <Compile Include="Assets\Scripts\Game1\NClass.cs" />
     <Compile Include="Assets\Scripts\Game1\Paint.cs" />
@@ -1168,14 +1168,6 @@
       <HintPath>Library\ScriptAssemblies\Unity.VisualScripting.SettingsProvider.Editor.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="Unity.AI.Navigation">
-      <HintPath>Library\ScriptAssemblies\Unity.AI.Navigation.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="Unity.AI.Navigation.Updater">
-      <HintPath>Library\ScriptAssemblies\Unity.AI.Navigation.Updater.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
     <Reference Include="Unity.VisualScripting.State.Editor">
       <HintPath>Library\ScriptAssemblies\Unity.VisualScripting.State.Editor.dll</HintPath>
       <Private>False</Private>
@@ -1204,16 +1196,8 @@
       <HintPath>Library\ScriptAssemblies\Unity.VisualScripting.Core.Editor.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="Unity.AI.Navigation.Editor">
-      <HintPath>Library\ScriptAssemblies\Unity.AI.Navigation.Editor.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
     <Reference Include="Unity.VisualScripting.State">
       <HintPath>Library\ScriptAssemblies\Unity.VisualScripting.State.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="Unity.AI.Navigation.Editor.ConversionSystem">
-      <HintPath>Library\ScriptAssemblies\Unity.AI.Navigation.Editor.ConversionSystem.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Unity.VisualScripting.Flow">

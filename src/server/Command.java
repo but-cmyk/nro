@@ -5,7 +5,6 @@ import consts.ConstNpc;
 import data.DataGame;
 import data.ItemData;
 import database.AlyraManager;
-import managers.AdminToolFrame;
 import managers.GiftCodeManager;
 import managers.boss.*;
 import models.item.Item;
@@ -66,10 +65,7 @@ public class Command {
             Service.gI().sendThongBao(player, "Đã nạp 15 phần thưởng Võ Đài demo (như ảnh)! Hãy gặp Whis tại Kaio để nhận.");
         });
           adminCommands.put("adm", player -> {
-            // Gọi bảng hiển thị lên Server
-            AdminToolFrame.showFrame(); 
-            // Thông báo cho người chơi biết đã mở
-            Service.gI().sendThongBao(player, "Đã mở bảng Admin Tool trên máy chủ!");
+            Service.gI().sendThongBao(player, "Bảng quản trị Live Ops Web Dashboard: http://localhost:14446/dashboard");
         });
         adminCommands.put("toplag", player -> {
             String report = server.network.PacketProfiler.gI().getTopLagReport();
@@ -90,7 +86,7 @@ public class Command {
         adminCommands.put("bot", player -> NpcService.gI().createMenuConMeo(player, ConstNpc.MENU_BOT, -1,
                 "Player online : " + Client.gI().getPlayers().size() + "\n"
                 + "\b|1|Thread: " + Thread.activeCount() + "\n"
-                + "Bot online : " + Thread.activeCount(),
+                + "Bot online : " + bot.BotManager.gI().bot.size(),
                 "Bot\nPem Quái", "Bot\nPem Nappa", "Bot\nPem Tương Lai", "Bot\nPem Cold", "Bot\nSăn Boss", "Đóng"));
         adminCommands.put("bu1", player -> Input.gI().createFormGiveItem(player));
         adminCommands.put("bu", player -> Input.gI().createFormGetItem(player));

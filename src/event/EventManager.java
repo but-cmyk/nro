@@ -58,4 +58,52 @@ public class EventManager {
             new TopUp().init();
         }
     }
+
+    public synchronized boolean setEventState(String eventName, boolean active) {
+        if (eventName == null) return false;
+        switch (eventName.toUpperCase()) {
+            case "LUNNAR_NEW_YEAR":
+                LUNNAR_NEW_YEAR = active;
+                if (active) new LunarNewYear().init();
+                return true;
+            case "INTERNATIONAL_WOMANS_DAY":
+                INTERNATIONAL_WOMANS_DAY = active;
+                if (active) new InternationalWomensDay().init();
+                return true;
+            case "CHRISTMAS":
+                CHRISTMAS = active;
+                if (active) new Christmas().init();
+                return true;
+            case "HALLOWEEN":
+                HALLOWEEN = active;
+                if (active) new Halloween().init();
+                return true;
+            case "HUNG_VUONG":
+                HUNG_VUONG = active;
+                if (active) new HungVuong().init();
+                return true;
+            case "TRUNG_THU":
+                TRUNG_THU = active;
+                if (active) new TrungThu().init();
+                return true;
+            case "TOP_UP":
+                TOP_UP = active;
+                if (active) new TopUp().init();
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    public java.util.Map<String, Boolean> getAllEventStates() {
+        java.util.Map<String, Boolean> map = new java.util.LinkedHashMap<>();
+        map.put("LUNNAR_NEW_YEAR", LUNNAR_NEW_YEAR);
+        map.put("INTERNATIONAL_WOMANS_DAY", INTERNATIONAL_WOMANS_DAY);
+        map.put("CHRISTMAS", CHRISTMAS);
+        map.put("HALLOWEEN", HALLOWEEN);
+        map.put("HUNG_VUONG", HUNG_VUONG);
+        map.put("TRUNG_THU", TRUNG_THU);
+        map.put("TOP_UP", TOP_UP);
+        return map;
+    }
 }

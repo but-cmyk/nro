@@ -937,6 +937,76 @@ public class TaskService {
     }
 
     // Kiểm tra hoàn thành nhiệm vụ thắng giải ĐHVT (Task 18: ĐHVT 23, Siêu Hạng, Siêu Cấp...)
+    // =========================================================================
+    // DANH HIỆU (TITLES & ACHIEVEMENTS)
+    // =========================================================================
+
+    /**
+     * Tiến trình danh hiệu [Ông thần ve chai] (ID: 1295, yêu cầu: 500)
+     * Kích hoạt khi: Người chơi bán đồ vào Shop HOẶC nhặt đồ trên đất.
+     */
+    public void checkDoneTaskVeChai(Player player, int amount) {
+        player = getMasterIfPet(player);
+        if (player == null || player.isBoss || player.isPet) return;
+        if (player.playerTask == null || player.playerTask.taskdh == null) return;
+
+        if (player.playerTask.taskdh.NhatDo < 500) {
+            player.playerTask.taskdh.addVeChai(amount);
+            if (player.effect != null) {
+                player.effect.setPointOngThanVeChai(player.playerTask.taskdh.NhatDo);
+            }
+            if (player.playerTask.taskdh.NhatDo >= 500) {
+                Service.gI().sendThongBao(player, "Chúc mừng! Bạn đã hoàn thành danh hiệu [Ông thần ve chai] (500/500). Đến Santa để nhận!");
+            }
+        }
+    }
+
+    /**
+     * Tiến trình danh hiệu [Đại gia mới nhú] (ID: 1289, yêu cầu: 5000 ngọc)
+     */
+    public void checkDoneTaskNapNgoc(Player player, int ngoc) {
+        player = getMasterIfPet(player);
+        if (player == null || player.isBoss || player.isPet || ngoc <= 0) return;
+        if (player.playerTask == null || player.playerTask.taskdh == null) return;
+
+        if (player.playerTask.taskdh.Nap < 5000) {
+            player.playerTask.taskdh.addNap(ngoc);
+            if (player.effect != null) {
+                player.effect.setPointDaiGiaMoiNhu(player.playerTask.taskdh.Nap);
+            }
+            if (player.playerTask.taskdh.Nap >= 5000) {
+                Service.gI().sendThongBao(player, "Chúc mừng! Bạn đã hoàn thành danh hiệu [Đại gia mới nhú] (5000/5000). Đến Santa để nhận!");
+            }
+        }
+    }
+
+    /**
+     * Tiến trình danh hiệu [Cao thủ siêu hạng] (ID: 1293, yêu cầu: 3)
+     */
+    public void checkDoneTaskSieuHang(Player player) {
+        player = getMasterIfPet(player);
+        if (player == null || player.isBoss || player.isPet) return;
+        if (player.playerTask == null || player.playerTask.taskdh == null) return;
+
+        if (player.playerTask.taskdh.SieuHang < 3) {
+            player.playerTask.taskdh.addSieuHang();
+            if (player.playerTask.taskdh.SieuHang >= 3) {
+                Service.gI().sendThongBao(player, "Chúc mừng! Bạn đã hoàn thành danh hiệu [Cao thủ siêu hạng] (3/3). Đến Santa để nhận!");
+            }
+        }
+    }
+
+    /**
+     * Tiến trình danh hiệu dùng Loa Thế Giới (yêu cầu: 10 trong ngày)
+     */
+    public void checkDoneTaskDungLoa(Player player) {
+        player = getMasterIfPet(player);
+        if (player == null || player.isBoss || player.isPet) return;
+        if (player.playerTask == null || player.playerTask.taskdh == null) return;
+
+        player.playerTask.taskdh.addDungLoa();
+    }
+
     public void checkDoneTaskDHVT(Player player) {
         player = getMasterIfPet(player);
         if (player != null && !player.isBoss && !player.isPet) {

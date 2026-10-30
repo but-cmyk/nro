@@ -416,6 +416,11 @@ public class Service {
     }
 
     public void chat(Player player, String text) {
+        if (player != null && player.isMuted()) {
+            long remainingMin = player.muteUntil > 0 ? Math.max(1, (player.muteUntil - System.currentTimeMillis()) / 60000) : 0;
+            sendThongBao(player, "Ban dang bi cam chat! " + (remainingMin > 0 ? "Con lai: " + remainingMin + " phut." : ""));
+            return;
+        }
         Message msg;
         try {
             msg = new Message(44);

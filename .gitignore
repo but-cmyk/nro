@@ -40,3 +40,11 @@ data/vdst_weekly.json
 SRC_NRO_219/
 tools/*.class
 clean_old_nested.bat
+
+# Local dev & sensitive files
+.env
+backups/
+certs/
+data/telemetry/
+Client/New Unity Project/
+Client/Client/New Unity Project/

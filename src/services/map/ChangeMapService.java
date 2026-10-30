@@ -203,6 +203,7 @@ public class ChangeMapService {
                     return;
                 }
                 if (zoneJoin != null) {
+                    telemetry.TrajectoryLogger.gI().logChangeZone(pl, zoneId);
                     int targetY = (pl.zone != null && (pl.zone.map.mapId == 186 || pl.zone.map.mapId == 187)) ? 360 : pl.location.y;
                     changeMap(pl, zoneJoin, -1, -1, pl.location.x, targetY, NON_SPACE_SHIP);
                 }

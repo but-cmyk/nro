@@ -85,14 +85,15 @@ public class NewBot {
 
 
    public int getIndex(int gender){
-        int Random = new Random().nextInt(MAXPART);
-        int gend = PARTBOT[Random][3];
-     //   if(gend == gender || gend == 3){
-        if(gend == gender){
-            return Random;
-        } else {
-            return getIndex(gender);
+        if (MAXPART <= 0) return 0;
+        for (int attempt = 0; attempt < 500; attempt++) {
+            int r = new Random().nextInt(MAXPART);
+            int gend = PARTBOT[r][3];
+            if (gend == gender || gend == 3) {
+                return r;
+            }
         }
+        return new Random().nextInt(MAXPART);
    }
 
 
@@ -153,5 +154,76 @@ public class NewBot {
             }
         }
     }
-}
+    }
+
+    /**
+     * Khởi tạo hạm đội Bot AI Hành Tinh Namec dựa trên Telemetry Imitation Learning.
+     * Phân bổ tỷ lệ chuẩn xác ra 14 map cày cuốc theo dữ liệu người thật (hạm đội 1,000 bots).
+     */
+    public void spawnNamecArmy(int count) {
+        LoadPart();
+        int[] targetMaps = { 30, 38, 34, 33, 13, 29, 27, 11, 31, 32, 8, 9, 10, 7 };
+        int[] botQuotas  = { 15, 12, 10, 10,  9,  8,  7,  6,  5,  5, 4, 3,  3, 3 };
+
+        List<FlagBag> validFlagBags = Manager.gI().FLAGS_BAGS.stream()
+                .filter(flag -> flag.id < 27)
+                .collect(Collectors.toList());
+
+        int spawned = 0;
+        for (int mIdx = 0; mIdx < targetMaps.length; mIdx++) {
+            int mapId = targetMaps[mIdx];
+            int quota = Math.max(1, (int) Math.round((double) botQuotas[mIdx] * count / 100.0));
+            if (mIdx == targetMaps.length - 1 && spawned + quota != count) {
+                quota = Math.max(1, count - spawned);
+            }
+
+            for (int k = 0; k < quota && spawned < count; k++) {
+                int partIdx = getIndex(consts.ConstPlayer.NAMEC);
+                int head = PARTBOT[partIdx][0];
+                int leg = PARTBOT[partIdx][1];
+                int body = PARTBOT[partIdx][2];
+                int flag = !validFlagBags.isEmpty() ? validFlagBags.get(new Random().nextInt(validFlagBags.size())).id : 0;
+
+                String botName = "nm_" + Getname() + "_" + (spawned + 1);
+                Bot b = new Bot((short) head, (short) body, (short) leg, 0, botName, (short) flag);
+                b.gender = consts.ConstPlayer.NAMEC;
+
+                int congThem = new Random().nextInt(50000000);
+                b.nPoint.limitPower = 8;
+                b.nPoint.power = 5000000 + congThem;
+                b.nPoint.tiemNang = 100000000 + congThem;
+                b.nPoint.dameg = 25000;
+                b.nPoint.mpg = 2000000;
+                b.nPoint.mpMax = 2000000;
+                b.nPoint.mp = 2000000;
+                b.nPoint.hpg = 500000;
+                b.nPoint.hpMax = 500000;
+                b.nPoint.hp = 500000;
+                b.nPoint.maxStamina = 20000;
+                b.nPoint.stamina = 20000;
+                b.nPoint.critg = 15;
+                b.nPoint.defg = 100;
+                b.nPoint.tlNeDon = 20;
+
+                b.leakSkill();
+                b.namecAi = new NamecImitationAI(b);
+
+                models.map.Zone zone = b.getRandomZone(mapId);
+                if (zone != null) {
+                    services.map.ChangeMapService.gI().goToMap(b, zone);
+                    zone.load_Me_To_Another(b);
+                } else {
+                    b.joinMap();
+                }
+
+                BotManager.gI().bot.add(b);
+                spawned++;
+
+                if (spawned % 200 == 0) {
+                    System.out.println("Đang khởi tạo Hạm Đội Namec: " + spawned + " / " + count + " bots...");
+                }
+            }
+        }
+        System.out.println("Đã khởi tạo thành công " + spawned + " Bot AI Hành Tinh Namec trên 14 bản đồ cày cuốc!");
+    }
 }

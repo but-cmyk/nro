@@ -1,0 +1,40 @@
+{
+  "model_version": "1.0.0-namec-imitation",
+  "trained_samples": 7589,
+  "source_player": "paradjse",
+  "movement": {
+    "mean_stride_px": 63.3,
+    "median_stride_px": 58.0,
+    "min_stride_px": 45,
+    "max_stride_px": 90,
+    "approach_offset_px": 30
+  },
+  "combat": {
+    "attack_trigger_range_px": 35,
+    "demon_skill_id": 2,
+    "demon_probability": 0.932,
+    "masenko_skill_id": 3,
+    "masenko_probability": 0.068,
+    "heal_skill_id": 7,
+    "heal_hp_threshold": 0.35,
+    "average_combo_hits": 2.2
+  },
+  "timing": {
+    "mean_delay_ms": 345,
+    "std_delay_ms": 183,
+    "min_delay_ms": 150,
+    "max_delay_ms": 450
+  },
+  "fleet_distribution_100": {
+    "30": 46,
+    "13": 12,
+    "29": 11,
+    "27": 7,
+    "11": 6,
+    "8": 4,
+    "32": 5,
+    "36": 4,
+    "9": 3,
+    "7": 2
+  }
+}

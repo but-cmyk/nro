@@ -24,26 +24,51 @@ public class TaskDanhHieu {
     public long ResetTime;
 
     public TaskDanhHieu() {
-        this.Nap = 0;             // Nạp Tích Lũy 10000 Ngọc Trong Ngày
-        this.Shenron = 0;         // Ước Rồng Thần 1 Sao x10 Lần
-        this.Hagucboss = 0;       // Hạ Gục Cumber, Black Goku, Cooler, Xên (30 Lần)
-        this.DapDo = 0;           // Đập 3 Trang Bị +7 Trong Ngày
-        this.SieuHang = 0;        // Top 1 Đại Hội Võ Đài Siêu Hạng
-        this.TaskBoMong = 0;      // Hoàn Thành 10 Nhiệm Vụ Siêu Khó Tại Bò Mộng
-        this.ChoSuong = 0;        // Đánh Bại, Hoặc Cho Xương Sói 20 Lần
-        this.ChoNuoc = 0;         // Hoàn Thành 5 Lần Nhiệm Vụ Cho Nước Xinbato
-        this.NhatDo = 0;          // Nhặt Đồ 500 Lần Trong Ngày
-        this.AnTrom = 0;          // Tiêu Diệt 30 Lần Boss Ăn Trộm
-        this.ODo = 0;             // Tiêu Diệt 30 Lần Boss Ở Dơ
-        this.DungLoa = 0;         // Sử Dụng Loa Liên Vũ Trụ 10 Lần Trong Ngày
+        this.Nap = 0;             // Nạp Tích Lũy 5000 Hồng Ngọc (Trọn đời)
+        this.Shenron = 0;         // Ước Rồng Thần 1 Sao x10 Lần (Trọn đời)
+        this.Hagucboss = 0;       // Hạ Gục Cumber, Black Goku, Cooler, Xên (30 Lần) (Trọn đời)
+        this.DapDo = 0;           // Đập 3 Trang Bị +7 Trong Ngày (Reset sau 00:00)
+        this.SieuHang = 0;        // Top 1 Đại Hội Võ Đài Siêu Hạng (3 Lần) (Trọn đời)
+        this.TaskBoMong = 0;      // Hoàn Thành 10 Nhiệm Vụ Siêu Khó Tại Bò Mộng (Trọn đời)
+        this.ChoSuong = 0;        // Đánh Bại, Hoặc Cho Xương Sói 20 Lần (Trọn đời)
+        this.ChoNuoc = 0;         // Hoàn Thành 5 Lần Nhiệm Vụ Cho Nước Xinbato (Trọn đời)
+        this.NhatDo = 0;          // Nhặt hoặc Bán Đồ Ve Chai 500 Lần (Trọn đời)
+        this.AnTrom = 0;          // Tiêu Diệt 30 Lần Boss Ăn Trộm (Trọn đời)
+        this.ODo = 0;             // Tiêu Diệt 30 Lần Boss Ở Dơ (Trọn đời)
+        this.DungLoa = 0;         // Sử Dụng Loa Liên Vũ Trụ 10 Lần Trong Ngày (Reset sau 00:00)
     }
 
     public void renew() {
         if (utils.Util.isAfterMidnight(ResetTime)) {
-            this.Nap = 0;
+            // Chỉ reset các nhiệm vụ daily "Trong Ngày":
             this.DapDo = 0;
-            this.NhatDo = 0;
             this.DungLoa = 0;
+            // Nap và NhatDo là tiến trình tích lũy trọn đời, KHÔNG reset về 0
+            this.ResetTime = System.currentTimeMillis();
+        }
+    }
+
+    public void addVeChai(int amount) {
+        this.NhatDo = Math.min(500, this.NhatDo + Math.max(1, amount));
+        this.ResetTime = System.currentTimeMillis();
+    }
+
+    public void addNap(int amount) {
+        this.Nap = Math.min(5000, this.Nap + Math.max(1, amount));
+        this.ResetTime = System.currentTimeMillis();
+    }
+
+    public void addSieuHang() {
+        if (this.SieuHang < 3) {
+            this.SieuHang++;
+            this.ResetTime = System.currentTimeMillis();
+        }
+    }
+
+    public void addDungLoa() {
+        renew();
+        if (this.DungLoa < 10) {
+            this.DungLoa++;
             this.ResetTime = System.currentTimeMillis();
         }
     }

@@ -77,10 +77,7 @@ public class SuperRank {
             SuperRankDAO.updatePlayer(player);
         }
         if (rank == 1 && player.playerTask != null && player.playerTask.taskdh != null) {
-            if (player.playerTask.taskdh.SieuHang < 1) {
-                player.playerTask.taskdh.SieuHang++;
-                player.playerTask.taskdh.ResetTime = System.currentTimeMillis();
-            }
+            services.TaskService.gI().checkDoneTaskSieuHang(player);
         }
     }
 

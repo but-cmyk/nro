@@ -79,9 +79,13 @@ echo ===================================================================
 echo           KHOI DONG NRO GAME SERVER (NATIVE JAVA)
 echo ===================================================================
 
-echo [PORT] Kiem tra va giai phong port 14445 truoc khi khoi dong...
+echo [PORT] Kiem tra va giai phong port 14445, 14446 truoc khi khoi dong...
 for /f "tokens=5" %%a in ('netstat -ano ^| findstr :14445 ^| findstr LISTENING') do (
     echo [PORT] Phat hien tien trinh PID %%a dang chiem port 14445. Dang giai phong...
+    taskkill /f /pid %%a >nul 2>&1
+)
+for /f "tokens=5" %%a in ('netstat -ano ^| findstr :14446 ^| findstr LISTENING') do (
+    echo [PORT] Phat hien tien trinh PID %%a dang chiem port 14446. Dang giai phong...
     taskkill /f /pid %%a >nul 2>&1
 )
 timeout /t 1 /nobreak >nul 2>&1

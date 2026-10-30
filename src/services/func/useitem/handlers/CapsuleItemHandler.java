@@ -116,6 +116,7 @@ public class CapsuleItemHandler implements ItemActionHandler {
             pl.mapBeforeCapsule = null;
         }
         pl.changeMapVIP = true;
+        telemetry.TrajectoryLogger.gI().logUseCapsule(pl, zoneChose.map.mapId);
         ChangeMapService.gI().changeMapBySpaceShip(pl, zoneChose.map.mapId, zoneId, -1);
     }
 }

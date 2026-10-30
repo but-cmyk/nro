@@ -57,6 +57,10 @@ public class AlyraManager {
         return ds.getConnection();
     }
 
+    public static HikariDataSource getDataSource() {
+        return ds;
+    }
+
     public static void close() {
         if (ds != null) {
             ds.close();

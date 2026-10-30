@@ -52,7 +52,11 @@ public class ChatGlobalService implements Runnable {
     }
 
     public void chat(Player player, String text) {
-    if (waitingChat.size() >= COUNT_WAIT) {
+        if (player != null && player.isMuted()) {
+            Service.gI().sendThongBao(player, "Ban dang bi cam chat!");
+            return;
+        }
+        if (waitingChat.size() >= COUNT_WAIT) {
         Service.gI().sendThongBao(player, "Kênh thế giới hiện đang quá tải, không thể chat lúc này");
         return;
     }
@@ -76,6 +80,7 @@ public class ChatGlobalService implements Runnable {
                 player.idMark.setLastTimeChatGlobal(System.currentTimeMillis());
                 String chatText = text.length() > 100 ? text.substring(0, 100) : text;
                 waitingChat.offer(new ChatGlobal(player, chatText));
+                TaskService.gI().checkDoneTaskDungLoa(player);
             } else {
                 Service.gI().sendThongBao(player, "Sức mạnh phải ít nhất 15 triệu mới có thể chat thế giới");
             }

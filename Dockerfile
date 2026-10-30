@@ -7,7 +7,7 @@ WORKDIR /app
 COPY lib/ ./lib/
 COPY dist/NROK.jar ./NROK.jar
 
-EXPOSE 14445
+EXPOSE 14445 14446
 
 # Chạy Server với G1GC tối ưu bộ nhớ RAM thực tế (~60MB - 150MB)
 CMD ["java", "-XX:+UseG1GC", "-XX:MaxGCPauseMillis=20", "-Xms128M", "-Xmx1024M", "-cp", "NROK.jar:lib/*", "server.ServerManager"]

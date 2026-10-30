@@ -98,6 +98,7 @@ public class Player extends Character {
     public int diemsukien;
     public int phaobong;
     public int lixi;
+    public long lastTimeShop;
     public int account_id;
     public int arenaWins;
     public int whisArenaU6Round;
@@ -1065,6 +1066,9 @@ public class Player extends Character {
                     setDie(plAtt);
                 }
             }
+            if (damage > 0) {
+                telemetry.TrajectoryLogger.gI().logDamageTaken(this, damage);
+            }
             return damage;
         } else {
             return 0;
@@ -1150,6 +1154,18 @@ public class Player extends Character {
 
     public boolean isAdmin() {
         return this.session != null && this.session.isAdmin;
+    }
+
+    public volatile boolean isMuted = false;
+    public volatile long muteUntil = 0;
+    public volatile boolean isFrozen = false;
+
+    public boolean isMuted() {
+        return this.isMuted && (this.muteUntil <= 0 || System.currentTimeMillis() < this.muteUntil);
+    }
+
+    public boolean isFrozen() {
+        return this.isFrozen;
     }
 
     public void setJustRevivaled() {

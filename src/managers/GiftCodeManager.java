@@ -1,6 +1,16 @@
 package managers;
 
 import database.AlyraManager;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.Timestamp;
+import java.util.List;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.JSONValue;
+import models.item.Item.ItemOption;
+
 import models.GiftCode;
 import models.player.Player;
 import services.map.NpcService;
@@ -65,4 +75,96 @@ public class GiftCodeManager {
         NpcService.gI().createTutorial(p, 5073, sb.toString());
     }
 
+
+    public synchronized void reload() {
+        this.listGiftCode.clear();
+        try (Connection con = AlyraManager.getConnection();
+             PreparedStatement ps = con.prepareStatement("SELECT * FROM giftcode ORDER BY id DESC");
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                GiftCode giftcode = new GiftCode();
+                giftcode.code = rs.getString("code");
+                giftcode.id = rs.getInt("id");
+                giftcode.countLeft = rs.getInt("count_left");
+                String ag = rs.getString("allGender");
+                giftcode.allGender = "all".equalsIgnoreCase(ag) || rs.getBoolean("allGender");
+                if (giftcode.countLeft == -1) {
+                    giftcode.countLeft = 999999999;
+                }
+                giftcode.datecreate = rs.getTimestamp("datecreate");
+                giftcode.dateexpired = rs.getTimestamp("expired");
+                JSONArray jar = (JSONArray) JSONValue.parse(rs.getString("detail"));
+                if (jar != null) {
+                    for (int i = 0; i < jar.size(); ++i) {
+                        JSONObject jsonObj = (JSONObject) jar.get(i);
+                        int id = Integer.parseInt(jsonObj.get("id").toString());
+                        int quantity = Integer.parseInt(jsonObj.get("quantity").toString());
+
+                        JSONArray option = (JSONArray) jsonObj.get("options");
+                        ArrayList<ItemOption> optionList = new ArrayList<>();
+                        if (option != null) {
+                            for (int u = 0; u < option.size(); u++) {
+                                JSONObject jsonobject = (JSONObject) option.get(u);
+                                int optionId = Integer.parseInt(jsonobject.get("id").toString());
+                                int param = Integer.parseInt(jsonobject.get("param").toString());
+                                optionList.add(new ItemOption(optionId, param));
+                            }
+                        }
+                        giftcode.option.put(id, optionList);
+                        giftcode.detail.put(id, quantity);
+                    }
+                }
+                this.listGiftCode.add(giftcode);
+            }
+            utils.Logger.log("GiftCodeManager: Reloaded " + this.listGiftCode.size() + " giftcodes.");
+        } catch (Exception e) {
+            utils.Logger.logException(GiftCodeManager.class, e, "Lỗi reload giftcode từ database");
+        }
+    }
+
+    public synchronized boolean createGiftCode(String code, int count, int days, String detailJson, String allGender) {
+        if (code == null || code.trim().isEmpty()) {
+            return false;
+        }
+        long now = System.currentTimeMillis();
+        long expiredMillis = now + ((long) Math.max(days, 1) * 24L * 60L * 60L * 1000L);
+        Timestamp createTs = new Timestamp(now);
+        Timestamp expiredTs = new Timestamp(expiredMillis);
+        String gender = (allGender == null || allGender.trim().isEmpty()) ? "all" : allGender;
+
+        String sql = "INSERT INTO giftcode (code, count_left, detail, allGender, datecreate, expired) VALUES (?, ?, ?, ?, ?, ?)";
+        try (Connection con = AlyraManager.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, code.trim().toLowerCase());
+            ps.setInt(2, count);
+            ps.setString(3, detailJson);
+            ps.setString(4, gender);
+            ps.setTimestamp(5, createTs);
+            ps.setTimestamp(6, expiredTs);
+            int row = ps.executeUpdate();
+            if (row > 0) {
+                reload();
+                return true;
+            }
+        } catch (Exception e) {
+            utils.Logger.logException(GiftCodeManager.class, e, "Lỗi tạo giftcode: " + code);
+        }
+        return false;
+    }
+
+    public synchronized boolean deleteGiftCode(int id) {
+        String sql = "DELETE FROM giftcode WHERE id = ?";
+        try (Connection con = AlyraManager.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, id);
+            int row = ps.executeUpdate();
+            if (row > 0) {
+                this.listGiftCode.removeIf(gc -> gc.id == id);
+                return true;
+            }
+        } catch (Exception e) {
+            utils.Logger.logException(GiftCodeManager.class, e, "Lỗi xóa giftcode id: " + id);
+        }
+        return false;
+    }
 }

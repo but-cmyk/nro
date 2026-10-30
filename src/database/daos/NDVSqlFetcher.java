@@ -1048,6 +1048,9 @@ public class NDVSqlFetcher {
                 Date datatime = new Date(Time);
 
                 // Các tiến độ tích lũy trọn đời LUÔN LUÔN được bảo toàn, không bao giờ bị xóa qua ngày:
+                if (dataArray.size() > 0) {
+                    player.playerTask.taskdh.Nap = Integer.parseInt(String.valueOf(dataArray.get(0)));
+                }
                 if (dataArray.size() > 2) {
                     player.playerTask.taskdh.Shenron = Integer.parseInt(String.valueOf(dataArray.get(2)));
                 }
@@ -1066,6 +1069,9 @@ public class NDVSqlFetcher {
                 if (dataArray.size() > 8) {
                     player.playerTask.taskdh.ChoNuoc = Integer.parseInt(String.valueOf(dataArray.get(8)));
                 }
+                if (dataArray.size() > 9) {
+                    player.playerTask.taskdh.NhatDo = Integer.parseInt(String.valueOf(dataArray.get(9)));
+                }
                 if (dataArray.size() > 10) {
                     player.playerTask.taskdh.AnTrom = Integer.parseInt(String.valueOf(dataArray.get(10)));
                 }
@@ -1073,23 +1079,17 @@ public class NDVSqlFetcher {
                     player.playerTask.taskdh.ODo = Integer.parseInt(String.valueOf(dataArray.get(11)));
                 }
 
-                // Các bộ đếm nhiệm vụ "Trong Ngày":
+                // Các bộ đếm nhiệm vụ daily "Trong Ngày" (reset sau 00:00):
                 if (TimeUtil.formatTime(datatime, Reset).equals(TimeUtil.formatTime(new Date(), Reset))) {
-                    player.playerTask.taskdh.Nap = Integer.parseInt(String.valueOf(dataArray.get(0)));
                     if (dataArray.size() > 4) {
                         player.playerTask.taskdh.DapDo = Integer.parseInt(String.valueOf(dataArray.get(4)));
-                    }
-                    if (dataArray.size() > 9) {
-                        player.playerTask.taskdh.NhatDo = Integer.parseInt(String.valueOf(dataArray.get(9)));
                     }
                     if (dataArray.size() > 12) {
                         player.playerTask.taskdh.DungLoa = Integer.parseInt(String.valueOf(dataArray.get(12)));
                     }
                     player.playerTask.taskdh.ResetTime = Time;
                 } else {
-                    player.playerTask.taskdh.Nap = 0;
                     player.playerTask.taskdh.DapDo = 0;
-                    player.playerTask.taskdh.NhatDo = 0;
                     player.playerTask.taskdh.DungLoa = 0;
                     player.playerTask.taskdh.ResetTime = System.currentTimeMillis();
                 }

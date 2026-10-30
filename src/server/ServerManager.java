@@ -8,7 +8,6 @@ import database.daos.HistoryTransactionDAO;
 import database.daos.EventDAO;
 import database.daos.PlayerDAO;
 import event.EventManager;
-import managers.AdminToolFrame;
 import managers.ConsignShopManager;
 import managers.SuperRankManager;
 import managers.boss.BossManager;
@@ -101,9 +100,7 @@ public class ServerManager {
     public static void main(String[] args) {
         timeStart = TimeUtil.getTimeNow("dd/MM/yyyy HH:mm:ss");
         ServerManager.gI().run();
-        SwingUtilities.invokeLater(() -> {
-            new AdminToolFrame().setVisible(true);
-        });
+        utils.Logger.log(utils.Logger.GREEN, "[LiveOps] Web Dashboard running on http://localhost:14446/dashboard");
     }
 
     public void run() {
@@ -125,6 +122,8 @@ public class ServerManager {
         executorService.submit(() -> DeathOrAliveArenaManager.gI().run());
         executorService.submit(() -> WorldMartialArtsTournamentManager.gI().run());
         executorService.submit(() -> AutoBtri.gI().run());
+        services.admin.AdminApiService.gI().start();
+        telemetry.TrajectoryLogger.gI().start();
 
         // 3. Load Boss và Map
         Logger.log("Đang tải dữ liệu Boss và Map...");
@@ -141,8 +140,8 @@ public class ServerManager {
         new Thread(BotManager.gI(), "Bot Manager").start();
 
         // Tạo 10 Bot thông minh test
-        NewBot.gI().runBot(0, 10);
-        System.out.println("Đã khởi tạo 10 Bot thông minh chạy map!");
+        NewBot.gI().spawnNamecArmy(1000);
+        System.out.println("Đã khởi tạo thành công Hạm Đội 1,000 Bot Namec thông minh chạy map!");
 
         // 4. Memory optimizer
         tools.MemoryOptimizer.gI(450, true);
@@ -366,6 +365,13 @@ public class ServerManager {
             NettyServer.gI().close();
         } catch (Exception e) {
             Logger.error("Error closing NettyServer: " + e.getMessage());
+        }
+
+        try {
+            Logger.log("Stopping TrajectoryLogger...");
+            telemetry.TrajectoryLogger.gI().stop();
+        } catch (Exception e) {
+            Logger.error("Error stopping TrajectoryLogger: " + e.getMessage());
         }
 
         try {
