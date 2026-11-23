@@ -528,7 +528,7 @@ public class TrajectoryLogger {
                 boolean timeReached = (now - lastFlushTime >= TelemetryConfig.FLUSH_INTERVAL_MS) && !batch.isEmpty();
 
                 if (sizeReached || timeReached) {
-                    writeBatchToFile(batch);
+                    processBatch(batch);
                     batch.clear();
                     lastFlushTime = now;
                 }
@@ -542,7 +542,7 @@ public class TrajectoryLogger {
 
         // Flush any remaining batch on loop exit
         if (!batch.isEmpty()) {
-            writeBatchToFile(batch);
+            processBatch(batch);
             batch.clear();
         }
     }
@@ -551,13 +551,32 @@ public class TrajectoryLogger {
         List<TrajectoryRecord> remaining = new ArrayList<>();
         queue.drainTo(remaining);
         if (!remaining.isEmpty()) {
-            writeBatchToFile(remaining);
+            processBatch(remaining);
         }
     }
 
-    private void writeBatchToFile(List<TrajectoryRecord> records) {
+    /**
+     * Dispatches the batch to the configured storage destination.
+     * In CLOUD_STREAM mode, records are GZIP-compressed in RAM and streamed
+     * over HTTP without creating or writing any file to the laptop.
+     */
+    private void processBatch(List<TrajectoryRecord> records) {
         if (records == null || records.isEmpty()) return;
 
+        if (TelemetryConfig.STORAGE_DESTINATION == TelemetryConfig.StorageDestination.CLOUD_STREAM) {
+            // ZERO-DISK LAPTOP FOOTPRINT: Stream directly to Cloud Storage
+            CloudTelemetryStreamer.gI().streamBatch(records);
+            totalFlushed.addAndGet(records.size());
+        } else if (TelemetryConfig.STORAGE_DESTINATION == TelemetryConfig.StorageDestination.LOCAL_DISK) {
+            // Fallback disk write (only if explicitly enabled)
+            writeBatchToDisk(records);
+        } else {
+            // NONE / DRY-RUN mode
+            totalFlushed.addAndGet(records.size());
+        }
+    }
+
+    private void writeBatchToDisk(List<TrajectoryRecord> records) {
         try {
             String dateStr = LocalDate.now().format(DATE_FORMATTER);
             File partitionDir = new File(TelemetryConfig.BASE_OUTPUT_DIR, dateStr);
@@ -587,10 +606,13 @@ public class TrajectoryLogger {
 
     public String getStatusJson() {
         return String.format(
-                "{\"enabled\":%b,\"queue_size\":%d,\"queue_capacity\":%d,\"total_enqueued\":%d," +
-                "\"total_flushed\":%d,\"total_dropped_queue_full\":%d,\"total_macro_filtered\":%d," +
-                "\"total_afk_filtered\":%d,\"whitelist_maps_count\":%d,\"whitelist_players_count\":%d}",
+                "{\"enabled\":%b,\"destination\":\"%s\",\"cloud_endpoint\":\"%s\",\"queue_size\":%d," +
+                "\"queue_capacity\":%d,\"total_enqueued\":%d,\"total_flushed\":%d," +
+                "\"total_dropped_queue_full\":%d,\"total_macro_filtered\":%d,\"total_afk_filtered\":%d," +
+                "\"whitelist_maps_count\":%d,\"whitelist_players_count\":%d,\"cloud_stats\":%s}",
                 TelemetryConfig.ENABLED,
+                TelemetryConfig.STORAGE_DESTINATION.name(),
+                TelemetryConfig.CLOUD_ENDPOINT,
                 queue.size(),
                 TelemetryConfig.QUEUE_CAPACITY,
                 totalEnqueued.get(),
@@ -599,7 +621,8 @@ public class TrajectoryLogger {
                 totalMacroFiltered.get(),
                 totalAfkFiltered.get(),
                 TelemetryConfig.WHITELIST_MAPS.size(),
-                TelemetryConfig.WHITELIST_PLAYERS.size()
+                TelemetryConfig.WHITELIST_PLAYERS.size(),
+                CloudTelemetryStreamer.gI().getCloudMetricsJson()
         );
     }
 

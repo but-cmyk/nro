@@ -98,7 +98,10 @@ public class NewBot {
 
 
    public void runBot(int type, int slot) {
-    LoadPart();
+        if (!BotManager.ENABLED) {
+            return;
+        }
+        LoadPart();
     for (int i = 0; i < slot; i++) {
         int Gender = new Random().nextInt(3);
         int Random1 = getIndex(Gender);
@@ -161,6 +164,10 @@ public class NewBot {
      * Phân bổ tỷ lệ chuẩn xác ra 14 map cày cuốc theo dữ liệu người thật (hạm đội 1,000 bots).
      */
     public void spawnNamecArmy(int count) {
+        if (!BotManager.ENABLED) {
+            System.out.println("Chức năng Bot đã bị vô hiệu hóa.");
+            return;
+        }
         LoadPart();
         int[] targetMaps = { 30, 38, 34, 33, 13, 29, 27, 11, 31, 32, 8, 9, 10, 7 };
         int[] botQuotas  = { 15, 12, 10, 10,  9,  8,  7,  6,  5,  5, 4, 3,  3, 3 };

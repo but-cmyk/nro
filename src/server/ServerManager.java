@@ -123,7 +123,6 @@ public class ServerManager {
         executorService.submit(() -> WorldMartialArtsTournamentManager.gI().run());
         executorService.submit(() -> AutoBtri.gI().run());
         services.admin.AdminApiService.gI().start();
-        telemetry.TrajectoryLogger.gI().start();
 
         // 3. Load Boss và Map
         Logger.log("Đang tải dữ liệu Boss và Map...");
@@ -136,12 +135,7 @@ public class ServerManager {
 
         new Thread(TopService.gI(), "Top Service Thread").start();
 
-        // executorService.submit(() -> CSMM.gI().run());
-        new Thread(BotManager.gI(), "Bot Manager").start();
-
-        // Tạo 10 Bot thông minh test
-        NewBot.gI().spawnNamecArmy(1000);
-        System.out.println("Đã khởi tạo thành công Hạm Đội 1,000 Bot Namec thông minh chạy map!");
+        // Bot Manager and Namec bot fleet disabled
 
         // 4. Memory optimizer
         tools.MemoryOptimizer.gI(450, true);
@@ -367,12 +361,7 @@ public class ServerManager {
             Logger.error("Error closing NettyServer: " + e.getMessage());
         }
 
-        try {
-            Logger.log("Stopping TrajectoryLogger...");
-            telemetry.TrajectoryLogger.gI().stop();
-        } catch (Exception e) {
-            Logger.error("Error stopping TrajectoryLogger: " + e.getMessage());
-        }
+
 
         try {
             Logger.log("Saving consign shop...");

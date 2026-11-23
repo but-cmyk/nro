@@ -98,36 +98,59 @@ public class CommandRegistry {
                         Logger.warning("Usage: telemetry player [add <pId>|remove <pId>|clear]\n");
                     }
                 }
+                case "mode" -> {
+                    if (args.length > 1) {
+                        String m = args[1].toUpperCase();
+                        switch (m) {
+                            case "CLOUD", "CLOUD_STREAM" -> {
+                                telemetry.TelemetryConfig.setStorageDestination(telemetry.TelemetryConfig.StorageDestination.CLOUD_STREAM);
+                                Logger.log(Logger.GREEN, "[Telemetry] Storage mode set to CLOUD_STREAM (0 bytes stored on laptop).\n");
+                            }
+                            case "DISK", "LOCAL" -> {
+                                telemetry.TelemetryConfig.setStorageDestination(telemetry.TelemetryConfig.StorageDestination.LOCAL_DISK);
+                                Logger.log(Logger.YELLOW, "[Telemetry] Storage mode set to LOCAL_DISK.\n");
+                            }
+                            case "NONE" -> {
+                                telemetry.TelemetryConfig.setStorageDestination(telemetry.TelemetryConfig.StorageDestination.NONE);
+                                Logger.log(Logger.PURPLE, "[Telemetry] Storage mode set to NONE (Discard).\n");
+                            }
+                            default -> Logger.warning("Usage: telemetry mode [cloud|disk|none]\n");
+                        }
+                    } else {
+                        Logger.log(Logger.PURPLE, "[Telemetry] Current mode: " + telemetry.TelemetryConfig.STORAGE_DESTINATION + "\n");
+                    }
+                }
+                case "cloud" -> {
+                    if (args.length > 1) {
+                        String url = args[1];
+                        telemetry.TelemetryConfig.setCloudEndpoint(url);
+                        Logger.log(Logger.GREEN, "[Telemetry] Cloud endpoint set to: " + url + "\n");
+                    } else {
+                        Logger.log(Logger.PURPLE, "[Telemetry] Cloud metrics: " + telemetry.CloudTelemetryStreamer.gI().getCloudMetricsJson() + "\n");
+                    }
+                }
                 case "reset" -> {
                     telemetry.TrajectoryLogger.gI().resetMetrics();
+                    telemetry.CloudTelemetryStreamer.gI().resetMetrics();
                     Logger.log(Logger.GREEN, "[Telemetry] Reset metrics counters.\n");
                 }
-                default -> Logger.warning("Usage: telemetry [on|off|map|player|reset]\n");
+                default -> Logger.warning("Usage: telemetry [on|off|mode <cloud|disk|none>|cloud <url>|map|player|reset]\n");
             }
         });
 
-        // Bot Management & Namec AI Fleet command
+        // Bot Management command (Vô hiệu hóa hoàn toàn)
         commands.put("bot", args -> {
             if (args.length == 0) {
-                int botCount = bot.BotManager.gI().bot.size();
-                Logger.log(Logger.PURPLE, "[Bot Fleet] Active bots: " + botCount + "\n");
-                Logger.warning("Usage: bot [namec <count> | clear]\n");
+                Logger.warning("[Bot] Chức năng Bot đã bị vô hiệu hóa hoàn toàn.\n");
                 return;
             }
             String sub = args[0].toLowerCase();
-            if ("namec".equals(sub)) {
-                int count = args.length > 1 ? Integer.parseInt(args[1]) : 1000;
-                bot.NewBot.gI().spawnNamecArmy(count);
-                Logger.log(Logger.GREEN, "[Bot] Successfully spawned " + count + " Namec AI bots!\n");
-            } else if ("clear".equals(sub)) {
+            if ("clear".equals(sub)) {
                 int size = bot.BotManager.gI().bot.size();
-                for (bot.Bot b : new java.util.ArrayList<>(bot.BotManager.gI().bot)) {
-                    services.map.ChangeMapService.gI().exitMap(b);
-                }
-                bot.BotManager.gI().bot.clear();
-                Logger.log(Logger.YELLOW, "[Bot] Cleared " + size + " active bots.\n");
+                bot.BotManager.gI().clearAllBots();
+                Logger.log(Logger.YELLOW, "[Bot] Đã dọn sạch tất cả bot tồn đọng (" + size + " bots).\n");
             } else {
-                Logger.warning("Usage: bot [namec <count> | clear]\n");
+                Logger.warning("[Bot] Chức năng Bot đã bị vô hiệu hóa hoàn toàn.\n");
             }
         });
 

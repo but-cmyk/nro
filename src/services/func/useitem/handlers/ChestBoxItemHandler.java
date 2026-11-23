@@ -24,7 +24,8 @@ import java.util.List;
 
 /**
  * Xử lý mở các loại Rương, Hộp quà, Capsule Kì Bí:
- * Rương gỗ (570), CSKB (380), Trứng rồng nhí (1426, 1427, 1428, 1429), Hộp quà (648, 1143, 1198-1200, 736),
+ * Rương gỗ (570), CSKB (380), Trứng rồng nhí (1426, 1427, 1428, 1429), Hộp quà
+ * (648, 1143, 1198-1200, 736),
  * Hộp thần linh, Quà quê, Set kích hoạt SKH.
  */
 public class ChestBoxItemHandler implements ItemActionHandler {
@@ -83,7 +84,8 @@ public class ChestBoxItemHandler implements ItemActionHandler {
             Item thoiVang = ItemService.gI().createNewItem((short) ConstItem.THOI_VANG);
             thoiVang.quantity = Util.nextInt(10, 30);
             InventoryService.gI().addItemBag(pl, thoiVang);
-            Service.gI().sendThongBao(pl, "|1|Bạn mở Capsule Vàng Kì Bí nhận được " + thoiVang.quantity + " Thỏi Vàng!");
+            Service.gI().sendThongBao(pl,
+                    "|1|Bạn mở Capsule Vàng Kì Bí nhận được " + thoiVang.quantity + " Thỏi Vàng!");
         } else if (roll <= 35) { // 20% Ngọc xanh
             int gemReward = Util.nextInt(100, 300);
             pl.inventory.addGem(gemReward);
@@ -98,19 +100,21 @@ public class ChestBoxItemHandler implements ItemActionHandler {
             InventoryService.gI().addItemBag(pl, eq);
             Service.gI().sendThongBao(pl, "|1|Bạn mở Capsule Vàng Kì Bí nhận được " + eq.template.name + "!");
         } else if (roll <= 75) { // 20% Cà chua / Cà rốt / Chuối buff
-            short[] vegIds = {(short) ConstItem.CA_CHUA, (short) ConstItem.CA_ROT, (short) ConstItem.CHUOI};
+            short[] vegIds = { (short) ConstItem.CA_CHUA, (short) ConstItem.CA_ROT, (short) ConstItem.CHUOI };
             short itemId = vegIds[Util.nextInt(0, vegIds.length - 1)];
             Item food = ItemService.gI().createNewItem(itemId);
             food.quantity = Util.nextInt(3, 5);
             food.itemOptions.add(new ItemOption(30, 0));
             food.itemOptions.add(new ItemOption(86, 0));
             InventoryService.gI().addItemBag(pl, food);
-            Service.gI().sendThongBao(pl, "|1|Bạn mở Capsule Vàng Kì Bí nhận được " + food.quantity + " " + food.template.name + "!");
+            Service.gI().sendThongBao(pl,
+                    "|1|Bạn mở Capsule Vàng Kì Bí nhận được " + food.quantity + " " + food.template.name + "!");
         } else { // 25% Vàng trực tiếp
             int gold = Util.nextInt(50_000_000, 150_000_000);
             pl.inventory.addGold(gold);
             PlayerService.gI().sendInfoHpMpMoney(pl);
-            Service.gI().sendThongBao(pl, "|1|Bạn mở Capsule Vàng Kì Bí nhận được " + Util.powerToString(gold) + " Vàng!");
+            Service.gI().sendThongBao(pl,
+                    "|1|Bạn mở Capsule Vàng Kì Bí nhận được " + Util.powerToString(gold) + " Vàng!");
         }
         InventoryService.gI().sendItemBags(pl);
     }
@@ -129,9 +133,9 @@ public class ChestBoxItemHandler implements ItemActionHandler {
         String text = "Bạn nhận được\n";
         List<Item> rewards = new ArrayList<>();
 
-        int[] itemT1 = {223, 224, 225, 17, 18};
-        int[] itemT2 = {441, 442, 443, 444};
-        int[] itemT3 = {445, 446, 447, 19, 20};
+        int[] itemT1 = { 223, 224, 225, 17, 18 };
+        int[] itemT2 = { 441, 442, 443, 444 };
+        int[] itemT3 = { 445, 446, 447, 19, 20 };
 
         int numClothes = param < 6 ? 1 : (param < 10 ? 2 : 3);
         for (int i = 0; i < numClothes; i++) {
@@ -160,9 +164,12 @@ public class ChestBoxItemHandler implements ItemActionHandler {
         pl.inventory.addGold(gold);
         pl.inventory.gem += gem;
         pl.inventory.ruby += ruby;
-        if (gold > 0) pl.textRuongGo.add(text + "|4| " + Util.powerToString(gold) + " Vàng");
-        if (gem > 0) pl.textRuongGo.add(text + "|1| " + gem + " Ngọc");
-        if (ruby > 0) pl.textRuongGo.add(text + "|1| " + ruby + " Hồng Ngọc");
+        if (gold > 0)
+            pl.textRuongGo.add(text + "|4| " + Util.powerToString(gold) + " Vàng");
+        if (gem > 0)
+            pl.textRuongGo.add(text + "|1| " + gem + " Ngọc");
+        if (ruby > 0)
+            pl.textRuongGo.add(text + "|1| " + ruby + " Hồng Ngọc");
 
         for (Item reward : rewards) {
             InventoryService.gI().addItemBag(pl, reward);
@@ -179,7 +186,8 @@ public class ChestBoxItemHandler implements ItemActionHandler {
 
     private void openCSKB(Player pl, Item item) {
         if (InventoryService.gI().getCountEmptyBag(pl) > 0) {
-            short[] temp = {76, 188, 189, 190, 381, 382, 383, 384, 385, (short) ConstItem.NGOC_RONG_6_SAO, (short) ConstItem.NGOC_RONG_7_SAO};
+            short[] temp = { 76, 188, 189, 190, 381, 382, 383, 384, 385, (short) ConstItem.NGOC_RONG_6_SAO,
+                    (short) ConstItem.NGOC_RONG_7_SAO };
             byte index = (byte) Util.nextInt(0, temp.length - 1);
             short[] icon = new short[2];
             icon[0] = item.template.iconID;
@@ -216,7 +224,7 @@ public class ChestBoxItemHandler implements ItemActionHandler {
 
     private static void open1426(Player pl, Item item) {
         if (InventoryService.gI().getCountEmptyBag(pl) > 0) {
-            short[] temp = {1423, 1424, 1425};
+            short[] temp = { 1423, 1424, 1425 };
             byte index = (byte) Util.nextInt(0, temp.length - 1);
             short[] icon = new short[2];
             icon[0] = item.template.iconID;
@@ -282,7 +290,7 @@ public class ChestBoxItemHandler implements ItemActionHandler {
             Service.gI().sendThongBao(pl, "Hãy chừa 1 ô trống để mở.");
             return;
         }
-        int[] items = new int[]{1318, 1319};
+        int[] items = new int[] { 1318, 1319 };
         int itemID = items[Util.nextInt(0, items.length - 1)];
         Item reward = ItemService.gI().createNewItem((short) itemID);
         reward.itemOptions.add(new ItemOption(50, 18));
@@ -304,7 +312,8 @@ public class ChestBoxItemHandler implements ItemActionHandler {
     }
 
     public static void itemSKH(Player pl, Item item) {
-        NpcService.gI().createMenuConMeo(pl, item.template.id, -1, "Hãy chọn một món quà", "Áo", "Quần", "Găng", "Giày", "Rada", "Từ Chối");
+        NpcService.gI().createMenuConMeo(pl, item.template.id, -1, "Hãy chọn một món quà", "Áo", "Quần", "Găng", "Giày",
+                "Rada", "Từ Chối");
     }
 
     public static void useHopQuaThanLinh(Player player, Item item) {
@@ -317,8 +326,8 @@ public class ChestBoxItemHandler implements ItemActionHandler {
             Service.gI().sendThongBao(pl, "Bạn đang kiệt sức, không thể mở vật phẩm!");
             return;
         }
-        if (InventoryService.gI().getCountEmptyBag(pl) < 3) {
-            Service.gI().sendThongBaoResetWait(pl, "Hành trang cần ít nhất 3 ô trống để mở Capsule Tân Thủ!");
+        if (InventoryService.gI().getCountEmptyBag(pl) < 7) {
+            Service.gI().sendThongBaoResetWait(pl, "Hành trang cần ít nhất 7 ô trống để mở Capsule Tân Thủ!");
             return;
         }
 
@@ -336,24 +345,53 @@ public class ChestBoxItemHandler implements ItemActionHandler {
         itCaiTrang.itemOptions.add(new ItemOption(50, 20)); // Sức đánh+#%
         itCaiTrang.itemOptions.add(new ItemOption(77, 20)); // HP+#%
         itCaiTrang.itemOptions.add(new ItemOption(103, 20)); // KI +#%
-        itCaiTrang.itemOptions.add(new ItemOption(83, 20));  // Tăng 20% sức mạnh và tiềm năng nhận được khi đánh quái
-        itCaiTrang.itemOptions.add(new ItemOption(93, 3));   // HSD 3 ngày
-        itCaiTrang.itemOptions.add(new ItemOption(30, 0));   // Không thể giao dịch
+        itCaiTrang.itemOptions.add(new ItemOption(83, 20)); // Tăng 20% sức mạnh và tiềm năng nhận được khi đánh quái
+        itCaiTrang.itemOptions.add(new ItemOption(93, 3)); // HSD 3 ngày
+        itCaiTrang.itemOptions.add(new ItemOption(30, 0)); // Không thể giao dịch
 
         // 2. Ván bay / Thú cưỡi cực VIP (id 396): HSD 7 ngày
         Item itVanBay = ItemService.gI().createNewItem((short) 396);
         itVanBay.itemOptions.clear();
         itVanBay.itemOptions.add(new ItemOption(89, 0)); // Dùng để bay và phục hồi HP, KI
-        itVanBay.itemOptions.add(new ItemOption(93, 7));  // HSD 7 ngày
-        itVanBay.itemOptions.add(new ItemOption(30, 0));  // Không thể giao dịch
+        itVanBay.itemOptions.add(new ItemOption(93, 7)); // HSD 7 ngày
+        itVanBay.itemOptions.add(new ItemOption(30, 0)); // Không thể giao dịch
 
-        // 3. Đeo lưng (id 1332): Biến 10% tấn công quái thành HP, Biến 10% tấn công quái thành KI, HSD 3 ngày
+        // 3. Đeo lưng (id 1332): Biến 10% tấn công quái thành HP, Biến 10% tấn công
+        // quái thành KI, HSD 3 ngày
         Item itDeoLung = ItemService.gI().createNewItem((short) 1332);
         itDeoLung.itemOptions.clear();
         itDeoLung.itemOptions.add(new ItemOption(104, 10)); // Biến 10% tấn công quái thành HP
-        itDeoLung.itemOptions.add(new ItemOption(96, 10));  // Biến 10% tấn công thành KI (quái)
-        itDeoLung.itemOptions.add(new ItemOption(93, 3));   // HSD 3 ngày
-        itDeoLung.itemOptions.add(new ItemOption(30, 0));   // Không thể giao dịch
+        itDeoLung.itemOptions.add(new ItemOption(96, 10)); // Biến 10% tấn công thành KI (quái)
+        itDeoLung.itemOptions.add(new ItemOption(93, 3)); // HSD 3 ngày
+        itDeoLung.itemOptions.add(new ItemOption(30, 0)); // Không thể giao dịch
+
+        // 4. x5 Sao pha lê đỏ (hút HP - id 441): Option 95 param 5 (5% hút máu), Option
+        // 30 param 0 (Không thể giao dịch)
+        Item itSplHutHp = ItemService.gI().createNewItem((short) 441, 5);
+        itSplHutHp.itemOptions.clear();
+        itSplHutHp.itemOptions.add(new ItemOption(95, 5));
+        itSplHutHp.itemOptions.add(new ItemOption(30, 0));
+
+        // 5. x5 Sao pha lê xanh dương (hút KI - id 442): Option 96 param 5 (5% hút KI),
+        // Option 30 param 0 (Không thể giao dịch)
+        Item itSplHutKi = ItemService.gI().createNewItem((short) 442, 5);
+        itSplHutKi.itemOptions.clear();
+        itSplHutKi.itemOptions.add(new ItemOption(96, 5));
+        itSplHutKi.itemOptions.add(new ItemOption(30, 0));
+
+        // 6. x5 Sao pha lê xanh lá (TNSM - id 447): Option 101 param 5 (5% TNSM),
+        // Option 30 param 0 (Không thể giao dịch)
+        Item itSplTnsm = ItemService.gI().createNewItem((short) 447, 5);
+        itSplTnsm.itemOptions.clear();
+        itSplTnsm.itemOptions.add(new ItemOption(101, 5));
+        itSplTnsm.itemOptions.add(new ItemOption(30, 0));
+
+        // 7. x5 Sao pha lê đỏ hồng (phản sát thương - id 443): Option 97 param 5 (5%
+        // phản sát thương), Option 30 param 0 (Không thể giao dịch)
+        Item itSplPhanSatThuong = ItemService.gI().createNewItem((short) 443, 5);
+        itSplPhanSatThuong.itemOptions.clear();
+        itSplPhanSatThuong.itemOptions.add(new ItemOption(97, 5));
+        itSplPhanSatThuong.itemOptions.add(new ItemOption(30, 0));
 
         short icon1 = item.template.iconID;
         short icon2 = (itCaiTrang.template != null) ? itCaiTrang.template.iconID : -1;
@@ -362,9 +400,13 @@ public class ChestBoxItemHandler implements ItemActionHandler {
         InventoryService.gI().addItemBag(pl, itCaiTrang);
         InventoryService.gI().addItemBag(pl, itVanBay);
         InventoryService.gI().addItemBag(pl, itDeoLung);
+        InventoryService.gI().addItemBag(pl, itSplHutHp);
+        InventoryService.gI().addItemBag(pl, itSplHutKi);
+        InventoryService.gI().addItemBag(pl, itSplTnsm);
+        InventoryService.gI().addItemBag(pl, itSplPhanSatThuong);
         InventoryService.gI().sendItemBags(pl);
 
         CombineService.gI().sendEffectOpenItem(pl, icon1, icon2);
-        Service.gI().sendThongBao(pl, "Bạn nhận được Cải trang, Ván bay và Đeo lưng tân thủ!");
+        Service.gI().sendThongBao(pl, "Bạn nhận được Cải trang, Ván bay, Đeo lưng và 4 loại Sao pha lê tân thủ!");
     }
 }

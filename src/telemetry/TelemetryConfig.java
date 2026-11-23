@@ -1,18 +1,36 @@
 package telemetry;
 
 import models.player.Player;
-import java.util.Collections;
+import utils.Logger;
+
+import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Runtime Configuration for Real Player Telemetry & Trajectory Logger.
- * Allows zero-downtime dynamic toggling per map, per player, and globally.
+ * Supports Cloud-Native Streaming (Zero-Disk laptop footprint),
+ * dynamic runtime toggling per map, per player, and globally.
  */
 public class TelemetryConfig {
 
+    public enum StorageDestination {
+        CLOUD_STREAM, // Stream GZIP payload directly to Cloud Storage (0 byte stored on laptop)
+        LOCAL_DISK,   // Append to local .jsonl file (only when explicitly configured)
+        NONE          // Discard records (dry-run mode)
+    }
+
     // Global toggle: Enable or disable telemetry recording dynamically
-    public static volatile boolean ENABLED = true;
+    public static volatile boolean ENABLED = false;
+
+    // Storage Destination (Default is NONE: disabled & 0 byte disk footprint)
+    public static volatile StorageDestination STORAGE_DESTINATION = StorageDestination.NONE;
+
+    // Cloud Stream Endpoint & Credentials
+    public static volatile String CLOUD_ENDPOINT = "";
+    public static volatile String CLOUD_AUTH_TOKEN = "";
+    public static volatile int CLOUD_TIMEOUT_SEC = 10;
+    public static volatile boolean CLOUD_DISCARD_ON_FAILURE = true;
 
     // Flush & Queue limits
     public static volatile int BATCH_SIZE = 500;
@@ -36,8 +54,62 @@ public class TelemetryConfig {
     public static final Set<Long> WHITELIST_PLAYERS = ConcurrentHashMap.newKeySet();
     public static final Set<Long> BLACKLIST_PLAYERS = ConcurrentHashMap.newKeySet();
 
-    // Storage path
+    // Fallback local storage path (used ONLY if STORAGE_DESTINATION == LOCAL_DISK)
     public static volatile String BASE_OUTPUT_DIR = "data/telemetry";
+
+    /**
+     * Initializes configuration from server properties file.
+     */
+    public static void loadFromProperties(Properties props) {
+        if (props == null) return;
+
+        try {
+            if (props.containsKey("telemetry.enabled")) {
+                ENABLED = Boolean.parseBoolean(props.getProperty("telemetry.enabled").trim());
+            }
+
+            if (props.containsKey("telemetry.storage.destination")) {
+                String dest = props.getProperty("telemetry.storage.destination").trim().toUpperCase();
+                switch (dest) {
+                    case "DISK", "LOCAL", "LOCAL_DISK" -> STORAGE_DESTINATION = StorageDestination.LOCAL_DISK;
+                    case "NONE", "DISABLED" -> STORAGE_DESTINATION = StorageDestination.NONE;
+                    default -> STORAGE_DESTINATION = StorageDestination.CLOUD_STREAM;
+                }
+            }
+
+            if (props.containsKey("telemetry.cloud.endpoint")) {
+                CLOUD_ENDPOINT = props.getProperty("telemetry.cloud.endpoint").trim();
+            }
+
+            if (props.containsKey("telemetry.cloud.auth.token")) {
+                CLOUD_AUTH_TOKEN = props.getProperty("telemetry.cloud.auth.token").trim();
+            }
+
+            if (props.containsKey("telemetry.cloud.timeout.sec")) {
+                CLOUD_TIMEOUT_SEC = Integer.parseInt(props.getProperty("telemetry.cloud.timeout.sec").trim());
+            }
+
+            if (props.containsKey("telemetry.output.dir")) {
+                BASE_OUTPUT_DIR = props.getProperty("telemetry.output.dir").trim();
+            }
+
+            if (props.containsKey("telemetry.batch.size")) {
+                BATCH_SIZE = Integer.parseInt(props.getProperty("telemetry.batch.size").trim());
+            }
+
+            if (props.containsKey("telemetry.flush.interval.ms")) {
+                FLUSH_INTERVAL_MS = Long.parseLong(props.getProperty("telemetry.flush.interval.ms").trim());
+            }
+
+            Logger.log(Logger.PURPLE, "[TelemetryConfig] Mode: " + STORAGE_DESTINATION +
+                    " | Enabled: " + ENABLED +
+                    (STORAGE_DESTINATION == StorageDestination.CLOUD_STREAM
+                            ? " | Cloud Endpoint: " + (CLOUD_ENDPOINT.isEmpty() ? "(Unset - In-RAM Discard Active)" : CLOUD_ENDPOINT)
+                            : " | Disk Dir: " + BASE_OUTPUT_DIR) + "\n");
+        } catch (Exception e) {
+            Logger.logException(TelemetryConfig.class, e, "Lỗi đọc cấu hình telemetry");
+        }
+    }
 
     /**
      * Checks if a player's actions should be logged under current filters.
@@ -81,6 +153,14 @@ public class TelemetryConfig {
         ENABLED = enabled;
     }
 
+    public static void setStorageDestination(StorageDestination destination) {
+        STORAGE_DESTINATION = destination;
+    }
+
+    public static void setCloudEndpoint(String endpoint) {
+        CLOUD_ENDPOINT = endpoint != null ? endpoint.trim() : "";
+    }
+
     public static void addWhitelistMap(int mapId) {
         WHITELIST_MAPS.add(mapId);
     }
@@ -105,4 +185,3 @@ public class TelemetryConfig {
         WHITELIST_PLAYERS.clear();
     }
 }
-

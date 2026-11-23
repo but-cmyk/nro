@@ -1,14 +1,16 @@
 package bot;
 
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList; // Import thư viện này
+import java.util.concurrent.CopyOnWriteArrayList;
 import server.ServerManager;
 
 public class BotManager implements Runnable {
 
     public static BotManager i;
 
-    // Đổi ArrayList thành CopyOnWriteArrayList để tránh lỗi ConcurrentModificationException
+    // Chức năng Bot đã bị vô hiệu hóa hoàn toàn
+    public static volatile boolean ENABLED = false;
+
     public List<Bot> bot = new CopyOnWriteArrayList<>();
 
     public static BotManager gI(){
@@ -22,14 +24,16 @@ public class BotManager implements Runnable {
     public void run() {
         while (ServerManager.isRunning) {
             try {
+                if (!ENABLED || this.bot.isEmpty()) {
+                    Thread.sleep(2000);
+                    continue;
+                }
                 long st = System.currentTimeMillis();
-                // Vòng lặp này bây giờ an toàn dù bot có bị xóa giữa chừng
                 for (Bot bot : this.bot) {
                     if (bot != null) {
                         try {
                             bot.update();
                         } catch (Exception ex) {
-                            // Bảo vệ 1,000 bots không bị gián đoạn khi 1 bot gặp lỗi cục bộ
                         }
                     }
                 }
@@ -40,8 +44,18 @@ public class BotManager implements Runnable {
                     Thread.sleep(5);
                 }
             } catch (Exception e) {
-                e.printStackTrace(); // In lỗi ra để biết nếu có gì sai
             }
         }
+    }
+
+    public void clearAllBots() {
+        for (Bot b : this.bot) {
+            if (b != null) {
+                try {
+                    services.map.ChangeMapService.gI().exitMap(b);
+                } catch (Exception ignored) {}
+            }
+        }
+        this.bot.clear();
     }
 }

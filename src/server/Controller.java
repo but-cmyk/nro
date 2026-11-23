@@ -530,7 +530,6 @@ public class Controller implements IMessageHandler {
                             AchievementService.gI().checkDoneTaskFly(player, player.location.x - toX);
                         }
                         player.location.lastTimeplayerMove = now;
-                        telemetry.TrajectoryLogger.gI().logMove(player, toX, toY);
                         PlayerService.gI().playerMove(player, toX, toY);
                     }
                     break;
@@ -756,7 +755,6 @@ public class Controller implements IMessageHandler {
                         int selectSkill = _msg.reader().readShort();
                         PlayerAuditLogger.logAction(player, "CMD_SELECT_SKILL", "Request select skillTemplateId=" + selectSkill);
                         SkillService.gI().selectSkill(player, selectSkill);
-                        telemetry.TrajectoryLogger.gI().logSelectSkill(player, selectSkill);
                     }
                     break;
                 case 54:
@@ -776,7 +774,6 @@ public class Controller implements IMessageHandler {
                         }
                         // _msg.reader().readByte();
                         PlayerAuditLogger.logAttackMob(player, mobId, isMobMe, masterId, "DISPATCH", "Service.attackMob");
-                        telemetry.TrajectoryLogger.gI().logAttackMob(player, mobId, 0, false);
                         Service.gI().attackMob(player, mobId, isMobMe, masterId);
                     }
                     break;
@@ -791,7 +788,6 @@ public class Controller implements IMessageHandler {
                         int playerId = _msg.reader().readInt();
                         // _msg.reader().readByte();
                         PlayerAuditLogger.logAttackPlayer(player, playerId, "DISPATCH", "Service.attackPlayer");
-                        telemetry.TrajectoryLogger.gI().logAttackPlayer(player, playerId, 0, false);
                         Service.gI().attackPlayer(player, playerId);
                     }
                     break;
@@ -805,7 +801,6 @@ public class Controller implements IMessageHandler {
                 case -20:
                     if (player != null && !player.isDie()) {
                         int itemMapId = _msg.reader().readShort();
-                        telemetry.TrajectoryLogger.gI().logPickItem(player, itemMapId, -1, "REQUEST", 1);
                         ItemMapService.gI().pickItem(player, itemMapId, false);
                     }
                     break;

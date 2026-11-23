@@ -334,6 +334,9 @@ public static final String queryTopWhis = "SELECT id, CAST(JSON_UNQUOTE(JSON_EXT
         if ((value = properties.get("server.daoautoupdater")) != null) {
             DAO_AUTO_UPDATER = String.valueOf(value).equalsIgnoreCase("true");
         }
+
+        // Cấu hình Cloud-Native Telemetry Logger (Zero-Disk laptop footprint)
+        telemetry.TelemetryConfig.loadFromProperties(properties);
     }
 
     /**

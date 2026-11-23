@@ -83,11 +83,7 @@ public class Command {
                 + " người chơi\n Sessions: " + SessionManager.gI().getNumSession() + "\nThreads: " + Thread.activeCount()
                 + " luồng" + "\n" + SystemMetrics.ToString(),
                 "Ngọc rồng", "Đệ tử", "Bảo trì", "Tìm kiếm\nngười chơi", "Boss", "VND + Tổng nạp", "Save", "Đóng"));
-        adminCommands.put("bot", player -> NpcService.gI().createMenuConMeo(player, ConstNpc.MENU_BOT, -1,
-                "Player online : " + Client.gI().getPlayers().size() + "\n"
-                + "\b|1|Thread: " + Thread.activeCount() + "\n"
-                + "Bot online : " + bot.BotManager.gI().bot.size(),
-                "Bot\nPem Quái", "Bot\nPem Nappa", "Bot\nPem Tương Lai", "Bot\nPem Cold", "Bot\nSăn Boss", "Đóng"));
+        adminCommands.put("bot", player -> Service.gI().sendThongBao(player, "Chức năng Bot đã bị vô hiệu hóa hoàn toàn."));
         adminCommands.put("bu1", player -> Input.gI().createFormGiveItem(player));
         adminCommands.put("bu", player -> Input.gI().createFormGetItem(player));
         adminCommands.put("d", player -> Service.gI().setPos(player, player.location.x, player.location.y + 10));
