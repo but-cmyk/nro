@@ -36,10 +36,21 @@ public class DeathOrAliveArenaService {
             return;
         }
 
-        Zone zone = getMapChallenge(112);
-        if (zone == null) {
-            Service.gI().sendThongBao(player, "Hiện tại các võ đài đều đang bận, vui lòng quay lại sau!");
-            return;
+        final Zone zone;
+        final DeathOrAliveArena vdst;
+        synchronized (DeathOrAliveArenaManager.gI()) {
+            zone = getMapChallenge(112);
+            if (zone == null) {
+                Service.gI().sendThongBao(player, "Hiện tại các võ đài đều đang bận, vui lòng quay lại sau!");
+                return;
+            }
+            vdst = new DeathOrAliveArena();
+            vdst.setPlayer(player);
+            vdst.setRound(0);
+            vdst.setZone(zone);
+            vdst.setTimeTotal(0);
+            vdst.endChallenge = false;
+            DeathOrAliveArenaManager.gI().add(vdst);
         }
 
         boolean isUseTicket = player.getTicketVDST() > 0;
@@ -77,21 +88,12 @@ public class DeathOrAliveArenaService {
 
         final int costUsed = cost;
         final boolean ticketUsed = isUseTicket;
+        vdst.costWaterBottle = costUsed;
+        vdst.isUseTicket = ticketUsed;
         setTimeout(() -> {
             try {
                 Npc baHatMit = NpcManager.getNpc(ConstNpc.BA_HAT_MIT);
-                DeathOrAliveArena vdst = new DeathOrAliveArena();
-
-                vdst.setPlayer(player);
                 vdst.setNpc(baHatMit);
-                vdst.setRound(0);
-                vdst.setZone(zone);
-                vdst.setTimeTotal(0);
-                vdst.costWaterBottle = costUsed;
-                vdst.isUseTicket = ticketUsed;
-                vdst.endChallenge = false;
-
-                DeathOrAliveArenaManager.gI().add(vdst);
 
                 vdst.toTheNextRound();
 

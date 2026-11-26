@@ -1,0 +1,90 @@
+{
+  "dimension_scores": [
+    {
+      "dimension": "Protocol & Network",
+      "score_out_of_10": 5.5,
+      "verdict": "Kiến trúc Netty Server (NroPacketDecoder/Encoder, Bounded Mailbox + Virtual Thread) hiện đại và an toàn, nhưng lớp Socket Client (Session_ME/Session_ME2, myReader/myWriter) và một số packet serializer phía Server (SummonDragonNamek, ConsignShopService) tồn tại các lỗi framing/desync P0-P1 nghiêm trọng và phân mảnh Dispatcher/Switch cũ."
+    }
+  ],
+  "verified_p0": [
+    {
+      "evidence": "Session_ME.cs:178,220 gọi dis.ReadBytes(num) không kiểm tra đủ số byte thực nhận; Session_ME.cs:173-176 (readMessage2) gọi readKey() mà không kiểm tra getKeyComplete hay giới hạn num4. Session_ME2.cs:156-224 lặp lại lỗi tương tự.",
+      "fix_plan": "Bổ sung helper ReadExactBytes(BinaryReader, int) lặp đọc đủ num byte hoặc ném EndOfStreamException; kiểm tra getKeyComplete và chặn 0 <= num4 <= 200000 trong readMessage2.",
+      "location": "Client/Client/Assets/Scripts/Game1/Session_ME.cs:171-238; Session_ME2.cs:156-224",
+      "status": "CONFIRMED",
+      "title": "Partial TCP Read & Unchecked readMessage2 Framing Desync"
+    },
+    {
+      "evidence": "Controller.cs:96-99 (requestItemPlayer) và 3203-3207 (case 33) dùng while(true) dựa vào Exception khi EOF. Tuy nhiên myReader.cs:34-42, 69-161 âm thầm kẹp posRead = buffer.Length và trả về 0 / string.Empty mà KHÔNG ném Exception, gây lặp vô tận / OOM.",
+      "fix_plan": "Thay while(true) bằng while (msg.reader().available() > 0) (hoặc >= 3 byte với requestItemPlayer).",
+      "location": "Client/Client/Assets/Scripts/Game1/Controller.cs:96-104, 3203-3212; myReader.cs:34-42, 69-161",
+      "status": "CONFIRMED",
+      "title": "Infinite while(true) EOF-by-exception loops in requestItemPlayer and case 33"
+    },
+    {
+      "evidence": "Controller.cs:854 đọc int num13 = msg.reader().readInt() trước readUTF(). SummonDragon.java:274 có writeInt((int) pl.id), nhưng SummonDragonNamek.java:109-110 bỏ qua và ghi thẳng writeUTF(pl.name). Cả hai thiếu finally msg.cleanup().",
+      "fix_plan": "Thêm msg.writer().writeInt((int) pl.id); vào SummonDragonNamek.java:110 và bọc msg.cleanup() trong finally ở cả hai lớp.",
+      "location": "src/services/func/SummonDragonNamek.java:101-119; SummonDragon.java:265-286; Controller.cs:846-858",
+      "status": "CONFIRMED",
+      "title": "Opcode -83 Stream Desync and Message Leak in SummonDragonNamek & SummonDragon"
+    },
+    {
+      "evidence": "ConsignShopService.java:187,666,706 ghi writeShort(itk.id) làm cắt 32-bit int; dòng 659 ghi writeByte(canKiGui.size()) tràn nếu >255; dòng 184,662,703 continue khi itk==null sau khi đã ghi size() vào header. (Lưu ý: việc ghi int quantity, newItem, partTemp trong -44 thực tế khớp với Controller.cs:2498-2532).",
+      "fix_plan": "Lọc bỏ null trước khi ghi size(), giới hạn/phân trang canKiGui <= 255, và đồng bộ kiểu int cho itk.id hoặc giới hạn ID <= 32767.",
+      "location": "src/services/ConsignShopService.java:181-213, 659-728",
+      "status": "CONFIRMED",
+      "title": "Consign shop protocol ID truncation (writeShort on int id), byte count overflow, and null-skip desync in openShopKyGui"
+    },
+    {
+      "evidence": "Message.cleanup() tại Client/Client/Assets/Scripts/Game1/Message.cs:54-56 là hàm rỗng, không đóng hay hủy myReader, nên finally tại Controller.cs:4638 không làm hỏng messWait.",
+      "fix_plan": "Không cần sửa lỗi cleanup; chỉ cần đảm bảo messWait được gán null sau khi xử lý xong ở loadInfoMap.",
+      "location": "Client/Client/Assets/Scripts/Game1/Controller.cs:3685-3694, 4634-4640; Message.cs:54-56",
+      "status": "FALSE_POSITIVE",
+      "title": "messWait saved in case -24 is immediately cleaned up in finally block"
+    },
+    {
+      "evidence": "Controller.cs:4084-4100 (trong khối switch thứ 2) có xử lý case -73 đọc npcTemplateId và isHide, khớp với Service.java:2151-2161.",
+      "fix_plan": "Không cần sửa code; chỉ cần cập nhật script quét protocol matrix để nhận diện các khối switch thứ cấp trong Controller.cs.",
+      "location": "docs/atlas/_index/02_protocol_matrix.md:63; src/services/Service.java:2151-2161; Client/Controller.cs:4084-4100",
+      "status": "FALSE_POSITIVE",
+      "title": "Opcode -73 SERVER_SENDS_BUT_NO_CLIENT_HANDLER"
+    }
+  ],
+  "verified_p1_highlights": [
+    {
+      "impact": "Mất toàn bộ payload và lệch endianness độ dài gói tin khi gửi trước lúc hoàn tất trao đổi key (-27).",
+      "location": "Client/Client/Assets/Scripts/Game1/Session_ME.cs:417-428; Session_ME2.cs:395-406",
+      "title": "Missing Unencrypted Payload Write & Endianness Mismatch in doSendMessage"
+    },
+    {
+      "impact": "Lệch framing TCP khi nhận gói 66 (getImgByName) qua Session_ME2 và nguy cơ kích hoạt nhầm luồng disconnect chính.",
+      "location": "Client/Client/Assets/Scripts/Game1/Session_ME2.cs:187, 237",
+      "title": "Missing Extended-Length Opcode 66 & isMainSession=true in Session_ME2"
+    },
+    {
+      "impact": "OverflowException / IndexOutOfRangeException nếu session key dài >= 128 byte.",
+      "location": "Client/Client/Assets/Scripts/Game1/Session_ME.cs:146,456-480; Session_ME2.cs:131,433-457",
+      "title": "Signed sbyte Overflow in XOR Key Length and curR/curW Indices"
+    },
+    {
+      "impact": "IndexOutOfRangeException khi ghi byte đúng tại ranh giới buffer (vd: byte thứ 2048).",
+      "location": "Client/Client/Assets/Scripts/Game1/myWriter.cs:23-27, 192-194",
+      "title": "Off-by-one capacity check in myWriter.writeSByte"
+    },
+    {
+      "impact": "Sai tên hằng số opcode (LOGOUT=-26, UPDATE_HP=6, v.v.) và tồn tại dead duplicate switch cases trong Controller.cs / Controller.java bị che bởi Dispatcher mới.",
+      "location": "Client/Client/Assets/Scripts/Game1/Constants/NetworkOpcodes.cs:13-26; PacketDispatcher.cs:49-74; src/server/network/ServerPacketDispatcher.java:30-36",
+      "title": "Misnamed NetworkOpcodes constants & Dead Duplicate Handlers in Controller"
+    },
+    {
+      "impact": "Race condition khi setSentKey(true) sau writeAndFlush bất đồng bộ; NroPacketEncoder XOR 3-byte size vô điều kiện và ghi writeShort(0) không mã hóa khi data==null.",
+      "location": "src/network/io/KeyHandler.java:23-25; src/network/netty/NroPacketEncoder.java:50-57, 77",
+      "title": "XOR handshake race condition and size-byte encryption issues in Netty pipeline"
+    },
+    {
+      "impact": "Server gửi -109 (sendChiSoPetGoc) nhưng Client hoàn toàn không có handler xử lý.",
+      "location": "src/services/Service.java:1256-1274; src/server/Controller.java:363",
+      "title": "Unmatched Opcode -109 (SERVER_SENDS_BUT_NO_CLIENT_HANDLER)"
+    }
+  ]
+}

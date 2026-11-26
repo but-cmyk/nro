@@ -18,10 +18,12 @@ public class GameLoopManager implements Runnable {
     private final ScheduledExecutorService scheduler;
     private ScheduledFuture<?> updateTask;
     private ScheduledFuture<?> bossUpdateTask;
+    private ScheduledFuture<?> eventBossUpdateTask;
     private ScheduledFuture<?> phoBanUpdateTask;
     private long lastTimeUpdateBlackBallWar = 0;
     private static final int UPDATE_RATE = 1000; // Tick rate: 1000ms
-    private static final int BOSS_UPDATE_RATE = 150; // Boss tick rate: 150ms
+    private static final int BOSS_UPDATE_RATE = 250; // Combat boss tick rate: 250ms
+    private static final int EVENT_BOSS_UPDATE_RATE = 1000; // Event & Dungeon boss tick rate: 1000ms
 
     private GameLoopManager() {
         int corePoolSize = Math.max(4, Runtime.getRuntime().availableProcessors());
@@ -52,6 +54,10 @@ public class GameLoopManager implements Runnable {
             bossUpdateTask = scheduler.scheduleAtFixedRate(this::updateBosses, 0, BOSS_UPDATE_RATE, TimeUnit.MILLISECONDS);
             Logger.log("BossUpdateTask started with rate: " + BOSS_UPDATE_RATE + "ms");
         }
+        if (eventBossUpdateTask == null || eventBossUpdateTask.isCancelled()) {
+            eventBossUpdateTask = scheduler.scheduleAtFixedRate(this::updateEventBosses, 0, EVENT_BOSS_UPDATE_RATE, TimeUnit.MILLISECONDS);
+            Logger.log("EventBossUpdateTask started with rate: " + EVENT_BOSS_UPDATE_RATE + "ms");
+        }
         if (phoBanUpdateTask == null || phoBanUpdateTask.isCancelled()) {
             phoBanUpdateTask = scheduler.scheduleAtFixedRate(this::updatePhoBans, 0, 1000, TimeUnit.MILLISECONDS);
             Logger.log("PhoBanUpdateTask started with rate: 1000ms");
@@ -66,6 +72,10 @@ public class GameLoopManager implements Runnable {
         if (bossUpdateTask != null) {
             bossUpdateTask.cancel(true);
             bossUpdateTask = null;
+        }
+        if (eventBossUpdateTask != null) {
+            eventBossUpdateTask.cancel(true);
+            eventBossUpdateTask = null;
         }
         if (phoBanUpdateTask != null) {
             phoBanUpdateTask.cancel(true);
@@ -85,12 +95,24 @@ public class GameLoopManager implements Runnable {
     private void updateBosses() {
         if (ServerManager.isRunning && !ServerManager.isReloading) {
             try {
+                // Nhóm boss chiến đấu thời gian thực: Cập nhật nhịp 250ms
                 safeUpdateBoss(BossManager.gI()::update, "BossManager");
                 safeUpdateBoss(YardartManager.gI()::update, "YardartManager");
                 safeUpdateBoss(FinalBossManager.gI()::update, "FinalBossManager");
                 safeUpdateBoss(SkillSummonedManager.gI()::update, "SkillSummonedManager");
                 safeUpdateBoss(BrolyManager.gI()::update, "BrolyManager");
                 safeUpdateBoss(OtherBossManager.gI()::update, "OtherBossManager");
+                safeUpdateBoss(models.tournament.whis_arena.WhisArenaBotManager.gI()::update, "WhisArenaBotManager");
+            } catch (Throwable t) {
+                Logger.logException(GameLoopManager.class, new Exception(t), "Lỗi nghiêm trọng trong updateBosses");
+            }
+        }
+    }
+
+    private void updateEventBosses() {
+        if (ServerManager.isRunning && !ServerManager.isReloading) {
+            try {
+                // Nhóm boss sự kiện và phó bản: Cập nhật nhịp 1000ms để tiết kiệm CPU Server
                 safeUpdateBoss(RedRibbonHQManager.gI()::update, "RedRibbonHQManager");
                 safeUpdateBoss(TreasureUnderSeaManager.gI()::update, "TreasureUnderSeaManager");
                 safeUpdateBoss(SnakeWayManager.gI()::update, "SnakeWayManager");
@@ -100,9 +122,8 @@ public class GameLoopManager implements Runnable {
                 safeUpdateBoss(ChristmasEventManager.gI()::update, "ChristmasEventManager");
                 safeUpdateBoss(HungVuongEventManager.gI()::update, "HungVuongEventManager");
                 safeUpdateBoss(LunarNewYearEventManager.gI()::update, "LunarNewYearEventManager");
-                safeUpdateBoss(models.tournament.whis_arena.WhisArenaBotManager.gI()::update, "WhisArenaBotManager");
             } catch (Throwable t) {
-                Logger.logException(GameLoopManager.class, new Exception(t), "Lỗi nghiêm trọng trong updateBosses");
+                Logger.logException(GameLoopManager.class, new Exception(t), "Lỗi nghiêm trọng trong updateEventBosses");
             }
         }
     }

@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
-import services.Service;
+import models.DomainPorts;
 import services.tournament.SuperRankService;
 import services.map.NpcService;
 import utils.Util;
@@ -56,7 +56,7 @@ public class SuperRank {
 //                int percentDone = (int) ((double) player.playerTask.taskdh.SieuHang / required * 100);
 //                player.playerTask.taskdh.SieuHang++;
 //                player.playerTask.taskdh.ResetTime = System.currentTimeMillis();
-//                Service.gI().sendThongBao(player, "Tiến độ hiện tại:  " + percentDone + "%");
+//                DomainPorts.notifier().sendThongBao(player, "Tiến độ hiện tại:  " + percentDone + "%");
 //            }
 //        }
 //    }
@@ -72,7 +72,7 @@ public class SuperRank {
             nhanGiai = true;
             lastRewardTime = System.currentTimeMillis();
             player.inventory.addGem(rw);
-            Service.gI().sendMoney(player);
+            DomainPorts.notifier().sendMoney(player);
             NpcService.gI().createTutorial(player, -1, "Bạn đang ở TOP " + rank + " võ đài Siêu Hạng và nhận được " + rw + " ngọc");
             SuperRankDAO.updatePlayer(player);
         }

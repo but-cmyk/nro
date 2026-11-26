@@ -514,6 +514,7 @@ namespace Game1
     		borderCenterH = mGraphics.getImageHeight(imgBorder[1]);
     		Panel.graphics = Rms.loadRMSInt("lowGraphic");
     		lowGraphic = Rms.loadRMSInt("lowGraphic") == 1;
+    		QualitySettings.vSyncCount = lowGraphic ? 0 : 1;
     		GameScr.isPaintChatVip = ((Rms.loadRMSInt("serverchat") != 1) ? true : false);
     		if (Rms.loadRMSInt("default_cfg_v1") == -1)
     		{

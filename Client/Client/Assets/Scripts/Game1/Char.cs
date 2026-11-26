@@ -4695,23 +4695,22 @@ namespace Game1
     		fM = array[t];
     	}
     
+    	private int cachedNewMountId0 = -1;
+    	private string cachedNewMountName0;
+    	private int cachedNewMountId1 = -1;
+    	private string cachedNewMountName1;
+
     	public void paintMount1(mGraphics g)
     	{
+    		if (xMount <= GameScr.cmx || xMount >= GameScr.cmx + GameCanvas.w) return;
+    		if (me && !isEndMount && !isStartMount && !isMount) return;
     		checkLoadMount();
-    		if (xMount <= GameScr.cmx || xMount >= GameScr.cmx + GameCanvas.w)
-    		{
-    			return;
-    		}
     		if (me)
     		{
-    			if (!isEndMount && !isStartMount && !isMount)
-    			{
-    				return;
-    			}
     			if (idMount >= ID_NEW_MOUNT)
     			{
-    				string nameImg = strMount + (idMount - ID_NEW_MOUNT) + "_0";
-    				FrameImage fraImage = mSystem.getFraImage(nameImg);
+    				if (cachedNewMountId0 != idMount) { cachedNewMountId0 = idMount; cachedNewMountName0 = strMount + (idMount - ID_NEW_MOUNT) + "_0"; }
+    				FrameImage fraImage = mSystem.getFraImage(cachedNewMountName0);
     				if (fraImage != null)
     				{
     					fraImage.drawFrame(frameNewMount / 2 % fraImage.nFrame, xMount, yMount + fy, transMount, 3, g);
@@ -4811,25 +4810,16 @@ namespace Game1
     
     	public void paintMount2(mGraphics g)
     	{
-    		if (!isPaint())
-    		{
-    			return;
-    		}
+    		if (!isPaint()) return;
+    		if (xMount <= GameScr.cmx || xMount >= GameScr.cmx + GameCanvas.w) return;
+    		if (me && !isEndMount && !isStartMount && !isMount) return;
     		checkLoadMount();
-    		if (xMount <= GameScr.cmx || xMount >= GameScr.cmx + GameCanvas.w)
-    		{
-    			return;
-    		}
     		if (me)
     		{
-    			if (!isEndMount && !isStartMount && !isMount)
-    			{
-    				return;
-    			}
     			if (idMount >= ID_NEW_MOUNT)
     			{
-    				string nameImg = strMount + (idMount - ID_NEW_MOUNT) + "_1";
-    				FrameImage fraImage = mSystem.getFraImage(nameImg);
+    				if (cachedNewMountId1 != idMount) { cachedNewMountId1 = idMount; cachedNewMountName1 = strMount + (idMount - ID_NEW_MOUNT) + "_1"; }
+    				FrameImage fraImage = mSystem.getFraImage(cachedNewMountName1);
     				if (fraImage != null)
     				{
     					fraImage.drawFrame(frameNewMount / 2 % fraImage.nFrame, xMount, yMount + fy, transMount, 3, g);

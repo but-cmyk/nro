@@ -1,0 +1,320 @@
+{
+  "batch_id": "client_gameplay_entities__p03",
+  "concurrency_and_state": [
+    "CrackBallScr.startAutoCrackBall() spawns a background Thread (AutoCrackBall) that mutates UI/game state (indexSkillSelect, listBall[].yTo, step, timeKame, Char.myCharz().setSkillPaint, SoundMn, Service.gI().SendCrackBall) concurrently with the Unity main thread update()/paint() without locks.",
+    "CrackBallScr.AutoCrackBall() calls Thread.ResetAbort() (line 819) and checks isCallStop/isAutoCrackBall without volatile or synchronization.",
+    "DataInputStream uses static shared state (istemp, status, filenametemp) with a Thread.Sleep(5) polling loop in _getResourceAsStream() without volatile/locks, though getResourceAsStream() bypasses it and calls __getResourceAsStream() directly.",
+    "ClanImage holds unbounded static collections (vClanImage, idImages) and Char.paintCharBody() inserts placeholder new ClanImage() entries keyed by bag ID on the fly."
+  ],
+  "cross_module_questions": [
+    "In Service.cs / Server Controller: what opcode and validation does Service.SendCrackBall(type, amount) use, and does the server enforce ticket/gold/gem balance and anti-replay when CrackBallScr.AutoCrackBall sends requests from a background thread?",
+    "In GameScr.cs / Char.cs (earlier lines): how are CharInfo[], Arr_Head_2Fr[][], and cHP/cHPFull initialized and synchronized so paintCharBody and paintHp remain consistent?",
+    "Does Service.createChar() validate character name length/characters server-side beyond CreateCharScr's 5-10 char check?"
+  ],
+  "db_redis_touchpoints": [],
+  "files_read": [
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/Char.cs (5854-8754)",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/CharChild.cs (1-86)",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/ChatBox.cs (1-6)",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/ChatTextField.cs (1-362)",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/ChooseCharScr.cs (1-167)",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/Clan.cs (1-29)",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/ClanImage.cs (1-51)",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/ClanManager.cs (1-7)",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/ClanObject.cs (1-9)",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/Constants/GameEnums.cs (1-69)",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/Constants/GameKeys.cs (1-142)",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/Constants/PanelConstants.cs (1-102)",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/Cout.cs (1-90)",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/CrackBallScr.cs (1-841)",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/CreateCharScr.cs (1-657)",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/DartInfo.cs (1-32)",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/DataInputStream.cs (1-176)",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/DataOutputStream.cs (1-56)"
+  ],
+  "findings": [
+    {
+      "category": "concurrency",
+      "impact": "Race conditions, torn state updates (step, listBall, indexSkillSelect), and off-main-thread calls to Char/SoundMn/GameScr APIs during auto-crack-ball.",
+      "location": "CrackBallScr.cs:775-839",
+      "root_cause": "startAutoCrackBall() runs AutoCrackBall() on a background Thread that directly mutates CrackBallScr fields, calls doClickBall/useSkillCrackBall, invokes SoundMn and Char.myCharz().setSkillPaint, and calls Thread.ResetAbort() (line 819) without locking or main-thread marshaling.",
+      "severity": "P1",
+      "title": "Background thread in CrackBallScr.AutoCrackBall mutates game/UI state without synchronization"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Once tickets run out in bag, CrackBallScr continues believing the player has numTicket tickets, miscalculating cost and allowing spin attempts with insufficient currency.",
+      "location": "CrackBallScr.cs:745-755",
+      "root_cause": "checkNumTicket() scans Char.myCharz().arrItemBag for idTicket and sets numTicket only if found, without resetting numTicket = 0 at the start of the method.",
+      "severity": "P1",
+      "title": "CrackBallScr.checkNumTicket never resets numTicket to 0 when tickets are exhausted"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Unintended double-draw of character head sprite when statusMe == 14 (Dead), and unreachable frame check in stealth paint.",
+      "location": "Char.cs:6378, 6657-6680",
+      "root_cause": "In paintCharBody() when statusMe == 14, ph.pi[CharInfo[cf][0][0]] is drawn at lines 6657-6660 and drawn a second time at lines 6674-6680 when !isHead_2Fr(head). In paintCharWithoutSkill() line 6378, GameCanvas.gameTick % 50 == 90 can never be true.",
+      "severity": "P2",
+      "title": "Double head rendering when dead and unreachable modulo check in Char.cs"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Potential NullReferenceException when calling startChat before initChatTextField, or when cancelling chat with null parentScreen.",
+      "location": "ChatTextField.cs:164-209, 349-356",
+      "root_cause": "startChat() accesses right.caption (lines 166, 186) even though right is only created in initChatTextField() (not in the constructor). perform(8001) invokes parentScreen.onCancelChat() without checking parentScreen != null.",
+      "severity": "P2",
+      "title": "ChatTextField missing null guards for right command and parentScreen"
+    },
+    {
+      "category": "gameplay",
+      "impact": "NullReferenceException if ChooseCharScr.update() runs before updateChooseCharacter(), or ArgumentOutOfRange/NRE in perform(1) if playerData is empty/null.",
+      "location": "ChooseCharScr.cs:55-61, 155-159",
+      "root_cause": "update() iterates vc_players.Length without a null check (unlike paint() at line 85), and perform(1) indexes playerData[focus] checking only focus != -1 without checking playerData != null or bounds.",
+      "severity": "P2",
+      "title": "ChooseCharScr missing null/bounds checks on vc_players and playerData"
+    },
+    {
+      "category": "performance_gc",
+      "impact": "Per-frame heap allocations inside paint() and update() loops cause GC pressure on mobile/Unity client.",
+      "location": "Char.cs:6615-6622, 7008, 7064, 8266, 8306, 8332, 8347, 8368-8410; CrackBallScr.cs:629-652; ChatTextField.cs:324; ChooseCharScr.cs:119,124; CreateCharScr.cs:593",
+      "root_cause": "String concatenations (bag + string.Empty, strEffAura + idAuraEff + \"_0\", xuStr + string.Empty, \" -\" + cost, strChat + to, power_point + \" \" + ...) and array allocations (new int[4] in searchItem/searchFocus) execute directly inside paint() and periodic update() calls.",
+      "severity": "P2",
+      "title": "Per-frame string concatenations and array allocations in paint/searchFocus loops"
+    },
+    {
+      "category": "devops",
+      "impact": "Leaked DataInputStream / myReader instances during character creation map loading, and silent exception swallowing masks failures.",
+      "location": "CreateCharScr.cs:130-146, 148-224; Char.cs:6309, 8380, 8413; CrackBallScr.cs:448, 692, 836",
+      "root_cause": "loadMapFromResource() and loadMapTableFromResource() open DataInputStream via MyStream.readFile() in loops without calling close(). Multiple paint/update methods use empty catch (Exception) blocks.",
+      "severity": "P2",
+      "title": "Unclosed DataInputStream in CreateCharScr and empty catch blocks"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Unnecessary map reloads when selecting hair style, and dead/redundant check in CreateCharScr.",
+      "location": "CreateCharScr.cs:412-415, 255-258, 101-104",
+      "root_cause": "updateKey() compares num5 != selected (indexHair != 2) instead of num5 != indexHair and triggers doChangeMap(). doChangeMap() assigns TileMap.tileID twice (line 255 overwritten by line 258). Constructor checks tAddName.getText().Equals(\"@\") right after new TField() and calls IndexOf(\"@\") without -1 guard.",
+      "severity": "P3",
+      "title": "CreateCharScr hair selection comparison bug and redundant TileMap.tileID assignment"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Broken or misleading helper/stub behavior in Char, CharChild, and DartInfo.",
+      "location": "Char.cs:6983, 7437-7440, 8168-8171, 8734-8752; CharChild.cs:68-79; DartInfo.cs:27-30",
+      "root_cause": "Char.getcharInjure subtracts HP twice for cHPShow; findNextFocusByKey (PK mode) omits mob.Equals(mobFocus); checkLuong returns int (overflow risk); setDanhHieu overwrites its parameters (smallDanhHieu=0, frame=1) and omits null check on mainImg; CharChild.paintCharBody ignores computed anchor and passes 0; DartInfo.clone() returns null.",
+      "severity": "P3",
+      "title": "Logic inconsistencies in Char, CharChild, and DartInfo"
+    }
+  ],
+  "key_classes": [
+    {
+      "key_methods": [
+        "paintCharBody",
+        "paintCharWithSkill",
+        "paintCharName_HP_MP_Overhead",
+        "paintHp",
+        "searchFocus",
+        "findNextFocusByKey",
+        "doInjure",
+        "startDie",
+        "isMeCanAttackOtherPlayer",
+        "SetSkillPaint_NEW",
+        "UpdSkillPaint_NEW",
+        "setDanhHieu"
+      ],
+      "name": "Char",
+      "path": "Client/Client/Assets/Scripts/Game1/Char.cs",
+      "responsibility": "Core player/NPC/clone entity rendering, focus/target acquisition, injury/death state, fusion/effects, and new skill animation state machine (lines 5854-8754)."
+    },
+    {
+      "key_methods": [
+        "CharChild",
+        "update",
+        "setSkillPaint",
+        "paintCharBody"
+      ],
+      "name": "CharChild",
+      "path": "Client/Client/Assets/Scripts/Game1/CharChild.cs",
+      "responsibility": "Lightweight subclass of Char for spawned/cloned child characters with custom skill mapping and body rendering."
+    },
+    {
+      "key_methods": [
+        "initChatTextField",
+        "startChat",
+        "startChat2",
+        "update",
+        "paint",
+        "perform"
+      ],
+      "name": "ChatTextField",
+      "path": "Client/Client/Assets/Scripts/Game1/ChatTextField.cs",
+      "responsibility": "Singleton in-game chat input overlay managing TField, soft-key commands, and platform keyboard callbacks."
+    },
+    {
+      "key_methods": [
+        "switchToMe",
+        "update",
+        "paint",
+        "updateChooseCharacter",
+        "perform"
+      ],
+      "name": "ChooseCharScr",
+      "path": "Client/Client/Assets/Scripts/Game1/ChooseCharScr.cs",
+      "responsibility": "Character selection screen rendering character previews, power points, and triggering game entry."
+    },
+    {
+      "key_methods": [
+        "SetCrackBallScr",
+        "update",
+        "updateKey",
+        "doClickBall",
+        "doClickSkill",
+        "paint",
+        "AutoCrackBall"
+      ],
+      "name": "CrackBallScr",
+      "path": "Client/Client/Assets/Scripts/Game1/CrackBallScr.cs",
+      "responsibility": "Lucky Ball (Vòng quay/Đập bóng) minigame screen including ball physics, currency/ticket calculation, rendering, and threaded auto-play."
+    },
+    {
+      "key_methods": [
+        "loadMapFromResource",
+        "loadMapTableFromResource",
+        "doChangeMap",
+        "update",
+        "updateKey",
+        "paint",
+        "perform"
+      ],
+      "name": "CreateCharScr",
+      "path": "Client/Client/Assets/Scripts/Game1/CreateCharScr.cs",
+      "responsibility": "New character creation screen with gender/hair preview, map preview loading, and name validation."
+    },
+    {
+      "key_methods": [
+        "getResourceAsStream",
+        "update",
+        "readShort",
+        "readInt",
+        "readUTF",
+        "readByte",
+        "readLong",
+        "close"
+      ],
+      "name": "DataInputStream",
+      "path": "Client/Client/Assets/Scripts/Game1/DataInputStream.cs",
+      "responsibility": "Binary stream reader wrapping myReader and Unity Resources.Load TextAsset loading."
+    },
+    {
+      "key_methods": [
+        "writeShort",
+        "writeInt",
+        "writeByte",
+        "writeUTF",
+        "writeBoolean",
+        "toByteArray",
+        "close"
+      ],
+      "name": "DataOutputStream",
+      "path": "Client/Client/Assets/Scripts/Game1/DataOutputStream.cs",
+      "responsibility": "Binary stream writer wrapping myWriter."
+    },
+    {
+      "key_methods": [
+        "println",
+        "Log",
+        "LogError",
+        "LogError3",
+        "LogWarning"
+      ],
+      "name": "Cout",
+      "path": "Client/Client/Assets/Scripts/Game1/Cout.cs",
+      "responsibility": "Unity console logging wrapper filtering log severity via UnityLogger and error-keyword matching."
+    },
+    {
+      "key_methods": [
+        "addClanImage",
+        "getClanImage",
+        "isExistClanImage"
+      ],
+      "name": "ClanImage",
+      "path": "Client/Client/Assets/Scripts/Game1/ClanImage.cs",
+      "responsibility": "Clan icon/bag metadata model and static cache table."
+    },
+    {
+      "key_methods": [
+        "IsLeftPressed",
+        "IsRightPressed",
+        "IsUpPressed",
+        "IsDownPressed",
+        "IsFirePressed"
+      ],
+      "name": "GameKeys",
+      "path": "Client/Client/Assets/Scripts/Game1/Constants/GameKeys.cs",
+      "responsibility": "Centralized PC/Phone input key index constants and zero-allocation key state helpers."
+    }
+  ],
+  "module_summary": "Deep-read of Client Game1 entity rendering/combat tail (Char.cs lines 5854-8754, CharChild.cs), UI screens (ChatTextField, ChooseCharScr, CrackBallScr, CreateCharScr), Clan/Dart data models, stream wrappers (DataInputStream, DataOutputStream), Cout logger, and GameEnums/GameKeys/PanelConstants. Key risks center on un-synchronized multithreading in CrackBallScr.AutoCrackBall, stale ticket state in CrackBallScr.checkNumTicket, per-frame string/array GC allocations inside paint()/searchFocus(), unclosed streams in CreateCharScr, and missing null checks in UI screens.",
+  "protocol_touchpoints": [
+    {
+      "direction": "DISPATCH",
+      "location": "Char.cs:6618",
+      "opcode": "Service.requestBagImage",
+      "payload_summary": "(sbyte)bag - requests clan bag icon sprites when bag ID missing from ClanImage.idImages"
+    },
+    {
+      "direction": "DISPATCH",
+      "location": "Char.cs:7746",
+      "opcode": "Service.useItem",
+      "payload_summary": "(0, 1, -1, arrItemBag[i].template.id) - uses potion/pea item from bag"
+    },
+    {
+      "direction": "DISPATCH",
+      "location": "Char.cs:8008",
+      "opcode": "Service.funsion",
+      "payload_summary": "(sbyte fusion) - dispatches fusion state 4 or 5"
+    },
+    {
+      "direction": "DISPATCH",
+      "location": "Char.cs:8441",
+      "opcode": "Service.new_skill_not_focus",
+      "payload_summary": "((sbyte)idTemplateSkill, (sbyte)cdir, short x, short y) - dispatches new skill attack coordinates"
+    },
+    {
+      "direction": "DISPATCH",
+      "location": "ClanImage.cs:21",
+      "opcode": "Service.clanImage",
+      "payload_summary": "(sbyte)cm.ID - requests clan image data"
+    },
+    {
+      "direction": "DISPATCH",
+      "location": "ChooseCharScr.cs:158",
+      "opcode": "Service.finishUpdate",
+      "payload_summary": "(playerData[focus].playerID) - selects character to enter game"
+    },
+    {
+      "direction": "DISPATCH",
+      "location": "CrackBallScr.cs:347, 570, 771",
+      "opcode": "Service.SendCrackBall",
+      "payload_summary": "(type 2, (byte)(checkTicket() + checkNum())) to spin/crack balls, or (typePrice, 0) to replay"
+    },
+    {
+      "direction": "DISPATCH",
+      "location": "CreateCharScr.cs:188, 201",
+      "opcode": "Service.getBgTemplate",
+      "payload_summary": "(bgItem.idImage) - requests missing background tile image"
+    },
+    {
+      "direction": "DISPATCH",
+      "location": "CreateCharScr.cs:294",
+      "opcode": "Service.finishUpdate",
+      "payload_summary": "() - signals completion of resource updates during character creation"
+    },
+    {
+      "direction": "DISPATCH",
+      "location": "CreateCharScr.cs:631",
+      "opcode": "Service.createChar",
+      "payload_summary": "(name, indexGender, hairID[indexGender][indexHair]) - submits new character creation request"
+    }
+  ]
+}

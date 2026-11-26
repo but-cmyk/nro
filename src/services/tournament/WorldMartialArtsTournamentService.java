@@ -146,76 +146,99 @@ public class WorldMartialArtsTournamentService extends ConstTournament {
             NpcService.gI().createTutorial(player, npc.tempId, npc.avartar, TEXT_DA_VO_DICH);
             return;
         }
-        if (!WorldMartialArtsTournamentManager.gI().listReg.contains(player.id)) {
-            int tour = getTournament();
-            int gold = tournamentGolds[tour];
-            int gem = tournamentGems[tour];
-
-            if (player.inventory.gold < gold) {
-                NpcService.gI().createTutorial(player, npc.tempId, npc.avartar, "Bạn không đủ vàng, còn thiếu " + (gold - player.inventory.gold) + " vàng nữa");
-                return;
-            }
-            if (!player.inventory.checkGemAndRuby(gem)) {
-                NpcService.gI().createTutorial(player, npc.tempId, npc.avartar, "Bạn không đủ ngọc, còn thiếu " + (gem - player.inventory.getGemAndRuby()) + " ngọc nữa");
-                return;
-            }
-
-            if (tour == NGOAI_HANG) {
-                NpcService.gI().createTutorial(player, npc.tempId, npc.avartar, ConstTournament.TEXT_DANG_KY_THANH_CONG.replaceAll("%1", TimeUtil.getCurrHour() + "").replaceAll("%2", TimeUtil.getCurrHour() + "h" + TimeUtil.getCurrMin()));
-                player.inventory.gold -= gold;
-                player.inventory.subGemAndRuby(gem);
-                Service.gI().sendMoney(player);
-                WorldMartialArtsTournamentManager.gI().listReg.add(player.id);
-                return;
-            }
-
-            if (player.nPoint.power < 1500000) {
-                if (tour != NHI_DONG) {
-                    NpcService.gI().createTutorial(player, npc.tempId, npc.avartar, ConstTournament.TEXT_CHI_CO_THE_THAM_GIA_GIAI_NHI_DONG);
+        synchronized (player) {
+            WorldMartialArtsTournamentManager mgr = WorldMartialArtsTournamentManager.gI();
+            if (!mgr.listReg.contains(player.id)) {
+                int tour = getTournament();
+                if (tour < 0 || tour >= tournamentGolds.length) {
                     return;
                 }
-            } else if (player.nPoint.power >= 1500000 && player.nPoint.power < 15000000) {
-                if (tour != SIEU_CAP_1) {
-                    NpcService.gI().createTutorial(player, npc.tempId, npc.avartar, ConstTournament.TEXT_CHI_CO_THE_THAM_GIA_GIAI_SIEU_CAP_1);
-                    return;
-                }
-            } else if (player.nPoint.power >= 15000000 && player.nPoint.power < 150000000) {
-                if (tour != SIEU_CAP_2) {
-                    NpcService.gI().createTutorial(player, npc.tempId, npc.avartar, ConstTournament.TEXT_CHI_CO_THE_THAM_GIA_GIAI_SIEU_CAP_2);
-                    return;
-                }
-            } else if (player.nPoint.power >= 150000000 && player.nPoint.power < 1500000000) {
-                if (tour != SIEU_CAP_3) {
-                    NpcService.gI().createTutorial(player, npc.tempId, npc.avartar, ConstTournament.TEXT_CHI_CO_THE_THAM_GIA_GIAI_SIEU_CAP_3);
-                    return;
-                }
-            } else {
-                if (tour != NGOAI_HANG) {
-                    NpcService.gI().createTutorial(player, npc.tempId, npc.avartar, ConstTournament.TEXT_CHI_CO_THE_THAM_GIA_GIAI_NGOAI_HANG);
-                    return;
-                }
-            }
-
-            player.inventory.gold -= gold;
-            player.inventory.subGemAndRuby(gem);
-            Service.gI().sendMoney(player);
-            WorldMartialArtsTournamentManager.gI().listReg.add(player.id);
-            NpcService.gI().createTutorial(player, npc.tempId, npc.avartar, ConstTournament.TEXT_DANG_KY_THANH_CONG.replaceAll("%1", TimeUtil.getCurrHour() + "").replaceAll("%2", TimeUtil.getCurrHour() + "h" + TimeUtil.getCurrMin()));
-        } else {
-            int tour = getTournament();
-            if (tour != -1) {
                 int gold = tournamentGolds[tour];
                 int gem = tournamentGems[tour];
-                if (gold > 0) {
-                    player.inventory.addGold(gold);
+
+                if (player.inventory.gold < gold) {
+                    NpcService.gI().createTutorial(player, npc.tempId, npc.avartar, "Bạn không đủ vàng, còn thiếu " + (gold - player.inventory.gold) + " vàng nữa");
+                    return;
                 }
-                if (gem > 0) {
-                    player.inventory.addGem(gem);
+                if (!player.inventory.checkGemAndRuby(gem)) {
+                    NpcService.gI().createTutorial(player, npc.tempId, npc.avartar, "Bạn không đủ ngọc, còn thiếu " + (gem - player.inventory.getGemAndRuby()) + " ngọc nữa");
+                    return;
                 }
+
+                if (tour == NGOAI_HANG) {
+                    int gemBefore = player.inventory.gem;
+                    int rubyBefore = player.inventory.ruby;
+                    player.inventory.gold -= gold;
+                    player.inventory.subGemAndRuby(gem);
+                    int gemPaid = Math.max(0, gemBefore - player.inventory.gem);
+                    int rubyPaid = Math.max(0, rubyBefore - player.inventory.ruby);
+                    mgr.regFees.put(player.id, new int[]{gold, gemPaid, rubyPaid});
+                    mgr.listReg.add(player.id);
+                    Service.gI().sendMoney(player);
+                    NpcService.gI().createTutorial(player, npc.tempId, npc.avartar, ConstTournament.TEXT_DANG_KY_THANH_CONG.replaceAll("%1", TimeUtil.getCurrHour() + "").replaceAll("%2", TimeUtil.getCurrHour() + "h" + TimeUtil.getCurrMin()));
+                    return;
+                }
+
+                if (player.nPoint.power < 1500000) {
+                    if (tour != NHI_DONG) {
+                        NpcService.gI().createTutorial(player, npc.tempId, npc.avartar, ConstTournament.TEXT_CHI_CO_THE_THAM_GIA_GIAI_NHI_DONG);
+                        return;
+                    }
+                } else if (player.nPoint.power >= 1500000 && player.nPoint.power < 15000000) {
+                    if (tour != SIEU_CAP_1) {
+                        NpcService.gI().createTutorial(player, npc.tempId, npc.avartar, ConstTournament.TEXT_CHI_CO_THE_THAM_GIA_GIAI_SIEU_CAP_1);
+                        return;
+                    }
+                } else if (player.nPoint.power >= 15000000 && player.nPoint.power < 150000000) {
+                    if (tour != SIEU_CAP_2) {
+                        NpcService.gI().createTutorial(player, npc.tempId, npc.avartar, ConstTournament.TEXT_CHI_CO_THE_THAM_GIA_GIAI_SIEU_CAP_2);
+                        return;
+                    }
+                } else if (player.nPoint.power >= 150000000 && player.nPoint.power < 1500000000) {
+                    if (tour != SIEU_CAP_3) {
+                        NpcService.gI().createTutorial(player, npc.tempId, npc.avartar, ConstTournament.TEXT_CHI_CO_THE_THAM_GIA_GIAI_SIEU_CAP_3);
+                        return;
+                    }
+                } else {
+                    if (tour != NGOAI_HANG) {
+                        NpcService.gI().createTutorial(player, npc.tempId, npc.avartar, ConstTournament.TEXT_CHI_CO_THE_THAM_GIA_GIAI_NGOAI_HANG);
+                        return;
+                    }
+                }
+
+                int gemBefore = player.inventory.gem;
+                int rubyBefore = player.inventory.ruby;
+                player.inventory.gold -= gold;
+                player.inventory.subGemAndRuby(gem);
+                int gemPaid = Math.max(0, gemBefore - player.inventory.gem);
+                int rubyPaid = Math.max(0, rubyBefore - player.inventory.ruby);
+                mgr.regFees.put(player.id, new int[]{gold, gemPaid, rubyPaid});
+                mgr.listReg.add(player.id);
                 Service.gI().sendMoney(player);
+                NpcService.gI().createTutorial(player, npc.tempId, npc.avartar, ConstTournament.TEXT_DANG_KY_THANH_CONG.replaceAll("%1", TimeUtil.getCurrHour() + "").replaceAll("%2", TimeUtil.getCurrHour() + "h" + TimeUtil.getCurrMin()));
+            } else {
+                if (mgr.listReg.remove(player.id)) {
+                    int[] fee = mgr.regFees.remove(player.id);
+                    if (fee != null) {
+                        if (fee[0] > 0) {
+                            player.inventory.addGold(fee[0]);
+                        }
+                        if (fee[1] > 0) {
+                            player.inventory.addGem(fee[1]);
+                        }
+                        if (fee[2] > 0) {
+                            player.inventory.addRuby(fee[2]);
+                        }
+                    } else {
+                        int tour = getTournament();
+                        if (tour >= 0 && tour < tournamentGolds.length && tournamentGolds[tour] > 0) {
+                            player.inventory.addGold(tournamentGolds[tour]);
+                        }
+                    }
+                    Service.gI().sendMoney(player);
+                }
+                NpcService.gI().createTutorial(player, npc.tempId, npc.avartar, ConstTournament.TEXT_HUY_DANG_KY);
             }
-            WorldMartialArtsTournamentManager.gI().listReg.remove(player.id);
-            NpcService.gI().createTutorial(player, npc.tempId, npc.avartar, ConstTournament.TEXT_HUY_DANG_KY);
         }
     }
 

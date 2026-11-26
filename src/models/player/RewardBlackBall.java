@@ -1,7 +1,7 @@
 package models.player;
 
 
-import services.Service;
+import models.DomainPorts;
 import utils.TimeUtil;
 import utils.Util;
 
@@ -49,7 +49,7 @@ public class RewardBlackBall {
         }
         this.timeOutOfDateReward[star - 1] = System.currentTimeMillis() + TIME_REWARD;
         if (player != null) {
-            Service.gI().point(player);
+            DomainPorts.notifier().point(player);
         }
     }
 
@@ -82,9 +82,9 @@ public class RewardBlackBall {
                 default -> "Bùa Ngọc Rồng Sao Đen";
             };
             long timeLeftHours = Math.max(1, (timeOutOfDateReward[star - 1] - System.currentTimeMillis()) / 3600000L);
-            Service.gI().sendThongBao(player, effectDesc + " đang có hiệu lực (còn khoảng " + timeLeftHours + " giờ)!");
+            DomainPorts.notifier().sendThongBao(player, effectDesc + " đang có hiệu lực (còn khoảng " + timeLeftHours + " giờ)!");
         } else {
-            Service.gI().sendThongBao(player, "Bùa sao đen này đã hết hạn!");
+            DomainPorts.notifier().sendThongBao(player, "Bùa sao đen này đã hết hạn!");
         }
     }
 

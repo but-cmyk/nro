@@ -43,7 +43,7 @@ public class WhisArenaService {
     /**
      * Tạm thời mở 24/24 để test theo yêu cầu của User
      */
-    public static boolean TEST_MODE_24_7 = true;
+    public static boolean TEST_MODE_24_7 = false;
 
     public boolean isOpen() {
         if (TEST_MODE_24_7) {

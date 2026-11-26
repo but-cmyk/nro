@@ -1,0 +1,185 @@
+{
+  "batch_id": "server_boss_dungeon_pvp__p07",
+  "concurrency_and_state": [
+    "SuperRankService.gI() and The23rdMartialArtCongressService.gI() use unsynchronized lazy singleton initialization.",
+    "SuperRankService.competing(Player, long) checks SuperRankManager.currentlyCompeting/awaitingCompetition/SPRCheck without locking, allowing concurrent requests to start duplicate matches for the same player, opponent, or zone.",
+    "The23rdMartialArtCongressService.startChallenge(Player) defers The23rdMartialArtCongress creation and manager.add(mc) by 500ms via GameLoopManager.gI().schedule while checking plCheck(player) and getMapChallenge(129) immediately, creating a 500ms TOCTOU window for duplicate challenges, zone collisions, and stale player/zone state.",
+    "WorldMartialArtsTournamentService.dangky_huy and regCheck mutate and read WorldMartialArtsTournamentManager.gI().listReg without synchronization, risking ConcurrentModificationException, double registration, or double refund.",
+    "SuperRankService.textInfoNew iterates pl.superRank.history and indexes pl.superRank.lastTime.get(i) without bounds check or synchronization."
+  ],
+  "cross_module_questions": [
+    "Does SuperRank constructor deduct ticket/gem and handle a null Zone parameter when SuperRankService.competing case 2 passes getZone(113)?",
+    "What is the underlying collection type of WorldMartialArtsTournamentManager.listReg (e.g., ArrayList vs CopyOnWriteArrayList) and does the tournament manager clear/lock listReg at hour boundaries when canReg transitions?",
+    "Does Message.cleanup() tolerate being called twice on the same Message instance (as in SuperRankService.topList lines 119 and 128), or does it release a Netty ByteBuf twice?",
+    "Does Player.inventory.addGold(int) guard against exceeding Inventory.LIMIT_GOLD / int-to-long overflow when refunding tournament fees?"
+  ],
+  "db_redis_touchpoints": [
+    {
+      "location": "SuperRankService.java:70",
+      "op": "SuperRankDAO.loadData(player)",
+      "safety_note": "Synchronous DB read executed on caller thread AFTER rank/ticket/gem validation checks (lines 57-68), risking stale checks or overwriting in-memory superRank fields.",
+      "target": "MySQL (SuperRankDAO)"
+    },
+    {
+      "location": "SuperRankService.java:99",
+      "op": "SuperRankDAO.getPlayerListInRank / getPlayerListInRankRange",
+      "safety_note": "Synchronous DB query executed on Netty/caller thread when opening top-100 or challenge list.",
+      "target": "MySQL (SuperRankDAO)"
+    },
+    {
+      "location": "SuperRankService.java:135",
+      "op": "NDVSqlFetcher.loadById(id)",
+      "safety_note": "Synchronous full player DB load executed on caller thread in competing() -> loadPlayer(id).",
+      "target": "MySQL (NDVSqlFetcher)"
+    }
+  ],
+  "files_read": [
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/services/tournament/SuperRankService.java:1-244",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/services/tournament/The23rdMartialArtCongressService.java:1-86",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/services/tournament/WorldMartialArtsTournamentService.java:1-222"
+  ],
+  "findings": [
+    {
+      "category": "security_dupe",
+      "impact": "Players can convert Ruby (Hong Ngoc) into Gem (Ngoc Xanh) by repeatedly registering and cancelling tournament entry, or exploit fee differences if cancellation occurs in a different tournament hour.",
+      "location": "src/services/tournament/WorldMartialArtsTournamentService.java:158-216",
+      "root_cause": "Registration checks and deducts Gem+Ruby via checkGemAndRuby(gem)/subGemAndRuby(gem) (lines 158, 166, 200), whereas cancellation refunds purely Gem via player.inventory.addGem(gem) (line 213) and computes the refund from current getTournament() (line 205) rather than the fee originally paid.",
+      "severity": "P0",
+      "title": "Ruby-to-Gem currency conversion and mismatched refund fee on tournament cancellation"
+    },
+    {
+      "category": "concurrency",
+      "impact": "Players can trigger duplicate 23rd Martial Arts Congress instances/fights for themselves or collide in the same arena zone, or start a match after disconnecting/leaving map 129.",
+      "location": "src/services/tournament/The23rdMartialArtCongressService.java:22-45,70-85",
+      "root_cause": "startChallenge checks plCheck(player) and acquires zone immediately, then delays The23rdMartialArtCongress instantiation and manager.add(mc) by 500ms in setTimeout without reserving the player/zone or re-validating player online/map state inside the callback. Fallback loop in getMapChallenge also ignores z.getPlayers().isEmpty().",
+      "severity": "P1",
+      "title": "500ms TOCTOU race condition and zone collision in The23rdMartialArtCongressService.startChallenge"
+    },
+    {
+      "category": "concurrency",
+      "impact": "Concurrent challenge requests can create duplicate SuperRank matches for the same player/opponent/zone or corrupt waiting/competing lists; case 2 can pass null Zone into SuperRank constructor causing NPE.",
+      "location": "src/services/tournament/SuperRankService.java:36-92,225-242",
+      "root_cause": "competing() checks currentlyCompeting/awaitingCompetition/SPRCheck without synchronization before calling addSPR/addWSPR, and case 2 passes getZone(113) (which returns null when all zones are busy) directly to new SuperRank(player, id, ...).",
+      "severity": "P1",
+      "title": "Missing lock/reservation in SuperRankService.competing and unchecked null zone in case 2"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Validation can evaluate stale superRank data (rank, ticket) or loadData can overwrite current superRank state after checks pass.",
+      "location": "src/services/tournament/SuperRankService.java:57-70",
+      "root_cause": "SuperRankDAO.loadData(player) is invoked at line 70 after rank comparisons and ticket/gem checks at lines 57-68.",
+      "severity": "P1",
+      "title": "SuperRankDAO.loadData(player) called after rank and ticket validation checks"
+    },
+    {
+      "category": "concurrency",
+      "impact": "ConcurrentModificationException, double registration (double fee deduction), or double refund when multiple threads access listReg concurrently.",
+      "location": "src/services/tournament/WorldMartialArtsTournamentService.java:140-218",
+      "root_cause": "WorldMartialArtsTournamentManager.gI().listReg is queried and mutated via contains/add/remove without synchronization around check-then-act sequences.",
+      "severity": "P1",
+      "title": "Unsynchronized check-then-act on WorldMartialArtsTournamentManager.listReg"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Server throws ArrayIndexOutOfBoundsException or misroutes NPC menu selections (teleports to wrong map or teleports when clicking Close) if canReg is true outside 8h-23h.",
+      "location": "src/services/tournament/WorldMartialArtsTournamentService.java:59-63,74-86,122-135,150-152",
+      "root_cause": "getTournament() returns -1 for hours 0..7, but sayText() indexes tournamentNames[getTournament()], dangky_huy() indexes tournamentGolds[tour] without checking tour != -1, and confirm() cases 2/3 check if (canReg) without && tour != -1 unlike menu().",
+      "severity": "P2",
+      "title": "Unchecked -1 tournament index and menu/confirm condition mismatch in WorldMartialArtsTournamentService"
+    },
+    {
+      "category": "performance_gc",
+      "impact": "Blocks Netty/game threads during MySQL round-trips, stalling packet processing or map updates for other players.",
+      "location": "src/services/tournament/SuperRankService.java:41,70,99,135",
+      "root_cause": "NDVSqlFetcher.loadById, SuperRankDAO.loadData, and SuperRankDAO.getPlayerListInRank/Range are called synchronously inside service methods.",
+      "severity": "P2",
+      "title": "Synchronous DB queries on caller/Netty thread in SuperRankService"
+    },
+    {
+      "category": "protocol",
+      "impact": "Potential double-cleanup of Netty ByteBuf in topList, leaked Message on exception in sendTypePK, and missed SuperRankBuilder.dispose() on exception in topList.",
+      "location": "src/services/tournament/SuperRankService.java:119-130; src/services/tournament/The23rdMartialArtCongressService.java:58-68",
+      "root_cause": "topList calls msg.cleanup() in try (line 119) and again in finally (line 128), while dispose()/clear() are only in try; sendTypePK calls msg.cleanup() only in try without a finally block.",
+      "severity": "P2",
+      "title": "Double Message.cleanup() in SuperRankService.topList and missing finally cleanup in sendTypePK"
+    },
+    {
+      "category": "architecture",
+      "impact": "Silent failures mask runtime exceptions and leave players without feedback when arena zones are full; duplicated code increases maintenance drift.",
+      "location": "src/services/tournament/The23rdMartialArtCongressService.java:43-44,53-54,66-67; src/services/tournament/SuperRankService.java:72-87; src/services/tournament/WorldMartialArtsTournamentService.java:163-170,199-203",
+      "root_cause": "Empty catch blocks in The23rdMartialArtCongressService (setTimeout, sendTypePK) and empty else branch when zone == null in startChallenge; duplicated case 0/1 blocks in SuperRankService.competing and duplicated fee/listReg block in dangky_huy.",
+      "severity": "P3",
+      "title": "Empty catch/else blocks and duplicated tournament service logic"
+    },
+    {
+      "category": "security_dupe",
+      "impact": "Potential truncation if player IDs exceed 32-bit int max or if SuperRank topList ever exceeds 127 entries; tournament gold fees stored in int instead of long.",
+      "location": "src/services/tournament/SuperRankService.java:103,107; src/services/tournament/The23rdMartialArtCongressService.java:62; src/services/tournament/WorldMartialArtsTournamentService.java:151,207",
+      "root_cause": "Message writes (int) sb.getId() / (int) boss.id and byte list.size(); WorldMartialArtsTournamentService stores tournamentGolds[tour] in int.",
+      "severity": "P3",
+      "title": "int narrowing on player/boss IDs, byte list size, and int gold variable"
+    }
+  ],
+  "key_classes": [
+    {
+      "key_methods": [
+        "gI",
+        "competing",
+        "topList",
+        "loadPlayer",
+        "getPlayer",
+        "textInfo",
+        "textInfoNew",
+        "textStatus",
+        "textReward",
+        "reward",
+        "getZone"
+      ],
+      "name": "SuperRankService",
+      "path": "src/services/tournament/SuperRankService.java",
+      "responsibility": "Handles Super Rank (Giai Sieu Hang) challenge initiation, top-100/opponent ranking UI packet (-96), DB player loading, reward text/amounts, and zone lookup."
+    },
+    {
+      "key_methods": [
+        "gI",
+        "startChallenge",
+        "setTimeout",
+        "sendTypePK",
+        "getMapChallenge"
+      ],
+      "name": "The23rdMartialArtCongressService",
+      "path": "src/services/tournament/The23rdMartialArtCongressService.java",
+      "responsibility": "Initiates 23rd Martial Arts Congress (DHVT 23) solo challenges on map 129, schedules match start after 500ms, sends PK type subcommand, and allocates challenge zones."
+    },
+    {
+      "key_methods": [
+        "getTournament",
+        "getNextTournamentTime",
+        "sayText",
+        "menu",
+        "confirm",
+        "regCheck",
+        "dangky_huy"
+      ],
+      "name": "WorldMartialArtsTournamentService",
+      "path": "src/services/tournament/WorldMartialArtsTournamentService.java",
+      "responsibility": "Manages hourly World Martial Arts Tournament schedule, NPC menu/confirm dialogs, power-bracket validation, and gold/gem+ruby registration and cancellation."
+    }
+  ],
+  "module_summary": "Tournament service layer (services.tournament) covering Super Rank PvP matchmaking/leaderboard, 23rd Martial Arts Congress solo boss challenge startup, and World Martial Arts Tournament hourly registration/NPC menus.",
+  "protocol_touchpoints": [
+    {
+      "direction": "WRITE",
+      "location": "SuperRankService.java:100-118",
+      "opcode": "-96",
+      "payload_summary": "byte(0), UTF title, byte list.size(), per player: int rank, int (int)id, short head, [if session.version > 214: short -1], short body, short leg, UTF name, UTF status, UTF info"
+    },
+    {
+      "direction": "WRITE",
+      "location": "The23rdMartialArtCongressService.java:61-64",
+      "opcode": "subcommand 35 (via Service.messageSubCommand)",
+      "payload_summary": "int (int)boss.id, byte 3 (set PK type against tournament boss)"
+    }
+  ],
+  "sources_read": null
+}

@@ -24,7 +24,7 @@ import models.skill.Skill;
 import utils.SkillUtil;
 import utils.Util;
 
-public abstract class Yardart extends Boss {
+public class Yardart extends Boss {
 
     protected int x;
     protected int x2;
@@ -39,8 +39,38 @@ public abstract class Yardart extends Boss {
 
     protected int rewardRatio;
 
+    private final int initX;
+    private final int initX2;
+    private final int initY;
+    private final int initY2;
+    private final int initRange;
+    private final int initRange2;
+    private final int initTimeHoiHP;
+    private final int initRewardRatio;
+
     public Yardart(BossType ducvupro, int id, BossData... data) throws Exception {
         super(ducvupro, id, data);
+        this.initX = 0;
+        this.initX2 = 0;
+        this.initY = 0;
+        this.initY2 = 0;
+        this.initRange = 1000;
+        this.initRange2 = 150;
+        this.initTimeHoiHP = 20000;
+        this.initRewardRatio = 100;
+    }
+
+    public Yardart(BossType ducvupro, int id, int x, int x2, int y, int y2, int timeHoiHP, BossData... data) throws Exception {
+        super(ducvupro, id, data);
+        this.initX = x;
+        this.initX2 = x2;
+        this.initY = y;
+        this.initY2 = y2;
+        this.initRange = 1000;
+        this.initRange2 = 150;
+        this.initTimeHoiHP = timeHoiHP;
+        this.initRewardRatio = 100;
+        init();
     }
 
     @Override
@@ -84,7 +114,14 @@ public abstract class Yardart extends Boss {
     }
 
     protected void init() {
-        rewardRatio = 100;
+        x = initX;
+        x2 = initX2;
+        y = initY;
+        y2 = initY2;
+        range = initRange;
+        range2 = initRange2;
+        timeHoiHP = initTimeHoiHP;
+        rewardRatio = initRewardRatio;
     }
 
     @Override
@@ -250,7 +287,6 @@ public abstract class Yardart extends Boss {
                 this.nPoint.subHP(damage);
             } else {
                 Service.gI().hsChar(this, this.nPoint.hpMax, this.nPoint.mpMax);
-                this.nPoint.hp = 1;
                 if (Util.isTrue(1, 10)) {
                     Service.gI().Send_Info_NV(this);
                 }

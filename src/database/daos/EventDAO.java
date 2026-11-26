@@ -28,9 +28,9 @@ public class EventDAO {
     public static void setRemainingTimeToIncreaseDame(long v) { remainingTimeToIncreaseDame = v; }
 
     public static void loadInternationalWomensDayEvent() {
-        try (Connection con = AlyraManager.getConnection();) {
-            PreparedStatement ps = con.prepareStatement("SELECT `data` FROM `event` WHERE `name` = 'international_womens_day'");
-            ResultSet rs = ps.executeQuery();
+        try (Connection con = AlyraManager.getConnection();
+             PreparedStatement ps = con.prepareStatement("SELECT `data` FROM `event` WHERE `name` = 'international_womens_day'");
+             ResultSet rs = ps.executeQuery()) {
             if (rs.next()) {
                 JsonObject json = new Gson().fromJson(rs.getString("data"), JsonObject.class);
                 remainingTimeToIncreasePotentialAndPower = json.get("remaining_time_to_increase_potential_and_power").getAsLong();
@@ -48,8 +48,8 @@ public class EventDAO {
     }
 
     private static void saveInternationalWomensDayEvent() {
-        try (Connection con = AlyraManager.getConnection();) {
-            PreparedStatement ps = con.prepareStatement("UPDATE `event` SET `data` = ? WHERE `name` = 'international_womens_day'");
+        try (Connection con = AlyraManager.getConnection();
+             PreparedStatement ps = con.prepareStatement("UPDATE `event` SET `data` = ? WHERE `name` = 'international_womens_day'")) {
             JsonObject json = new JsonObject();
             json.addProperty("remaining_time_to_increase_potential_and_power", remainingTimeToIncreasePotentialAndPower);
             json.addProperty("remaining_time_to_increase_hp", remainingTimeToIncreaseHP);

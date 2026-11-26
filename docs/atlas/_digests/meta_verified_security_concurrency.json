@@ -1,0 +1,99 @@
+{
+  "dimension_scores": [
+    {
+      "dimension": "Bảo mật & Chống Dupe Kinh Tế",
+      "score_out_of_10": 2.5,
+      "verdict": "Rất nghiêm trọng (Critical). Tồn tại hàng loạt lỗ hổng P0 có thể khai thác trực tiếp qua packet: self-trade & snapshot-overwrite dupe đồ, thiếu kiểm tra isAdmin() cho phép người chơi thường buff VND/tạo item/đổi tên người khác, nhân chỉ số x127 miễn phí ở BlackBallWar, chuyển đổi Hồng Ngọc -> Ngọc Xanh ở Giải đấu, bypass tỉ lệ 10% nâng cấp sách tuyệt kỹ, và ký gửi vật phẩm bị khóa giao dịch (option 30)."
+    },
+    {
+      "dimension": "Concurrency & Realtime Loop",
+      "score_out_of_10": 3,
+      "verdict": "Yếu (High Risk). Vòng lặp realtime và các handler mạng bị chặn bởi busy-wait 2.5s trong synchronized (SAIBAMEN.injured), Thread.sleep trong Boss AI, TOCTOU 500ms khi đặt zone đấu trường (DeathOrAliveArenaService), race condition khi mở Phó Bản / nhặt Ngọc Namek, không có lock khi thao tác túi đồ (InventoryService) và hàng đợi gửi/nhận không đồng bộ ở Client Session_ME2."
+    }
+  ],
+  "verified_p0": [
+    {
+      "evidence": "TransactionService.java:63-107 không kiểm tra playerId != pl.id nên cho phép tạo new Trade(pl, pl). Trade.java:56-57 copy snapshot itemsBag1/itemsBag2 và dòng 451-452 ghi đè player1.inventory.itemsBag = itemsBag1 / itemsBag2 lúc commit, trong khi các handler như Input.BANSLL không kiểm tra isTrade.",
+      "fix_plan": "Chặn playerId == pl.id trong TransactionService; khóa đồng thời 2 Player theo thứ tự ID khi commit Trade; kiểm tra isTrade/TransactionService.check() ở mọi thao tác sửa túi đồ.",
+      "location": "src/services/func/Trade.java:54-57,451-452 & src/services/func/TransactionService.java:63-107",
+      "status": "CONFIRMED",
+      "title": "Self-Trade & Snapshot-Overwrite Item Duplication in Trade/TransactionService"
+    },
+    {
+      "evidence": "Input.java dòng 404 (DUNGLOA), 415 (BUFFVND), 448-482 (BOT*), 484 (GIVE_IT), 546 (CHANGE_NAME) đều thiếu if (!player.isAdmin()). Hàm doInput() không gọi setTypeInput(-1) và không synchronized(player) ở TANG_NGOC_HONG (116-155) hay BANSLL (662-699).",
+      "fix_plan": "Thêm kiểm tra player.isAdmin() cho toàn bộ case admin; reset setTypeInput(-1) trong finally/đầu doInput(); bọc synchronized(player) và kiểm tra isTrade cho các case kinh tế.",
+      "location": "src/services/func/Input.java:96-155,404-567,662-699",
+      "status": "CONFIRMED",
+      "title": "Missing Admin Checks, Unreset typeInput, and Unsynchronized Economy Cases in Input.java"
+    },
+    {
+      "evidence": "ConsignShopService.java:381-383 return true cho type 14/15 hoặc opt 86/87 trước khi check opt 30 ở dòng 385-387. ChuyenHoaBangNgoc.java:102-155 bỏ qua check opt 72/102 trên trangBiCanChuyenHoa. NangCapSachTuyetKi.java:42-74 không check ID 1181-1183 và không roll tỉ lệ 10%.",
+      "fix_plan": "Đưa check opt 30 lên đầu itemCanConsign(); đồng bộ đầy đủ validate từ showInfoCombine sang hàm thực thi ở ChuyenHoaBangNgoc và NangCapSachTuyetKi (thêm check ID 1181-1183 và Util.isTrue(10, 100)).",
+      "location": "src/services/ConsignShopService.java:376-390; src/models/combine/list/ChuyenHoaBangNgoc.java:102-155; src/models/combine/list/NangCapSachTuyetKi.java:42-74",
+      "status": "CONFIRMED",
+      "title": "Missing server-side validation in combine execution and dead opt-30 trade lock check in ConsignShopService"
+    },
+    {
+      "evidence": "BlackBallWarService.java:128-181 khởi tạo cost = 0, switch(x) chỉ xử lý X3/X5/X7 không có nhánh default, nên bất kỳ byte x nào khác đều trả cost=0 và gán effectSkin.xHPKI = x / xDame = x.",
+      "fix_plan": "Thêm nhánh default trong switch(x) của xHPKI() và xDame() để từ chối và return ngay nếu x không thuộc {X3, X5, X7}.",
+      "location": "src/services/phoban/BlackBallWarService.java:128-181",
+      "status": "CONFIRMED",
+      "title": "Unvalidated multiplier byte in xHPKI/xDame grants free stat multiplier"
+    },
+    {
+      "evidence": "DeathOrAliveArenaService.java:39 gọi getMapChallenge(112) kiểm tra zone trống nhưng dòng 94 mới gọi DeathOrAliveArenaManager.gI().add(vdst) sau 500ms trong setTimeout(), tạo cửa sổ race condition 500ms. WorldMartialArtsTournamentService.java:166,200 trừ qua subGemAndRuby(gem) nhưng dòng 213 hoàn trả toàn bộ bằng addGem(gem) theo getTournament() hiện tại.",
+      "fix_plan": "Reserve zone ngay lập tức dưới lock trước khi setTimeout ở DeathOrAliveArenaService; lưu lại số gem/ruby thực tế đã đóng ở WorldMartialArtsTournamentService để hoàn trả đúng loại tiền khi hủy.",
+      "location": "src/services/tournament/DeathOrAliveArenaService.java:39-109 & src/services/tournament/WorldMartialArtsTournamentService.java:158-219",
+      "status": "CONFIRMED",
+      "title": "500ms TOCTOU in DeathOrAliveArenaService & Ruby-to-Gem conversion in WorldMartialArtsTournamentService"
+    },
+    {
+      "evidence": "SAIBAMEN.java:104 là synchronized long injured() gọi thẳng setBom(plAtt) ở dòng 119; setBom() chạy while(this.playerSkill.prepareTuSat) spin-wait 2500ms (dòng 152-171) giữ lock và chặn thread gọi, đồng thời thiếu null check plAtt ở dòng 133-134.",
+      "fix_plan": "Chuyển logic đếm 2500ms của setBom sang hàm update() của boss (non-blocking state machine), bỏ vòng while busy-wait và Functions.sleep(1500) trong afk().",
+      "location": "src/models/boss/boss_list/SnakeWay/SAIBAMEN.java:72,104-172",
+      "status": "CONFIRMED",
+      "title": "Busy-wait 2.5s spin-loop inside synchronized SAIBAMEN.injured/setBom blocks caller thread and spikes CPU"
+    },
+    {
+      "evidence": "NgocRongNamecService.pickNamekBall (357-398), DestronGasService.openKhiGasHuyDiet (36-75), SnakeWayService.openConDuongRanDoc (38-77) đều thực hiện check-then-act trên trạng thái clan/pool phó bản/ngọc Namek mà không có synchronized.",
+      "fix_plan": "Đồng bộ hóa trên clan và pool phó bản khi kiểm tra/cấp phát instance; đồng bộ hóa khi nhặt và cập nhật mảng Ngọc Rồng Namek.",
+      "location": "src/services/phoban/NgocRongNamecService.java:357-398; DestronGasService.java:36-75; SnakeWayService.java:38-77",
+      "status": "CONFIRMED",
+      "title": "Unsynchronized check-then-act on Namek ball pickup and PhoBan instance allocation"
+    },
+    {
+      "evidence": "Session_ME2.cs:13-61 truy cập List<Message> sendingMessage từ Main thread (AddMessage) và Sender thread (sendingMessage[0], RemoveAt(0)) không có lock.",
+      "fix_plan": "Bọc lock(sendingMessage) hoặc dùng ConcurrentQueue<Message> tương tự Session_ME.cs.",
+      "location": "Client/Client/Assets/Scripts/Game1/Session_ME2.cs:13-61",
+      "status": "CONFIRMED",
+      "title": "Unsynchronized Send/Receive Queues Across Threads in Session_ME2"
+    }
+  ],
+  "verified_p1_highlights": [
+    {
+      "impact": "Cho phép người chơi thường teleport tức thời đến gần bất kỳ quái nào trong map, vượt qua kiểm tra tốc độ và rate-limit 80ms.",
+      "location": "Controller.java:489-513",
+      "title": "Client-trusted coordinates bypass anti-speed/teleport check in MOVE (-7)"
+    },
+    {
+      "impact": "Cho phép tung QCKK và Makankosappo tức thì không cần chờ 3-4 giây tụ lực bằng cách gửi 2 gói tin liên tiếp.",
+      "location": "src/services/SkillService.java:478-542",
+      "title": "Missing charge-time validation allows instant-cast QCKK and Makankosappo bypass"
+    },
+    {
+      "impact": "Cho phép mọi tiến trình local hoặc trang web độc hại qua CSRF/CORS gọi API admin POST (buff đồ, ban, bảo trì) với token hardcode.",
+      "location": "src/services/admin/AdminApiService.java:54,120-160",
+      "title": "Unauthenticated localhost bypass with wildcard CORS and hardcoded token in AdminApiService"
+    },
+    {
+      "impact": "Hai yêu cầu đăng nhập đồng thời hoặc đăng nhập lại ngay sau khi ngắt kết nối (trước khi Virtual Thread lưu DB xong) có thể đọc dữ liệu cũ và nhân đôi vật phẩm.",
+      "location": "src/network/session/MySession.java:125-172 & src/server/Client.java:162-197",
+      "title": "Per-account login lock race & async disconnect save race with immediate reconnect"
+    },
+    {
+      "impact": "Thao tác túi đồ (mặc/tháo/vứt/cất rương) không giữ lock đồng bộ, dễ gây race condition mất hoặc nhân đôi vật phẩm.",
+      "location": "src/services/player/InventoryService.java:138-187,425-627",
+      "title": "Unlocked inventory mutations allow race-condition item dupe/loss"
+    }
+  ]
+}

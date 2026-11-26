@@ -1,0 +1,273 @@
+{
+  "batch_id": "client_network_protocol__p04",
+  "concurrency_and_state": [
+    "Service.cs:9,110-119,813-815,1739-1748,1766-1775,1793-1802,1820-1829,2279-2288,2444-2453,2707-2717,2967-2977: Service singleton mutates its shared instance field `this.session = Session_ME2.gI()` before `sendMessage()` and restores `Session_ME.gI()` afterwards (not in `finally`), racing with concurrent callers and permanently sticking to Session_ME2 if an exception occurs.",
+    "Session_ME.cs:241-295 & Session_ME2.cs:227-279: Both session classes store connection state, streams, threads, XOR key, and byte counters in `static` fields while keeping host/port/timeWaitConnect as instance fields, making multi-instance impossible and risking cross-state contamination.",
+    "Session_ME2.cs:13-61,279,288,459-500: Session_ME2 accesses `Sender.sendingMessage` (`List<Message>`) and `recieveMsg` (`MyVector`) without any lock across main thread (`AddMessage`, `clearSendingMessage`, `update`) and background `sendThread`/`collectorThread` (`Sender.run`, `onRecieveMsg`).",
+    "Session_ME.cs:375-384: `doConnect` starts `collectorThread` at line 380 before calling `doSendMessage(-27)` and setting `key = null` at line 384, creating a startup race if the `-27` key response arrives before line 384 executes.",
+    "Session_ME.cs:538-599 & Session_ME2.cs:507-542: `cleanNetwork` closes socket/streams without locking against `Sender`/`MessageCollector`, uses `Thread.Abort()` on main thread in `Session_ME`, and neither class clears `recieveMsg` or `sendingMessage` on disconnect/reconnect.",
+    "Session_ME.cs:352 & Session_ME2.cs:332: `NetworkInit` sets `connected = true` before `doConnect` succeeds, exposing a partially initialized session to `isConnected()` and worker threads."
+  ],
+  "cross_module_questions": [
+    "Does the Java Netty server handle opcode 18 (used by both `Service.gotoPlayer` and `Service.requestPlayerInfo`), opcode 24 (used by both `Service.sendOptHat` and `Service.sendCT_ready`), and opcode -45 (`skill_not_focus` vs `new_skill_not_focus`) without payload ambiguity?",
+    "Does `Session_ME2.isMainSession = true` (Session_ME2.cs:237) get overwritten by `GameCanvas.connect2()` before `connect()`, or does a `Session_ME2` failure/disconnect trigger main-session disconnect dialogs and `connect2()` recursion in `getKey`?",
+    "Does the server expect little-endian `ushort` or big-endian 2-byte length for unencrypted messages (`getKeyComplete == false`), since `Session_ME.doSendMessage` writes `(ushort)num` (LE) when `!getKeyComplete` vs BE `(num>>8),(num&0xFF)` when `getKeyComplete`?",
+    "How does the Java server parse `Service.charMove` (cmd -7) conditional `cy` (3-byte vs 5-byte packet), `Service.buyItem` (cmd 6) conditional `quantity` (`if (quantity > 1)`), and `Service.useItem` (cmd -43) where `index == -1` triggers `writeShort(template)` (colliding with slot 255)?",
+    "Are `Service.sendOptHat(1)` (`Res.TakeSnapShot()`), `Service.sendServerData`, `Service.charMove` (client-computed `cx/cy` and MP deduction), and `Service.new_skill_not_focus` validated server-side against spoofing or oversized payloads?"
+  ],
+  "db_redis_touchpoints": [],
+  "files_read": [
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/Service.cs (lines 1-3285)",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/Session_ME.cs (lines 1-637)",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/Session_ME2.cs (lines 1-575)"
+  ],
+  "findings": [
+    {
+      "category": "protocol",
+      "impact": "TCP stream framing permanently desyncs on partial socket reads, corrupting the XOR keystream and dropping/garbling all subsequent packets; `readMessage2` can also NRE if called before key exchange or allocate huge buffers.",
+      "location": "Client/Client/Assets/Scripts/Game1/Session_ME.cs:171-238; Client/Client/Assets/Scripts/Game1/Session_ME2.cs:156-224",
+      "root_cause": "`dis.ReadBytes(num)` is assumed to always return `num` bytes (no read-loop until `num` bytes received), and `readMessage2` unconditionally calls `readKey()` without checking `getKeyComplete` or validating `num4` upper bounds.",
+      "severity": "P0",
+      "title": "Partial TCP Read & Unchecked readMessage2 Framing Desync"
+    },
+    {
+      "category": "protocol",
+      "impact": "Opcode `66` (`getImgByName`) received over `Session_ME2` is parsed with a 2-byte length instead of 3-byte `readMessage2`, corrupting the TCP stream.",
+      "location": "Client/Client/Assets/Scripts/Game1/Session_ME2.cs:187",
+      "root_cause": "`Session_ME2.MessageCollector.readMessage()` checks `b == -32 || b == -66 || b == 11 || b == -67 || b == -74 || b == -87` and omits `|| b == 66` present in `Session_ME.cs:202`.",
+      "severity": "P1",
+      "title": "Missing Extended-Length Opcode 66 in Session_ME2.readMessage"
+    },
+    {
+      "category": "concurrency",
+      "impact": "Concurrent `AddMessage`/`RemoveAt`/`Clear` on `List<Message>` and `addElement`/`removeElementAt` on `MyVector` across threads can corrupt collections, drop packets, or throw `ArgumentOutOfRangeException`.",
+      "location": "Client/Client/Assets/Scripts/Game1/Session_ME2.cs:13-61,279,288,459-500",
+      "root_cause": "`Session_ME2` accesses `Sender.sendingMessage` and `recieveMsg` from main, sender, and collector threads without synchronization locks (unlike `Session_ME.cs`).",
+      "severity": "P0",
+      "title": "Unsynchronized Send/Receive Queues Across Threads in Session_ME2"
+    },
+    {
+      "category": "concurrency",
+      "impact": "Gameplay/trade/combat packets can be routed to the secondary asset session (`Session_ME2`), or `Service.session` can remain permanently stuck on `Session_ME2` if `sendMessage` throws.",
+      "location": "Client/Client/Assets/Scripts/Game1/Service.cs:9,110-120,813-816,1739-1749,1766-1776,1793-1803,1820-1830,2279-2289,2444-2454,2707-2718,2967-2978",
+      "root_cause": "Ten asset/update methods temporarily overwrite the shared `Service.session` field with `Session_ME2.gI()` before `sendMessage()` and reset it outside `finally`.",
+      "severity": "P1",
+      "title": "Shared Service.session Field Mutation Race With Session_ME2"
+    },
+    {
+      "category": "protocol",
+      "impact": "Sending any message with non-null payload before `getKeyComplete` silently drops all payload bytes on the wire while writing an unencrypted little-endian `ushort` length, corrupting framing.",
+      "location": "Client/Client/Assets/Scripts/Game1/Session_ME.cs:417-428; Client/Client/Assets/Scripts/Game1/Session_ME2.cs:395-406",
+      "root_cause": "In `doSendMessage`, the `if (getKeyComplete)` loop writing `data` bytes has no `else` branch for `!getKeyComplete`, and unencrypted length uses `dos.Write((ushort)num)` (little-endian) vs big-endian when encrypted.",
+      "severity": "P1",
+      "title": "Missing Unencrypted Payload Write & Endianness Mismatch in doSendMessage"
+    },
+    {
+      "category": "protocol",
+      "impact": "Session XOR keystream breaks with `OverflowException` or `IndexOutOfRangeException` if server sends a key of length >= 128 bytes.",
+      "location": "Client/Client/Assets/Scripts/Game1/Session_ME.cs:146,456-480; Client/Client/Assets/Scripts/Game1/Session_ME2.cs:131,433-457",
+      "root_cause": "Key length is read via `readSByte()`, and `curR`/`curW` are `sbyte` indices that wrap negative at 128 (`curR = (sbyte)(num + 1)`).",
+      "severity": "P1",
+      "title": "Signed sbyte Overflow in XOR Key Length and curR/curW Indices"
+    },
+    {
+      "category": "protocol",
+      "impact": "`Session_ME2` defaults to `isMainSession = true`, which can trigger main-session disconnect/fail handlers and infinite `GameCanvas.connect2()` recursion on secondary socket events.",
+      "location": "Client/Client/Assets/Scripts/Game1/Session_ME2.cs:110-120,146-149,237,336-344",
+      "root_cause": "`Session_ME2` was copy-pasted from `Session_ME` with `public static bool isMainSession = true;`.",
+      "severity": "P1",
+      "title": "Session_ME2 Defaults isMainSession to true"
+    },
+    {
+      "category": "concurrency",
+      "impact": "`doConnect` starts `collectorThread` before `key = null`, allowing a fast `-27` key response to be wiped; `cleanNetwork` can race with streams, abort threads unsafely, and retain stale queued messages across reconnects.",
+      "location": "Client/Client/Assets/Scripts/Game1/Session_ME.cs:380-385,538-599; Client/Client/Assets/Scripts/Game1/Session_ME2.cs:507-542",
+      "root_cause": "Thread startup and teardown lack synchronization, `key = null` is placed after thread start, and `recieveMsg`/`sendingMessage` are not cleared in `cleanNetwork`.",
+      "severity": "P2",
+      "title": "Unsynchronized Session Startup/Teardown and Stale Queues on Reconnect"
+    },
+    {
+      "category": "protocol",
+      "impact": "Opcode collisions and `sbyte` truncation risk misrouted handlers or silent slot/ID corruption when inventory/map/template indices exceed 127.",
+      "location": "Client/Client/Assets/Scripts/Game1/Service.cs:39,405,465-482,1182-1193,2055,3199,3245,3270",
+      "root_cause": "`gotoPlayer` and `requestPlayerInfo` share cmd `18`; `sendOptHat` and `sendCT_ready` share cmd `24`; `skill_not_focus` and `new_skill_not_focus` share cmd `-45`; numerous item/UI indices and IDs are written via `writeByte()`, and `useItem` uses `-1` sentinel for `template`.",
+      "severity": "P2",
+      "title": "Overloaded Opcodes (18, 24, -45) and Signed Byte Slot/ID Truncation in Service.cs"
+    },
+    {
+      "category": "security_dupe",
+      "impact": "Client controls and sends its own position, flying MP deduction, target coords, and arbitrary byte blobs (`sendOptHat`, `sendServerData`), enabling speed/teleport/skill-range exploits if server trusts them.",
+      "location": "Client/Client/Assets/Scripts/Game1/Service.cs:950-1006,3007-3034,3197-3222,3240-3263",
+      "root_cause": "`charMove` computes MP locally and sends `cx`/`cy`, `new_skill_not_focus` sends self and target coords, and `sendOptHat(1)`/`sendServerData` upload unvalidated client byte arrays.",
+      "severity": "P2",
+      "title": "Client-Trusted Coordinates, Local MP Deduction, and Raw Byte Uploads"
+    },
+    {
+      "category": "architecture",
+      "impact": "God class (`Service.cs` 3285 lines) and copy-pasted `Session_ME`/`Session_ME2` cause feature drift, unclosed `/info` file handles, swallowed exceptions, and `NullReferenceException` in `finally` blocks (`message.cleanup()`).",
+      "location": "Client/Client/Assets/Scripts/Game1/Service.cs:49,762,802,1008-1042,1564-1637,3042-3045",
+      "root_cause": "Duplicated `Session_ME`/`Session_ME2` and `setClientType`/`setClientType2`/`magicTree`/`getMagicTree`; unguarded `message.cleanup()` in `finally`; missing `cleanup()` and null guard in `sendPlayerAttack`; unclosed `MyStream.readFile(\"/info\")`; `dos.Flush()` inside `catch` in `Session_ME.doSendMessage:452`.",
+      "severity": "P2",
+      "title": "Service God Class, Copy-Paste Session Drift, and Unguarded Cleanup/Stream Leaks"
+    },
+    {
+      "category": "performance_gc",
+      "impact": "Secondary asset downloads on `Session_ME2` are artificially capped at <=200 msgs/sec and trigger extra GC pressure; `charMove` allocates `new Message(-7)` while moving.",
+      "location": "Client/Client/Assets/Scripts/Game1/Session_ME2.cs:44,93; Client/Client/Assets/Scripts/Game1/Session_ME.cs:177-179,219-221; Client/Client/Assets/Scripts/Game1/Service.cs:967",
+      "root_cause": "`Session_ME2.MessageCollector.run()` sleeps 5ms after every received packet; `readMessage`/`readMessage2` allocate a throwaway `new sbyte[num]` before `ArrayCast.cast(src)`; `Session_ME.Sender.doSendMessage` never calls `m.cleanup()`.",
+      "severity": "P2",
+      "title": "Per-Packet Thread.Sleep(5) Bottleneck and Unnecessary Message/Buffer Allocations"
+    }
+  ],
+  "key_classes": [
+    {
+      "key_methods": [
+        "gI",
+        "charMove",
+        "sendPlayerAttack",
+        "useItem",
+        "combine",
+        "giaodich",
+        "kigui",
+        "buyItem",
+        "saleItem",
+        "login",
+        "setClientType",
+        "setClientType2",
+        "getResource",
+        "imageSource",
+        "new_skill_not_focus"
+      ],
+      "name": "Game1.Service",
+      "path": "Client/Client/Assets/Scripts/Game1/Service.cs",
+      "responsibility": "Singleton outbound packet builder/dispatcher (~130+ methods) encoding all client-to-server commands onto Session_ME or Session_ME2."
+    },
+    {
+      "key_methods": [
+        "gI",
+        "connect",
+        "doConnect",
+        "sendMessage",
+        "doSendMessage",
+        "readKey",
+        "writeKey",
+        "onRecieveMsg",
+        "update",
+        "close",
+        "cleanNetwork",
+        "Sender.run",
+        "MessageCollector.run",
+        "MessageCollector.readMessage",
+        "MessageCollector.readMessage2",
+        "MessageCollector.getKey"
+      ],
+      "name": "Game1.Session_ME",
+      "path": "Client/Client/Assets/Scripts/Game1/Session_ME.cs",
+      "responsibility": "Primary TCP socket session managing connection lifecycle, XOR stream cipher, threaded send/receive loops, and main-thread message queue dispatch."
+    },
+    {
+      "key_methods": [
+        "gI",
+        "connect",
+        "doConnect",
+        "sendMessage",
+        "doSendMessage",
+        "readKey",
+        "writeKey",
+        "onRecieveMsg",
+        "update",
+        "close",
+        "cleanNetwork",
+        "Sender.run",
+        "MessageCollector.run",
+        "MessageCollector.readMessage",
+        "MessageCollector.readMessage2",
+        "MessageCollector.getKey"
+      ],
+      "name": "Game1.Session_ME2",
+      "path": "Client/Client/Assets/Scripts/Game1/Session_ME2.cs",
+      "responsibility": "Secondary TCP socket session (copy-pasted from Session_ME) used by Service.cs for asset/template downloads (icons, backgrounds, resources, map/skill/item updates)."
+    }
+  ],
+  "module_summary": "Batch covers the Unity C# client's outbound packet factory (`Service.cs`, 3285 lines) and both TCP transport implementations (`Session_ME.cs`, 637 lines; `Session_ME2.cs`, 575 lines). `Service` is a monolithic singleton constructing binary `Message` payloads for gameplay, UI, trade, combine, clan, consignment, and asset downloads, temporarily switching its `session` field to `Session_ME2` for resource packets. `Session_ME` and `Session_ME2` implement TCP framing, XOR keystream encryption, and background send/receive threads, with `Session_ME2` containing older unsynchronized queue/list code, a missing extended-length opcode (`66`), and `isMainSession = true`.",
+  "protocol_touchpoints": [
+    {
+      "direction": "WRITE",
+      "location": "Session_ME.cs:383; Session_ME2.cs:363",
+      "opcode": "-27",
+      "payload_summary": "Empty handshake request sent immediately on TCP connect before XOR key exchange."
+    },
+    {
+      "direction": "READ",
+      "location": "Session_ME.cs:100-103,142-169; Session_ME2.cs:78-81,127-154",
+      "opcode": "-27",
+      "payload_summary": "keyLen (sbyte), key bytes (XOR-chained), IP2 (UTF), PORT2 (int), isConnect2 (byte)."
+    },
+    {
+      "direction": "READ",
+      "location": "Session_ME.cs:202; Session_ME2.cs:187",
+      "opcode": "-32,-66,11,-67,-74,-87,66",
+      "payload_summary": "3-byte extended length header (`readMessage2`) for large asset/data payloads (`66` omitted in Session_ME2)."
+    },
+    {
+      "direction": "WRITE",
+      "location": "Service.cs:724-822,860-897",
+      "opcode": "-29 (sub 0,1,2)",
+      "payload_summary": "messageNotLogin: sub 0 login(user,pass,version,type); sub 1 register(user,pass,[userAo,\"a\"]); sub 2 setClientType/2(type,zoom,false,w,h,qwerty,touch,platform|ver,/info bytes)."
+    },
+    {
+      "direction": "WRITE",
+      "location": "Service.cs:731-736,1008-1042,1063-1099,1760-1857,2013-2030,2172-2190,2233-2269,2300-2435",
+      "opcode": "-28 (sub 1,2,6,7,8,9,10,12,13,16,17,18,33,34,37,38,39,40,41)",
+      "payload_summary": "messageNotMap: selectChar(1), createChar(2), updateMap/Skill/Item(6-8), requestSkill/Map/Npc(9,10,12), clientOk(13), card(16), clearTask(17), changeName(18), convertUpgrade(33), clanDun(34), accProtect(37-39,41), split(40)."
+    },
+    {
+      "direction": "WRITE",
+      "location": "Service.cs:738-743,1141-1159,1364-1418,2192-2231,2651-2689,3096-3135",
+      "opcode": "-30 (sub 16,17,19,21,22,60,61,63,64,-99)",
+      "payload_summary": "messageSubCommand: upPotential(16), upSkill(17), boxSort(19), boxCoinOut(21), requestItem(22), saveRms(60), loadRMS(61), playerMenu(63,64), upPotentialPet(-99)."
+    },
+    {
+      "direction": "WRITE",
+      "location": "Service.cs:950-1006",
+      "opcode": "-7",
+      "payload_summary": "charMove: isFly(byte 0/1), cx(short), optional cy(short if dy != 0)."
+    },
+    {
+      "direction": "WRITE",
+      "location": "Service.cs:1564-1637",
+      "opcode": "-4, 67, 54, -60",
+      "payload_summary": "sendPlayerAttack: mob/char targets (byte/int IDs) + cdir(sbyte)."
+    },
+    {
+      "direction": "WRITE",
+      "location": "Service.cs:150-211,1420-1562,1859-1876",
+      "opcode": "-81, -86, 13, 14, 36, 37, 38, 39, 50",
+      "payload_summary": "Combine (-81,13,14) and Trade (-86,36,37,38,39,50) item indexUI/coin/action packets."
+    },
+    {
+      "direction": "WRITE",
+      "location": "Service.cs:1161-1204,1639-1675,2807-2851",
+      "opcode": "6, 7, -18, -20, -43, -100",
+      "payload_summary": "Shop buy/sale(6,7), pick/throw(-20,-18), useItem(-43), consignment kigui(-100)."
+    },
+    {
+      "direction": "WRITE",
+      "location": "Service.cs:34-51,2050-2072,3197-3222,3265-3283,400-417,3240-3263",
+      "opcode": "18, 24, -45",
+      "payload_summary": "Overloaded opcodes: 18 (gotoPlayer vs requestPlayerInfo), 24 (sendOptHat vs sendCT_ready), -45 (skill_not_focus vs new_skill_not_focus)."
+    },
+    {
+      "direction": "WRITE",
+      "location": "Service.cs:1733-1839,2271-2298,2437-2463,2691-2727,2951-2987,3137-3153",
+      "opcode": "-87, -67, -32, -74, -111, 66, 11, -66",
+      "payload_summary": "Asset/template requests routed via Session_ME2 when connected: updateData(-87), icon(-67), bg(-32), resource(-74), imageSource(-111), imgByName(66), mod(11), eff(-66)."
+    },
+    {
+      "direction": "WRITE",
+      "location": "Service.cs:381-659,661-722,824-858,1245-1362,1677-1731,2465-2650,2729-3238",
+      "opcode": "40,42,44,53,59,62,69,75-79,88,90,91,112,125,126,127,-15,-16,-23,-33..-41,-44,-46..-63,-71,-72,-76,-78..-80,-85,-91,-96,-99,-101,-103..-110,-113,-114,-118,-120,-121,-125..-127",
+      "payload_summary": "Remaining gameplay, clan, social, chat, radar, captcha, pet, flag, crackball, and ping/sync opcodes."
+    }
+  ]
+}

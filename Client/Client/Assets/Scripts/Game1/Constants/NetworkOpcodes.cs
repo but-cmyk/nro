@@ -8,22 +8,22 @@ namespace Game1
     /// </summary>
     public static class NetworkOpcodes
     {
-        #region Xác thực & Tài khoản
+        #region Xác thực & Thông báo hệ thống
         public const sbyte LOGIN = 0;
-        public const sbyte LOGOUT = -26;
+        public const sbyte SERVER_ALERT = -26;
         #endregion
 
         #region Chỉ số & Cập nhật nhân vật
-        public const sbyte UPDATE_HP = 6;
-        public const sbyte UPDATE_MP = -69;
-        public const sbyte UPDATE_EXP = -68;
+        public const sbyte UPDATE_CURRENCY = 6;
+        public const sbyte UPDATE_MAX_STAMINA = -69;
+        public const sbyte UPDATE_STAMINA = -68;
         public const sbyte UPDATE_NANG_DONG = -97;
         #endregion
 
         #region Nhiệm vụ & Tương tác NPC
-        public const sbyte TASK_UPDATE = -70;
-        public const sbyte NPC_MENU = 38;
-        public const sbyte NPC_CHAT = 32;
+        public const sbyte NPC_BIG_MESSAGE = -70;
+        public const sbyte OPEN_UI_SAY = 38;
+        public const sbyte NPC_MENU = 32;
         #endregion
 
         #region Bang hội (Clan)

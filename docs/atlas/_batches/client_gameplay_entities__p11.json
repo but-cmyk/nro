@@ -1,0 +1,248 @@
+{
+  "batch_id": "client_gameplay_entities__p11",
+  "concurrency_and_state": [
+    "TileMap holds ~60 mutable public static fields (maps, types, imgTile, vGo, vItemBg, vCurrItem, vObject, mapID, tileID, etc.) with static cctor calling GameCanvas.loadImage('/bg/light.png').",
+    "Timer uses 4 global static fields (timeListener, idAction, timeExecute, isON); only one timer can exist globally and setTimer overwrites any active timer.",
+    "UIWindowManager is a singleton managing List<IUIWindow> _activeWindows without iteration snapshots during Update/UpdateKey/Paint.",
+    "UnityLogger spawns a background workerThread ('AsyncLoggerWorker') reading from an unbounded ConcurrentQueue<string> signaled by AutoResetEvent, fed by Application.logMessageReceivedThreaded from arbitrary threads."
+  ],
+  "cross_module_questions": [
+    "Does Server validate TransportScr early-arrival / Luong deduction when receiving Service.gI().transportNow(), since TransportScr.perform(2) sets isSpeed=true after checking Char.myCharz().checkLuong()>0 locally without sending a speed-up/gem-spend packet?",
+    "Do any callers of Timer.setTimer pass a non-GameScr IActionListener expecting timeListener.perform() to be invoked instead of GameScr.gI().actionPerform()?",
+    "How does Panel.cs route Update/UpdateKey/PointerClick for ChestSubPanel, CombineSubPanel, InventorySubPanel, and ShopSubPanel while their ISubPanel methods remain empty stubs?",
+    "What does MyStream.readFile('/mymap/' + mapID) return on missing map files, and does any caller close the returned DataInputStream?"
+  ],
+  "db_redis_touchpoints": [],
+  "files_read": [
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/TileMap.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/Timer.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/TopInfo.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/TouchScreenKeyboard.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/TouchScreenKeyboardType.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/TransportScr.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/UI/IUIWindow.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/UI/Panels/ChestSubPanel.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/UI/Panels/ClanSubPanel.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/UI/Panels/CombineSubPanel.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/UI/Panels/InventorySubPanel.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/UI/Panels/ISubPanel.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/UI/Panels/ShopSubPanel.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/UI/UIWindowManager.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/Waypoint.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/UnityLogger.cs"
+  ],
+  "findings": [
+    {
+      "category": "gameplay",
+      "impact": "Out-of-bounds tileTypeAt queries evaluate as waterflow/waterfall/outside/down1pixel tiles; in paintOutTilemap (which does not clamp gssx..gssye to tmw/tmh), out-of-bounds cells match (type & 0x40) == 64, drawing stray water tiles and corrupting TileMap.yWater.",
+      "location": "Client/Client/Assets/Scripts/Game1/TileMap.cs:742-782, 812-834",
+      "root_cause": "tileTypeAt(x,y) and tileTypeAtPixel(px,py) catch Exception and return magic value 1000 (0x3E8 = 512|256|128|64|32|8), which sets bit flags T_WATERFLOW (64), T_WATERFALL (32), T_TOPFALL (128), T_OUTSIDE (256), T_DOWN1PIXEL (512), and T_RIGHT (8).",
+      "severity": "P1",
+      "title": "TileMap.tileTypeAt returns bitmask-polluting magic value 1000 on out-of-bounds exception"
+    },
+    {
+      "category": "performance_gc",
+      "impact": "Leaks DataInputStream handle on every map load, risks NullReferenceException if map file is missing, and throws IndexOutOfRangeException if tmw*tmh exceeds available() or leaves trailing zeroes if smaller.",
+      "location": "Client/Client/Assets/Scripts/Game1/TileMap.cs:786-798",
+      "root_cause": "loadMapFromResource calls MyStream.readFile('/mymap/' + mapID) without null-check or close/using, allocates maps with dataInputStream.available() instead of tmw * tmh, and loops tmw * tmh times.",
+      "severity": "P1",
+      "title": "TileMap.loadMapFromResource never closes DataInputStream and sizes array via available()"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Any caller passing a custom IActionListener to Timer.setTimer never has its listener invoked; instead GameScr.gI().actionPerform is erroneously executed.",
+      "location": "Client/Client/Assets/Scripts/Game1/Timer.cs:15-41",
+      "root_cause": "setTimer assigns timeListener = actionListener, but update() ignores timeListener and hardcodes GameScr.gI().actionPerform(idAction, null); inside an empty try/catch.",
+      "severity": "P1",
+      "title": "Timer.update ignores stored timeListener and hardcodes GameScr.gI().actionPerform"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Throws DivideByZeroException in TransportScr.update() if TransportScr is updated while maxTime == 0.",
+      "location": "Client/Client/Assets/Scripts/Game1/TransportScr.cs:119-125",
+      "root_cause": "Line 123 computes currSpeed = GameCanvas.w / 2 * time / maxTime without guarding maxTime <= 0.",
+      "severity": "P1",
+      "title": "Potential division by zero in TransportScr.update when maxTime is 0"
+    },
+    {
+      "category": "security_dupe",
+      "impact": "Client accelerates transport locally without sending a speed-up/gem deduction request; if server does not enforce minimum travel time or deduct Luong on transportNow(), players can bypass wait time or speed up for free.",
+      "location": "Client/Client/Assets/Scripts/Game1/TransportScr.cs:170-174, 189-194",
+      "root_cause": "perform(idAction == 2) only checks Char.myCharz().checkLuong() > 0 locally and sets isSpeed = true, then later sends Service.gI().transportNow() once currSpeed reaches threshold.",
+      "severity": "P2",
+      "title": "TransportScr client-side Luong check and speed-up without server spend notification"
+    },
+    {
+      "category": "performance_gc",
+      "impact": "Causes GC pauses during map transitions, leaves old Texture2D references when zoomLevel != 1 or freeTilemap() is called, and adds per-tile ListChars.getInstance().HideMap and try/catch overhead in paint loops.",
+      "location": "Client/Client/Assets/Scripts/Game1/TileMap.cs:307-311, 343-366, 438-481, 483-723",
+      "root_cause": "freeTilemap and loadTileImage invoke mSystem.gcc() synchronously; getTile only nulls imgTile[j].texture when zoomLevel == 1 (not != 1); paintTile/paintTilemap/paintOutTilemap re-fetch ListChars.getInstance().HideMap and call tileTypeAt(j,k) repeatedly per cell; paintTilemap logs Exception every frame on persistent errors.",
+      "severity": "P2",
+      "title": "TileMap GC spikes, incomplete texture cleanup, and redundant per-tile lookups in paint"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Throws IndexOutOfRangeException if pixel/tile coordinates are out of map bounds during runtime tile modifications.",
+      "location": "Client/Client/Assets/Scripts/Game1/TileMap.cs:848-861",
+      "root_cause": "setTileTypeAtPixel, setTileTypeAt, and killTileTypeAt index types[] directly with no bounds validation.",
+      "severity": "P2",
+      "title": "Unchecked array indexing in TileMap tile type mutators"
+    },
+    {
+      "category": "concurrency",
+      "impact": "If an active window closes or pushes windows during Update, UpdateKey, or Paint, windows in _activeWindows can be skipped for that frame or cause ArgumentOutOfRangeException. Also re-pushing an already open window skips OnClose().",
+      "location": "Client/Client/Assets/Scripts/Game1/UI/UIWindowManager.cs:47-53, 102-141",
+      "root_cause": "UpdateKey/Update/Paint iterate _activeWindows directly by index while invoking callbacks that may mutate _activeWindows; Push removes an existing window without calling OnClose() before OnOpen().",
+      "severity": "P2",
+      "title": "UIWindowManager mutates/iterates _activeWindows unsafely and skips OnClose on re-Push"
+    },
+    {
+      "category": "architecture",
+      "impact": "Strangler Fig refactoring of Panel.cs is incomplete: all UI logic/input remains in Panel.cs while SubPanel classes duplicate boilerplate and return false for UpdateKey/PointerClick/PointerHoldIn.",
+      "location": "Client/Client/Assets/Scripts/Game1/UI/Panels/ChestSubPanel.cs:8-57",
+      "root_cause": "ChestSubPanel, CombineSubPanel, InventorySubPanel, ShopSubPanel, and ClanSubPanel only forward Paint (and ClanSubPanel.OnSelectTab) back to Panel; all other ISubPanel methods are no-op stubs.",
+      "severity": "P3",
+      "title": "Incomplete ISubPanel decomposition delegates only Paint back to Panel.cs"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Clicking a distant enter-waypoint on maps with obstacles or knockback can loop MovePoint/endMovePointCommand if arrival lands outside isInEnterOfflinePoint()/isInEnterOnlinePoint() bounds.",
+      "location": "Client/Client/Assets/Scripts/Game1/Waypoint.cs:90-118",
+      "root_cause": "Waypoint.perform(2) assigns endMovePointCommand = new Command(null, this, 2, null) whenever the char is not inside the enter point, re-triggering itself on move completion.",
+      "severity": "P3",
+      "title": "Waypoint auto-enter sets self-referential endMovePointCommand"
+    },
+    {
+      "category": "concurrency",
+      "impact": "If client_log.txt is locked by another reader on Windows, File.Move fails silently and FileMode.Create truncates the active log file. Unbounded logQueue can also grow indefinitely under log floods, and LogDir static initializer accesses Application.dataPath which fails if touched off main thread.",
+      "location": "Client/Client/Assets/Scripts/UnityLogger.cs:9, 14, 320-330, 358-389",
+      "root_cause": "RotateLogFiles swallows all exceptions in catch {}, after which ProcessLogQueue unconditionally opens LogFilePath with FileMode.Create; logQueue has no max capacity; LogDir uses Application.dataPath in static field init.",
+      "severity": "P2",
+      "title": "UnityLogger log rotation silently loses logs on locked file and lacks queue cap"
+    },
+    {
+      "category": "architecture",
+      "impact": "Dead commented-out code clutters the Scripts/Game1 directory.",
+      "location": "Client/Client/Assets/Scripts/Game1/TouchScreenKeyboard.cs:3-23",
+      "root_cause": "TouchScreenKeyboard.cs and TouchScreenKeyboardType.cs have their entire class/enum bodies commented out.",
+      "severity": "P3",
+      "title": "Commented-out dead stub files TouchScreenKeyboard and TouchScreenKeyboardType"
+    }
+  ],
+  "key_classes": [
+    {
+      "key_methods": [
+        "loadMap",
+        "loadMapFromResource",
+        "getTile",
+        "freeTilemap",
+        "paintTilemap",
+        "paintTilemapLOW",
+        "paintOutTilemap",
+        "tileTypeAt",
+        "tileTypeAtPixel"
+      ],
+      "name": "TileMap",
+      "path": "Client/Client/Assets/Scripts/Game1/TileMap.cs",
+      "responsibility": "Static tile grid map data, tile texture loading, tile collision/type bitmask queries, and map rendering."
+    },
+    {
+      "key_methods": [
+        "setTimer",
+        "update"
+      ],
+      "name": "Timer",
+      "path": "Client/Client/Assets/Scripts/Game1/Timer.cs",
+      "responsibility": "Global single-slot delayed callback timer ticked per frame."
+    },
+    {
+      "key_methods": [
+        "gI",
+        "switchToMe",
+        "paint",
+        "update",
+        "perform"
+      ],
+      "name": "TransportScr",
+      "path": "Client/Client/Assets/Scripts/Game1/TransportScr.cs",
+      "responsibility": "Spaceship/submarine travel cutscene screen with optional gem-based speed-up trigger."
+    },
+    {
+      "key_methods": [
+        "gI",
+        "Push",
+        "Close",
+        "Pop",
+        "CloseAll",
+        "UpdateKey",
+        "Update",
+        "Paint"
+      ],
+      "name": "UIWindowManager",
+      "path": "Client/Client/Assets/Scripts/Game1/UI/UIWindowManager.cs",
+      "responsibility": "Window stack manager for IUIWindow modals and overlays, handling input blocking and Panel auto-hide."
+    },
+    {
+      "key_methods": [
+        "Init",
+        "Paint",
+        "Update",
+        "UpdateKey",
+        "OnSelectTab",
+        "PointerClick"
+      ],
+      "name": "ISubPanel / *SubPanel",
+      "path": "Client/Client/Assets/Scripts/Game1/UI/Panels/ISubPanel.cs",
+      "responsibility": "Strangler Fig interface and thin Paint-forwarding wrappers (Chest, Clan, Combine, Inventory, Shop) decomposing Panel.cs."
+    },
+    {
+      "key_methods": [
+        "Waypoint",
+        "perform"
+      ],
+      "name": "Waypoint",
+      "path": "Client/Client/Assets/Scripts/Game1/Waypoint.cs",
+      "responsibility": "Map portal/transition trigger registering PopUp prompts and initiating map-change movement/requests."
+    },
+    {
+      "key_methods": [
+        "Initialize",
+        "ShouldLog",
+        "HandleLog",
+        "ProcessLogQueue",
+        "RotateLogFiles",
+        "Shutdown"
+      ],
+      "name": "UnityLogger",
+      "path": "Client/Client/Assets/Scripts/UnityLogger.cs",
+      "responsibility": "Asynchronous file logger with spam blacklist, valuable tag whitelist, 3MB log rotation, and gatekeeper filter."
+    }
+  ],
+  "module_summary": "This batch covers Unity C# client map rendering/tile queries (TileMap, Waypoint), cutscene transport screen (TransportScr), global delayed timer (Timer), leaderboard DTO (TopInfo), dead commented-out keyboard stubs (TouchScreenKeyboard*), UI window/subpanel refactoring scaffolding (UIWindowManager, IUIWindow, ISubPanel and 5 SubPanels), and asynchronous client file logging (UnityLogger). Key issues include TileMap returning magic bitmask 1000 on out-of-bounds tileTypeAt calls (polluting water rendering), unclosed DataInputStream in loadMapFromResource, Timer.update ignoring its stored timeListener, TransportScr lacking a maxTime==0 guard, unsafe iteration in UIWindowManager, and log-loss on locked file rotation in UnityLogger.",
+  "protocol_touchpoints": [
+    {
+      "direction": "WRITE",
+      "location": "Client/Client/Assets/Scripts/Game1/TransportScr.cs:173",
+      "opcode": "Service.gI().transportNow()",
+      "payload_summary": "Sent when client travel progress currSpeed reaches GameCanvas.w / 2 + 30."
+    },
+    {
+      "direction": "WRITE",
+      "location": "Client/Client/Assets/Scripts/Game1/Waypoint.cs:87, 94, 101",
+      "opcode": "Service.gI().charMove()",
+      "payload_summary": "Syncs player position before approaching or entering a waypoint."
+    },
+    {
+      "direction": "WRITE",
+      "location": "Client/Client/Assets/Scripts/Game1/Waypoint.cs:96",
+      "opcode": "Service.gI().getMapOffline()",
+      "payload_summary": "Requests offline map entry when Char.myCharz().isInEnterOfflinePoint() != null."
+    },
+    {
+      "direction": "WRITE",
+      "location": "Client/Client/Assets/Scripts/Game1/Waypoint.cs:102",
+      "opcode": "Service.gI().requestChangeMap()",
+      "payload_summary": "Requests online map transition when Char.myCharz().isInEnterOnlinePoint() != null."
+    }
+  ]
+}

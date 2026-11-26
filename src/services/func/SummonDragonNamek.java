@@ -99,7 +99,7 @@ public class SummonDragonNamek {
     }
 
     private void activeShenron(Player pl, boolean appear, byte type) {
-        Message msg;
+        Message msg = null;
         try {
             msg = new Message(-83);
             msg.writer().writeByte(appear ? 0 : (byte) 1);
@@ -107,6 +107,7 @@ public class SummonDragonNamek {
                 msg.writer().writeShort(pl.zone.map.mapId);
                 msg.writer().writeShort(pl.zone.map.bgId);
                 msg.writer().writeByte(pl.zone.zoneId);
+                msg.writer().writeInt((int) pl.id);
                 msg.writer().writeUTF(pl.name);
                 msg.writer().writeShort(pl.location.x);
                 msg.writer().writeShort(pl.location.y);
@@ -115,6 +116,10 @@ public class SummonDragonNamek {
             }
             Service.gI().sendMessAllPlayer(msg);
         } catch (Exception e) {
+        } finally {
+            if (msg != null) {
+                msg.cleanup();
+            }
         }
     }
 

@@ -17,6 +17,13 @@ namespace Game1.God
             return instance == null ? instance = new ListChars() : instance;
         }
         private static readonly string[] indexPrefixes;
+        private struct CharCacheInfo
+        {
+            public long lastHP;
+            public string text;
+        }
+        private static readonly Dictionary<int, CharCacheInfo> charTextCache = new Dictionary<int, CharCacheInfo>();
+
         static ListChars()
         {
             indexPrefixes = new string[100];
@@ -44,10 +51,26 @@ namespace Game1.God
                 if (@char.cName != null && @char.cName.Length > 0 && !@char.isPet && !@char.isMiniPet && !@char.cName.StartsWith("#") && !@char.cName.StartsWith("$") && @char.cName != "Trọng tài")
                 {
                     bool flag = isBoss(@char);
-                    string hpStr = NinjaUtil.getMoneys(@char.cHP);
-                    string text = flag
-                        ? (@char.cName + " [" + hpStr + "]")
-                        : (@char.cName + " [" + hpStr + " - " + @char.getGenderName() + "]");
+                    CharCacheInfo cacheInfo;
+                    string text;
+                    if (charTextCache.TryGetValue(@char.charID, out cacheInfo) && cacheInfo.lastHP == @char.cHP)
+                    {
+                        text = cacheInfo.text;
+                    }
+                    else
+                    {
+                        string hpStr = NinjaUtil.getMoneys(@char.cHP);
+                        text = flag
+                            ? (@char.cName + " [" + hpStr + "]")
+                            : (@char.cName + " [" + hpStr + " - " + @char.getGenderName() + "]");
+                        cacheInfo.lastHP = @char.cHP;
+                        cacheInfo.text = text;
+                        if (charTextCache.Count > 300)
+                        {
+                            charTextCache.Clear();
+                        }
+                        charTextCache[@char.charID] = cacheInfo;
+                    }
                     string prefix = (i + 1 < indexPrefixes.Length) ? indexPrefixes[i + 1] : (i + 1) + ". ";
                     string fullText = prefix + text;
 

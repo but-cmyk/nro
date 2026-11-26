@@ -1,0 +1,288 @@
+{
+  "batch_id": "client_gameplay_entities__p10",
+  "concurrency_and_state": [
+    "Teleport.update() sets Controller.isStopReadMessage = false (Teleport.cs:434) when isMe && type == 0 && y <= -80, coupling client animation completion directly to network message queue resumption.",
+    "Teleport.update() calls vTeleport.removeElement(this) (Teleport.cs:443,452) and GameScr.vCharInMap.removeElement(...) (Teleport.cs:439); if iterated with a forward index loop without reverse iteration or index adjustment, adjacent entries are skipped.",
+    "TextInfo uses static mutable fields (dx, tx, wStr, isBack, laststring in TextInfo.cs:5-13), so concurrent or multi-widget calls to TextInfo.paint() in the same frame corrupt each other's scroll state.",
+    "TField maintains static singleton state currentTField and TouchScreenKeyboard kb (TField.cs:155,199) alongside Thread.CurrentThread.Name == Main.mainThreadName checks (TField.cs:668) before opening mobile TouchScreenKeyboard.",
+    "SplashScr relies on static flags (nData, maxData, pendingScreen, splashScrStat in SplashScr.cs:9-17) and Rms persistence to transition into ServerListScreen or pendingScreen."
+  ],
+  "cross_module_questions": [
+    "Are CharacterCombat, InventorySystem, and CharacterMovement in Game1.Systems.* actually instantiated and wired by Char.cs / Panel.cs, or are they unused/partial refactorings leaving legacy fields in Char.cs active?",
+    "Does GameScr/TileMap iterate Teleport.vTeleport in reverse when calling Teleport.update(), or does Teleport.vTeleport.removeElement(this) skip elements?",
+    "What opcode and stream format does Service.getClan(sbyte action, sbyte imgID, string text) send, and does the server support clan image IDs > 127 that TabClanIcon.perform() truncates via (sbyte) cast?",
+    "How is TField.HandleInputText() invoked from Main/GameCanvas OnGUI, and does server-side validation enforce maxTextLenght and newline/numeric restrictions bypassed by Ctrl+V paste?"
+  ],
+  "db_redis_touchpoints": [],
+  "files_read": [
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/ServerScr.cs:1-717",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/Skill.cs:1-96",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/SkillInfoPaint.cs:1-31",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/SkillOption.cs:1-20",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/SkillOptionTemplate.cs:1-9",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/SkillPaint.cs:1-15",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/Skills.cs:1-17",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/SkillTemplate.cs:1-61",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/SmallDart.cs:1-17",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/SMS.cs:1-170",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/SplashScr.cs:1-335",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/Sprite.cs:1-21",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/StaticObj.cs:1-83",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/Systems/Combat/CharacterCombat.cs:1-99",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/Systems/Inventory/InventorySystem.cs:1-84",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/Systems/Movement/CharacterMovement.cs:1-74",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/T1.cs:1-521",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/T2.cs:1-573",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/T3.cs:1-555",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/TabClanIcon.cs:1-368",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/Task.cs:1-35",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/TaskOrder.cs:1-34",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/TaskTemplate.cs:1-11",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/Teleport.cs:1-464",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/TextInfo.cs:1-81",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/TField.cs:1-1013"
+  ],
+  "findings": [
+    {
+      "category": "gameplay",
+      "impact": "Throws ArgumentOutOfRangeException when typing on keypad/multi-tap with password input mode active (keyInActiveState > 0 and caretPos > 0).",
+      "location": "TField.cs:582-583",
+      "root_cause": "passwordText.Substring(caretPos, passwordText.Length) passes total length instead of remaining length (passwordText.Length - caretPos) as the second argument.",
+      "severity": "P1",
+      "title": "TField.setPasswordTest passes invalid length to Substring"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Pressing confirm (key 5) in non-touch ServerScr selects the wrong server (always row 0 column num) or throws when vecServer is empty.",
+      "location": "ServerScr.cs:329-333",
+      "root_cause": "updateKey() invokes ((Command)vecServer.elementAt(num)).performAction() using column remainder num (mainSelect % n) instead of mainSelect.",
+      "severity": "P1",
+      "title": "ServerScr.updateKey invokes command at column index num instead of mainSelect"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Allows pasting arbitrarily long strings, newlines into single-line fields, or non-numeric characters into numeric TFields, potentially breaking UI or downstream protocol limits.",
+      "location": "TField.cs:887-903,933-949",
+      "root_cause": "HandleInputText() Ctrl+V and Shift+Insert handlers concatenate GUIUtility.systemCopyBuffer without checking maxTextLenght, multiline, or INPUT_TYPE_NUMERIC.",
+      "severity": "P2",
+      "title": "TField paste bypasses maxTextLenght, multiline, and numeric input validation"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Backspace/clear button in TField.clear() silently deletes all characters after the caret instead of removing only the single character before caretPos.",
+      "location": "TField.cs:321-332",
+      "root_cause": "clear() assigns text = text.Substring(0, caretPos - 1) without appending text.Substring(caretPos).",
+      "severity": "P2",
+      "title": "TField.clear truncates all text after caretPos"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Zero-width or narrow sub-panel causes DivideByZeroException in ServerScr.sort_newUI() when wsub < 81.",
+      "location": "ServerScr.cs:188-189",
+      "root_cause": "numw = wsub / (wc + w2c) evaluates to 0 without a Math.Max(1, numw) guard before vecServer.size() / numw.",
+      "severity": "P2",
+      "title": "ServerScr.sort_newUI divides by zero if numw is 0"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Holding pointer on server type tabs recreates Command list and ListNew every frame while pointer is held down; also Load_RMS_Area lacks bounds check on select_Area.",
+      "location": "ServerScr.cs:611-619,683-695",
+      "root_cause": "UpdTouch_NewUI checks GameCanvas.isPointerDown instead of release/click, repeatedly calling GetVecTypeSv(); Load_RMS_Area accepts any sbyte from RMS that may exceed strArea.Length.",
+      "severity": "P2",
+      "title": "ServerScr re-runs GetVecTypeSv every frame on pointer hold and lacks RMS bounds check"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Potential NullReferenceException or IndexOutOfRangeException in Teleport.paint() and Teleport.update() if headId is invalid or maybay images fail to load; also repeated linear scans of vCharInMap.",
+      "location": "Teleport.cs:146-195,289-439",
+      "root_cause": "GameScr.parts[headId] and maybay[planet] are accessed without bounds/null checks; GameScr.findCharInMap(id) is called repeatedly per frame in update().",
+      "severity": "P2",
+      "title": "Teleport lacks bounds/null guards on parts/maybay and repeats findCharInMap scans"
+    },
+    {
+      "category": "protocol",
+      "impact": "Clan icon IDs >= 128 overflow to negative sbyte values when creating or updating a clan icon; request mode in TabClanIcon is dead code.",
+      "location": "TabClanIcon.cs:354-365,184-186",
+      "root_cause": "TabClanIcon.perform casts ClanImage.ID to sbyte before calling Service.gI().getClan; when isRequest is true, paintPeans() is empty and perform() fetches item into an unused local without bounds check on select.",
+      "severity": "P2",
+      "title": "TabClanIcon casts icon ID to sbyte and has unfinished request-item handling"
+    },
+    {
+      "category": "performance_gc",
+      "impact": "Allocates objects and strings every frame inside paint() and update() across multiple UI screens, violating Client Zero-GC rules.",
+      "location": "ServerScr.cs:234,522; TabClanIcon.cs:227-235; TField.cs:509-512,537,546,577-600; SplashScr.cs:231",
+      "root_cause": "new Command() in ServerScr.update; splitFontArray() in ServerScr.paintNewSelectMenu; CleanClanIconName() and string concat in TabClanIcon.paintIcon; Substring/Replace/new string in TField.paint/paintInputTf/update; string concat in SplashScr.paint.",
+      "severity": "P2",
+      "title": "Per-frame heap and string allocations inside paint() and update() loops"
+    },
+    {
+      "category": "architecture",
+      "impact": "Multiple UI widgets calling TextInfo.paint() in the same frame reset each other's marquee offset every tick and never scroll properly.",
+      "location": "TextInfo.cs:5-31",
+      "root_cause": "TextInfo stores scroll offsets (dx, tx, wStr, isBack, laststring) in static fields rather than per-instance state.",
+      "severity": "P2",
+      "title": "TextInfo uses shared static state for marquee scrolling"
+    },
+    {
+      "category": "architecture",
+      "impact": "T3 (Indonesian localization) diverges from T1/T2 by omitting clientType == 7 overrides for MENUGENDER and hairStyleName and having 17 split tips entries.",
+      "location": "T3.cs:166,242-246,531-536",
+      "root_cause": "Copy-paste drift across T1, T2, and T3 static load() tables; SMS.cs (1-170) is also completely commented out.",
+      "severity": "P3",
+      "title": "Localization drift in T3.cs and dead commented-out SMS.cs"
+    }
+  ],
+  "key_classes": [
+    {
+      "key_methods": [
+        "switchToMe",
+        "update",
+        "paint",
+        "updateKey",
+        "perform",
+        "SetNewSelectMenu",
+        "GetVecTypeSv",
+        "UpdTouch_NewUI"
+      ],
+      "name": "ServerScr",
+      "path": "Client/Client/Assets/Scripts/Game1/ServerScr.cs",
+      "responsibility": "Server region/type selection screen supporting legacy grid UI and new split-panel touch UI with RMS persistence."
+    },
+    {
+      "key_methods": [
+        "update",
+        "paint",
+        "loadIP",
+        "loadSplashScr",
+        "switchToMe"
+      ],
+      "name": "SplashScr",
+      "path": "Client/Client/Assets/Scripts/Game1/SplashScr.cs",
+      "responsibility": "Boot splash screen handling initial RMS config defaults, server list/IP bootstrap, fade transition, and asset download progress bar."
+    },
+    {
+      "key_methods": [
+        "init",
+        "CleanClanIconName",
+        "paintIcon",
+        "update",
+        "updateKey",
+        "perform"
+      ],
+      "name": "TabClanIcon",
+      "path": "Client/Client/Assets/Scripts/Game1/TabClanIcon.cs",
+      "responsibility": "UI panel for selecting clan icon on clan creation or icon update, dispatching Service.getClan requests."
+    },
+    {
+      "key_methods": [
+        "Teleport",
+        "addTeleport",
+        "paintHole",
+        "paint",
+        "update"
+      ],
+      "name": "Teleport",
+      "path": "Client/Client/Assets/Scripts/Game1/Teleport.cs",
+      "responsibility": "Spaceship/time-machine arrival and departure animation entity managing ground raycast, character position sync, and Controller message unblocking."
+    },
+    {
+      "key_methods": [
+        "paint",
+        "paintInputTf",
+        "update",
+        "HandleInputText",
+        "setFocusWithKb",
+        "setPasswordTest",
+        "clear"
+      ],
+      "name": "TField",
+      "path": "Client/Client/Assets/Scripts/Game1/TField.cs",
+      "responsibility": "Custom text input control handling desktop Unity Event.current keyboard/mouse editing, undo stack, selection, and mobile TouchScreenKeyboard."
+    },
+    {
+      "key_methods": [
+        "strCurExp",
+        "strTimeReplay",
+        "paint"
+      ],
+      "name": "Skill",
+      "path": "Client/Client/Assets/Scripts/Game1/Skill.cs",
+      "responsibility": "Client skill instance model holding template, cooldown timing, mana cost, options, and icon/cooldown overlay rendering."
+    },
+    {
+      "key_methods": [
+        "SetTarget",
+        "HasValidTarget",
+        "ResolveSkillPaint",
+        "RecordAttack",
+        "CanPerformAttack"
+      ],
+      "name": "CharacterCombat",
+      "path": "Client/Client/Assets/Scripts/Game1/Systems/Combat/CharacterCombat.cs",
+      "responsibility": "Modular combat state helper extracted from Char.cs for target focus, skill paint fallback, and attack interval gating."
+    },
+    {
+      "key_methods": [
+        "SetBagItems",
+        "SetBodyItems",
+        "SetBoxItems",
+        "CountAvailableSlots"
+      ],
+      "name": "InventorySystem",
+      "path": "Client/Client/Assets/Scripts/Game1/Systems/Inventory/InventorySystem.cs",
+      "responsibility": "Modular inventory container holding bag/body/box lists, currencies (long Gold, int Gem/Ruby), and change event."
+    },
+    {
+      "key_methods": [
+        "SyncPosition",
+        "CheckGroundCollision",
+        "CalculateMoveDelta",
+        "FaceTarget"
+      ],
+      "name": "CharacterMovement",
+      "path": "Client/Client/Assets/Scripts/Game1/Systems/Movement/CharacterMovement.cs",
+      "responsibility": "Modular movement helper extracted from Char.cs for TileMap ground check, clamped move delta, and facing direction."
+    },
+    {
+      "key_methods": [
+        "load"
+      ],
+      "name": "T1 / T2 / T3",
+      "path": "Client/Client/Assets/Scripts/Game1/T1.cs",
+      "responsibility": "Vietnamese (T1), English (T2), and Indonesian (T3) localization string loaders populating mResources static fields."
+    }
+  ],
+  "module_summary": "Reviewed 26 client Game1 scripts (5504 lines) covering startup/server selection (SplashScr, ServerScr), localization (T1/T2/T3), skill/task/sprite data models (Skill, SkillTemplate, SkillPaint, SkillInfoPaint, SkillOption, SkillOptionTemplate, Skills, SmallDart, Sprite, StaticObj, Task, TaskOrder, TaskTemplate), UI components (TabClanIcon, TextInfo, TField), teleport animation (Teleport), disabled SMS stub (SMS), and extracted system modules (CharacterCombat, InventorySystem, CharacterMovement). Key issues include an ArgumentOutOfRangeException in TField.setPasswordTest, wrong command indexing in ServerScr.updateKey, uncapped clipboard paste in TField.HandleInputText, shared static marquee state in TextInfo, and multiple per-frame string/object allocations in paint()/update() loops.",
+  "protocol_touchpoints": [
+    {
+      "direction": "DISPATCH",
+      "location": "TabClanIcon.cs:354",
+      "opcode": "Service.getClan(2, iconId, text)",
+      "payload_summary": "action=2 (create clan), sbyte iconId=(sbyte)ClanImage.ID, string clanName/text"
+    },
+    {
+      "direction": "DISPATCH",
+      "location": "TabClanIcon.cs:358",
+      "opcode": "Service.getClan(4, iconId, empty)",
+      "payload_summary": "action=4 (change clan icon), sbyte iconId=(sbyte)ClanImage.ID, empty string"
+    },
+    {
+      "direction": "DISPATCH",
+      "location": "ServerScr.cs:385-394",
+      "opcode": "selectServer / clearSendingMessage",
+      "payload_summary": "Clears sending queue and connects to ServerListScreen.ipSelect server"
+    },
+    {
+      "direction": "DISPATCH",
+      "location": "SplashScr.cs:102,185,203",
+      "opcode": "getServerList / GameCanvas.connect",
+      "payload_summary": "Fetches server list from linkDefault if svselect == -1 and initiates TCP connection to GameMidlet.IP:PORT"
+    },
+    {
+      "direction": "READ",
+      "location": "Teleport.cs:434",
+      "opcode": "Controller.isStopReadMessage = false",
+      "payload_summary": "Resumes reading buffered server messages after outgoing player teleport ship leaves screen (y <= -80)"
+    }
+  ]
+}

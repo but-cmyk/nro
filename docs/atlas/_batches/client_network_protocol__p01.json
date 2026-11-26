@@ -1,0 +1,144 @@
+{
+  "batch_id": "client_network_protocol__p01",
+  "concurrency_and_state": [
+    "ClanMessage.vMessage is a static MyVector holding up to 20 clan chat/request entries; ClanMessage.addMessage mutates it in a forward loop without index adjustment.",
+    "Controller2 is purely static and mutates global singletons/static fields directly (Char.myCharz(), GameScr.gI(), GameCanvas.panel, GameCanvas.panel2, RadarScr.list/listUse, CrackBallScr.gI(), ServerListScreen.ipSelect/waitToLogin, Service.logController/logMap, EffecMn, Rms).",
+    "Controller2.readMessage, readLuckyRound, readInfoRada, readInfoEffChar, and readActionBoss assume sequential invocation on the Unity main-thread message pump."
+  ],
+  "cross_module_questions": [
+    "Verify against Controller.cs and Java server Service.java whether NetworkOpcodes.cs is an unused/broken refactor or actually referenced in Game1/God or elsewhere in Client.",
+    "Verify server-side Cmd.java / Service.java payload layout for opcode 100 (REFRESH_ITEM), -100 (KIGUI), -124 (HOLD), and 31 (STATUS_PET) to confirm whether server sends unsigned mobId bytes or negative values.",
+    "Check GameCanvas.panel.arrItemShop size vs opcode -100 tab index byte b, and how Char.arrItemBag/arrItemBody handle item removal when REFRESH_ITEM sends quantity <= 0."
+  ],
+  "db_redis_touchpoints": [],
+  "files_read": [
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/Assets/src/f/Controller2.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/ClanMessage.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/Cmd.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/Constants/NetworkOpcodes.cs"
+  ],
+  "findings": [
+    {
+      "category": "protocol",
+      "impact": "Item removal via REFRESH_ITEM leaves stale item objects with quantity <= 0 in inventory arrays; out-of-range slot/type or null slot throws NullReferenceException/IndexOutOfRangeException and aborts packet handling.",
+      "location": "Controller2.cs:422-464",
+      "root_cause": "In case 100 (REFRESH_ITEM), b31 (0=body, 1=bag) and b32 (slot) are used without bounds or null checks on item2, and lines 459-462 set the local variable item2 = null instead of clearing Char.myCharz().arrItemBody[b32] or arrItemBag[b32]. Line 453 also checks num45 != -1 after readUnsignedByte() which never returns -1 (same dead check at lines 897 and 1146).",
+      "severity": "P1",
+      "title": "REFRESH_ITEM (opcode 100) nulls local ref instead of inventory slot and lacks bounds/null checks"
+    },
+    {
+      "category": "protocol",
+      "impact": "Packets referencing characters, Mabu bosses, NPCs, or mobs not currently present in the client map crash mid-read and are swallowed by catch(Exception), dropping the packet and leaving partial state.",
+      "location": "Controller2.cs:104-110, 188-192, 200-225, 249-258, 612-626, 750-788",
+      "root_cause": "Unchecked GameScr.findCharInMap, findNPCInMap, and findMobInMap results and unchecked (Mabu) casts in opcodes 31, 51, 52, -122, and -124. Additionally opcode -124 reads mobId into signed sbyte b9, breaking mob IDs >= 128.",
+      "severity": "P1",
+      "title": "Missing null/type checks on map entity lookups in Controller2 packet handlers"
+    },
+    {
+      "category": "protocol",
+      "impact": "Any code using NetworkOpcodes.LOGOUT, UPDATE_HP, UPDATE_MP, UPDATE_EXP, TASK_UPDATE, or NPC_CHAT will send/match completely wrong protocol commands (e.g. DIALOG_MESSAGE, MAXSTAMINA, STAMINA, BIG_MESSAGE).",
+      "location": "NetworkOpcodes.cs:13-26 vs Cmd.cs:17-579",
+      "root_cause": "NetworkOpcodes defines mismatched sbyte values compared to Cmd.cs (LOGOUT=-26 vs 0; UPDATE_HP=6 vs 5; UPDATE_MP=-69 vs MAXSTAMINA; UPDATE_EXP=-68 vs STAMINA; TASK_UPDATE=-70 vs 43; NPC_CHAT=32 vs 124). Controller2 ignores both and hardcodes numeric literals.",
+      "severity": "P1",
+      "title": "NetworkOpcodes.cs contains multiple wrong opcode values colliding with Cmd.cs"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Adjacent full pea requests or matching message IDs are skipped during iteration, causing duplicate entries or stale full-capacity pea requests to remain in ClanMessage.vMessage.",
+      "location": "ClanMessage.cs:35-55",
+      "root_cause": "ClanMessage.addMessage iterates forward (for i = 0; i < vMessage.size(); i++) and calls vMessage.removeElement(clanMessage) at line 53 when recieve == maxCap without decrementing i.",
+      "severity": "P2",
+      "title": "Collection mutation during forward loop in ClanMessage.addMessage skips elements"
+    },
+    {
+      "category": "performance_gc",
+      "impact": "Continuous managed heap allocations every render frame when viewing clan chat/requests, plus potential IndexOutOfRangeException/NullReferenceException if chat is empty/null.",
+      "location": "ClanMessage.cs:70-108",
+      "root_cause": "ClanMessage.paint performs multiple string concatenations per frame (lines 90, 94, 96, 100, 101) and indexes chat[0] without checking chat != null && chat.Length > 0.",
+      "severity": "P2",
+      "title": "Zero-GC violation via per-frame string allocations in ClanMessage.paint"
+    },
+    {
+      "category": "protocol",
+      "impact": "Truncated/malformed packets can spawn phantom effects, trigger negative array size exceptions, or cause silent protocol desyncs with zero diagnostic logs.",
+      "location": "Controller2.cs:33-53, 81-88, 206-208, 837-840, 985-995, 1063-1328",
+      "root_cause": "Signed sbyte/short lengths (b19, b20, num40, b) are used directly for array allocation or indexing arrItemShop[b] without bounds checks. Opcode 113 still calls EffecMn.addEff after catching read errors. Sub-handlers readLuckyRound, readInfoRada, readInfoEffChar, and readActionBoss use empty catch(Exception) blocks.",
+      "severity": "P2",
+      "title": "Unvalidated stream lengths and silent exception swallowing in Controller2 sub-handlers"
+    },
+    {
+      "category": "architecture",
+      "impact": "Increases risk of using wrong opcode constants across Client/Server features.",
+      "location": "Cmd.cs:5-580",
+      "root_cause": "Top-level message commands and scoped sub-commands (under NOT_LOGIN, NOT_MAP, SUB_COMMAND) are declared flat in one class without namespaces or prefixes, causing dozens of duplicate numeric values (0, 1, 2, 6, 7, 13, 14, 16-18, 21, 35, 38, 40, 50, 62-66).",
+      "severity": "P2",
+      "title": "Flat Cmd.cs mixes top-level and sub-command constants with extensive value collisions"
+    },
+    {
+      "category": "security_dupe",
+      "impact": "Client contains built-in boss tracking/cheat state triggered directly from server VIP chat broadcasts.",
+      "location": "Controller2.cs:848-851",
+      "root_cause": "Controller2 case 93 (CHAT_VIP) checks if the message starts with BOSS/Boss and calls Game1.God.BossData.getInstance().getBOSSInfo(str).",
+      "severity": "P3",
+      "title": "Mod/cheat hook (Game1.God.BossData) embedded in Controller2 CHAT_VIP handler"
+    }
+  ],
+  "key_classes": [
+    {
+      "key_methods": [
+        "readMessage(Message msg)",
+        "readLuckyRound(Message msg)",
+        "readInfoRada(Message msg)",
+        "readInfoEffChar(Message msg)",
+        "readActionBoss(Message msg, int actionBoss)"
+      ],
+      "name": "Controller2",
+      "path": "Client/Client/Assets/Scripts/Game1/Assets/src/f/Controller2.cs",
+      "responsibility": "Secondary client-side binary Message dispatcher handling extended game opcodes (effects, pets, Mabu/BigBoss/NewBoss, Rada cards, lucky round, shop/consignment, flags, RMS sync, latency checks)."
+    },
+    {
+      "key_methods": [
+        "addMessage(ClanMessage cm, int index, bool upToTop)",
+        "paint(mGraphics g, int x, int y)",
+        "perform(int idAction, object p)",
+        "update()"
+      ],
+      "name": "ClanMessage",
+      "path": "Client/Client/Assets/Scripts/Game1/ClanMessage.cs",
+      "responsibility": "Data model and UI list-item renderer for clan chat messages, pea requests, and clan join requests, backed by static MyVector vMessage."
+    },
+    {
+      "key_methods": [],
+      "name": "Cmd",
+      "path": "Client/Client/Assets/Scripts/Game1/Cmd.cs",
+      "responsibility": "Legacy flat sbyte opcode constant table combining top-level protocol commands and scoped sub-commands."
+    },
+    {
+      "key_methods": [],
+      "name": "NetworkOpcodes",
+      "path": "Client/Client/Assets/Scripts/Game1/Constants/NetworkOpcodes.cs",
+      "responsibility": "Attempted centralized sbyte opcode constants class for TCP protocol, currently misaligned with Cmd.cs on several commands."
+    }
+  ],
+  "module_summary": "Read all 2,101 lines across Controller2.cs, ClanMessage.cs, Cmd.cs, and NetworkOpcodes.cs. Controller2 dispatches 35+ extended server opcodes using raw numeric literals, relies on unchecked entity lookups/casts and unvalidated lengths, and suppresses exceptions in sub-handlers. Cmd.cs and NetworkOpcodes.cs exhibit opcode collisions and mismatched constants. ClanMessage has a forward-loop removal bug and per-frame string allocations in paint().",
+  "protocol_touchpoints": [
+    {
+      "direction": "READ",
+      "location": "Controller2.cs:14-1053",
+      "opcode": "-128, 127, 114, 113, 48, 31, -89, 42, 52, 51, -127, -126, -122, 102, 101, -120, -121, 100, -123, -119, -117, -116, -115, -113, -111, 125, 124, 123, 122, 121, -124, -125, -110, 93, -106, -105, -103, -102, -101, -100",
+      "payload_summary": "Extended server-to-client message handlers using raw literals instead of Cmd/NetworkOpcodes constants."
+    },
+    {
+      "direction": "WRITE",
+      "location": "Controller2.cs:412, 419, 827, 831, 962, 973, 974",
+      "opcode": "sendCheckController, sendCheckMap, sendServerData, login, setClientType",
+      "payload_summary": "Client replies triggered during latency checks (-120/-121), RMS server data sync (-110), and login fallback/virtual login (-102/-101)."
+    },
+    {
+      "direction": "DISPATCH",
+      "location": "Cmd.cs:5-580 & NetworkOpcodes.cs:12-66",
+      "opcode": "sbyte constants",
+      "payload_summary": "Protocol opcode constant definitions with duplicate values in Cmd.cs and mismatched values in NetworkOpcodes.cs."
+    }
+  ]
+}

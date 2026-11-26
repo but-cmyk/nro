@@ -1,0 +1,273 @@
+{
+  "batch_id": "server_boss_dungeon_pvp__p03",
+  "concurrency_and_state": [
+    "Every boss subclass with custom damage handling declares `synchronized long injured(...)`, acquiring the boss monitor on the caller thread (typically Netty worker/game loop) during combat.",
+    "SAIBAMEN.setBom(plAtt) (called from synchronized injured() at line 119) busy-spins in `while (this.playerSkill.prepareTuSat)` for 2500ms while holding the boss monitor and blocking the caller thread.",
+    "CADICH.attack() (line 211) and SAIBAMEN.afk() (line 72) call `Functions.sleep(2000)` / `Functions.sleep(1500)`, blocking the boss update loop thread.",
+    "Mabu2H maintains `public List<Player> maBuEat = new CopyOnWriteArrayList<>()`, which is accessed and cleared by both Mabu2H.die() and SuperBu.die().",
+    "SuperBu.injured() (synchronized on SuperBu) delegates to Mabu2H.injured() (synchronized on Mabu2H) via FinalBossManager before checking its own isDie(), while Mabu2H.injured() looks up SuperBu on death and calls changeStatus(BossStatus.DIE).",
+    "NinjaAoTim.injured() mutates `clan.doanhTrai.bosses.add(new NinjaClone(...))` from the combat caller thread.",
+    "Bosses use non-volatile timer/state fields (lastTimeAttack, lastTimeAfk, lastTimeUpdate/st, stateTimer, isEnraged, calledNinja, isLaze, currentState) read/written between boss update ticks and synchronized injured()."
+  ],
+  "cross_module_questions": [
+    "Does Zone.getNotBosses(), Zone.getPlayers(), and Zone.getBosses() return a thread-safe snapshot/CopyOnWriteArrayList, or a mutable ArrayList that can throw ConcurrentModificationException during boss skill/aura loops?",
+    "Does Boss clone BossesData entries per instance, or does Raiti.enrage() calling `this.data[this.currentLevel].setSecondsRest(1)` mutate a shared static BossData across all Raiti spawns?",
+    "Does ChangeMapService.changeMap(..., 127, ...) reset `pl.isMabuHold = false`, or do players released from Mabu2H/SuperBu stay stuck with `isMabuHold = true`?",
+    "How does `Boss.injured` caller handle the return value when `injured` returns `(int) damage` (truncated from `long`) for uncapped high-HP bosses?",
+    "Is `clan.doanhTrai.bosses` thread-safe when NinjaAoTim.injured() adds 4-6 NinjaClone instances from a player attack thread?",
+    "What happens in `Player.injured` / `BossManager` when `SAIBAMEN.setBom` sets `this.nPoint.hp = 0` and then busy-waits 2.5s before calling `setDie(this); die(plAtt);`? Can another thread observe `isDie() == true` or skip `setBom`?"
+  ],
+  "db_redis_touchpoints": [],
+  "files_read": [
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/boss/boss_list/MajinBuu12H/BuiBui2.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/boss/boss_list/MajinBuu12H/Cadic.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/boss/boss_list/MajinBuu12H/Drabura.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/boss/boss_list/MajinBuu12H/Drabura2.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/boss/boss_list/MajinBuu12H/Drabura3.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/boss/boss_list/MajinBuu12H/Goku.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/boss/boss_list/MajinBuu12H/Mabu.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/boss/boss_list/MajinBuu12H/Yacon.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/boss/boss_list/MajinBuu14H/Mabu2H.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/boss/boss_list/MajinBuu14H/SuperBu.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/boss/boss_list/NamekGinyuForce/SO1_NM.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/boss/boss_list/NamekGinyuForce/SO2_NM.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/boss/boss_list/NamekGinyuForce/SO3_NM.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/boss/boss_list/NamekGinyuForce/SO4_NM.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/boss/boss_list/NamekGinyuForce/TDT_NM.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/boss/boss_list/Nappa/Kuku.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/boss/boss_list/Nappa/MapDauDinh.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/boss/boss_list/Nappa/Rambo.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/boss/boss_list/NewBoss/BaDo.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/boss/boss_list/NewBoss/ChoRach.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/boss/boss_list/NewBoss/Raiti.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/boss/boss_list/NewBoss/Xibachao.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/boss/boss_list/RedRibbonHQ/NinjaAoTim.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/boss/boss_list/RedRibbonHQ/NinjaClone.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/boss/boss_list/RedRibbonHQ/RobotVeSi.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/boss/boss_list/RedRibbonHQ/TrungUyThep.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/boss/boss_list/RedRibbonHQ/TrungUyTrang.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/boss/boss_list/RedRibbonHQ/TrungUyXanhLo.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/boss/boss_list/SnakeWay/CADICH.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/boss/boss_list/SnakeWay/NADIC.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/boss/boss_list/SnakeWay/SAIBAMEN.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/boss/boss_list/SuperDivineWater/Pocolo.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/boss/boss_list/SuperRank/Rival.java"
+  ],
+  "findings": [
+    {
+      "category": "concurrency",
+      "impact": "Freezes the attacking player's handler thread (and wastes 100% of a CPU core) for 2.5 seconds on every Saibamen suicide death, risking Netty event-loop/thread-pool stalls or timeouts.",
+      "location": "src/models/boss/boss_list/SnakeWay/SAIBAMEN.java:118-172",
+      "root_cause": "SAIBAMEN.injured() (synchronized) calls setBom(plAtt) directly when isDie() becomes true, and setBom() executes a busy-wait `while (this.playerSkill.prepareTuSat)` loop checking Util.canDoWithTime(..., 2500) instead of transitioning to a boss update state. Also dereferences plAtt without null check in Service.gI().chat(plAtt, ...) and startStun(plAtt, ...).",
+      "severity": "P0",
+      "title": "Busy-wait 2.5s spin-loop inside synchronized SAIBAMEN.injured/setBom blocks caller thread and spikes CPU"
+    },
+    {
+      "category": "concurrency",
+      "impact": "Stalls the boss manager / zone update tick for 1.5s-2s whenever CADICH transforms or SAIBAMEN #1 wakes up, delaying AI and timeouts for other bosses on the same thread.",
+      "location": "src/models/boss/boss_list/SnakeWay/CADICH.java:211; src/models/boss/boss_list/SnakeWay/SAIBAMEN.java:72",
+      "root_cause": "Direct calls to Functions.sleep(2000) inside CADICH.attack() and Functions.sleep(1500) inside SAIBAMEN.afk().",
+      "severity": "P1",
+      "title": "Blocking Thread.sleep calls inside boss AI update methods (CADICH, SAIBAMEN)"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Drabura2 never dies through normal combat; players receive no fightMabu point reward, no item drops, and no boss-kill task completion.",
+      "location": "src/models/boss/boss_list/MajinBuu12H/Drabura2.java:128-138,176-179",
+      "root_cause": "In Drabura2.injured(), `if (damage >= this.nPoint.hp)` sets status to BossStatus.AFK and resets `damage = 0` before `subHP(damage)`. Thus `isDie()` is never true, `die(plAtt)` / `reward(plAtt)` are bypassed, and `afk()` immediately switches to BossStatus.DIE.",
+      "severity": "P1",
+      "title": "Drabura2 resets lethal damage to 0 and skips die()/reward()"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Cadic dodges 100% of all non-piercing attacks whenever tlNeDon >= 1, making him nearly unkillable except by piercing skills.",
+      "location": "src/models/boss/boss_list/MajinBuu12H/Cadic.java:257",
+      "root_cause": "`Util.isTrue(this.nPoint.tlNeDon, 1)` passes denominator `1` instead of `100` or `1000`.",
+      "severity": "P1",
+      "title": "Cadic dodge roll uses denominator 1 instead of 100/1000"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Can throw ArrayIndexOutOfBoundsException during boss reward() if LuongLong arrays are shorter than Kaio arrays, or IllegalArgumentException if any array length <= 1; also never drops the last array element.",
+      "location": "src/models/boss/boss_list/MajinBuu12H/Cadic.java:233-251; src/models/boss/boss_list/MajinBuu12H/Goku.java:234-252",
+      "root_cause": "Lines 247/250 (Cadic) and 248/251 (Goku) index `itemIds_LuongLong_AWJ[randomDo]` and `itemIds_LuongLong_GN[randomDo1]` using Kaio-bounded random indices instead of `randomDo2` and `randomDo3`, and `new Random().nextInt(len - 1)` excludes the final index.",
+      "severity": "P1",
+      "title": "Wrong array indices and off-by-one Random bound in Cadic.reward and Goku.reward"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Throws NullPointerException on non-player damage (e.g. burn/DoT/boss-vs-boss) or when fightMabu is null, interrupting damage application or reward logic.",
+      "location": "src/models/boss/boss_list/MajinBuu12H/Cadic.java:229,262; src/models/boss/boss_list/MajinBuu12H/Goku.java:230,257; src/models/boss/boss_list/MajinBuu12H/Drabura.java:199; src/models/boss/boss_list/MajinBuu14H/Mabu2H.java:189",
+      "root_cause": "`plAtt.isPl()` and `plAtt.fightMabu.changePercentPoint(...)` / `plKill.fightMabu.changePoint(...)` are called without null-checking `plAtt` or `fightMabu`.",
+      "severity": "P1",
+      "title": "Missing null checks on plAtt and fightMabu in MajinBuu12H/14H bosses"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Damage exceeding Integer.MAX_VALUE overflows/truncates to negative or incorrect ints when returned from injured(); SuperRank Rival HP/damage is capped at 2.14B instead of using long stats.",
+      "location": "src/models/boss/boss_list/SuperRank/Rival.java:36-43; all 23 injured() overrides (e.g. BuiBui2.java:214, CADICH.java:191, NinjaAoTim.java:140, Pocolo.java:109)",
+      "root_cause": "All 23 overridden `injured()` methods cast `long damage` to `(int) damage` on return; `Rival.bossData()` uses `NPoint.safeInt()` and `new int[]{hpMax}` instead of `long`.",
+      "severity": "P2",
+      "title": "(int) damage truncation in injured() overrides and 32-bit stat clamping in SuperRank Rival"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Yacon teleports to Y=10000 (far off-map) on invisibility trigger, and silently swallows all exceptions in attack().",
+      "location": "src/models/boss/boss_list/MajinBuu12H/Yacon.java:99-100,111-112",
+      "root_cause": "`Service.gI().setPos2(this, ..., 10000)` passes 10000 as the Y coordinate (likely confused with duration), and `catch (Exception ex) {}` has an empty body.",
+      "severity": "P2",
+      "title": "Yacon teleports to Y=10000 and swallows exceptions in attack()"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Throws NPE if Pocolo's laze finishes after playerCall disconnects/leaves, or NPE in TrungUyTrang.leaveMap if zone is null; SuperBu forwards damage to Mabu2H even when SuperBu is already dead.",
+      "location": "src/models/boss/boss_list/SuperDivineWater/Pocolo.java:144-166; src/models/boss/boss_list/RedRibbonHQ/TrungUyTrang.java:206; src/models/boss/boss_list/MajinBuu14H/SuperBu.java:81-87",
+      "root_cause": "Pocolo.autoLeaveMap() accesses `playerCall.winSTT`/`setDie()` without checking null or online/zone status; TrungUyTrang.leaveMap() writes `this.zone.isTUTAlive = false` before `exitMap`; SuperBu.injured() calls Mabu2H.injured() before checking `!this.isDie()`.",
+      "severity": "P2",
+      "title": "Missing null/alive guards in Pocolo, TrungUyTrang, and SuperBu"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Long player IDs (>2^31-1) get truncated when stored as int for ChoRach/Xibachao rewards or ItemMap owner in CADICH; BaDo/ChoRach/Xibachao ignore actual player damage.",
+      "location": "src/models/boss/boss_list/NewBoss/ChoRach.java:43,173; src/models/boss/boss_list/NewBoss/BaDo.java:90; src/models/boss/boss_list/NewBoss/Xibachao.java:96,149; src/models/boss/boss_list/SnakeWay/CADICH.java:79,87,122",
+      "root_cause": "Casting `long` `bone.playerId` and `plKill.id` to `(int)`, and overwriting `damage` with `Util.nextInt(300, 500)` in BaDo/ChoRach/Xibachao.injured().",
+      "severity": "P3",
+      "title": "Player ID (long->int) narrowing and fixed 300-500 damage override in NewBoss/CADICH"
+    },
+    {
+      "category": "architecture",
+      "impact": "High maintenance burden and drift (e.g., SO3_NM.doneChatE missing break and waking two bosses, Mabu.java unused AO_TL/QUAN_TL/GANG_TL/GIAY_TL caches, Cadic/Goku dead petrifyPlayersInTheMap methods).",
+      "location": "src/models/boss/boss_list/NamekGinyuForce/*.java; src/models/boss/boss_list/Nappa/*.java; src/models/boss/boss_list/RedRibbonHQ/*.java; src/models/boss/boss_list/MajinBuu12H/*.java",
+      "root_cause": "Copy-pasted reward(), attack(), autoLeaveMap(), and leaveMap() implementations across NamekGinyuForce (5 files), Nappa (3 files), RedRibbonHQ (6 files), and MajinBuu12H (5 files) instead of shared base/helper methods.",
+      "severity": "P3",
+      "title": "Extensive copy-paste duplication and dead code across boss families"
+    }
+  ],
+  "key_classes": [
+    {
+      "key_methods": [
+        "reward(Player)",
+        "attack()",
+        "injured(Player, long, boolean, boolean)",
+        "afk()",
+        "die(Player)"
+      ],
+      "name": "BuiBui2, Drabura, Drabura2, Drabura3, Cadic, Goku, Mabu, Yacon",
+      "path": "src/models/boss/boss_list/MajinBuu12H/*.java",
+      "responsibility": "12H Majin Buu raid bosses (Babidi ship floors) handling fightMabu points, petrify/socola/slow debuffs, AFK respawn loops, and Mabu respawn progress."
+    },
+    {
+      "key_methods": [
+        "eatPlayersInTheMap()",
+        "petrifyPlayersInTheMap()",
+        "attack()",
+        "injured(Player, long, boolean, boolean)",
+        "die(Player)"
+      ],
+      "name": "Mabu2H, SuperBu",
+      "path": "src/models/boss/boss_list/MajinBuu14H/*.java",
+      "responsibility": "14H Majin Buu world event boss (5 forms ending in Kid Buu) and interior stomach boss (SuperBu) linked via maBuEat list and shared damage."
+    },
+    {
+      "key_methods": [
+        "reward(Player)",
+        "joinMap()",
+        "autoLeaveMap()",
+        "doneChatE()"
+      ],
+      "name": "SO1_NM, SO2_NM, SO3_NM, SO4_NM, TDT_NM",
+      "path": "src/models/boss/boss_list/NamekGinyuForce/*.java",
+      "responsibility": "Time-gated (TimeUtil.timeNamek()) Namek Ginyu Force squad bosses with sequential wake-up via doneChatE() and Hong Ngoc + special item drops."
+    },
+    {
+      "key_methods": [
+        "joinMap()",
+        "reward(Player)",
+        "autoLeaveMap()",
+        "leaveMap()"
+      ],
+      "name": "Kuku, MapDauDinh, Rambo",
+      "path": "src/models/boss/boss_list/Nappa/*.java",
+      "responsibility": "Standard Nappa saga quest bosses dropping gold and 20% star equipment / upgrade stones, despawning after 15m of empty zone."
+    },
+    {
+      "key_methods": [
+        "update()",
+        "attack()",
+        "injured(Player, long, boolean, boolean)",
+        "reward(Player)"
+      ],
+      "name": "BaDo, ChoRach, Raiti, Xibachao",
+      "path": "src/models/boss/boss_list/NewBoss/*.java",
+      "responsibility": "Event/quest roaming bosses with custom AI state machines (smell aura, bone-fetching wolf, enraged threshold, teleporting trickster)."
+    },
+    {
+      "key_methods": [
+        "reward(Player)",
+        "injured(Player, long, boolean, boolean)",
+        "attack()",
+        "doneChatS()",
+        "leaveMap()"
+      ],
+      "name": "NinjaAoTim, NinjaClone, RobotVeSi, TrungUyThep, TrungUyTrang, TrungUyXanhLo",
+      "path": "src/models/boss/boss_list/RedRibbonHQ/*.java",
+      "responsibility": "Red Ribbon HQ (Doanh Trai) dungeon bosses scaled per clan power, including Ninja clone spawning and Bulon invulnerability gate on TrungUyTrang."
+    },
+    {
+      "key_methods": [
+        "injured(Player, long, boolean, boolean)",
+        "setBom(Player)",
+        "attack()",
+        "afk()",
+        "die(Player)",
+        "reward(Player)"
+      ],
+      "name": "CADICH, NADIC, SAIBAMEN",
+      "path": "src/models/boss/boss_list/SnakeWay/*.java",
+      "responsibility": "Snake Way (Con Duong Ran Doc) clan dungeon bosses with sequential wave unlocking, Saibamen self-destruct, and Cadich Great Ape phase."
+    },
+    {
+      "key_methods": [
+        "injured(Player, long, boolean, boolean)",
+        "laze()",
+        "autoLeaveMap()",
+        "afk()",
+        "attack()",
+        "mc()"
+      ],
+      "name": "Pocolo",
+      "path": "src/models/boss/boss_list/SuperDivineWater/Pocolo.java",
+      "responsibility": "Super Divine Water (Nuoc Than) instance boss spawning mob waves first and ending with a scripted laser finisher packet."
+    },
+    {
+      "key_methods": [
+        "Rival(Player, Player)",
+        "bossData(Player)"
+      ],
+      "name": "Rival",
+      "path": "src/models/boss/boss_list/SuperRank/Rival.java",
+      "responsibility": "SuperRank PvP AI clone built dynamically from a rival Player's outfit, stats, and non-banned skills."
+    }
+  ],
+  "module_summary": "Read all 33 boss implementation classes (5713 lines) across 9 boss packs: MajinBuu12H, MajinBuu14H, NamekGinyuForce, Nappa, NewBoss, RedRibbonHQ, SnakeWay, SuperDivineWater, and SuperRank. All classes extend Boss (or SuperRank -> Boss) and override lifecycle hooks (joinMap, afk, attack, injured, die, reward, autoLeaveMap, leaveMap). Primary risks center on thread-blocking loops/sleeps inside AI/injured hooks (SAIBAMEN.setBom busy-wait, CADICH/SAIBAMEN Functions.sleep), broken lethal/dodge/array-index logic (Drabura2, Cadic, Goku), missing null guards on plAtt/fightMabu/playerCall/zone, and pervasive (int) damage truncation and copy-paste duplication.",
+  "protocol_touchpoints": [
+    {
+      "direction": "WRITE",
+      "location": "src/models/boss/boss_list/SnakeWay/SAIBAMEN.java:140-146",
+      "opcode": "-45",
+      "payload_summary": "byte(7), int(boss.id), short(104), short(2000) - broadcast self-destruct charge effect to zone"
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/models/boss/boss_list/SuperDivineWater/Pocolo.java:122-128",
+      "opcode": "-45",
+      "payload_summary": "byte(4), int(boss.id), short(83), short(3000) - broadcast laze skill charge effect to zone"
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/models/boss/boss_list/SuperDivineWater/Pocolo.java:149-160",
+      "opcode": "-60",
+      "payload_summary": "int(boss.id), byte(83), byte(1), int(playerCall.id), byte(1), byte(1), int(1_000_000_000), boolean(true), boolean(isCrit) - scripted laze kill packet"
+    }
+  ]
+}

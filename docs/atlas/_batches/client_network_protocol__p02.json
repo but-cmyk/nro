@@ -1,0 +1,159 @@
+{
+  "batch_id": "client_network_protocol__p02",
+  "concurrency_and_state": [
+    "Static singletons me/me2 in Controller.gI() (L49-56) and Controller.gI2() (L58-65) use unguarded lazy init without locking.",
+    "Static mutable flags (isMain, isLoadingData, isConnectOK, isConnectionFail, isDisconnected, isStopReadMessage, frameHT_NEWBOSS at L17-35) are shared globally across gI() and gI2().",
+    "onConnectOK/onConnectionFail/onDisconnected (L67-83) overwrite static Controller.isMain, creating a race if main and secondary sessions emit lifecycle callbacks.",
+    "onMessage mutates global game collections and UI state directly (Char.myCharz(), Char.myPetz(), GameScr.vMob, GameScr.vCharInMap, GameScr.vItemMap, GameCanvas.panel, TileMap).",
+    "messWait (L15, L3692) caches the incoming Message instance for deferred map loading while finally (L4634-4640) immediately calls msg.cleanup()."
+  ],
+  "cross_module_questions": [
+    "Does Message.cleanup() close or null msg.reader()? If so, messWait = msg in case -24 (L3692) is invalidated by finally (L4638) before deferred loadInfoMap can run.",
+    "Does Client myReader return 0/empty string on EOF instead of throwing? If so, infinite while(true) loops in requestItemPlayer (L96-100) and case 33 (L3203-3207) will hang/OOM.",
+    "Do Java Server handlers match the exact client read widths for bag (readUnsignedByte in -64/-80 vs readShort in -99), mapID (readUnsignedByte in -24), currency/deltas (readShort in -20 vs readInt in -1/-2/95 vs readLong in 6), and mob/bag indices (signed readByte)?",
+    "Are Controller.gI() and Controller.gI2() ever active simultaneously on different sessions/threads, racing on static Controller.isMain?",
+    "How are helper methods called by onMessage implemented in lines 4642-6894 (readLogin, read_opt, phuban_Info, readGetImgByName, messageNotLogin, messageNotMap, messageSubCommand, loadInfoMap, createData, readCharInfo, readClanMsg, readFrameBoss)?"
+  ],
+  "db_redis_touchpoints": [],
+  "files_read": [
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/Controller.cs (lines 1-4641)",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/GEMINI.md (lines 1-41)"
+  ],
+  "findings": [
+    {
+      "category": "protocol",
+      "impact": "Potential infinite loop / OOM freeze on malformed or EOF packet if myReader returns 0/empty string instead of throwing, or silent truncation on genuine stream errors.",
+      "location": "Controller.cs:96-104, 3203-3212",
+      "root_cause": "requestItemPlayer (L96-100) and case 33 OPEN_UI_MENU (L3203-3207) use `while (true)` relying on an Exception at EOF instead of checking `msg.reader().available() > 0` (unlike L269 and L2635). Case -4 (L3769) and case 54 (L3833) also loop up to 10 times relying on EOF catch.",
+      "severity": "P1",
+      "title": "Infinite while(true) EOF-by-exception loops in requestItemPlayer and case 33"
+    },
+    {
+      "category": "protocol",
+      "impact": "Deferred map loading after receiving the requested map template fails or reads a disposed/nulled stream.",
+      "location": "Controller.cs:3685-3694, 4634-4640",
+      "root_cause": "In case -24 (MAP_INFO), when TileMap.loadMapFromResource throws, the catch block requests the map template and stores `messWait = msg;` before breaking out, but the `finally` block at L4634-4640 unconditionally calls `msg.cleanup()` immediately at the end of `onMessage`.",
+      "severity": "P1",
+      "title": "messWait saved in case -24 is immediately cleaned up in finally block"
+    },
+    {
+      "category": "protocol",
+      "impact": "NullReferenceException / IndexOutOfRangeException aborts onMessage packet processing when entities despawn, bags/mobs exceed index, or unexpected indices arrive.",
+      "location": "Controller.cs:90, 336-368, 459-496, 820-825, 1412-1415, 1720, 2016-2028, 2099-2105, 2131-2187, 2207-2209, 2924-2956, 3053, 3131, 3153-3165, 3748-3773, 3903-3914",
+      "root_cause": "Multiple handlers dereference `GameScr.findMobInMap`, `GameScr.findCharInMap`, `Char.mobMe`, `Char.clan`, `GameScr.vMob.elementAt(readByte/readUnsignedByte)`, `arrItemBag[sbyte]`, `arrItemBox[sbyte]`, and `@char.attMobs[0]` without null or array bounds checks.",
+      "severity": "P1",
+      "title": "Widespread missing null and bounds checks on map entities, mobMe, and inventory arrays"
+    },
+    {
+      "category": "architecture",
+      "impact": "High maintenance risk, hidden opcode collisions, and dead code (`case 66` XP-down stub at L4564 is completely unreachable).",
+      "location": "Controller.cs:120-4641, 148-150, 3992, 4564-4566",
+      "root_cause": "`onMessage` is a 4,520-line God method combining binary deserialization, UI panel logic, audio, RMS persistence, and auto-play/boss hooks, split across two separate `switch (msg.command)` blocks (L137 and L3992). `case 66` in the first switch (L148-150) returns early, shadowing `case 66` in the second switch (L4564-4566).",
+      "severity": "P2",
+      "title": "Monolithic dual-switch onMessage God method with unreachable duplicate case 66"
+    },
+    {
+      "category": "protocol",
+      "impact": "Values overflow/truncate if server sends mapID >= 256, bag icon >= 256, pickup currency delta > 32767, or bag/box/mob indices >= 128.",
+      "location": "Controller.cs:1055, 1119, 1422, 2016, 2099, 2202, 3371, 3462, 3675, 3997, 4005, 4032, 4043",
+      "root_cause": "Inconsistent primitive widths across opcodes: `mapID` read as unsigned byte in case -24 (L3675); `bag` read as unsigned byte in -80/-64 vs short in -99 (L1119); bag/box/mob indices read as signed `sbyte` (`readByte()`); pickup currency delta read as `readShort()` in case -20 (L3371); xu/yen/power deltas read as `readInt()` in -1/-2/95/-3 vs `readLong()` in case 6.",
+      "severity": "P2",
+      "title": "Narrow or signed protocol integer widths for mapID, bag, indices, and currency deltas"
+    },
+    {
+      "category": "performance_gc",
+      "impact": "Frame hitches/GC pauses on map changes and asset downloads; potential loss of all user RMS data if ResVersion is absent; unhandled FormatException if ResVersion RMS string is corrupted.",
+      "location": "Controller.cs:532-538, 667, 1229, 1304, 1325, 2762, 2844, 3674",
+      "root_cause": "Synchronous `Rms.saveRMS` / `Rms.clearAll()` and forced `mSystem.gcc()` calls execute directly inside `onMessage` on the main/dispatch path. `case -92` wipes all RMS (`Rms.clearAll()`) whenever `ResVersion` is null, and `case -74` calls unguarded `int.Parse(text3)`.",
+      "severity": "P2",
+      "title": "Synchronous RMS disk I/O, forced GC, destructive clearAll, and unguarded int.Parse in onMessage"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Forward removal skips adjacent matching mobMe entries in `GameScr.vMob`; allocation of untrusted packet-specified byte array sizes can trigger OOM on corrupt packets.",
+      "location": "Controller.cs:507-523, 1301-1302, 2822-2827, 4403, 4449",
+      "root_cause": "`case -95` (`b29 == 7`) removes elements from `GameScr.vMob` inside an incrementing `for` loop without decrementing the index. Cases `-74` (L1301) and `-32` (L2822) allocate `new sbyte[len]` directly from `msg.reader().readInt()` without non-negative or max-size validation. Minor redundant checks appear at L4403 and L4449.",
+      "severity": "P2",
+      "title": "Forward loop removal bug, unvalidated array allocation sizes, and redundant status checks"
+    }
+  ],
+  "key_classes": [
+    {
+      "key_methods": [
+        "gI",
+        "gI2",
+        "onConnectOK",
+        "onConnectionFail",
+        "onDisconnected",
+        "requestItemPlayer",
+        "onMessage"
+      ],
+      "name": "Game1.Controller",
+      "path": "Client/Client/Assets/Scripts/Game1/Controller.cs",
+      "responsibility": "Primary client network message handler implementing IMessageHandler; manages connection lifecycle callbacks and decodes ~80 server opcodes into Char, Mob, Item, TileMap, Panel, and UI state."
+    }
+  ],
+  "module_summary": "Lines 1-4641 of Client/Client/Assets/Scripts/Game1/Controller.cs implement Controller singleton accessors, connection lifecycle callbacks, requestItemPlayer, and the massive dual-switch onMessage(Message) dispatcher handling ~80 opcodes (login/register, player/pet/mob combat, inventory/shop/consignment/trade/combine, clan, tasks, map/tile/resource loading, and chat/UI). Key risks observed are EOF-by-exception infinite loops, messWait lifecycle conflict with finally cleanup, unguarded entity/array indexing, unreachable duplicate case 66, inconsistent narrow integer widths, and synchronous RMS/GC calls inside packet handling.",
+  "protocol_touchpoints": [
+    {
+      "direction": "READ",
+      "location": "Controller.cs:85-118",
+      "opcode": "cmd 90 -> requestItemPlayer",
+      "payload_summary": "unsignedByte slot, int saleCoinLock, byte sys, EOF-terminated loop of (unsignedByte optId, unsignedShort param)"
+    },
+    {
+      "direction": "DISPATCH",
+      "location": "Controller.cs:129-136",
+      "opcode": "pre-switch delegates",
+      "payload_summary": "Controller2.readMessage(msg) then PacketDispatcher.gI().Dispatch(this, msg)"
+    },
+    {
+      "direction": "READ",
+      "location": "Controller.cs:139-267",
+      "opcode": "cmd 0, 24, 20, 66, 65, 112, -98, -97, -96",
+      "payload_summary": "Login/opt/phuban/imgByName delegates; ItemTime(sbyte,UTF,short); SpecialSkill(byte,short/UTF tabs); confirm dlg; cNangdong(int); Top leaderboard"
+    },
+    {
+      "direction": "READ",
+      "location": "Controller.cs:268-529",
+      "opcode": "cmd -94, -95",
+      "payload_summary": "-94: loop (short skillId, int cd); -95: mobMe actions 0..7 (int charId, short tpl, readInt3Byte hp/dame, byte mobId)"
+    },
+    {
+      "direction": "READ",
+      "location": "Controller.cs:530-931",
+      "opcode": "cmd -92, -91, -90, -88, -87, -86, -85, -112, -84, -83, -82",
+      "payload_summary": "clientType; mapTrans; UPDATE_BODY; switch serverScreen; UPDATE_DATA; Trade(actions 0..7); Captcha; mob body; mob maxHp; DragonBall; TileMap tiles"
+    },
+    {
+      "direction": "READ",
+      "location": "Controller.cs:932-1465",
+      "opcode": "cmd -81, -80, -99, -79, -93, -77, -76, -74, -43, -59, -62, -65, -64, -63",
+      "payload_summary": "Combine; Friend/Enemy; ViewPower; Bg/SmallImg versions; Achievements; Resource download; itemRequest; PvP; ClanImage; Teleport; Bag icon"
+    },
+    {
+      "direction": "READ",
+      "location": "Controller.cs:1466-2108",
+      "opcode": "cmd -57, -51, -53, -52, -50, -47, -46, -61, -42, 1, 2, -107, -37, -36, -35",
+      "payload_summary": "Clan invite/chat/info/member/search/icon/id; Char stats(-42); Register/CreateChar; Pet info(-107); Body(-37), Bag(-36), Box(-35) items"
+    },
+    {
+      "direction": "READ",
+      "location": "Controller.cs:2109-2959",
+      "opcode": "cmd -45, -44, -41, -34, 11, -69, -68, -67, -66, -32, 92, -26, -25, 94, 47, 81, 82, 85, 86, 87",
+      "payload_summary": "SKILL_NOT_FOCUS(-45); Shop/KyGui(-44); Level captions; MagicTree; MobTemplate(11); Stamina; SmallImg/Eff/Bg bytes; Chat/Notice; Mob debuffs"
+    },
+    {
+      "direction": "READ",
+      "location": "Controller.cs:2960-3990",
+      "opcode": "cmd 56, 83, 84, 46, -29, -28, -30, 62..64, 39, 57, 58, 88, 27, 33, 40, 41, 50, 43, 90, 29, -21..-18, 68, 69, -14, -22, -70, 38, 32, 7, 6, -24, -31, -4, 54, -60",
+      "payload_summary": "Injure/Revive/ResetPoint; Sub-dispatchers(-29,-28,-30); CuuSat/TradeWait; Menus/Dialogs/Tasks/GameInfo; ItemMap; MAP_INFO(-24); BgItem(-31); Combat(-4,54,-60)"
+    },
+    {
+      "direction": "READ",
+      "location": "Controller.cs:3994-4626",
+      "opcode": "cmd -2, 95, 96, 97, -1, -3, -73, -5, -7, -6, -13, -75, -9, 45, -12, 74, -11, -10, -17, 66(dead), -8, -16, 44, 18, 19",
+      "payload_summary": "Second switch: yen/xu/power; TaskOrder; NPC hide; Char add/move/remove; Mob respawn/boss/hit/miss/die/attack; Die/Revive; Chat bubble; Batch char sync; Kill count"
+    }
+  ]
+}

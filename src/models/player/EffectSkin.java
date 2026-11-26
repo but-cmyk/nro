@@ -4,7 +4,7 @@ import models.item.Item;
 import models.mob.Mob;
 import services.ItemService;
 import services.player.PlayerService;
-import services.Service;
+import models.DomainPorts;
 import services.player.InventoryService;
 import services.map.MapService;
 import utils.Util;
@@ -98,11 +98,11 @@ public class EffectSkin {
         }
         if (xHPKI != 1 && Util.canDoWithTime(lastTimeXHPKI, 1800000)) {
             xHPKI = 1;
-            Service.gI().point(player);
+            DomainPorts.notifier().point(player);
         }
         if (xDame != 1 && Util.canDoWithTime(lastTimeXDame, 1800000)) {
             xDame = 1;
-            Service.gI().point(player);
+            DomainPorts.notifier().point(player);
         }
         updateCTHaiTac();
     }
@@ -191,13 +191,13 @@ public class EffectSkin {
                             hpHut += subHp;
                             mpHut += subMp;
                             PlayerService.gI().sendInfoHpMpMoney(pl);
-                            Service.gI().Send_Info_NV(pl);
+                            DomainPorts.notifier().Send_Info_NV(pl);
                             pl.injured(null, subHp, true, false);
                         }
                         this.player.nPoint.addHp(hpHut);
                         this.player.nPoint.addMp(mpHut);
                         PlayerService.gI().sendInfoHpMpMoney(this.player);
-                        Service.gI().Send_Info_NV(this.player);
+                        DomainPorts.notifier().Send_Info_NV(this.player);
                         this.lastTimeXenHutHpKi = System.currentTimeMillis();
                     }
                 }
@@ -222,9 +222,9 @@ public class EffectSkin {
                                 if (subHp >= pl.nPoint.hp) {
                                     subHp = pl.nPoint.hp - 1;
                                 }
-                                Service.gI().chat(pl, textOdo[Util.nextInt(0, textOdo.length - 1)]);
+                                DomainPorts.notifier().chat(pl, textOdo[Util.nextInt(0, textOdo.length - 1)]);
                                 PlayerService.gI().sendInfoHpMpMoney(pl);
-                                Service.gI().Send_Info_NV(pl);
+                                DomainPorts.notifier().Send_Info_NV(pl);
                                 pl.injured(null, subHp, true, false);
                             }
 
@@ -247,7 +247,7 @@ public class EffectSkin {
                         Player pl = playersMap.get(i);
                         if (pl != null && pl.nPoint != null && !this.player.equals(pl) && !pl.isBoss && !pl.isDie()
                                 && Util.getDistance(this.player, pl) <= 200) {
-                            Service.gI().chat(pl, textltdb[Util.nextInt(0, textltdb.length - 1)]);
+                            DomainPorts.notifier().chat(pl, textltdb[Util.nextInt(0, textltdb.length - 1)]);
                         }
 
                     }
@@ -270,9 +270,9 @@ public class EffectSkin {
                         if (pl != null && pl.nPoint != null && !this.player.equals(pl) && !pl.isBoss && !pl.isDie()
                                 && Util.getDistance(this.player, pl) <= 120) {
                             if (player.nPoint.isThoBulma) {
-                                Service.gI().chat(pl, textThoBulma[Util.nextInt(0, textThoBulma.length - 1)]);
+                                DomainPorts.notifier().chat(pl, textThoBulma[Util.nextInt(0, textThoBulma.length - 1)]);
                             } else {
-                                Service.gI().chat(pl, textBuffSD[Util.nextInt(0, textBuffSD.length - 1)]);
+                                DomainPorts.notifier().chat(pl, textBuffSD[Util.nextInt(0, textBuffSD.length - 1)]);
                             }
                             EffectSkillService.gI().setDameBuff(player, 11000, player.nPoint.tlSexyDame);
                         }
@@ -329,7 +329,7 @@ public class EffectSkin {
                         Player pl = playersMap.get(i);
                         if (pl != null && pl.nPoint != null && !this.player.equals(pl) && !pl.isBoss && !pl.isDie()
                                 && Util.getDistance(this.player, pl) <= 200) {
-                            Service.gI().chat(pl, "Nặng quá!");
+                            DomainPorts.notifier().chat(pl, "Nặng quá!");
                             EffectSkillService.gI().setIsLamCham(pl, 5000);
                         }
 
@@ -451,7 +451,7 @@ public class EffectSkin {
             }
             this.lastTimeSubTimeTrainArmor = System.currentTimeMillis();
             InventoryService.gI().sendItemBags(player);
-            Service.gI().point(this.player);
+            DomainPorts.notifier().point(this.player);
         }
     }
 

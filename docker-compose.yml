@@ -5,7 +5,8 @@ services:
     container_name: nro_mysql
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: root
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-change_me_strong_password}
+      MYSQL_DATABASE: ${DATABASE_NAME:-nro_data}
     ports:
       - "3308:3306"
     volumes:
@@ -21,8 +22,9 @@ services:
       - --max-connections=200
       - --wait-timeout=28800
       - --interactive-timeout=28800
+    mem_limit: 1024m
     healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -proot || exit 1"]
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p$$MYSQL_ROOT_PASSWORD || exit 1"]
       interval: 5s
       timeout: 3s
       retries: 10
@@ -37,6 +39,7 @@ services:
     volumes:
       - redis_data:/data
     command: redis-server --appendonly yes
+    mem_limit: 256m
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -56,18 +59,21 @@ services:
       redis:
         condition: service_healthy
     environment:
-      - DATABASE_HOST=mysql
-      - DATABASE_PORT=3306
-      - DATABASE_NAME=nro_data
-      - DATABASE_USER=root
-      - DATABASE_PASS=root
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
+      - DATABASE_HOST=${DATABASE_HOST:-mysql}
+      - DATABASE_PORT=${DATABASE_PORT:-3306}
+      - DATABASE_NAME=${DATABASE_NAME:-nro_data}
+      - DATABASE_USER=${DATABASE_USER:-root}
+      - DATABASE_PASS=${DATABASE_PASS:-change_me_strong_password}
+      - REDIS_HOST=${REDIS_HOST:-redis}
+      - REDIS_PORT=${REDIS_PORT:-6379}
+      - NRO_ADMIN_TOKEN=${NRO_ADMIN_TOKEN:-}
+      - NRO_CORS_ORIGIN=${NRO_CORS_ORIGIN:-http://localhost:3000}
     ports:
       - "14445:14445"
       - "14446:14446"
     volumes:
       - ./data:/app/data
+    mem_limit: 1280m
 
 volumes:
   mysql_data:

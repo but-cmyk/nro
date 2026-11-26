@@ -1,0 +1,287 @@
+{
+  "batch_id": "server_player_combat__p03",
+  "concurrency_and_state": [
+    "PlayerService.gI() uses volatile DCL singleton, whereas SkillService.gI() (lines 37-42) uses unsynchronized non-volatile lazy initialization (race on startup).",
+    "PlayerService.hoiSinh() (lines 269-298) performs check-then-act on player.isDie(), lastTimeRevived, and gold/gem deduction without locking player or inventory, risking double-revive or double-deduction under concurrent requests.",
+    "SkillService.useSkillAttack() / useSkillAlone() mutate playerSkill state (prepareQCKK, prepareLaze, prepareTuSat, lastTimeUseThisSkill, lastTimeAttack) without synchronization; Boss/Pet TU_SAT schedules explodeTuSat() on GameLoopManager (lines 761-769) which can race with Zone/Session threads.",
+    "SkillService iterates player.zone.mobs, getHumanoids(), getNotBosses(), getBosses(), and player.newSkill.playersTaget/mobsTaget across combat methods without synchronization (depends on Zone returning snapshot copies to avoid ConcurrentModificationException).",
+    "PlayerService.playerMove() mutates player.location.x/y and player.isFly without synchronization; SkillService.updateSkillSpecial() hits all targets in range on every tick while stepSkillSpecial == 1 without per-cast hit deduplication."
+  ],
+  "cross_module_questions": [
+    "Does Message.cleanup() handle double-calls safely (SkillService.learSkillSpecial calls it twice at lines 377 and 382), and does Player.sendMessage() clean up Message on error when callers like PlayerService.sendInfoHpMpMoney (lines 123-141) omit msg.cleanup()?",
+    "In Client Unity C# Controller, how is Message(-60) parsed when useSkillBuffToPlayer writes byte(0) at line 869 vs playerAttackPlayer writing byte(1), byte(0), int(dameHit), boolean(isDie), boolean(isCrit) at lines 1071-1079?",
+    "Does NPoint.setHp/setHP/addHp/addMp enforce [0, hpMax] bounds and thread safety, and why does SkillService.useSkillAttack (line 440) wrap HP in Util.maxIntValue() while NPoint supports long HP?",
+    "Why were SUPER_KAME, LIEN_HOAN_CHUONG, MA_PHONG_BA removed from SkillService.useNewSkillNotFocus (line 226), leaving updateSkillSpecial and newSkillNotFocus partly orphaned/dead-pathed?",
+    "Does Zone.getHumanoids() / getNotBosses() / getBosses() / mobs return thread-safe snapshots or live lists?"
+  ],
+  "db_redis_touchpoints": [
+    {
+      "location": "src/services/player/PlayerService.java:253-258",
+      "op": "UPDATE account set ban = 1 where id = ? and username = ?",
+      "safety_note": "Parameterized via AlyraManager.executeUpdate (no SQL injection), but runs synchronously on caller thread (blocking I/O), lacks null-check on playerBaned.getSession(), and silently swallows exceptions.",
+      "target": "MySQL: account table"
+    }
+  ],
+  "files_read": [
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/services/player/PlayerService.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/services/SkillService.java"
+  ],
+  "findings": [
+    {
+      "category": "gameplay",
+      "impact": "Casting Tri Thuong heals enemy/PvP players in 300px range and multiplies the caster's own HP/MP heal by the number of targets in the AoE.",
+      "location": "src/services/SkillService.java:852-875",
+      "root_cause": "In useSkillBuffToPlayer (TRI_THUONG), line 857 checks canHsPlayer(player, plTarget) instead of canHsPlayer(player, pl) when filtering players in 300px radius, and lines 872-873 heal the caster player inside the for (Player pl : players) loop on every iteration.",
+      "severity": "P0",
+      "title": "Skill.TRI_THUONG heals enemies and multiplies caster self-heal per target"
+    },
+    {
+      "category": "security_dupe",
+      "impact": "Players can instant-cast QCKK and Makankosappo without waiting the 4000ms/3000ms charge time by sending back-to-back attack packets (100-150ms apart).",
+      "location": "src/services/SkillService.java:478-542",
+      "root_cause": "useSkillAttack records lastTimePrepareQCKK (line 482) and lastTimePrepareLaze (line 521) when starting preparation, and returns without deducting MP or setting cooldown; on the second call (prepareQCKK/prepareLaze == true), it never validates elapsed time against lastTimePrepareQCKK or lastTimePrepareLaze (unlike TU_SAT at line 772).",
+      "severity": "P0",
+      "title": "Missing charge-time validation allows instant-cast QCKK and Makankosappo bypass"
+    },
+    {
+      "category": "security_dupe",
+      "impact": "Clients can teleport anywhere inside the map bounds in one packet (speed/teleport hack) with zero server-side distance check.",
+      "location": "src/services/player/PlayerService.java:143-163",
+      "root_cause": "playerMove(player, x, y) clamps client-supplied (x, y) only to [24, mapWidth-24] and [24, mapHeight-24] without validating movement delta against lastTimeplayerMove or player speed.",
+      "severity": "P1",
+      "title": "Client-trusted coordinates in PlayerService.playerMove allow arbitrary in-map teleportation"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Players with >2.14B HP have their HP truncated to 2,147,483,647 on every Kaioken attack, and players with 1-10% HP cannot cast Kaioken despite only needing 1-3% HP.",
+      "location": "src/services/SkillService.java:429-443,1174-1182",
+      "root_cause": "useSkillAttack wraps hpUse and remaining HP (hp - hpUse) in Util.maxIntValue() (line 440) clamping long HP down to Integer.MAX_VALUE; additionally, canUseSkillWithMana (line 1175) requires hp > 10% hpMax while useSkillAttack deducts 1-3% hpMax (and if hp <= hpUse at line 437 it breaks out of switch skipping affterUseSkill while still returning true).",
+      "severity": "P1",
+      "title": "Kaioken truncates >2.14B HP to Integer.MAX_VALUE and mismatches mana check (10% vs 1-3%)"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Neutral players in public maps (cFlag == 0) get buffed by another player's Huyt Sao, and neutral Namec players lose 10% HP unconditionally without PvP/flag/death checks.",
+      "location": "src/services/SkillService.java:699-720",
+      "root_cause": "useSkillAlone (HUYT_SAO) filters zone.getHumanoids() using only player.cFlag == pl.cFlag without checking cFlag != 0 or canAttackPlayer/isDie, applying Huyt Sao buff or 10% hpMax damage (to Namec) to all neutral players in the zone.",
+      "severity": "P1",
+      "title": "Skill.HUYT_SAO affects neutral (cFlag == 0) players and damages neutral Namecs in safe/public maps"
+    },
+    {
+      "category": "concurrency",
+      "impact": "Concurrent revive requests can double-deduct gold/gem+ruby or revive a player twice.",
+      "location": "src/services/player/PlayerService.java:269-298",
+      "root_cause": "hoiSinh performs check-then-act on player.isDie(), lastTimeRevived, and inventory gold/gem deduction before calling Service.gI().hsChar without synchronizing on player or inventory.",
+      "severity": "P1",
+      "title": "Unsynchronized check-then-act in PlayerService.hoiSinh risks double-spend / double-revive"
+    },
+    {
+      "category": "concurrency",
+      "impact": "Potential Netty ByteBuf/Message memory leak on every PlayerService.sendInfoHpMpMoney call and on exception paths in other send methods.",
+      "location": "src/services/player/PlayerService.java:38-51,62-102,123-141,208-251",
+      "root_cause": "sendInfoHpMpMoney never calls msg.cleanup() at all; sendTNSM, sendMessageAllPlayer, sendMessageIgnore, sendInfoHp, sendInfoMp, sendCurrentStamina, sendMaxStamina, and sendTypePk call msg.cleanup() outside a finally block. Conversely, SkillService.learSkillSpecial (lines 377, 382) calls message.cleanup() twice.",
+      "severity": "P1",
+      "title": "Missing Message.cleanup() in sendInfoHpMpMoney and non-finally cleanup paths"
+    },
+    {
+      "category": "protocol",
+      "impact": "If status==20 requests switching from a Type-2 skill (Tri Thuong) to another skill, it executes Tri Thuong first and skips switching; Type-4 skills consume MP and trigger cooldown with no combat effect.",
+      "location": "src/services/SkillService.java:110-116,172-178,211-230",
+      "root_cause": "useSkill evaluates skillSelect.template.type == 2 at line 110 before checking status == 20 skillId switching at line 172; useNewSkillNotFocus (type 4) had special cases removed (line 226) and only calls affterUseSkill.",
+      "severity": "P2",
+      "title": "useSkill checks Type-2 buff before status=20 skill switch and Type-4 skills are no-ops with MP/CD cost"
+    },
+    {
+      "category": "protocol",
+      "impact": "Truncating long param in sendTNSM (-3) and target count in newSkillNotFocus (-45) can overflow client-displayed TNSM or drop/corrupt target lists when >127 targets exist.",
+      "location": "src/services/player/PlayerService.java:42; src/services/SkillService.java:339-355",
+      "root_cause": "sendTNSM casts long param to int (writeInt((int) param)); newSkillNotFocus casts playersTaget.size() + mobsTaget.size() to signed byte (line 339), causing negative num if >127. Also useSkill (line 86) silently ignores IOException when reading status==20 packet fields.",
+      "severity": "P2",
+      "title": "Integer/byte truncation and silent IOException swallow in packet writers/readers"
+    },
+    {
+      "category": "database",
+      "impact": "NullPointerException if a banned player has null session (silently swallowed, account not banned in DB) and blocking JDBC call on Netty/game thread.",
+      "location": "src/services/player/PlayerService.java:253-263",
+      "root_cause": "banPlayer accesses playerBaned.getSession().userId/uu without null-checking getSession(), runs AlyraManager.executeUpdate synchronously on caller thread, and swallows all exceptions in an empty catch block.",
+      "severity": "P2",
+      "title": "PlayerService.banPlayer lacks session null-check, blocks caller thread, and swallows exceptions"
+    },
+    {
+      "category": "performance_gc",
+      "impact": "Unnecessary heap allocations (Stream, String arrays, string concatenation) on hot combat loop paths.",
+      "location": "src/services/SkillService.java:122-130,418,656",
+      "root_cause": "useSkillAttack allocates zone.getBosses().stream() on every attack (line 418); THAI_DUONG_HA_SAN allocates a new String[] per target inside the loop (line 656); useSkill builds effDesc via String concatenation.",
+      "severity": "P3",
+      "title": "Per-attack Stream and per-target String[] allocations in SkillService hot paths"
+    },
+    {
+      "category": "architecture",
+      "impact": "Non-thread-safe singleton and tight coupling across 1487 lines complicate combat maintenance.",
+      "location": "src/services/SkillService.java:33-42",
+      "root_cause": "SkillService.gI() is an unsynchronized non-volatile lazy singleton, and SkillService mixes validation, cooldown/mana accounting, AoE/DoT/reflect/lifesteal combat formulas, PvP rules, and binary Message encoding in one 1487-line class.",
+      "severity": "P3",
+      "title": "Non-thread-safe singleton and God-class coupling in SkillService"
+    }
+  ],
+  "key_classes": [
+    {
+      "key_methods": [
+        "gI",
+        "sendTNSM",
+        "dailyLogin",
+        "sendMessageAllPlayer",
+        "sendMessageIgnore",
+        "sendInfoHp",
+        "sendInfoMp",
+        "sendInfoHpMp",
+        "hoiPhuc",
+        "sendInfoHpMpMoney",
+        "playerMove",
+        "sendCurrentStamina",
+        "sendMaxStamina",
+        "changeAndSendTypePK",
+        "changeTypePK",
+        "sendTypePk",
+        "banPlayer",
+        "hoiSinh"
+      ],
+      "name": "PlayerService",
+      "path": "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/services/player/PlayerService.java",
+      "responsibility": "Handles player state updates and packet dispatches for HP/MP/money/stamina/TNSM, movement validation/fly MP cost, daily login reset, PK type changes, account banning, and revival."
+    },
+    {
+      "key_methods": [
+        "gI",
+        "useSkill",
+        "useNewSkillNotFocus",
+        "updateSkillSpecial",
+        "sendCurrLevelSpecial",
+        "newSkillNotFocus",
+        "learSkillSpecial",
+        "useSkillAttack",
+        "useSkillAlone",
+        "explodeTuSat",
+        "useSkillBuffToPlayer",
+        "hutHPMP",
+        "phanSatThuong",
+        "playerAttackPlayer",
+        "playerAttackMob",
+        "sendPlayerPrepareSkill",
+        "sendPlayerPrepareBom",
+        "canUseSkillWithMana",
+        "canUseSkillWithCooldown",
+        "affterUseSkill",
+        "setMpAffterUseSkill",
+        "setLastTimeUseSkill",
+        "canHsPlayer",
+        "canAttackPlayer",
+        "canAttackPlayer2",
+        "sendPlayerAttackMob",
+        "selectSkill"
+      ],
+      "name": "SkillService",
+      "path": "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/services/SkillService.java",
+      "responsibility": "Central combat and skill execution service: validates skill eligibility (mana, cooldown, CC, PvP/PK rules), executes melee/ki/AoE/buff/self-destruct/special skills, computes reflect and lifesteal, and broadcasts combat packets."
+    }
+  ],
+  "module_summary": "Read all 1,816 lines across PlayerService.java (329 lines) and SkillService.java (1,487 lines). PlayerService manages player HP/MP/money/stamina/TNSM packets, movement handling, daily reset, PK state, banning, and revival. SkillService is the core combat engine handling skill selection, mana/cooldown checks, PvP rules, damage/reflect/lifesteal execution, and combat packet broadcasts. Direct inspection revealed critical gameplay/security issues including a Tri Thuong targeting/self-heal multiplier bug, missing charge-time enforcement on QCKK and Makankosappo, client-trusted movement coordinates, Kaioken HP int-truncation, Huyt Sao hitting neutral players, unsynchronized revival, and ByteBuf Message.cleanup() leaks.",
+  "protocol_touchpoints": [
+    {
+      "direction": "WRITE",
+      "location": "src/services/player/PlayerService.java:40-48",
+      "opcode": "-3",
+      "payload_summary": "sendTNSM: byte type, int (int)param, optional long power & long tiemNang"
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/services/player/PlayerService.java:83-86",
+      "opcode": "subcommand 5",
+      "payload_summary": "sendInfoHp: int safeInt(hp)"
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/services/player/PlayerService.java:95-98",
+      "opcode": "subcommand 6",
+      "payload_summary": "sendInfoMp: int safeInt(mp)"
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/services/player/PlayerService.java:127-137",
+      "opcode": "subcommand 4",
+      "payload_summary": "sendInfoHpMpMoney: long gold (if ver>214) else int gold, int gem, int safeInt(hp), int safeInt(mp), int ruby (missing cleanup)"
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/services/player/PlayerService.java:211-214",
+      "opcode": "-68",
+      "payload_summary": "sendCurrentStamina: short stamina"
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/services/player/PlayerService.java:223-226",
+      "opcode": "-69",
+      "payload_summary": "sendMaxStamina: short maxStamina"
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/services/player/PlayerService.java:244-248",
+      "opcode": "subcommand 35",
+      "payload_summary": "sendTypePk: int playerId, byte typePk"
+    },
+    {
+      "direction": "READ",
+      "location": "src/services/SkillService.java:78-87",
+      "opcode": "useSkill (status=20)",
+      "payload_summary": "Reads byte skillId, short dx, short dy, byte dir, short x, short y"
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/services/SkillService.java:298-302",
+      "opcode": "subcommand 62",
+      "payload_summary": "sendCurrLevelSpecial: short skillId, byte 0, short currLevel"
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/services/SkillService.java:316-358",
+      "opcode": "-45 (status=20/21)",
+      "payload_summary": "newSkillNotFocus: byte status, int playerId, short templateId, then frame/dir/timeGong/paint/item (20) or pointX/Y/timeDame/range/paint/num/targets/typeItem (21)"
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/services/SkillService.java:373-376",
+      "opcode": "subcommand 23",
+      "payload_summary": "learSkillSpecial: short skillId"
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/services/SkillService.java:864-870",
+      "opcode": "-60 (Tri Thuong)",
+      "payload_summary": "useSkillBuffToPlayer: int casterId, byte skillTemplateId, byte 1, int targetId, byte 0"
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/services/SkillService.java:958-966",
+      "opcode": "56",
+      "payload_summary": "phanSatThuong: int plAttId, int safeInt(hp), writeFix(dameInflicted), boolean false, byte 36"
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/services/SkillService.java:1062-1080",
+      "opcode": "-60 (Attack Player)",
+      "payload_summary": "playerAttackPlayer: int plAttId, byte skillTemplateId, byte 1, int plInjureId, byte 1, byte 0, int safeInt(dameHit), boolean isDie, boolean isCrit"
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/services/SkillService.java:1141-1146,1158-1163",
+      "opcode": "-45 (status=4/7)",
+      "payload_summary": "sendPlayerPrepareSkill (4) / sendPlayerPrepareBom (7): byte status, int playerId, short skillId, short affterMiliseconds"
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/services/SkillService.java:1458-1462",
+      "opcode": "54",
+      "payload_summary": "sendPlayerAttackMob: int plAttId, byte skillId, byte mobId"
+    }
+  ]
+}

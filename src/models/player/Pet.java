@@ -723,7 +723,7 @@ public class Pet extends Player {
         int mX = master.location.x;
         int mY = master.location.y;
         int disX = this.location.x - mX;
-        if (Math.sqrt(Math.pow(mX - this.location.x, 2) + Math.pow(mY - this.location.y, 2)) >= dis || disX < 50) {
+        if (Math.sqrt(Math.pow(mX - this.location.x, 2) + Math.pow(mY - this.location.y, 2)) >= dis || Math.abs(disX) < 50) {
             if (disX < 0) {
                 this.location.x = mX - 50;
             } else {

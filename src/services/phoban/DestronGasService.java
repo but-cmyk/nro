@@ -44,33 +44,35 @@ public class DestronGasService {
                 if (clan.members.size() < DestronGas.N_PLAYER_CLAN) {
                     return;
                 }
-                if (player.clan.KhiGasHuyDiet == null) {
-                    if (clan.lastTimeOpenKhiGasHuyDiet > 0 && (System.currentTimeMillis() - clan.lastTimeOpenKhiGasHuyDiet >= 3L * 86400000L)) {
-                        clan.timesPerDayKGHD = 0;
-                    }
-                    if (level >= 1 && level <= 110) {
-                        if (clan.isLeader(player)) {
-                            DestronGas khiGasHuyDiet = null;
-                            for (DestronGas kghd : this.khiGasHuyDiets) {
-                                if (!kghd.isOpened) {
-                                    khiGasHuyDiet = kghd;
-                                    break;
+                synchronized (clan) {
+                    if (player.clan.KhiGasHuyDiet == null) {
+                        if (clan.lastTimeOpenKhiGasHuyDiet > 0 && (System.currentTimeMillis() - clan.lastTimeOpenKhiGasHuyDiet >= 3L * 86400000L)) {
+                            clan.timesPerDayKGHD = 0;
+                        }
+                        if (level >= 1 && level <= 110) {
+                            if (clan.isLeader(player)) {
+                                DestronGas khiGasHuyDiet = null;
+                                for (DestronGas kghd : this.khiGasHuyDiets) {
+                                    if (!kghd.isOpened) {
+                                        khiGasHuyDiet = kghd;
+                                        break;
+                                    }
                                 }
-                            }
-                            if (khiGasHuyDiet != null) {
-                                if (player.clan.timesPerDayKGHD > 0) {
-                                    Service.gI().sendThongBao(player, "Bạn đã đi hết lượt khí Gas lần này, hãy quay lại sau 3 ngày");
+                                if (khiGasHuyDiet != null) {
+                                    if (player.clan.timesPerDayKGHD > 0) {
+                                        Service.gI().sendThongBao(player, "Bạn đã đi hết lượt khí Gas lần này, hãy quay lại sau 3 ngày");
+                                        return;
+                                    }
+                                    khiGasHuyDiet.openKhiGasHuyDiet(player, player.clan, level);
+                                } else {
+                                    Service.gI().sendThongBao(player, "Destron Gas đã đầy, hãy quay lại sau 30 phút");
                                     return;
                                 }
-                                khiGasHuyDiet.openKhiGasHuyDiet(player, player.clan, level);
-                            } else {
-                                Service.gI().sendThongBao(player, "Destron Gas đã đầy, hãy quay lại sau 30 phút");
-                                return;
                             }
+                        } else {
+                            Service.gI().sendThongBao(player, "Cấp độ lựa chọn không hợp lệ (1 - 110)!");
+                            return;
                         }
-                    } else {
-                        Service.gI().sendThongBao(player, "Cấp độ lựa chọn không hợp lệ (1 - 110)!");
-                        return;
                     }
                 }
                 if (player.clan.KhiGasHuyDiet != null && !player.idMark.isGoToKGHD()) {

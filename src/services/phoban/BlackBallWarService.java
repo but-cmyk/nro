@@ -137,6 +137,12 @@ public class BlackBallWarService {
             case X7:
                 cost = COST_X7;
                 break;
+            default:
+                Service.gI().sendThongBao(player, "Hệ số không hợp lệ!");
+                return;
+        }
+        if (cost <= 0) {
+            return;
         }
         if (player.inventory.checkGemAndRuby(cost)) {
             player.inventory.subGemAndRuby(cost);
@@ -166,6 +172,12 @@ public class BlackBallWarService {
             case X7:
                 cost = COST_X7;
                 break;
+            default:
+                Service.gI().sendThongBao(player, "Hệ số không hợp lệ!");
+                return;
+        }
+        if (cost <= 0) {
+            return;
         }
         if (player.inventory.checkGemAndRuby(cost)) {
             player.inventory.subGemAndRuby(cost);

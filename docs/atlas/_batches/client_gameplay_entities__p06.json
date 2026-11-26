@@ -1,0 +1,171 @@
+{
+  "batch_id": "client_gameplay_entities__p06",
+  "concurrency_and_state": [
+    "GameScr is a monolithic singleton (GameScr.instance) managing input, camera, auto-play, HUD rendering, entity loops, and actionPerform callbacks on the Unity main thread.",
+    "paint() mutates gameplay/animation/input state directly: shock_scr (5483), tMabuEff/mabuEff (5678-5696), Char.tFusion (5783-5816), tPower/dxPower/isSuperPower (5882-5913), ClanImage.addClanImage (5941), consumes GameCanvas.isPointerJustRelease and pushes info1 (5959-5963), secondVS countdown (6546-6554), flareTime (6559-6564).",
+    "update() iterates shared MyVectors (vCharInMap, Teleport.vTeleport, vMob, vNpc, vItemMap, Effect2.*, Char.vItemTime, textTime) without locking; relies on Unity main-thread execution with Controller message dispatch also touching collections (try/catch around elementAt in paint() at 5637-5642 and 5797-5802 hints at concurrent/mid-frame modification).",
+    "Client-side anti-cheat / sync touchpoints: tickMove counts 100 update ticks and sends elapsed seconds via Service.gI().checkMMove(second) (5110-5120); autoPlay() directly mutates Char.myCharz().cx/cy to mob coordinates and sends charMove() (4282-4287)."
+  ],
+  "cross_module_questions": [
+    "Does Server Player/Movement handler validate distance/speed on charMove() when GameScr.autoPlay() (4284-4287) teleports cx/cy directly to mob xFirst/yFirst?",
+    "Does Server openUIZone (corresponding to GameScr.openUIZone at 7262-7297) ever send zone counts or zone IDs >= 128 where signed readByte() becomes negative?",
+    "Are command IDs 11068, 11069, 11074, 11075, 12009 (assigned in openWeb, sendSms, updateKeyAlert) handled elsewhere via mScreen/GameCanvas, since GameScr.actionPerform (7393-7640) has no cases for them?",
+    "Where is GameScr.paintHPCT (8302-8331) or GameScr.paintImageBarRight (6340-6360) invoked, and does the MP bar overflow/clipping bug manifest in Vo Dai (isVS) matches?"
+  ],
+  "db_redis_touchpoints": [],
+  "files_read": [
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/GameScr.cs:2836-8333"
+  ],
+  "findings": [
+    {
+      "category": "gameplay",
+      "impact": "Any VIP chat broadcast prefixed with '!' crashes chatVip() with ArgumentOutOfRangeException, preventing the message from being added to vChatVip.",
+      "location": "Client/Client/Assets/Scripts/Game1/GameScr.cs:7735-7738",
+      "root_cause": "chatVip.Substring(1, chatVip.Length) passes chatVip.Length as the length parameter starting at index 1 in C# (startIndex + length > chatVip.Length).",
+      "severity": "P1",
+      "title": "Guaranteed ArgumentOutOfRangeException in chatVip() for '!' messages"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Selecting an alert line containing '@' either extracts an incorrect player name or throws ArgumentOutOfRangeException.",
+      "location": "Client/Client/Assets/Scripts/Game1/GameScr.cs:7023-7030",
+      "root_cause": "fnick = text2.Substring(num + 1, num2) passes an end index (num2 + num) as the length argument to C# string.Substring(startIndex, length).",
+      "severity": "P1",
+      "title": "Wrong Substring length argument in updateKeyAlert() causes out-of-range crash or bad nick parsing"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Right-side VS player MP bar width overflows integer range or clips improperly whenever cMP > 0, and uses hpBarW instead of mpBarW for offset calculation.",
+      "location": "Client/Client/Assets/Scripts/Game1/GameScr.cs:6340-6360",
+      "root_cause": "num2 = (int)(c.cMP * mpBarW) and num4 = (int)(dMP * mpBarW) omit division by c.cMPFull (unlike cHP / c.cHPFull on lines 6342 and 6344), and lines 6354/6357 add hpBarW instead of mpBarW.",
+      "severity": "P2",
+      "title": "Missing cMPFull division and wrong bar width constant in paintImageBarRight()"
+    },
+    {
+      "category": "performance_gc",
+      "impact": "Allocates arrays, ClanImage objects, and concatenated strings every render frame inside paint(), violating Client Zero-GC invariant and increasing GC pressure/stutter.",
+      "location": "Client/Client/Assets/Scripts/Game1/GameScr.cs:6731,6742,8248-8249,8264,8270,5939,5948-5962",
+      "root_cause": "paintSelectedSkill() allocates new string[] arrays inside the per-skill loop; paint_board_CT() allocates new int[] arrays and calls Res.split() per row; paint() constructs new ClanImage() and multiple string concatenations every frame.",
+      "severity": "P2",
+      "title": "Per-frame heap allocations and string concatenation inside paint() paths"
+    },
+    {
+      "category": "performance_gc",
+      "impact": "O(N^2) iteration over vCharInMap every frame during VS/Vo Dai maps and redundant repeated scans.",
+      "location": "Client/Client/Assets/Scripts/Game1/GameScr.cs:6457-6503,6570",
+      "root_cause": "paintInfoBar() calls findCharVS1() and findCharVS2() up to 6 times per frame (plus isVS() at 6570), and findCharVS2() calls findCharVS1() inside its loop over vCharInMap.",
+      "severity": "P2",
+      "title": "O(N^2) redundant player scans in paintInfoBar() via findCharVS1/findCharVS2"
+    },
+    {
+      "category": "gameplay",
+      "impact": "NullReferenceException in paint() if cmdMenu is null while clan message indicator, item timers, PT icon, or textTime are active.",
+      "location": "Client/Client/Assets/Scripts/Game1/GameScr.cs:5876-5968",
+      "root_cause": "Line 5834 guards cmdMenu != null, but lines 5878, 5917, 5934, and 5968 dereference cmdMenu.x without checking for null.",
+      "severity": "P2",
+      "title": "Unchecked cmdMenu dereference in GameScr.paint()"
+    },
+    {
+      "category": "security_dupe",
+      "impact": "Built-in autoPlay teleports client position directly to mob spawn/current coordinates and sends charMove() to server, bypassing normal pathing/movement speed if server does not validate movement deltas.",
+      "location": "Client/Client/Assets/Scripts/Game1/GameScr.cs:4282-4287",
+      "root_cause": "autoPlay() assigns Char.myCharz().cx = targetX and cy = targetY directly before calling Service.gI().charMove().",
+      "severity": "P2",
+      "title": "autoPlay() directly teleports client coordinates to mob position"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Left-aligned MP bar draws using delayed dMP width instead of current cMP width; paintHPCT always draws full 80px HP/MP bars regardless of actual HP/MP.",
+      "location": "Client/Client/Assets/Scripts/Game1/GameScr.cs:6428-6435,8311-8330",
+      "root_cause": "paintImageBar() passes num2 (dMP) instead of num4 (cMP) to setClip when isLeft is true (6430); paintHPCT() computes num2/num3 then hardcodes width 80 in drawRegion (8320, 8330).",
+      "severity": "P3",
+      "title": "Incorrect MP bar clipping in paintImageBar() and ignored HP/MP calculations in paintHPCT()"
+    },
+    {
+      "category": "architecture",
+      "impact": "State transitions, animations, countdown timers, and touch input consumption depend on render framerate and bypass update() separation.",
+      "location": "Client/Client/Assets/Scripts/Game1/GameScr.cs:5676-5698,5781-5816,5880-5914,5959-5963,6546-6565",
+      "root_cause": "paint() directly increments/decrements timers (shock_scr, tMabuEff, tFusion, tPower, secondVS, flareTime) and handles touch release + info1 popup for PT icon inside paint().",
+      "severity": "P3",
+      "title": "Game state and input handling mutated inside GameScr.paint()"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Potential IndexOutOfRangeException when task index exceeds mapTasks or mobIndex is out of range; PC keyHold[1] jump check in statusMe==2 has inverted Main.isPC guard and keyPressed[10] checks at 3079/3576 are unreachable after 3041.",
+      "location": "Client/Client/Assets/Scripts/Game1/GameScr.cs:3037-3084,3342-3355,6157-6160,7170-7178",
+      "root_cause": "getTaskMapId() lacks length check unlike getTaskNpcId() (7187); findMobInMap(sbyte) lacks bounds check; updateKey() clears keyPressed at 3041 before rechecking keyPressed[10] at 3079 and 3576, and checks if (Main.isPC) instead of !Main.isPC at 3344.",
+      "severity": "P3",
+      "title": "Missing bounds checks and dead/inverted input branches in GameScr"
+    }
+  ],
+  "key_classes": [
+    {
+      "key_methods": [
+        "updateKey",
+        "update",
+        "paint",
+        "checkClick",
+        "checkSingleClickEarly",
+        "checkDoubleClick",
+        "checkClickMoveTo",
+        "doFire",
+        "doSelectSkill",
+        "autoPlay",
+        "openUIZone",
+        "actionPerform",
+        "paintInfoBar",
+        "paintSelectedSkill",
+        "paintPhuBanBar",
+        "paint_CT"
+      ],
+      "name": "GameScr",
+      "path": "Client/Client/Assets/Scripts/Game1/GameScr.cs",
+      "responsibility": "Main in-game screen controller handling input/touch/keyboard, camera drag, auto-play, skill selection, entity update/render loops, HUD/minigame bars, zone UI parsing, and command dispatch."
+    }
+  ],
+  "module_summary": "Lines 2836-8333 of GameScr.cs cover the core in-game loop of the Unity C# client: keyboard/touch/gamepad input handling (updateKey, checkDrag, checkClick, updateKeyTouchControl), combat and auto-play (doFire, doSelectSkill, doUseSkill, autoPlay, checkAuto), the main update() and paint() pipelines, HUD/VS/PhuBan/ChienTruong bars, lottery (XoSo) & VIP chat tickers, task/NPC pointers, zone list decoding (openUIZone), and command routing (actionPerform). Heavy God-class coupling mixes rendering with state/input mutation and exhibits several paint-time allocations, substring indexing bugs, and HUD math errors.",
+  "protocol_touchpoints": [
+    {
+      "direction": "READ",
+      "location": "Client/Client/Assets/Scripts/Game1/GameScr.cs:7262-7297",
+      "opcode": "openUIZone(Message)",
+      "payload_summary": "Reads zoneCount (byte); per zone: zoneId (byte), pts (byte), numPlayer (byte), maxPlayer (byte), hasRank (byte); if hasRank==1: rankName1 (UTF), rank1 (int), rankName2 (UTF), rank2 (int)."
+    },
+    {
+      "direction": "WRITE",
+      "location": "Client/Client/Assets/Scripts/Game1/GameScr.cs:3241,4656",
+      "opcode": "Service.mobCapcha",
+      "payload_summary": "Sends single char input for anti-bot mob captcha."
+    },
+    {
+      "direction": "WRITE",
+      "location": "Client/Client/Assets/Scripts/Game1/GameScr.cs:3296,3315,3336,3348,3363,3447,3507,4287,4931,7458",
+      "opcode": "Service.charMove",
+      "payload_summary": "Syncs current player position/direction to server (also invoked immediately after teleporting cx/cy in autoPlay)."
+    },
+    {
+      "direction": "WRITE",
+      "location": "Client/Client/Assets/Scripts/Game1/GameScr.cs:4505,4539,4569,4584",
+      "opcode": "Service.selectSkill",
+      "payload_summary": "Sends selected skill template ID."
+    },
+    {
+      "direction": "WRITE",
+      "location": "Client/Client/Assets/Scripts/Game1/GameScr.cs:4786,4810,4834",
+      "opcode": "Service.useItem",
+      "payload_summary": "Uses bag item (type 0, where 1, index i) for capsule 193/194 or (-1,-1,-1,-1) for dragon ball pickup action."
+    },
+    {
+      "direction": "WRITE",
+      "location": "Client/Client/Assets/Scripts/Game1/GameScr.cs:5119",
+      "opcode": "Service.checkMMove",
+      "payload_summary": "Sends elapsed wall-clock seconds per 100 client update ticks for speed-hack detection."
+    },
+    {
+      "direction": "WRITE",
+      "location": "Client/Client/Assets/Scripts/Game1/GameScr.cs:4269,4471,7209,7214,7350,7399,7405,7413,7424,7438,7439,7446,7454,7499,7502,7522,7526,7581,7597,7606,7614,7626",
+      "opcode": "Service gameplay/social actions",
+      "payload_summary": "Dispatches requestPean, pickItem, chat, chatPlayer, getFlag, petStatus, friend, giaodich, playerMenu actions, player_vs_player, returnTownFromDead, wakeUpFromDead, confirmMenu, requestChangeZone, getClan, clanInvite."
+    }
+  ]
+}

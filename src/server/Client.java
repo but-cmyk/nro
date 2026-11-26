@@ -228,6 +228,9 @@ public class Client implements Runnable {
 
                 // Dọn dẹp hàng đợi Võ Đài Liên Server Whis Arena nếu có
                 models.tournament.whis_arena.WhisArenaService.gI().getReadyPlayerIds().remove(player.id);
+
+                // Dọn dẹp tick telemetry của player chống rò rỉ RAM dài hạn
+                telemetry.TrajectoryLogger.gI().removePlayerTick(player.id);
             }
         } catch (Exception e) {
             Logger.logException(Client.class, e, "Error in player disconnect cleanup: " + player.name);

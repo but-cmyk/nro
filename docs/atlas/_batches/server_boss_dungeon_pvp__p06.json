@@ -1,0 +1,408 @@
+{
+  "batch_id": "server_boss_dungeon_pvp__p06",
+  "concurrency_and_state": [
+    "WhisArenaMatch, WhisArenaPvPMatch, WhisArenaBossMatch, WhisArenaBotVsBotMatch each spawn a dedicated Thread.ofVirtual() loop sleeping ~1000ms per tick; isFinished is non-volatile in WhisArenaMatch/PvPMatch/BossMatch/BotVsBotMatch despite cross-thread reads/writes.",
+    "WhisArenaBotManager.lobbyBots and bots use CopyOnWriteArrayList; update() runs on GameLoopManager every 150ms and calls tryMatchmaking() which mutates zone/match state concurrently with player request threads.",
+    "WhisArenaService.readyPlayerIds is ConcurrentHashMap.newKeySet(), modified unsynchronized in WhisArenaService.findMatch() while iterated under synchronized(readyIds) in WhisArenaLobbyBot.tryMatchmaking().",
+    "WhisArenaService synchronizes DB I/O (addReward, clearRewards, claimRewards) and matchmaking zone lookup (getFreeZone, getFreeZoneInMap) on the same singleton monitor.",
+    "NgocRongNamecService runs a daemon Thread.sleep(1000) loop mutating zone.items directly from its own thread without zone locking.",
+    "PhoBan services (DestronGasService, SnakeWayService, TreasureUnderSeaService, RedRibbonHQService, SuperDivineWaterService) check and allocate shared instance pools and clan fields without synchronization.",
+    "DeathOrAliveArenaService.startChallenge defers adding DeathOrAliveArena to DeathOrAliveArenaManager by 500ms via setTimeout, leaving getMapChallenge(112) unprotected against concurrent claims."
+  ],
+  "cross_module_questions": [
+    "Does Client or Controller validate byte x before calling BlackBallWarService.xHPKI(player, x) / xDame(player, x), or can a client send arbitrary x != 3/5/7?",
+    "How is Client opcode -96 (typeTop=0) parsed against WhisArenaService.showLeaderboard, and how does opcode -118 map targetId to WhisArenaService.competing(player, int targetId) when player.id is long?",
+    "Under what NPC menu conditions can a player invoke DeathOrAliveArenaService.cancelChallenge(player) — can it be triggered after round 0 starts?",
+    "Is Zone.getPlayers() / Zone.items backed by a thread-safe collection or copy, given concurrent iteration/mutation by NgocRongNamecService, BlackBallWarService, and GameLoop?",
+    "How does PlayerDAO.updatePlayer(player) handle concurrent saves when DeathOrAliveArenaWeeklyService.rewardAndReset() updates DB directly via UPDATE player SET arena_wins = 0?"
+  ],
+  "db_redis_touchpoints": [
+    {
+      "location": "src/models/tournament/whis_arena/WhisArenaService.java:163-187",
+      "op": "SELECT `rewards` FROM `whis_arena_rewards` WHERE `player_id` = ?",
+      "safety_note": "Uses try-with-resources and backticks; however addReward() does not load existing DB rows first if pendingArenaRewards cache is cold, so saveRewardsToDB() overwrites existing DB rewards.",
+      "target": "whis_arena_rewards"
+    },
+    {
+      "location": "src/models/tournament/whis_arena/WhisArenaService.java:189-206",
+      "op": "INSERT INTO `whis_arena_rewards` ... ON DUPLICATE KEY UPDATE `rewards` = ?",
+      "safety_note": "Uses try-with-resources and backticks; executed synchronously inside synchronized WhisArenaService.addReward() while holding singleton lock.",
+      "target": "whis_arena_rewards"
+    },
+    {
+      "location": "src/models/tournament/whis_arena/WhisArenaService.java:208-216",
+      "op": "DELETE FROM `whis_arena_rewards` WHERE `player_id` = ?",
+      "safety_note": "Uses try-with-resources and backticks; executed inside synchronized clearRewards()/claimRewards().",
+      "target": "whis_arena_rewards"
+    },
+    {
+      "location": "src/models/tournament/whis_arena/WhisArenaBotManager.java:445-470",
+      "op": "NDVSqlFetcher.loadById(top.getId_player()) in loop",
+      "safety_note": "N+1 DB queries (up to 15 sequential player loads) inside getLeaderboardEntries() on every leaderboard view or findMatch() call.",
+      "target": "player (via NDVSqlFetcher.loadById)"
+    },
+    {
+      "location": "src/services/tournament/DeathOrAliveArenaWeeklyService.java:126-145",
+      "op": "SELECT id, name, arena_wins FROM player WHERE arena_wins > 0 ORDER BY arena_wins DESC, id ASC LIMIT 5",
+      "safety_note": "Uses try-with-resources; no transaction spans reward distribution, UPDATE reset, and JSON file write.",
+      "target": "player"
+    },
+    {
+      "location": "src/services/tournament/DeathOrAliveArenaWeeklyService.java:170-176",
+      "op": "UPDATE player SET arena_wins = 0",
+      "safety_note": "Uses try-with-resources; resets DB before resetting online players in RAM (lines 179-183), creating a window where logout/PlayerDAO.updatePlayer can write stale arenaWins back.",
+      "target": "player"
+    },
+    {
+      "location": "src/models/tournament/whis_arena/WhisArenaMatch.java:359,366; WhisArenaBossMatch.java:285,325,340; WhisArenaPvPMatch.java:292,298; WhisArenaService.java:710; DeathOrAliveArenaService.java:66,145; DeathOrAliveArenaWeeklyService.java:155,244",
+      "op": "PlayerDAO.updatePlayer(player)",
+      "safety_note": "Synchronous full-player DB persistence on match end / challenge start / reward claim.",
+      "target": "player"
+    }
+  ],
+  "files_read": [
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/tournament/whis_arena/WhisArenaBossMatch.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/tournament/whis_arena/WhisArenaBot.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/tournament/whis_arena/WhisArenaBotManager.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/tournament/whis_arena/WhisArenaBotVsBotMatch.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/tournament/whis_arena/WhisArenaLobbyBot.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/tournament/whis_arena/WhisArenaMatch.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/tournament/whis_arena/WhisArenaPvPMatch.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/tournament/whis_arena/WhisArenaRival.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/tournament/whis_arena/WhisArenaService.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/tournament/whis_arena/WhisArenaU6Boss.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/tournament/WorldMartialArtsTournament.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/services/phoban/BlackBallWarService.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/services/phoban/DestronGasService.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/services/phoban/MajinBuu14HService.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/services/phoban/MajinBuuService.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/services/phoban/NgocRongNamecService.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/services/phoban/RedRibbonHQService.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/services/phoban/SnakeWayService.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/services/phoban/SuperDivineWaterService.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/services/phoban/TrainingService.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/services/phoban/TreasureUnderSeaService.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/services/tournament/DeathOrAliveArenaService.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/services/tournament/DeathOrAliveArenaWeeklyService.java"
+  ],
+  "findings": [
+    {
+      "category": "security_dupe",
+      "impact": "If client supplies any byte x other than X3/X5/X7, player gets up to x127 HP/KI/Dame multiplier for 0 gems.",
+      "location": "src/services/phoban/BlackBallWarService.java:128-181",
+      "root_cause": "xHPKI() and xDame() initialize cost=0 and only assign cost in switch cases X3/X5/X7 without a default rejection, then check checkGemAndRuby(0) (true) and assign effectSkin.xHPKI = x / xDame = x.",
+      "severity": "P0",
+      "title": "Unvalidated multiplier byte in xHPKI/xDame grants free stat multiplier"
+    },
+    {
+      "category": "security_dupe",
+      "impact": "Two players can double-claim/lock the same Namek Ball, or two clan members can open duplicate dungeon instances and bypass cooldown/item limits.",
+      "location": "src/services/phoban/NgocRongNamecService.java:357-398; DestronGasService.java:36-75; SnakeWayService.java:38-77; TreasureUnderSeaService.java:36-64; RedRibbonHQService.java:36-71",
+      "root_cause": "Check-then-act on shared dungeon pools (isOpened / getClan() == null), clan dungeon slots, daily counters, item consumption, and Namek ball arrays lack synchronization.",
+      "severity": "P0",
+      "title": "Unsynchronized check-then-act on Namek ball pickup and PhoBan instance allocation"
+    },
+    {
+      "category": "concurrency",
+      "impact": "Two players can be assigned the same zone simultaneously, overwrite each other's arena match, and lose entry tickets/water bottles; disconnecting during the 500ms delay leaves player.isPKDHVT=true.",
+      "location": "src/services/tournament/DeathOrAliveArenaService.java:39-109",
+      "root_cause": "getMapChallenge(112) checks DeathOrAliveArenaManager.getVDST(zone) == null synchronously, but new DeathOrAliveArena() is not added to DeathOrAliveArenaManager until 500ms later inside setTimeout().",
+      "severity": "P0",
+      "title": "500ms TOCTOU window in DeathOrAliveArenaService.startChallenge allows double-booking arena zones"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Players who win Round 4 with at least 1 empty bag slot receive 2 Capsule Vangs instead of 1 (one in Whis mailbox and one directly in bag).",
+      "location": "src/models/tournament/whis_arena/WhisArenaBossMatch.java:339-354",
+      "root_cause": "onBossDie() unconditionally calls WhisArenaService.gI().addReward(player, 574) at line 339, and then at lines 344-349 also creates and adds ConstItem.CAPSULE_VANG directly to bag when getCountEmptyBag(player) > 0.",
+      "severity": "P1",
+      "title": "Double Capsule Vang reward on winning Whis Arena U6 Round 4"
+    },
+    {
+      "category": "database",
+      "impact": "Winning a Whis Arena match before getRewards() loads existing rewards from DB permanently wipes all previously stored unclaimed rewards in whis_arena_rewards.",
+      "location": "src/models/tournament/whis_arena/WhisArenaService.java:68-104",
+      "root_cause": "addReward() uses pendingArenaRewards.computeIfAbsent(playerId, k -> new CopyOnWriteArrayList<>()) without loading from DB first, and saveRewardsToDB() executes ON DUPLICATE KEY UPDATE rewards = ? overwriting the DB JSON array.",
+      "severity": "P1",
+      "title": "WhisArenaService.addReward overwrites uncached DB rewards on cold cache"
+    },
+    {
+      "category": "concurrency",
+      "impact": "Same zone can host overlapping matches, same player can be matched twice (findMatch + LobbyBot.tryMatchmaking), and same LobbyBot can be pulled into two concurrent fights.",
+      "location": "src/models/tournament/whis_arena/WhisArenaService.java:422-468,551-581,597-640; WhisArenaLobbyBot.java:221-292",
+      "root_cause": "getFreeZone() returns a zone without atomically marking zone.isCompeting=true; readyPlayerIds is mutated unsynchronized while iterated under synchronized(readyIds); LobbyBot state transitions to FIGHTING are not atomic/synchronized.",
+      "severity": "P1",
+      "title": "TOCTOU races in WhisArena matchmaking, zone reservation, and LobbyBot state transitions"
+    },
+    {
+      "category": "database",
+      "impact": "Crash during Sunday reset can cause double weekly gem payouts, stale arenaWins persistence on logout, or corrupted vdst_weekly.json losing unclaimed records.",
+      "location": "src/services/tournament/DeathOrAliveArenaWeeklyService.java:121-201,259-289",
+      "root_cause": "rewardAndReset() performs SELECT, gem payout + PlayerDAO.updatePlayer, UPDATE player SET arena_wins = 0, RAM reset, and FileWriter saveData() without a DB transaction or atomic file write; RAM reset happens after SQL UPDATE.",
+      "severity": "P1",
+      "title": "Non-atomic weekly VDST reset and non-atomic JSON persistence"
+    },
+    {
+      "category": "concurrency",
+      "impact": "IndexOutOfBoundsException, skipped items, byte overflow (>127 items), or ConcurrentModificationException during Namek ball/stone cleanup.",
+      "location": "src/services/phoban/NgocRongNamecService.java:125-137,400-419",
+      "root_cause": "removeStoneNrNamec() uses a byte loop index j and calls zone.items.remove(j) in a forward loop without decrementing j and without synchronizing on zone.items while running on its own thread.",
+      "severity": "P1",
+      "title": "Unsafe removal and byte index overflow in NgocRongNamecService.removeStoneNrNamec"
+    },
+    {
+      "category": "gameplay",
+      "impact": "After a match ends via fallOut(), update() executes die() and leaveMap() in the same tick on nulled player fields, re-triggering finish()/dispose() and throwing NPEs (silently caught).",
+      "location": "src/models/tournament/WorldMartialArtsTournament.java:45-46,110-118,157-172,272-298",
+      "root_cause": "fallOut() invokes finish() -> dispose() which nulls player_1, player_2, npc, and zone, yet update() immediately calls die() and leaveMap() afterward; leaveMap() treats player_2==null as forfeit and calls finish() again. Also init() calls npc.location without null check.",
+      "severity": "P1",
+      "title": "Double finish() invocation and NPEs in WorldMartialArtsTournament"
+    },
+    {
+      "category": "performance_gc",
+      "impact": "Opening the Whis Arena leaderboard or clicking findMatch blocks on up to 15 synchronous DB queries and sorts a CopyOnWriteArrayList while holding/blocking service operations.",
+      "location": "src/models/tournament/whis_arena/WhisArenaBotManager.java:283-288,404-470; WhisArenaService.java:68-148,551-581",
+      "root_cause": "getLeaderboardEntries() runs NDVSqlFetcher.loadById() per topArena entry in a loop and calls sortBots() on a CopyOnWriteArrayList; WhisArenaService synchronizes JDBC queries on the same singleton lock used by getFreeZone().",
+      "severity": "P2",
+      "title": "N+1 DB queries in WhisArenaBotManager and singleton lock contention with DB I/O in WhisArenaService"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Two concurrent players in different zones fighting the same U6 Boss round or player clone share identical entity IDs; BotVsBot matches lock Zone 0 (the main lobby) for competing.",
+      "location": "src/models/tournament/whis_arena/WhisArenaU6Boss.java:16; WhisArenaService.java:657; WhisArenaLobbyBot.java:273-279",
+      "root_cause": "WhisArenaU6Boss uses fixed IDs -30001 - round and clone bots use (int) -plTarget.id; WhisArenaLobbyBot.startBotVsBotMatch selects b1.lobbyZone (Map 186 Zone 0) when !isCompeting instead of isolating bot matches to non-lobby zones.",
+      "severity": "P2",
+      "title": "Boss/clone ID collisions and BotVsBot matches occupying Map 186 Zone 0 lobby"
+    },
+    {
+      "category": "gameplay",
+      "impact": "NullPointerException if player is null when calling tnsmLuyenTapUp; player loses 1 gem if disconnecting during the 1000ms schedule delay; SuperDivineWaterService strands player if Pocolo creation fails and heals MP with hpMax.",
+      "location": "src/services/phoban/TrainingService.java:170-204; SuperDivineWaterService.java:33-59,62-63,104-125; MajinBuuService.java:58-73",
+      "root_cause": "TrainingService.tnsmLuyenTapUp dereferences player.lastTimeOffline before null-checking player and deducts 1 gem before scheduled execution; SuperDivineWaterService sets callBossPocolo=true even if new Pocolo() throws, passes hpMax as MP to hsChar, and doesn't null-check mc; MajinBuuService.joinMapMabu ignores clanmate's cFlag.",
+      "severity": "P2",
+      "title": "Null-check, resource-order, and flag assignment defects in Training/SuperDivineWater/MajinBuu services"
+    },
+    {
+      "category": "protocol",
+      "impact": "If write/send throws IOException, the Netty-backed Message buffer in sendTypePK is never released.",
+      "location": "src/services/tournament/DeathOrAliveArenaService.java:159-169",
+      "root_cause": "msg.cleanup() is placed inside the try block instead of a finally block.",
+      "severity": "P2",
+      "title": "Missing finally cleanup for Message in DeathOrAliveArenaService.sendTypePK"
+    },
+    {
+      "category": "devops",
+      "impact": "Whis Arena ignores the 21:00-22:00 schedule and auto-grants demo rewards to admins in production unless toggled off.",
+      "location": "src/models/tournament/whis_arena/WhisArenaService.java:46-53,223-225",
+      "root_cause": "TEST_MODE_24_7 is hardcoded to true.",
+      "severity": "P3",
+      "title": "WhisArenaService.TEST_MODE_24_7 left enabled"
+    }
+  ],
+  "key_classes": [
+    {
+      "key_methods": [
+        "isOpen",
+        "addReward",
+        "getRewards",
+        "claimRewards",
+        "openMenuAtKaio",
+        "confirmMenuAtKaio",
+        "openMenuAtArena",
+        "confirmMenuAtArena",
+        "startU6TournamentMatch",
+        "findMatch",
+        "getFreeZone",
+        "competing",
+        "exchangeCapsuleVang",
+        "showLeaderboard"
+      ],
+      "name": "WhisArenaService",
+      "path": "src/models/tournament/whis_arena/WhisArenaService.java",
+      "responsibility": "Central singleton managing Whis Arena menus, rewards persistence, matchmaking, leaderboard packet dispatch, and U6 boss/PvP/bot match starts."
+    },
+    {
+      "key_methods": [
+        "initLobbyBots",
+        "findReadyLobbyBot",
+        "findAnotherReadyLobbyBot",
+        "initBots",
+        "sortBots",
+        "getPlayerRank",
+        "getLeaderboardEntries",
+        "update",
+        "initLobbyBotsOnStartup"
+      ],
+      "name": "WhisArenaBotManager",
+      "path": "src/models/tournament/whis_arena/WhisArenaBotManager.java",
+      "responsibility": "Manages 100 ranking bots, 8 Map 186 Zone 0 LobbyBots, leaderboard aggregation, and 150ms lobby bot AI tick."
+    },
+    {
+      "key_methods": [
+        "joinLobby",
+        "update",
+        "die",
+        "updateLobby",
+        "tryMatchmaking",
+        "startMatchWithPlayer",
+        "startBotVsBotMatch",
+        "returnToLobby"
+      ],
+      "name": "WhisArenaLobbyBot",
+      "path": "src/models/tournament/whis_arena/WhisArenaLobbyBot.java",
+      "responsibility": "Lobby NPC-like SuperRank bot entity in Map 186 Zone 0 that wanders, chats, readies up, and transitions into PvE or BotVsBot arena matches."
+    },
+    {
+      "key_methods": [
+        "start",
+        "run",
+        "update",
+        "onPlayerDie",
+        "onRivalDie",
+        "resolveTimeOut",
+        "finishMatch",
+        "dispose"
+      ],
+      "name": "WhisArenaMatch",
+      "path": "src/models/tournament/whis_arena/WhisArenaMatch.java",
+      "responsibility": "1v1 Player vs Bot/LobbyBot/AI-Clone match controller running on a virtual thread."
+    },
+    {
+      "key_methods": [
+        "start",
+        "run",
+        "update",
+        "finishMatch",
+        "dispose"
+      ],
+      "name": "WhisArenaPvPMatch",
+      "path": "src/models/tournament/whis_arena/WhisArenaPvPMatch.java",
+      "responsibility": "1v1 Player vs Player Whis Arena match controller running on a virtual thread."
+    },
+    {
+      "key_methods": [
+        "start",
+        "spawnCurrentBoss",
+        "run",
+        "update",
+        "onPlayerDie",
+        "onBossDie",
+        "dispose"
+      ],
+      "name": "WhisArenaBossMatch",
+      "path": "src/models/tournament/whis_arena/WhisArenaBossMatch.java",
+      "responsibility": "Universe 6-7 tournament match controller pitting player against sequential bosses (Frost, Kyabe, Autamegetta, Hit)."
+    },
+    {
+      "key_methods": [
+        "start",
+        "run",
+        "update",
+        "onBotDie",
+        "finishMatch",
+        "dispose"
+      ],
+      "name": "WhisArenaBotVsBotMatch",
+      "path": "src/models/tournament/whis_arena/WhisArenaBotVsBotMatch.java",
+      "responsibility": "Exhibition match controller between two WhisArenaLobbyBots."
+    },
+    {
+      "key_methods": [
+        "init",
+        "run",
+        "update",
+        "timeOut",
+        "die",
+        "leaveMap",
+        "fallOut",
+        "finish",
+        "dispose"
+      ],
+      "name": "WorldMartialArtsTournament",
+      "path": "src/models/tournament/WorldMartialArtsTournament.java",
+      "responsibility": "Standard World Martial Arts Tournament (WMAT) match lifecycle on map 51."
+    },
+    {
+      "key_methods": [
+        "startChallenge",
+        "cancelChallenge",
+        "sendTypePK",
+        "getMapChallenge"
+      ],
+      "name": "DeathOrAliveArenaService",
+      "path": "src/services/tournament/DeathOrAliveArenaService.java",
+      "responsibility": "Handles VDST (map 112) challenge registration, ticket/water bottle deduction & refund, and arena zone lookup."
+    },
+    {
+      "key_methods": [
+        "init",
+        "checkAndResetWeekly",
+        "rewardAndReset",
+        "claimReward",
+        "saveData",
+        "loadData"
+      ],
+      "name": "DeathOrAliveArenaWeeklyService",
+      "path": "src/services/tournament/DeathOrAliveArenaWeeklyService.java",
+      "responsibility": "Weekly Sunday 00:00 VDST Top 1-5 gem payout, SQL arena_wins reset, and JSON claim persistence."
+    },
+    {
+      "key_methods": [
+        "initNgocRongNamec",
+        "reInitNgocRongNamec",
+        "removeStoneNrNamec",
+        "doneDragonNamec",
+        "canCallDragonNamec",
+        "teleportToNrNamec",
+        "getDis",
+        "pickNamekBall",
+        "run",
+        "dropNamekBall"
+      ],
+      "name": "NgocRongNamecService",
+      "path": "src/services/phoban/NgocRongNamecService.java",
+      "responsibility": "Manages Namek Dragon Ball spawning, stone reinit, radar distance calculations, pickup/drop, and clan summoning checks."
+    },
+    {
+      "key_methods": [
+        "dropBlackBall",
+        "joinMapBlackBallWar",
+        "pickBlackBall",
+        "xHPKI",
+        "xDame",
+        "changeMap"
+      ],
+      "name": "BlackBallWarService",
+      "path": "src/services/phoban/BlackBallWarService.java",
+      "responsibility": "Manages Black Ball War pickup/drop, clan flags, stat buffs (x3/x5/x7), and map entry."
+    },
+    {
+      "key_methods": [
+        "callBoss",
+        "luyenTapEnd",
+        "getTnsmMoiPhut",
+        "tangTnsmLuyenTap",
+        "tnsmLuyenTapUp"
+      ],
+      "name": "TrainingService",
+      "path": "src/services/phoban/TrainingService.java",
+      "responsibility": "Manages training bosses, training level progression, and offline/auto-training power gains."
+    }
+  ],
+  "module_summary": "Batch p06 covers Whis Arena (bot manager, lobby bots, PvE/PvP/BotVsBot/U6 Boss matches, service/DB rewards), WorldMartialArtsTournament, DeathOrAliveArena (VDST service and weekly reset), and 10 dungeon/event services (BlackBallWar, DestronGas, MajinBuu, MajinBuu14H, NgocRongNamec, RedRibbonHQ, SnakeWay, SuperDivineWater, Training, TreasureUnderSea). Key risks include an unvalidated stat multiplier exploit in BlackBallWarService, race conditions on zone/instance/ball allocation across VDST, Whis Arena, Namek balls, and clan dungeons, a double Capsule Vang reward in WhisArenaBossMatch, DB reward overwrite in WhisArenaService, non-atomic weekly VDST reset, and unsafe concurrent mutation in NgocRongNamecService.",
+  "protocol_touchpoints": [
+    {
+      "direction": "WRITE",
+      "location": "src/models/tournament/whis_arena/WhisArenaService.java:737-763",
+      "opcode": "-96",
+      "payload_summary": "byte typeTop=0, UTF headerTitle, byte count, followed by per-entry int rank, int id, short head, (if version>214) short -1, short body, short leg, UTF name, UTF info1, UTF info2"
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/services/tournament/DeathOrAliveArenaService.java:162-166",
+      "opcode": "subcommand 35 (Service.messageSubCommand)",
+      "payload_summary": "int (int) boss.id, byte 3 (PK type); msg.cleanup() omitted on IOException path"
+    }
+  ],
+  "queue_count": 0
+}

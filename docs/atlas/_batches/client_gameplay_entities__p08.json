@@ -1,0 +1,299 @@
+{
+  "batch_id": "client_gameplay_entities__p08",
+  "concurrency_and_state": [
+    "All data structures (MyVector, MyHashTable, MyKeyMap.h, Mob.arrMobTemplate, Mob.lastMob, Mob.newMob) are unsynchronized and assume single-threaded Unity main-thread execution; no locks or concurrent primitives exist in this batch.",
+    "MobCapcha stores all camera, animation, and captcha state in global static fields (MobCapcha.cs:5-40), preventing multiple instances and persisting stale state across sessions.",
+    "NewBoss uses C# 'new' member hiding on 20+ Mob fields/methods (NewBoss.cs:17-86, 188-650) instead of 'override', splitting state between Mob base fields and NewBoss shadowed fields depending on reference type.",
+    "Mob.arrMobTemplate and Npc.arrNpcTemplate are global static arrays resized on demand via EnsureMobTemplateCapacity/EnsureNpcTemplateCapacity (Mob.cs:383-394, Npc.cs:55-66), while NewBoss accesses Mob.arrMobTemplate directly without capacity checks."
+  ],
+  "cross_module_questions": [
+    "Does Service.requestModTemplate(templateId) deduplicate in-flight requests on the client, or can multiple Mob/NewBoss instances spam template requests?",
+    "How does Controller.frameHT_NEWBOSS populate frame arrays for Mob (6-row) vs NewBoss (17-row) templates, and what happens if a templateId is missing from frameHT_NEWBOSS?",
+    "Does TField.update() handle setting isFocus on pointer press independently, or does MoneyCharge.updateKey() (MoneyCharge.cs:200-210) leave tfSerial/tfCode focus out of sync on touch/mouse click?",
+    "Do any server-sent packets still send 0-byte or 1-byte arrays to NinjaUtil.readByteArray(Message), which skips reading when length <= 1?"
+  ],
+  "db_redis_touchpoints": [],
+  "files_read": [
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/Mob.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/MobCapcha.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/MobTemplate.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/MoneyCharge.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/MonsterDart.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/MovePoint.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/mResources.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/mScreen.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/MsgDlg.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/MyHashTable.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/MyKeyMap.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/MyRandom.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/MyStream.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/MyVector.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/NClass.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/Net.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/NewBoss.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/NewPanel.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/NinjaUtil.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/Npc.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/NpcTemplate.cs"
+  ],
+  "findings": [
+    {
+      "category": "gameplay",
+      "impact": "Client NullReferenceException crash during mob death/knockback animation when hp reaches 0 without injureBy set or after startDie().",
+      "location": "Client/Client/Assets/Scripts/Game1/Mob.cs:1049-1055, 1233-1239",
+      "root_cause": "updateInjure() checks `(injureBy != null && injureThenDie) || hp == 0` then unconditionally accesses `injureBy.cdir`; updateMobWalk() checks `if (injureThenDie)` then unconditionally accesses `injureBy.cdir`.",
+      "severity": "P1",
+      "title": "NullReferenceException on injureBy.cdir when mob dies with injureBy == null"
+    },
+    {
+      "category": "architecture",
+      "impact": "NullReferenceException or IndexOutOfRangeException crash on boss spawn, update, or render if arrMobTemplate is null, too small, or template data is not yet loaded.",
+      "location": "Client/Client/Assets/Scripts/Game1/NewBoss.cs:156, 255, 403, 462, 509, 655",
+      "root_cause": "NewBoss directly indexes Mob.arrMobTemplate[templateId] instead of using Mob.EnsureMobTemplateCapacity() / Mob.getTemplate() null-safe helpers.",
+      "severity": "P1",
+      "title": "NewBoss bypasses Mob template capacity/null guards and crashes on uninitialized templates"
+    },
+    {
+      "category": "architecture",
+      "impact": "Calling Mob-typed references invokes Mob methods/fields instead of NewBoss implementations, causing state desync and wrong frame array indexing.",
+      "location": "Client/Client/Assets/Scripts/Game1/NewBoss.cs:17-86, 188-650",
+      "root_cause": "NewBoss shadows over 20 fields and methods (xSd, isBusyAttackSomeOne, injureBy, blindEff, sleepEff, setAttack, updateMobAttack, updateMobWalk, isPaint, isUpdate, GetFrame, etc.) with `new` instead of `override`. In addition, `case 7` in NewBoss.update() (line 289) calls `base.update()` into Mob.update().",
+      "severity": "P1",
+      "title": "NewBoss hides Mob fields and methods with `new` instead of `override`"
+    },
+    {
+      "category": "gameplay",
+      "impact": "DivideByZeroException crash in NewBoss.paint() if maxHp is 0; NullReferenceException in NewBoss.updateMobAttack() if charAttack/dameHP/frameArr is null or type < 1.",
+      "location": "Client/Client/Assets/Scripts/Game1/NewBoss.cs:383-398, 516",
+      "root_cause": "NewBoss.paint() computes `(long)this.hp * 50L / (long)this.maxHp` without checking `maxHp <= 0`, and NewBoss.updateMobAttack() accesses `charAttack`, `dameHP`, `frameArr[type + 1]`, and `frameArr[15][type - 1]` without null/bounds checks (while `setAttack(Char)` at line 320 sets status=3 without initializing `charAttack` or `type`).",
+      "severity": "P1",
+      "title": "Missing zero/null/bounds guards in NewBoss.paint() and NewBoss.updateMobAttack()"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Boss position becomes framerate-dependent and snaps/drifts horizontally when moving vertically.",
+      "location": "Client/Client/Assets/Scripts/Game1/NewBoss.cs:486-508",
+      "root_cause": "NewBoss.paint() mutates `this.x` and `this.yTemp` directly inside the render method based on tile collisions and `y != yTemp`.",
+      "severity": "P1",
+      "title": "NewBoss.paint() mutates world coordinates (x, yTemp) during rendering"
+    },
+    {
+      "category": "protocol",
+      "impact": "Stream desync if a 1-byte array is sent (1 byte left unread in Message stream), or OutOfMemoryException/OverflowException on corrupted negative/huge int lengths.",
+      "location": "Client/Client/Assets/Scripts/Game1/NinjaUtil.cs:23-55",
+      "root_cause": "readByteArray(Message) silently skips reading when `num <= 1` (`if (num > 1)`), leaving 1 byte in the stream when `num == 1`; readByteArray(myReader) allocates `new sbyte[num]` with no bounds validation on `num`.",
+      "severity": "P1",
+      "title": "NinjaUtil.readByteArray stream desync on len==1 and unchecked array allocation"
+    },
+    {
+      "category": "gameplay",
+      "impact": "NullReferenceException if GetFrame() fails to find templateId in Controller.frameHT_NEWBOSS, or if mob attacks with both cFocus and mobToAttack null.",
+      "location": "Client/Client/Assets/Scripts/Game1/Mob.cs:1150-1196, 1704-1713",
+      "root_cause": "Mob.GetFrame() casts `Controller.frameHT_NEWBOSS.get(...)` to `int[][]` and immediately indexes `frameArr[0]..frameArr[5]` without null/length checks; updateMobAttack() assumes `mobToAttack` is non-null whenever `cFocus == null`.",
+      "severity": "P2",
+      "title": "Unchecked frameArr and mobToAttack dereferences in Mob.GetFrame() and Mob.updateMobAttack()"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Multi-update projectiles can execute after removal and pass null Char to ServerEffect.addServerEffect(81, c, 1); trail cleanup skips elements.",
+      "location": "Client/Client/Assets/Scripts/Game1/MonsterDart.cs:150-191, 223-231",
+      "root_cause": "MonsterDart.update() removes itself from `Effect2.vEffect2` without returning from the `nUpdate` loop, passes `c` (null when created with xTo/yTo) to `ServerEffect.addServerEffect`, and removes expired `SmallDart` elements at `j` without decrementing `j`. Same loop-skip on `GameScr.vMob.removeElementAt(j)` in `Mob.cs:778-784`.",
+      "severity": "P2",
+      "title": "MonsterDart continues nUpdate loop after self-removal and skips vector elements on removal"
+    },
+    {
+      "category": "performance_gc",
+      "impact": "Per-frame heap allocations in update()/paint() violate Client Zero-GC rules and increase Unity GC pauses.",
+      "location": "Client/Client/Assets/Scripts/Game1/Npc.cs:153, 269, 274, 315; Mob.cs:621, 646, 1191, 1706; MobCapcha.cs:88, 93; MonsterDart.cs:154",
+      "root_cause": "`Npc.update()` allocates `new sbyte[7]` every tick while `effTask == null`; `Npc.paint()` allocates `new Effect` and concatenates `TileMap.zoneID + string.Empty`; `Mob.update()`/`MobCapcha.paint()`/`MonsterDart.update()` allocate `new Effect`, `new Char`, `new SmallDart`, and `templateId + string.Empty` strings inside update/paint paths.",
+      "severity": "P2",
+      "title": "Heap allocations and string concatenation inside update() and paint() loops"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Repeated calls to NinjaUtil.randomNumber() within the same tick/millisecond return identical values; duplicate entries in Mob.lastMob cause premature template eviction.",
+      "location": "Client/Client/Assets/Scripts/Game1/NinjaUtil.cs:17-21; Mob.cs:439-452",
+      "root_cause": "`NinjaUtil.randomNumber` allocates a fresh `new MyRandom()` (`new System.Random()`) per call instead of reusing a static instance. `Mob.getData()` appends `templateId + string.Empty` to `lastMob` without deduplication, so repeated reloads push out valid templates after 15 calls.",
+      "severity": "P2",
+      "title": "Per-call Random instantiation in NinjaUtil and un-deduplicated Mob.lastMob LRU list"
+    },
+    {
+      "category": "architecture",
+      "impact": "Minor dead code, boxing in hashtable keymap, and command hit-test edge case at y==0.",
+      "location": "Client/Client/Assets/Scripts/Game1/MyKeyMap.cs:66-74; mScreen.cs:108; Net.cs:1-47; Npc.cs:176-183",
+      "root_cause": "MyKeyMap boxes KeyCode and unboxes int on every map() call; mScreen.getCmdPointerLast treats `cmd.y == 0` as unset sentinel; Net.cs is fully commented out; Npc.update() has identical if/else branches at lines 176-183 assigning `GameScr.efs[98]`.",
+      "severity": "P3",
+      "title": "Dead/redundant branches, KeyCode boxing, and cmd.y==0 sentinel edge case"
+    }
+  ],
+  "key_classes": [
+    {
+      "key_methods": [
+        "Mob",
+        "EnsureMobTemplateCapacity",
+        "getData",
+        "checkData",
+        "update",
+        "updateInjure",
+        "updateMobStandWait",
+        "updateMobAttack",
+        "updateMobWalk",
+        "getTemplate",
+        "updateHp_bar",
+        "paint",
+        "GetFrame"
+      ],
+      "name": "Mob",
+      "path": "Client/Client/Assets/Scripts/Game1/Mob.cs",
+      "responsibility": "Core client monster entity handling state machine, animation frames, shadow raycast, template lazy-loading/caching, HP bar, and rendering."
+    },
+    {
+      "key_methods": [
+        "NewBoss",
+        "update",
+        "updateDead",
+        "updateMobStandWait",
+        "setAttack",
+        "updateMobAttack",
+        "updateMobWalk",
+        "paint",
+        "move",
+        "GetFrame"
+      ],
+      "name": "NewBoss",
+      "path": "Client/Client/Assets/Scripts/Game1/NewBoss.cs",
+      "responsibility": "Extended boss entity subclassing Mob with 17-state frame arrays, multi-target AoE attacks, and custom HP bar rendering."
+    },
+    {
+      "key_methods": [
+        "Npc",
+        "EnsureNpcTemplateCapacity",
+        "setStatus",
+        "clearEffTask",
+        "update",
+        "paintHead",
+        "paint",
+        "paintName"
+      ],
+      "name": "Npc",
+      "path": "Client/Client/Assets/Scripts/Game1/Npc.cs",
+      "responsibility": "NPC entity inheriting Char; renders part-based NPC sprites, quest indicator effects, watermelon timer (template 50/51), and names."
+    },
+    {
+      "key_methods": [
+        "MonsterDart",
+        "setAngle",
+        "addMonsterDart",
+        "update",
+        "findDirIndexFromAngle",
+        "paint"
+      ],
+      "name": "MonsterDart",
+      "path": "Client/Client/Assets/Scripts/Game1/MonsterDart.cs",
+      "responsibility": "Homing projectile effect fired by mobs/bosses toward players or target coordinates with tail trail particles."
+    },
+    {
+      "key_methods": [
+        "init",
+        "paint",
+        "moveCamera"
+      ],
+      "name": "MobCapcha",
+      "path": "Client/Client/Assets/Scripts/Game1/MobCapcha.cs",
+      "responsibility": "Static floating anti-bot captcha mob renderer and damped camera follower."
+    },
+    {
+      "key_methods": [
+        "MoneyCharge",
+        "gI",
+        "switchToMe",
+        "paint",
+        "update",
+        "keyPress",
+        "updateKey",
+        "perform"
+      ],
+      "name": "MoneyCharge",
+      "path": "Client/Client/Assets/Scripts/Game1/MoneyCharge.cs",
+      "responsibility": "Card top-up screen UI collecting serial and card code via two TFields and dispatching to server."
+    },
+    {
+      "key_methods": [
+        "loadLanguague",
+        "replace"
+      ],
+      "name": "mResources",
+      "path": "Client/Client/Assets/Scripts/Game1/mResources.cs",
+      "responsibility": "Global localization string registry populated by T1/T2/T3 language loaders."
+    },
+    {
+      "key_methods": [
+        "switchToMe",
+        "updateKey",
+        "getCmdPointerLast",
+        "paint"
+      ],
+      "name": "mScreen",
+      "path": "Client/Client/Assets/Scripts/Game1/mScreen.cs",
+      "responsibility": "Base screen abstraction managing left/center/right softkey commands and pointer/key input dispatch."
+    },
+    {
+      "key_methods": [
+        "readByteArray",
+        "numberTostring",
+        "getDate",
+        "getDate2",
+        "getTime",
+        "getMoneys",
+        "getTimeAgo",
+        "split",
+        "checkNumber"
+      ],
+      "name": "NinjaUtil",
+      "path": "Client/Client/Assets/Scripts/Game1/NinjaUtil.cs",
+      "responsibility": "Utility helpers for stream byte-array reading, number/time/currency formatting, and string splitting."
+    },
+    {
+      "key_methods": [
+        "addElement",
+        "elementAt",
+        "removeElementAt",
+        "removeElement",
+        "get",
+        "put",
+        "remove",
+        "containsKey"
+      ],
+      "name": "MyVector / MyHashTable",
+      "path": "Client/Client/Assets/Scripts/Game1/MyVector.cs & MyHashTable.cs",
+      "responsibility": "J2ME-compatible collection wrappers backed by List<object>/Hashtable alongside generic MyVector<T> and MyHashTable<TKey,TValue>."
+    }
+  ],
+  "module_summary": "Batch client_gameplay_entities__p08 covers 21 Unity C# client scripts (5910 lines) in Assets/Scripts/Game1: core world entities (Mob, NewBoss, Npc, MonsterDart, MobCapcha), templates/data models (MobTemplate, NpcTemplate, NClass, MovePoint), UI screens/dialogs (mScreen, MoneyCharge, MsgDlg, NewPanel, mResources), and J2ME-compatibility utilities/collections (MyVector, MyHashTable, MyKeyMap, MyRandom, MyStream, NinjaUtil, plus commented-out Net). Key risks center on Mob/NewBoss architectural split (NewBoss using `new` hiding instead of `override` and bypassing Mob template bounds checks), null-dereference/divide-by-zero crashes in Mob/NewBoss/MonsterDart, stream desync on 1-byte arrays in NinjaUtil.readByteArray, and per-frame GC allocations inside update()/paint().",
+  "protocol_touchpoints": [
+    {
+      "direction": "READ",
+      "location": "Client/Client/Assets/Scripts/Game1/NinjaUtil.cs:23-39",
+      "opcode": "helper (Message)",
+      "payload_summary": "Reads int length then raw sbyte[] via msg.reader().readInt() / read(ref data); skips reading if length <= 1."
+    },
+    {
+      "direction": "READ",
+      "location": "Client/Client/Assets/Scripts/Game1/NinjaUtil.cs:41-55",
+      "opcode": "helper (myReader)",
+      "payload_summary": "Reads int length then raw sbyte[] via dos.readInt() / read(ref data) without length validation."
+    },
+    {
+      "direction": "DISPATCH",
+      "location": "Client/Client/Assets/Scripts/Game1/Mob.cs:437 & NewBoss.cs:158",
+      "opcode": "Service.requestModTemplate",
+      "payload_summary": "Requests missing mob template data/sprite from server by templateId."
+    },
+    {
+      "direction": "DISPATCH",
+      "location": "Client/Client/Assets/Scripts/Game1/MoneyCharge.cs:239",
+      "opcode": "Service.sendCardInfo",
+      "payload_summary": "Sends card serial and card code strings to server for top-up."
+    }
+  ]
+}

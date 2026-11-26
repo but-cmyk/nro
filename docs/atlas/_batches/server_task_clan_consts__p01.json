@@ -1,0 +1,134 @@
+{
+  "batch_id": "server_task_clan_consts__p01",
+  "concurrency_and_state": [
+    "No thread synchronization or DB/Redis calls exist in these consts files; however, ConstPlayer.HOP_THE_PORATA2/HOP_THE_PORATA3 (src/consts/ConstPlayer.java:21-22) and ConstHocKyNang.TimeUseSkill (src/consts/ConstHocKyNang.java:7) are non-final mutable public static fields."
+  ],
+  "cross_module_questions": [
+    "How does the packet router / Controller distinguish colliding byte opcodes in Cmd_message (e.g., 0, 1, 2, 4, 6, 7, 13, 14, 18, 21, 35, 38, 40, 41, 50, 62-66) between top-level commands and sub-commands?",
+    "Does ConstItem.java fail javac compilation due to duplicate field name SIEU_THAN_THUY at lines 200 and 730, or is ConstItem.java excluded/patched in the build?",
+    "Which IDs are actually used for item 1109 (CHOI_PHU_THUY vs MAY_DO_BOSS) and item 1210 (TRAI_TIM_VALENTINE vs BUNMA_TOC_TIM_THAT_BIM) in ItemService/UseItem?",
+    "In ConstNpc, do SUB_MENU (31720025) and SHEN_RON_BI_NGO_CONFIRM (31720025) collide on the same NPC handler (RongThieng or ConMeo)?"
+  ],
+  "db_redis_touchpoints": [],
+  "files_read": [
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/consts/AppearType.java:1-8",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/consts/BossID.java:1-219",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/consts/BossStatus.java:1-13",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/consts/BossType.java:1-19",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/consts/Cmd_message.java:1-580",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/consts/ConstAccount.java:1-11",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/consts/ConstAchievement.java:1-29",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/consts/ConstFont.java:1-18",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/consts/ConstHocKyNang.java:1-10",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/consts/ConstIgnoreName.java:1-4",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/consts/ConstItem.java:1-1293",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/consts/ConstMap.java:1-30",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/consts/ConstMob.java:1-112",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/consts/ConstNpc.java:1-482",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/consts/ConstPlayer.java:1-23",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/consts/ConstRatio.java:1-14",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/consts/ConstSuperRank.java:1-21",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/consts/ConstTask.java:1-2800"
+  ],
+  "findings": [
+    {
+      "category": "architecture",
+      "impact": "Compile-time error if ConstItem.java is compiled with javac, preventing build or forcing IDE/stale class usage.",
+      "location": "src/consts/ConstItem.java:200,730",
+      "root_cause": "Duplicate field declaration `public static final int SIEU_THAN_THUY` with values 195 (line 200) and 725 (line 730) in the same class.",
+      "severity": "P0",
+      "title": "Duplicate field name SIEU_THAN_THUY in ConstItem.java"
+    },
+    {
+      "category": "protocol",
+      "impact": "High risk of opcode misrouting or developer confusion when adding/modifying packet handlers.",
+      "location": "src/consts/Cmd_message.java:5-580",
+      "root_cause": "Top-level command IDs and sub-command IDs (NOT_LOGIN, NOT_MAP, SUB_COMMAND) are mixed in one flat class with many colliding byte values (e.g., 0, 1, 2, 3, 4, 6, 7, 13, 14, 16-18, 20-23, 35, 38, 40, 41, 50, 62-66).",
+      "severity": "P1",
+      "title": "Flat Cmd_message class mixes top-level and sub-command opcodes with widespread byte collisions"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Using or checking CHOI_PHU_THUY/MAY_DO_BOSS or TRAI_TIM_VALENTINE/BUNMA_TOC_TIM_THAT_BIM triggers wrong item behavior or event item confusion.",
+      "location": "src/consts/ConstItem.java:1114-1115,1183-1184",
+      "root_cause": "Item ID 1109 is assigned to both CHOI_PHU_THUY and MAY_DO_BOSS; item ID 1210 is assigned to both TRAI_TIM_VALENTINE and BUNMA_TOC_TIM_THAT_BIM.",
+      "severity": "P2",
+      "title": "Duplicate item ID constants in ConstItem.java (1109, 1210)"
+    },
+    {
+      "category": "gameplay",
+      "impact": "If handled in the same NPC switch, one menu branch becomes unreachable or triggers the wrong dialog.",
+      "location": "src/consts/ConstNpc.java:270,277",
+      "root_cause": "Both SHEN_RON_BI_NGO_CONFIRM and SUB_MENU are assigned the identical integer 31720025.",
+      "severity": "P2",
+      "title": "Colliding menu ID 31720025 in ConstNpc.java"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Biased random drop rate favoring item 2030 (THIT_BA_CHI) twice as often as other Tet 2023 materials.",
+      "location": "src/consts/ConstItem.java:1284",
+      "root_cause": "LIST_ITEM_NLSK_TET_2023 contains duplicate element 2030: `{2027, 2028, 2029, 2030, 2030, 2037, 2038}`.",
+      "severity": "P3",
+      "title": "Duplicate entry 2030 in LIST_ITEM_NLSK_TET_2023"
+    },
+    {
+      "category": "concurrency",
+      "impact": "Global fusion/skill constants could be accidentally mutated at runtime across threads without synchronization.",
+      "location": "src/consts/ConstPlayer.java:21-22; src/consts/ConstHocKyNang.java:7",
+      "root_cause": "HOP_THE_PORATA2, HOP_THE_PORATA3, and TimeUseSkill are declared `public static` without `final`.",
+      "severity": "P3",
+      "title": "Non-final mutable static fields in ConstPlayer and ConstHocKyNang"
+    },
+    {
+      "category": "architecture",
+      "impact": "Bloated class constant pool and poor maintainability; also non-ASCII identifier ĐỔI_PHIẾU_BÉ_NGOAN (ConstNpc.java:420) risks encoding issues across toolchains.",
+      "location": "src/consts/ConstTask.java:59-2800; src/consts/ConstNpc.java:420",
+      "root_cause": "ConstTask pre-generates thousands of `TASK_<id>_<step>` integer constants instead of a bit-shift helper method.",
+      "severity": "P3",
+      "title": "Massive pre-generated task constant table in ConstTask and non-ASCII identifier in ConstNpc"
+    }
+  ],
+  "key_classes": [
+    {
+      "key_methods": [],
+      "name": "Cmd_message",
+      "path": "src/consts/Cmd_message.java",
+      "responsibility": "Defines byte opcodes for client-server protocol commands and sub-commands."
+    },
+    {
+      "key_methods": [],
+      "name": "ConstItem",
+      "path": "src/consts/ConstItem.java",
+      "responsibility": "Defines item template ID constants and equipment/event item ID arrays."
+    },
+    {
+      "key_methods": [
+        "TextNpc(Player, byte)"
+      ],
+      "name": "ConstNpc",
+      "path": "src/consts/ConstNpc.java",
+      "responsibility": "Defines NPC IDs, menu action IDs, shop IDs, guide strings, and minigame text builder."
+    },
+    {
+      "key_methods": [],
+      "name": "ConstTask",
+      "path": "src/consts/ConstTask.java",
+      "responsibility": "Defines side/clan task limits, rewards, placeholder tokens, and pre-computed task-step IDs."
+    },
+    {
+      "key_methods": [],
+      "name": "BossID",
+      "path": "src/consts/BossID.java",
+      "responsibility": "Defines negative integer IDs for all boss instances."
+    }
+  ],
+  "module_summary": "Core server constants package (`src/consts/*`) defining boss IDs/statuses/types, protocol opcodes (`Cmd_message`), item IDs (`ConstItem`), NPC/menu/shop IDs (`ConstNpc`), mob/map/player/achievement constants, and task step IDs (`ConstTask`). No DB, Redis, or Netty I/O logic resides here, but several constant collisions, a duplicate field name in `ConstItem`, and mutable static fields were observed.",
+  "protocol_touchpoints": [
+    {
+      "direction": "DISPATCH",
+      "location": "src/consts/Cmd_message.java:5-580",
+      "opcode": "All client-server byte opcodes (e.g., LOGIN=0, LOGOUT=0, NOT_LOGIN=-29, NOT_MAP=-28, SUB_COMMAND=-30, GIAO_DICH=-86, COMBINNE=-81, SHOP=-44, KIGUI=-100)",
+      "payload_summary": "Constant definitions only; no serialization/deserialization performed in this file."
+    }
+  ]
+}

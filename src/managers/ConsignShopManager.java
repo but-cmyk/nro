@@ -7,6 +7,8 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.atomic.AtomicInteger;
 import models.ConsignItem;
@@ -22,6 +24,11 @@ public class ConsignShopManager {
     private final ReentrantLock saveLock = new ReentrantLock();
     private final ReentrantLock listLock = new ReentrantLock();
     private final AtomicInteger nextItemId = new AtomicInteger(0);
+    private final ExecutorService dbExecutor = Executors.newSingleThreadExecutor(r -> {
+        Thread t = new Thread(r, "db-consign-worker");
+        t.setDaemon(true);
+        return t;
+    });
 
     public static ConsignShopManager gI() {
         if (instance == null) {
@@ -46,11 +53,6 @@ public class ConsignShopManager {
             List<ConsignItem> itemsToSave = new ArrayList<>(this.listItem);
             listLock.unlock();
 
-            if (itemsToSave.isEmpty()) {
-                Logger.log("ConsignShopManager", "No consignment items to save.");
-                return;
-            }
-
             try (Connection con = AlyraManager.getConnection()) {
                 if (con == null) {
                     Logger.logException(ConsignShopManager.class, new Exception("Database connection is null"), "Failed to get database connection");
@@ -59,67 +61,72 @@ public class ConsignShopManager {
 
                 con.setAutoCommit(false);
 
-                try (Statement stmt = con.createStatement()) {
-                    stmt.execute("DELETE FROM shop_ky_gui");
-                }
+                try {
+                    try (Statement stmt = con.createStatement()) {
+                        stmt.execute("DELETE FROM shop_ky_gui");
+                    }
 
-                String sql = "INSERT INTO shop_ky_gui(id, player_id, tab, item_id, gold, gem, quantity, itemOption, isUpTop, isBuy) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-                try (PreparedStatement ps = con.prepareStatement(sql)) {
-                    int batchCount = 0;
-                    final int BATCH_SIZE = 100;
+                    if (!itemsToSave.isEmpty()) {
+                        String sql = "INSERT INTO shop_ky_gui(id, player_id, tab, item_id, gold, gem, quantity, itemOption, isUpTop, isBuy) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                        try (PreparedStatement ps = con.prepareStatement(sql)) {
+                            int batchCount = 0;
+                            final int BATCH_SIZE = 100;
 
-                    for (ConsignItem it : itemsToSave) {
-                        if (it == null || it.player_sell <= 0 || it.itemId <= 0 || it.quantity <= 0) {
-                            continue;
-                        }
-
-                        try {
-                            String optionsJson = "[]";
-                            if (it.options != null && !it.options.isEmpty()) {
-                                JSONArray array = new JSONArray();
-                                for (Item.ItemOption option : it.options) {
-                                    if (option != null && option.optionTemplate != null) {
-                                        JSONObject obj = new JSONObject();
-                                        obj.put("id", option.optionTemplate.id);
-                                        obj.put("param", option.param);
-                                        array.add(obj);
-                                    }
+                            for (ConsignItem it : itemsToSave) {
+                                if (it == null || it.player_sell <= 0 || it.itemId <= 0 || it.quantity <= 0) {
+                                    continue;
                                 }
-                                optionsJson = JSONValue.toJSONString(array);
+
+                                String optionsJson = "[]";
+                                if (it.options != null && !it.options.isEmpty()) {
+                                    JSONArray array = new JSONArray();
+                                    for (Item.ItemOption option : it.options) {
+                                        if (option != null && option.optionTemplate != null) {
+                                            JSONObject obj = new JSONObject();
+                                            obj.put("id", option.optionTemplate.id);
+                                            obj.put("param", option.param);
+                                            array.add(obj);
+                                        }
+                                    }
+                                    optionsJson = JSONValue.toJSONString(array);
+                                }
+
+                                ps.setInt(1, it.id);
+                                ps.setInt(2, it.player_sell);
+                                ps.setByte(3, it.tab);
+                                ps.setInt(4, it.itemId);
+                                ps.setInt(5, it.goldSell);
+                                ps.setInt(6, it.gemSell);
+                                ps.setInt(7, it.quantity);
+                                ps.setString(8, optionsJson);
+                                ps.setByte(9, it.isUpTop);
+                                ps.setBoolean(10, it.isBuy);
+
+                                ps.addBatch();
+                                batchCount++;
+
+                                if (batchCount >= BATCH_SIZE) {
+                                    ps.executeBatch();
+                                    ps.clearBatch();
+                                    batchCount = 0;
+                                }
                             }
 
-                            ps.setInt(1, it.id);
-                            ps.setInt(2, it.player_sell);
-                            ps.setByte(3, it.tab);
-                            ps.setInt(4, it.itemId);
-                            ps.setInt(5, it.goldSell);
-                            ps.setInt(6, it.gemSell);
-                            ps.setInt(7, it.quantity);
-                            ps.setString(8, optionsJson);
-                            ps.setByte(9, it.isUpTop);
-                            ps.setBoolean(10, it.isBuy);
-
-                            ps.addBatch();
-                            batchCount++;
-
-                            if (batchCount >= BATCH_SIZE) {
+                            if (batchCount > 0) {
                                 ps.executeBatch();
-                                ps.clearBatch();
-                                batchCount = 0;
                             }
-                        } catch (Exception ex) {
-                            Logger.logException(ConsignShopManager.class, ex, "Error inserting item ID: " + it.id);
                         }
                     }
 
-                    if (batchCount > 0) {
-                        ps.executeBatch();
+                    con.commit();
+                    Logger.log("Successfully saved " + itemsToSave.size() + " items\n");
+                } catch (Exception txEx) {
+                    try {
+                        con.rollback();
+                    } catch (Exception ignored) {
                     }
+                    Logger.logException(ConsignShopManager.class, txEx, "Transaction failed & rolled back while saving consignment shop");
                 }
-
-                con.commit();
-                Logger.log("Successfully saved " + itemsToSave.size() + " items\n");
-
             } catch (Exception e) {
                 Logger.logException(ConsignShopManager.class, e, "Failed to save consignment shop data");
             }
@@ -264,89 +271,109 @@ public class ConsignShopManager {
         }
     }
 
-    // Atomic DB operations - Cập nhật trạng thái đã mua
+    // Atomic DB operations - Cập nhật trạng thái đã mua (tuần tự dưới saveLock)
     public void updateItemBoughtAsync(int itemId) {
-        Thread.ofVirtual().name("db-consign-bought").start(() -> {
-            String sql = "UPDATE `shop_ky_gui` SET `isBuy` = 1 WHERE `id` = ?";
-            try (Connection con = AlyraManager.getConnection();
-                 PreparedStatement ps = con.prepareStatement(sql)) {
-                ps.setInt(1, itemId);
-                ps.executeUpdate();
-            } catch (Exception e) {
-                Logger.logException(ConsignShopManager.class, e, "Lỗi updateItemBoughtAsync ID: " + itemId);
+        dbExecutor.execute(() -> {
+            saveLock.lock();
+            try {
+                String sql = "UPDATE `shop_ky_gui` SET `isBuy` = 1 WHERE `id` = ?";
+                try (Connection con = AlyraManager.getConnection();
+                     PreparedStatement ps = con.prepareStatement(sql)) {
+                    ps.setInt(1, itemId);
+                    ps.executeUpdate();
+                } catch (Exception e) {
+                    Logger.logException(ConsignShopManager.class, e, "Lỗi updateItemBoughtAsync ID: " + itemId);
+                }
+            } finally {
+                saveLock.unlock();
             }
         });
     }
 
-    // Atomic DB operations - Xóa item khi hủy hoặc nhận tiền
+    // Atomic DB operations - Xóa item khi hủy hoặc nhận tiền (tuần tự dưới saveLock)
     public void deleteItemAsync(int itemId) {
-        Thread.ofVirtual().name("db-consign-delete").start(() -> {
-            String sql = "DELETE FROM `shop_ky_gui` WHERE `id` = ?";
-            try (Connection con = AlyraManager.getConnection();
-                 PreparedStatement ps = con.prepareStatement(sql)) {
-                ps.setInt(1, itemId);
-                ps.executeUpdate();
-            } catch (Exception e) {
-                Logger.logException(ConsignShopManager.class, e, "Lỗi deleteItemAsync ID: " + itemId);
+        dbExecutor.execute(() -> {
+            saveLock.lock();
+            try {
+                String sql = "DELETE FROM `shop_ky_gui` WHERE `id` = ?";
+                try (Connection con = AlyraManager.getConnection();
+                     PreparedStatement ps = con.prepareStatement(sql)) {
+                    ps.setInt(1, itemId);
+                    ps.executeUpdate();
+                } catch (Exception e) {
+                    Logger.logException(ConsignShopManager.class, e, "Lỗi deleteItemAsync ID: " + itemId);
+                }
+            } finally {
+                saveLock.unlock();
             }
         });
     }
 
-    // Atomic DB operations - Cập nhật đưa lên top
+    // Atomic DB operations - Cập nhật đưa lên top (tuần tự dưới saveLock)
     public void updateItemUpTopAsync(int itemId, byte isUpTop) {
-        Thread.ofVirtual().name("db-consign-uptop").start(() -> {
-            String sql = "UPDATE `shop_ky_gui` SET `isUpTop` = ? WHERE `id` = ?";
-            try (Connection con = AlyraManager.getConnection();
-                 PreparedStatement ps = con.prepareStatement(sql)) {
-                ps.setByte(1, isUpTop);
-                ps.setInt(2, itemId);
-                ps.executeUpdate();
-            } catch (Exception e) {
-                Logger.logException(ConsignShopManager.class, e, "Lỗi updateItemUpTopAsync ID: " + itemId);
+        dbExecutor.execute(() -> {
+            saveLock.lock();
+            try {
+                String sql = "UPDATE `shop_ky_gui` SET `isUpTop` = ? WHERE `id` = ?";
+                try (Connection con = AlyraManager.getConnection();
+                     PreparedStatement ps = con.prepareStatement(sql)) {
+                    ps.setByte(1, isUpTop);
+                    ps.setInt(2, itemId);
+                    ps.executeUpdate();
+                } catch (Exception e) {
+                    Logger.logException(ConsignShopManager.class, e, "Lỗi updateItemUpTopAsync ID: " + itemId);
+                }
+            } finally {
+                saveLock.unlock();
             }
         });
     }
 
-    // Atomic Async DB operation - Chèn item mới vào database ngầm qua Virtual Thread (không block Netty)
+    // Atomic Async DB operation - Chèn item mới tuần tự dưới saveLock (không block Netty)
     @SuppressWarnings("unchecked")
     public void insertItemAsync(ConsignItem item) {
         if (item == null || item.player_sell <= 0 || item.itemId <= 0 || item.quantity <= 0) {
             return;
         }
-        Thread.ofVirtual().name("db-consign-insert").start(() -> {
-            String sql = "INSERT INTO `shop_ky_gui`(`id`, `player_id`, `tab`, `item_id`, `gold`, `gem`, `quantity`, `itemOption`, `isUpTop`, `isBuy`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-            String optionsJson = "[]";
-            if (item.options != null && !item.options.isEmpty()) {
-                try {
-                    JSONArray jsonArray = new JSONArray();
-                    for (Item.ItemOption option : item.options) {
-                        if (option != null && option.optionTemplate != null) {
-                            JSONObject jsonObj = new JSONObject();
-                            jsonObj.put("id", option.optionTemplate.id);
-                            jsonObj.put("param", option.param);
-                            jsonArray.add(jsonObj);
+        dbExecutor.execute(() -> {
+            saveLock.lock();
+            try {
+                String sql = "INSERT INTO `shop_ky_gui`(`id`, `player_id`, `tab`, `item_id`, `gold`, `gem`, `quantity`, `itemOption`, `isUpTop`, `isBuy`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                String optionsJson = "[]";
+                if (item.options != null && !item.options.isEmpty()) {
+                    try {
+                        JSONArray jsonArray = new JSONArray();
+                        for (Item.ItemOption option : item.options) {
+                            if (option != null && option.optionTemplate != null) {
+                                JSONObject jsonObj = new JSONObject();
+                                jsonObj.put("id", option.optionTemplate.id);
+                                jsonObj.put("param", option.param);
+                                jsonArray.add(jsonObj);
+                            }
                         }
+                        optionsJson = JSONValue.toJSONString(jsonArray);
+                    } catch (Exception ignored) {
+                        optionsJson = "[]";
                     }
-                    optionsJson = JSONValue.toJSONString(jsonArray);
-                } catch (Exception ignored) {
-                    optionsJson = "[]";
                 }
-            }
-            try (Connection con = AlyraManager.getConnection();
-                 PreparedStatement ps = con.prepareStatement(sql)) {
-                ps.setInt(1, item.id);
-                ps.setInt(2, item.player_sell);
-                ps.setByte(3, item.tab);
-                ps.setInt(4, item.itemId);
-                ps.setInt(5, item.goldSell);
-                ps.setInt(6, item.gemSell);
-                ps.setInt(7, item.quantity);
-                ps.setString(8, optionsJson);
-                ps.setByte(9, item.isUpTop);
-                ps.setBoolean(10, item.isBuy);
-                ps.executeUpdate();
-            } catch (Exception e) {
-                Logger.logException(ConsignShopManager.class, e, "Lỗi insertItemAsync ID: " + item.id);
+                try (Connection con = AlyraManager.getConnection();
+                     PreparedStatement ps = con.prepareStatement(sql)) {
+                    ps.setInt(1, item.id);
+                    ps.setInt(2, item.player_sell);
+                    ps.setByte(3, item.tab);
+                    ps.setInt(4, item.itemId);
+                    ps.setInt(5, item.goldSell);
+                    ps.setInt(6, item.gemSell);
+                    ps.setInt(7, item.quantity);
+                    ps.setString(8, optionsJson);
+                    ps.setByte(9, item.isUpTop);
+                    ps.setBoolean(10, item.isBuy);
+                    ps.executeUpdate();
+                } catch (Exception e) {
+                    Logger.logException(ConsignShopManager.class, e, "Lỗi insertItemAsync ID: " + item.id);
+                }
+            } finally {
+                saveLock.unlock();
             }
         });
     }

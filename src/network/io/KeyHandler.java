@@ -20,9 +20,9 @@ public class KeyHandler implements IKeySessionHandler {
             msg.writer().writeUTF("");
             msg.writer().writeInt(0);
             msg.writer().writeByte(0);
+            session.setSentKey(true);
             session.doSendMessage(msg);
             msg.cleanup();
-            session.setSentKey(true);
         } catch (Exception ex) {
         }
     }

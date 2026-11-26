@@ -38,7 +38,8 @@ public class ResultSetImpl implements AlyraResultSet {
                 Object[] rowValues = new Object[nColumn];
                 for (int j = 1; j <= nColumn; ++j) {
                     final String tableName = rsmd.getTableName(j);
-                    final String columnName = rsmd.getColumnName(j);
+                    final String columnLabel = rsmd.getColumnLabel(j);
+                    final String columnName = (columnLabel != null && !columnLabel.isEmpty()) ? columnLabel : rsmd.getColumnName(j);
                     final Object columnValue = rs.getObject(j);
                     
                     // Store with column name (case insensitive)
@@ -507,6 +508,9 @@ public class ResultSetImpl implements AlyraResultSet {
         if (value instanceof Timestamp) {
             return (Timestamp) value;
         }
+        if (value instanceof java.time.LocalDateTime) {
+            return Timestamp.valueOf((java.time.LocalDateTime) value);
+        }
         if (value instanceof java.util.Date) {
             return new Timestamp(((java.util.Date) value).getTime());
         }
@@ -530,6 +534,9 @@ public class ResultSetImpl implements AlyraResultSet {
         }
         if (value instanceof Timestamp) {
             return (Timestamp) value;
+        }
+        if (value instanceof java.time.LocalDateTime) {
+            return Timestamp.valueOf((java.time.LocalDateTime) value);
         }
         if (value instanceof java.util.Date) {
             return new Timestamp(((java.util.Date) value).getTime());

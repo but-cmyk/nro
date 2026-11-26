@@ -49,12 +49,18 @@ public class NroPacketEncoder extends MessageToByteEncoder<Message> {
             // Trường hợp đặc biệt: Các command gửi resource/ảnh lớn dùng 3 bytes size
             if (msg.command == -32 || msg.command == -66 || msg.command == -74 || msg.command == 11
                     || msg.command == -67 || msg.command == -87 || msg.command == 66) {
-                byte b2 = this.writeKey((byte) size);
-                out.writeByte(b2 - 128);
-                byte b3 = this.writeKey((byte) (size >> 8));
-                out.writeByte(b3 - 128);
-                byte b4 = this.writeKey((byte) (size >> 16));
-                out.writeByte(b4 - 128);
+                if (shouldEncrypt) {
+                    byte b2 = this.writeKey((byte) size);
+                    out.writeByte(b2 - 128);
+                    byte b3 = this.writeKey((byte) (size >> 8));
+                    out.writeByte(b3 - 128);
+                    byte b4 = this.writeKey((byte) (size >> 16));
+                    out.writeByte(b4 - 128);
+                } else {
+                    out.writeByte(((byte) size) - 128);
+                    out.writeByte(((byte) (size >> 8)) - 128);
+                    out.writeByte(((byte) (size >> 16)) - 128);
+                }
             } else if (shouldEncrypt) {
                 byte byte1 = this.writeKey((byte) (size >> 8));
                 out.writeByte(byte1);
@@ -74,7 +80,12 @@ public class NroPacketEncoder extends MessageToByteEncoder<Message> {
                 out.writeBytes(data);
             }
         } else {
-            out.writeShort(0);
+            if (shouldEncrypt) {
+                out.writeByte(this.writeKey((byte) 0));
+                out.writeByte(this.writeKey((byte) 0));
+            } else {
+                out.writeShort(0);
+            }
         }
 
         if (server.Manager.DEBUG) {

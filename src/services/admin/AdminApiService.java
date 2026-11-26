@@ -51,7 +51,18 @@ public class AdminApiService {
     private static AdminApiService instance;
     private HttpServer httpServer;
     private static final int DEFAULT_PORT = 14446;
-    private static final String ADMIN_TOKEN = "nro_admin_secret_2026";
+    private static final String ADMIN_TOKEN = resolveAdminToken();
+    private static final String ALLOWED_ORIGIN = System.getenv("NRO_ADMIN_CORS_ORIGIN") != null
+            ? System.getenv("NRO_ADMIN_CORS_ORIGIN")
+            : "http://localhost:" + DEFAULT_PORT;
+
+    private static String resolveAdminToken() {
+        String envToken = System.getenv("NRO_ADMIN_TOKEN");
+        if (envToken != null && !envToken.trim().isEmpty()) {
+            return envToken.trim();
+        }
+        return UUID.randomUUID().toString();
+    }
     private final Gson gson = new Gson();
 
     public static AdminApiService gI() {
@@ -141,20 +152,13 @@ public class AdminApiService {
             }
         }
 
-        // 3. Fallback: localhost / 127.0.0.1 without token can access dashboard page
-        String remoteHost = exchange.getRemoteAddress().getAddress().getHostAddress();
-        if ("127.0.0.1".equals(remoteHost) || "0:0:0:0:0:0:0:1".equals(remoteHost)) {
-            // Read-only or local dev access
-            return true;
-        }
-
         return false;
     }
 
     private void sendJsonResponse(HttpExchange exchange, int statusCode, Object data) throws IOException {
         byte[] bytes = gson.toJson(data).getBytes(StandardCharsets.UTF_8);
         exchange.getResponseHeaders().set("Content-Type", "application/json; charset=UTF-8");
-        exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
+        exchange.getResponseHeaders().set("Access-Control-Allow-Origin", ALLOWED_ORIGIN);
         exchange.getResponseHeaders().set("Access-Control-Allow-Headers", "Content-Type, Authorization");
         exchange.getResponseHeaders().set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
         exchange.sendResponseHeaders(statusCode, bytes.length);

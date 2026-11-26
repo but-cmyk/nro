@@ -427,17 +427,17 @@ public class SkillService {
         }
         switch (player.playerSkill.skillSelect.template.id) {
             case Skill.KAIOKEN: //kaioken
-                long hpUse = Util.maxIntValue((double) player.nPoint.hpMax / 100 * 3);
+                long hpUse = (long) (player.nPoint.hpMax * 0.03);
                 if (player.setClothes.thanVuTruKaio == 4) {
-                    hpUse = Util.maxIntValue((double) player.nPoint.hpMax / 100 * 2);
+                    hpUse = (long) (player.nPoint.hpMax * 0.02);
                 } else if (player.setClothes.thanVuTruKaio == 5) {
-                    hpUse = Util.maxIntValue((double) player.nPoint.hpMax / 100 * 1);
+                    hpUse = (long) (player.nPoint.hpMax * 0.01);
                 }
-                if (Util.maxIntValue(player.nPoint.hp) <= hpUse) {
+                if (player.nPoint.hp <= hpUse) {
                     break;
                 } else {
                     Service.gI().sendEffAllPlayer(player, 1027);
-                    player.nPoint.setHp(Util.maxIntValue(player.nPoint.hp - hpUse));
+                    player.nPoint.setHp(player.nPoint.hp - hpUse);
                     PlayerService.gI().sendInfoHpMpMoney(player);
                     Service.gI().Send_Info_NV(player);
                 }
@@ -482,6 +482,9 @@ public class SkillService {
                     player.playerSkill.lastTimePrepareQCKK = System.currentTimeMillis();
                     sendPlayerPrepareSkill(player, 4000);
                 } else {
+                    if (!Util.canDoWithTime(player.playerSkill.lastTimePrepareQCKK, 3700)) {
+                        return;
+                    }
                     //ném cầu
                     player.playerSkill.prepareQCKK = false;
                     mobs = new ArrayList<>();
@@ -521,6 +524,9 @@ public class SkillService {
                     player.playerSkill.lastTimePrepareLaze = System.currentTimeMillis();
                     sendPlayerPrepareSkill(player, 3000);
                 } else {
+                    if (!Util.canDoWithTime(player.playerSkill.lastTimePrepareLaze, 2700)) {
+                        return;
+                    }
                     //bắn laze
                     player.playerSkill.prepareLaze = false;
                     boolean lazeMiss = false;
@@ -712,7 +718,7 @@ public class SkillService {
                                     Service.gI().Send_Info_NV(pl);
                                     ItemTimeService.gI().sendItemTime(pl, 3781, 30);
                                     PlayerService.gI().sendInfoHpMp(pl);
-                                } else if (!pl.isBoss && pl.gender == ConstPlayer.NAMEC && player.cFlag == pl.cFlag) {
+                                } else if (!pl.isBoss && pl.gender == ConstPlayer.NAMEC && player.cFlag != 0 && player.cFlag == pl.cFlag) {
                                     pl.nPoint.setHP((long) pl.nPoint.hp - (((long) pl.nPoint.hpMax * 10 / 100) < pl.nPoint.hp ? ((long) pl.nPoint.hpMax * 10 / 100) : 0));
                                     Service.gI().point(pl);
                                     Service.gI().Send_Info_NV(pl);
@@ -854,11 +860,13 @@ public class SkillService {
                 List<Player> playersMap = player.zone.getNotBosses();
                 for (Player pl : playersMap) {
                     if (!pl.equals(plTarget) && point > 1) {
-                        if (canHsPlayer(player, plTarget) && Util.getDistance(player, pl) <= 300) {
+                        if (canHsPlayer(player, pl) && Util.getDistance(player, pl) <= 300) {
                             players.add(pl);
                         }
                     }
                 }
+                player.nPoint.setHP(player.nPoint.getHP() + ((long) player.nPoint.hpMax * percentTriThuong / 100));
+                player.nPoint.setMP(player.nPoint.getMP() + ((long) player.nPoint.mpMax * percentTriThuong / 100));
                 for (Player pl : players) {
                     try {
                         msg = new Message(-60);
@@ -869,8 +877,6 @@ public class SkillService {
                         msg.writer().writeByte(0); //read continue
                         Service.gI().sendMessAllPlayerInMap(pl, msg);
                         boolean isDie = pl.isDie();
-                        player.nPoint.setHP(player.nPoint.getHP() + ((long) player.nPoint.hpMax * percentTriThuong / 100));
-                        player.nPoint.setMP(player.nPoint.getMP() + ((long) player.nPoint.mpMax * percentTriThuong / 100));
                         pl.nPoint.setHP(pl.nPoint.getHP() + ((long) pl.nPoint.hpMax * percentTriThuong / 100));
                         pl.nPoint.setMP(pl.nPoint.getMP() + ((long) pl.nPoint.mpMax * percentTriThuong / 100));
                         if (isDie) {

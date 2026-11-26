@@ -1,0 +1,204 @@
+{
+  "java_package_edges_top50": [
+    {
+      "edge": "models -> services",
+      "import_count": 818
+    },
+    {
+      "edge": "models -> consts",
+      "import_count": 502
+    },
+    {
+      "edge": "models -> utils",
+      "import_count": 333
+    },
+    {
+      "edge": "services -> models",
+      "import_count": 332
+    },
+    {
+      "edge": "models -> [ext]java.util",
+      "import_count": 151
+    },
+    {
+      "edge": "services -> [ext]java.util",
+      "import_count": 124
+    },
+    {
+      "edge": "managers -> models",
+      "import_count": 112
+    },
+    {
+      "edge": "services -> utils",
+      "import_count": 100
+    },
+    {
+      "edge": "services -> consts",
+      "import_count": 73
+    },
+    {
+      "edge": "models -> server",
+      "import_count": 66
+    },
+    {
+      "edge": "server -> services",
+      "import_count": 61
+    },
+    {
+      "edge": "database -> models",
+      "import_count": 55
+    },
+    {
+      "edge": "server -> models",
+      "import_count": 50
+    },
+    {
+      "edge": "services -> server",
+      "import_count": 48
+    },
+    {
+      "edge": "models -> managers",
+      "import_count": 42
+    },
+    {
+      "edge": "services -> network",
+      "import_count": 38
+    },
+    {
+      "edge": "server -> [ext]java.util",
+      "import_count": 34
+    },
+    {
+      "edge": "services -> database",
+      "import_count": 31
+    },
+    {
+      "edge": "database -> [ext]java.sql",
+      "import_count": 30
+    },
+    {
+      "edge": "models -> network",
+      "import_count": 29
+    },
+    {
+      "edge": "network -> [ext]java.util",
+      "import_count": 29
+    },
+    {
+      "edge": "bot -> services",
+      "import_count": 27
+    },
+    {
+      "edge": "managers -> [ext]java.util",
+      "import_count": 27
+    },
+    {
+      "edge": "services -> [ext]java.sql",
+      "import_count": 27
+    },
+    {
+      "edge": "telemetry -> [ext]java.util",
+      "import_count": 26
+    },
+    {
+      "edge": "network -> interfaces",
+      "import_count": 25
+    },
+    {
+      "edge": "database -> [ext]java.util",
+      "import_count": 23
+    },
+    {
+      "edge": "network -> [ext]java.io",
+      "import_count": 22
+    },
+    {
+      "edge": "services -> [ext]java.io",
+      "import_count": 22
+    },
+    {
+      "edge": "bot -> models",
+      "import_count": 21
+    },
+    {
+      "edge": "network -> [ext]io.netty",
+      "import_count": 21
+    },
+    {
+      "edge": "server -> utils",
+      "import_count": 20
+    },
+    {
+      "edge": "server -> network",
+      "import_count": 18
+    },
+    {
+      "edge": "server -> [ext]java.io",
+      "import_count": 17
+    },
+    {
+      "edge": "utils -> models",
+      "import_count": 17
+    },
+    {
+      "edge": "root -> [ext]io.netty",
+      "import_count": 17
+    },
+    {
+      "edge": "models -> database",
+      "import_count": 16
+    },
+    {
+      "edge": "database -> utils",
+      "import_count": 15
+    },
+    {
+      "edge": "database -> [ext]org.json",
+      "import_count": 15
+    },
+    {
+      "edge": "server -> database",
+      "import_count": 15
+    },
+    {
+      "edge": "utils -> [ext]java.util",
+      "import_count": 15
+    },
+    {
+      "edge": "managers -> server",
+      "import_count": 14
+    },
+    {
+      "edge": "bot -> [ext]java.util",
+      "import_count": 13
+    },
+    {
+      "edge": "database -> services",
+      "import_count": 13
+    },
+    {
+      "edge": "managers -> utils",
+      "import_count": 13
+    },
+    {
+      "edge": "models -> [ext]java.io",
+      "import_count": 13
+    },
+    {
+      "edge": "server -> managers",
+      "import_count": 13
+    },
+    {
+      "edge": "data -> models",
+      "import_count": 12
+    },
+    {
+      "edge": "services -> managers",
+      "import_count": 12
+    },
+    {
+      "edge": "managers -> services",
+      "import_count": 11
+    }
+  ]
+}

@@ -390,7 +390,8 @@ public class Trade {
     }
 
     private void startTrade() {
-        if (this.isDisposed || player1 == null || player2 == null || player1.inventory == null || player2.inventory == null) {
+        if (this.isDisposed || player1 == null || player2 == null || player1 == player2 || player1.id == player2.id
+                || player1.inventory == null || player2.inventory == null) {
             return;
         }
         Player firstLock = player1.id < player2.id ? player1 : player2;
@@ -399,6 +400,11 @@ public class Trade {
         firstLock.getTradeLock().lock();
         secondLock.getTradeLock().lock();
         try {
+            synchronized (firstLock) {
+                synchronized (secondLock) {
+                    if (this.isDisposed || !player1.isTrade || !player2.isTrade) {
+                        return;
+                    }
             byte tradeStatus = SUCCESS;
             boolean isTransCommitted = false;
             try {
@@ -506,6 +512,8 @@ public class Trade {
                     }
                 } catch (Exception e) {
                     Logger.logException(Trade.class, e, "Lỗi gửi cập nhật UI sau giao dịch cho player2");
+                }
+            }
                 }
             }
         } finally {

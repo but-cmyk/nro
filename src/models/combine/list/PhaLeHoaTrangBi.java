@@ -142,7 +142,7 @@ public class PhaLeHoaTrangBi {
             return;
         }
 
-        int maxAttempts = (args.length > 0 && args[0] > 0) ? args[0] : 1;
+        int maxAttempts = (args.length > 0 && args[0] > 0) ? Math.min(args[0], 100) : 1;
         int star = item.getOptionParam(OPTION_SAO_PHA_LE);
         
         if (star >= CombineService.MAX_STAR_ITEM) return;

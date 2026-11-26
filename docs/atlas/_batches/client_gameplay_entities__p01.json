@@ -1,0 +1,342 @@
+{
+  "batch_id": "client_gameplay_entities__p01",
+  "concurrency_and_state": [
+    "Static shared EffectData fields on boss classes (BigBoss.data, BachTuoc.data, BigBoss2.data, Mabu.data1/data2) overwrite across instances or partial loads.",
+    "BackgroudEffect mixes instance particles with static shared fields (wP, PIXEL, imgLacay, isFog, isPaintFar, nCloud, xfog, yfog, vBgEffect), causing concurrent effects of different types to clobber each other's PIXEL/wP/imgLacay.",
+    "BgItem maintains static MyHashTable imgNew, vKeysNew, vKeysLast across map transitions while clearHashTable() is empty.",
+    "ImageSource stores static MyVector vSource and vRms; ClientInput uses a static singleton instance that is not cleared on submit (perform idAction=2).",
+    "All Unity C# gameplay/render classes run on the Unity main thread; no locks or background threads are used in these files."
+  ],
+  "cross_module_questions": [
+    "How does Mob base class and Controller invoke BigBoss/BigBoss2/BachTuoc methods (e.g., isPaint, isUpdate, startDie, setAttack(Char), updateMobAttack), given those methods use 'new' hiding instead of 'override'?",
+    "How does SmallImage call Small.update() vs Small.paint() (GameCanvas.gameTick % 1000) to avoid premature texture destruction in Small.cs:70-78?",
+    "What opcode/handler in Service and Server receives ImageSource.checkRMS() (which currently sends an empty MyVector due to 'if (false)') and RegisterScreen's charInfo(user, pass)?",
+    "How does TileMap/GameScr trigger BgItem.clearHashTable() and clear BigBoss/BachTuoc/BigBoss2/Mabu static EffectData textures on map exit?"
+  ],
+  "db_redis_touchpoints": [],
+  "files_read": [
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/ActionChat.cs:1-4",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/ActionPaint.cs:1-4",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/ActionUpdate.cs:1-4",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/Archivement.cs:1-15",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/ArrayCast.cs:1-35",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/Arrow.cs:1-184",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/Arrowpaint.cs:1-176",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/Assets/src/e/ChatVip.cs:1-11",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/Assets/src/e/Small.cs:1-80",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/Assets/src/e/SmallSave.cs:1-9",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/Assets/src/g/BigBoss.cs:1-745",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/Assets/src/g/ClientInput.cs:1-200",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/Assets/src/g/GameInfo.cs:1-13",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/Assets/src/g/ImageSource.cs:1-132",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/Assets/src/g/Mabu.cs:1-252",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/Assets/src/g/PetFollow.cs:1-115",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/Assets/src/g/RegisterScreen.cs:1-405",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/BachTuoc.cs:1-613",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/BackgroudEffect.cs:1-1367",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/BallInfo.cs:1-49",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/BaseCommand.cs:1-20",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/BgItem.cs:1-195",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/BgItemMn.cs:1-155",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/BigBoss2.cs:1-677"
+  ],
+  "findings": [
+    {
+      "category": "performance_gc",
+      "impact": "Causes per-frame GC allocations, debug string formatting, and animation speed coupled to render FPS instead of fixed update ticks.",
+      "location": "Client/Client/Assets/Scripts/Game1/Assets/src/g/BigBoss.cs:630-643; Client/Client/Assets/Scripts/Game1/BachTuoc.cs:493-505; Client/Client/Assets/Scripts/Game1/BigBoss2.cs:563-575; Client/Client/Assets/Scripts/Game1/Assets/src/g/Mabu.cs:235",
+      "root_cause": "BigBoss.paint, BachTuoc.paint, and BigBoss2.paint instantiate two 'new Effect(...)' objects per paint call when shock==true, and BigBoss.paint concatenates '\"type= \" + type'. Mabu.paint advances animation state via checkFrameTick(skills[skillID]) inside paint().",
+      "severity": "P2",
+      "title": "Object allocations, string concat, and state mutation inside boss paint() loops"
+    },
+    {
+      "category": "performance_gc",
+      "impact": "Allocates multiple temporary strings per background item every render frame and performs synchronous PNG encoding on the Unity main thread on cache miss.",
+      "location": "Client/Client/Assets/Scripts/Game1/BgItem.cs:124-140,152; Client/Client/Assets/Scripts/Game1/BgItemMn.cs:119-134,141-151",
+      "root_cause": "BgItem.paint builds hashtable lookup keys via 'idImage + string.Empty' and 'idImage + \"blend\" + layer' on every frame. BgItemMn.blendImage runs Texture2D blending and EncodeToPNG() + Rms.saveRMS synchronously on the main thread.",
+      "severity": "P2",
+      "title": "Per-frame string allocations in BgItem.paint and blocking PNG encode on main thread"
+    },
+    {
+      "category": "architecture",
+      "impact": "Calling isPaint(), isUpdate(), startDie(), setAttack(Char), or updateMobAttack() through a Mob base reference invokes Mob's methods instead of the boss's implementation; massive copy-paste increases maintenance risk.",
+      "location": "Client/Client/Assets/Scripts/Game1/Assets/src/g/BigBoss.cs:220-743; Client/Client/Assets/Scripts/Game1/BachTuoc.cs:158-605; Client/Client/Assets/Scripts/Game1/BigBoss2.cs:183-675",
+      "root_cause": "BigBoss, BachTuoc, and BigBoss2 duplicate ~500 lines of Mob/Boss logic and use 'new' method hiding (isPaint, isUpdate, startDie, setAttack(Char), updateMobAttack, updateMobWalk, getX/Y/W/H) instead of 'override'.",
+      "severity": "P1",
+      "title": "Extensive boss code duplication and 'new' hiding instead of 'override' on Mob methods"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Crashes client with DivideByZeroException if maxHp==0, or NullReferenceException/IndexOutOfRangeException if charAttack is null/empty during boss attack states.",
+      "location": "Client/Client/Assets/Scripts/Game1/Assets/src/g/BigBoss.cs:457,488,504,528,620; Client/Client/Assets/Scripts/Game1/BachTuoc.cs:361,383,483; Client/Client/Assets/Scripts/Game1/BigBoss2.cs:421,441,459,553; Client/Client/Assets/Scripts/Game1/Assets/src/g/Mabu.cs:201",
+      "root_cause": "Boss paint() divides hp*50L/maxHp without checking maxHp>0; updateMobAttack() and Mabu.update() index charAttack[0]/charAttack[pIndex] without null or length guards. Also Mabu.update() accesses effEat without null check when focus!=null.",
+      "severity": "P1",
+      "title": "Unguarded division by maxHp and unguarded charAttack[] indexing in bosses and Mabu"
+    },
+    {
+      "category": "protocol",
+      "impact": "Client always sends an empty image-diff vector to the server when cached ImageSource RMS exists, preventing incremental image version updates.",
+      "location": "Client/Client/Assets/Scripts/Game1/Assets/src/g/ImageSource.cs:54-73",
+      "root_cause": "The version comparison loops populating myVector between vSource and vRms are disabled inside an 'if (false)' block before Service.gI().imageSource(myVector).",
+      "severity": "P1",
+      "title": "ImageSource.checkRMS disables version diffing via dead 'if (false)' block"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Touching/clicking a TField in ClientInput does nothing unless Up/Down key was also pressed in the same tick; submitted ClientInput singleton remains allocated in memory.",
+      "location": "Client/Client/Assets/Scripts/Game1/Assets/src/g/ClientInput.cs:44-55,144-166,196-198",
+      "root_cause": "Pointer hit-testing ('if (GameCanvas.isPointerJustRelease && ...)') is nested inside 'if (GameCanvas.keyPressed[2] || GameCanvas.keyPressed[8])'. Also init() sets tf[0].isFocus inside the loop for every index i, and perform(2) switches screen without calling clearScreen().",
+      "severity": "P2",
+      "title": "ClientInput touch focus broken by nesting inside keyPressed branch"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Concurrent leaf/snow/lunar-year BackgroudEffect instances corrupt each other's sprite frame height (PIXEL) and animation frame cap; ship vertical directions (way 3 and 4) never trigger.",
+      "location": "Client/Client/Assets/Scripts/Game1/BackgroudEffect.cs:19,51,127,612-640,855-856,1108-1131",
+      "root_cause": "BackgroudEffect stores PIXEL, wP, and imgLacay as static fields shared across instances; update() and paintLacay1/2 overwrite 'num' unconditionally with 'typeEff != 15 ? 4 : 4' making typeEff==11 check dead, and mutate static PIXEL=5 during paint; reloadShip() calls Res.random(1, 3) so way==3 and way==4 are unreachable.",
+      "severity": "P2",
+      "title": "Shared static state corruption, dead branches, and unreachable ship paths in BackgroudEffect"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Non-square Small sprite sheets slice frames at wrong Y offset, and Small textures risk premature destruction if paint() hasn't hit gameTick % 1000.",
+      "location": "Client/Client/Assets/Scripts/Game1/Assets/src/e/Small.cs:28,48-53,70-78",
+      "root_cause": "Small.paint uses 'f * w' instead of 'f * h' for vertical frame region offset. Small.update increments timeUpdate every call and destroys the texture when 'timeUpdate - timePaint > 1', whereas timePaint only increments when 'GameCanvas.gameTick % 1000 == 0' during paint.",
+      "severity": "P2",
+      "title": "Small frame Y-offset uses width instead of height and aggressive texture eviction"
+    },
+    {
+      "category": "architecture",
+      "impact": "Maintains duplicated arrow logic, double-blends tileID 11 layer 1 textures, leaks cached BgItem images across maps, and saves unverified registration passwords.",
+      "location": "Client/Client/Assets/Scripts/Game1/Arrow.cs:73-80; Client/Client/Assets/Scripts/Game1/Arrowpaint.cs:69-76; Client/Client/Assets/Scripts/Game1/BgItem.cs:41-62; Client/Client/Assets/Scripts/Game1/BgItemMn.cs:89-96; Client/Client/Assets/Scripts/Game1/Assets/src/g/RegisterScreen.cs:158-196,385-388",
+      "root_cause": "Arrow and Arrowpaint duplicate identical movement/angle code with dead 'else if (num + num2 < 30)' after '< 60' without Res.abs; BgItemMn runs blend twice for 'num == 10 && layer == 1'; BgItem.clearHashTable() is empty; RegisterScreen mutates UI coordinates inside paint() and saves account/password to RMS before server registration reply.",
+      "severity": "P3",
+      "title": "Arrow/Arrowpaint duplication, BgItemMn double-blend, empty BgItem cleanup, and RegisterScreen layout/RMS issues"
+    }
+  ],
+  "key_classes": [
+    {
+      "key_methods": [
+        "BigBoss",
+        "getDataB",
+        "getDataB2",
+        "update",
+        "updateMobAttack",
+        "updateMobFly",
+        "paint",
+        "setAttack"
+      ],
+      "name": "BigBoss",
+      "path": "Client/Client/Assets/Scripts/Game1/Assets/src/g/BigBoss.cs",
+      "responsibility": "Hirudegarn-style giant boss Mob subclass managing two-phase/half-body animation, flying slam, shockwave effects, and multi-target attacks."
+    },
+    {
+      "key_methods": [
+        "BigBoss2",
+        "getDataB",
+        "update",
+        "updateMobAttack",
+        "updateMobFly",
+        "paint",
+        "setAttack"
+      ],
+      "name": "BigBoss2",
+      "path": "Client/Client/Assets/Scripts/Game1/BigBoss2.cs",
+      "responsibility": "Giant boss variant (effectdata 109) with fly/slam and multi-target attack state machine extending Mob."
+    },
+    {
+      "key_methods": [
+        "BachTuoc",
+        "getDataB",
+        "update",
+        "updateMobAttack",
+        "updateMobWalk",
+        "paint",
+        "move"
+      ],
+      "name": "BachTuoc",
+      "path": "Client/Client/Assets/Scripts/Game1/BachTuoc.cs",
+      "responsibility": "Octopus boss Mob subclass (effectdata 108) with horizontal walk movement and multi-target attacks."
+    },
+    {
+      "key_methods": [
+        "Mabu",
+        "eat",
+        "setSkill",
+        "getData1",
+        "getData2",
+        "update",
+        "paint"
+      ],
+      "name": "Mabu",
+      "path": "Client/Client/Assets/Scripts/Game1/Assets/src/g/Mabu.cs",
+      "responsibility": "Majin Buu Char subclass handling eat/absorb hold effect and custom skill animations (effectdata 102/103)."
+    },
+    {
+      "key_methods": [
+        "BackgroudEffect",
+        "initCloud",
+        "updateEff",
+        "update",
+        "paintFrontAll",
+        "paintBackAll",
+        "paintFarAll",
+        "clearWeatherEffects"
+      ],
+      "name": "BackgroudEffect",
+      "path": "Client/Client/Assets/Scripts/Game1/BackgroudEffect.cs",
+      "responsibility": "Manages ambient map/weather effects (rain, leaves, snow, stars, airship, water, clouds, fog, fireflies, sandstorm) and dynamic rain scheduling."
+    },
+    {
+      "key_methods": [
+        "BgItem",
+        "isNotBlend",
+        "isMiniBg",
+        "changeColor",
+        "paint",
+        "clearHashTable"
+      ],
+      "name": "BgItem",
+      "path": "Client/Client/Assets/Scripts/Game1/BgItem.cs",
+      "responsibility": "Renders map background props/tiles with parallax offsets, waterflow animation, double-map mirroring, and blended texture lookup."
+    },
+    {
+      "key_methods": [
+        "BgItemMn",
+        "blendImage",
+        "getByteArray",
+        "blendcurrBg"
+      ],
+      "name": "BgItemMn",
+      "path": "Client/Client/Assets/Scripts/Game1/BgItemMn.cs",
+      "responsibility": "Applies per-tileID/layer color tint blending to background item textures and persists blended PNGs to RMS."
+    },
+    {
+      "key_methods": [
+        "Small",
+        "paint",
+        "destroyTexture",
+        "update"
+      ],
+      "name": "Small",
+      "path": "Client/Client/Assets/Scripts/Game1/Assets/src/e/Small.cs",
+      "responsibility": "Wraps dynamic small sprite textures with frame slicing and Unity Texture2D lifecycle cleanup."
+    },
+    {
+      "key_methods": [
+        "ImageSource",
+        "checkRMS",
+        "saveRMS",
+        "getVersionRMSByID",
+        "getCurrVersionByID"
+      ],
+      "name": "ImageSource",
+      "path": "Client/Client/Assets/Scripts/Game1/Assets/src/g/ImageSource.cs",
+      "responsibility": "Tracks cached RMS image source versions and dispatches image sync requests to server."
+    },
+    {
+      "key_methods": [
+        "Arrow",
+        "update",
+        "endMe",
+        "paint",
+        "findDirIndexFromAngle"
+      ],
+      "name": "Arrow",
+      "path": "Client/Client/Assets/Scripts/Game1/Arrow.cs",
+      "responsibility": "Homing projectile visual attached to a Char that triggers attack and skill cooldown on arrival."
+    },
+    {
+      "key_methods": [
+        "Arrowpaint",
+        "update",
+        "endMe",
+        "paint",
+        "findDirIndexFromAngle"
+      ],
+      "name": "Arrowpaint",
+      "path": "Client/Client/Assets/Scripts/Game1/Arrowpaint.cs",
+      "responsibility": "Alternative homing projectile class holding inline imgId[3] instead of an Arrowpaint template reference."
+    },
+    {
+      "key_methods": [
+        "PetFollow",
+        "SetImg",
+        "paint",
+        "update",
+        "moveCamera",
+        "remove"
+      ],
+      "name": "PetFollow",
+      "path": "Client/Client/Assets/Scripts/Game1/Assets/src/g/PetFollow.cs",
+      "responsibility": "Floating follower pet entity interpolating toward target coordinates and rendering animated SmallImage sprites."
+    },
+    {
+      "key_methods": [
+        "ClientInput",
+        "gI",
+        "setInput",
+        "paint",
+        "update",
+        "updateKey",
+        "perform"
+      ],
+      "name": "ClientInput",
+      "path": "Client/Client/Assets/Scripts/Game1/Assets/src/g/ClientInput.cs",
+      "responsibility": "Dynamic multi-field popup input screen for server-requested text inputs."
+    },
+    {
+      "key_methods": [
+        "RegisterScreen",
+        "switchToMe",
+        "update",
+        "paint",
+        "updateKey",
+        "doRegister",
+        "perform"
+      ],
+      "name": "RegisterScreen",
+      "path": "Client/Client/Assets/Scripts/Game1/Assets/src/g/RegisterScreen.cs",
+      "responsibility": "Account registration screen validating username/password inputs and sending registration requests."
+    }
+  ],
+  "module_summary": "Batch covers 24 Unity C# Client (Game1) files implementing boss entities (BigBoss, BigBoss2, BachTuoc, Mabu), homing projectiles (Arrow, Arrowpaint), follower pets (PetFollow, BallInfo), ambient/weather particle systems (BackgroudEffect), map background item rendering/blending (BgItem, BgItemMn), dynamic sprite/image caching (Small, SmallSave, ImageSource), UI input/registration screens (ClientInput, RegisterScreen, BaseCommand), and small data/delegate helpers (ActionChat/Paint/Update, Archivement, ArrayCast, ChatVip, GameInfo). Key systemic issues include heavy code duplication with 'new' method hiding across boss classes, allocations and state mutation inside paint(), shared static fields across BackgroudEffect instances, disabled RMS image version diffing in ImageSource, and a broken touch-focus condition in ClientInput.",
+  "protocol_touchpoints": [
+    {
+      "direction": "DISPATCH",
+      "location": "Client/Client/Assets/Scripts/Game1/Assets/src/g/BigBoss.cs:183,203",
+      "opcode": "Service.gI().requestModTemplate(templateId)",
+      "payload_summary": "Requests mob EffectData template when local asset load fails"
+    },
+    {
+      "direction": "DISPATCH",
+      "location": "Client/Client/Assets/Scripts/Game1/BachTuoc.cs:141",
+      "opcode": "Service.gI().requestModTemplate(templateId)",
+      "payload_summary": "Requests mob EffectData template when local asset load fails"
+    },
+    {
+      "direction": "DISPATCH",
+      "location": "Client/Client/Assets/Scripts/Game1/BigBoss2.cs:166",
+      "opcode": "Service.gI().requestModTemplate(templateId)",
+      "payload_summary": "Requests mob EffectData template when local asset load fails"
+    },
+    {
+      "direction": "DISPATCH",
+      "location": "Client/Client/Assets/Scripts/Game1/Assets/src/g/ClientInput.cs:196",
+      "opcode": "Service.gI().sendClientInput(tf)",
+      "payload_summary": "Sends array of TField text inputs to server on OK button"
+    },
+    {
+      "direction": "DISPATCH",
+      "location": "Client/Client/Assets/Scripts/Game1/Assets/src/g/RegisterScreen.cs:388",
+      "opcode": "Service.gI().charInfo(user, pass)",
+      "payload_summary": "Sends validated account username and password for registration"
+    },
+    {
+      "direction": "DISPATCH",
+      "location": "Client/Client/Assets/Scripts/Game1/Assets/src/g/ImageSource.cs:27,73",
+      "opcode": "Service.gI().imageSource(myVector)",
+      "payload_summary": "Sends MyVector of ImageSource entries to sync (always empty due to dead 'if (false)')"
+    }
+  ]
+}

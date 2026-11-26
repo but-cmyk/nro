@@ -1,0 +1,84 @@
+{
+  "dimension_scores": [
+    {
+      "dimension": "Connection Pool & Resource Management (HikariCP)",
+      "score_out_of_10": 5.5,
+      "verdict": "Phần lớn DAO mới dùng try-with-resources và AlyraManager.executeQuery tự đóng Connection trước khi trả ResultSetImpl; tuy nhiên vẫn còn P0 leak Connection trực tiếp ở GiftService.isUsedGiftCode và rò rỉ PreparedStatement/ResultSet ở EventDAO, Clan, ClanService, PlayerDAO.subvnd/subVND2."
+    },
+    {
+      "dimension": "Data Integrity, Transactions & Concurrency (ACID)",
+      "score_out_of_10": 4.5,
+      "verdict": "Có transaction cho updatePlayersInTransaction và snapshot lock trong PlayerDAO, nhưng ConsignShopManager.save() xung đột race condition với Virtual Thread async writes (không rollback, không lock chung), subvnd/subcash thiếu guard số dư âm, và nhiều thao tác đọc-sửa-ghi offline không có lock/FOR UPDATE."
+    },
+    {
+      "dimension": "Query Safety & MySQL 8 Compatibility",
+      "score_out_of_10": 6,
+      "verdict": "100% truy vấn kiểm tra đều dùng PreparedStatement tham số hóa (không có SQL Injection); nhưng ResultSetImpl dùng getColumnName thay vì getColumnLabel (gãy alias), getTimestamp lỗi với LocalDateTime của MySQL 8, và nhiều bảng/cột (shop_ky_gui, rank...) thiếu backtick đồng bộ."
+    },
+    {
+      "dimension": "Redis Cache & Fault Tolerance",
+      "score_out_of_10": 5.5,
+      "verdict": "Cấu hình JedisPool gọn nhẹ với fallback in-memory khi khởi động lỗi, nhưng isConnected không volatile và không tự hạ cờ/phục hồi khi Redis sập lúc runtime (gây block 3s/request), ZSET leaderboard thiếu TTL."
+    },
+    {
+      "dimension": "Tổng thể Database & Persistence",
+      "score_out_of_10": 5.5,
+      "verdict": "Nền tảng HikariCP + PreparedStatement + Snapshot Save khá tốt về mặt hiệu năng, nhưng các lỗ hổng ACID/race condition ở ConsignShop, trừ tiền không atomic, và lỗi tương thích MySQL 8/ResultSetImpl cần xử lý ngay trước khi vận hành production."
+    }
+  ],
+  "verified_p0": [
+    {
+      "evidence": "consignShopManager.save() (lines 42-129) giữ saveLock, xóa toàn bộ bảng shop_ky_gui rồi batch INSERT, thiếu con.rollback() trong catch và return sớm nếu itemsToSave.isEmpty() (bỏ qua DELETE). Trong khi đó các hàm updateItemBoughtAsync, deleteItemAsync, updateItemUpTopAsync, insertItemAsync (lines 268-352) spawn Virtual Thread ghi SQL trực tiếp không lấy saveLock và không có thứ tự thực thi.",
+      "fix_plan": "Loại bỏ cơ chế DELETE ALL + INSERT ALL định kỳ trong save(); đưa mọi thao tác ghi shop_ky_gui qua một single-thread sequential executor hoặc đồng bộ bằng saveLock + UPSERT, bổ sung con.rollback() và khôi phục setAutoCommit(true) trong finally.",
+      "location": "src/managers/ConsignShopManager.java:42-129, 268-352",
+      "status": "CONFIRMED",
+      "title": "Race condition và mất dữ liệu giữa ConsignShopManager.save() và Virtual Thread async writes"
+    },
+    {
+      "evidence": "Line 148: `try (PreparedStatement stmt = AlyraManager.getConnection().prepareStatement(query))` gọi getConnection() bên ngoài try-with-resources nên Connection không bao giờ được đóng sau khi hàm kết thúc, gây cạn kiệt HikariCP pool.",
+      "fix_plan": "Đưa Connection vào try-with-resources: `try (Connection con = AlyraManager.getConnection(); PreparedStatement stmt = con.prepareStatement(query))` và log SQLException thay vì nuốt lỗi.",
+      "location": "src/services/player/GiftService.java:148-159",
+      "status": "CONFIRMED",
+      "title": "JDBC Connection leak trong GiftService.isUsedGiftCode"
+    },
+    {
+      "evidence": "Kiểm tra AlyraManager.executeQuery (lines 167-172, 203-208) và ResultSetImpl (lines 62-81) xác nhận Connection, PreparedStatement và ResultSet đều được đóng ngay trước khi trả về ResultSetImpl (dữ liệu đã buffer vào RAM). Việc không gọi rs.dispose() ở Input.java:549,570 và Service.java:114-130 chỉ giữ tham chiếu mảng trong Heap đến kỳ GC, KHÔNG gây leak HikariCP Connection.",
+      "fix_plan": "Cho AlyraResultSet extends AutoCloseable và bọc try-with-resources để giải phóng Heap sớm, nhưng không cần xếp mức P0/P1 connection leak.",
+      "location": "src/services/func/Input.java:549,570; src/services/Service.java:114-130",
+      "status": "FALSE_POSITIVE",
+      "title": "Claim rò rỉ HikariCP Connection do không gọi AlyraResultSet.dispose()"
+    }
+  ],
+  "verified_p1_highlights": [
+    {
+      "impact": "Gây SQLException thiếu cột nếu được gọi (truyền SELECT id vào loadPlayer vốn đọc ~35 cột) và bỏ qua kiểm tra ban/bảo trì.",
+      "location": "src/database/AlyraManager.java:256-332, 310, 317",
+      "title": "Hàm AlyraManager.login() trùng lặp với NDVSqlFetcher.login() bị lỗi schema & thiếu check ban/DEBUG"
+    },
+    {
+      "impact": "Mọi SQL alias (AS sm, AS player_name...) không tra cứu được; gọi getTimestamp() trên cột DATETIME MySQL 8 (trả LocalDateTime) bị ném Exception tại runtime.",
+      "location": "src/database/ResultSetImpl.java:41-50, 496-541",
+      "title": "ResultSetImpl dùng getColumnName thay getColumnLabel và lỗi getTimestamp với LocalDateTime MySQL 8"
+    },
+    {
+      "impact": "Trừ tiền không atomic dễ bị race condition làm âm sotien/cash; subvnd/subVND2 rò rỉ PreparedStatement ngoài try-with-resources.",
+      "location": "src/database/daos/PlayerDAO.java:1295-1307, 1641-1674",
+      "title": "PlayerDAO.subvnd/subVND2/subcash thiếu guard số dư >= ? và không kiểm tra affectedRows"
+    },
+    {
+      "impact": "Newbie tạo nhân vật có data_achievement/giftcode = 0 gây ClassCastException; save player luôn ghi đè boughtSkills = \"[]\" làm mất dữ liệu; login() dễ NPE nếu Timestamp null.",
+      "location": "src/database/daos/NDVSqlFetcher.java:256-258, 1527-1558; PlayerDAO.java:365, 1160",
+      "title": "Lỗi JSON mặc định sai kiểu (\"0\"), hardcode boughtSkills=\"[]\" khi save và thiếu null-check Timestamp khi login"
+    },
+    {
+      "impact": "BXH Sức Mạnh không loại trừ được tài khoản Admin và loại nhầm người chơi thường có player.id trùng account.id của Admin.",
+      "location": "src/server/Manager.java:159-165",
+      "title": "Sai khóa JOIN trong Manager.queryTopSM (p.id = a.id thay vì p.account_id = a.id)"
+    },
+    {
+      "impact": "Nếu Redis sập lúc runtime, isConnected không chuyển false khiến mỗi request gọi Redis bị stall tối đa 3000ms chờ JedisPool.",
+      "location": "src/services/cache/RedisService.java:23, 97-105, 143-164",
+      "title": "RedisService.isConnected không volatile, thiếu circuit-breaker phục hồi runtime và thiếu TTL cho ZSET leaderboard"
+    }
+  ]
+}

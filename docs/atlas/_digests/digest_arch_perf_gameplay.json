@@ -1,0 +1,2428 @@
+{
+  "module_summaries": {
+    "client_core_render_audio__p01": {
+      "domain": "client_core_render_audio",
+      "lines": 5676,
+      "summary": "Read all 4 files (5,676 lines) in the client core & rendering batch: Main.cs (Unity MonoBehaviour lifecycle & input bridge), GameCanvas.cs (central UI/game loop, input map, map background/weather renderer, dialog/action dispatcher), Image.cs (Texture2D image loader/slicer), and mFont.cs (bitmap & Unity Font/GUIStyle text rendering and word-wrapping). Observed high-impact UI/input/rendering bugs (double panel.updateKey(), double currentDialog.paint(), stuck keyHold[15], OnGUI frame-input polling), a crash bug in mFont.setTypePaint for bigNumber_black (id=31), per-frame Color[]/Position/string GC allocations in rendering, and Texture2D leaks/false LogError in Image.cs.",
+      "key_classes_count": 4
+    },
+    "client_core_render_audio__p02": {
+      "domain": "client_core_render_audio",
+      "lines": 3683,
+      "summary": "Client core rendering, canvas scaling, system utilities, small sprite atlas management, and Unity audio subsystem across 7 files (3,683 lines). Critical issues include double zoomLevel scaling and broken blendColor math in mGraphics, ignored SmallImage atlas offsets in multi-frame drawSmallImage, blocking I/O and GC allocations during paint(), Sound.player[] aliasing a single GameObject/AudioSource with an empty Sound.update() spin-wait hazard, and UI/network God-class responsibilities in SoundMn.",
+      "key_classes_count": 7
+    },
+    "client_gameplay_entities__p01": {
+      "domain": "client_gameplay_entities",
+      "lines": 5460,
+      "summary": "Batch covers 24 Unity C# Client (Game1) files implementing boss entities (BigBoss, BigBoss2, BachTuoc, Mabu), homing projectiles (Arrow, Arrowpaint), follower pets (PetFollow, BallInfo), ambient/weather particle systems (BackgroudEffect), map background item rendering/blending (BgItem, BgItemMn), dynamic sprite/image caching (Small, SmallSave, ImageSource), UI input/registration screens (ClientInput, RegisterScreen, BaseCommand), and small data/delegate helpers (ActionChat/Paint/Update, Archivement, ArrayCast, ChatVip, GameInfo). Key systemic issues include heavy code duplication with 'new' method hiding across boss classes, allocations and state mutation inside paint(), shared static fields across BackgroudEffect instances, disabled RMS image version diffing in ImageSource, and a broken touch-focus condition in ClientInput.",
+      "key_classes_count": 14
+    },
+    "client_gameplay_entities__p02": {
+      "domain": "client_gameplay_entities",
+      "lines": 5853,
+      "summary": "Read lines 1-5853 of Client/Client/Assets/Scripts/Game1/Char.cs (Unity C# client). Char is a monolithic God class implementing IMapObject that manages character stats, inventory/equipment helpers, task hints, tile-based movement physics, skill casting/charging/cooldowns, mount logic, status effects, and frame rendering. Key issues observed include heavy per-frame GC allocations/string concats and synchronous disk/texture I/O in update()/paint(), duplicated inventory/waypoint/mount methods with dead branches, coordinate/reference bugs in remote player physics/charging, unguarded array/parse operations, and mixed int/long numeric types.",
+      "key_classes_count": 1
+    },
+    "client_gameplay_entities__p03": {
+      "domain": "client_gameplay_entities",
+      "lines": 5783,
+      "summary": "Deep-read of Client Game1 entity rendering/combat tail (Char.cs lines 5854-8754, CharChild.cs), UI screens (ChatTextField, ChooseCharScr, CrackBallScr, CreateCharScr), Clan/Dart data models, stream wrappers (DataInputStream, DataOutputStream), Cout logger, and GameEnums/GameKeys/PanelConstants. Key risks center on un-synchronized multithreading in CrackBallScr.AutoCrackBall, stale ticket state in CrackBallScr.checkNumTicket, per-frame string/array GC allocations inside paint()/searchFocus(), unclosed streams in CreateCharScr, and missing null checks in UI screens.",
+      "key_classes_count": 11
+    },
+    "client_gameplay_entities__p04": {
+      "domain": "client_gameplay_entities",
+      "lines": 4598,
+      "summary": "Client Game1 visual effect subsystems (Effect, EffecMn, EffectData, Effect_End, EffectManager, EffectPanel, EffectFeet, Firework*), shared data/UI primitives (DefaultItemOptions, Dialog, Frame, FrameImage, Friend, EffectChar/Template/Paint/InfoPaint, EPosition), and input/bootstrap controllers (GamePad, GameMidlet). No direct DB/Redis code; network interaction is limited to requesting missing effect data via Service.gI().getEffData and wiring Session_ME/Session_ME2 to Controller.gI(). Several client Zero-GC violations, loop-removal bugs, unchecked array/null accesses, and character-coordinate mutations in effect code were observed.",
+      "key_classes_count": 14
+    },
+    "client_gameplay_entities__p05": {
+      "domain": "client_gameplay_entities",
+      "lines": 2835,
+      "summary": "Lines 1-2835 of GameScr.cs define the core state and setup of the main in-game screen God Class: static HUD/entity/UI-flag fields, RMS binary template loaders (NRitem0, NR_part, NR_effect, NR_arrow, NR_dart, NR_skill), skill shortcut slot management (onScreenSkill/keySkill), camera & responsive touch/PC UI layout (loadCamera/updateCamera/setSkillBarPosition), and target interaction/attack routing (playerMenu, isAttack).",
+      "key_classes_count": 1
+    },
+    "client_gameplay_entities__p06": {
+      "domain": "client_gameplay_entities",
+      "lines": 5498,
+      "summary": "Lines 2836-8333 of GameScr.cs cover the core in-game loop of the Unity C# client: keyboard/touch/gamepad input handling (updateKey, checkDrag, checkClick, updateKeyTouchControl), combat and auto-play (doFire, doSelectSkill, doUseSkill, autoPlay, checkAuto), the main update() and paint() pipelines, HUD/VS/PhuBan/ChienTruong bars, lottery (XoSo) & VIP chat tickers, task/NPC pointers, zone list decoding (openUIZone), and command routing (actionPerform). Heavy God-class coupling mixes rendering with state/input mutation and exhibits several paint-time allocations, substring indexing bugs, and HUD math errors.",
+      "key_classes_count": 1
+    },
+    "client_gameplay_entities__p07": {
+      "domain": "client_gameplay_entities",
+      "lines": 5961,
+      "summary": "Client Game1 gameplay entities, UI widgets/screens, input/network interfaces, and item/aura/hint/login models (42 files, 5961 lines). Covers item models (Item, ItemMap, ItemOption, ItemTemplate, ItemTemplates, ItemTime, ItemObject), UI/HUD info & scrolling (Hint, Info, InfoItem, InfoMe, Info_RadaScr, InfoPhuBan, InputDlg, ListNew, LoginScr, MagicTree), image/map/math helpers (ImgByName, ImageInfo, MainImage, MapTemplate, Math, Member, Line, mLine, Layer), input/platform wrappers (Key, KeyConstant, ipKeyboard, iOSPlugins, iPhoneGeneration, iPhoneSettings), and core interfaces (HTTPHandler, IActionListener, IChatable, IKbAction, IMapObject, IMessageHandler, IPaint, ISession, InputStream).",
+      "key_classes_count": 12
+    },
+    "client_gameplay_entities__p08": {
+      "domain": "client_gameplay_entities",
+      "lines": 5910,
+      "summary": "Batch client_gameplay_entities__p08 covers 21 Unity C# client scripts (5910 lines) in Assets/Scripts/Game1: core world entities (Mob, NewBoss, Npc, MonsterDart, MobCapcha), templates/data models (MobTemplate, NpcTemplate, NClass, MovePoint), UI screens/dialogs (mScreen, MoneyCharge, MsgDlg, NewPanel, mResources), and J2ME-compatibility utilities/collections (MyVector, MyHashTable, MyKeyMap, MyRandom, MyStream, NinjaUtil, plus commented-out Net). Key risks center on Mob/NewBoss architectural split (NewBoss using `new` hiding instead of `override` and bypassing Mob template bounds checks), null-dereference/divide-by-zero crashes in Mob/NewBoss/MonsterDart, stream desync on 1-byte arrays in NinjaUtil.readByteArray, and per-frame GC allocations inside update()/paint().",
+      "key_classes_count": 10
+    },
+    "client_gameplay_entities__p09": {
+      "domain": "client_gameplay_entities",
+      "lines": 5345,
+      "summary": "Client Game1 UI, math/persistence utilities, and lightweight gameplay entities (Paint, Part/PartImage/PKFlag, PlayerDart, PlayerData/PlayerInfo, Point, Position, PopUpYesNo, RadarScr, Res, Rms, ScaleGUI, Scroll/ScrollResult, ServerEffect, ServerListScreen). Covers UI rendering primitives, local RMS file/AES password storage, fixed-point trig/formatting helpers, homing projectiles/effects, and the server-selection/resource-download screen.",
+      "key_classes_count": 9
+    },
+    "client_gameplay_entities__p10": {
+      "domain": "client_gameplay_entities",
+      "lines": 5504,
+      "summary": "Reviewed 26 client Game1 scripts (5504 lines) covering startup/server selection (SplashScr, ServerScr), localization (T1/T2/T3), skill/task/sprite data models (Skill, SkillTemplate, SkillPaint, SkillInfoPaint, SkillOption, SkillOptionTemplate, Skills, SmallDart, Sprite, StaticObj, Task, TaskOrder, TaskTemplate), UI components (TabClanIcon, TextInfo, TField), teleport animation (Teleport), disabled SMS stub (SMS), and extracted system modules (CharacterCombat, InventorySystem, CharacterMovement). Key issues include an ArgumentOutOfRangeException in TField.setPasswordTest, wrong command indexing in ServerScr.updateKey, uncapped clipboard paste in TField.HandleInputText, shared static marquee state in TextInfo, and multiple per-frame string/object allocations in paint()/update() loops.",
+      "key_classes_count": 10
+    },
+    "client_gameplay_entities__p11": {
+      "domain": "client_gameplay_entities",
+      "lines": 2242,
+      "summary": "This batch covers Unity C# client map rendering/tile queries (TileMap, Waypoint), cutscene transport screen (TransportScr), global delayed timer (Timer), leaderboard DTO (TopInfo), dead commented-out keyboard stubs (TouchScreenKeyboard*), UI window/subpanel refactoring scaffolding (UIWindowManager, IUIWindow, ISubPanel and 5 SubPanels), and asynchronous client file logging (UnityLogger). Key issues include TileMap returning magic bitmask 1000 on out-of-bounds tileTypeAt calls (polluting water rendering), unclosed DataInputStream in loadMapFromResource, Timer.update ignoring its stored timeListener, TransportScr lacking a maxTime==0 guard, unsafe iteration in UIWindowManager, and log-loss on locked file rotation in UnityLogger.",
+      "key_classes_count": 7
+    },
+    "client_network_protocol__p01": {
+      "domain": "client_network_protocol",
+      "lines": 2101,
+      "summary": "Read all 2,101 lines across Controller2.cs, ClanMessage.cs, Cmd.cs, and NetworkOpcodes.cs. Controller2 dispatches 35+ extended server opcodes using raw numeric literals, relies on unchecked entity lookups/casts and unvalidated lengths, and suppresses exceptions in sub-handlers. Cmd.cs and NetworkOpcodes.cs exhibit opcode collisions and mismatched constants. ClanMessage has a forward-loop removal bug and per-frame string allocations in paint().",
+      "key_classes_count": 4
+    },
+    "client_network_protocol__p02": {
+      "domain": "client_network_protocol",
+      "lines": 4641,
+      "summary": "Lines 1-4641 of Client/Client/Assets/Scripts/Game1/Controller.cs implement Controller singleton accessors, connection lifecycle callbacks, requestItemPlayer, and the massive dual-switch onMessage(Message) dispatcher handling ~80 opcodes (login/register, player/pet/mob combat, inventory/shop/consignment/trade/combine, clan, tasks, map/tile/resource loading, and chat/UI). Key risks observed are EOF-by-exception infinite loops, messWait lifecycle conflict with finally cleanup, unguarded entity/array indexing, unreachable duplicate case 66, inconsistent narrow integer widths, and synchronous RMS/GC calls inside packet handling.",
+      "key_classes_count": 1
+    },
+    "client_network_protocol__p03": {
+      "domain": "client_network_protocol",
+      "lines": 4855,
+      "summary": "Client network serialization, modular packet dispatchers/handlers, Controller template/map/subcommand parsing, and Game1.God automation controllers (MapController, MobController, PetService). Covers big-endian binary framing (Message/myReader/myWriter), 8 domain IPacketHandler classes registered in PacketDispatcher, the tail half of monolithic Controller.cs (lines 4642-6894), and built-in client auto-play/teleportation helpers.",
+      "key_classes_count": 9
+    },
+    "client_network_protocol__p04": {
+      "domain": "client_network_protocol",
+      "lines": 4497,
+      "summary": "Batch covers the Unity C# client's outbound packet factory (`Service.cs`, 3285 lines) and both TCP transport implementations (`Session_ME.cs`, 637 lines; `Session_ME2.cs`, 575 lines). `Service` is a monolithic singleton constructing binary `Message` payloads for gameplay, UI, trade, combine, clan, consignment, and asset downloads, temporarily switching its `session` field to `Session_ME2` for resource packets. `Session_ME` and `Session_ME2` implement TCP framing, XOR keystream encryption, and background send/receive threads, with `Session_ME2` containing older unsynchronized queue/list code, a missing extended-length opcode (`66`), and `isMainSession = true`.",
+      "key_classes_count": 3
+    },
+    "client_ui_god_mods__p01": {
+      "domain": "client_ui_god_mods",
+      "lines": 4538,
+      "summary": "Batch p01 covers core client UI widgets (ChatPopup, Command, InfoDlg, Menu) and the Game1.God mod/automation suite (ClientManager, AutoSettingManager, Items, Mobs, ListChars, NPoint, PlayerInfo, Revive, nSkill, Boss/BossData, AutoControlPanel, Utils). Key issues identified are per-frame GC allocations in UI paint loops (`ChatPopup`, `ClientManager.GUI` via `Utils.getItemFromName`, `BossData`, `ListChars`, `Menu`), stale click/teleport handling in `ListChars.UpdateTouch` when hidden, shared quantity corruption in `Items.autoBuy`, unguarded `int.Parse`/`float.Parse` in chat/NPoint input, unenforced `Revive.maxReviveCount`, `Menu.updateMenuKey` flick array bug, and client-side teleport/speedhack/extended-reach attack helpers.",
+      "key_classes_count": 15
+    },
+    "client_ui_god_mods__p02": {
+      "domain": "client_ui_god_mods",
+      "lines": 5643,
+      "summary": "Read lines 1-5643 of `Client/Client/Assets/Scripts/Game1/Panel.cs` (part 1 of 2 of the 11,857-line UI God class). This half defines `Panel` fields/constants, `ISubPanel` registration (`InventorySubPanel`, `ChestSubPanel`, `CombineSubPanel`, `ShopSubPanel`, `ClanSubPanel`), asset loading (`loadEff`, `loadBg`), detail popups (`addItemDetail`, `addClanDetail`, `addSkillDetail`, etc.), input/scroll handling (`updateKey`, `updateKeyScrollView`, `updateKeyInTabBar`, `updateKeyMap`, `updateKeyQuest`, `updateKeyClans`), tab initialization (`setType*`, `setTab*`), camera/close transitions (`moveCamera`), and core rendering (`paint`, `paintDetail`, `paintTop`, `paintGiaoDich`, `paintShop`, `paintPetInventory`, `paintSkill`, `paintZone`, `paintSpeacialSkill`, `paintBox`, `paintLogChat`, `paintFlagChange`).",
+      "key_classes_count": 2
+    },
+    "client_ui_god_mods__p03": {
+      "domain": "client_ui_god_mods",
+      "lines": 5639,
+      "summary": "Read lines 5644-11282 of Client/Client/Assets/Scripts/Game1/Panel.cs (5639 lines). This slice covers the core rendering methods (enemy, friend, player menu, clan, achievement, combine, inventory, tabs, money/clan/char/pet/shop/map/task info, combine effects, options), lifecycle methods (hide, hideNow, update), item/stat interaction handlers (doFire*), command dispatch (perform), and modal text input callbacks (onChatFromMe).",
+      "key_classes_count": 1
+    },
+    "client_ui_god_mods__p04": {
+      "domain": "client_ui_god_mods",
+      "lines": 911,
+      "summary": "Read the final 575 lines of Panel.cs (11283-11857) and the entirety of PopUp.cs (1-336). Panel.cs's tail handles the Account tab UI/actions, Special Skill tab initialization, Ruby purchase prompt, item upgrade/slot visual effects and option icon rendering, font/color lookup helpers, and inventory page-tab selection/pagination math. PopUp.cs manages floating world/waypoint speech bubbles and shared 9-slice-like popup frame drawing, static popup registry (vPopups), delayed command execution, and mod HideMap visibility coupling via Game1.God.ListChars.",
+      "key_classes_count": 2
+    },
+    "server_boss_dungeon_pvp__p01": {
+      "domain": "server_boss_dungeon_pvp",
+      "lines": 6000,
+      "summary": "Covers the server boss management layer (BossManager and 15 specialized/event/dungeon manager subclasses in src/managers/boss/), the core Boss FSM & combat base class (Boss.java), AnTrom, and boss_list implementations for Androids (13/14/15/19/DrKore/Pic/Poc/KingKong), BlackGoku, Broly/SuperBroly/DetuBroly, Cell/SieuBoHung/XENCON1-7, OngGiaNoel, plus commented-out RongNhi1-7 and ChristmasEvent stubs.",
+      "key_classes_count": 7
+    },
+    "server_boss_dungeon_pvp__p02": {
+      "domain": "server_boss_dungeon_pvp",
+      "lines": 5782,
+      "summary": "Deep-read 46 boss implementation files across 12 boss subpackages (ChristmasEvent, Commeson, Cooler, DeathOrAliveArena, DestronGas, Earth, Frieza, GinyuForce, GoldenFrieza, HalloweenEvent, HungVuongEvent, huydiet, LunarNewYearEvent, MajinBuu12H). 31 files are active Java classes and 15 files are entirely commented-out legacy classes. Key issues include widespread `(int) damage` truncation in `long injured(...)` overrides, inverted shield logic (`damage / 1`) in Halloween bosses, swapped `BossType` constants between `TuanLoc` and `LanCon`, missing null checks in `DrLychee.leaveMap`, `GoldenFrieza.leaveMap`, `DeathBeam`, and multiple `reward()` overrides, plus an off-by-one `Random.nextInt(length - 1)` bug in `Cumber.reward()`.",
+      "key_classes_count": 10
+    },
+    "server_boss_dungeon_pvp__p03": {
+      "domain": "server_boss_dungeon_pvp",
+      "lines": 5713,
+      "summary": "Read all 33 boss implementation classes (5713 lines) across 9 boss packs: MajinBuu12H, MajinBuu14H, NamekGinyuForce, Nappa, NewBoss, RedRibbonHQ, SnakeWay, SuperDivineWater, and SuperRank. All classes extend Boss (or SuperRank -> Boss) and override lifecycle hooks (joinMap, afk, attack, injured, die, reward, autoLeaveMap, leaveMap). Primary risks center on thread-blocking loops/sleeps inside AI/injured hooks (SAIBAMEN.setBom busy-wait, CADICH/SAIBAMEN Functions.sleep), broken lethal/dodge/array-index logic (Drabura2, Cadic, Goku), missing null guards on plAtt/fightMabu/playerCall/zone, and pervasive (int) damage truncation and copy-paste duplication.",
+      "key_classes_count": 9
+    },
+    "server_boss_dungeon_pvp__p04": {
+      "domain": "server_boss_dungeon_pvp",
+      "lines": 3947,
+      "summary": "Batch covers 51 files in boss_list (SuperRank, TaoPaiPai, The23rdMartialArtCongress, ThoDaiKa, Training, TreasureUnderSea, commented-out TrungThuEvent, Yardart) plus BossData. These bosses inherit Boss and implement custom PvP/tournament, solo training, dungeon, and event AI/damage/reward loops. Key findings include an infinite-reward HP=1 bug in Yardart, premature death + repeated DB writes in Whis, wrong BossID/BossData in Pocolo, inverted playerAtt null checks, int truncation of long damage, and unsafe unlocked Client player list indexing in ThoDaiKa.",
+      "key_classes_count": 9
+    },
+    "server_boss_dungeon_pvp__p05": {
+      "domain": "server_boss_dungeon_pvp",
+      "lines": 5870,
+      "summary": "Batch server_boss_dungeon_pvp__p05 covers static boss definitions (BossesData), 1v1 PVP match types and invitation/revenge service (PVP, PVPService, DHVT, LuyenTap, PKCommeson, ThachDau, TraThu, TOP, TYPE_PVP, TYPE_LOSE_PVP), clan/timed dungeons (BlackBallWar, DestronGas, MajinBuu14H, RedRibbonHQ, SnakeWay, TreasureUnderSea), and arena/tournament controllers (DeathOrAliveArena, SuperRank, SuperRankBuilder, The23rdMartialArtCongress). Key risks include missing early returns after dungeon dispose(), PVP constructor publication and wager races, leaked DHVT PVP objects in tournaments, int overflows in SnakeWay/DeathOrAliveArena, and non-atomic SuperRank rank swaps.",
+      "key_classes_count": 13
+    },
+    "server_boss_dungeon_pvp__p06": {
+      "domain": "server_boss_dungeon_pvp",
+      "lines": 5820,
+      "summary": "Batch p06 covers Whis Arena (bot manager, lobby bots, PvE/PvP/BotVsBot/U6 Boss matches, service/DB rewards), WorldMartialArtsTournament, DeathOrAliveArena (VDST service and weekly reset), and 10 dungeon/event services (BlackBallWar, DestronGas, MajinBuu, MajinBuu14H, NgocRongNamec, RedRibbonHQ, SnakeWay, SuperDivineWater, Training, TreasureUnderSea). Key risks include an unvalidated stat multiplier exploit in BlackBallWarService, race conditions on zone/instance/ball allocation across VDST, Whis Arena, Namek balls, and clan dungeons, a double Capsule Vang reward in WhisArenaBossMatch, DB reward overwrite in WhisArenaService, non-atomic weekly VDST reset, and unsafe concurrent mutation in NgocRongNamecService.",
+      "key_classes_count": 13
+    },
+    "server_boss_dungeon_pvp__p07": {
+      "domain": "server_boss_dungeon_pvp",
+      "lines": 552,
+      "summary": "Tournament service layer (services.tournament) covering Super Rank PvP matchmaking/leaderboard, 23rd Martial Arts Congress solo boss challenge startup, and World Martial Arts Tournament hourly registration/NPC menus.",
+      "key_classes_count": 3
+    },
+    "server_database_persistence__p01": {
+      "domain": "server_database_persistence",
+      "lines": 5839,
+      "summary": "Persistence layer built on HikariCP (`AlyraManager`) with JSON-packed player columns (`NDVSqlFetcher`, `PlayerDAO`), startup template hydration (`DatabaseTemplateLoader`), and feature DAOs (`ShopDAO`, `SuperRankDAO`, `HistoryTransactionDAO`, `EventDAO`, `TraningDAO`). Contains several critical issues including a broken duplicate login method in `AlyraManager`, `BoughtSkills` load/save loss, unchecked currency deductions, async save ordering races, missing try-with-resources in `EventDAO`/`PlayerDAO`, and N+1 `tab_shop` queries in `ShopDAO`.",
+      "key_classes_count": 10
+    },
+    "server_database_persistence__p02": {
+      "domain": "server_database_persistence",
+      "lines": 591,
+      "summary": "ResultSetImpl (591 lines) implements AlyraResultSet as an eagerly buffered, disconnected JDBC ResultSet wrapper. Its constructor copies every row into both a case-insensitive HashMap (indexed by column name and table.column) and an Object[] array, then closes the JDBC ResultSet and Statement in a finally block before exposing cursor navigation and typed getters.",
+      "key_classes_count": 1
+    },
+    "server_economy_items__p01": {
+      "domain": "server_economy_items",
+      "lines": 5819,
+      "summary": "Read all 33 assigned files (5,819 lines) covering the consignment shop (ConsignShopManager, ConsignShopService, ConsignItem), item combination/upgrade system (CombineService, Combine, and 18 combine recipe classes), item & buff models (Item, ItemTime), NPC shop models (Shop, TabShop, TabShopHocKyNang, ItemShop), and helper services (BuyBackService, EffectMapService). Key risks center on consign shop DB/memory synchronization races, consign protocol ID/size truncation, missing server-side validation and unbounded loops in combine handlers, and conflicting option/bag-space handling across upgrades.",
+      "key_classes_count": 9
+    },
+    "server_economy_items__p02": {
+      "domain": "server_economy_items",
+      "lines": 4909,
+      "summary": "Covers player-facing economy, trading, minigame, dragon summoning, dialog input, and item-use subsystems under services.func and services.func.useitem. Item usage was refactored into a Strategy/Facade architecture (UseItem -> ItemActionManager -> 7 handlers), while Trade uses ordered ReentrantLocks on snapshotted bags. Major P0/P1 risks center on missing privilege/trade/quantity/state checks in Input, ChestBoxItemHandler, SpecialItemHandler, and SummonDragon, self-trade and snapshot-overwrite dupes in Trade/TransactionService, an opcode -83 desync in SummonDragonNamek, and unclosed JDBC result sets in Input.",
+      "key_classes_count": 18
+    },
+    "server_economy_items__p03": {
+      "domain": "server_economy_items",
+      "lines": 3703,
+      "summary": "Batch server_economy_items__p03 covers item factory/lootbox logic (ItemService), shop UI/purchase/sell flows (ShopService), and the consign shop benchmark (TestConsignShopPerformance). Key risks center on non-atomic multi-currency deductions without rollback in ShopService (buyItemHD, buyItem SANTA_PGG, buyItemDaBan), missing inventory locks and null/quantity validation in ItemService lootbox/SKH openers, missing index bounds checks and int overflow in sellItem/showConfirmSellItem/buyItemDaBan, and protocol/logic defects such as uncleaned Message in openShopType3, wrong currency constant in getRubyPrice, and missing option 214 mapping in optionIdSKH.",
+      "key_classes_count": 3
+    },
+    "server_network_core__p01": {
+      "domain": "server_network_core",
+      "lines": 5062,
+      "summary": "Core server networking, session/client lifecycle, game template/asset packet builders, and admin/console command dispatch. Contains both a Netty 4 NIO pipeline (NettyServer/NettySession/NroPacketDecoder/NroPacketEncoder/RateLimiterHandler/NroChannelHandler) using Virtual Thread per-session FIFO mailboxes and a coexisting legacy blocking-socket stack (Network/Session/Collector/Sender/QueueHandler), alongside DataGame/ItemData caches, SessionManager, Client, Command, and CommandRegistry.",
+      "key_classes_count": 12
+    },
+    "server_network_core__p02": {
+      "domain": "server_network_core",
+      "lines": 3762,
+      "summary": "Core server lifecycle, game loop, packet routing/profiling, and static registry layer in src/server/ and src/server/network/. Controller remains a large God-class handler with only opcodes -86 and -20 extracted to ServerPacketDispatcher, while PacketProfiler measures every packet in Controller's finally block. ServerManager orchestrates Netty startup, background tournament/event services, BCrypt migration, auto-save, daily reset, and shutdown; GameLoopManager runs fixed-rate player, zone, boss, and dungeon ticks; Manager holds static game templates, maps, clans, and leaderboard queries.",
+      "key_classes_count": 13
+    },
+    "server_player_combat__p01": {
+      "domain": "server_player_combat",
+      "lines": 5227,
+      "summary": "Core player/pet state, stat calculation, skin/skill effects, inventory, and DTO models in src/models/player and src/models/intrinsic. NPoint acts as the central stat/damage engine with additive equipment percent calculation and long-based overflow protection, while Pet, EffectSkin, EffectSkill, and NewSkill drive autonomous updates and combat/fusion state. Several high-impact gameplay and concurrency issues were observed directly in the source (NewSkill assignment bug, NPoint calPercent / 150, Pet followMaster packet spam, non-thread-safe NPoint/NewSkill timers, and missing subRuby/subGemDirect guards).",
+      "key_classes_count": 7
+    },
+    "server_player_combat__p02": {
+      "domain": "server_player_combat",
+      "lines": 5882,
+      "summary": "Deep-read of batch server_player_combat__p02 (19 files, 5882 lines) covering core Player entity, player state components (SetClothes, RewardBlackBall, SuperRank, PlayerEffect, Satellite, Traning), radar cards, skills (NClass, PlayerSkill, Skill), and player/pet/clan/inventory/social/gift/intrinsic services. Identified critical anti-dupe locking gaps in InventoryService and ClanService, a HikariCP connection leak in GiftService, authorization/cooldown bypasses in ClanService, set-bonus skipping in SetClothes, int overflow in InventoryService.countItemBag, and several null-safety and concurrency issues.",
+      "key_classes_count": 11
+    },
+    "server_player_combat__p03": {
+      "domain": "server_player_combat",
+      "lines": 1816,
+      "summary": "Read all 1,816 lines across PlayerService.java (329 lines) and SkillService.java (1,487 lines). PlayerService manages player HP/MP/money/stamina/TNSM packets, movement handling, daily reset, PK state, banning, and revival. SkillService is the core combat engine handling skill selection, mana/cooldown checks, PvP rules, damage/reflect/lifesteal execution, and combat packet broadcasts. Direct inspection revealed critical gameplay/security issues including a Tri Thuong targeting/self-heal multiplier bug, missing charge-time enforcement on QCKK and Makankosappo, client-trusted movement coordinates, Kaioken HP int-truncation, Huyt Sao hitting neutral players, unsynchronized revival, and ByteBuf Message.cleanup() leaks.",
+      "key_classes_count": 2
+    },
+    "server_services_bot_telemetry__p01": {
+      "domain": "server_services_bot_telemetry",
+      "lines": 5955,
+      "summary": "Batch server_services_bot_telemetry__p01 spans the Bot AI subsystem (legacy mob/boss bots plus FSM GenericBotAI and telemetry-based NamecImitationAI), tournament/PVP/giftcode managers, Admin LiveOps HTTP API & moderation/audit services, Jedis Redis cache service, and global chat/skill effect/flagbag services. Key risks center on an unauthenticated localhost bypass with wildcard CORS on the Admin HTTP server (P0), CopyOnWriteArrayList Iterator.remove() crash in SuperRankManager, expired giftcodes and currency/race vulnerabilities in GiftCodeManager/ChatGlobalService/AdminService, and thread-spawning/NPE defects in the disabled Bot subsystem.",
+      "key_classes_count": 14
+    },
+    "server_services_bot_telemetry__p02": {
+      "domain": "server_services_bot_telemetry",
+      "lines": 5988,
+      "summary": "Batch covers core server player/reward/UI services (Service, GiftCodeService, ItemTimeService, OpenPowerService, RadarService, RewardService, SubMenuService, TopService), the AI player trajectory telemetry pipeline (TelemetryConfig, AntiMacroFilter, TrajectoryRecord, TrajectoryLogger, CloudTelemetryStreamer), and server utility tools (MemoryOptimizer, MapExporter, DdosTester). Key architectural issues include Service.java functioning as a 2385-line God class, N+1 DB reads in leaderboard display, a shared mutable itemOptions/int32-overflow bug in GiftCodeService, missing admin checks in SubMenuService, and thread-safety gaps in AntiMacroFilter and telemetry singletons.",
+      "key_classes_count": 16
+    },
+    "server_services_bot_telemetry__p03": {
+      "domain": "server_services_bot_telemetry",
+      "lines": 1988,
+      "summary": "Batch server_services_bot_telemetry__p03 covers 15 utility classes in src/utils/ providing async/audit/bot logging, JSON serialization, BCrypt password hashing, system metrics, time/event helpers, skill/combine/item helpers, file I/O, and general RNG/formatting utilities.",
+      "key_classes_count": 8
+    },
+    "server_task_clan_consts__p01": {
+      "domain": "server_task_clan_consts",
+      "lines": 5686,
+      "summary": "Core server constants package (`src/consts/*`) defining boss IDs/statuses/types, protocol opcodes (`Cmd_message`), item IDs (`ConstItem`), NPC/menu/shop IDs (`ConstNpc`), mob/map/player/achievement constants, and task step IDs (`ConstTask`). No DB, Redis, or Netty I/O logic resides here, but several constant collisions, a duplicate field name in `ConstItem`, and mutable static fields were observed.",
+      "key_classes_count": 5
+    },
+    "server_task_clan_consts__p02": {
+      "domain": "server_task_clan_consts",
+      "lines": 5041,
+      "summary": "Read ConstTask (lines 2801-6359), ConstTournament, SocketType, the event subsystem (Event, IEvent, EventManager, and 8 event_list classes), clan models (Clan, ClanMember, ClanMessage), task models (ClanTask, SideTask, TaskMain, SubTaskMain, TaskPlayer, TaskDanhHieu), and AchievementService. Found P1 JDBC PreparedStatement lifecycle bugs, non-atomic ID generation races, unsynchronized achievement reward claiming, blocking DB fallback in Clan.getPlayerOnline, and P2 logic/concurrency issues in CopyOnWriteArrayList iteration, TaskDanhHieu daily resets, task percent calculation, and EventManager re-activation.",
+      "key_classes_count": 6
+    },
+    "server_task_clan_consts__p03": {
+      "domain": "server_task_clan_consts",
+      "lines": 2425,
+      "summary": "TaskService.java (2425 lines) handles main task progression, NPC/mob/boss/item/map completion hooks, daily SideTask assignment/rewards, ClanTask assignment/rewards, and achievement counters. Key issues found include unsynchronized reward claim paths in paySideTask/payClanTask, missing TASK_24_2 for Namec/Xayda elders, unchecked list-index lookup in getClanTaskTemplateById, and regex replaceAll overhead in transformName.",
+      "key_classes_count": 1
+    },
+    "server_world_map_mob__p01": {
+      "domain": "server_world_map_mob",
+      "lines": 5963,
+      "summary": "Deep-read of 33 files (5963 lines) covering map data loading/caching (MapDataManager, TileMapDataLoader), world Map/Zone/ItemMap/Satellite/TrapMap/Boss10 structures, Mob/BigBoss/MobEffectSkill/MobMe/MobPoint combat & loot systems, and MabuEgg/MagicTree NPCs.",
+      "key_classes_count": 11
+    },
+    "server_world_map_mob__p02": {
+      "domain": "server_world_map_mob",
+      "lines": 5993,
+      "summary": "Read all 50 files in the NPC subsystem (NonInteractiveNPC, Npc base class, and 48 npc_list classes). Npc extends/implements menu creation (opcode 32), NPC chat (opcode 124), and distance/map checks via canOpenNpc. Individual NPCs in npc_list route player menu selections to CombineService, ShopService, ChangeMapService, TaskService, InventoryService, and pho ban / tournament services. Three NPCs (ChiChi, DuongTang, NgoKhong) are completely commented out, and OngGohan's old VND/Giftcode logic is commented out.",
+      "key_classes_count": 6
+    },
+    "server_world_map_mob__p03": {
+      "domain": "server_world_map_mob",
+      "lines": 5148,
+      "summary": "Covers 18 NPC implementations in npc_list, NpcFactory (global RONG_THIENG/CON_MEO menu handlers), and core map/NPC/drop/weather services in services/map (ChangeMapService, MapService, ItemMapService, NpcManager, NpcService, SmartDropService, WeatherService).",
+      "key_classes_count": 8
+    },
+    "tooling_and_tests__p01": {
+      "domain": "tooling_and_tests",
+      "lines": 1471,
+      "summary": "Batch tooling_and_tests__p01 covers 3 core model classes (AntiLogin, GiftCode, Template) and 9 standalone test/diagnostic runners (Whis Arena, TLS, MySQL connection, Namec AI, PacketProfiler, Telemetry, and RedRibbonHQ mob loading). No custom game protocol opcodes are serialized/deserialized in this batch. Key issues include byte overflow & public field exposure in AntiLogin, an unclosed JDBC Connection/Statement in TestMobParse, and test side-effects/brittle assertions in TestProfilerEngine and TestWhisArenaLogic.",
+      "key_classes_count": 12
+    }
+  },
+  "architecture_findings": [
+    {
+      "batch": "client_core_render_audio__p02",
+      "category": "architecture",
+      "impact": "UI/settings/network mutations in SoundMn, hardcoded GameScr coupling in mGraphics.getClip*, and duplicate __drawRegion/_drawRegion implementations increase regression risk.",
+      "location": "SoundMn.cs:147-296,359-470,690-696; mGraphics.cs:249-267,660-970; Sound.cs:299,310,400",
+      "root_cause": "SoundMn owns Panel menus, RMS settings, Char aura flags, and Session_ME disconnect; mGraphics.getClipX/Y/W/H ignore clipX/Y/W/H and return GameScr.cmx/cmy/gW/gH; Sound.playSoundNatural checks SoundBGLoop instead of SoundWater and stopSoundNatural/sTopSoundBG lack null checks.",
+      "severity": "P2",
+      "title": "Tight cross-module coupling in SoundMn/mGraphics and null/logic bugs in Sound channel guards"
+    },
+    {
+      "batch": "client_gameplay_entities__p01",
+      "category": "architecture",
+      "impact": "Calling isPaint(), isUpdate(), startDie(), setAttack(Char), or updateMobAttack() through a Mob base reference invokes Mob's methods instead of the boss's implementation; massive copy-paste increases maintenance risk.",
+      "location": "Client/Client/Assets/Scripts/Game1/Assets/src/g/BigBoss.cs:220-743; Client/Client/Assets/Scripts/Game1/BachTuoc.cs:158-605; Client/Client/Assets/Scripts/Game1/BigBoss2.cs:183-675",
+      "root_cause": "BigBoss, BachTuoc, and BigBoss2 duplicate ~500 lines of Mob/Boss logic and use 'new' method hiding (isPaint, isUpdate, startDie, setAttack(Char), updateMobAttack, updateMobWalk, getX/Y/W/H) instead of 'override'.",
+      "severity": "P1",
+      "title": "Extensive boss code duplication and 'new' hiding instead of 'override' on Mob methods"
+    },
+    {
+      "batch": "client_gameplay_entities__p01",
+      "category": "architecture",
+      "impact": "Maintains duplicated arrow logic, double-blends tileID 11 layer 1 textures, leaks cached BgItem images across maps, and saves unverified registration passwords.",
+      "location": "Client/Client/Assets/Scripts/Game1/Arrow.cs:73-80; Client/Client/Assets/Scripts/Game1/Arrowpaint.cs:69-76; Client/Client/Assets/Scripts/Game1/BgItem.cs:41-62; Client/Client/Assets/Scripts/Game1/BgItemMn.cs:89-96; Client/Client/Assets/Scripts/Game1/Assets/src/g/RegisterScreen.cs:158-196,385-388",
+      "root_cause": "Arrow and Arrowpaint duplicate identical movement/angle code with dead 'else if (num + num2 < 30)' after '< 60' without Res.abs; BgItemMn runs blend twice for 'num == 10 && layer == 1'; BgItem.clearHashTable() is empty; RegisterScreen mutates UI coordinates inside paint() and saves account/password to RMS before server registration reply.",
+      "severity": "P3",
+      "title": "Arrow/Arrowpaint duplication, BgItemMn double-blend, empty BgItem cleanup, and RegisterScreen layout/RMS issues"
+    },
+    {
+      "batch": "client_gameplay_entities__p02",
+      "category": "architecture",
+      "impact": "High maintenance cost, fragile state transitions, and regressions when modifying movement, skills, or rendering.",
+      "location": "Char.cs:7-5853",
+      "root_cause": "Char is a massive God class (8754 lines total) combining entity data, inventory sorting, physics/tile collision, waypoint/map transitions, network dispatch, skill state machine, mount animation, and rendering.",
+      "severity": "P2",
+      "title": "Monolithic God Class (Char) with tightly coupled physics, network, inventory, and rendering"
+    },
+    {
+      "batch": "client_gameplay_entities__p02",
+      "category": "architecture",
+      "impact": "Bug fixes must be applied twice; dead code paths obscure control flow.",
+      "location": "Char.cs:1523-1631, 1682-1734, 4698-4937",
+      "root_cause": "Duplicated methods: bagSort() vs boxSort() (L1523-1631), isInEnterOfflinePoint() vs isInEnterOnlinePoint() (L1682-1734), paintMount1() vs paintMount2() (L4698-4937, both containing unreachable `if (me) return;` inside `else`), and empty stubs (updateChargeSkill L1810, saveLoadPreviousSkill L3363, updateSkillFall L3447).",
+      "severity": "P3",
+      "title": "Extensive code duplication and dead branches in inventory sorting, waypoints, and mount rendering"
+    },
+    {
+      "batch": "client_gameplay_entities__p04",
+      "category": "architecture",
+      "impact": "High maintenance cost, brittle state handling, and client-side character position desync when costume 1265 or Destroy skill runs.",
+      "location": "Client/Client/Assets/Scripts/Game1/Effect_End.cs:5, 269-283, 1051-1053",
+      "root_cause": "Effect_End is a 1926-line monolith switching across 12+ effect types; its constructor (lines 269-283) and upd_Skill_Destroy (lines 1051-1053) directly mutate `charUse.cx`, altering character world coordinates from visual effect code.",
+      "severity": "P2",
+      "title": "Effect_End monolith mutates Char world position directly"
+    },
+    {
+      "batch": "client_gameplay_entities__p05",
+      "category": "architecture",
+      "impact": "High coupling across camera, HUD textures, RMS binary parsers, entity lists, combat targeting, trade state, and event UI makes changes risky and hard to isolate; clearGameScr() leaves static state behind.",
+      "location": "GameScr.cs:8-1092, 1957-1969",
+      "root_cause": "GameScr (8333 lines) acts as a monolithic God Class storing ~100+ static fields (entity MyVectors, ~35 isPaint* booleans, Image assets, templates, camera coordinates, trade/event/auto-play state) alongside instance combat/input state.",
+      "severity": "P1",
+      "title": "God Class architecture with extensive unreset static state in GameScr"
+    },
+    {
+      "batch": "client_gameplay_entities__p06",
+      "category": "architecture",
+      "impact": "State transitions, animations, countdown timers, and touch input consumption depend on render framerate and bypass update() separation.",
+      "location": "Client/Client/Assets/Scripts/Game1/GameScr.cs:5676-5698,5781-5816,5880-5914,5959-5963,6546-6565",
+      "root_cause": "paint() directly increments/decrements timers (shock_scr, tMabuEff, tFusion, tPower, secondVS, flareTime) and handles touch release + info1 popup for PT icon inside paint().",
+      "severity": "P3",
+      "title": "Game state and input handling mutated inside GameScr.paint()"
+    },
+    {
+      "batch": "client_gameplay_entities__p07",
+      "category": "architecture",
+      "impact": "Dead/unreachable tutorial hint code and dead LoginScr methods/UI state cause confusion and double-update overhead.",
+      "location": "Client/Client/Assets/Scripts/Game1/Hint.cs:267,299-304,490-569; LoginScr.cs:247-284,368-370,564-579,629-642,763-799",
+      "root_cause": "Hint.hint() returns early for taskId > 2 making case 3 and taskId == 9 blocks unreachable; LoginScr.getServerLink creates an unused Command; LoginScr.update updates tfUser/tfPass twice per tick and conflicts with updateKey/paint over command/layout assignments.",
+      "severity": "P2",
+      "title": "Unreachable Hint branches, dead LoginScr code, and duplicated tfUser/tfPass updates"
+    },
+    {
+      "batch": "client_gameplay_entities__p08",
+      "category": "architecture",
+      "impact": "NullReferenceException or IndexOutOfRangeException crash on boss spawn, update, or render if arrMobTemplate is null, too small, or template data is not yet loaded.",
+      "location": "Client/Client/Assets/Scripts/Game1/NewBoss.cs:156, 255, 403, 462, 509, 655",
+      "root_cause": "NewBoss directly indexes Mob.arrMobTemplate[templateId] instead of using Mob.EnsureMobTemplateCapacity() / Mob.getTemplate() null-safe helpers.",
+      "severity": "P1",
+      "title": "NewBoss bypasses Mob template capacity/null guards and crashes on uninitialized templates"
+    },
+    {
+      "batch": "client_gameplay_entities__p08",
+      "category": "architecture",
+      "impact": "Calling Mob-typed references invokes Mob methods/fields instead of NewBoss implementations, causing state desync and wrong frame array indexing.",
+      "location": "Client/Client/Assets/Scripts/Game1/NewBoss.cs:17-86, 188-650",
+      "root_cause": "NewBoss shadows over 20 fields and methods (xSd, isBusyAttackSomeOne, injureBy, blindEff, sleepEff, setAttack, updateMobAttack, updateMobWalk, isPaint, isUpdate, GetFrame, etc.) with `new` instead of `override`. In addition, `case 7` in NewBoss.update() (line 289) calls `base.update()` into Mob.update().",
+      "severity": "P1",
+      "title": "NewBoss hides Mob fields and methods with `new` instead of `override`"
+    },
+    {
+      "batch": "client_gameplay_entities__p08",
+      "category": "architecture",
+      "impact": "Minor dead code, boxing in hashtable keymap, and command hit-test edge case at y==0.",
+      "location": "Client/Client/Assets/Scripts/Game1/MyKeyMap.cs:66-74; mScreen.cs:108; Net.cs:1-47; Npc.cs:176-183",
+      "root_cause": "MyKeyMap boxes KeyCode and unboxes int on every map() call; mScreen.getCmdPointerLast treats `cmd.y == 0` as unset sentinel; Net.cs is fully commented out; Npc.update() has identical if/else branches at lines 176-183 assigning `GameScr.efs[98]`.",
+      "severity": "P3",
+      "title": "Dead/redundant branches, KeyCode boxing, and cmd.y==0 sentinel edge case"
+    },
+    {
+      "batch": "client_gameplay_entities__p09",
+      "category": "architecture",
+      "impact": "Dead null-handling branches in cmdUpdateServer.actionChat fail to call getServerList(linkDefault) when str == null; paint()/update() risk NRE/IOOBE if nameServer or cmd is uninitialized; per-frame string concat in paint().",
+      "location": "Client/Client/Assets/Scripts/Game1/ServerListScreen.cs:149-187,371-376,507-512,599-609,803-835",
+      "root_cause": "cmdUpdateServer assigns text = str and text2 = str, making `text == null && text2 != null` unreachable and omitting getServerList(text) when str == null; loadIP does not validate negative sbyte b or language[i] bounds and lacks try/finally on stream close.",
+      "severity": "P2",
+      "title": "Broken actionChat null branch, unsafe array indexing, and per-frame GC in ServerListScreen"
+    },
+    {
+      "batch": "client_gameplay_entities__p10",
+      "category": "architecture",
+      "impact": "Multiple UI widgets calling TextInfo.paint() in the same frame reset each other's marquee offset every tick and never scroll properly.",
+      "location": "TextInfo.cs:5-31",
+      "root_cause": "TextInfo stores scroll offsets (dx, tx, wStr, isBack, laststring) in static fields rather than per-instance state.",
+      "severity": "P2",
+      "title": "TextInfo uses shared static state for marquee scrolling"
+    },
+    {
+      "batch": "client_gameplay_entities__p10",
+      "category": "architecture",
+      "impact": "T3 (Indonesian localization) diverges from T1/T2 by omitting clientType == 7 overrides for MENUGENDER and hairStyleName and having 17 split tips entries.",
+      "location": "T3.cs:166,242-246,531-536",
+      "root_cause": "Copy-paste drift across T1, T2, and T3 static load() tables; SMS.cs (1-170) is also completely commented out.",
+      "severity": "P3",
+      "title": "Localization drift in T3.cs and dead commented-out SMS.cs"
+    },
+    {
+      "batch": "client_gameplay_entities__p11",
+      "category": "architecture",
+      "impact": "Strangler Fig refactoring of Panel.cs is incomplete: all UI logic/input remains in Panel.cs while SubPanel classes duplicate boilerplate and return false for UpdateKey/PointerClick/PointerHoldIn.",
+      "location": "Client/Client/Assets/Scripts/Game1/UI/Panels/ChestSubPanel.cs:8-57",
+      "root_cause": "ChestSubPanel, CombineSubPanel, InventorySubPanel, ShopSubPanel, and ClanSubPanel only forward Paint (and ClanSubPanel.OnSelectTab) back to Panel; all other ISubPanel methods are no-op stubs.",
+      "severity": "P3",
+      "title": "Incomplete ISubPanel decomposition delegates only Paint back to Panel.cs"
+    },
+    {
+      "batch": "client_gameplay_entities__p11",
+      "category": "architecture",
+      "impact": "Dead commented-out code clutters the Scripts/Game1 directory.",
+      "location": "Client/Client/Assets/Scripts/Game1/TouchScreenKeyboard.cs:3-23",
+      "root_cause": "TouchScreenKeyboard.cs and TouchScreenKeyboardType.cs have their entire class/enum bodies commented out.",
+      "severity": "P3",
+      "title": "Commented-out dead stub files TouchScreenKeyboard and TouchScreenKeyboardType"
+    },
+    {
+      "batch": "client_network_protocol__p01",
+      "category": "architecture",
+      "impact": "Increases risk of using wrong opcode constants across Client/Server features.",
+      "location": "Cmd.cs:5-580",
+      "root_cause": "Top-level message commands and scoped sub-commands (under NOT_LOGIN, NOT_MAP, SUB_COMMAND) are declared flat in one class without namespaces or prefixes, causing dozens of duplicate numeric values (0, 1, 2, 6, 7, 13, 14, 16-18, 21, 35, 38, 40, 50, 62-66).",
+      "severity": "P2",
+      "title": "Flat Cmd.cs mixes top-level and sub-command constants with extensive value collisions"
+    },
+    {
+      "batch": "client_network_protocol__p02",
+      "category": "architecture",
+      "impact": "High maintenance risk, hidden opcode collisions, and dead code (`case 66` XP-down stub at L4564 is completely unreachable).",
+      "location": "Controller.cs:120-4641, 148-150, 3992, 4564-4566",
+      "root_cause": "`onMessage` is a 4,520-line God method combining binary deserialization, UI panel logic, audio, RMS persistence, and auto-play/boss hooks, split across two separate `switch (msg.command)` blocks (L137 and L3992). `case 66` in the first switch (L148-150) returns early, shadowing `case 66` in the second switch (L4564-4566).",
+      "severity": "P2",
+      "title": "Monolithic dual-switch onMessage God method with unreachable duplicate case 66"
+    },
+    {
+      "batch": "client_network_protocol__p03",
+      "category": "architecture",
+      "impact": "Duplicated item/template parsing logic and fragile split between legacy Controller.cs (~6900 lines) and modular PacketDispatcher handlers.",
+      "location": "Client/Client/Assets/Scripts/Game1/Controller.cs:4662-4680,6503-6619; Client/Client/Assets/Scripts/Game1/Network/PacketDispatcher.cs:49-74",
+      "root_cause": "Controller remains a massive monolithic class containing createItem and newer loadItemNew side-by-side, while PacketDispatcher extracts only a subset of opcodes into IPacketHandler classes.",
+      "severity": "P3",
+      "title": "Monolithic Controller.cs retains legacy template loaders alongside partial PacketDispatcher refactor"
+    },
+    {
+      "batch": "client_network_protocol__p04",
+      "category": "architecture",
+      "impact": "God class (`Service.cs` 3285 lines) and copy-pasted `Session_ME`/`Session_ME2` cause feature drift, unclosed `/info` file handles, swallowed exceptions, and `NullReferenceException` in `finally` blocks (`message.cleanup()`).",
+      "location": "Client/Client/Assets/Scripts/Game1/Service.cs:49,762,802,1008-1042,1564-1637,3042-3045",
+      "root_cause": "Duplicated `Session_ME`/`Session_ME2` and `setClientType`/`setClientType2`/`magicTree`/`getMagicTree`; unguarded `message.cleanup()` in `finally`; missing `cleanup()` and null guard in `sendPlayerAttack`; unclosed `MyStream.readFile(\"/info\")`; `dos.Flush()` inside `catch` in `Session_ME.doSendMessage:452`.",
+      "severity": "P2",
+      "title": "Service God Class, Copy-Paste Session Drift, and Unguarded Cleanup/Stream Leaks"
+    },
+    {
+      "batch": "client_ui_god_mods__p01",
+      "category": "architecture",
+      "impact": "Dead code and unused allocations/methods bloat maintenance surface and can confuse debugging (e.g., `BossData` instantiates an empty `List<BossData>` per boss entry).",
+      "location": "Client/Client/Assets/Scripts/Game1/God/Boss/BossData.cs:12, 68; Client/Client/Assets/Scripts/Game1/God/Player/AutoControlPanel.cs:1-40; Client/Client/Assets/Scripts/Game1/God/Client/ClientManager.cs:181-209; Client/Client/Assets/Scripts/Game1/God/Player/PlayerInfo.cs:12, 17-24",
+      "root_cause": "Removed UI features (`AutoControlPanel`, `PlayerInfo.paintInfoPlayer`, `ClientManager.KeyPressed`/`MenuClient`) remain partially wired or dead; `BossData` mixes singleton manager and DTO roles; `AutoSettingItem` `doFire` uses `GameCanvas.px` even on keyboard confirm.",
+      "severity": "P3",
+      "title": "Mixed DTO/singleton in BossData, dead stub classes, and unused fields"
+    },
+    {
+      "batch": "client_ui_god_mods__p02",
+      "category": "architecture",
+      "impact": "High maintenance risk and regression surface across ~30 panel modes and dual-panel layouts (`panel` / `panel2`).",
+      "location": "Panel.cs:1-5643 (e.g., 906-946, 1293-1351, 4294-4475, 4865, 5401, 5494)",
+      "root_cause": "God class `Panel` (11,857 lines total) mixes partial `ISubPanel` delegation (`InventorySubPanel`, `ChestSubPanel`, `CombineSubPanel`, `ShopSubPanel`, `ClanSubPanel`) with legacy monolithic switch/paint/updateKey logic, duplicated item-row rendering in 4+ methods, dead stub methods (`setTabChatPlayer`, `IsNewMessage`, `updateKeyAuto`, `subArray`, `paintPetSkill`), copy-paste ternary (`GetColor_ItemBg` twice at lines 4865/5401), and wrong log context (`\"paintPetInventory\"` in `paintBox` catch at line 5494).",
+      "severity": "P2",
+      "title": "Monolithic Panel God Class with partial ISubPanel migration and copy-paste defects"
+    },
+    {
+      "batch": "client_ui_god_mods__p03",
+      "category": "architecture",
+      "impact": "High maintenance cost and bug divergence across parallel code paths (e.g., hide vs hideNow missing imgMap.texture cleanup and subpanel OnClose; dead loop in new inventory).",
+      "location": "Panel.cs:5645-5741, 6164-6620, 7717-7863, 8632-8788, 9132-9133",
+      "root_cause": "Panel God class duplicates paintEnemy/paintFriend, paintCharInfo overloads, paintItemBodyBagInfo overloads, doFireTool havePet/no-pet switches, chatTField initialization, and has dead code in paintInventory (flag=true, newSelected==0 loop) plus duplicate menu.startAt in doFireClanOption.",
+      "severity": "P2",
+      "title": "God-class duplication, dead code paths, and divergent hide()/hideNow() teardown in Panel.cs"
+    },
+    {
+      "batch": "client_ui_god_mods__p04",
+      "category": "architecture",
+      "impact": "Increases coupling between core PopUp rendering and third-party/mod UI state; unguarded null images if loadBg() wasn't called or assets failed.",
+      "location": "Client/Client/Assets/Scripts/Game1/PopUp.cs:3,180-227",
+      "root_cause": "PopUp imports Game1.God and checks ListChars.getInstance().HideMap inside paintPopUp(); paintPopUp() also draws goc/imgPopUp/imgPopUp2 without null guards or calling loadBg().",
+      "severity": "P2",
+      "title": "PopUp coupled to Game1.God.ListChars and missing null guards on background images in paintPopUp"
+    },
+    {
+      "batch": "client_ui_god_mods__p04",
+      "category": "architecture",
+      "impact": "Duplicated layout/clamping logic and potential NullReferenceException if info is null; negative cx when map width is 0 or narrow.",
+      "location": "Client/Client/Assets/Scripts/Game1/PopUp.cs:51-92,110-151",
+      "root_cause": "PopUp(string, int, int) and updateXYWH(string[], int, int) duplicate cx/cy/cw/ch rounding and clamping logic; constructor accesses info.Length without null guard.",
+      "severity": "P3",
+      "title": "Duplicated layout clamping logic and unguarded info.Length in PopUp"
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p01",
+      "category": "architecture",
+      "impact": "High maintenance burden and bug replication across duplicate classes (e.g., XENCON1-7, 6 identical BossManager subclasses, commented-out RongNhi1-7 and ChristmasEvent classes).",
+      "location": "src/models/boss/boss_list/Cell/XENCON1.java..XENCON7.java & src/managers/boss/BrolyManager.java:30-58",
+      "root_cause": "XENCON1-7 duplicate identical reward/joinMap/doneChatE/leaveMap/autoLeaveMap logic differing only by BossID; 6 managers duplicate update(); BrolyManager contains unused fake start/stop/spawnBroly/despawnBroly stubs.",
+      "severity": "P3",
+      "title": "Heavy boilerplate duplication and dead stub code in Boss managers and XENCON1-7"
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p02",
+      "category": "architecture",
+      "impact": "High maintenance cost and bug propagation (e.g., identical bugs copied across TuanLoc/LanCon, BiMa/Doi/MaTroi, BIDO/BUJIN/KOGU/ZANGYA, SO1..SO4). Also 15 completely commented-out files clutter the codebase.",
+      "location": "TuanLoc.java, LanCon.java, BIDO.java, BOJACK.java, BUJIN.java, KOGU.java, SUPER_BOJACK.java, ZANGYA.java, SO1.java, SO2.java, SO3.java, SO4.java, BiMa.java, Doi.java, MaTroi.java, DrLychee.java, Hatchiyack.java",
+      "root_cause": "Duplicated boilerplate for joinMap, autoLeaveMap, reward item spreading, doneChatE, and injured across sibling boss classes, plus dead `currentLevel == 1` checks in single-level Earth/GinyuForce bosses and commented-out files.",
+      "severity": "P3",
+      "title": "Heavy copy-paste duplication across event/Earth/GinyuForce/DestronGas bosses and 15 commented-out classes"
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p03",
+      "category": "architecture",
+      "impact": "High maintenance burden and drift (e.g., SO3_NM.doneChatE missing break and waking two bosses, Mabu.java unused AO_TL/QUAN_TL/GANG_TL/GIAY_TL caches, Cadic/Goku dead petrifyPlayersInTheMap methods).",
+      "location": "src/models/boss/boss_list/NamekGinyuForce/*.java; src/models/boss/boss_list/Nappa/*.java; src/models/boss/boss_list/RedRibbonHQ/*.java; src/models/boss/boss_list/MajinBuu12H/*.java",
+      "root_cause": "Copy-pasted reward(), attack(), autoLeaveMap(), and leaveMap() implementations across NamekGinyuForce (5 files), Nappa (3 files), RedRibbonHQ (6 files), and MajinBuu12H (5 files) instead of shared base/helper methods.",
+      "severity": "P3",
+      "title": "Extensive copy-paste duplication and dead code across boss families"
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p04",
+      "category": "architecture",
+      "impact": "Dead/exiting tournament bosses never transition through DIE/LEAVE_MAP inside update() on their own; relies entirely on external managers polling or removing them, and Yardart uses 18 nearly identical subclasses for static data.",
+      "location": "src/models/boss/boss_list/SuperRank/SuperRank.java:148-171, The23rdMartialArtCongress.java:117-134, ThienXinHangClone.java:71-94, Yardart/*.java",
+      "root_cause": "Tournament boss update() overrides omit super.update() and omit DIE/LEAVE_MAP/CHAT_S/CHAT_E switch cases; Yardart hardcodes 18 spawn-point subclasses instead of parameterized config, and TrungThuEvent (3 files) remains as fully commented-out dead code.",
+      "severity": "P3",
+      "title": "Incomplete BossStatus state machines in tournament update() loops and boilerplate Yardart subclasses"
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p07",
+      "category": "architecture",
+      "impact": "Silent failures mask runtime exceptions and leave players without feedback when arena zones are full; duplicated code increases maintenance drift.",
+      "location": "src/services/tournament/The23rdMartialArtCongressService.java:43-44,53-54,66-67; src/services/tournament/SuperRankService.java:72-87; src/services/tournament/WorldMartialArtsTournamentService.java:163-170,199-203",
+      "root_cause": "Empty catch blocks in The23rdMartialArtCongressService (setTimeout, sendTypePK) and empty else branch when zone == null in startChallenge; duplicated case 0/1 blocks in SuperRankService.competing and duplicated fee/listReg block in dangky_huy.",
+      "severity": "P3",
+      "title": "Empty catch/else blocks and duplicated tournament service logic"
+    },
+    {
+      "batch": "server_database_persistence__p01",
+      "category": "architecture",
+      "impact": "Calling AlyraManager.login() crashes with SQLException on existing players (missing columns in rsPlayer) and allows banned/non-admin players to bypass ban and maintenance checks.",
+      "location": "src/database/AlyraManager.java:256-332,367-445",
+      "root_cause": "AlyraManager.login duplicates NDVSqlFetcher.login, passes `SELECT id FROM player` ResultSet directly into NDVSqlFetcher.loadPlayer() which expects all player columns, omits `ban` and `Manager.DEBUG` checks, omits `last_time_login` update, and omits `isAdmin` wait-time bypass.",
+      "severity": "P0",
+      "title": "Broken duplicate login() in AlyraManager passes id-only ResultSet to loadPlayer() and skips ban/maintenance checks"
+    },
+    {
+      "batch": "server_database_persistence__p02",
+      "category": "architecture",
+      "impact": "Invalid column index throws raw ArrayIndexOutOfBoundsException; null column name throws raw NullPointerException; maintenance risk from 18 nearly identical getter implementations.",
+      "location": "src/database/ResultSetImpl.java:174-585",
+      "root_cause": "Indexed getters do not validate column bounds (1..nColumn) before indexing values[indexData][column - 1], string getters call column.toLowerCase() without null check, and cursor/conversion logic is duplicated across 18 getter methods.",
+      "severity": "P3",
+      "title": "Missing column index/null validation and heavy boilerplate duplication across getters"
+    },
+    {
+      "batch": "server_network_core__p01",
+      "category": "architecture",
+      "impact": "Dead/duplicated code increases maintenance burden; calling Session.gI() always throws an exception, and network.Message.getData() throws NPE on read-mode messages.",
+      "location": "src/network/Message.java:11-77; src/network/Network.java:20-234; src/network/session/Session.java:36-41,67-72",
+      "root_cause": "Legacy socket stack (Network, Session, Collector, Sender, QueueHandler, network.Message) coexists with Netty 4 stack; Session.instance is never initialized; Session(Socket) constructs redundant Sender/Collector instances.",
+      "severity": "P3",
+      "title": "Coexisting legacy socket stack, duplicate Message class, and uninitialized Session.gI()"
+    },
+    {
+      "batch": "server_network_core__p02",
+      "category": "architecture",
+      "impact": "ServerPacketDispatcher only handles -86 and -20 while those same opcodes remain as dead branches in Controller.java, increasing maintenance confusion and bypassing dispatcher symmetry.",
+      "location": "ServerPacketDispatcher.java:30-36;Controller.java:89-97,358-362,801-806",
+      "root_cause": "Partial refactoring left 50+ opcodes in Controller.onMessage and duplicated case -86 and case -20 after ServerPacketDispatcher.dispatch().",
+      "severity": "P3",
+      "title": "Incomplete ServerPacketDispatcher migration with dead duplicate opcodes in Controller"
+    },
+    {
+      "batch": "server_player_combat__p01",
+      "category": "architecture",
+      "impact": "GiftCode state is split/duplicated across Inventory.giftCode and GiftCode.rewards; NPoint.tlDameCrit and Inventory.giftCode leak in dispose().",
+      "location": "src/models/player/Inventory.java:14,164-204",
+      "root_cause": "Inventory maintains giftCode list separately from GiftCode class and omits it in dispose(); NPoint.dispose() nulls 6 lists but omits tlDameCrit.",
+      "severity": "P3",
+      "title": "Duplicated GiftCode list and incomplete dispose() cleanup in Inventory and NPoint"
+    },
+    {
+      "batch": "server_player_combat__p02",
+      "category": "architecture",
+      "impact": "High coupling and maintenance risk; Player.dispose() contains redundant field clearing statements.",
+      "location": "src/models/player/Player.java:1254,1350-1390; src/services/player/InventoryService.java; src/services/player/ClanService.java",
+      "root_cause": "Player acts as a God class (1476 lines) combining combat, cooking events, network session, and visual rendering; InventoryService (1256 lines) and ClanService (1208 lines) mix persistence, protocol, and business logic.",
+      "severity": "P3",
+      "title": "God-class coupling in Player/InventoryService/ClanService and duplicate cleanup in Player.dispose"
+    },
+    {
+      "batch": "server_player_combat__p03",
+      "category": "architecture",
+      "impact": "Non-thread-safe singleton and tight coupling across 1487 lines complicate combat maintenance.",
+      "location": "src/services/SkillService.java:33-42",
+      "root_cause": "SkillService.gI() is an unsynchronized non-volatile lazy singleton, and SkillService mixes validation, cooldown/mana accounting, AoE/DoT/reflect/lifesteal combat formulas, PvP rules, and binary Message encoding in one 1487-line class.",
+      "severity": "P3",
+      "title": "Non-thread-safe singleton and God-class coupling in SkillService"
+    },
+    {
+      "batch": "server_services_bot_telemetry__p01",
+      "category": "architecture",
+      "impact": "4 nearly identical bot AI classes and 3 duplicated zone/map-routing methods increase maintenance cost; getRandomZone1/2/3 fallback retries call wrong map pool.",
+      "location": "src/bot/Bot.java:127-344; src/bot/BotCold1.java; src/bot/BotNappa.java; src/bot/BotTuonglai.java; src/bot/Mobb.java",
+      "root_cause": "Copy-pasted BotCold1/BotNappa/BotTuonglai/Mobb classes and MapToPow*/getRandomZone* methods with identical dead gender branches and recursive fallback calling getRandomZone(MapToPow*()) instead of getRandomZone1/2/3.",
+      "severity": "P2",
+      "title": "Heavy code duplication in legacy Bot controllers and broken recursive zone retry routing"
+    },
+    {
+      "batch": "server_task_clan_consts__p01",
+      "category": "architecture",
+      "impact": "Compile-time error if ConstItem.java is compiled with javac, preventing build or forcing IDE/stale class usage.",
+      "location": "src/consts/ConstItem.java:200,730",
+      "root_cause": "Duplicate field declaration `public static final int SIEU_THAN_THUY` with values 195 (line 200) and 725 (line 730) in the same class.",
+      "severity": "P0",
+      "title": "Duplicate field name SIEU_THAN_THUY in ConstItem.java"
+    },
+    {
+      "batch": "server_task_clan_consts__p01",
+      "category": "architecture",
+      "impact": "Bloated class constant pool and poor maintainability; also non-ASCII identifier ĐỔI_PHIẾU_BÉ_NGOAN (ConstNpc.java:420) risks encoding issues across toolchains.",
+      "location": "src/consts/ConstTask.java:59-2800; src/consts/ConstNpc.java:420",
+      "root_cause": "ConstTask pre-generates thousands of `TASK_<id>_<step>` integer constants instead of a bit-shift helper method.",
+      "severity": "P3",
+      "title": "Massive pre-generated task constant table in ConstTask and non-ASCII identifier in ConstNpc"
+    },
+    {
+      "batch": "server_task_clan_consts__p02",
+      "category": "architecture",
+      "impact": "Bloated class file and constant pool; difficult to maintain task IDs.",
+      "location": "src/consts/ConstTask.java:2801-6359",
+      "root_cause": "Thousands of enumerated TASK_X_Y constants instead of a helper method computing (taskId << 11) + (index << 1).",
+      "severity": "P3",
+      "title": "ConstTask contains thousands of repetitive hardcoded task constants"
+    },
+    {
+      "batch": "server_world_map_mob__p03",
+      "category": "architecture",
+      "impact": "Increases maintenance burden and risk of divergent bug fixes across dungeon map-entry rules.",
+      "location": "src/services/map/MapService.java:161-315, 625-635",
+      "root_cause": "MapService.getMapCanJoin duplicates the ~40-line mob/boss-dead check 4 times for DoanhTrai, BanDoKhoBau, KhiGasHuyDiet, and ConDuongRanDoc; MapService.goToMap duplicates ChangeMapService.goToMap.",
+      "severity": "P3",
+      "title": "Duplicated dungeon clearance logic and goToMap method in MapService"
+    },
+    {
+      "batch": "server_world_map_mob__p03",
+      "category": "architecture",
+      "impact": "Dead code clutter in npc_list package.",
+      "location": "src/models/npc/npc_list/ShopNew.java:1-116; src/models/npc/npc_list/ToriBot.java:1-86",
+      "root_cause": "Entire class definitions are commented out.",
+      "severity": "P3",
+      "title": "Fully commented-out NPC classes ShopNew and ToriBot"
+    },
+    {
+      "batch": "tooling_and_tests__p01",
+      "category": "architecture",
+      "impact": "Increases risk of inconsistent state between `skills` array and `skillss` list, and fragile index alignment across parallel arrays in `MapTemplate`.",
+      "location": "src/models/Template.java:117-125,152-154",
+      "root_cause": "`SkillTemplate` declares both `Skill[] skills` and `List<Skill> skillss = new ArrayList<>()`; `MapTemplate` stores mob/npc attributes in separate parallel primitive arrays.",
+      "severity": "P3",
+      "title": "Template.java has duplicated skill collections and parallel arrays in MapTemplate"
+    }
+  ],
+  "performance_gc_findings": [
+    {
+      "batch": "client_core_render_audio__p01",
+      "category": "performance_gc",
+      "impact": "Causes continuous GC allocations during combat/damage rendering on every frame at zoomLevel > 1, plus 5x GUI.Label draw calls per string.",
+      "location": "mFont.cs:392-405, 421-446, 524-531",
+      "root_cause": "setTypePaint allocates `new Color[6]` and calls bigColor() twice (each allocating `new Color[7]`) on every call for id > 24, alongside 5 `_drawString` passes per outlined text/number.",
+      "severity": "P1",
+      "title": "Per-frame Color[] heap allocations in mFont.setTypePaint and bigColor"
+    },
+    {
+      "batch": "client_core_render_audio__p01",
+      "category": "performance_gc",
+      "impact": "Orphans a Texture2D GPU/native allocation on every Image.createImage(Image) call and leaks sampled Textures in loadBG until scene unload.",
+      "location": "Image.cs:66-72; GameCanvas.cs:1834-1835",
+      "root_cause": "Image.createImage(Image img) calls createImage(img.w, img.h) (allocating a new Texture2D) and immediately overwrites `image.texture = img.texture` without destroying the allocated Texture2D, then calls Apply() again. GameCanvas.loadBG loads a temporary Image to read 1 pixel via getRGB without destroying its texture.",
+      "severity": "P2",
+      "title": "Texture2D native memory leak in Image.createImage(Image) and loadBG"
+    },
+    {
+      "batch": "client_core_render_audio__p01",
+      "category": "performance_gc",
+      "impact": "Double draw cost every frame a dialog is open and visual double-darkening of semi-transparent dialog backdrops.",
+      "location": "GameCanvas.cs:2740-2744, 2777-2780",
+      "root_cause": "GameCanvas.paint() paints `currentDialog.paint(g)` at line 2743 and paints it a second time at line 2779.",
+      "severity": "P2",
+      "title": "currentDialog.paint(g) called twice per frame in GameCanvas.paint()"
+    },
+    {
+      "batch": "client_core_render_audio__p01",
+      "category": "performance_gc",
+      "impact": "Generates per-frame GC garbage in paint/input loops (Position object on every drag, string concats on HUD money/loading/text comparison).",
+      "location": "GameCanvas.cs:2593, 2705, 2789, 2926-2943; mFont.cs:753",
+      "root_cause": "pointerDragged allocates `new Position(x, y)` instead of reusing existing elements; getMoneys allocates multiple concatenated strings in a loop; paint/paintChangeMap build strings via `+`; mFont.compare allocates `string.Empty + strSource[i]` per character.",
+      "severity": "P2",
+      "title": "Per-frame allocations in GameCanvas pointerDragged/paint/getMoneys and mFont.compare"
+    },
+    {
+      "batch": "client_core_render_audio__p02",
+      "category": "performance_gc",
+      "impact": "Disk/RMS reads, Resources.Load, Texture2D creation, and GC allocations occur directly inside paint/OnGUI, causing frame hitches and memory churn.",
+      "location": "SmallImage.cs:121-191,218-330; mGraphics.cs:174-183,1319-1327; mSystem.cs:180-259",
+      "root_cause": "drawSmallImage calls createImage synchronously during paint; drawLine(mGraphics,...) allocates MyVector and mLine objects per call; mSystem string formatters concatenate strings in loops; color1x1Cache destroys all cached Texture2Ds at >300 entries.",
+      "severity": "P1",
+      "title": "Blocking I/O and per-frame GC allocations inside paint/render paths"
+    },
+    {
+      "batch": "client_gameplay_entities__p01",
+      "category": "performance_gc",
+      "impact": "Causes per-frame GC allocations, debug string formatting, and animation speed coupled to render FPS instead of fixed update ticks.",
+      "location": "Client/Client/Assets/Scripts/Game1/Assets/src/g/BigBoss.cs:630-643; Client/Client/Assets/Scripts/Game1/BachTuoc.cs:493-505; Client/Client/Assets/Scripts/Game1/BigBoss2.cs:563-575; Client/Client/Assets/Scripts/Game1/Assets/src/g/Mabu.cs:235",
+      "root_cause": "BigBoss.paint, BachTuoc.paint, and BigBoss2.paint instantiate two 'new Effect(...)' objects per paint call when shock==true, and BigBoss.paint concatenates '\"type= \" + type'. Mabu.paint advances animation state via checkFrameTick(skills[skillID]) inside paint().",
+      "severity": "P2",
+      "title": "Object allocations, string concat, and state mutation inside boss paint() loops"
+    },
+    {
+      "batch": "client_gameplay_entities__p01",
+      "category": "performance_gc",
+      "impact": "Allocates multiple temporary strings per background item every render frame and performs synchronous PNG encoding on the Unity main thread on cache miss.",
+      "location": "Client/Client/Assets/Scripts/Game1/BgItem.cs:124-140,152; Client/Client/Assets/Scripts/Game1/BgItemMn.cs:119-134,141-151",
+      "root_cause": "BgItem.paint builds hashtable lookup keys via 'idImage + string.Empty' and 'idImage + \"blend\" + layer' on every frame. BgItemMn.blendImage runs Texture2D blending and EncodeToPNG() + Rms.saveRMS synchronously on the main thread.",
+      "severity": "P2",
+      "title": "Per-frame string allocations in BgItem.paint and blocking PNG encode on main thread"
+    },
+    {
+      "batch": "client_gameplay_entities__p02",
+      "category": "performance_gc",
+      "impact": "Frequent GC spikes and frame drops on mobile/Unity client during combat, charging, and crowded maps.",
+      "location": "Char.cs:1922-2367, 2168-2222, 3031-3094, 4713-4886, 5564-5648",
+      "root_cause": "Per-frame heap allocations and string concatenations inside update()/paint(): `new Effect(...)` every 5-10 ticks (L1922, 1927, 1938, 2367), `charID + string.Empty` and `Res.split` (L1951-1969), `Res.outz(... + cName + ...)` every tick during charge (L2168), `strMount + (idMount - ID_NEW_MOUNT) + \"_0\"` in paintMount1/2 (L4713, 4762, 4831, 4885), `new MyVector()`/`new EffectPaint[]` in setAttack (L5564-5648).",
+      "severity": "P1",
+      "title": "Heavy GC allocations and string concatenations in update() and paint() loops"
+    },
+    {
+      "batch": "client_gameplay_entities__p02",
+      "category": "performance_gc",
+      "impact": "Main-thread stalls / frame hitches during rendering when zoom changes or special mount/mount textures first appear.",
+      "location": "Char.cs:433-456, 4667-4686, 4700, 4818, 4847, 4902",
+      "root_cause": "paintMount1() and paintMount2() invoke checkLoadMount() (synchronously loading 12 PNGs via GameCanvas.loadImage) and getMountData() (reading /Mob/50 from disk via MyStream.readFile) directly during the render pass.",
+      "severity": "P1",
+      "title": "Synchronous disk/texture I/O executed inside paintMount1/paintMount2 render path"
+    },
+    {
+      "batch": "client_gameplay_entities__p02",
+      "category": "performance_gc",
+      "impact": "CPU spikes in crowded maps when multiple players are visible.",
+      "location": "Char.cs:3106-3143",
+      "root_cause": "checkHideCharName() runs every 20 ticks for every remote Char and linearly scans all GameScr.vCharInMap and GameScr.vNpc (O(N^2 + N*M)).",
+      "severity": "P2",
+      "title": "Quadratic O(N^2) proximity scan in checkHideCharName() for remote characters"
+    },
+    {
+      "batch": "client_gameplay_entities__p03",
+      "category": "performance_gc",
+      "impact": "Per-frame heap allocations inside paint() and update() loops cause GC pressure on mobile/Unity client.",
+      "location": "Char.cs:6615-6622, 7008, 7064, 8266, 8306, 8332, 8347, 8368-8410; CrackBallScr.cs:629-652; ChatTextField.cs:324; ChooseCharScr.cs:119,124; CreateCharScr.cs:593",
+      "root_cause": "String concatenations (bag + string.Empty, strEffAura + idAuraEff + \"_0\", xuStr + string.Empty, \" -\" + cost, strChat + to, power_point + \" \" + ...) and array allocations (new int[4] in searchItem/searchFocus) execute directly inside paint() and periodic update() calls.",
+      "severity": "P2",
+      "title": "Per-frame string concatenations and array allocations in paint/searchFocus loops"
+    },
+    {
+      "batch": "client_gameplay_entities__p04",
+      "category": "performance_gc",
+      "impact": "Unnecessary GC allocations during EffectData binary parsing and per-frame Effect.update() calls for missing animation states.",
+      "location": "Client/Client/Assets/Scripts/Game1/EffectData.cs:48-51, 217-223",
+      "root_cause": "EffectData.get(int index) allocates `new short[1]` on every call when `anim_data[index] == null` (called from Effect.update() for typeEff == 5). Additionally, readData() builds an unused string `text = text + num9 + \",\"` in a loop (line 222).",
+      "severity": "P2",
+      "title": "Per-frame short[1] allocation in EffectData.get and dead string concat in readData"
+    },
+    {
+      "batch": "client_gameplay_entities__p04",
+      "category": "performance_gc",
+      "impact": "Broken firework trajectory math, zero-sized screen clear in FireWorkEff, skipped/double-painted elements on removal, and GC allocations inside paint().",
+      "location": "Client/Client/Assets/Scripts/Game1/Firework.cs:67-83; FireWorkEff.cs:7-8, 55, 63-77, 126-127; FireWorkMn.cs:33-41",
+      "root_cause": "Firework.preDraw and FireWorkEff.animate convert `angle` to radians before calling `Res.cos`/`Res.sin` which expect integer degrees (0..359). FireWorkEff.w and h are never initialized (remain 0). FireWorkEff.paint() calls preDraw()/keyPressed() and allocates `new FireWorkMn(...)` inside paint(). FireWorkMn.paint() removes from `fw` in a forward loop without adjusting index `i`.",
+      "severity": "P2",
+      "title": "Broken trigonometry, uninitialized bounds, and update/allocation inside Firework paint loops"
+    },
+    {
+      "batch": "client_gameplay_entities__p05",
+      "category": "performance_gc",
+      "impact": "DataInputStream in loadOptionTemplatesFromRMS() is never closed (resource leak), and readUnsignedByte() truncates template counts if count > 255.",
+      "location": "GameScr.cs:226-259",
+      "root_cause": "loadOptionTemplatesFromRMS() creates DataInputStream at line 233 without a finally/close() block, and reads count using d.readUnsignedByte() at line 239.",
+      "severity": "P2",
+      "title": "Unclosed DataInputStream and 8-bit count limit in loadOptionTemplatesFromRMS()"
+    },
+    {
+      "batch": "client_gameplay_entities__p05",
+      "category": "performance_gc",
+      "impact": "Every out-of-range attack tick allocates new MovePoint and Command objects, and missing/corrupt RMS files log Cout.LogError (creating red Console error badges in Unity) even when fallback/re-fetch is handled.",
+      "location": "GameScr.cs:1636, 1650, 1697, 1730, 1754, 1843, 1939, 2561-2562, 2653-2654, 2713-2714, 2802-2803, 2822-2823",
+      "root_cause": "isAttack() instantiates new MovePoint(...) and new Command(null, null, 8002, null) repeatedly while approaching targets; RMS loaders emit Cout.LogError on parse/load failures.",
+      "severity": "P3",
+      "title": "Repeated object allocations in isAttack() and LogError usage in RMS loaders"
+    },
+    {
+      "batch": "client_gameplay_entities__p06",
+      "category": "performance_gc",
+      "impact": "Allocates arrays, ClanImage objects, and concatenated strings every render frame inside paint(), violating Client Zero-GC invariant and increasing GC pressure/stutter.",
+      "location": "Client/Client/Assets/Scripts/Game1/GameScr.cs:6731,6742,8248-8249,8264,8270,5939,5948-5962",
+      "root_cause": "paintSelectedSkill() allocates new string[] arrays inside the per-skill loop; paint_board_CT() allocates new int[] arrays and calls Res.split() per row; paint() constructs new ClanImage() and multiple string concatenations every frame.",
+      "severity": "P2",
+      "title": "Per-frame heap allocations and string concatenation inside paint() paths"
+    },
+    {
+      "batch": "client_gameplay_entities__p06",
+      "category": "performance_gc",
+      "impact": "O(N^2) iteration over vCharInMap every frame during VS/Vo Dai maps and redundant repeated scans.",
+      "location": "Client/Client/Assets/Scripts/Game1/GameScr.cs:6457-6503,6570",
+      "root_cause": "paintInfoBar() calls findCharVS1() and findCharVS2() up to 6 times per frame (plus isVS() at 6570), and findCharVS2() calls findCharVS1() inside its loop over vCharInMap.",
+      "severity": "P2",
+      "title": "O(N^2) redundant player scans in paintInfoBar() via findCharVS1/findCharVS2"
+    },
+    {
+      "batch": "client_gameplay_entities__p07",
+      "category": "performance_gc",
+      "impact": "Per-frame heap allocations in Unity render/update loops increase GC pauses on mobile/PC clients.",
+      "location": "Client/Client/Assets/Scripts/Game1/Info.cs:124,132,134,215; ItemTime.cs:141-145,169-182,406; MagicTree.cs:167-170; Info_RadaScr.cs:252,265; LoginScr.cs:728,735",
+      "root_cause": "Info.paint calls Res.split/splitFontArray every frame; ItemTime.paint/paintText and LoginScr.paint concatenate strings every frame; MagicTree.update calls NinjaUtil.getTime(seconds) every frame; Info_RadaScr.paintEff allocates Position via SetEff inside paint.",
+      "severity": "P2",
+      "title": "Per-frame allocations and string concatenations in paint() and update() loops"
+    },
+    {
+      "batch": "client_gameplay_entities__p08",
+      "category": "performance_gc",
+      "impact": "Per-frame heap allocations in update()/paint() violate Client Zero-GC rules and increase Unity GC pauses.",
+      "location": "Client/Client/Assets/Scripts/Game1/Npc.cs:153, 269, 274, 315; Mob.cs:621, 646, 1191, 1706; MobCapcha.cs:88, 93; MonsterDart.cs:154",
+      "root_cause": "`Npc.update()` allocates `new sbyte[7]` every tick while `effTask == null`; `Npc.paint()` allocates `new Effect` and concatenates `TileMap.zoneID + string.Empty`; `Mob.update()`/`MobCapcha.paint()`/`MonsterDart.update()` allocate `new Effect`, `new Char`, `new SmallDart`, and `templateId + string.Empty` strings inside update/paint paths.",
+      "severity": "P2",
+      "title": "Heap allocations and string concatenation inside update() and paint() loops"
+    },
+    {
+      "batch": "client_gameplay_entities__p09",
+      "category": "performance_gc",
+      "impact": "Skips next SmallDart update on removal, and causes IndexOutOfRangeException in PlayerDart.paint when smallDart.index >= info.tail.Length; also creates GC churn every update tick.",
+      "location": "Client/Client/Assets/Scripts/Game1/PlayerDart.cs:90-146",
+      "root_cause": "PlayerDart.update allocates new SmallDart(x, y) each sub-step and removes expired elements in a forward loop `for (int j = 0; j < darts.size(); j++)` without decrementing j after `darts.removeElementAt(j)`.",
+      "severity": "P1",
+      "title": "Forward-loop removal bug and per-tick allocation in PlayerDart.update"
+    },
+    {
+      "batch": "client_gameplay_entities__p09",
+      "category": "performance_gc",
+      "impact": "Allocates strings every frame in RadarScr.paint and PopUpYesNo.paint/update, increasing GC pressure; RadarScr constructor also loads /radar/17.png into imgUIText before overwriting it with /radar/18.png.",
+      "location": "Client/Client/Assets/Scripts/Game1/RadarScr.cs:136,148,694-723; Client/Client/Assets/Scripts/Game1/PopUpYesNo.cs:55-63,82",
+      "root_cause": "String concatenation inside paint() and Res.outz() string formatting inside PopUpYesNo.update() allocate managed strings every frame.",
+      "severity": "P2",
+      "title": "Per-frame string allocations in RadarScr.paint and PopUpYesNo.paint/update"
+    },
+    {
+      "batch": "client_gameplay_entities__p09",
+      "category": "performance_gc",
+      "impact": "Allocates new ScrollResult() on every updateKey() call; drag velocity history pointerDownLastX[1..2] is never initialized on pointer-down, breaking fling velocity; zero ITEM_SIZE/ITEM_PER_LINE causes DivideByZeroException.",
+      "location": "Client/Client/Assets/Scripts/Game1/Scroll.cs:101-104,213,230-233,314,392",
+      "root_cause": "pointerDownLastX[0] is assigned inside the init loop instead of pointerDownLastX[i]; updateKeyScrollUpDown/LeftRight allocate new ScrollResult() each call instead of reusing a cached instance.",
+      "severity": "P2",
+      "title": "Per-frame ScrollResult allocation and pointerDownLastX[0] loop typo in Scroll.cs"
+    },
+    {
+      "batch": "client_gameplay_entities__p10",
+      "category": "performance_gc",
+      "impact": "Allocates objects and strings every frame inside paint() and update() across multiple UI screens, violating Client Zero-GC rules.",
+      "location": "ServerScr.cs:234,522; TabClanIcon.cs:227-235; TField.cs:509-512,537,546,577-600; SplashScr.cs:231",
+      "root_cause": "new Command() in ServerScr.update; splitFontArray() in ServerScr.paintNewSelectMenu; CleanClanIconName() and string concat in TabClanIcon.paintIcon; Substring/Replace/new string in TField.paint/paintInputTf/update; string concat in SplashScr.paint.",
+      "severity": "P2",
+      "title": "Per-frame heap and string allocations inside paint() and update() loops"
+    },
+    {
+      "batch": "client_gameplay_entities__p11",
+      "category": "performance_gc",
+      "impact": "Leaks DataInputStream handle on every map load, risks NullReferenceException if map file is missing, and throws IndexOutOfRangeException if tmw*tmh exceeds available() or leaves trailing zeroes if smaller.",
+      "location": "Client/Client/Assets/Scripts/Game1/TileMap.cs:786-798",
+      "root_cause": "loadMapFromResource calls MyStream.readFile('/mymap/' + mapID) without null-check or close/using, allocates maps with dataInputStream.available() instead of tmw * tmh, and loops tmw * tmh times.",
+      "severity": "P1",
+      "title": "TileMap.loadMapFromResource never closes DataInputStream and sizes array via available()"
+    },
+    {
+      "batch": "client_gameplay_entities__p11",
+      "category": "performance_gc",
+      "impact": "Causes GC pauses during map transitions, leaves old Texture2D references when zoomLevel != 1 or freeTilemap() is called, and adds per-tile ListChars.getInstance().HideMap and try/catch overhead in paint loops.",
+      "location": "Client/Client/Assets/Scripts/Game1/TileMap.cs:307-311, 343-366, 438-481, 483-723",
+      "root_cause": "freeTilemap and loadTileImage invoke mSystem.gcc() synchronously; getTile only nulls imgTile[j].texture when zoomLevel == 1 (not != 1); paintTile/paintTilemap/paintOutTilemap re-fetch ListChars.getInstance().HideMap and call tileTypeAt(j,k) repeatedly per cell; paintTilemap logs Exception every frame on persistent errors.",
+      "severity": "P2",
+      "title": "TileMap GC spikes, incomplete texture cleanup, and redundant per-tile lookups in paint"
+    },
+    {
+      "batch": "client_network_protocol__p01",
+      "category": "performance_gc",
+      "impact": "Continuous managed heap allocations every render frame when viewing clan chat/requests, plus potential IndexOutOfRangeException/NullReferenceException if chat is empty/null.",
+      "location": "ClanMessage.cs:70-108",
+      "root_cause": "ClanMessage.paint performs multiple string concatenations per frame (lines 90, 94, 96, 100, 101) and indexes chat[0] without checking chat != null && chat.Length > 0.",
+      "severity": "P2",
+      "title": "Zero-GC violation via per-frame string allocations in ClanMessage.paint"
+    },
+    {
+      "batch": "client_network_protocol__p02",
+      "category": "performance_gc",
+      "impact": "Frame hitches/GC pauses on map changes and asset downloads; potential loss of all user RMS data if ResVersion is absent; unhandled FormatException if ResVersion RMS string is corrupted.",
+      "location": "Controller.cs:532-538, 667, 1229, 1304, 1325, 2762, 2844, 3674",
+      "root_cause": "Synchronous `Rms.saveRMS` / `Rms.clearAll()` and forced `mSystem.gcc()` calls execute directly inside `onMessage` on the main/dispatch path. `case -92` wipes all RMS (`Rms.clearAll()`) whenever `ResVersion` is null, and `case -74` calls unguarded `int.Parse(text3)`.",
+      "severity": "P2",
+      "title": "Synchronous RMS disk I/O, forced GC, destructive clearAll, and unguarded int.Parse in onMessage"
+    },
+    {
+      "batch": "client_network_protocol__p03",
+      "category": "performance_gc",
+      "impact": "Noticeable frame hitch on every map transition and continuous GC allocations during auto-farm update ticks.",
+      "location": "Client/Client/Assets/Scripts/Game1/Controller.cs:5033-5034; Client/Client/Assets/Scripts/Game1/God/Mob/MobController.cs:355,656-658",
+      "root_cause": "Controller.loadInfoMap synchronously calls Resources.UnloadUnusedAssets() and GC.Collect() on main thread; MobController allocates int[2] in GetPointYsdMax and new MovePoint in Move during Update().",
+      "severity": "P3",
+      "title": "Synchronous GC.Collect on map load and per-tick allocations in MobController"
+    },
+    {
+      "batch": "client_network_protocol__p04",
+      "category": "performance_gc",
+      "impact": "Secondary asset downloads on `Session_ME2` are artificially capped at <=200 msgs/sec and trigger extra GC pressure; `charMove` allocates `new Message(-7)` while moving.",
+      "location": "Client/Client/Assets/Scripts/Game1/Session_ME2.cs:44,93; Client/Client/Assets/Scripts/Game1/Session_ME.cs:177-179,219-221; Client/Client/Assets/Scripts/Game1/Service.cs:967",
+      "root_cause": "`Session_ME2.MessageCollector.run()` sleeps 5ms after every received packet; `readMessage`/`readMessage2` allocate a throwaway `new sbyte[num]` before `ArrayCast.cast(src)`; `Session_ME.Sender.doSendMessage` never calls `m.cleanup()`.",
+      "severity": "P2",
+      "title": "Per-Packet Thread.Sleep(5) Bottleneck and Unnecessary Message/Buffer Allocations"
+    },
+    {
+      "batch": "client_ui_god_mods__p01",
+      "category": "performance_gc",
+      "impact": "Every frame when player lacks items 921 and 454 (and `isAnalog == 1`), `GUI()` iterates the entire bag and allocates two `.ToLower()` strings per item, causing heavy per-frame GC allocations.",
+      "location": "Client/Client/Assets/Scripts/Game1/God/Client/ClientManager.cs:146-163; Client/Client/Assets/Scripts/Game1/God/Utils/Utils.cs:85-96",
+      "root_cause": "`ClientManager.GUI()` calls `Utils.getItemFromName(\"bông tai\")` and `TileMap.zoneID.ToString()` unconditionally inside the render loop; `getItemFromName` allocates `item.template.name.ToLower()` and `name.ToLower()` on every bag item.",
+      "severity": "P1",
+      "title": "Heavy per-frame string allocations in ClientManager.GUI via Utils.getItemFromName and ToString"
+    },
+    {
+      "batch": "client_ui_god_mods__p01",
+      "category": "performance_gc",
+      "impact": "Continuous GC pressure and frame drops whenever ChatPopup, Boss HUD, ListChars, AutoSettingManager, or Menu is visible.",
+      "location": "Client/Client/Assets/Scripts/Game1/ChatPopup.cs:358-484, 562-632; Client/Client/Assets/Scripts/Game1/God/Boss/BossData.cs:20-39; Client/Client/Assets/Scripts/Game1/God/Player/ListChars.cs:74-75; Client/Client/Assets/Scripts/Game1/God/Client/AutoSettingManager.cs:470; Client/Client/Assets/Scripts/Game1/Menu.cs:467",
+      "root_cause": "Multiple `paint*` methods allocate objects every frame: `ChatPopup.paint`/`paintRada` call `Res.split`, `Substring`, `new int[maxStarSlot]`, and `Res.err(...)`; `BossData.getDisplayString()`/`getElapsedTime()` concat strings every frame; `ListChars.paintPlayerMap` concats `prefix + text` every frame; `AutoSettingManager.paint` calls `GetItemValueString`; `Menu.paintMenu` allocates `new string[1]` when `subCaption` is null.",
+      "severity": "P1",
+      "title": "Per-frame heap allocations in paint() across ChatPopup, BossData, ListChars, AutoSettingManager, and Menu"
+    },
+    {
+      "batch": "client_ui_god_mods__p02",
+      "category": "performance_gc",
+      "impact": "Stutter/freeze on the Unity main thread whenever the player opens or refreshes the World Map panel, plus 2x duplicate image references loaded by `loadEff()`.",
+      "location": "Panel.cs:4020-4021, 988-995",
+      "root_cause": "`setTabMap()` synchronously invokes `Resources.UnloadUnusedAssets(); GC.Collect();`; `loadEff()` loops `for (int i = 0; i < 2; i++)` without using `i`, appending all 8 `bgList`/`imgList` entries twice (16 entries per list).",
+      "severity": "P1",
+      "title": "Blocking GC.Collect/UnloadUnusedAssets on map tab open and duplicate effect image loading"
+    },
+    {
+      "batch": "client_ui_god_mods__p02",
+      "category": "performance_gc",
+      "impact": "High per-frame GC pressure and frame drops in Unity UI render loops when panels are open.",
+      "location": "Panel.cs:2494-2736, 4491-4790, 4821-4980, 5075-5213, 5297-5347, 5349-5497, 5538-5594",
+      "root_cause": "`paintGiaoDich`, `paintShop`, `paintPetInventory`, `paintSkill`, `paintSpeacialSkill`, `paintBox`, and `paintLogChat` allocate strings every frame via concatenation (`+`, `Res.formatNumber`), call `splitFontArray` (`5150`, `5340`) and `Res.split` (`5586`, `5590`) inside `paint()`, and most iterate all items instead of only visible `cmy` rows.",
+      "severity": "P1",
+      "title": "Per-frame heap allocations, string splits, and unculled loops inside Panel paint methods"
+    },
+    {
+      "batch": "client_ui_god_mods__p03",
+      "category": "performance_gc",
+      "impact": "High per-frame GC pressure and frame-time spikes when scrolling panels or closing UI/map.",
+      "location": "Panel.cs:5853, 5860-5901, 6080-6148, 6526-6611, 6822-6923, 7058-7085, 7479-7687, 7742, 7803, 9618",
+      "root_cause": "paint* methods allocate strings via concatenation/Res.formatNumber/NinjaUtil.getMoneys/splitFontArray every frame, paintClans allocates new ClanImage() in paint loop, and hide()/hideNow()/doFireMap() call mSystem.gcc() synchronously.",
+      "severity": "P2",
+      "title": "Per-frame allocations in paint* methods and synchronous mSystem.gcc() on panel close"
+    },
+    {
+      "batch": "client_ui_god_mods__p04",
+      "category": "performance_gc",
+      "impact": "Triggers synchronous asset loading during rendering; if any o_0..o_3 image is missing on disk, loadImage runs every frame.",
+      "location": "Client/Client/Assets/Scripts/Game1/Panel.cs:11606-11665",
+      "root_cause": "paintOptItem() performs lazy mSystem.loadImage(\"/mainImage/o_*.png\") inside the paint loop instead of preloading once; imgo_0 null-check/draw block is also duplicated across cases 34, 35, 36.",
+      "severity": "P2",
+      "title": "Synchronous mSystem.loadImage inside paintOptItem render path"
+    },
+    {
+      "batch": "client_ui_god_mods__p04",
+      "category": "performance_gc",
+      "impact": "Excessive drawRegion calls per frame for button popups and unused isFocus parameter in paintClipPopUp.",
+      "location": "Client/Client/Assets/Scripts/Game1/PopUp.cs:168-178,208-223",
+      "root_cause": "paintPopUp() loops per 10px edge tile calling g.drawRegion individually; paintClipPopUp() accepts bool isFocus that is never referenced.",
+      "severity": "P3",
+      "title": "Per-10px-tile drawRegion loops in PopUp.paintPopUp and dead isFocus parameter in paintClipPopUp"
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p02",
+      "category": "performance_gc",
+      "impact": "Sends redundant setPos2 network packets every boss update tick for 5 consecutive seconds while NguoiVoHinh is invisible, wasting bandwidth.",
+      "location": "NguoiVoHinh.java:40-43",
+      "root_cause": "`if (!Util.canDoWithTime(this.lastTimeTanHinh, 5000))` executes `Service.gI().setPos2(...)` unconditionally on every attack() tick instead of once on entering stealth.",
+      "severity": "P2",
+      "title": "NguoiVoHinh.tanHinh() spams setPos2 packets every tick for 5 seconds"
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p02",
+      "category": "performance_gc",
+      "impact": "Unnecessary heap allocations inside boss combat update ticks (new ArrayList per attack tick in DeathOrAliveArena; new Random per Cumber kill).",
+      "location": "DeathOrAliveArena.java:98, Cumber.java:40-41",
+      "root_cause": "`DeathOrAliveArena.attack()` allocates `new ArrayList<>()` every 3s attack cycle to filter skills; `Cumber.reward()` instantiates `new Random()` twice.",
+      "severity": "P3",
+      "title": "Per-tick ArrayList allocation in DeathOrAliveArena.attack() and Random allocation in Cumber.reward()"
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p06",
+      "category": "performance_gc",
+      "impact": "Opening the Whis Arena leaderboard or clicking findMatch blocks on up to 15 synchronous DB queries and sorts a CopyOnWriteArrayList while holding/blocking service operations.",
+      "location": "src/models/tournament/whis_arena/WhisArenaBotManager.java:283-288,404-470; WhisArenaService.java:68-148,551-581",
+      "root_cause": "getLeaderboardEntries() runs NDVSqlFetcher.loadById() per topArena entry in a loop and calls sortBots() on a CopyOnWriteArrayList; WhisArenaService synchronizes JDBC queries on the same singleton lock used by getFreeZone().",
+      "severity": "P2",
+      "title": "N+1 DB queries in WhisArenaBotManager and singleton lock contention with DB I/O in WhisArenaService"
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p07",
+      "category": "performance_gc",
+      "impact": "Blocks Netty/game threads during MySQL round-trips, stalling packet processing or map updates for other players.",
+      "location": "src/services/tournament/SuperRankService.java:41,70,99,135",
+      "root_cause": "NDVSqlFetcher.loadById, SuperRankDAO.loadData, and SuperRankDAO.getPlayerListInRank/Range are called synchronously inside service methods.",
+      "severity": "P2",
+      "title": "Synchronous DB queries on caller/Netty thread in SuperRankService"
+    },
+    {
+      "batch": "server_database_persistence__p02",
+      "category": "performance_gc",
+      "impact": "Large query results cause high heap allocation, duplicate object references, and GC pauses.",
+      "location": "src/database/ResultSetImpl.java:33-59",
+      "root_cause": "Constructor eagerly buffers all rows into both List<Map<String, Object>> (one HashMap per row with column and table.column String keys) and List<Object[]> before closing ResultSet.",
+      "severity": "P2",
+      "title": "Eager dual-structure in-memory buffering of entire ResultSet"
+    },
+    {
+      "batch": "server_economy_items__p01",
+      "category": "performance_gc",
+      "impact": "Client sending a large n to startCombineVip(PHA_LE_HOA_TRANG_BI) can stall a Netty worker thread (holding player lock) for hundreds of millions of loop iterations, or hang infinitely if star is out of bounds (goldCost=0, gemCost=0).",
+      "location": "src/models/combine/list/PhaLeHoaTrangBi.java:137-188; src/services/CombineService.java:332-354",
+      "root_cause": "startCombineVip passes arbitrary n to phaLeHoa without validating against {1, 5, 10} or player.combineNew.quantities, and phaLeHoa loops maxAttempts times synchronously with no upper bound.",
+      "severity": "P1",
+      "title": "Unbounded loop DoS in PhaLeHoaTrangBi.phaLeHoa via startCombineVip"
+    },
+    {
+      "batch": "server_economy_items__p01",
+      "category": "performance_gc",
+      "impact": "Unbounded heap growth over server uptime leading to OOM, as every distinct option name + param integer creates a permanent String cache entry.",
+      "location": "src/models/item/Item.java:118-122",
+      "root_cause": "ItemOption.OPTION_STRING is a static ConcurrentHashMap with computeIfAbsent(name + \"#\" + param + \"#\") and no size limit or eviction policy.",
+      "severity": "P1",
+      "title": "Unbounded static ConcurrentHashMap cache memory leak in Item.ItemOption.OPTION_STRING"
+    },
+    {
+      "batch": "server_economy_items__p01",
+      "category": "performance_gc",
+      "impact": "ItemTime.update() recalculates and sends full player stats multiple times in a single tick when multiple buffs expire simultaneously; Item.getInfo/getInfoItem concatenate Strings in loops.",
+      "location": "src/models/item/ItemTime.java:131-246; src/models/item/Item.java:52-72",
+      "root_cause": "Each expired buff branch directly invokes Service.gI().point(player) instead of setting a boolean dirty flag to recalculate once at the end of update().",
+      "severity": "P3",
+      "title": "Redundant Service.point(player) recalculations in ItemTime.update() and String concatenation in Item.java"
+    },
+    {
+      "batch": "server_economy_items__p02",
+      "category": "performance_gc",
+      "impact": "Memory leak of Player/Item objects, potential ConcurrentModificationException or HashMap corruption, and Message ByteBuf leak on exception in SkillBookItemHandler.",
+      "location": "src/services/func/Input.java:41,915 & src/services/func/SummonDragon.java:70,136 & src/services/func/useitem/handlers/SkillBookItemHandler.java:54-72",
+      "root_cause": "Input.PLAYER_ID_OBJECT and SummonDragon.pl_dragonStar use raw/unsynchronized HashMap and leak entries when players cancel forms or summon menus; SkillBookItemHandler.learnSkill does not place msg.cleanup() in finally.",
+      "severity": "P2",
+      "title": "Unsynchronized HashMap Leaks & Missing Message Cleanup in SkillBookItemHandler"
+    },
+    {
+      "batch": "server_economy_items__p03",
+      "category": "performance_gc",
+      "impact": "Unnecessary GC pressure from per-call Random/Date/Arrays.asList allocations and redundant full-table scans on every special shop purchase or SKH creation.",
+      "location": "src/services/ItemService.java:35-42,52,178-237,1059-1069,1980-2156",
+      "root_cause": "ItemService allocates `new Random()` inside hot item-creation methods instead of using ThreadLocalRandom/Util; getItemIdByIcon (lines 35-42) and getListOptionItemShop (lines 1059-1069) linearly scan all templates/shops on every call without caching or breaking early (`&& list.isEmpty()` continues iterating).",
+      "severity": "P2",
+      "title": "Repeated Random allocations and uncached linear scans in ItemService"
+    },
+    {
+      "batch": "server_network_core__p01",
+      "category": "performance_gc",
+      "impact": "clearCloneSessions, cloneMySessionNotConnect, and Client.update allocate defensive ArrayList copies of all sessions every second and synchronize/mutate the local copy instead of SessionManager's backing list; clearCloneSessions/cloneMySessionNotConnect also cast blindly to (MySession).",
+      "location": "src/server/Client.java:94-112,368-397,399-430; src/network/session/SessionManager.java:219-227",
+      "root_cause": "SessionManager.getSessions() returns new ArrayList<>(sessions), but Client.java iterates, synchronizes on, and calls remove() on that local copy.",
+      "severity": "P2",
+      "title": "Client.java synchronizes and mutates defensive copy from SessionManager.getSessions() every second"
+    },
+    {
+      "batch": "server_network_core__p01",
+      "category": "performance_gc",
+      "impact": "Map changes and tile info requests perform repeated synchronous disk reads; sendRes sleeps up to 500ms per file and skips msg.cleanup() if an exception is thrown mid-loop.",
+      "location": "src/data/DataGame.java:524,543,656-693",
+      "root_cause": "sendTileSetInfo and sendMapTemp call FileIO.readFile on every request without caching; sendRes polls channel.isWritable() with Thread.sleep(5) and lacks a finally block around per-iteration Message cleanup.",
+      "severity": "P2",
+      "title": "Uncached blocking FileIO reads in DataGame.sendMapTemp/sendTileSetInfo and Thread.sleep polling in sendRes"
+    },
+    {
+      "batch": "server_network_core__p02",
+      "category": "performance_gc",
+      "impact": "Once a command exceeds criticalThreshold, every subsequent slow packet for that command acquires the PacketProfiler monitor and synchronously rewrites PERFORMANCE_ALERTS.json on the Netty IO thread, stalling network processing.",
+      "location": "PacketProfiler.java:185-187,202-205,212-249",
+      "root_cause": "triggerPerformanceAlert() is synchronized and calls synchronous FileWriter I/O (syncAlertsJson) directly from record() on the Netty IO thread without checking if the alert is already active or offloading to the background writer.",
+      "severity": "P1",
+      "title": "Synchronous disk I/O and global lock on Netty IO thread in PacketProfiler.triggerPerformanceAlert"
+    },
+    {
+      "batch": "server_network_core__p02",
+      "category": "performance_gc",
+      "impact": "When Maintenance triggers ServerManager.close(), cleanupResources() skips its parallel player-save block because isRunning was already set to false at line 330; System.exit(0) also triggers cleanupResources() a second time via shutdown hook.",
+      "location": "ServerManager.java:329-330,374,387,393-440",
+      "root_cause": "close() sets isRunning=false before invoking cleanupResources(), whose player-save block is gated on `if (isRunning)`.",
+      "severity": "P2",
+      "title": "ServerManager.close() bypasses cleanupResources() player-save guard and double-invokes cleanup"
+    },
+    {
+      "batch": "server_player_combat__p03",
+      "category": "performance_gc",
+      "impact": "Unnecessary heap allocations (Stream, String arrays, string concatenation) on hot combat loop paths.",
+      "location": "src/services/SkillService.java:122-130,418,656",
+      "root_cause": "useSkillAttack allocates zone.getBosses().stream() on every attack (line 418); THAI_DUONG_HA_SAN allocates a new String[] per target inside the loop (line 656); useSkill builds effDesc via String concatenation.",
+      "severity": "P3",
+      "title": "Per-attack Stream and per-target String[] allocations in SkillService hot paths"
+    },
+    {
+      "batch": "server_services_bot_telemetry__p01",
+      "category": "performance_gc",
+      "impact": "Unnecessary object allocations per bot tick, linear template scan per search request, uncached disk read on dashboard load, and stop-the-world pauses via System.gc().",
+      "location": "src/bot/Bot.java:51,58; src/bot/BotCold1.java:29,52; src/services/admin/AdminApiService.java:770,925,1246",
+      "root_cause": "Legacy bots instantiate new Random() on every call; ItemSearchHandler scans all templates linearly; loadDashboardHtml() reads from disk on every request; ServerActionHandler exposes System.gc().",
+      "severity": "P3",
+      "title": "Minor GC/CPU inefficiencies in legacy Bot RNGs and AdminApiService handlers"
+    },
+    {
+      "batch": "server_services_bot_telemetry__p02",
+      "category": "performance_gc",
+      "impact": "`TrajectoryLogger.playerTickMap` leaks memory indefinitely over server uptime; `Service.chatPrivate()` and `Service.sendPVB()` overwrite `msg` before calling `cleanup()`, leaking the first Message.",
+      "location": "src/telemetry/TrajectoryLogger.java:41,119-121; src/services/Service.java:1471-1503,1807-1822",
+      "root_cause": "`playerTickMap` has no removal on player logout or periodic eviction; `chatPrivate()` (line 1485) and `sendPVB()` (line 1812) reassign `msg = new Message(...)` without calling `msg.cleanup()` on the previous `Message`.",
+      "severity": "P2",
+      "title": "Unbounded playerTickMap leak in TrajectoryLogger and Message leak in Service.chatPrivate/sendPVB"
+    },
+    {
+      "batch": "server_services_bot_telemetry__p03",
+      "category": "performance_gc",
+      "impact": "Unnecessary object allocations and blocking I/O on caller threads.",
+      "location": "src/utils/BotTestLogger.java:23-25, src/utils/ItemUtil.java:63-98, src/utils/Util.java:256-261",
+      "root_cause": "BotTestLogger opens/closes FileWriter per log line under class monitor; ItemUtil and Functions allocate new Random() per call; Util.haveSpecialCharacter compiles Pattern on every call.",
+      "severity": "P3",
+      "title": "Repeated Random/Pattern allocations and per-call FileWriter in utils"
+    },
+    {
+      "batch": "server_task_clan_consts__p02",
+      "category": "performance_gc",
+      "impact": "Callers expecting an in-memory online player lookup incur blocking MySQL I/O and receive an offline detached Player object, risking NPEs or state desync.",
+      "location": "src/models/clan/Clan.java:238-251",
+      "root_cause": "Clan.getPlayerOnline(int) falls back to NDVSqlFetcher.loadById(playerId) when the player is not in membersInGame.",
+      "severity": "P1",
+      "title": "Clan.getPlayerOnline performs synchronous DB load for offline players"
+    },
+    {
+      "batch": "server_task_clan_consts__p03",
+      "category": "performance_gc",
+      "impact": "Unnecessary CPU and GC allocation on every main task load/transition due to compiling 14 regex Patterns per transformName() call.",
+      "location": "src/services/TaskService.java:1634-1690",
+      "root_cause": "transformName() uses String.replaceAll() 14 times per invocation instead of literal String.replace(), compiling a regex Pattern each time.",
+      "severity": "P3",
+      "title": "transformName() uses regex replaceAll() 14 times per call instead of literal replace()"
+    },
+    {
+      "batch": "server_world_map_mob__p01",
+      "category": "performance_gc",
+      "impact": "Creates unnecessary stream/lambda garbage every second per active satellite and scans Zone.players twice.",
+      "location": "src/models/map/vetinh/Satellite.java:54-56",
+      "root_cause": "`Satellite.update()` calls `zone.getPlayers().stream().anyMatch(...)` followed by `zone.getPlayers().stream().filter(...).forEach(...)` every 1000ms.",
+      "severity": "P3",
+      "title": "Repeated Stream allocations in Satellite.update loop"
+    }
+  ],
+  "gameplay_p0_p1_findings": [
+    {
+      "batch": "client_core_render_audio__p01",
+      "category": "gameplay",
+      "impact": "Every frame when a panel is open without an active chat field, panel.updateKey() or panel2.updateKey() executes twice per tick, causing double-clicks, double-scrolls, or unintended item/tab activations.",
+      "location": "GameCanvas.cs:699-729",
+      "root_cause": "GameCanvas.update() calls panel/panel2.updateKey() at lines 699-713 and then calls panel/panel2.updateKey() a second time in the else-if chain at lines 714-729 when chatTField is not shown.",
+      "severity": "P1",
+      "title": "Double panel.updateKey() invocation in GameCanvas.update()"
+    },
+    {
+      "batch": "client_core_render_audio__p01",
+      "category": "gameplay",
+      "impact": "IndexOutOfRangeException crashes rendering whenever bigNumber_black is drawn at zoomLevel > 1.",
+      "location": "mFont.cs:360, 421-433",
+      "root_cause": "mFont.init() instantiates bigNumber_black with id = 31 (line 360). bigColor(31) indexes a 7-element array (valid), but setTypePaint() allocates a 6-element Color[6] outline array and indexes `array[id - 25]` (6), throwing IndexOutOfRangeException.",
+      "severity": "P1",
+      "title": "IndexOutOfRangeException in mFont.setTypePaint for bigNumber_black (id=31)"
+    },
+    {
+      "batch": "client_core_render_audio__p01",
+      "category": "gameplay",
+      "impact": "Key 15 stays stuck in keyHold/keyPressed after releasing Enter/OK, and numpad keys stay stuck in keyHold when isMoveNumberPad is false.",
+      "location": "GameCanvas.cs:2463-2469, 2349-2423 vs 2474-2548",
+      "root_cause": "In mapKeyRelease, case -5 / 10 sets `keyHold[15] = true; keyPressed[15] = true;` (copy-pasted from mapKeyPress) instead of false/released. Also mapKeyPress records numpad keys 1-8 without checking `isMoveNumberPad`, while mapKeyRelease only clears them if `isMoveNumberPad` is true.",
+      "severity": "P1",
+      "title": "Stuck keyHold/keyPressed state in mapKeyRelease and asymmetric isMoveNumberPad check"
+    },
+    {
+      "batch": "client_core_render_audio__p01",
+      "category": "gameplay",
+      "impact": "Mouse press/drag/release events fire multiple times per Unity frame (Layout, Repaint, MouseDown, etc.), causing missed or duplicate clicks and wasted work.",
+      "location": "Main.cs:313-317, 511-561",
+      "root_cause": "OnGUI() invokes checkInput() on every IMGUI event pass, and checkInput() polls frame-level Input.GetMouseButtonDown/GetMouseButton/GetMouseButtonUp(0) and Input.GetAxis(\"Mouse ScrollWheel\") instead of guarding by Event.current.type.",
+      "severity": "P1",
+      "title": "Frame-level Input.GetMouseButton* polled on every OnGUI pass in Main.checkInput()"
+    },
+    {
+      "batch": "client_core_render_audio__p02",
+      "category": "gameplay",
+      "impact": "Multi-frame SmallImage sprites drawn from Big0-Big3 atlases render from texture origin (0, f*w) instead of their atlas coordinates smallImg[id][1..2], corrupting sprites.",
+      "location": "SmallImage.cs:307-310",
+      "root_cause": "drawSmallImage(mGraphics, id, f, x, y, w, h, ...) passes 0 instead of smallImg[id][1] as x0 and f*w without smallImg[id][2] offset as y0 to g.drawRegion.",
+      "severity": "P1",
+      "title": "SmallImage 9-arg drawSmallImage ignores atlas x0/y0 offsets in smallImg[id]"
+    },
+    {
+      "batch": "client_core_render_audio__p02",
+      "category": "gameplay",
+      "impact": "Any non-iOS-AppStore caller of mSystem.getHeight(Image) receives image width instead of height; mSystem.arrayReplace silently leaves dest unmodified.",
+      "location": "mSystem.cs:63-70,304-322",
+      "root_cause": "getHeight returns img.getWidth() when clientType != 5; arrayReplace copies into local array without assigning dest = array.",
+      "severity": "P1",
+      "title": "mSystem.getHeight returns width and arrayReplace is a silent no-op"
+    },
+    {
+      "batch": "client_core_render_audio__p02",
+      "category": "gameplay",
+      "impact": "Horizontal/vertical drawLine, fillTrans, and fillArg render at zoomLevel^2 coordinates/sizes instead of zoomLevel; fillRect(6-arg) ignores alpha and forces 0.5f.",
+      "location": "mGraphics.cs:311-345,1204-1208,1266-1269",
+      "root_cause": "drawLine, fillTrans, and fillArg multiply coordinates/dimensions by zoomLevel before calling fillRect, which multiplies by zoomLevel again; fillRect(..., color, alpha) hardcodes alpha2 = 0.5f.",
+      "severity": "P1",
+      "title": "Double zoomLevel scaling in mGraphics.drawLine/fillTrans/fillArg and ignored alpha in fillRect"
+    },
+    {
+      "batch": "client_gameplay_entities__p01",
+      "category": "gameplay",
+      "impact": "Crashes client with DivideByZeroException if maxHp==0, or NullReferenceException/IndexOutOfRangeException if charAttack is null/empty during boss attack states.",
+      "location": "Client/Client/Assets/Scripts/Game1/Assets/src/g/BigBoss.cs:457,488,504,528,620; Client/Client/Assets/Scripts/Game1/BachTuoc.cs:361,383,483; Client/Client/Assets/Scripts/Game1/BigBoss2.cs:421,441,459,553; Client/Client/Assets/Scripts/Game1/Assets/src/g/Mabu.cs:201",
+      "root_cause": "Boss paint() divides hp*50L/maxHp without checking maxHp>0; updateMobAttack() and Mabu.update() index charAttack[0]/charAttack[pIndex] without null or length guards. Also Mabu.update() accesses effEat without null check when focus!=null.",
+      "severity": "P1",
+      "title": "Unguarded division by maxHp and unguarded charAttack[] indexing in bosses and Mabu"
+    },
+    {
+      "batch": "client_gameplay_entities__p03",
+      "category": "gameplay",
+      "impact": "Once tickets run out in bag, CrackBallScr continues believing the player has numTicket tickets, miscalculating cost and allowing spin attempts with insufficient currency.",
+      "location": "CrackBallScr.cs:745-755",
+      "root_cause": "checkNumTicket() scans Char.myCharz().arrItemBag for idTicket and sets numTicket only if found, without resetting numTicket = 0 at the start of the method.",
+      "severity": "P1",
+      "title": "CrackBallScr.checkNumTicket never resets numTicket to 0 when tickets are exhausted"
+    },
+    {
+      "batch": "client_gameplay_entities__p04",
+      "category": "gameplay",
+      "impact": "NullReferenceException when rendering under-background effects whose EffectData was evicted by lastEff (>20 entries) or failed to load, crashing or failing the paint pass.",
+      "location": "Client/Client/Assets/Scripts/Game1/Effect.cs:308",
+      "root_cause": "paintUnderBackground calls getEffDataById(effId).img != null without checking if getEffDataById(effId) is null (unlike paint() at line 346).",
+      "severity": "P1",
+      "title": "Unchecked null dereference in Effect.paintUnderBackground"
+    },
+    {
+      "batch": "client_gameplay_entities__p04",
+      "category": "gameplay",
+      "impact": "If EffectData.get() returns null, Effect.update() throws NullReferenceException on data.Length - 1, enters the catch block, and prematurely removes the Effect from EffecMn.vEff.",
+      "location": "Client/Client/Assets/Scripts/Game1/Effect.cs:382-481",
+      "root_cause": "The `if (data != null)` block ends at line 480, but `if (t >= data.Length - 1)` at line 481 executes outside that null check.",
+      "severity": "P1",
+      "title": "Effect.update dereferences data.Length outside null check"
+    },
+    {
+      "batch": "client_gameplay_entities__p04",
+      "category": "gameplay",
+      "impact": "Throws ArgumentNullException when anim_data[num7] is null (if num7 != 0) or leaves anim_data[0] zero-initialized, breaking boss/effect animations with ID >= 201 that lack negative sentinel markers.",
+      "location": "Client/Client/Assets/Scripts/Game1/EffectData.cs:235-240",
+      "root_cause": "When `!flag`, readData allocates `anim_data[0] = new short[num8]` on line 237, but copies into `anim_data[num7]` on line 238 instead of `anim_data[0]`.",
+      "severity": "P1",
+      "title": "Array.Copy targets wrong slot anim_data[num7] instead of anim_data[0] in EffectData.readData"
+    },
+    {
+      "batch": "client_gameplay_entities__p05",
+      "category": "gameplay",
+      "impact": "In saveKeySkillToRMS(), keySkill is sent using the exact same Service.changeOnKeyScr(array) call as saveonScreenSkillToRMS(); calling both in addSkillShortcut() causes the second call to overwrite the first or lose keySkill bindings.",
+      "location": "GameScr.cs:1518-1550, 1579-1580",
+      "root_cause": "saveKeySkillToRMS() invokes Service.gI().changeOnKeyScr(array) instead of a keySkill-specific method/parameter, mirroring saveonScreenSkillToRMS().",
+      "severity": "P1",
+      "title": "saveKeySkillToRMS() calls changeOnKeyScr identical to saveonScreenSkillToRMS()"
+    },
+    {
+      "batch": "client_gameplay_entities__p06",
+      "category": "gameplay",
+      "impact": "Any VIP chat broadcast prefixed with '!' crashes chatVip() with ArgumentOutOfRangeException, preventing the message from being added to vChatVip.",
+      "location": "Client/Client/Assets/Scripts/Game1/GameScr.cs:7735-7738",
+      "root_cause": "chatVip.Substring(1, chatVip.Length) passes chatVip.Length as the length parameter starting at index 1 in C# (startIndex + length > chatVip.Length).",
+      "severity": "P1",
+      "title": "Guaranteed ArgumentOutOfRangeException in chatVip() for '!' messages"
+    },
+    {
+      "batch": "client_gameplay_entities__p06",
+      "category": "gameplay",
+      "impact": "Selecting an alert line containing '@' either extracts an incorrect player name or throws ArgumentOutOfRangeException.",
+      "location": "Client/Client/Assets/Scripts/Game1/GameScr.cs:7023-7030",
+      "root_cause": "fnick = text2.Substring(num + 1, num2) passes an end index (num2 + num) as the length argument to C# string.Substring(startIndex, length).",
+      "severity": "P1",
+      "title": "Wrong Substring length argument in updateKeyAlert() causes out-of-range crash or bad nick parsing"
+    },
+    {
+      "batch": "client_gameplay_entities__p07",
+      "category": "gameplay",
+      "impact": "Horizontal scroll fling velocity is computed from stale pointer history on touch-down, causing erratic horizontal scrolling/flicks in ListNew.",
+      "location": "Client/Client/Assets/Scripts/Game1/ListNew.cs:239-242",
+      "root_cause": "updatePos_LEFT_RIGHT initializes pointerDownLastX[0] inside the loop instead of pointerDownLastX[i] (unlike update_Pos_UP_DOWN at line 147).",
+      "severity": "P1",
+      "title": "Wrong array index in ListNew.updatePos_LEFT_RIGHT pointer history init"
+    },
+    {
+      "batch": "client_gameplay_entities__p07",
+      "category": "gameplay",
+      "impact": "DivideByZeroException when maxPeas == 0, and IndexOutOfRangeException/NullReferenceException when isPeasEffect runs with currPeas <= 0 or null peaPostionX.",
+      "location": "Client/Client/Assets/Scripts/Game1/MagicTree.cs:146,174",
+      "root_cause": "Line 146 divides by maxPeas without checking maxPeas > 0; line 174 indexes peaPostionX[currPeas - 1] without null or bounds checks on currPeas and peaPostionX.",
+      "severity": "P1",
+      "title": "Unchecked division by zero and array bounds in MagicTree.update"
+    },
+    {
+      "batch": "client_gameplay_entities__p08",
+      "category": "gameplay",
+      "impact": "Client NullReferenceException crash during mob death/knockback animation when hp reaches 0 without injureBy set or after startDie().",
+      "location": "Client/Client/Assets/Scripts/Game1/Mob.cs:1049-1055, 1233-1239",
+      "root_cause": "updateInjure() checks `(injureBy != null && injureThenDie) || hp == 0` then unconditionally accesses `injureBy.cdir`; updateMobWalk() checks `if (injureThenDie)` then unconditionally accesses `injureBy.cdir`.",
+      "severity": "P1",
+      "title": "NullReferenceException on injureBy.cdir when mob dies with injureBy == null"
+    },
+    {
+      "batch": "client_gameplay_entities__p08",
+      "category": "gameplay",
+      "impact": "DivideByZeroException crash in NewBoss.paint() if maxHp is 0; NullReferenceException in NewBoss.updateMobAttack() if charAttack/dameHP/frameArr is null or type < 1.",
+      "location": "Client/Client/Assets/Scripts/Game1/NewBoss.cs:383-398, 516",
+      "root_cause": "NewBoss.paint() computes `(long)this.hp * 50L / (long)this.maxHp` without checking `maxHp <= 0`, and NewBoss.updateMobAttack() accesses `charAttack`, `dameHP`, `frameArr[type + 1]`, and `frameArr[15][type - 1]` without null/bounds checks (while `setAttack(Char)` at line 320 sets status=3 without initializing `charAttack` or `type`).",
+      "severity": "P1",
+      "title": "Missing zero/null/bounds guards in NewBoss.paint() and NewBoss.updateMobAttack()"
+    },
+    {
+      "batch": "client_gameplay_entities__p08",
+      "category": "gameplay",
+      "impact": "Boss position becomes framerate-dependent and snaps/drifts horizontally when moving vertically.",
+      "location": "Client/Client/Assets/Scripts/Game1/NewBoss.cs:486-508",
+      "root_cause": "NewBoss.paint() mutates `this.x` and `this.yTemp` directly inside the render method based on tile collisions and `y != yTemp`.",
+      "severity": "P1",
+      "title": "NewBoss.paint() mutates world coordinates (x, yTemp) during rendering"
+    },
+    {
+      "batch": "client_gameplay_entities__p09",
+      "category": "gameplay",
+      "impact": "Infinite loop freezes client main thread if Res.random_Am_0(1) is ever called.",
+      "location": "Client/Client/Assets/Scripts/Game1/Res.cs:293-301",
+      "root_cause": "random_Am_0(int a) only checks if (a <= 0) return 0, then loops while (num == 0) num = r.nextInt() % a. For a == 1, x % 1 is always 0.",
+      "severity": "P1",
+      "title": "Infinite loop in Res.random_Am_0 when a == 1"
+    },
+    {
+      "batch": "client_gameplay_entities__p09",
+      "category": "gameplay",
+      "impact": "Throws IndexOutOfRangeException when computing arrow frame for angles around 345 degrees.",
+      "location": "Client/Client/Assets/Scripts/Game1/Point.cs:196-208",
+      "root_cause": "setFrameAngle clamps num with `if (num > 24) num = 24;` and indexes mpaintone_Arrow[num], whose length is 24 (valid indices 0..23).",
+      "severity": "P1",
+      "title": "Off-by-one array bounds clamp in Point.setFrameAngle"
+    },
+    {
+      "batch": "client_gameplay_entities__p09",
+      "category": "gameplay",
+      "impact": "Throws NullReferenceException in updateKeyTouchControl/doKeyText when focus_card or focus_card.cp is null, and DivideByZeroException in update() if max_amount == 0 or list.size() == 0, spamming Debug.LogError.",
+      "location": "Client/Client/Assets/Scripts/Game1/RadarScr.cs:330-341,485,590",
+      "root_cause": "RadarScr.update divides by focus_card.max_amount and list.size() without zero guards; updateKeyTouchControl and doKeyText dereference focus_card.cp.lim without null checks.",
+      "severity": "P1",
+      "title": "Missing zero-division and null guards in RadarScr"
+    },
+    {
+      "batch": "client_gameplay_entities__p10",
+      "category": "gameplay",
+      "impact": "Throws ArgumentOutOfRangeException when typing on keypad/multi-tap with password input mode active (keyInActiveState > 0 and caretPos > 0).",
+      "location": "TField.cs:582-583",
+      "root_cause": "passwordText.Substring(caretPos, passwordText.Length) passes total length instead of remaining length (passwordText.Length - caretPos) as the second argument.",
+      "severity": "P1",
+      "title": "TField.setPasswordTest passes invalid length to Substring"
+    },
+    {
+      "batch": "client_gameplay_entities__p10",
+      "category": "gameplay",
+      "impact": "Pressing confirm (key 5) in non-touch ServerScr selects the wrong server (always row 0 column num) or throws when vecServer is empty.",
+      "location": "ServerScr.cs:329-333",
+      "root_cause": "updateKey() invokes ((Command)vecServer.elementAt(num)).performAction() using column remainder num (mainSelect % n) instead of mainSelect.",
+      "severity": "P1",
+      "title": "ServerScr.updateKey invokes command at column index num instead of mainSelect"
+    },
+    {
+      "batch": "client_gameplay_entities__p11",
+      "category": "gameplay",
+      "impact": "Out-of-bounds tileTypeAt queries evaluate as waterflow/waterfall/outside/down1pixel tiles; in paintOutTilemap (which does not clamp gssx..gssye to tmw/tmh), out-of-bounds cells match (type & 0x40) == 64, drawing stray water tiles and corrupting TileMap.yWater.",
+      "location": "Client/Client/Assets/Scripts/Game1/TileMap.cs:742-782, 812-834",
+      "root_cause": "tileTypeAt(x,y) and tileTypeAtPixel(px,py) catch Exception and return magic value 1000 (0x3E8 = 512|256|128|64|32|8), which sets bit flags T_WATERFLOW (64), T_WATERFALL (32), T_TOPFALL (128), T_OUTSIDE (256), T_DOWN1PIXEL (512), and T_RIGHT (8).",
+      "severity": "P1",
+      "title": "TileMap.tileTypeAt returns bitmask-polluting magic value 1000 on out-of-bounds exception"
+    },
+    {
+      "batch": "client_gameplay_entities__p11",
+      "category": "gameplay",
+      "impact": "Any caller passing a custom IActionListener to Timer.setTimer never has its listener invoked; instead GameScr.gI().actionPerform is erroneously executed.",
+      "location": "Client/Client/Assets/Scripts/Game1/Timer.cs:15-41",
+      "root_cause": "setTimer assigns timeListener = actionListener, but update() ignores timeListener and hardcodes GameScr.gI().actionPerform(idAction, null); inside an empty try/catch.",
+      "severity": "P1",
+      "title": "Timer.update ignores stored timeListener and hardcodes GameScr.gI().actionPerform"
+    },
+    {
+      "batch": "client_gameplay_entities__p11",
+      "category": "gameplay",
+      "impact": "Throws DivideByZeroException in TransportScr.update() if TransportScr is updated while maxTime == 0.",
+      "location": "Client/Client/Assets/Scripts/Game1/TransportScr.cs:119-125",
+      "root_cause": "Line 123 computes currSpeed = GameCanvas.w / 2 * time / maxTime without guarding maxTime <= 0.",
+      "severity": "P1",
+      "title": "Potential division by zero in TransportScr.update when maxTime is 0"
+    },
+    {
+      "batch": "client_ui_god_mods__p01",
+      "category": "gameplay",
+      "impact": "Clicking the right side of the screen where ListChars was previously drawn can unintentionally focus or teleport the player to stale coordinates even when ListChars is disabled.",
+      "location": "Client/Client/Assets/Scripts/Game1/God/Player/ListChars.cs:141-178",
+      "root_cause": "ListChars.Update() returns early when `!isShow` without clearing `listPlayers`, and ListChars.UpdateTouch() has no `if (!isShow) return;` guard, so it continues hit-testing stale `listPlayers` entries and calling `Utils.Teleport`/`Utils.FocusObject`.",
+      "severity": "P1",
+      "title": "ListChars.UpdateTouch processes clicks and teleports even when ListChars is hidden"
+    },
+    {
+      "batch": "client_ui_god_mods__p01",
+      "category": "gameplay",
+      "impact": "If a player queues more than one item to auto-buy, buying the first batch wipes out all queued items; starting a new buy overwrites the active quantity.",
+      "location": "Client/Client/Assets/Scripts/Game1/God/Item/Items.cs:20-21, 207-240, 301-315",
+      "root_cause": "Items.autoBuy() stores target quantity in a single shared `int quantity` field rather than inside `ItemGroup`, and clears the entire `itemBuys` list (`itemBuys.Clear()`) as soon as `quantity <= 0`.",
+      "severity": "P1",
+      "title": "Items.autoBuy uses a single shared quantity counter across the entire itemBuys list"
+    },
+    {
+      "batch": "client_ui_god_mods__p01",
+      "category": "gameplay",
+      "impact": "Any invalid chat input like `k `, `k abc`, `cheat `, or non-numeric NPoint potential input crashes the client loop with unhandled exceptions; NPoint also cannot target stats above `int.MaxValue` despite using `long` fields (`hpg`, `mpg`, `dameg`).",
+      "location": "Client/Client/Assets/Scripts/Game1/God/Client/ClientManager.cs:212-223; Client/Client/Assets/Scripts/Game1/God/Player/NPoint.cs:175",
+      "root_cause": "`ClientManager.Chat` calls `float.Parse`/`int.Parse` on `text.Split(' ')[1]` without bounds or format checks; `NPoint.onChatFromMe` calls `int.Parse` without `TryParse` and does not reset `ChatTextField` on early returns (lines 179, 204).",
+      "severity": "P1",
+      "title": "Unhandled int.Parse/float.Parse and missing bounds checks in ClientManager.Chat and NPoint.onChatFromMe"
+    },
+    {
+      "batch": "client_ui_god_mods__p01",
+      "category": "gameplay",
+      "impact": "Client will spam `wakeUpFromDead()` packets indefinitely every 20 ticks while dead, bypassing the intended `maxReviveCount = 5` limit.",
+      "location": "Client/Client/Assets/Scripts/Game1/God/Player/Revive.cs:8-10, 30-48",
+      "root_cause": "`Revive.reviveCount` is incremented and reset after 60s, but `Revive.maxReviveCount` is never checked in `PlayerRevive()`. Also `Char.myCharz()` is dereferenced without null check.",
+      "severity": "P1",
+      "title": "Revive.maxReviveCount is never enforced in PlayerRevive()"
+    },
+    {
+      "batch": "client_ui_god_mods__p02",
+      "category": "gameplay",
+      "impact": "NullReferenceException when rendering consignment or shop rows containing a null Item slot, breaking `paintShop` and causing repeated console errors.",
+      "location": "Panel.cs:4580-4783 (specifically line 4751)",
+      "root_cause": "`paintShop` guards `if (item != null)` at line 4580, but after closing that block at line 4750, line 4751 unconditionally evaluates `item.buyType == 0` without checking `item == null`.",
+      "severity": "P1",
+      "title": "NullReferenceException in paintShop when item slot is null"
+    },
+    {
+      "batch": "client_ui_god_mods__p02",
+      "category": "gameplay",
+      "impact": "Opening clan search or tapping while `clans` is null throws NullReferenceException; switching to `setTabClans` with fewer than 4 tabs throws IndexOutOfRangeException.",
+      "location": "Panel.cs:5531, 3745, 1304, 3823",
+      "root_cause": "`getCurrClan()` reads `clans.Length` without checking `clans != null`; `setTabClans()` reads `lastSelect[3]` without bounds check; `setTabKiGui()` and `setTabShop()` read `Char.myCharz().arrItemShop[...].Length` without null/length checks.",
+      "severity": "P1",
+      "title": "Missing null and bounds checks in getCurrClan, setTabClans, setTabKiGui, and setTabShop"
+    },
+    {
+      "batch": "client_ui_god_mods__p02",
+      "category": "gameplay",
+      "impact": "Option 107 visual aura/frame effect renders the wrong tier or null whenever an item has any subsequent option with param != option 107's param.",
+      "location": "Panel.cs:1023-1055",
+      "root_cause": "`paintEff` checks `item.isHaveOption(107)` then loops over every `option` in `item.itemOption`, overwriting `img_frame` and `img_bg` based on `option.param` regardless of `option.optionTemplate.id`.",
+      "severity": "P1",
+      "title": "paintEff overwrites option 107 effect lists with unrelated item option params"
+    },
+    {
+      "batch": "client_ui_god_mods__p03",
+      "category": "gameplay",
+      "impact": "Clicking Back in the Change Flag menu unexpectedly disconnects the player from the game server.",
+      "location": "Panel.cs:9046, 10314-10317",
+      "root_cause": "doFireChangeFlag() creates a Back Command with idAction=10031, but perform() handles idAction==10031 by calling Session_ME.gI().close().",
+      "severity": "P1",
+      "title": "Change Flag Back button (idAction 10031) closes network session"
+    },
+    {
+      "batch": "client_ui_god_mods__p03",
+      "category": "gameplay",
+      "impact": "Non-numeric or overflowing consignment quantity input crashes with unhandled FormatException/OverflowException, and 0/negative quantities can be submitted to consignment flow.",
+      "location": "Panel.cs:10530-10551",
+      "root_cause": "onChatFromMe parses currItem.quantilyToBuy via raw int.Parse without try/catch and only checks > currItem.quantity without checking <= 0 or currItem != null.",
+      "severity": "P1",
+      "title": "Unchecked int.Parse and missing <= 0 / null validation for consignment quantity in onChatFromMe"
+    },
+    {
+      "batch": "client_ui_god_mods__p03",
+      "category": "gameplay",
+      "impact": "Clicking empty slots or stale indices in new inventory, legacy bag/box, achievement, skill, or trade panels can throw NullReferenceException or IndexOutOfRangeException.",
+      "location": "Panel.cs:8168, 8172, 8231, 8456, 8489-8520, 8523, 8566, 9522, 9656, 9688, 10337",
+      "root_cause": "doFireArchivement, doFireInventory, doFireGiaoDich, doFireShop, doFireBox, and doFireSkill index arrays/MyVectors or dereference currItem/text without null or bounds checks (and line 10337 checks text.Equals before text == null).",
+      "severity": "P1",
+      "title": "Missing null and array/vector bounds checks in doFire* handlers and onChatFromMe"
+    },
+    {
+      "batch": "client_ui_god_mods__p03",
+      "category": "gameplay",
+      "impact": "Corrupts ItemOption template/param in-place on first compare, and causes int overflow/wrong MP cost display in potential upgrade UI when defense > 21,469.",
+      "location": "Panel.cs:6945-6955, 9431-9432, 9484, 9578",
+      "root_cause": "getCompare() mutates item.itemOption[0].optionTemplate and param*=1000 in-place; doFireSkill() displays cHPGoc instead of cMPGoc for MP upgrade; cDefGoc*1000 and 500000+cDefGoc*100000 compute in 32-bit int before long assignment.",
+      "severity": "P1",
+      "title": "In-place ItemOption mutation in getCompare, MP/HP typo in doFireSkill, and 32-bit int overflow in defense cost display"
+    },
+    {
+      "batch": "client_ui_god_mods__p04",
+      "category": "gameplay",
+      "impact": "NullReferenceException when Char.myCharz().taskMaint is null and player selects Account option 4 on non-language-2 clients.",
+      "location": "Client/Client/Assets/Scripts/Game1/Panel.cs:11376",
+      "root_cause": "doFireAccount() accesses Char.myCharz().taskMaint.taskId <= 10 without checking Char.myCharz().taskMaint != null (unlike PopUp.update()).",
+      "severity": "P1",
+      "title": "Missing null check on taskMaint in Panel.doFireAccount"
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p01",
+      "category": "gameplay",
+      "impact": "Players killing SieuBoHung via its self-destruct mechanic never receive kill rewards, drops, or Boss task/quest completion credit.",
+      "location": "src/models/boss/Boss.java:466-477 & src/models/boss/boss_list/Cell/SieuBoHung.java:152-155",
+      "root_cause": "SieuBoHung.injured() triggers setBom(plAtt) instead of die(plAtt) when lethal damage is taken; 2500ms later Boss.handleBom() hardcodes `Player plAtt = null; die(plAtt);`, so Boss.die() skips `reward(plKill)` and ServerNotify.",
+      "severity": "P1",
+      "title": "SieuBoHung self-destruct (handleBom) passes null killer, skipping reward and quest credit"
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p01",
+      "category": "gameplay",
+      "impact": "Clicking a boss in Máy Dò Boss (Boss Radar) teleports/selects the wrong boss or fails because indices do not match.",
+      "location": "src/managers/boss/BossManager.java:288-304 & 314-330",
+      "root_cause": "showListBoss() filters `this.bosses` by `isBossTaskMain()` into `validBosses` and writes `validBosses` index `i` into Message(-96), while getBossByIndex(index) indexes the unfiltered `this.bosses` and `BrolyManager.gI().bosses` lists.",
+      "severity": "P1",
+      "title": "Index mismatch between showListBoss() and getBossByIndex() breaks Boss Radar selection"
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p01",
+      "category": "gameplay",
+      "impact": "SieuBoHung immediately exits AFK back to ACTIVE before its 7 XENCON children finish spawning, fighting players simultaneously during the 6s spawn delay.",
+      "location": "src/models/boss/boss_list/Cell/SieuBoHung.java:38-86 & 170-176",
+      "root_cause": "callCellCon() sets bossStatus = BossStatus.AFK and schedules XENCON1-7 spawn 6000ms later, but autoLeaveMap() runs every update tick and forces `AFK -> ACTIVE` whenever `this.currentLevel > 0` (form 2).",
+      "severity": "P1",
+      "title": "SieuBoHung.autoLeaveMap() prematurely cancels AFK state during callCellCon()"
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p01",
+      "category": "gameplay",
+      "impact": "Boss HP recovery and damage tracking overflow to negative values when damage > 2.68B (Android19) or > Integer.MAX_VALUE (XenBoHung, Broly, BlackGoku, etc.).",
+      "location": "src/models/boss/boss_list/Android/Android19.java:66 & src/models/boss/boss_list/Cell/XenBoHung.java:76,84 & src/models/boss/boss_list/Black/BlackGoku.java:87",
+      "root_cause": "Android19 casts `(int) ((long) damage * 80 / 100)` before calling hoiPhuc; XenBoHung casts `maxDameAllowed`/`maxHpAllowed` to `(int)` when assigning `dameg`/`hpg`; 7 Boss subclasses cast `long` damage to `(int)` on `return` from `long injured(...)`.",
+      "severity": "P1",
+      "title": "Integer truncation/overflow in Android19, XenBoHung, and Boss injured() returns"
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p02",
+      "category": "gameplay",
+      "impact": "Shielding does not reduce incoming damage on Halloween event bosses, making the shield skill completely ineffective.",
+      "location": "BiMa.java:43, Doi.java:42, MaTroi.java:46",
+      "root_cause": "Inside `if (!piercing && effectSkill.isShielding)`, all three Halloween bosses execute `damage = damage / 1;` instead of `damage = 1;`.",
+      "severity": "P1",
+      "title": "Halloween bosses (BiMa, Doi, MaTroi) divide damage by 1 instead of setting damage to 1 when shielded"
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p02",
+      "category": "gameplay",
+      "impact": "Attacks exceeding Integer.MAX_VALUE (e.g., against uncapped bosses like Cumber, BuiBui, DrLychee, Hatchiyack) overflow when returned as int, causing negative or corrupted damage return values.",
+      "location": "TuanLoc.java:212, Cooler.java:115, DeathOrAliveArena.java:235, DrLychee.java:89, Hatchiyack.java:87, GoldenFrieza.java:86, BiMa.java:53, Doi.java:52, MaTroi.java:56, Cumber.java:80, LanCon.java:212, BuiBui.java:106",
+      "root_cause": "Methods declare `public synchronized long injured(...)` and accept `long damage`, but explicitly cast `return (int) damage;`.",
+      "severity": "P1",
+      "title": "All active Boss injured() overrides truncate long damage to (int) on return"
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p02",
+      "category": "gameplay",
+      "impact": "TuanLoc spawns under TET_EVENT and LanCon spawns under CHRISTMAS_EVENT, breaking event-type boss spawning/lifecycle; LanCon also skips zones containing ONG_GIA_NOEL instead of Tet bosses.",
+      "location": "TuanLoc.java:33, LanCon.java:33, LanCon.java:62",
+      "root_cause": "TuanLoc (ChristmasEvent) passes `TET_EVENT` to super(), while LanCon (LunarNewYearEvent) passes `CHRISTMAS_EVENT` to super() and checks `BossID.ONG_GIA_NOEL` due to copy-paste.",
+      "severity": "P1",
+      "title": "TuanLoc and LanCon have swapped BossType constants (TET_EVENT vs CHRISTMAS_EVENT)"
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p02",
+      "category": "gameplay",
+      "impact": "If Manager.itemIds_tl_GN or itemIds_tl_AWJ has length <= 1, new Random().nextInt(length - 1) throws IllegalArgumentException; otherwise the last array item can never drop.",
+      "location": "Cumber.java:40-41",
+      "root_cause": "`new Random().nextInt(Manager.itemIds_tl_GN.length - 1)` passes `length - 1` to exclusive bound `nextInt(bound)`, and allocates a new `Random` on every kill.",
+      "severity": "P1",
+      "title": "Cumber.reward() off-by-one Random bound skips last item and throws if array length <= 1"
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p03",
+      "category": "gameplay",
+      "impact": "Drabura2 never dies through normal combat; players receive no fightMabu point reward, no item drops, and no boss-kill task completion.",
+      "location": "src/models/boss/boss_list/MajinBuu12H/Drabura2.java:128-138,176-179",
+      "root_cause": "In Drabura2.injured(), `if (damage >= this.nPoint.hp)` sets status to BossStatus.AFK and resets `damage = 0` before `subHP(damage)`. Thus `isDie()` is never true, `die(plAtt)` / `reward(plAtt)` are bypassed, and `afk()` immediately switches to BossStatus.DIE.",
+      "severity": "P1",
+      "title": "Drabura2 resets lethal damage to 0 and skips die()/reward()"
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p03",
+      "category": "gameplay",
+      "impact": "Cadic dodges 100% of all non-piercing attacks whenever tlNeDon >= 1, making him nearly unkillable except by piercing skills.",
+      "location": "src/models/boss/boss_list/MajinBuu12H/Cadic.java:257",
+      "root_cause": "`Util.isTrue(this.nPoint.tlNeDon, 1)` passes denominator `1` instead of `100` or `1000`.",
+      "severity": "P1",
+      "title": "Cadic dodge roll uses denominator 1 instead of 100/1000"
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p03",
+      "category": "gameplay",
+      "impact": "Can throw ArrayIndexOutOfBoundsException during boss reward() if LuongLong arrays are shorter than Kaio arrays, or IllegalArgumentException if any array length <= 1; also never drops the last array element.",
+      "location": "src/models/boss/boss_list/MajinBuu12H/Cadic.java:233-251; src/models/boss/boss_list/MajinBuu12H/Goku.java:234-252",
+      "root_cause": "Lines 247/250 (Cadic) and 248/251 (Goku) index `itemIds_LuongLong_AWJ[randomDo]` and `itemIds_LuongLong_GN[randomDo1]` using Kaio-bounded random indices instead of `randomDo2` and `randomDo3`, and `new Random().nextInt(len - 1)` excludes the final index.",
+      "severity": "P1",
+      "title": "Wrong array indices and off-by-one Random bound in Cadic.reward and Goku.reward"
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p03",
+      "category": "gameplay",
+      "impact": "Throws NullPointerException on non-player damage (e.g. burn/DoT/boss-vs-boss) or when fightMabu is null, interrupting damage application or reward logic.",
+      "location": "src/models/boss/boss_list/MajinBuu12H/Cadic.java:229,262; src/models/boss/boss_list/MajinBuu12H/Goku.java:230,257; src/models/boss/boss_list/MajinBuu12H/Drabura.java:199; src/models/boss/boss_list/MajinBuu14H/Mabu2H.java:189",
+      "root_cause": "`plAtt.isPl()` and `plAtt.fightMabu.changePercentPoint(...)` / `plKill.fightMabu.changePoint(...)` are called without null-checking `plAtt` or `fightMabu`.",
+      "severity": "P1",
+      "title": "Missing null checks on plAtt and fightMabu in MajinBuu12H/14H bosses"
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p04",
+      "category": "gameplay",
+      "impact": "Players can farm infinite item ID 590 drops on every single attack after depleting a Yardart's HP once, instead of once per full HP bar.",
+      "location": "src/models/boss/boss_list/Yardart/Yardart.java:249-262",
+      "root_cause": "In Yardart.injured(), when damage >= this.nPoint.hp, Service.gI().hsChar(this, hpMax, mpMax) restores HP, and line 253 immediately overwrites this.nPoint.hp = 1. Every subsequent hit has damage >= 1, failing (hp > damage) and triggering reward(plAtt) on every hit.",
+      "severity": "P0",
+      "title": "Yardart HP reset to 1 after hsChar allows reward drop on every hit"
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p04",
+      "category": "gameplay",
+      "impact": "Whis dies prematurely (often at ~50% HP) and, because hp remains > 0 while status becomes AFK, subsequent attacks during AFK re-trigger die(), repeatedly incrementing training top and spamming TraningDAO.updatePlayer() DB writes.",
+      "location": "src/models/boss/boss_list/Training/Whis.java:73-84",
+      "root_cause": "Whis.injured() subtracts damage at line 73 (this.nPoint.subHP(damage)), then checks if (damage >= this.nPoint.hp) at line 80 against the post-subtraction HP instead of isDie() (hp <= 0), and lacks an outer if (!this.isDie()) guard.",
+      "severity": "P1",
+      "title": "Whis dies prematurely and can trigger die() + DB update multiple times"
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p04",
+      "category": "gameplay",
+      "impact": "The Pocolo tournament opponent spawns as JackyChun (wrong BossID, name, outfit, skills, and stats) in The 23rd Martial Art Congress.",
+      "location": "src/models/boss/boss_list/The23rdMartialArtCongress/Pocolo.java:18",
+      "root_cause": "Copy-paste constructor calls super(PHOBAN, BossID.JACKY_CHUN, BossesData.JACKY_CHUN) instead of BossID.POCOLO and BossesData.POCOLO.",
+      "severity": "P1",
+      "title": "Pocolo constructor uses BossID.JACKY_CHUN and BossesData.JACKY_CHUN"
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p05",
+      "category": "gameplay",
+      "impact": "Boss CADICH HP overflows int to a negative number when SnakeWay level >= 114 (e.g., level 114 computes 64*64*538888 = 2,207,285,248 > Integer.MAX_VALUE), and mob damage/HP calculations also use int arithmetic before assignment.",
+      "location": "src/models/phoban/SnakeWay.java:124-131, 140-141, 175",
+      "root_cause": "`60000000 + (long)((level - 50) * (level - 50) * 538888)` multiplies three ints before casting to long, and mob dame/maxHp use `(int) level * 1000 * mob.tempId * 12`.",
+      "severity": "P1",
+      "title": "Numeric int overflow in SnakeWay CADICH HP and mob stats scaling"
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p06",
+      "category": "gameplay",
+      "impact": "Players who win Round 4 with at least 1 empty bag slot receive 2 Capsule Vangs instead of 1 (one in Whis mailbox and one directly in bag).",
+      "location": "src/models/tournament/whis_arena/WhisArenaBossMatch.java:339-354",
+      "root_cause": "onBossDie() unconditionally calls WhisArenaService.gI().addReward(player, 574) at line 339, and then at lines 344-349 also creates and adds ConstItem.CAPSULE_VANG directly to bag when getCountEmptyBag(player) > 0.",
+      "severity": "P1",
+      "title": "Double Capsule Vang reward on winning Whis Arena U6 Round 4"
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p06",
+      "category": "gameplay",
+      "impact": "After a match ends via fallOut(), update() executes die() and leaveMap() in the same tick on nulled player fields, re-triggering finish()/dispose() and throwing NPEs (silently caught).",
+      "location": "src/models/tournament/WorldMartialArtsTournament.java:45-46,110-118,157-172,272-298",
+      "root_cause": "fallOut() invokes finish() -> dispose() which nulls player_1, player_2, npc, and zone, yet update() immediately calls die() and leaveMap() afterward; leaveMap() treats player_2==null as forfeit and calls finish() again. Also init() calls npc.location without null check.",
+      "severity": "P1",
+      "title": "Double finish() invocation and NPEs in WorldMartialArtsTournament"
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p07",
+      "category": "gameplay",
+      "impact": "Validation can evaluate stale superRank data (rank, ticket) or loadData can overwrite current superRank state after checks pass.",
+      "location": "src/services/tournament/SuperRankService.java:57-70",
+      "root_cause": "SuperRankDAO.loadData(player) is invoked at line 70 after rank comparisons and ticket/gem checks at lines 57-68.",
+      "severity": "P1",
+      "title": "SuperRankDAO.loadData(player) called after rank and ticket validation checks"
+    },
+    {
+      "batch": "server_database_persistence__p01",
+      "category": "gameplay",
+      "impact": "talkToThanMeo state is lost/corrupted on relog (overwritten with talkToThuongDe), and Whis training/luyentap updates saved via TraningDAO are discarded on next login.",
+      "location": "src/database/daos/NDVSqlFetcher.java:1315-1321,1419-1479; src/database/daos/TraningDAO.java:10-38",
+      "root_cause": "NDVSqlFetcher reads index 2 twice for both talkToThuongDe and talkToThanMeo instead of index 3; TraningDAO writes 10 elements to data_luyentap without updating data_training, which NDVSqlFetcher reads second and uses to overwrite player.traning.",
+      "severity": "P1",
+      "title": "CDRD index copy-paste bug and TraningDAO vs data_training persistence mismatch on loadPlayer"
+    },
+    {
+      "batch": "server_economy_items__p01",
+      "category": "gameplay",
+      "impact": "Players lose gold, gems, and materials while receiving no output item when bag is full, or encounter NullPointerException crashes.",
+      "location": "src/models/combine/list/NangCapSachTuyetKi.java:53-70; src/models/combine/list/GiamDinhSach.java:70-73; src/models/combine/list/TaySach.java:74-76; src/models/combine/list/DoiDoThan.java:54-60; src/models/combine/list/NangCapSaoPhaLe.java:52-58, 107-113, 143-148",
+      "root_cause": "These combine handlers call InventoryService.addItemBag BEFORE subtracting source items and without checking getCountEmptyBag(player) > 0. NangCapSachTuyetKi line 53 also dereferences sachTuyetKy.template.id before its null check.",
+      "severity": "P1",
+      "title": "Missing bag-space checks and item-add-before-remove causing item loss and NPE in multiple combine handlers"
+    },
+    {
+      "batch": "server_economy_items__p01",
+      "category": "gameplay",
+      "impact": "Players can re-strengthen an already-strengthened 8-star item if option 230 precedes option 107; ChuyenHoaBangNgoc/Vang misinterpret option 230 as downgrade penalty and corrupt/duplicate item options on conversion.",
+      "location": "src/models/combine/list/CuongHoaLoSao.java:83-90; src/models/combine/list/ChuyenHoaBangNgoc.java:26-37, 156-165; src/models/combine/list/ChuyenHoaBangVang.java:26-37, 149-157",
+      "root_cause": "Option ID 230 has conflicting meanings across modules; CuongHoaLoSao overwrites checkOption=0 when option 107 appears after 230; ChuyenHoaBangNgoc/Vang copy all options from index 1..n of trangBiGoc onto trangBiCanChuyenHoa without filtering base stats or duplicate option IDs.",
+      "severity": "P1",
+      "title": "Conflicting option 230 semantics, option-order bug in CuongHoaLoSao, and option corruption in ChuyenHoaBangNgoc/Vang"
+    },
+    {
+      "batch": "server_economy_items__p02",
+      "category": "gameplay",
+      "impact": "Players can open Wood Chest (570) infinitely without waiting for midnight, lose items when bag is full, or crash on out-of-bounds param; players can craft Dragon Egg (1426) from 1 shard instead of 99.",
+      "location": "src/services/func/useitem/handlers/ChestBoxItemHandler.java:122-185,249-260",
+      "root_cause": "openWoodChest never updates pl.lastTimeRewardWoodChest = System.currentTimeMillis() and never checks getCountEmptyBag or itemOptions bounds. open1427 calls subQuantityItemsBag(pl, item, 99) without verifying item.quantity >= 99.",
+      "severity": "P0",
+      "title": "Infinite Wood Chest Exploit & 1-for-99 Item Craft Exploit in ChestBoxItemHandler"
+    },
+    {
+      "batch": "server_economy_items__p02",
+      "category": "gameplay",
+      "impact": "Players with a stack of Xinbato Water Bottles (456) lose up to 99 bottles on a single use; Radar cards with Max/maxLevel > 127 overflow byte maxPerLevel and grant max level for 0 cards.",
+      "location": "src/services/func/useitem/handlers/ConsumableItemHandler.java:150-151 & src/services/func/useitem/handlers/SpecialItemHandler.java:235,250,255,282",
+      "root_cause": "useBinhNuocXinbato checks item.quantity >= 1 then subtracts 99. useCardBatch casts maxPerLevel and card.Amount to signed byte (overflowing > 127 to negative).",
+      "severity": "P1",
+      "title": "Wrong Item Deduction (99 vs 1) in ConsumableItemHandler & Byte Overflow in SpecialItemHandler.useCardBatch"
+    },
+    {
+      "batch": "server_economy_items__p03",
+      "category": "gameplay",
+      "impact": "getRubyPrice fails to find Ruby-priced items (returns wrong Gem-priced items or -1); subMoneyByItemShopV2 displays negative deficit amounts to players.",
+      "location": "src/services/ShopService.java:614-620,805",
+      "root_cause": "getRubyPrice (line 805) checks `is.typeSell == COST_GEM` (1) instead of `COST_RUBY` (3). subMoneyByItemShopV2 (lines 615, 619) computes `player.inventory.gold - gold` and `player.inventory.coupon - coupon` (negative values) instead of `cost - current`.",
+      "severity": "P1",
+      "title": "Wrong currency constant in getRubyPrice and inverted deficit math in subMoneyByItemShopV2"
+    },
+    {
+      "batch": "server_economy_items__p03",
+      "category": "gameplay",
+      "impact": "Integer overflow in sell confirmation dialog, IndexOutOfBoundsException on bad body/bag index, and blocked selling of permanent items when a timed item of the same ID is in bag (or vice versa).",
+      "location": "src/services/ShopService.java:870-965",
+      "root_cause": "showConfirmSellItem uses `int cost` and `cost *= quantity` (lines 890-905), causing int overflow for high-value stacks; neither showConfirmSellItem nor sellItem checks upper bounds (`>= size()`) or negative index after `version < 220` adjustment (lines 879-882); sellItem line 952 checks `InventoryService.getParam(pl, 93, item.template.id) > 0` across bag instead of checking option 93 on the specific `item` being sold.",
+      "severity": "P1",
+      "title": "Int overflow, missing bounds checks, and wrong HSD check in sellItem/showConfirmSellItem"
+    },
+    {
+      "batch": "server_player_combat__p01",
+      "category": "gameplay",
+      "impact": "Special skill update continues running after closeSkillSpecial() or races with close(), and cannot properly gate on isStartSkillSpecial == true.",
+      "location": "src/models/player/NewSkill.java:51-55",
+      "root_cause": "Assignment operator used instead of equality comparison: `if (this.isStartSkillSpecial = true)`.",
+      "severity": "P0",
+      "title": "NewSkill.update() uses assignment (=) instead of comparison (==) on isStartSkillSpecial"
+    },
+    {
+      "batch": "server_player_combat__p01",
+      "category": "gameplay",
+      "impact": "All callers of NPoint.calPercent receive 66.7% of the intended percentage value (e.g., 50% becomes 33.3%).",
+      "location": "src/models/player/NPoint.java:927-933",
+      "root_cause": "Both calPercent(long, int) and calPercent(int, int) divide by 150 instead of 100.",
+      "severity": "P0",
+      "title": "NPoint.calPercent() divides by 150 instead of 100"
+    },
+    {
+      "batch": "server_player_combat__p01",
+      "category": "gameplay",
+      "impact": "Punch stack bonus (+1% per punch up to tlDamePunchMax) is wiped out on every stat recalculation (every ~150ms or equip/buff).",
+      "location": "src/models/player/NPoint.java:1126-1129",
+      "root_cause": "resetPoint() sets `this.tlDamePunchMax = 0;` and immediately checks `if (this.tlDamePunchMax == 0) { this.stackDamePunch = 0; }`, which is always true.",
+      "severity": "P1",
+      "title": "NPoint.resetPoint() unconditionally resets stackDamePunch to 0"
+    },
+    {
+      "batch": "server_player_combat__p01",
+      "category": "gameplay",
+      "impact": "Whenever a pet is to the left of its master (disX < 0), disX < 50 is always true, causing continuous teleportation and playerMove packet spam on every update tick.",
+      "location": "src/models/player/Pet.java:722-735",
+      "root_cause": "followMaster(int dis) compares signed `disX < 50` (where `disX = this.location.x - mX`) instead of `Math.abs(disX) < 50`.",
+      "severity": "P1",
+      "title": "Pet.followMaster() checks signed disX < 50, triggering infinite move/packet spam when pet is left of master"
+    },
+    {
+      "batch": "server_player_combat__p01",
+      "category": "gameplay",
+      "impact": "Player retains training armor dame% buff permanently after selling, dropping, trading, or banking the item; also cannot switch to a different training armor while stale reference exists.",
+      "location": "src/models/player/NPoint.java:613-642",
+      "root_cause": "setDameTrainArmor() caches an unequipped bag training armor in inventory.trainArmor when null and continues applying its dame bonus without verifying the item still exists in itemsBag.",
+      "severity": "P1",
+      "title": "NPoint.setDameTrainArmor() retains stale inventory.trainArmor reference after item leaves bag"
+    },
+    {
+      "batch": "server_player_combat__p01",
+      "category": "gameplay",
+      "impact": "Throws ArithmeticException: / by zero if mpMax is 0 (e.g. during stat reset or before initial calPoint).",
+      "location": "src/models/player/NPoint.java:1426-1428",
+      "root_cause": "getCurrPercentMP() divides by this.mpMax without checking `if (this.mpMax == 0)` (unlike getCurrPercentHP()).",
+      "severity": "P1",
+      "title": "NPoint.getCurrPercentMP() lacks zero-division guard on mpMax"
+    },
+    {
+      "batch": "server_player_combat__p01",
+      "category": "gameplay",
+      "impact": "In ATTACK mode against mobs at range, pet fires skill 2 ignoring cooldown, master idle check (canAttack), and askPea() when out of mana.",
+      "location": "src/models/player/Pet.java:470-476",
+      "root_cause": "Mob ranged skill-2 branch in Pet.update() omits canUseSkillWithCooldown(), canAttack(), and else askPea() present in the PROTECT branch.",
+      "severity": "P1",
+      "title": "Pet.update() ATTACK mode skips cooldown, canAttack, and askPea checks for ranged mob skill 2"
+    },
+    {
+      "batch": "server_player_combat__p02",
+      "category": "gameplay",
+      "impact": "Players wearing partial sets with an empty earlier slot (e.g. missing shirt slot 0) receive 0 set bonuses; items with SKT option + option 21 param 80 may skip setDHD counting.",
+      "location": "src/models/player/SetClothes.java:72-184",
+      "root_cause": "setupSKT (line 140-142) and setupSKHNew (line 180-182) execute `break` instead of `continue` when an equipment slot is null; setupSKT also breaks early on `isActSet` before checking remaining options on the same item.",
+      "severity": "P1",
+      "title": "SetClothes.setupSKT/setupSKHNew break on empty slot instead of continue"
+    },
+    {
+      "batch": "server_player_combat__p02",
+      "category": "gameplay",
+      "impact": "When chibi type 0 is active, picking up/receiving gold via addItemBag credits 2x gold and can exceed getGoldLimit(); items 925-931 gain duplicate 2-day expiry options on every addItemList call.",
+      "location": "src/services/player/InventoryService.java:789-793, 852-854",
+      "root_cause": "addGold is called twice when isChibi && typeChibi == 0 after checking limit only for 1x quantity; lines 852-854 unconditionally add Option(93, 2) without checking if option 93 is already present.",
+      "severity": "P1",
+      "title": "Double gold credit bypassing limit and duplicate expiry options in InventoryService.addItemBag/addItemList"
+    },
+    {
+      "batch": "server_player_combat__p03",
+      "category": "gameplay",
+      "impact": "Casting Tri Thuong heals enemy/PvP players in 300px range and multiplies the caster's own HP/MP heal by the number of targets in the AoE.",
+      "location": "src/services/SkillService.java:852-875",
+      "root_cause": "In useSkillBuffToPlayer (TRI_THUONG), line 857 checks canHsPlayer(player, plTarget) instead of canHsPlayer(player, pl) when filtering players in 300px radius, and lines 872-873 heal the caster player inside the for (Player pl : players) loop on every iteration.",
+      "severity": "P0",
+      "title": "Skill.TRI_THUONG heals enemies and multiplies caster self-heal per target"
+    },
+    {
+      "batch": "server_player_combat__p03",
+      "category": "gameplay",
+      "impact": "Players with >2.14B HP have their HP truncated to 2,147,483,647 on every Kaioken attack, and players with 1-10% HP cannot cast Kaioken despite only needing 1-3% HP.",
+      "location": "src/services/SkillService.java:429-443,1174-1182",
+      "root_cause": "useSkillAttack wraps hpUse and remaining HP (hp - hpUse) in Util.maxIntValue() (line 440) clamping long HP down to Integer.MAX_VALUE; additionally, canUseSkillWithMana (line 1175) requires hp > 10% hpMax while useSkillAttack deducts 1-3% hpMax (and if hp <= hpUse at line 437 it breaks out of switch skipping affterUseSkill while still returning true).",
+      "severity": "P1",
+      "title": "Kaioken truncates >2.14B HP to Integer.MAX_VALUE and mismatches mana check (10% vs 1-3%)"
+    },
+    {
+      "batch": "server_player_combat__p03",
+      "category": "gameplay",
+      "impact": "Neutral players in public maps (cFlag == 0) get buffed by another player's Huyt Sao, and neutral Namec players lose 10% HP unconditionally without PvP/flag/death checks.",
+      "location": "src/services/SkillService.java:699-720",
+      "root_cause": "useSkillAlone (HUYT_SAO) filters zone.getHumanoids() using only player.cFlag == pl.cFlag without checking cFlag != 0 or canAttackPlayer/isDie, applying Huyt Sao buff or 10% hpMax damage (to Namec) to all neutral players in the zone.",
+      "severity": "P1",
+      "title": "Skill.HUYT_SAO affects neutral (cFlag == 0) players and damages neutral Namecs in safe/public maps"
+    },
+    {
+      "batch": "server_services_bot_telemetry__p01",
+      "category": "gameplay",
+      "impact": "Expired giftcodes remain redeemable indefinitely; empty listGiftCode crashes info tutorial with StringIndexOutOfBoundsException; case-mismatched codes fail lookup.",
+      "location": "src/managers/GiftCodeManager.java:35-57,74,89-95,138",
+      "root_cause": "checkUseGiftCode() never validates giftCode.dateexpired, creates case-sensitive equals() against lowercased DB inserts, checkInfomationGiftCode() calls sb.deleteCharAt(sb.length() - 1) when empty without synchronization, and reload() invokes rs.getBoolean(\"allGender\") for non-\"all\" strings.",
+      "severity": "P1",
+      "title": "GiftCodeManager skips expiration check and has unsynchronized iteration/empty crash"
+    },
+    {
+      "batch": "server_services_bot_telemetry__p02",
+      "category": "gameplay",
+      "impact": "Players opening Nguoi Tuyet Bang Gia have a 25.6% chance of receiving no reward at all.",
+      "location": "src/services/RewardService.java:951-982",
+      "root_cause": "Independent sequential rolls (`if (isTrue(20,100)) ... else if (isTrue(20,100)) ... else if (isTrue(60,100))`) yield 0.2 + 0.16 + 0.384 = 74.4% total probability instead of 100%.",
+      "severity": "P1",
+      "title": "25.6% no-reward bug in RewardService.rewardNguoiTuyetBangGia()"
+    },
+    {
+      "batch": "server_services_bot_telemetry__p03",
+      "category": "gameplay",
+      "impact": "Server thread hang (100% CPU infinite loop) if the randomly picked mapId (0..20) has no zone or only zoneId == 0.",
+      "location": "src/utils/Util.java:84-95",
+      "root_cause": "mapId is selected once before the while(zoneJoin == null || zoneJoin.zoneId == 0) loop; getMapWithRandZone(mapId) is retried on the same mapId forever without a retry cap or re-rolling mapId.",
+      "severity": "P1",
+      "title": "Potential infinite loop in Util.randomAllMap"
+    },
+    {
+      "batch": "server_world_map_mob__p01",
+      "category": "gameplay",
+      "impact": "Dead mobs spam -124 network messages to all players in the zone on every game tick until they respawn.",
+      "location": "src/models/mob/MobEffectSkill.java:28-30",
+      "root_cause": "Operator precedence bug in `if (isBlindDCTT && (Util.canDoWithTime(lastTimeBlindDCTT, timeBlindDCTT)) || mob.isDie())` causes `mob.isDie()` alone to trigger `removeBlindDCTT()` every update tick even when `isBlindDCTT` is false.",
+      "severity": "P1",
+      "title": "Dead mobs broadcast removeBlindDCTT (-124) every update tick"
+    },
+    {
+      "batch": "server_world_map_mob__p02",
+      "category": "gameplay",
+      "impact": "CayThong NPC menu in maps 0, 7, 14 is broken and immediately replaced by the map 184 exit menu.",
+      "location": "src/models/npc/npc_list/CayThong.java:32-47",
+      "root_cause": "Switch cases 0, 7, 14 in CayThong.openBaseMenu are missing a break statement and fall through into case 184, overwriting the menu with 'Quay ve / Dong'.",
+      "severity": "P1",
+      "title": "CayThong.openBaseMenu missing break falls through to map 184 menu"
+    },
+    {
+      "batch": "server_world_map_mob__p03",
+      "category": "gameplay",
+      "impact": "Players who fail the map 169 task/power check in checkMapCanJoin still lose 50M gold without entering the map.",
+      "location": "src/models/npc/npc_list/Whis.java:124-133; src/services/map/ChangeMapService.java:1149-1156",
+      "root_cause": "Whis.vaoMapHD deducts 50,000,000 gold (requiring strictly > COST_HD) before calling ChangeMapService.changeMapBySpaceShip, which later rejects entry if TaskService.getIdTask < TASK_25_0.",
+      "severity": "P1",
+      "title": "Whis.vaoMapHD deducts 50M gold before map entry validation"
+    },
+    {
+      "batch": "server_world_map_mob__p03",
+      "category": "gameplay",
+      "impact": "A player denied entry to a map (checkMapCanJoin returns null) can still have their Namek Dragon Ball dropped or tracking arrays overwritten.",
+      "location": "src/services/map/ChangeMapService.java:345-362",
+      "root_cause": "changeMap mutates NgocRongNamecService.mapNrNamec/zoneNrNamec and calls dropNamekBall(pl) before checkMapCanJoin(pl, zoneJoin) validates whether the player can actually enter zoneJoin.",
+      "severity": "P1",
+      "title": "ChangeMapService mutates Namek Dragon Ball state before checkMapCanJoin validation"
+    }
+  ],
+  "gameplay_p2_p3_count": 127,
+  "devops_findings": [
+    {
+      "batch": "client_core_render_audio__p01",
+      "category": "devops",
+      "impact": "Floods Unity Console with false red error badges during normal image loading and slows network message pumping to 15 Hz when window loses focus.",
+      "location": "Image.cs:319-320; Main.cs:505-509, 634-644",
+      "root_cause": "Image.loadData unconditionally calls `Debug.LogError(\"CHIEU DAI MANG BYTE IMAGE CREAT = \" + array.Length)` after an unused `ArrayCast.cast`. Main.OnApplicationFocus(false) sets `Application.targetFrameRate = 15`, throttling Update() where Session_ME.update() drains network packets.",
+      "severity": "P2",
+      "title": "False Debug.LogError in Image.loadData and network throttling on focus loss in Main.cs"
+    },
+    {
+      "batch": "client_gameplay_entities__p03",
+      "category": "devops",
+      "impact": "Leaked DataInputStream / myReader instances during character creation map loading, and silent exception swallowing masks failures.",
+      "location": "CreateCharScr.cs:130-146, 148-224; Char.cs:6309, 8380, 8413; CrackBallScr.cs:448, 692, 836",
+      "root_cause": "loadMapFromResource() and loadMapTableFromResource() open DataInputStream via MyStream.readFile() in loops without calling close(). Multiple paint/update methods use empty catch (Exception) blocks.",
+      "severity": "P2",
+      "title": "Unclosed DataInputStream in CreateCharScr and empty catch blocks"
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p06",
+      "category": "devops",
+      "impact": "Whis Arena ignores the 21:00-22:00 schedule and auto-grants demo rewards to admins in production unless toggled off.",
+      "location": "src/models/tournament/whis_arena/WhisArenaService.java:46-53,223-225",
+      "root_cause": "TEST_MODE_24_7 is hardcoded to true.",
+      "severity": "P3",
+      "title": "WhisArenaService.TEST_MODE_24_7 left enabled"
+    },
+    {
+      "batch": "server_services_bot_telemetry__p02",
+      "category": "devops",
+      "impact": "Production source tree contains a 5000-thread unclosed-socket DDoS spammer class (`DdosTester`).",
+      "location": "src/testddos/DdosTester.java:8-23",
+      "root_cause": "`DdosTester.main()` spawns 5000 threads opening sockets to `127.0.0.1:14445` and sleeping 100s without closing sockets.",
+      "severity": "P3",
+      "title": "Unclosed-socket DdosTester left in production src tree"
+    },
+    {
+      "batch": "server_services_bot_telemetry__p03",
+      "category": "devops",
+      "impact": "External URL launch or unvalidated cmd execution if invoked in production.",
+      "location": "src/utils/ErrorRes.java:8-15, src/utils/FileRunner.java:7-10",
+      "root_cause": "ErrorRes.howToFix opens chatgpt.com with raw error text; FileRunner.runBatchFile passes batchFilePath directly to cmd /c start.",
+      "severity": "P3",
+      "title": "Dev helper ErrorRes and unvalidated ProcessBuilder in FileRunner"
+    },
+    {
+      "batch": "tooling_and_tests__p01",
+      "category": "devops",
+      "impact": "Test 18 fails whenever `WhisArenaService.getRemainingMinutes()` is not 101; TestProfilerEngine pollutes real `PERFORMANCE_ALERTS.json` and `logs/metrics/` files.",
+      "location": "test/TestWhisArenaLogic.java:299; tools/test/TestProfilerEngine.java:135-221",
+      "root_cause": "`TestWhisArenaLogic` asserts `expectedHeader.contains(\"101 phút nữa\")`, and `TestProfilerEngine` writes directly to production metrics/alert paths instead of temp directories.",
+      "severity": "P3",
+      "title": "Brittle time-dependent assertion in TestWhisArenaLogic and side-effects in TestProfilerEngine"
+    }
+  ],
+  "cross_module_questions": [
+    {
+      "batch": "client_core_render_audio__p01",
+      "q": "Does any external script invoke Image._createImage* via reflection, or is the entire static status/imgTemp mailbox dead code that can be removed from Main.FixedUpdate()?"
+    },
+    {
+      "batch": "client_core_render_audio__p01",
+      "q": "Where is `Main.gameSpeed` modified at runtime, and how does `gameSpeedAccumulator` in `Main.FixedUpdate()` interact with server-side movement/attack cooldown validation?"
+    },
+    {
+      "batch": "client_core_render_audio__p01",
+      "q": "Does `mFont.bigNumber_black` (id 31) get called anywhere when `mGraphics.zoomLevel > 1`, which would trigger `IndexOutOfRangeException` in `mFont.setTypePaint()`?"
+    },
+    {
+      "batch": "client_core_render_audio__p02",
+      "q": "Is SmallImage.vt_images_watingDowload drained and downloaded by another module (e.g. Service/GameScr), and are server-sent SmallImage IDs bounded to prevent OOM when resizing imgNew?"
+    },
+    {
+      "batch": "client_core_render_audio__p02",
+      "q": "Are all audio files /music/0..2 and /sound/0..38 present in Client Resources, since Sound.__load logs a warning when missing?"
+    },
+    {
+      "batch": "client_gameplay_entities__p01",
+      "q": "How does SmallImage call Small.update() vs Small.paint() (GameCanvas.gameTick % 1000) to avoid premature texture destruction in Small.cs:70-78?"
+    },
+    {
+      "batch": "client_gameplay_entities__p02",
+      "q": "Does the Java server validate skill cooldowns, MP, and HP thresholds (e.g. skill 9 self-destruct cHP > cHPFull/10) server-side, or can client clock rollback in Char.setSkillPaint (L5181-5184) / sendUseChargeSkill (L5348-5351) bypass cooldowns?"
+    },
+    {
+      "batch": "client_gameplay_entities__p02",
+      "q": "What type is Mob.hpInjure? Char.updateEffect() (L3049) assigns long expression (cDamFull / 2 - cDamFull * rand / 100) to effPaints[i].eMob.hpInjure."
+    },
+    {
+      "batch": "client_gameplay_entities__p02",
+      "q": "Are bagSort()/boxSort() item merges (L1548, L1603) synchronized with server inventory state, and how are item.quantity overflows prevented?"
+    },
+    {
+      "batch": "client_gameplay_entities__p02",
+      "q": "How does Service.gI().skill_not_focus(byte) and sendPlayerAttack(vMob, vChar, type) serialize payloads and validate target counts/ranges on server?"
+    },
+    {
+      "batch": "client_gameplay_entities__p03",
+      "q": "In GameScr.cs / Char.cs (earlier lines): how are CharInfo[], Arr_Head_2Fr[][], and cHP/cHPFull initialized and synchronized so paintCharBody and paintHp remain consistent?"
+    },
+    {
+      "batch": "client_gameplay_entities__p03",
+      "q": "Does Service.createChar() validate character name length/characters server-side beyond CreateCharScr's 5-10 char check?"
+    },
+    {
+      "batch": "client_gameplay_entities__p04",
+      "q": "Does GameScr iterate Effect2.vEffect3 backwards (like EffectManager) or forwards when calling EffectPanel.update(), given EffectPanel removes itself directly from vEffect3?"
+    },
+    {
+      "batch": "client_gameplay_entities__p04",
+      "q": "How does Char.cx mutation inside Effect_End (lines 269-283, 1051-1053) interact with server position sync or skill range checks?"
+    },
+    {
+      "batch": "client_gameplay_entities__p04",
+      "q": "Are FireWorkEff, FireWorkMn, and Firework still reachable from GameCanvas/GameScr or superseded by Effect_End typeEffect == 3 (End_FireWork)?"
+    },
+    {
+      "batch": "client_gameplay_entities__p05",
+      "q": "Does the server validate Char.myCharz() position updates sent via Service.gI().charMove() when GameScr.isAttack() teleports cx/cy client-side during melee range adjustment (GameScr.cs:2590-2640, 2683-2686, 2779-2792)?"
+    },
+    {
+      "batch": "client_gameplay_entities__p05",
+      "q": "Where is GameScr.getMaxExp(int level) called, and does any caller break when getMaxExp returns a truncated/overflowed int from long[] exps (GameScr.cs:1345-1353)?"
+    },
+    {
+      "batch": "client_gameplay_entities__p06",
+      "q": "Does Server Player/Movement handler validate distance/speed on charMove() when GameScr.autoPlay() (4284-4287) teleports cx/cy directly to mob xFirst/yFirst?"
+    },
+    {
+      "batch": "client_gameplay_entities__p06",
+      "q": "Are command IDs 11068, 11069, 11074, 11075, 12009 (assigned in openWeb, sendSms, updateKeyAlert) handled elsewhere via mScreen/GameCanvas, since GameScr.actionPerform (7393-7640) has no cases for them?"
+    },
+    {
+      "batch": "client_gameplay_entities__p06",
+      "q": "Where is GameScr.paintHPCT (8302-8331) or GameScr.paintImageBarRight (6340-6360) invoked, and does the MP bar overflow/clipping bug manifest in Vo Dai (isVS) matches?"
+    },
+    {
+      "batch": "client_gameplay_entities__p07",
+      "q": "Verify in GameScr/ServerEffect/PopUp whether Info.outSide == true is ever used in a context where Info.paint mutating cx/cy causes frame-over-frame coordinate drift."
+    },
+    {
+      "batch": "client_gameplay_entities__p07",
+      "q": "Verify in Service/Char how ItemTemplates placeholders created by ItemTemplates.get (ItemTemplates.cs:15-19) interact with real item template loading and whether missing templates get overwritten properly."
+    },
+    {
+      "batch": "client_gameplay_entities__p08",
+      "q": "Does Service.requestModTemplate(templateId) deduplicate in-flight requests on the client, or can multiple Mob/NewBoss instances spam template requests?"
+    },
+    {
+      "batch": "client_gameplay_entities__p08",
+      "q": "Does TField.update() handle setting isFocus on pointer press independently, or does MoneyCharge.updateKey() (MoneyCharge.cs:200-210) leave tfSerial/tfCode focus out of sync on touch/mouse click?"
+    },
+    {
+      "batch": "client_gameplay_entities__p09",
+      "q": "Does Service.gI().SendRada(1, focus_card.id) validate card level, amount >= 120 for card 859 (Doc Nhan), and aura eligibility strictly on the Java server, or does it trust client preconditions in RadarScr.doClickUse?"
+    },
+    {
+      "batch": "client_gameplay_entities__p09",
+      "q": "In PlayerDart.update (lines 100-103), charBelong.charFocus.doInjure(...) is invoked when the client projectile reaches target; does the server authoritatively drive HP/damage or can client dart speed/desync affect displayed or actual HP?"
+    },
+    {
+      "batch": "client_gameplay_entities__p09",
+      "q": "How does GameScr's Effect2.vEffect2 update loop iterate when ServerEffect.update calls Effect2.vEffect2.removeElement(this)? Does it iterate backwards or risk skipping the next effect?"
+    },
+    {
+      "batch": "client_gameplay_entities__p09",
+      "q": "Where is Rms.saveRMSPassword / loadRMSPassword called (e.g., LoginScr), and is legacy plaintext fallback in loadRMSPassword (lines 149-152) ever migrated automatically?"
+    },
+    {
+      "batch": "client_gameplay_entities__p10",
+      "q": "Are CharacterCombat, InventorySystem, and CharacterMovement in Game1.Systems.* actually instantiated and wired by Char.cs / Panel.cs, or are they unused/partial refactorings leaving legacy fields in Char.cs active?"
+    },
+    {
+      "batch": "client_gameplay_entities__p10",
+      "q": "Does GameScr/TileMap iterate Teleport.vTeleport in reverse when calling Teleport.update(), or does Teleport.vTeleport.removeElement(this) skip elements?"
+    },
+    {
+      "batch": "client_gameplay_entities__p10",
+      "q": "How is TField.HandleInputText() invoked from Main/GameCanvas OnGUI, and does server-side validation enforce maxTextLenght and newline/numeric restrictions bypassed by Ctrl+V paste?"
+    },
+    {
+      "batch": "client_gameplay_entities__p11",
+      "q": "Do any callers of Timer.setTimer pass a non-GameScr IActionListener expecting timeListener.perform() to be invoked instead of GameScr.gI().actionPerform()?"
+    },
+    {
+      "batch": "client_gameplay_entities__p11",
+      "q": "How does Panel.cs route Update/UpdateKey/PointerClick for ChestSubPanel, CombineSubPanel, InventorySubPanel, and ShopSubPanel while their ISubPanel methods remain empty stubs?"
+    },
+    {
+      "batch": "client_network_protocol__p04",
+      "q": "Are `Service.sendOptHat(1)` (`Res.TakeSnapShot()`), `Service.sendServerData`, `Service.charMove` (client-computed `cx/cy` and MP deduction), and `Service.new_skill_not_focus` validated server-side against spoofing or oversized payloads?"
+    },
+    {
+      "batch": "client_ui_god_mods__p01",
+      "q": "Server-side movement/anti-cheat: Does the Java server validate `charMove` step distance/speed (`Mobs.GotoXY`, `Utils.Teleport`, `ClientManager.speedRun`) and `Main.gameSpeed` (`cheat` up to 100x)?"
+    },
+    {
+      "batch": "client_ui_god_mods__p01",
+      "q": "Server-side combat & cooldowns: Does the Java server enforce skill range (vs `nSkill` 1.7x `dx/dy` reach), `paintCanNotUseSkill`, and mana checks when receiving `sendPlayerAttack`?"
+    },
+    {
+      "batch": "client_ui_god_mods__p01",
+      "q": "Server-side revive & shop: Does the Java server rate-limit `wakeUpFromDead()` (spammed every 20 ticks by `Revive.PlayerRevive`) and `buyItem()` (sent every 200ms by `Items.autoBuy`)?"
+    },
+    {
+      "batch": "client_ui_god_mods__p01",
+      "q": "Client integration: How does `GameScr` dispatch the synthetic `GameCanvas.keyAsciiPress` chars (`x, c, f, m, j, k, l`) injected by `ClientManager.UpdateTouch()` (`ClientManager.cs:35-108`) now that `ClientManager.KeyPressed()` is empty?"
+    },
+    {
+      "batch": "client_ui_god_mods__p02",
+      "q": "How do `InventorySubPanel`, `ChestSubPanel`, `CombineSubPanel`, `ShopSubPanel`, and `ClanSubPanel` (registered in `InitSubPanels` lines 939-946) interact with `Panel`'s legacy fields (`selected`, `cmy`, `currentTabIndex`), and which `Panel` methods in lines 5644-11857 are still called when `ISubPanel.Paint`/`UpdateKey` returns false?"
+    },
+    {
+      "batch": "client_ui_god_mods__p02",
+      "q": "Does `Service.gI().kigui` validate page bounds server-side when `updateKeyScrollView` (lines 3068-3123) or `moveCamera` (lines 4043-4060) sends negative or out-of-range page indices?"
+    },
+    {
+      "batch": "client_ui_god_mods__p02",
+      "q": "Where is `Panel.tabName[0/1/5/6]` populated before `setType()` (line 1179) runs, and are `tabName` entries guaranteed non-null on all entry points?"
+    },
+    {
+      "batch": "client_ui_god_mods__p02",
+      "q": "Does server trade handling enforce `long` vs `int` for trade gold (`moneyGD`, `friendMoneyGD` are 32-bit `int` at lines 85-87)?"
+    },
+    {
+      "batch": "client_ui_god_mods__p03",
+      "q": "Does the Java server validate Service.gI().giaodich(2, -1, -1, money) against money <= 0 when client onChatFromMe only checks num2 > Char.myCharz().xu?"
+    },
+    {
+      "batch": "client_ui_god_mods__p03",
+      "q": "Does the Java server validate Service.gI().kigui(0, ...) quantity > 0 and price > 0, and how does Panel.doNotiRuby (outside this slice) handle int.Parse errors and bounds?"
+    },
+    {
+      "batch": "client_ui_god_mods__p03",
+      "q": "Does the server validate skill/potential upgrade requests (upPotential) independently of the client's cMPGoc/cHPGoc UI typo and int-overflow calculations?"
+    },
+    {
+      "batch": "client_ui_god_mods__p04",
+      "q": "What server-side validation exists for the NPC/ruby purchase handler triggered by Panel command IDs 11000/11001 (doNotiRuby) when currItem.buyRuby <= 0 or overflows?"
+    },
+    {
+      "batch": "client_ui_god_mods__p04",
+      "q": "In Panel.cs earlier lines, how are imgo_0..imgo_3, colorUpgradeEffect, sizeUpgradeEff, and nsize declared (static vs instance) and preloaded, and how are cmd IDs 11000/11001/11002 handled in perform()?"
+    },
+    {
+      "batch": "client_ui_god_mods__p04",
+      "q": "Which PopUp command.performAction() callbacks call PopUp.removePopUp(), and are they vulnerable to skipped elements in PopUp.updateAll()?"
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p01",
+      "q": "In Player/Points (nPoint), are dameg and hpg still `int` or `long`? XenBoHung.hapThu() casts maxDameAllowed and maxHpAllowed to `(int)`, and multiple Boss subclasses cast `injured()` return values to `(int) damage`."
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p01",
+      "q": "Does ChangeMapService.exitMap(this) set this.zone = null synchronously? SuperBroly.leaveMap() calls detu.leaveMap() before exitMap(this), which relies on master.zone != this.zone to allow DetuBroly to clean up."
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p02",
+      "q": "Does Util.nextInt(int min, int max) treat max as inclusive or exclusive? Earth bosses BUJIN/KOGU/ZANGYA use Util.nextInt(8, 11) with comment 'Random 8-10', whereas BIDO/BOJACK/SUPER_BOJACK use Util.nextInt(8, 10)."
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p02",
+      "q": "How does Boss base class handle the long return value of injured(...)—does returning (int) damage cause negative heal/miss accounting or damage display bugs when damage > Integer.MAX_VALUE?"
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p02",
+      "q": "What handles pl.canReward and pl.haveReward on Player (e.g. NPC/Service reward claim) and how does it handle TuanLoc (TET_EVENT) vs LanCon (CHRISTMAS_EVENT) having swapped BossType constants?"
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p02",
+      "q": "Is PKCommeson registered anywhere else by its constructor in NhanBan.active() (NhanBan.java:44), and does it guarantee setting typePk != NON_PK on the same tick?"
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p03",
+      "q": "Does Boss clone BossesData entries per instance, or does Raiti.enrage() calling `this.data[this.currentLevel].setSecondsRest(1)` mutate a shared static BossData across all Raiti spawns?"
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p03",
+      "q": "Does ChangeMapService.changeMap(..., 127, ...) reset `pl.isMabuHold = false`, or do players released from Mabu2H/SuperBu stay stuck with `isMabuHold = true`?"
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p03",
+      "q": "How does `Boss.injured` caller handle the return value when `injured` returns `(int) damage` (truncated from `long`) for uncapped high-HP bosses?"
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p04",
+      "q": "How do SuperRankManager/SuperRankService and The23rdMartialArtCongress tournament service clean up SuperRank and The23rdMartialArtCongress bosses after die() sets BossStatus.DIE, given their update() loops omit case DIE and return early on isDie()?"
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p04",
+      "q": "How does Boss.dispose() / OtherBossManager.removeBoss() handle ThienXinHangClone instances if the parent ThienXinHang is killed before clones expire?"
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p05",
+      "q": "Are DestronGas, RedRibbonHQ, SnakeWay, and TreasureUnderSea instances pooled and reused across runs by a manager? If so, unreset fields like TreasureUnderSea.isRecordUpdated and DestronGas.callBoss will break subsequent runs."
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p05",
+      "q": "Where are BossesData.REST_24_H (86400000) and BossesData.DEATH_BEAM / RAITI / *_NEW consumed, and is REST_24_H converted from seconds or milliseconds in Boss?"
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p06",
+      "q": "Under what NPC menu conditions can a player invoke DeathOrAliveArenaService.cancelChallenge(player) — can it be triggered after round 0 starts?"
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p07",
+      "q": "Does SuperRank constructor deduct ticket/gem and handle a null Zone parameter when SuperRankService.competing case 2 passes getZone(113)?"
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p07",
+      "q": "Does Player.inventory.addGold(int) guard against exceeding Inventory.LIMIT_GOLD / int-to-long overflow when refunding tournament fees?"
+    },
+    {
+      "batch": "server_economy_items__p01",
+      "q": "Where is ConstNpc.UP_TOP_ITEM handled in NPC menu routing, and does the caller set idMark.setIdItemUpTop before/after ConsignShopService.upItemToTop since upItemToTop does not store the consign item id?"
+    },
+    {
+      "batch": "server_economy_items__p01",
+      "q": "What is the authoritative meaning of item option ID 230 in item_option_template — CuongHoaLoSao/EpSaoTrangBi treat 230 as 8th star-slot strengthening (starvip=1), whereas ChuyenHoaBangNgoc/ChuyenHoaBangVang treat 230 as downgrade count (soLanRotCap)?"
+    },
+    {
+      "batch": "server_economy_items__p01",
+      "q": "In ShopService, is BuyBackService.addItem called inside synchronized(player), and how does ShopService handle TabShopHocKyNang?"
+    },
+    {
+      "batch": "server_economy_items__p02",
+      "q": "Check how ShopService.getRubyPrice vs ShopService.COST_GEM differ in MuaCtService so cosmetic inspection purchase pricing and commission currency are consistent."
+    },
+    {
+      "batch": "server_economy_items__p03",
+      "q": "Does BuyBackService.addItem(pl, item) deep-copy `item`? In ShopService.sellItem (lines 978-986), BuyBackService.addItem is called before subQuantityItemsBag/Body; if not copied, quantity becomes 0 in itemsDaBan."
+    },
+    {
+      "batch": "server_economy_items__p03",
+      "q": "Does the shop copy constructor `new Shop(shop)` / `new Shop(shop, player)` deep-copy TabShop, ItemShop, and ItemShop.options? ShopService.resolveShopBua (line 147) clears and mutates item.options directly."
+    },
+    {
+      "batch": "server_economy_items__p03",
+      "q": "Do callers of ItemService.OpenSKH, OpenSKHVIP, OpenItem*, and settltd/settlnm/settlxd synchronize on player.inventory.itemsBag and validate itemUse existence before invoking ItemService?"
+    },
+    {
+      "batch": "server_economy_items__p03",
+      "q": "How does InventoryService.addItemBag handle charm items bought in buyItemBua (line 656) when bag is full, since buyItemBua does not check getCountEmptyBag(player)?"
+    },
+    {
+      "batch": "server_player_combat__p01",
+      "q": "Do Trade/Combine/Shop services enforce player-level locks around Inventory.subRuby()/subGemDirect() and IDMark.playerTradeId (int vs long Character.id)?"
+    },
+    {
+      "batch": "server_player_combat__p01",
+      "q": "Does SkillService.useSkill() check skill cooldown when Pet.java:470-475 calls it for Mob ranged skill 2 without canUseSkillWithCooldown() or canAttack()?"
+    },
+    {
+      "batch": "server_player_combat__p01",
+      "q": "Where is Inventory.trainArmor cleared when a player unequips, trades, drops, or sells the training armor item in bag?"
+    },
+    {
+      "batch": "server_player_combat__p01",
+      "q": "How does SkillService.updateSkillSpecial() handle NewSkill.isStartSkillSpecial when NewSkill.update() unconditionally assigns isStartSkillSpecial = true?"
+    },
+    {
+      "batch": "server_player_combat__p03",
+      "q": "Why were SUPER_KAME, LIEN_HOAN_CHUONG, MA_PHONG_BA removed from SkillService.useNewSkillNotFocus (line 226), leaving updateSkillSpecial and newSkillNotFocus partly orphaned/dead-pathed?"
+    },
+    {
+      "batch": "server_services_bot_telemetry__p01",
+      "q": "In models.tournament.WorldMartialArtsTournament, does finish() remove itself from WorldMartialArtsTournamentManager.listTournaments, and how do other callers add/remove listReg to avoid races during round transitions?"
+    },
+    {
+      "batch": "server_services_bot_telemetry__p01",
+      "q": "Does models.GiftCode.isUsedGiftCode() perform case-insensitive matching, given GiftCodeManager.createGiftCode() lowercases the code while checkUseGiftCode() uses String.equals()?"
+    },
+    {
+      "batch": "server_services_bot_telemetry__p02",
+      "q": "Does the caller of OpenPowerService.openPowerSpeed() deduct COST_SPEED_OPEN_LIMIT_POWER (100) atomically, and is ((Pet) player).master guaranteed non-null?"
+    },
+    {
+      "batch": "server_services_bot_telemetry__p03",
+      "q": "Does Player.zone.map.yPhysicInTop or Zone initialization guarantee every mapId in 0..20 has at least one zone with zoneId != 0 (otherwise Util.randomAllMap loops infinitely)?"
+    },
+    {
+      "batch": "server_services_bot_telemetry__p03",
+      "q": "Do callers of Util.nextInt(int[] percen) handle the case where the sum of percentages is < 1000 and it returns percen.length?"
+    },
+    {
+      "batch": "server_task_clan_consts__p01",
+      "q": "Does ConstItem.java fail javac compilation due to duplicate field name SIEU_THAN_THUY at lines 200 and 730, or is ConstItem.java excluded/patched in the build?"
+    },
+    {
+      "batch": "server_task_clan_consts__p01",
+      "q": "Which IDs are actually used for item 1109 (CHOI_PHU_THUY vs MAY_DO_BOSS) and item 1210 (TRAI_TIM_VALENTINE vs BUNMA_TOC_TIM_THAT_BIM) in ItemService/UseItem?"
+    },
+    {
+      "batch": "server_task_clan_consts__p01",
+      "q": "In ConstNpc, do SUB_MENU (31720025) and SHEN_RON_BI_NGO_CONFIRM (31720025) collide on the same NPC handler (RongThieng or ConMeo)?"
+    },
+    {
+      "batch": "server_task_clan_consts__p03",
+      "q": "Verify ConstTask.java bit-shift definitions against TaskService.isCurrentTask() / getIdTask() (lines 1694, 1702) where `(id << 10) + index << 1` evaluates as `((id << 10) + index) << 1` due to `+` having higher precedence than `<<`."
+    },
+    {
+      "batch": "server_task_clan_consts__p03",
+      "q": "Verify whether ConstTask.TASK_24_2 is intentionally omitted from TRUONG_LAO_GURU (lines 607-621) and VUA_VEGETA (lines 622-636) in checkDoneTaskTalkNpc(), whereas QUY_LAO_KAME (line 605) includes it."
+    },
+    {
+      "batch": "server_task_clan_consts__p03",
+      "q": "Verify Client Unity Msg43 handler matches sendUpdateCountSubTask() (lines 516-554) writing count + x_hint + y_hint (3 shorts)."
+    },
+    {
+      "batch": "server_world_map_mob__p01",
+      "q": "How does ItemMapService.removeItemMapAndSendClient interact with Zone.items lock when called from Zone.udItem() -> ItemMap.update()?"
+    },
+    {
+      "batch": "server_world_map_mob__p01",
+      "q": "Where is Zone.maBuHolds populated? Zone constructor initializes it as an empty ArrayList, and setMaBuHold checks slot < z128.maBuHolds.size()."
+    },
+    {
+      "batch": "server_world_map_mob__p01",
+      "q": "Why are GaChinCua, GauTuongCuop, NguaChinLmao, Piano, and VoiChinNga completely commented out while Map.initMob still references ConstMob.HIRUDEGARN, VUA_BACH_TUOC, ROBOT_BAO_VE, MAY_DO_SUC_MANH?"
+    },
+    {
+      "batch": "server_world_map_mob__p02",
+      "q": "Does NoiBanh's cooking completion handler (in Player/Task/Update) subtract ingredients and gold at completion, or are they never deducted?"
+    },
+    {
+      "batch": "server_world_map_mob__p02",
+      "q": "Is NpcFactory.PLAYERID_OBJECT a ConcurrentHashMap and are stale entries cleaned up on disconnect?"
+    },
+    {
+      "batch": "server_world_map_mob__p03",
+      "q": "Verify Player.setClothes.checkSetDes() return value polarity: Whis.java:73 blocks access to Heaven Gear crafting when checkSetDes() returns true (\"Ngươi hãy trang bị đủ 5 món trang bị Hủy Diệt rồi ta nói chuyện tiếp\")."
+    },
+    {
+      "batch": "tooling_and_tests__p01",
+      "q": "Does GiftCodeService/GiftCodeManager synchronize or lock around `GiftCode.countLeft` and `player.giftCode.isUsedGiftCode(code)` during redemption to prevent race-condition dupes?"
+    },
+    {
+      "batch": "tooling_and_tests__p01",
+      "q": "Are `MobTemplate.hp` and `MapTemplate.mobHp` (`int` in `Template.java`) overflowing or capped for high-HP custom mobs/bosses compared to `NPoint.hpMax` (`long`)?"
+    },
+    {
+      "batch": "tooling_and_tests__p01",
+      "q": "Is `TestProfilerEngine` safe to run in CI/dev without polluting `tools/memory/PERFORMANCE_ALERTS.json` and `logs/metrics/`?"
+    }
+  ]
+}

@@ -1,0 +1,102 @@
+{
+  "dimension_scores": [
+    {
+      "dimension": "Kiến trúc (Architecture)",
+      "score_out_of_10": 4.5,
+      "verdict": "Tồn tại các God Classes khổng lồ (Panel.cs 11.8k, Char.cs 8.7k, GameScr.cs 8.3k, Controller.cs 6.8k, Service.java 2.3k) và phụ thuộc vòng chéo nghiêm trọng (models <-> services: 818 vs 332 edges). Có nền tảng Netty 4 NIO + Virtual Thread và nỗ lực Strangler Fig (ISubPanel, PacketDispatcher, ItemActionManager) nhưng dang dở."
+    },
+    {
+      "dimension": "Hiệu năng CPU/RAM/GC (Performance)",
+      "score_out_of_10": 4,
+      "verdict": "Server tách nhịp GameLoop 250ms/1000ms nhưng dùng CopyOnWriteArrayList trong Zone, ghi file đồng bộ trên Netty IO thread (PacketProfiler), rò rỉ ConcurrentHashMap (OPTION_STRING, playerTickMap) và DoS vòng lặp vô hạn (PhaLeHoa). Client Unity vi phạm nặng Zero-GC trong paint()/update(), I/O đồng bộ khi vẽ mount/tile và gọi GC.Collect() trực tiếp."
+    },
+    {
+      "dimension": "Gameplay Logic & Cân bằng (Gameplay)",
+      "score_out_of_10": 3.5,
+      "verdict": "Nhiều lỗi logic P0/P1 phá vỡ cân bằng và kinh tế: NPoint.calPercent chia 150 thay vì 100, NewSkill.update gán '=', Yardart.injured gán hp=1 gây farm vô hạn, SkillService TRI_THUONG hồi máu địch & nhân bội self-heal, ChestBoxItemHandler mở rương vô hạn & chế 1 đổi 99, cùng hàng loạt lỗi Boss/Pet/SetClothes/Task."
+    },
+    {
+      "dimension": "DevOps, Tooling, Telemetry & Testing",
+      "score_out_of_10": 6.5,
+      "verdict": "Điểm sáng nổi bật nhờ hệ thống Loop Engineering (compile_check.py Roslyn+Javac, tools/memory/, guardrails.py, PERFORMANCE_ALERTS.json) và TrajectoryLogger non-blocking. Tuy nhiên thiếu CI/CD, TestProfilerEngine ghi đè file production, sót DdosTester.java và TEST_MODE_24_7=true."
+    }
+  ],
+  "verified_p0": [
+    {
+      "evidence": "Direct read of src/models/player/NPoint.java:927-933 confirms both calPercent(long, int) and calPercent(int, int) execute `return param * percent / 150;` instead of `/ 100`.",
+      "fix_plan": "Thay `/ 150` thành `/ 100` ở cả hai overload `calPercent` và kiểm tra lại cân bằng sát thương/HP toàn server.",
+      "location": "src/models/player/NPoint.java:927-933",
+      "status": "CONFIRMED",
+      "title": "NPoint.calPercent() divides by 150 instead of 100"
+    },
+    {
+      "evidence": "Direct read of src/models/player/NewSkill.java:51-55 confirms line 52 is `if (this.isStartSkillSpecial = true)` using assignment `=` instead of equality `==`.",
+      "fix_plan": "Sửa thành `if (this.isStartSkillSpecial)` hoặc `== true` và đồng bộ khóa truy cập nếu `closeSkillSpecial()` chạy khác luồng.",
+      "location": "src/models/player/NewSkill.java:51-55",
+      "status": "CONFIRMED",
+      "title": "NewSkill.update() uses assignment (=) instead of comparison (==) on isStartSkillSpecial"
+    },
+    {
+      "evidence": "Direct read of src/models/boss/boss_list/Yardart/Yardart.java:249-262 confirms line 252-253 calls `hsChar(this, hpMax, mpMax)` then immediately overwrites `this.nPoint.hp = 1;` followed by `reward(plAtt)` on every subsequent hit.",
+      "fix_plan": "Xóa dòng `this.nPoint.hp = 1;` sau `hsChar()` để Yardart hồi đầy HP thực sự trước khi cho phép nhận `reward(plAtt)` lần kế tiếp.",
+      "location": "src/models/boss/boss_list/Yardart/Yardart.java:249-262",
+      "status": "CONFIRMED",
+      "title": "Yardart.injured() resets HP to 1 after hsChar, allowing infinite reward drops on every hit"
+    },
+    {
+      "evidence": "Direct read of src/services/SkillService.java:852-875 confirms line 857 checks `canHsPlayer(player, plTarget)` instead of `canHsPlayer(player, pl)` and lines 872-873 heal `player` inside the `for (Player pl : players)` loop.",
+      "fix_plan": "Đổi điều kiện lọc thành `canHsPlayer(player, pl)` và đưa logic hồi HP/MP cho bản thân `player` ra ngoài vòng lặp `for (Player pl : players)`.",
+      "location": "src/services/SkillService.java:852-875",
+      "status": "CONFIRMED",
+      "title": "Skill.TRI_THUONG heals enemies and multiplies caster self-heal per target"
+    },
+    {
+      "evidence": "Digest evidence (server_economy_items__p02): `openWoodChest` never updates `pl.lastTimeRewardWoodChest` and lacks bag-space checks; `open1427` calls `subQuantityItemsBag(pl, item, 99)` without checking `item.quantity >= 99`.",
+      "fix_plan": "Cập nhật `pl.lastTimeRewardWoodChest = System.currentTimeMillis()`, kiểm tra `getCountEmptyBag > 0` và xác thực `item.quantity >= 99` trước khi trừ/tạo vật phẩm.",
+      "location": "src/services/func/useitem/handlers/ChestBoxItemHandler.java:122-185,249-260",
+      "status": "CONFIRMED",
+      "title": "Infinite Wood Chest Exploit & 1-for-99 Dragon Egg Craft Exploit in ChestBoxItemHandler"
+    },
+    {
+      "evidence": "Digest evidence (server_database_persistence__p01): `AlyraManager.login` runs `SELECT id FROM player` and passes that id-only ResultSet directly into `NDVSqlFetcher.loadPlayer()`, while skipping ban, maintenance, and admin wait checks.",
+      "fix_plan": "Xóa bản `login()` trùng lặp trong `AlyraManager` hoặc hợp nhất về `NDVSqlFetcher.login()` duy nhất.",
+      "location": "src/database/AlyraManager.java:256-332",
+      "status": "CONFIRMED",
+      "title": "Broken duplicate login() in AlyraManager passes id-only ResultSet to loadPlayer() and skips ban/maintenance checks"
+    },
+    {
+      "evidence": "Direct read of src/consts/ConstItem.java:200 and 730 proves line 200 is `SIEU_THANH_THUY = 195` (with 'H') and line 730 is `SIEU_THAN_THUY = 725` (without 'H'). They are distinct identifiers and compile cleanly with javac.",
+      "fix_plan": "Không cần sửa lỗi biên dịch; chỉ cần chuẩn hóa đặt tên ở đợt refactor constants nếu muốn tránh nhầm lẫn ngữ nghĩa.",
+      "location": "src/consts/ConstItem.java:200,730",
+      "status": "FALSE_POSITIVE",
+      "title": "Duplicate field name SIEU_THAN_THUY in ConstItem.java"
+    }
+  ],
+  "verified_p1_highlights": [
+    {
+      "impact": "Gây stall Netty IO thread mỗi khi có gói tin chậm vượt ngưỡng criticalThreshold do ghi file JSON đồng bộ dưới global synchronized lock.",
+      "location": "src/server/network/PacketProfiler.java:202-249",
+      "title": "Synchronous disk I/O and global lock on Netty IO thread in PacketProfiler.triggerPerformanceAlert"
+    },
+    {
+      "impact": "Gây đơ khung hình (Main Thread stall) khi mở World Map trên Client Unity và cấp phát Color[]/string mỗi frame trong mFont, Char, Panel.",
+      "location": "Client/Client/Assets/Scripts/Game1/Panel.cs:4020-4021; mFont.cs:392-446; Char.cs:4698-4719",
+      "title": "Blocking GC.Collect/UnloadUnusedAssets, synchronous mount I/O in paint(), and per-frame Zero-GC violations on Client"
+    },
+    {
+      "impact": "Cho phép client gửi n cực lớn để treo luồng xử lý (DoS) và rò rỉ bộ nhớ vĩnh viễn qua static cache không giới hạn kích thước.",
+      "location": "src/models/combine/list/PhaLeHoaTrangBi.java:137-188; src/models/item/Item.java:118-122",
+      "title": "Unbounded loop DoS in PhaLeHoaTrangBi and unbounded OPTION_STRING memory leak"
+    },
+    {
+      "impact": "Gây mất phần thưởng/nhiệm vụ boss, bất tử hoặc né 100%, và phá vỡ cơ chế kích hoạt set đồ/hành vi đệ tử.",
+      "location": "src/models/boss/Boss.java:466-477; Drabura2.java:128-138; Cadic.java:257; Pet.java:722-735; SetClothes.java:140-182",
+      "title": "Systemic Boss/Pet/SetClothes gameplay logic defects (SieuBoHung, Drabura2, Cadic, Pet, SetClothes)"
+    },
+    {
+      "impact": "Làm kẹt phím Enter, chạy đúp panel.updateKey(), crash UI khi nhận chatVip '!' và mất kết nối khi bấm Back ở menu Đổi Cờ.",
+      "location": "Client/Client/Assets/Scripts/Game1/GameCanvas.cs:699-729,2463; GameScr.cs:7735; Panel.cs:9046,10314",
+      "title": "Critical Client input/UI regressions (double updateKey, stuck keyHold[15], chatVip crash, Change Flag disconnect)"
+    }
+  ]
+}

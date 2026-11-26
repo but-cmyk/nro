@@ -93,7 +93,7 @@ namespace Game1
                 item.options = new MyVector();
                 try
                 {
-                    while (true)
+                    while (msg.reader().available() > 0)
                     {
                         item.options.addElement(new ItemOption(msg.reader().readUnsignedByte(), msg.reader().readUnsignedShort()));
                     }
@@ -229,9 +229,6 @@ namespace Game1
                             }
                             break;
                         }
-                    case -97:
-                        Char.myCharz().cNangdong = msg.reader().readInt();
-                        break;
                     case -96:
                         {
                             sbyte typeTop = msg.reader().readByte();
@@ -265,25 +262,6 @@ namespace Game1
                             GameCanvas.panel.show();
                             break;
                         }
-                    case -94:
-                        while (msg.reader().available() > 0)
-                        {
-                            short num45 = msg.reader().readShort();
-                            int num46 = msg.reader().readInt();
-                            for (int num47 = 0; num47 < Char.myCharz().vSkill.size(); num47++)
-                            {
-                                Skill skill = (Skill)Char.myCharz().vSkill.elementAt(num47);
-                                if (skill != null && skill.skillId == num45)
-                                {
-                                    if (num46 < skill.coolDown)
-                                    {
-                                        skill.lastTimeUseThisSkill = mSystem.currentTimeMillis() - (skill.coolDown - num46);
-                                    }
-                                    Res.outz("1 chieu id= " + skill.template.id + " cooldown= " + num46 + "curr cool down= " + skill.coolDown);
-                                }
-                            }
-                        }
-                        break;
                     case -95:
                         {
                             sbyte b29 = msg.reader().readByte();
@@ -540,20 +518,6 @@ namespace Game1
                             GameCanvas.startOK(mResources.plsRestartGame, 8885, null);
                         }
                         break;
-                    case -91:
-                        {
-                            sbyte b59 = msg.reader().readByte();
-                            GameCanvas.panel.mapNames = new string[b59];
-                            GameCanvas.panel.planetNames = new string[b59];
-                            for (int num142 = 0; num142 < b59; num142++)
-                            {
-                                GameCanvas.panel.mapNames[num142] = msg.reader().readUTF();
-                                GameCanvas.panel.planetNames[num142] = msg.reader().readUTF();
-                            }
-                            GameCanvas.panel.setTypeMapTrans();
-                            GameCanvas.panel.show();
-                            break;
-                        }
                     case -90:
                         {
                             sbyte b63 = msg.reader().readByte();
@@ -675,111 +639,6 @@ namespace Game1
                                 GameScr.gI().readSkill();
                                 Service.gI().clientOk();
                                 return;
-                            }
-                            break;
-                        }
-                    case -86:
-                        {
-                            sbyte b60 = msg.reader().readByte();
-                            Res.outz("server gui ve giao dich action = " + b60);
-                            if (b60 == 0)
-                            {
-                                int playerID = msg.reader().readInt();
-                                GameScr.gI().giaodich(playerID);
-                            }
-                            if (b60 == 1)
-                            {
-                                int num143 = msg.reader().readInt();
-                                Char char10 = GameScr.findCharInMap(num143);
-                                if (char10 == null)
-                                {
-                                    return;
-                                }
-                                GameCanvas.panel.setTypeGiaoDich(char10);
-                                GameCanvas.panel.show();
-                                Service.gI().getPlayerMenu(num143);
-                            }
-                            if (b60 == 2)
-                            {
-                                sbyte b61 = msg.reader().readByte();
-                                for (int num144 = 0; num144 < GameCanvas.panel.vMyGD.size(); num144++)
-                                {
-                                    Item item2 = (Item)GameCanvas.panel.vMyGD.elementAt(num144);
-                                    if (item2.indexUI == b61)
-                                    {
-                                        GameCanvas.panel.vMyGD.removeElement(item2);
-                                        break;
-                                    }
-                                }
-                            }
-                            if (b60 == 5)
-                            {
-                            }
-                            if (b60 == 6)
-                            {
-                                GameCanvas.panel.isFriendLock = true;
-                                if (GameCanvas.panel2 != null)
-                                {
-                                    GameCanvas.panel2.isFriendLock = true;
-                                }
-                                GameCanvas.panel.vFriendGD.removeAllElements();
-                                if (GameCanvas.panel2 != null)
-                                {
-                                    GameCanvas.panel2.vFriendGD.removeAllElements();
-                                }
-                                int friendMoneyGD = msg.reader().readInt();
-                                sbyte b62 = msg.reader().readByte();
-                                Res.outz("item size = " + b62);
-                                for (int num145 = 0; num145 < b62; num145++)
-                                {
-                                    Item item3 = new Item();
-                                    item3.template = ItemTemplates.get(msg.reader().readShort());
-                                    item3.quantity = msg.reader().readInt();
-                                    int num146 = msg.reader().readUnsignedByte();
-                                    if (num146 != 0)
-                                    {
-                                        item3.itemOption = new ItemOption[num146];
-                                        for (int num147 = 0; num147 < item3.itemOption.Length; num147++)
-                                        {
-                                            int num148 = msg.reader().readUnsignedByte();
-                                            int param6 = msg.reader().readUnsignedShort();
-                                            if (num148 != -1)
-                                            {
-                                                item3.itemOption[num147] = new ItemOption(num148, param6);
-                                                item3.compare = GameCanvas.panel.getCompare(item3);
-                                            }
-                                        }
-                                    }
-                                    if (GameCanvas.panel2 != null)
-                                    {
-                                        GameCanvas.panel2.vFriendGD.addElement(item3);
-                                    }
-                                    else
-                                    {
-                                        GameCanvas.panel.vFriendGD.addElement(item3);
-                                    }
-                                }
-                                if (GameCanvas.panel2 != null)
-                                {
-                                    GameCanvas.panel2.setTabGiaoDich(false);
-                                    GameCanvas.panel2.friendMoneyGD = friendMoneyGD;
-                                }
-                                else
-                                {
-                                    GameCanvas.panel.friendMoneyGD = friendMoneyGD;
-                                    if (GameCanvas.panel.currentTabIndex == 2)
-                                    {
-                                        GameCanvas.panel.setTabGiaoDich(false);
-                                    }
-                                }
-                            }
-                            if (b60 == 7)
-                            {
-                                InfoDlg.hide();
-                                if (GameCanvas.panel.isShow)
-                                {
-                                    GameCanvas.panel.hide();
-                                }
                             }
                             break;
                         }
@@ -1469,258 +1328,6 @@ namespace Game1
                             int clanID = msg.reader().readInt();
                             int code = msg.reader().readInt();
                             GameScr.gI().clanInvite(strInvite, clanID, code);
-                            break;
-                        }
-                    case -51:
-                        InfoDlg.hide();
-                        readClanMsg(msg, 0);
-                        if (GameCanvas.panel.isMessage && GameCanvas.panel.type == 5)
-                        {
-                            GameCanvas.panel.initTabClans();
-                        }
-                        break;
-                    case -53:
-                        {
-                            InfoDlg.hide();
-                            bool flag8 = false;
-                            int num107 = msg.reader().readInt();
-                            Res.outz("clanId= " + num107);
-                            if (num107 == -1)
-                            {
-                                flag8 = true;
-                                Char.myCharz().clan = null;
-                                ClanMessage.vMessage.removeAllElements();
-                                if (GameCanvas.panel.member != null)
-                                {
-                                    GameCanvas.panel.member.removeAllElements();
-                                }
-                                if (GameCanvas.panel.myMember != null)
-                                {
-                                    GameCanvas.panel.myMember.removeAllElements();
-                                }
-                                if (GameCanvas.currentScreen == GameScr.gI())
-                                {
-                                    GameCanvas.panel.setTabClans();
-                                }
-                                return;
-                            }
-                            GameCanvas.panel.tabIcon = null;
-                            if (Char.myCharz().clan == null)
-                            {
-                                Char.myCharz().clan = new Clan();
-                            }
-                            Char.myCharz().clan.ID = num107;
-                            Char.myCharz().clan.name = msg.reader().readUTF();
-                            Char.myCharz().clan.slogan = msg.reader().readUTF();
-                            Char.myCharz().clan.imgID = msg.reader().readUnsignedByte();
-                            Char.myCharz().clan.powerPoint = msg.reader().readUTF();
-                            Char.myCharz().clan.leaderName = msg.reader().readUTF();
-                            Char.myCharz().clan.currMember = msg.reader().readUnsignedByte();
-                            Char.myCharz().clan.maxMember = msg.reader().readUnsignedByte();
-                            Char.myCharz().role = msg.reader().readByte();
-                            Char.myCharz().clan.clanPoint = msg.reader().readInt();
-                            Char.myCharz().clan.level = msg.reader().readByte();
-                            GameCanvas.panel.myMember = new MyVector();
-                            for (int num108 = 0; num108 < Char.myCharz().clan.currMember; num108++)
-                            {
-                                Member member5 = new Member();
-                                member5.ID = msg.reader().readInt();
-                                member5.head = msg.reader().readShort();
-                                member5.headICON = msg.reader().readShort();
-                                member5.leg = msg.reader().readShort();
-                                member5.body = msg.reader().readShort();
-                                member5.name = msg.reader().readUTF();
-                                member5.role = msg.reader().readByte();
-                                member5.powerPoint = msg.reader().readUTF();
-                                member5.donate = msg.reader().readInt();
-                                member5.receive_donate = msg.reader().readInt();
-                                member5.clanPoint = msg.reader().readInt();
-                                member5.curClanPoint = msg.reader().readInt();
-                                member5.joinTime = NinjaUtil.getDate(msg.reader().readInt());
-                                GameCanvas.panel.myMember.addElement(member5);
-                            }
-                            int num109 = msg.reader().readUnsignedByte();
-                            for (int num110 = 0; num110 < num109; num110++)
-                            {
-                                readClanMsg(msg, -1);
-                            }
-                            if (GameCanvas.panel.isSearchClan || GameCanvas.panel.isViewMember || GameCanvas.panel.isMessage)
-                            {
-                                GameCanvas.panel.setTabClans();
-                            }
-                            if (flag8)
-                            {
-                                GameCanvas.panel.setTabClans();
-                            }
-                            Res.outz("=>>>>>>>>>>>>>>>>>>>>>> -537 MY CLAN INFO");
-                            break;
-                        }
-                    case -52:
-                        {
-                            sbyte b20 = msg.reader().readByte();
-                            if (b20 == 0)
-                            {
-                                Member member2 = new Member();
-                                member2.ID = msg.reader().readInt();
-                                member2.head = msg.reader().readShort();
-                                member2.headICON = msg.reader().readShort();
-                                member2.leg = msg.reader().readShort();
-                                member2.body = msg.reader().readShort();
-                                member2.name = msg.reader().readUTF();
-                                member2.role = msg.reader().readByte();
-                                member2.powerPoint = msg.reader().readUTF();
-                                member2.donate = msg.reader().readInt();
-                                member2.receive_donate = msg.reader().readInt();
-                                member2.clanPoint = msg.reader().readInt();
-                                member2.joinTime = NinjaUtil.getDate(msg.reader().readInt());
-                                if (GameCanvas.panel.myMember == null)
-                                {
-                                    GameCanvas.panel.myMember = new MyVector();
-                                }
-                                GameCanvas.panel.myMember.addElement(member2);
-                                GameCanvas.panel.initTabClans();
-                            }
-                            if (b20 == 1)
-                            {
-                                GameCanvas.panel.myMember.removeElementAt(msg.reader().readByte());
-                                GameCanvas.panel.currentListLength--;
-                                GameCanvas.panel.initTabClans();
-                            }
-                            if (b20 == 2)
-                            {
-                                Member member3 = new Member();
-                                member3.ID = msg.reader().readInt();
-                                member3.head = msg.reader().readShort();
-                                member3.headICON = msg.reader().readShort();
-                                member3.leg = msg.reader().readShort();
-                                member3.body = msg.reader().readShort();
-                                member3.name = msg.reader().readUTF();
-                                member3.role = msg.reader().readByte();
-                                member3.powerPoint = msg.reader().readUTF();
-                                member3.donate = msg.reader().readInt();
-                                member3.receive_donate = msg.reader().readInt();
-                                member3.clanPoint = msg.reader().readInt();
-                                member3.joinTime = NinjaUtil.getDate(msg.reader().readInt());
-                                for (int num34 = 0; num34 < GameCanvas.panel.myMember.size(); num34++)
-                                {
-                                    Member member4 = (Member)GameCanvas.panel.myMember.elementAt(num34);
-                                    if (member4.ID == member3.ID)
-                                    {
-                                        if (Char.myCharz().charID == member3.ID)
-                                        {
-                                            Char.myCharz().role = member3.role;
-                                        }
-                                        Member o = member3;
-                                        GameCanvas.panel.myMember.removeElement(member4);
-                                        GameCanvas.panel.myMember.insertElementAt(o, num34);
-                                        return;
-                                    }
-                                }
-                            }
-                            Res.outz("=>>>>>>>>>>>>>>>>>>>>>> -52  MY CLAN UPDSTE");
-                            break;
-                        }
-                    case -50:
-                        {
-                            InfoDlg.hide();
-                            GameCanvas.panel.member = new MyVector();
-                            sbyte b17 = msg.reader().readByte();
-                            for (int num26 = 0; num26 < b17; num26++)
-                            {
-                                Member member = new Member();
-                                member.ID = msg.reader().readInt();
-                                member.head = msg.reader().readShort();
-                                member.headICON = msg.reader().readShort();
-                                member.leg = msg.reader().readShort();
-                                member.body = msg.reader().readShort();
-                                member.name = msg.reader().readUTF();
-                                member.role = msg.reader().readByte();
-                                member.powerPoint = msg.reader().readUTF();
-                                member.donate = msg.reader().readInt();
-                                member.receive_donate = msg.reader().readInt();
-                                member.clanPoint = msg.reader().readInt();
-                                member.joinTime = NinjaUtil.getDate(msg.reader().readInt());
-                                GameCanvas.panel.member.addElement(member);
-                            }
-                            GameCanvas.panel.isViewMember = true;
-                            GameCanvas.panel.isSearchClan = false;
-                            GameCanvas.panel.isMessage = false;
-                            GameCanvas.panel.currentListLength = GameCanvas.panel.member.size() + 2;
-                            GameCanvas.panel.initTabClans();
-                            break;
-                        }
-                    case -47:
-                        {
-                            InfoDlg.hide();
-                            sbyte b10 = msg.reader().readByte();
-                            Res.outz("clan = " + b10);
-                            if (b10 == 0)
-                            {
-                                GameCanvas.panel.clanReport = mResources.cannot_find_clan;
-                                GameCanvas.panel.clans = null;
-                            }
-                            else
-                            {
-                                GameCanvas.panel.clans = new Clan[b10];
-                                Res.outz("clan search lent= " + GameCanvas.panel.clans.Length);
-                                for (int k = 0; k < GameCanvas.panel.clans.Length; k++)
-                                {
-                                    GameCanvas.panel.clans[k] = new Clan();
-                                    GameCanvas.panel.clans[k].ID = msg.reader().readInt();
-                                    GameCanvas.panel.clans[k].name = msg.reader().readUTF();
-                                    GameCanvas.panel.clans[k].slogan = msg.reader().readUTF();
-                                    GameCanvas.panel.clans[k].imgID = msg.reader().readUnsignedByte();
-                                    GameCanvas.panel.clans[k].powerPoint = msg.reader().readUTF();
-                                    GameCanvas.panel.clans[k].leaderName = msg.reader().readUTF();
-                                    GameCanvas.panel.clans[k].currMember = msg.reader().readUnsignedByte();
-                                    GameCanvas.panel.clans[k].maxMember = msg.reader().readUnsignedByte();
-                                    GameCanvas.panel.clans[k].date = msg.reader().readInt();
-                                }
-                            }
-                            GameCanvas.panel.isSearchClan = true;
-                            GameCanvas.panel.isViewMember = false;
-                            GameCanvas.panel.isMessage = false;
-                            if (GameCanvas.panel.isSearchClan)
-                            {
-                                GameCanvas.panel.initTabClans();
-                            }
-                            break;
-                        }
-                    case -46:
-                        {
-                            InfoDlg.hide();
-                            sbyte b65 = msg.reader().readByte();
-                            if (b65 == 1 || b65 == 3)
-                            {
-                                GameCanvas.endDlg();
-                                ClanImage.vClanImage.removeAllElements();
-                                int num161 = msg.reader().readUnsignedByte();
-                                for (int num162 = 0; num162 < num161; num162++)
-                                {
-                                    ClanImage clanImage3 = new ClanImage();
-                                    clanImage3.ID = msg.reader().readUnsignedByte();
-                                    clanImage3.name = TabClanIcon.CleanClanIconName(msg.reader().readUTF());
-                                    clanImage3.xu = msg.reader().readInt();
-                                    clanImage3.luong = msg.reader().readInt();
-                                    if (!ClanImage.isExistClanImage(clanImage3.ID))
-                                    {
-                                        ClanImage.addClanImage(clanImage3);
-                                        continue;
-                                    }
-                                    ClanImage.getClanImage((short)clanImage3.ID).name = clanImage3.name;
-                                    ClanImage.getClanImage((short)clanImage3.ID).xu = clanImage3.xu;
-                                    ClanImage.getClanImage((short)clanImage3.ID).luong = clanImage3.luong;
-                                }
-                                if (Char.myCharz().clan != null)
-                                {
-                                    GameCanvas.panel.changeIcon();
-                                }
-                            }
-                            if (b65 == 4)
-                            {
-                                Char.myCharz().clan.imgID = msg.reader().readUnsignedByte();
-                                Char.myCharz().clan.slogan = msg.reader().readUTF();
-                            }
                             break;
                         }
                     case -61:
@@ -2720,12 +2327,6 @@ namespace Game1
                             }
                             return;
                         }
-                    case -69:
-                        Char.myCharz().cMaxStamina = msg.reader().readShort();
-                        break;
-                    case -68:
-                        Char.myCharz().cStamina = msg.reader().readShort();
-                        break;
                     case -67:
                         {
                             demCount += 1f;
@@ -2889,18 +2490,6 @@ namespace Game1
                             }
                             break;
                         }
-                    case -26:
-                        ServerListScreen.testConnect = 2;
-                        GameCanvas.debug("SA2", 2);
-                        GameCanvas.startOKDlg(msg.reader().readUTF());
-                        InfoDlg.hide();
-                        LoginScr.isContinueToLogin = false;
-                        Char.isLoadingMap = false;
-                        if (GameCanvas.currentScreen == GameCanvas.loginScr || GameCanvas.currentScreen == GameCanvas.registerScr)
-                        {
-                            GameCanvas.serverScreen.switchToMe();
-                        }
-                        break;
                     case -25:
                         GameCanvas.debug("SA3", 2);
                         string notice25 = msg.reader().readUTF();
@@ -2957,134 +2546,6 @@ namespace Game1
                             mob8.isWind = msg.reader().readBool();
                             break;
                         }
-                    case 56:
-                        {
-                            GameCanvas.debug("SXX6", 2);
-                            @char = null;
-                            int num18 = msg.reader().readInt();
-                            if (num18 == Char.myCharz().charID)
-                            {
-                                bool flag4 = false;
-                                @char = Char.myCharz();
-                                @char.cHP = msg.readInt3Byte();
-                                long num41 = msg.readInt3Byte();
-                                Res.outz("dame hit = " + num41);
-                                if (num41 != 0)
-                                {
-                                    @char.doInjure();
-                                }
-                                long num42 = 0;
-                                try
-                                {
-                                    flag4 = msg.reader().readBoolean();
-                                    sbyte b22 = msg.reader().readByte();
-                                    if (b22 != -1)
-                                    {
-                                        Res.outz("hit eff= " + b22);
-                                        EffecMn.addEff(new Effect(b22, @char.cx, @char.cy, 3, 1, -1));
-                                    }
-                                }
-                                catch (Exception)
-                                {
-                                }
-                                num41 += num42;
-                                if (Char.myCharz().cTypePk != 4)
-                                {
-                                    if (num41 == 0)
-                                    {
-                                        GameScr.startFlyText(mResources.miss, @char.cx, @char.cy - @char.ch, 0, -3, mFont.MISS_ME);
-                                    }
-                                    else
-                                    {
-                                        GameScr.startFlyText("-" + num41, @char.cx, @char.cy - @char.ch, 0, -3, flag4 ? mFont.FATAL : mFont.RED);
-                                    }
-                                }
-                                break;
-                            }
-                            @char = GameScr.findCharInMap(num18);
-                            if (@char == null)
-                            {
-                                return;
-                            }
-                            @char.cHP = msg.readInt3Byte();
-                            bool flag5 = false;
-                            long num43 = msg.readInt3Byte();
-                            if (num43 != 0)
-                            {
-                                @char.doInjure();
-                            }
-                            long num44 = 0;
-                            try
-                            {
-                                flag5 = msg.reader().readBoolean();
-                                sbyte b23 = msg.reader().readByte();
-                                if (b23 != -1)
-                                {
-                                    Res.outz("hit eff= " + b23);
-                                    EffecMn.addEff(new Effect(b23, @char.cx, @char.cy, 3, 1, -1));
-                                }
-                            }
-                            catch (Exception)
-                            {
-                            }
-                            num43 += num44;
-                            if (@char.cTypePk != 4)
-                            {
-                                if (num43 == 0)
-                                {
-                                    GameScr.startFlyText(mResources.miss, @char.cx, @char.cy - @char.ch, 0, -3, mFont.MISS);
-                                }
-                                else
-                                {
-                                    GameScr.startFlyText("-" + num43, @char.cx, @char.cy - @char.ch, 0, -3, flag5 ? mFont.FATAL : mFont.ORANGE);
-                                }
-                            }
-                            break;
-                        }
-                    case 83:
-                        {
-                            GameCanvas.debug("SXX8", 2);
-                            int num18 = msg.reader().readInt();
-                            @char = ((num18 != Char.myCharz().charID) ? GameScr.findCharInMap(num18) : Char.myCharz());
-                            if (@char == null)
-                            {
-                                return;
-                            }
-                            Mob mobToAttack = (Mob)GameScr.vMob.elementAt(msg.reader().readUnsignedByte());
-                            if (@char.mobMe != null)
-                            {
-                                @char.mobMe.attackOtherMob(mobToAttack);
-                            }
-                            break;
-                        }
-                    case 84:
-                        {
-                            int num18 = msg.reader().readInt();
-                            if (num18 == Char.myCharz().charID)
-                            {
-                                @char = Char.myCharz();
-                            }
-                            else
-                            {
-                                @char = GameScr.findCharInMap(num18);
-                                if (@char == null)
-                                {
-                                    return;
-                                }
-                            }
-                            @char.cHP = @char.cHPFull;
-                            @char.cMP = @char.cMPFull;
-                            @char.cx = msg.reader().readShort();
-                            @char.cy = msg.reader().readShort();
-                            @char.liveFromDead();
-                            break;
-                        }
-                    case 46:
-                        GameCanvas.debug("SA5", 2);
-                        Cout.LogWarning("Controler RESET_POINT  " + Char.ischangingMap);
-                        Char.isLockKey = false;
-                        Char.myCharz().setResetPoint(msg.reader().readShort(), msg.reader().readShort());
-                        break;
                     case -29:
                         messageNotLogin(msg);
                         break;
@@ -3130,44 +2591,12 @@ namespace Game1
                         }
                         @char.killCharId = -9999;
                         break;
-                    case 39:
-                        GameCanvas.debug("SA49", 2);
-                        GameScr.gI().typeTradeOrder = 2;
-                        if (GameScr.gI().typeTrade >= 2 && GameScr.gI().typeTradeOrder >= 2)
-                        {
-                            InfoDlg.showWait();
-                        }
-                        break;
                     case 57:
                         {
                             GameCanvas.debug("SZ6", 2);
                             MyVector myVector2 = new MyVector();
                             myVector2.addElement(new Command(msg.reader().readUTF(), GameCanvas.instance, 88817, null));
                             GameCanvas.menu.startAt(myVector2, 3);
-                            break;
-                        }
-                    case 58:
-                        {
-                            GameCanvas.debug("SZ7", 2);
-                            int num18 = msg.reader().readInt();
-                            Char char11 = ((num18 != Char.myCharz().charID) ? GameScr.findCharInMap(num18) : Char.myCharz());
-                            char11.moveFast = new short[3];
-                            char11.moveFast[0] = 0;
-                            short num173 = msg.reader().readShort();
-                            short num174 = msg.reader().readShort();
-                            char11.moveFast[1] = num173;
-                            char11.moveFast[2] = num174;
-                            try
-                            {
-                                num18 = msg.reader().readInt();
-                                Char char12 = ((num18 != Char.myCharz().charID) ? GameScr.findCharInMap(num18) : Char.myCharz());
-                                char12.cx = num173;
-                                char12.cy = num174;
-                            }
-                            catch (Exception ex26)
-                            {
-                                Cout.println("Loi MOVE_FAST " + ex26.ToString());
-                            }
                             break;
                         }
                     case 88:
@@ -3200,7 +2629,7 @@ namespace Game1
                             myVector = new MyVector();
                             try
                             {
-                                while (true)
+                                while (msg.reader().available() > 0)
                                 {
                                     string caption3 = msg.reader().readUTF();
                                     myVector.addElement(new Command(caption3, GameCanvas.instance, 88822, null));
@@ -3337,310 +2766,9 @@ namespace Game1
                         GameCanvas.debug("SA58", 2);
                         GameScr.gI().openUIZone(msg);
                         break;
-                    case -21:
-                        {
-                            GameCanvas.debug("SA60", 2);
-                            short itemMapID = msg.reader().readShort();
-                            for (int num141 = 0; num141 < GameScr.vItemMap.size(); num141++)
-                            {
-                                if (((ItemMap)GameScr.vItemMap.elementAt(num141)).itemMapID == itemMapID)
-                                {
-                                    GameScr.vItemMap.removeElementAt(num141);
-                                    break;
-                                }
-                            }
-                            break;
-                        }
-                    case -20:
-                        {
-                            GameCanvas.debug("SA61", 2);
-                            Char.myCharz().itemFocus = null;
-                            short itemMapID = msg.reader().readShort();
-                            for (int num134 = 0; num134 < GameScr.vItemMap.size(); num134++)
-                            {
-                                ItemMap itemMap4 = (ItemMap)GameScr.vItemMap.elementAt(num134);
-                                if (itemMap4.itemMapID != itemMapID)
-                                {
-                                    continue;
-                                }
-                                itemMap4.setPoint(Char.myCharz().cx, Char.myCharz().cy - 10);
-                                string text5 = msg.reader().readUTF();
-                                num = 0;
-                                try
-                                {
-                                    num = msg.reader().readShort();
-                                    if (itemMap4.template.type == 9)
-                                    {
-                                        Char.myCharz().xu += num;
-                                        Char.myCharz().xuStr = Res.formatNumber(Char.myCharz().xu);
-                                    }
-                                    else if (itemMap4.template.type == 10)
-                                    {
-                                        Char.myCharz().luong += num;
-                                        Char.myCharz().luongStr = mSystem.numberTostring(Char.myCharz().luong);
-                                    }
-                                    else if (itemMap4.template.type == 34)
-                                    {
-                                        Char.myCharz().luongKhoa += num;
-                                        Char.myCharz().luongKhoaStr = mSystem.numberTostring(Char.myCharz().luongKhoa);
-                                    }
-                                }
-                                catch (Exception)
-                                {
-                                }
-                                if (text5.Equals(string.Empty))
-                                {
-                                    if (itemMap4.template.type == 9)
-                                    {
-                                        GameScr.startFlyText(((num >= 0) ? "+" : string.Empty) + num, Char.myCharz().cx, Char.myCharz().cy - Char.myCharz().ch, 0, -2, mFont.YELLOW);
-                                        SoundMn.gI().getItem();
-                                    }
-                                    else if (itemMap4.template.type == 10)
-                                    {
-                                        GameScr.startFlyText(((num >= 0) ? "+" : string.Empty) + num, Char.myCharz().cx, Char.myCharz().cy - Char.myCharz().ch, 0, -2, mFont.GREEN);
-                                        SoundMn.gI().getItem();
-                                    }
-                                    else if (itemMap4.template.type == 34)
-                                    {
-                                        GameScr.startFlyText(((num >= 0) ? "+" : string.Empty) + num, Char.myCharz().cx, Char.myCharz().cy - Char.myCharz().ch, 0, -2, mFont.RED);
-                                        SoundMn.gI().getItem();
-                                    }
-                                    else
-                                    {
-                                        GameScr.info1.addInfo(mResources.you_receive + " " + ((num <= 0) ? string.Empty : (num + " ")) + itemMap4.template.name, 0);
-                                        SoundMn.gI().getItem();
-                                    }
-                                    if (num > 0 && Char.myCharz().petFollow != null && Char.myCharz().petFollow.smallID == 4683)
-                                    {
-                                        ServerEffect.addServerEffect(55, Char.myCharz().petFollow.cmx, Char.myCharz().petFollow.cmy, 1);
-                                        ServerEffect.addServerEffect(55, Char.myCharz().cx, Char.myCharz().cy, 1);
-                                    }
-                                }
-                                else if (text5.Length == 1)
-                                {
-                                }
-                                else
-                                {
-                                    GameScr.info1.addInfo(text5, 0);
-                                }
-                                break;
-                            }
-                            break;
-                        }
-                    case -19:
-                        {
-                            GameCanvas.debug("SA62", 2);
-                            short itemMapID = msg.reader().readShort();
-                            @char = GameScr.findCharInMap(msg.reader().readInt());
-                            for (int num133 = 0; num133 < GameScr.vItemMap.size(); num133++)
-                            {
-                                ItemMap itemMap3 = (ItemMap)GameScr.vItemMap.elementAt(num133);
-                                if (itemMap3.itemMapID != itemMapID)
-                                {
-                                    continue;
-                                }
-                                if (@char == null)
-                                {
-                                    return;
-                                }
-                                itemMap3.setPoint(@char.cx, @char.cy - 10);
-                                if (itemMap3.x < @char.cx)
-                                {
-                                    @char.cdir = -1;
-                                }
-                                else if (itemMap3.x > @char.cx)
-                                {
-                                    @char.cdir = 1;
-                                }
-                                break;
-                            }
-                            break;
-                        }
-                    case -18:
-                        {
-                            GameCanvas.debug("SA63", 2);
-                            int num132 = msg.reader().readByte();
-                            GameScr.vItemMap.addElement(new ItemMap(msg.reader().readShort(), Char.myCharz().arrItemBag[num132].template.id, Char.myCharz().cx, Char.myCharz().cy, msg.reader().readShort(), msg.reader().readShort()));
-                            Char.myCharz().arrItemBag[num132] = null;
-                            break;
-                        }
-                    case 68:
-                        {
-                            try
-                            {
-                                Res.outz("ADD ITEM TO MAP --------------------------------------");
-                                GameCanvas.debug("SA6333", 2);
-                                short itemMapID = msg.reader().readShort();
-                                short itemTemplateID = msg.reader().readShort();
-                                int x = msg.reader().readShort();
-                                int y = msg.reader().readShort();
-                                int num125 = msg.reader().readInt();
-                                short r = 0;
-                                if (num125 == -2)
-                                {
-                                    r = msg.reader().readShort();
-                                }
-                                ItemMap itemMap = new ItemMap(num125, itemMapID, itemTemplateID, x, y, r);
-                                bool flag10 = false;
-                                for (int num126 = 0; num126 < GameScr.vItemMap.size(); num126++)
-                                {
-                                    ItemMap itemMap2 = (ItemMap)GameScr.vItemMap.elementAt(num126);
-                                    if (itemMap2 != null && itemMap2.itemMapID == itemMap.itemMapID)
-                                    {
-                                        flag10 = true;
-                                        break;
-                                    }
-                                }
-                                if (!flag10)
-                                {
-                                    GameScr.vItemMap.addElement(itemMap);
-                                }
-                            }
-                            catch (Exception exCmd68)
-                            {
-                                Res.err("[Controller] Error handling ADD_ITEM_MAP (cmd 68): " + exCmd68.Message);
-                            }
-                            break;
-                        }
                     case 69:
                         SoundMn.IsDelAcc = ((msg.reader().readByte() != 0) ? true : false);
                         break;
-                    case -14:
-                        GameCanvas.debug("SA64", 2);
-                        @char = GameScr.findCharInMap(msg.reader().readInt());
-                        if (@char == null)
-                        {
-                            return;
-                        }
-                        GameScr.vItemMap.addElement(new ItemMap(msg.reader().readShort(), msg.reader().readShort(), @char.cx, @char.cy, msg.reader().readShort(), msg.reader().readShort()));
-                        break;
-                    case -22:
-                        GameCanvas.debug("SA65", 2);
-                        Char.isLockKey = true;
-                        Char.ischangingMap = true;
-                        GameScr.gI().timeStartMap = 0;
-                        GameScr.gI().timeLengthMap = 0;
-                        Char.myCharz().mobFocus = null;
-                        Char.myCharz().npcFocus = null;
-                        Char.myCharz().charFocus = null;
-                        Char.myCharz().itemFocus = null;
-                        Char.myCharz().focus.removeAllElements();
-                        Char.myCharz().testCharId = -9999;
-                        Char.myCharz().killCharId = -9999;
-                        GameCanvas.resetBg();
-                        GameScr.gI().resetButton();
-                        GameScr.gI().center = null;
-                        if (Effect.vEffData.size() > 15)
-                        {
-                            for (int num124 = 0; num124 < 5; num124++)
-                            {
-                                Effect.vEffData.removeElementAt(0);
-                            }
-                        }
-                        break;
-                    case -70:
-                        {
-                            Res.outz("BIG MESSAGE .......................................");
-                            GameCanvas.endDlg();
-                            int avatar2 = msg.reader().readShort();
-                            string chat3 = msg.reader().readUTF();
-                            Npc npc6 = new Npc(-1, 0, 0, 0, 0, 0);
-                            npc6.avatar = avatar2;
-                            ChatPopup.addBigMessage(chat3, 100000, npc6);
-                            sbyte b47 = msg.reader().readByte();
-                            if (b47 == 0)
-                            {
-                                ChatPopup.serverChatPopUp.cmdMsg1 = new Command(mResources.CLOSE, ChatPopup.serverChatPopUp, 1001, null);
-                                ChatPopup.serverChatPopUp.cmdMsg1.x = GameCanvas.w / 2 - 35;
-                                ChatPopup.serverChatPopUp.cmdMsg1.y = GameCanvas.h - 35;
-                            }
-                            if (b47 == 1)
-                            {
-                                string p2 = msg.reader().readUTF();
-                                string caption2 = msg.reader().readUTF();
-                                ChatPopup.serverChatPopUp.cmdMsg1 = new Command(caption2, ChatPopup.serverChatPopUp, 1000, p2);
-                                ChatPopup.serverChatPopUp.cmdMsg1.x = GameCanvas.w / 2 - 75;
-                                ChatPopup.serverChatPopUp.cmdMsg1.y = GameCanvas.h - 35;
-                                ChatPopup.serverChatPopUp.cmdMsg2 = new Command(mResources.CLOSE, ChatPopup.serverChatPopUp, 1001, null);
-                                ChatPopup.serverChatPopUp.cmdMsg2.x = GameCanvas.w / 2 + 11;
-                                ChatPopup.serverChatPopUp.cmdMsg2.y = GameCanvas.h - 35;
-                            }
-                            break;
-                        }
-                    case 38:
-                        {
-                            GameCanvas.debug("SA67", 2);
-                            InfoDlg.hide();
-                            int num87 = msg.reader().readShort();
-                            Res.outz("OPEN_UI_SAY ID= " + num87);
-                            string str = msg.reader().readUTF();
-                            str = Res.changeString(str);
-                            for (int num121 = 0; num121 < GameScr.vNpc.size(); num121++)
-                            {
-                                Npc npc4 = (Npc)GameScr.vNpc.elementAt(num121);
-                                Res.outz("npc id= " + npc4.template.npcTemplateId);
-                                if (npc4.template.npcTemplateId == num87)
-                                {
-                                    ChatPopup.addChatPopupMultiLine(str, 100000, npc4);
-                                    return;
-                                }
-                            }
-                            Npc npc5 = new Npc(num87, 0, 0, 0, num87, GameScr.info1.charId[Char.myCharz().cgender][2]);
-                            if (npc5.template.npcTemplateId == 5)
-                            {
-                                npc5.charID = 5;
-                            }
-                            try
-                            {
-                                npc5.avatar = msg.reader().readShort();
-                            }
-                            catch (Exception)
-                            {
-                            }
-                            ChatPopup.addChatPopupMultiLine(str, 100000, npc5);
-                            break;
-                        }
-                    case 32:
-                        {
-                            GameCanvas.debug("SA68", 2);
-                            int num87 = msg.reader().readShort();
-                            for (int num88 = 0; num88 < GameScr.vNpc.size(); num88++)
-                            {
-                                Npc npc = (Npc)GameScr.vNpc.elementAt(num88);
-                                if (npc.template.npcTemplateId == num87 && npc.Equals(Char.myCharz().npcFocus))
-                                {
-                                    string chat = msg.reader().readUTF();
-                                    string[] array7 = new string[msg.reader().readByte()];
-                                    for (int num89 = 0; num89 < array7.Length; num89++)
-                                    {
-                                        array7[num89] = msg.reader().readUTF();
-                                    }
-                                    GameScr.gI().createMenu(array7, npc);
-                                    ChatPopup.addChatPopup(chat, 100000, npc);
-                                    return;
-                                }
-                            }
-                            Npc npc2 = new Npc(num87, 0, -100, 100, num87, GameScr.info1.charId[Char.myCharz().cgender][2]);
-                            Res.outz((Char.myCharz().npcFocus == null) ? "null" : "!null");
-                            string chat2 = msg.reader().readUTF();
-                            string[] array8 = new string[msg.reader().readByte()];
-                            for (int num90 = 0; num90 < array8.Length; num90++)
-                            {
-                                array8[num90] = msg.reader().readUTF();
-                            }
-                            try
-                            {
-                                short avatar = msg.reader().readShort();
-                                npc2.avatar = avatar;
-                            }
-                            catch (Exception)
-                            {
-                            }
-                            Res.outz((Char.myCharz().npcFocus == null) ? "null" : "!null");
-                            GameScr.gI().createMenu(array8, npc2);
-                            ChatPopup.addChatPopup(chat2, 100000, npc2);
-                            break;
-                        }
                     case 7:
                         {
                             sbyte type = msg.reader().readByte();
@@ -3649,16 +2777,6 @@ namespace Game1
                             GameCanvas.panel.saleRequest(type, info2, id2);
                             return;
                         }
-                    case 6:
-                        GameCanvas.debug("SA70", 2);
-                        Char.myCharz().xu = msg.reader().readLong();
-                        Char.myCharz().luong = msg.reader().readInt();
-                        Char.myCharz().luongKhoa = msg.reader().readInt();
-                        Char.myCharz().xuStr = Res.formatNumber(Char.myCharz().xu);
-                        Char.myCharz().luongStr = mSystem.numberTostring(Char.myCharz().luong);
-                        Char.myCharz().luongKhoaStr = mSystem.numberTostring(Char.myCharz().luongKhoa);
-                        GameCanvas.endDlg();
-                        return;
                     case -24:
                         Res.outz("***************MAP_INFO**************");
                         GameScr.isPickNgocRong = false;

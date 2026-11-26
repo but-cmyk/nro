@@ -266,6 +266,16 @@ public class Boss extends Player implements IBoss {
         if (effectSkill != null && effectSkill.isBinh) {
             return idOutfitMafuba[effectSkill.typeBinh][0];
         }
+        if (effectSkill != null && effectSkill.isStone) {
+            return 454;
+        }
+        if (effectSkill != null && effectSkill.isSocola) {
+            return 412;
+        }
+        if (effectSkill != null && effectSkill.isSocola2) {
+            int g = (this.gender >= 0 && this.gender <= 2) ? this.gender : 0;
+            return idOutfitSocola2[effectSkill.idOutfitSocola2][g][0];
+        }
         if (effectSkill != null && effectSkill.isMonkey) {
             return (short) ConstPlayer.HEADMONKEY[effectSkill.levelMonkey - 1];
         }
@@ -278,6 +288,16 @@ public class Boss extends Player implements IBoss {
         if (effectSkill != null && effectSkill.isBinh) {
             return idOutfitMafuba[effectSkill.typeBinh][1];
         }
+        if (effectSkill != null && effectSkill.isStone) {
+            return 455;
+        }
+        if (effectSkill != null && effectSkill.isSocola) {
+            return 413;
+        }
+        if (effectSkill != null && effectSkill.isSocola2) {
+            int g = (this.gender >= 0 && this.gender <= 2) ? this.gender : 0;
+            return idOutfitSocola2[effectSkill.idOutfitSocola2][g][1];
+        }
         if (effectSkill != null && effectSkill.isMonkey) {
             return 193;
         }
@@ -289,6 +309,16 @@ public class Boss extends Player implements IBoss {
     public short getLeg() {
         if (effectSkill != null && effectSkill.isBinh) {
             return idOutfitMafuba[effectSkill.typeBinh][2];
+        }
+        if (effectSkill != null && effectSkill.isStone) {
+            return 456;
+        }
+        if (effectSkill != null && effectSkill.isSocola) {
+            return 414;
+        }
+        if (effectSkill != null && effectSkill.isSocola2) {
+            int g = (this.gender >= 0 && this.gender <= 2) ? this.gender : 0;
+            return idOutfitSocola2[effectSkill.idOutfitSocola2][g][2];
         }
         if (effectSkill != null && effectSkill.isMonkey) {
             return 194;

@@ -1,0 +1,332 @@
+{
+  "batch_id": "client_gameplay_entities__p09",
+  "concurrency_and_state": [
+    "Rms.cs uses a static rmsLock around Dictionary<string, sbyte[]> rmsCache and synchronous FileStream I/O, returning direct sbyte[] array references (aliasing mutable cache entries) and clearing rmsCache before releasing rmsLock while deleting files in clearAll().",
+    "ServerListScreen relies heavily on ~25 mutable static fields (nameServer, address, port, ipSelect, loadScreen, isGetData, testConnect, isAutoConect, cmdDownload, cmdDeleteRMS) shared across screens and connection callbacks.",
+    "RadarScr stores static MyVector list/listUse and UI coordinates alongside instance state (page, maxpage, indexFocus, focus_card).",
+    "Scroll maintains pointer tracking state (pointerDownLastX[3], pointerIsDowning, cmRun) plus a static singleton gI; ScaleGUI maintains a static List<Matrix4x4> stack without synchronization.",
+    "PlayerDart and ServerEffect mutate collection membership during update (darts.removeElementAt(j) in PlayerDart.update; Effect2.vEffect2.removeElement(this) in ServerEffect.update)."
+  ],
+  "cross_module_questions": [
+    "Does Service.gI().SendRada(1, focus_card.id) validate card level, amount >= 120 for card 859 (Doc Nhan), and aura eligibility strictly on the Java server, or does it trust client preconditions in RadarScr.doClickUse?",
+    "In PlayerDart.update (lines 100-103), charBelong.charFocus.doInjure(...) is invoked when the client projectile reaches target; does the server authoritatively drive HP/damage or can client dart speed/desync affect displayed or actual HP?",
+    "How does GameScr's Effect2.vEffect2 update loop iterate when ServerEffect.update calls Effect2.vEffect2.removeElement(this)? Does it iterate backwards or risk skipping the next effect?",
+    "Where is Rms.saveRMSPassword / loadRMSPassword called (e.g., LoginScr), and is legacy plaintext fallback in loadRMSPassword (lines 149-152) ever migrated automatically?"
+  ],
+  "db_redis_touchpoints": [],
+  "files_read": [
+    "Client/Client/Assets/Scripts/Game1/Paint.cs:1-402",
+    "Client/Client/Assets/Scripts/Game1/Part.cs:1-34",
+    "Client/Client/Assets/Scripts/Game1/PartImage.cs:1-11",
+    "Client/Client/Assets/Scripts/Game1/PKFlag.cs:1-9",
+    "Client/Client/Assets/Scripts/Game1/PlayerDart.cs:1-225",
+    "Client/Client/Assets/Scripts/Game1/PlayerData.cs:1-32",
+    "Client/Client/Assets/Scripts/Game1/PlayerInfo.cs:1-66",
+    "Client/Client/Assets/Scripts/Game1/Point.cs:1-333",
+    "Client/Client/Assets/Scripts/Game1/PopUpYesNo.cs:1-99",
+    "Client/Client/Assets/Scripts/Game1/Position.cs:1-94",
+    "Client/Client/Assets/Scripts/Game1/RadarScr.cs:1-805",
+    "Client/Client/Assets/Scripts/Game1/Res.cs:1-518",
+    "Client/Client/Assets/Scripts/Game1/Rms.cs:1-599",
+    "Client/Client/Assets/Scripts/Game1/ScaleGUI.cs:1-73",
+    "Client/Client/Assets/Scripts/Game1/ScreenPointer.cs:1-43",
+    "Client/Client/Assets/Scripts/Game1/Scroll.cs:1-452",
+    "Client/Client/Assets/Scripts/Game1/ScrollResult.cs:1-11",
+    "Client/Client/Assets/Scripts/Game1/ServerEffect.cs:1-228",
+    "Client/Client/Assets/Scripts/Game1/ServerListScreen.cs:1-1311"
+  ],
+  "findings": [
+    {
+      "category": "gameplay",
+      "impact": "Infinite loop freezes client main thread if Res.random_Am_0(1) is ever called.",
+      "location": "Client/Client/Assets/Scripts/Game1/Res.cs:293-301",
+      "root_cause": "random_Am_0(int a) only checks if (a <= 0) return 0, then loops while (num == 0) num = r.nextInt() % a. For a == 1, x % 1 is always 0.",
+      "severity": "P1",
+      "title": "Infinite loop in Res.random_Am_0 when a == 1"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Throws IndexOutOfRangeException when computing arrow frame for angles around 345 degrees.",
+      "location": "Client/Client/Assets/Scripts/Game1/Point.cs:196-208",
+      "root_cause": "setFrameAngle clamps num with `if (num > 24) num = 24;` and indexes mpaintone_Arrow[num], whose length is 24 (valid indices 0..23).",
+      "severity": "P1",
+      "title": "Off-by-one array bounds clamp in Point.setFrameAngle"
+    },
+    {
+      "category": "performance_gc",
+      "impact": "Skips next SmallDart update on removal, and causes IndexOutOfRangeException in PlayerDart.paint when smallDart.index >= info.tail.Length; also creates GC churn every update tick.",
+      "location": "Client/Client/Assets/Scripts/Game1/PlayerDart.cs:90-146",
+      "root_cause": "PlayerDart.update allocates new SmallDart(x, y) each sub-step and removes expired elements in a forward loop `for (int j = 0; j < darts.size(); j++)` without decrementing j after `darts.removeElementAt(j)`.",
+      "severity": "P1",
+      "title": "Forward-loop removal bug and per-tick allocation in PlayerDart.update"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Throws NullReferenceException if PlayerDart is constructed when both mobFocus and charFocus are null.",
+      "location": "Client/Client/Assets/Scripts/Game1/PlayerDart.cs:45-57",
+      "root_cause": "Constructor casts charBelong.mobFocus/charFocus to IMapObject and immediately calls mapObject.getX()/getY() without null check (unlike update()).",
+      "severity": "P2",
+      "title": "Missing null check on target in PlayerDart constructor"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Throws NullReferenceException in updateKeyTouchControl/doKeyText when focus_card or focus_card.cp is null, and DivideByZeroException in update() if max_amount == 0 or list.size() == 0, spamming Debug.LogError.",
+      "location": "Client/Client/Assets/Scripts/Game1/RadarScr.cs:330-341,485,590",
+      "root_cause": "RadarScr.update divides by focus_card.max_amount and list.size() without zero guards; updateKeyTouchControl and doKeyText dereference focus_card.cp.lim without null checks.",
+      "severity": "P1",
+      "title": "Missing zero-division and null guards in RadarScr"
+    },
+    {
+      "category": "performance_gc",
+      "impact": "Allocates strings every frame in RadarScr.paint and PopUpYesNo.paint/update, increasing GC pressure; RadarScr constructor also loads /radar/17.png into imgUIText before overwriting it with /radar/18.png.",
+      "location": "Client/Client/Assets/Scripts/Game1/RadarScr.cs:136,148,694-723; Client/Client/Assets/Scripts/Game1/PopUpYesNo.cs:55-63,82",
+      "root_cause": "String concatenation inside paint() and Res.outz() string formatting inside PopUpYesNo.update() allocate managed strings every frame.",
+      "severity": "P2",
+      "title": "Per-frame string allocations in RadarScr.paint and PopUpYesNo.paint/update"
+    },
+    {
+      "category": "performance_gc",
+      "impact": "Allocates new ScrollResult() on every updateKey() call; drag velocity history pointerDownLastX[1..2] is never initialized on pointer-down, breaking fling velocity; zero ITEM_SIZE/ITEM_PER_LINE causes DivideByZeroException.",
+      "location": "Client/Client/Assets/Scripts/Game1/Scroll.cs:101-104,213,230-233,314,392",
+      "root_cause": "pointerDownLastX[0] is assigned inside the init loop instead of pointerDownLastX[i]; updateKeyScrollUpDown/LeftRight allocate new ScrollResult() each call instead of reusing a cached instance.",
+      "severity": "P2",
+      "title": "Per-frame ScrollResult allocation and pointerDownLastX[0] loop typo in Scroll.cs"
+    },
+    {
+      "category": "gameplay",
+      "impact": "sqrt() returns 0 for large coordinates (|dx| > 46340) due to 32-bit int square overflow.",
+      "location": "Client/Client/Assets/Scripts/Game1/Res.cs:314-322",
+      "root_cause": "distance and getDistance compute (x1-x2)*(x1-x2) + (y1-y2)*(y1-y2) in 32-bit int before passing to sqrt(int).",
+      "severity": "P2",
+      "title": "32-bit integer overflow in Res.distance and Res.getDistance"
+    },
+    {
+      "category": "security_dupe",
+      "impact": "Saved passwords encrypted with AES-CBC can be decrypted offline by anyone knowing deviceUniqueIdentifier and lack integrity/HMAC verification; cleartext HTTP URLs are used for update/host/web links.",
+      "location": "Client/Client/Assets/Scripts/Game1/Rms.cs:114-194; Client/Client/Assets/Scripts/Game1/Paint.cs:329; Client/Client/Assets/Scripts/Game1/ServerListScreen.cs:1301-1303",
+      "root_cause": "getPasswordKey derives AES key deterministically from SHA256(SystemInfo.deviceUniqueIdentifier + \"|NRO-6Tab|\" + filename) without OS keystore protection or MAC; ServerListScreen/Paint hardcode http:// endpoints.",
+      "severity": "P2",
+      "title": "Weak deterministic password key derivation in Rms and cleartext HTTP URLs"
+    },
+    {
+      "category": "concurrency",
+      "impact": "Synchronous disk I/O executes while holding rmsLock (stalling callers), rmsCache exposes mutable sbyte[] arrays directly, clearAll() deletes files outside rmsLock, and loadRMSInt crashes on 0-byte files.",
+      "location": "Client/Client/Assets/Scripts/Game1/Rms.cs:25-59,211-215,360-365,373-410",
+      "root_cause": "rmsCache stores/returns raw sbyte[] references without cloning; clearAll releases rmsLock before deleting files; loadRMSInt reads array[0] without checking Length > 0; FileStream.Read return length is unchecked.",
+      "severity": "P2",
+      "title": "Rms cache aliasing, lock-scope race on clearAll, and missing length checks"
+    },
+    {
+      "category": "architecture",
+      "impact": "Dead null-handling branches in cmdUpdateServer.actionChat fail to call getServerList(linkDefault) when str == null; paint()/update() risk NRE/IOOBE if nameServer or cmd is uninitialized; per-frame string concat in paint().",
+      "location": "Client/Client/Assets/Scripts/Game1/ServerListScreen.cs:149-187,371-376,507-512,599-609,803-835",
+      "root_cause": "cmdUpdateServer assigns text = str and text2 = str, making `text == null && text2 != null` unreachable and omitting getServerList(text) when str == null; loadIP does not validate negative sbyte b or language[i] bounds and lacks try/finally on stream close.",
+      "severity": "P2",
+      "title": "Broken actionChat null branch, unsafe array indexing, and per-frame GC in ServerListScreen"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Paint.paintLogo(g) draws the logo at swapped (h/2, w/2) coordinates; paintCellContaint ignores height h; Paint.paintWhitePopup reverses (y, x) param order.",
+      "location": "Client/Client/Assets/Scripts/Game1/Paint.cs:97-103,265-274,287-292",
+      "root_cause": "paintLogo passes `GameCanvas.h >> 1` as X and `GameCanvas.w >> 1` as Y to drawImage; paintCellContaint uses w for height.",
+      "severity": "P3",
+      "title": "Swapped screen dimensions in Paint.paintLogo and ignored height in Paint.paintCellContaint"
+    },
+    {
+      "category": "gameplay",
+      "impact": "32-bit int overflow in ServerEffect duration when timeLengthInSecond > 2,147,483; silent catch blocks mask effect load failures.",
+      "location": "Client/Client/Assets/Scripts/Game1/ServerEffect.cs:29-154",
+      "root_cause": "`timeLengthInSecond * 1000` is multiplied as 32-bit int before adding to mSystem.currentTimeMillis(); empty catch(Exception) in getEffect and all addServerEffect* methods.",
+      "severity": "P3",
+      "title": "Duration int-overflow and swallowed exceptions in ServerEffect"
+    },
+    {
+      "category": "gameplay",
+      "impact": "PlayerInfo stores xu and gold as 32-bit int instead of long, risking overflow if used for high-value currency.",
+      "location": "Client/Client/Assets/Scripts/Game1/PlayerInfo.cs:17-19,38-42",
+      "root_cause": "xu and gold declared as int; setMoney(int m) accepts 32-bit int.",
+      "severity": "P3",
+      "title": "32-bit int currency fields in PlayerInfo"
+    }
+  ],
+  "key_classes": [
+    {
+      "key_methods": [
+        "paintDefaultBg",
+        "paintCmdBar",
+        "paintPopUp",
+        "paintFrame",
+        "paintCheckPass",
+        "paintInputDlg"
+      ],
+      "name": "Paint",
+      "path": "Client/Client/Assets/Scripts/Game1/Paint.cs",
+      "responsibility": "Shared UI primitive and popup/frame/button rendering helper for the client."
+    },
+    {
+      "key_methods": [
+        "PlayerDart",
+        "setAngle",
+        "update",
+        "endMe",
+        "paint"
+      ],
+      "name": "PlayerDart",
+      "path": "Client/Client/Assets/Scripts/Game1/PlayerDart.cs",
+      "responsibility": "Homing projectile entity fired by Char toward mobFocus or charFocus, spawning SmallDart trail particles."
+    },
+    {
+      "key_methods": [
+        "update",
+        "updateInMap",
+        "setFrameAngle",
+        "create_Arrow",
+        "create_Speed",
+        "moveTo_xy",
+        "paint_Arrow"
+      ],
+      "name": "Point",
+      "path": "Client/Client/Assets/Scripts/Game1/Point.cs",
+      "responsibility": "2D particle/arrow/effect point with velocity, frame animation, and directional sprite rotation."
+    },
+    {
+      "key_methods": [
+        "SetRadarScr",
+        "SetListUse",
+        "listIndex",
+        "update",
+        "updateKey",
+        "doClickUse",
+        "paint"
+      ],
+      "name": "RadarScr",
+      "path": "Client/Client/Assets/Scripts/Game1/RadarScr.cs",
+      "responsibility": "Monster Radar card collection/aura UI screen (viewing cards, filtering, scrolling stats, toggling aura)."
+    },
+    {
+      "key_methods": [
+        "init",
+        "sin",
+        "cos",
+        "angle",
+        "distance",
+        "sqrt",
+        "random_Am_0",
+        "split",
+        "formatNumber",
+        "formatNumber2",
+        "formatNumberWithCommas",
+        "err"
+      ],
+      "name": "Res",
+      "path": "Client/Client/Assets/Scripts/Game1/Res.cs",
+      "responsibility": "Fixed-point trig tables, math/RNG helpers, string splitting/formatting, and logging wrapper."
+    },
+    {
+      "key_methods": [
+        "saveRMS",
+        "loadRMS",
+        "saveRMSString",
+        "loadRMSString",
+        "saveRMSPassword",
+        "loadRMSPassword",
+        "clearAll",
+        "clearLoginData",
+        "deleteRecord"
+      ],
+      "name": "Rms",
+      "path": "Client/Client/Assets/Scripts/Game1/Rms.cs",
+      "responsibility": "Thread-safe cached local file persistence, legacy path fallback, and AES-CBC password storage."
+    },
+    {
+      "key_methods": [
+        "updateKey",
+        "updatecm",
+        "setStyle",
+        "moveTo"
+      ],
+      "name": "Scroll",
+      "path": "Client/Client/Assets/Scripts/Game1/Scroll.cs",
+      "responsibility": "Touch/drag kinetic scroll container supporting vertical and horizontal item grids/lists."
+    },
+    {
+      "key_methods": [
+        "getEffect",
+        "addServerEffect",
+        "addServerEffectWithTime",
+        "paint",
+        "update"
+      ],
+      "name": "ServerEffect",
+      "path": "Client/Client/Assets/Scripts/Game1/ServerEffect.cs",
+      "responsibility": "Timed/looped visual effect attached to world coordinates, Char, or Mob in Effect2.vEffect2."
+    },
+    {
+      "key_methods": [
+        "getServerList",
+        "selectServer",
+        "paint",
+        "update",
+        "updateKey",
+        "saveIP",
+        "loadIP",
+        "perform",
+        "startDownloadData"
+      ],
+      "name": "ServerListScreen",
+      "path": "Client/Client/Assets/Scripts/Game1/ServerListScreen.cs",
+      "responsibility": "Main server selection, asset download progress, auto-reconnect loop, RMS reset, and login entry screen."
+    }
+  ],
+  "module_summary": "Client Game1 UI, math/persistence utilities, and lightweight gameplay entities (Paint, Part/PartImage/PKFlag, PlayerDart, PlayerData/PlayerInfo, Point, Position, PopUpYesNo, RadarScr, Res, Rms, ScaleGUI, Scroll/ScrollResult, ServerEffect, ServerListScreen). Covers UI rendering primitives, local RMS file/AES password storage, fixed-point trig/formatting helpers, homing projectiles/effects, and the server-selection/resource-download screen.",
+  "protocol_touchpoints": [
+    {
+      "direction": "DISPATCH",
+      "location": "Client/Client/Assets/Scripts/Game1/RadarScr.cs:515",
+      "opcode": "Service.SendRada(1, focus_card.id)",
+      "payload_summary": "Sends sub-command 1 and card id to toggle/activate card aura on server."
+    },
+    {
+      "direction": "DISPATCH",
+      "location": "Client/Client/Assets/Scripts/Game1/ServerListScreen.cs:967,1245",
+      "opcode": "Service.getResource(1, null)",
+      "payload_summary": "Requests resource download type 1 from server."
+    },
+    {
+      "direction": "DISPATCH",
+      "location": "Client/Client/Assets/Scripts/Game1/ServerListScreen.cs:993,1025,1097",
+      "opcode": "Service.login2(string.Empty)",
+      "payload_summary": "Requests guest/virtual account creation or login."
+    },
+    {
+      "direction": "DISPATCH",
+      "location": "Client/Client/Assets/Scripts/Game1/ServerListScreen.cs:999,1000,1103,1104",
+      "opcode": "Service.setClientType() / Service.login(...)",
+      "payload_summary": "Sends client type and logs in with stored userAo username, empty password, GameMidlet.VERSION, type 1."
+    },
+    {
+      "direction": "DISPATCH",
+      "location": "Client/Client/Assets/Scripts/Game1/ServerListScreen.cs:574",
+      "opcode": "Service.finishUpdate()",
+      "payload_summary": "Notifies server that client update/auto-login step completed."
+    },
+    {
+      "direction": "WRITE",
+      "location": "Client/Client/Assets/Scripts/Game1/ServerListScreen.cs:733-772",
+      "opcode": "RMS NRlink3 (DataOutputStream)",
+      "payload_summary": "Writes language byte, server count byte, per-server (name UTF, address UTF, port short, language byte, typeSv byte, isNew byte), serverPriority byte."
+    },
+    {
+      "direction": "READ",
+      "location": "Client/Client/Assets/Scripts/Game1/ServerListScreen.cs:786-841",
+      "opcode": "RMS NRlink3 (DataInputStream)",
+      "payload_summary": "Reads language byte, server count sbyte, per-server metadata, and serverPriority byte into static arrays."
+    },
+    {
+      "direction": "READ",
+      "location": "Client/Client/Assets/Scripts/Game1/Rms.cs:61-112",
+      "opcode": "RMS UTF string (DataInputStream/DataOutputStream)",
+      "payload_summary": "Reads/writes UTF-8 length-prefixed string records (including \"enc:\" + Base64 AES payload for passwords)."
+    }
+  ]
+}

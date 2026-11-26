@@ -21,7 +21,10 @@ namespace Game1
     
     		public void AddMessage(Message message)
     		{
-    			sendingMessage.Add(message);
+    			lock (sendingMessage)
+    			{
+    				sendingMessage.Add(message);
+    			}
     		}
     
     		public void run()
@@ -32,11 +35,19 @@ namespace Game1
     				{
     					if (getKeyComplete)
     					{
-    						while (sendingMessage.Count > 0)
+    						while (true)
     						{
-    							Message m = sendingMessage[0];
+    							Message m = null;
+    							lock (sendingMessage)
+    							{
+    								if (sendingMessage.Count > 0)
+    								{
+    									m = sendingMessage[0];
+    									sendingMessage.RemoveAt(0);
+    								}
+    							}
+    							if (m == null) break;
     							doSendMessage(m);
-    							sendingMessage.RemoveAt(0);
     						}
     					}
     					try
@@ -90,7 +101,7 @@ namespace Game1
     					}
     					try
     					{
-    						Thread.Sleep(5);
+    						if (dataStream != null && !dataStream.DataAvailable) { Thread.Sleep(5); }
     					}
     					catch (Exception)
     					{
@@ -128,9 +139,9 @@ namespace Game1
     		{
     			try
     			{
-    				sbyte b = message.reader().readSByte();
-    				key = new sbyte[b];
-    				for (int i = 0; i < b; i++)
+    				int b = message.reader().readUnsignedByte();
+			key = new sbyte[b];
+			for (int i = 0; i < b; i++)
     				{
     					key[i] = message.reader().readSByte();
     				}
@@ -153,15 +164,38 @@ namespace Game1
     			}
     		}
     
+    		private static byte[] ReadExactBytes(BinaryReader reader, int count)
+    		{
+    			if (count < 0 || count > 2000000)
+    			{
+    				throw new IOException("Invalid packet length: " + count);
+    			}
+    			if (count == 0)
+    			{
+    				return new byte[0];
+    			}
+    			byte[] buffer = new byte[count];
+    			int offset = 0;
+    			while (offset < count)
+    			{
+    				int read = reader.Read(buffer, offset, count - offset);
+    				if (read <= 0)
+    				{
+    					throw new EndOfStreamException("Unexpected EOF while reading packet payload");
+    				}
+    				offset += read;
+    			}
+    			return buffer;
+    		}
+
     		private Message readMessage2(sbyte cmd)
     		{
     			int num = readKey(dis.ReadSByte()) + 128;
     			int num2 = readKey(dis.ReadSByte()) + 128;
     			int num3 = readKey(dis.ReadSByte()) + 128;
     			int num4 = (num3 * 256 + num2) * 256 + num;
-    			sbyte[] array = new sbyte[num4];
-    			byte[] src = dis.ReadBytes(num4);
-                array = ArrayCast.cast(src);
+    			byte[] src = ReadExactBytes(dis, num4);
+    			sbyte[] array = ArrayCast.cast(src);
                 recvByteCount += 5 + num4;
     			int num6 = recvByteCount + sendByteCount;
     			strRecvByteCount = num6 / 1024 + "." + num6 % 1024 / 102 + "Kb";
@@ -184,7 +218,7 @@ namespace Game1
     				{
     					b = readKey(b);
     				}
-    				if (b == -32 || b == -66 || b == 11 || b == -67 || b == -74 || b == -87)
+    				if (b == -32 || b == -66 || b == 11 || b == -67 || b == -74 || b == -87 || b == 66)
     				{
     					return readMessage2(b);
     				}
@@ -201,9 +235,8 @@ namespace Game1
     					sbyte b5 = dis.ReadSByte();
     					num = ((b4 & 0xFF) << 8) | (b5 & 0xFF);
     				}
-    				sbyte[] array = new sbyte[num];
-    				byte[] src = dis.ReadBytes(num);
-                    array = ArrayCast.cast(src);
+    				byte[] src = ReadExactBytes(dis, num);
+    				sbyte[] array = ArrayCast.cast(src);
                     recvByteCount += 5 + num;
     				int num4 = recvByteCount + sendByteCount;
     				strRecvByteCount = num4 / 1024 + "." + num4 % 1024 / 102 + "Kb";
@@ -234,7 +267,7 @@ namespace Game1
     
     	public static IMessageHandler messageHandler;
     
-    	public static bool isMainSession = true;
+    	public static bool isMainSession = false;
     
     	private static TcpClient sc;
     
@@ -258,9 +291,9 @@ namespace Game1
     
     	public static sbyte[] key = null;
     
-    	private static sbyte curR;
+    	private static int curR;
     
-    	private static sbyte curW;
+    	private static int curW;
     
     	private static int timeConnected;
     
@@ -393,17 +426,25 @@ namespace Game1
     					dos.Write((sbyte)num3);
     				}
     				else
-    				{
-    					dos.Write((ushort)num);
-    				}
-    				if (getKeyComplete)
-    				{
-    					for (int i = 0; i < data.Length; i++)
-    					{
-    						sbyte value2 = writeKey(data[i]);
-    						dos.Write(value2);
-    					}
-    				}
+				{
+					dos.Write((byte)(num >> 8));
+					dos.Write((byte)(num & 0xFF));
+				}
+				if (getKeyComplete)
+				{
+					for (int i = 0; i < data.Length; i++)
+					{
+						sbyte value2 = writeKey(data[i]);
+						dos.Write(value2);
+					}
+				}
+				else
+				{
+					for (int i = 0; i < data.Length; i++)
+					{
+						dos.Write(data[i]);
+					}
+				}
     				sendByteCount += 5 + data.Length;
     			}
     			else
@@ -417,9 +458,10 @@ namespace Game1
     					dos.Write((sbyte)num6);
     				}
     				else
-    				{
-    					dos.Write((ushort)0);
-    				}
+				{
+					dos.Write((byte)0);
+					dos.Write((byte)0);
+				}
     				sendByteCount += 5;
     			}
     			dos.Flush();
@@ -431,30 +473,28 @@ namespace Game1
     	}
     
     	public static sbyte readKey(sbyte b)
-    	{
-    		sbyte[] array = key;
-    		sbyte num = curR;
-    		curR = (sbyte)(num + 1);
-    		sbyte result = (sbyte)((array[num] & 0xFF) ^ (b & 0xFF));
-    		if (curR >= key.Length)
-    		{
-    			curR %= (sbyte)key.Length;
-    		}
-    		return result;
-    	}
+	{
+		sbyte[] array = key;
+		int num = curR++;
+		sbyte result = (sbyte)((array[num] & 0xFF) ^ (b & 0xFF));
+		if (curR >= key.Length)
+		{
+			curR %= key.Length;
+		}
+		return result;
+	}
     
     	public static sbyte writeKey(sbyte b)
-    	{
-    		sbyte[] array = key;
-    		sbyte num = curW;
-    		curW = (sbyte)(num + 1);
-    		sbyte result = (sbyte)((array[num] & 0xFF) ^ (b & 0xFF));
-    		if (curW >= key.Length)
-    		{
-    			curW %= (sbyte)key.Length;
-    		}
-    		return result;
-    	}
+	{
+		sbyte[] array = key;
+		int num = curW++;
+		sbyte result = (sbyte)((array[num] & 0xFF) ^ (b & 0xFF));
+		if (curW >= key.Length)
+		{
+			curW %= key.Length;
+		}
+		return result;
+	}
     
     	public static void onRecieveMsg(Message msg)
     	{

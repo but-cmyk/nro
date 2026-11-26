@@ -1,13 +1,42 @@
-# Dockerfile NRO Game Server (Siêu nhẹ & Khởi động trong 1 giây)
-FROM eclipse-temurin:22-jre-alpine
+# Stage 1: Build NRO Game Server (Java 21 LTS)
+FROM eclipse-temurin:21-jdk-alpine AS builder
+WORKDIR /build
 
+COPY lib/ ./lib/
+COPY src/ ./src/
+
+RUN mkdir -p out \
+    && find src -name "*.java" > sources.txt \
+    && javac -encoding UTF-8 --release 21 -cp "lib/*" -d out @sources.txt \
+    && jar --create --file NROK.jar --main-class server.ServerManager -C out .
+
+# Stage 2: Minimal Runtime Image (Non-Root, Java 21 LTS)
+FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 
-# Chỉ copy thư viện và file JAR đã đóng gói sẵn
-COPY lib/ ./lib/
-COPY dist/NROK.jar ./NROK.jar
+RUN addgroup -S nro && adduser -S nro -G nro
+
+COPY --from=builder /build/lib/ ./lib/
+COPY --from=builder /build/NROK.jar ./NROK.jar
+
+RUN mkdir -p /app/data /app/logs && chown -R nro:nro /app
+USER nro
 
 EXPOSE 14445 14446
 
-# Chạy Server với G1GC tối ưu bộ nhớ RAM thực tế (~60MB - 150MB)
-CMD ["java", "-XX:+UseG1GC", "-XX:MaxGCPauseMillis=20", "-Xms128M", "-Xmx1024M", "-cp", "NROK.jar:lib/*", "server.ServerManager"]
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+    CMD nc -z 127.0.0.1 14445 || exit 1
+
+CMD ["java", \
+     "-server", \
+     "-XX:+UseG1GC", \
+     "-XX:MaxGCPauseMillis=20", \
+     "-Xms128M", \
+     "-Xmx1024M", \
+     "--add-opens", "java.base/jdk.internal.misc=ALL-UNNAMED", \
+     "--add-opens", "java.base/java.lang=ALL-UNNAMED", \
+     "--add-opens", "java.base/java.nio=ALL-UNNAMED", \
+     "-Dio.netty.tryReflectionSetAccessible=true", \
+     "-Dfile.encoding=UTF-8", \
+     "-cp", "NROK.jar:lib/*", \
+     "server.ServerManager"]

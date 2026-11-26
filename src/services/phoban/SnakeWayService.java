@@ -50,24 +50,26 @@ public class SnakeWayService {
                     player.talkToThuongDe = false;
                     player.talkToThanMeo = false;
                 }
-                if (player.clan.ConDuongRanDoc == null) {
-                    if (level >= 1 && level <= 110) {
-                        SnakeWay conDuongRanDoc = null;
-                        for (SnakeWay cdrd : this.conDuongRanDocs) {
-                            if (!cdrd.isOpened) {
-                                conDuongRanDoc = cdrd;
-                                break;
+                synchronized (clan) {
+                    if (player.clan.ConDuongRanDoc == null) {
+                        if (level >= 1 && level <= 110) {
+                            SnakeWay conDuongRanDoc = null;
+                            for (SnakeWay cdrd : this.conDuongRanDocs) {
+                                if (!cdrd.isOpened) {
+                                    conDuongRanDoc = cdrd;
+                                    break;
+                                }
                             }
-                        }
-                        if (conDuongRanDoc != null) {
-                            conDuongRanDoc.openConDuongRanDoc(player, player.clan, level);
+                            if (conDuongRanDoc != null) {
+                                conDuongRanDoc.openConDuongRanDoc(player, player.clan, level);
+                            } else {
+                                Service.gI().sendThongBao(player, "Con đường rắn độc đã đầy, hãy quay lại sau 30 phút");
+                                return;
+                            }
                         } else {
-                            Service.gI().sendThongBao(player, "Con đường rắn độc đã đầy, hãy quay lại sau 30 phút");
+                            Service.gI().sendThongBao(player, "Cấp độ lựa chọn không hợp lệ (1 - 110)!");
                             return;
                         }
-                    } else {
-                        Service.gI().sendThongBao(player, "Cấp độ lựa chọn không hợp lệ (1 - 110)!");
-                        return;
                     }
                 }
                 if (player.clan.ConDuongRanDoc != null) {

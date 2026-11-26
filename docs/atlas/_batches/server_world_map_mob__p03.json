@@ -1,0 +1,328 @@
+{
+  "batch_id": "server_world_map_mob__p03",
+  "concurrency_and_state": [
+    "NpcFactory.PLAYERID_OBJECT (src/models/npc/NpcFactory.java:49) is a static non-thread-safe HashMap accessed concurrently from Netty threads via NpcService.createMenuConMeo (NpcService.java:31), NpcFactory.createNpcConMeo, and ThanVuTru.confirmMenu (ThanVuTru.java:174).",
+    "NpcFactory.java:481-485 uses ordered locking on Player objects (firstLock = player.id < pl.id ? player : pl) for OTT_ACCEPT gold wagering to prevent deadlocks.",
+    "NpcFactory.java:666-668 synchronizes on player.inventory.itemsBoxCrackBall when clearing lucky round items.",
+    "SmartDropService.isSlotAcquired (src/services/map/SmartDropService.java:171-185) synchronizes on zone.items while iterating ground drops.",
+    "WeatherService.activeWeatherMap (src/services/map/WeatherService.java:24) is a ConcurrentHashMap storing unsynchronized ArrayList<EffectMap> instances shared with Map.effMap, mutated in setWeather without locking.",
+    "MapService.gI() uses double-checked locking with volatile (src/services/map/MapService.java:20-31), whereas ChangeMapService, ItemMapService, NpcService, SmartDropService, and WeatherService use un-synchronized lazy singleton initialization."
+  ],
+  "cross_module_questions": [
+    "Verify Player.setClothes.checkSetDes() return value polarity: Whis.java:73 blocks access to Heaven Gear crafting when checkSetDes() returns true (\"Ngươi hãy trang bị đủ 5 món trang bị Hủy Diệt rồi ta nói chuyện tiếp\").",
+    "Verify ConsignShopManager.getItemById / updateItemUpTopAsync thread-safety when UP_TOP_ITEM (NpcFactory.java:762-789) mutates ConsignItem.isUpTop concurrently with item purchase/cancel.",
+    "Verify Client-side handling of Message(-91), Message(29), Message(32), Message(38), Message(-105) for EOF edge cases when optional fields (e.g. avatar != -1 in NpcService.java:49,66,80) are omitted."
+  ],
+  "db_redis_touchpoints": [
+    {
+      "location": "src/models/npc/NpcFactory.java:653",
+      "op": "DELETE (via Clan.deleteDB)",
+      "safety_note": "Called without checking if clan != null or clan.isLeader(player) in CONFIRM_DISSOLUTION_CLAN.",
+      "target": "clan table (via Clan.deleteDB)"
+    },
+    {
+      "location": "src/models/npc/NpcFactory.java:779",
+      "op": "UPDATE (async)",
+      "safety_note": "Updates consign item isUpTop without locking the ConsignItem against concurrent buy/cancel.",
+      "target": "consign shop DB (via ConsignShopManager.updateItemUpTopAsync)"
+    },
+    {
+      "location": "src/models/npc/NpcFactory.java:780",
+      "op": "UPDATE (async)",
+      "safety_note": "Persists player after gem deduction in UP_TOP_ITEM.",
+      "target": "player table (via PlayerDAO.updatePlayerAsync)"
+    }
+  ],
+  "files_read": [
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/npc/npc_list/Rong6Sao.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/npc/npc_list/Rong7Sao.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/npc/npc_list/RongOmega.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/npc/npc_list/RuongDo.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/npc/npc_list/Santa.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/npc/npc_list/ShopNew.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/npc/npc_list/Tapion.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/npc/npc_list/ThanVuTru.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/npc/npc_list/ThuongDe.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/npc/npc_list/ToriBot.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/npc/npc_list/ToSuKaio.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/npc/npc_list/TrongTai.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/npc/npc_list/TrongTai2.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/npc/npc_list/TruongLaoGuru.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/npc/npc_list/Uron.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/npc/npc_list/Vados.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/npc/npc_list/VuaVegeta.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/npc/npc_list/Whis.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/npc/NpcFactory.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/services/map/ChangeMapService.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/services/map/ItemMapService.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/services/map/MapService.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/services/map/NpcManager.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/services/map/NpcService.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/services/map/SmartDropService.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/services/map/WeatherService.java"
+  ],
+  "findings": [
+    {
+      "category": "concurrency",
+      "impact": "Concurrent Netty worker thread mutations can cause NPE, lost entries, or corrupted buckets; uncleaned keys retain Player/Item references until server restart.",
+      "location": "src/models/npc/NpcFactory.java:49; src/services/map/NpcService.java:31",
+      "root_cause": "NpcFactory.PLAYERID_OBJECT is a plain HashMap shared across threads, and multiple menu handlers (MAKE_FRIEND, CONFIRM_NHUONG_PC, BAN_PLAYER, BUFF_PET, SUB_MENU, MENU_FIND_PLAYER, ThanVuTru) or cancelled menus never remove entries.",
+      "severity": "P1",
+      "title": "Non-thread-safe HashMap and memory leak in NpcFactory.PLAYERID_OBJECT"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Players who fail the map 169 task/power check in checkMapCanJoin still lose 50M gold without entering the map.",
+      "location": "src/models/npc/npc_list/Whis.java:124-133; src/services/map/ChangeMapService.java:1149-1156",
+      "root_cause": "Whis.vaoMapHD deducts 50,000,000 gold (requiring strictly > COST_HD) before calling ChangeMapService.changeMapBySpaceShip, which later rejects entry if TaskService.getIdTask < TASK_25_0.",
+      "severity": "P1",
+      "title": "Whis.vaoMapHD deducts 50M gold before map entry validation"
+    },
+    {
+      "category": "gameplay",
+      "impact": "A player denied entry to a map (checkMapCanJoin returns null) can still have their Namek Dragon Ball dropped or tracking arrays overwritten.",
+      "location": "src/services/map/ChangeMapService.java:345-362",
+      "root_cause": "changeMap mutates NgocRongNamecService.mapNrNamec/zoneNrNamec and calls dropNamekBall(pl) before checkMapCanJoin(pl, zoneJoin) validates whether the player can actually enter zoneJoin.",
+      "severity": "P1",
+      "title": "ChangeMapService mutates Namek Dragon Ball state before checkMapCanJoin validation"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Players with exactly 1,500,000 power pass checkMapCanJoin, are moved into map 111 and receive mapInfo, then get resetPoint and a rejection message.",
+      "location": "src/services/map/ChangeMapService.java:444-454, 1129-1134",
+      "root_cause": "checkMapCanJoin checks power > 1500000L, whereas post-join code at line 444 checks power >= 1_500_000L after goToMap and zoneJoin.mapInfo have already executed.",
+      "severity": "P2",
+      "title": "Off-by-one power check and late rejection on map 111"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Clicking \"Hướng dẫn\" at Tapion when the 22h event is closed does nothing.",
+      "location": "src/models/npc/npc_list/Tapion.java:28, 55-59",
+      "root_cause": "openBaseMenu opens menu ConstNpc.MENU_NOT_OPEN_MMB, but confirmMenu handles ConstNpc.MENU_NOT_OPEN_BDW.",
+      "severity": "P2",
+      "title": "Tapion confirmMenu checks wrong menu constant when event is closed"
+    },
+    {
+      "category": "security_dupe",
+      "impact": "Players can enable offline auto-training for free without having or spending 1 gem.",
+      "location": "src/models/npc/npc_list/ThuongDe.java:116-120; src/models/npc/npc_list/ThanVuTru.java:91-95; src/models/npc/npc_list/ToSuKaio.java:47-51",
+      "root_cause": "Menu option 1 advertises \"Đồng ý\\n1 ngọc\\nmỗi lần\", but confirmMenu sets player.dangKyTapTuDong = true without checking or deducting gem.",
+      "severity": "P2",
+      "title": "Auto-training registration does not check or deduct advertised 1 gem cost"
+    },
+    {
+      "category": "concurrency",
+      "impact": "Concurrent setWeather and Zone.mapInfo reads can throw ConcurrentModificationException; broadcastWeatherToMap resends full map info (-24) to all players in all zones.",
+      "location": "src/services/map/WeatherService.java:24, 84-114",
+      "root_cause": "WeatherService stores plain ArrayLists in activeWeatherMap/Map.effMap and mutates them in setWeather without synchronization.",
+      "severity": "P2",
+      "title": "Unsynchronized list mutation in WeatherService.setWeather"
+    },
+    {
+      "category": "security_dupe",
+      "impact": "Potential NPE if clan is null, and non-leader or forged menu state could trigger clan deletion if reached.",
+      "location": "src/models/npc/NpcFactory.java:649-662",
+      "root_cause": "CONFIRM_DISSOLUTION_CLAN calls clan.deleteDB(clan.id) without null-checking player.clan or verifying clan.isLeader(player).",
+      "severity": "P2",
+      "title": "Missing null and leader check in CONFIRM_DISSOLUTION_CLAN"
+    },
+    {
+      "category": "architecture",
+      "impact": "Increases maintenance burden and risk of divergent bug fixes across dungeon map-entry rules.",
+      "location": "src/services/map/MapService.java:161-315, 625-635",
+      "root_cause": "MapService.getMapCanJoin duplicates the ~40-line mob/boss-dead check 4 times for DoanhTrai, BanDoKhoBau, KhiGasHuyDiet, and ConDuongRanDoc; MapService.goToMap duplicates ChangeMapService.goToMap.",
+      "severity": "P3",
+      "title": "Duplicated dungeon clearance logic and goToMap method in MapService"
+    },
+    {
+      "category": "architecture",
+      "impact": "Dead code clutter in npc_list package.",
+      "location": "src/models/npc/npc_list/ShopNew.java:1-116; src/models/npc/npc_list/ToriBot.java:1-86",
+      "root_cause": "Entire class definitions are commented out.",
+      "severity": "P3",
+      "title": "Fully commented-out NPC classes ShopNew and ToriBot"
+    }
+  ],
+  "key_classes": [
+    {
+      "key_methods": [
+        "createNPC",
+        "createNpcRongThieng",
+        "createNpcConMeo"
+      ],
+      "name": "NpcFactory",
+      "path": "src/models/npc/NpcFactory.java",
+      "responsibility": "Instantiates all map NPCs by template ID and handles global menu callbacks for Shenron (RongThieng) and ConMeo dialogs."
+    },
+    {
+      "key_methods": [
+        "openChangeMapTab",
+        "openZoneUI",
+        "changeZone",
+        "changeMap",
+        "changeMapWaypoint",
+        "finishLoadMap",
+        "exitMap",
+        "checkMapCanJoin"
+      ],
+      "name": "ChangeMapService",
+      "path": "src/services/map/ChangeMapService.java",
+      "responsibility": "Handles map/zone transitions, spaceship/yardrat/waypoint movement, map access gating, and post-load effect synchronization."
+    },
+    {
+      "key_methods": [
+        "getWaypointPlayerIn",
+        "getMapCanJoin",
+        "getZone",
+        "getMapCapsule",
+        "sendPlayerMove",
+        "isMapOffline"
+      ],
+      "name": "MapService",
+      "path": "src/services/map/MapService.java",
+      "responsibility": "Provides map/zone lookup, dungeon progression checks, capsule destination lists, and map type predicates."
+    },
+    {
+      "key_methods": [
+        "rollDrop",
+        "isSlotAcquired",
+        "isTierCompleted",
+        "selectSmartSlot",
+        "shouldDropGear",
+        "createSmartDropItemMap"
+      ],
+      "name": "SmartDropService",
+      "path": "src/services/map/SmartDropService.java",
+      "responsibility": "Adaptive beginner gear drop engine with 8 power tiers, anti-duplicate scanning, pity counter, and bonus stats/star slots."
+    },
+    {
+      "key_methods": [
+        "createMenuRongThieng",
+        "createMenuConMeo",
+        "createTutorial",
+        "npcChat",
+        "createMenu"
+      ],
+      "name": "NpcService",
+      "path": "src/services/map/NpcService.java",
+      "responsibility": "Sends NPC dialog menus (opcode 32), tutorials (opcode 38), and NPC chat bubbles (opcode 124) to clients."
+    },
+    {
+      "key_methods": [
+        "initWeatherForMap",
+        "setWeather",
+        "broadcastWeatherToMap"
+      ],
+      "name": "WeatherService",
+      "path": "src/services/map/WeatherService.java",
+      "responsibility": "Manages map-level atmospheric EffectMap presets and broadcasts updates to players."
+    },
+    {
+      "key_methods": [
+        "pickItem",
+        "removeItemMapAndSendClient",
+        "sendItemMapDisappear"
+      ],
+      "name": "ItemMapService",
+      "path": "src/services/map/ItemMapService.java",
+      "responsibility": "Handles ground item pickup throttling and removal/disappear packets."
+    },
+    {
+      "key_methods": [
+        "getByIdAndMap",
+        "getNpc",
+        "getNpcsByMapPlayer"
+      ],
+      "name": "NpcManager",
+      "path": "src/services/map/NpcManager.java",
+      "responsibility": "Queries loaded NPCs by template/map and filters visible NPCs for a player's current map."
+    }
+  ],
+  "module_summary": "Covers 18 NPC implementations in npc_list, NpcFactory (global RONG_THIENG/CON_MEO menu handlers), and core map/NPC/drop/weather services in services/map (ChangeMapService, MapService, ItemMapService, NpcManager, NpcService, SmartDropService, WeatherService).",
+  "protocol_touchpoints": [
+    {
+      "direction": "WRITE",
+      "location": "src/services/map/ChangeMapService.java:66-103",
+      "opcode": "-91",
+      "payload_summary": "byte count, then UTF mapName and UTF planetName per zone for Capsule/BlackBall/MaBu tabs."
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/services/map/ChangeMapService.java:135-153",
+      "opcode": "29",
+      "payload_summary": "byte zoneCount; per zone: byte zoneId, byte status, byte numPlayers, byte maxPlayer, byte isCompeting (+ UTF/int rank1, rank2 if 1)."
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/services/map/ChangeMapService.java:657,700,717,739,748,757,770,780",
+      "opcode": "-124",
+      "payload_summary": "Skill/effect state sync on map join (shielding 33, thoi mien 41, stun/blind 40, troi 32) for mobs and players."
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/services/map/ChangeMapService.java:667,676,791",
+      "opcode": "-95",
+      "payload_summary": "byte 0, int owner/mobMe id, short tempId, int hp for mobMe sync."
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/services/map/ChangeMapService.java:709",
+      "opcode": "-112",
+      "payload_summary": "byte 1, byte mob.id, short 4133 for mob socola state on map join."
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/services/map/ChangeMapService.java:812-814",
+      "opcode": "-65",
+      "payload_summary": "int player.id, byte typeSpace for spaceship arrive effect."
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/services/map/ChangeMapService.java:878-880",
+      "opcode": "-6",
+      "payload_summary": "int player.id broadcast to zone when player exits map."
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/services/map/ChangeMapService.java:935-938",
+      "opcode": "-105",
+      "payload_summary": "short seconds, byte type for transition effect (future/BDKB/Gas)."
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/services/map/ItemMapService.java:39-41",
+      "opcode": "-21",
+      "payload_summary": "short itemMapId broadcast to zone when ground item disappears."
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/services/map/MapService.java:481-485",
+      "opcode": "-7",
+      "payload_summary": "int player.id, short x, short y broadcast player position to others in map."
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/services/map/NpcService.java:42-52, 128-135",
+      "opcode": "32",
+      "payload_summary": "short npcTempId, UTF npcSay, byte menuCount, UTF[] menuSelect, optional short avatar."
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/services/map/NpcService.java:62-68, 77-83",
+      "opcode": "38",
+      "payload_summary": "short npcTempId, UTF npcSay, optional short avatar for NPC tutorial dialog."
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/services/map/NpcService.java:95-98, 111-114",
+      "opcode": "124",
+      "payload_summary": "short npcTempId, UTF text for NPC chat bubble."
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/models/npc/NpcFactory.java:806-808, 826-829",
+      "opcode": "subcommand 23 / 62",
+      "payload_summary": "short skillId (and byte -1 for subcommand 62) when learning/upgrading skills via HOC_KY_NANG."
+    }
+  ]
+}

@@ -21,8 +21,8 @@ namespace Game1
     	}
     
     	public void writeSByte(sbyte value)
-    	{
-    		checkLenght(0);
+		{
+			checkLenght(1);
     		buffer[posWrite++] = value;
     	}
     

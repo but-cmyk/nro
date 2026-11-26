@@ -355,7 +355,11 @@ public class NgocRongNamecService implements Runnable {
     }
 
     public boolean pickNamekBall(Player player, Item item) {
-        try {
+        if (player == null || item == null || item.template == null || player.zone == null) {
+            return false;
+        }
+        synchronized (player) {
+            try {
             switch (item.template.id) {
                 case 362:
                     Service.gI().sendThongBao(player, "Chỉ là cục đá, vác chi cho nặng");
@@ -394,6 +398,7 @@ public class NgocRongNamecService implements Runnable {
             return false;
         } catch (Exception e) {
             return false;
+        }
         }
     }
 

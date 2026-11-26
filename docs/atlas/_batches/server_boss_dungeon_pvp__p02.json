@@ -1,0 +1,332 @@
+{
+  "batch_id": "server_boss_dungeon_pvp__p02",
+  "concurrency_and_state": [
+    "All injured(...) overrides are synchronized on the Boss instance (this), but player-side flags like pl.canReward and pl.haveReward in TuanLoc.afk/injured and LanCon.afk/injured are read/mutated from Boss update threads without player-level synchronization.",
+    "GoldenFrieza.handleBomExplosion (GoldenFrieza.java:183-190) iterates this.zone.getNotBosses() and invokes pl.injured(this, 2_100_000_000, true, false) from the boss loop without synchronization on players or zone.",
+    "TDT.bodyChangePlayerInMap (TDT.java:25-33) iterates this.zone.getPlayers() every 10s to apply EffectSkillService.setIsBodyChangeTechnique.",
+    "DrLychee.leaveMap (DrLychee.java:154) mutates clan.KhiGasHuyDiet.bosses.add(new Hatchiyack(...)) without null-checking clan/KhiGasHuyDiet or synchronizing on the bosses collection.",
+    "DeathOrAliveArena.update() (DeathOrAliveArena.java:162-174) falls through from case RESPAWN directly into case JOIN_MAP (no break), sets typePk = 3 magic literal, and transitions to AFK where afk() checks zone equality.",
+    "15 of 46 files are completely commented-out legacy/disabled classes (SuperXaydaGod, Chiller, Frost, DeathBeam1..5, SonTinh, ThuyTinh, berus, champa, vados, whis, bena)."
+  ],
+  "cross_module_questions": [
+    "Does Util.nextInt(int min, int max) treat max as inclusive or exclusive? Earth bosses BUJIN/KOGU/ZANGYA use Util.nextInt(8, 11) with comment 'Random 8-10', whereas BIDO/BOJACK/SUPER_BOJACK use Util.nextInt(8, 10).",
+    "How does Boss base class handle the long return value of injured(...)—does returning (int) damage cause negative heal/miss accounting or damage display bugs when damage > Integer.MAX_VALUE?",
+    "Does Zone.getNotBosses() / Zone.getPlayers() return a defensive copy or the live backing list, and are they thread-safe during concurrent player death/exit triggered inside GoldenFrieza.handleBomExplosion and TDT.bodyChangePlayerInMap?",
+    "What handles pl.canReward and pl.haveReward on Player (e.g. NPC/Service reward claim) and how does it handle TuanLoc (TET_EVENT) vs LanCon (CHRISTMAS_EVENT) having swapped BossType constants?",
+    "Is PKCommeson registered anywhere else by its constructor in NhanBan.active() (NhanBan.java:44), and does it guarantee setting typePk != NON_PK on the same tick?"
+  ],
+  "db_redis_touchpoints": [],
+  "files_read": [
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/boss/boss_list/ChristmasEvent/SuperXaydaGod.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/boss/boss_list/ChristmasEvent/TuanLoc.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/boss/boss_list/Commeson/NhanBan.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/boss/boss_list/Cooler/Chiller.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/boss/boss_list/Cooler/Cooler.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/boss/boss_list/Cooler/Frost.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/boss/boss_list/DeathOrAliveArena/BongBang.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/boss/boss_list/DeathOrAliveArena/DeathOrAliveArena.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/boss/boss_list/DeathOrAliveArena/Dracula.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/boss/boss_list/DeathOrAliveArena/NguoiVoHinh.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/boss/boss_list/DeathOrAliveArena/ThoDauBac.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/boss/boss_list/DeathOrAliveArena/VuaQuySaTang.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/boss/boss_list/DestronGas/DrLychee.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/boss/boss_list/DestronGas/Hatchiyack.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/boss/boss_list/Earth/BIDO.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/boss/boss_list/Earth/BOJACK.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/boss/boss_list/Earth/BUJIN.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/boss/boss_list/Earth/KOGU.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/boss/boss_list/Earth/SUPER_BOJACK.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/boss/boss_list/Earth/ZANGYA.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/boss/boss_list/Frieza/Fide.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/boss/boss_list/GinyuForce/SO1.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/boss/boss_list/GinyuForce/SO2.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/boss/boss_list/GinyuForce/SO3.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/boss/boss_list/GinyuForce/SO4.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/boss/boss_list/GinyuForce/TDT.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/boss/boss_list/GoldenFrieza/DeathBeam.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/boss/boss_list/GoldenFrieza/DeathBeam1.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/boss/boss_list/GoldenFrieza/DeathBeam2.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/boss/boss_list/GoldenFrieza/DeathBeam3.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/boss/boss_list/GoldenFrieza/DeathBeam4.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/boss/boss_list/GoldenFrieza/DeathBeam5.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/boss/boss_list/GoldenFrieza/GoldenFrieza.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/boss/boss_list/HalloweenEvent/BiMa.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/boss/boss_list/HalloweenEvent/Doi.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/boss/boss_list/HalloweenEvent/MaTroi.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/boss/boss_list/HungVuongEvent/SonTinh.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/boss/boss_list/HungVuongEvent/ThuyTinh.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/boss/boss_list/huydiet/berus.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/boss/boss_list/huydiet/champa.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/boss/boss_list/huydiet/Cumber.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/boss/boss_list/huydiet/vados.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/boss/boss_list/huydiet/whis.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/boss/boss_list/LunarNewYearEvent/bena.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/boss/boss_list/LunarNewYearEvent/LanCon.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/boss/boss_list/MajinBuu12H/BuiBui.java"
+  ],
+  "findings": [
+    {
+      "category": "gameplay",
+      "impact": "Shielding does not reduce incoming damage on Halloween event bosses, making the shield skill completely ineffective.",
+      "location": "BiMa.java:43, Doi.java:42, MaTroi.java:46",
+      "root_cause": "Inside `if (!piercing && effectSkill.isShielding)`, all three Halloween bosses execute `damage = damage / 1;` instead of `damage = 1;`.",
+      "severity": "P1",
+      "title": "Halloween bosses (BiMa, Doi, MaTroi) divide damage by 1 instead of setting damage to 1 when shielded"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Attacks exceeding Integer.MAX_VALUE (e.g., against uncapped bosses like Cumber, BuiBui, DrLychee, Hatchiyack) overflow when returned as int, causing negative or corrupted damage return values.",
+      "location": "TuanLoc.java:212, Cooler.java:115, DeathOrAliveArena.java:235, DrLychee.java:89, Hatchiyack.java:87, GoldenFrieza.java:86, BiMa.java:53, Doi.java:52, MaTroi.java:56, Cumber.java:80, LanCon.java:212, BuiBui.java:106",
+      "root_cause": "Methods declare `public synchronized long injured(...)` and accept `long damage`, but explicitly cast `return (int) damage;`.",
+      "severity": "P1",
+      "title": "All active Boss injured() overrides truncate long damage to (int) on return"
+    },
+    {
+      "category": "gameplay",
+      "impact": "TuanLoc spawns under TET_EVENT and LanCon spawns under CHRISTMAS_EVENT, breaking event-type boss spawning/lifecycle; LanCon also skips zones containing ONG_GIA_NOEL instead of Tet bosses.",
+      "location": "TuanLoc.java:33, LanCon.java:33, LanCon.java:62",
+      "root_cause": "TuanLoc (ChristmasEvent) passes `TET_EVENT` to super(), while LanCon (LunarNewYearEvent) passes `CHRISTMAS_EVENT` to super() and checks `BossID.ONG_GIA_NOEL` due to copy-paste.",
+      "severity": "P1",
+      "title": "TuanLoc and LanCon have swapped BossType constants (TET_EVENT vs CHRISTMAS_EVENT)"
+    },
+    {
+      "category": "gameplay",
+      "impact": "If Manager.itemIds_tl_GN or itemIds_tl_AWJ has length <= 1, new Random().nextInt(length - 1) throws IllegalArgumentException; otherwise the last array item can never drop.",
+      "location": "Cumber.java:40-41",
+      "root_cause": "`new Random().nextInt(Manager.itemIds_tl_GN.length - 1)` passes `length - 1` to exclusive bound `nextInt(bound)`, and allocates a new `Random` on every kill.",
+      "severity": "P1",
+      "title": "Cumber.reward() off-by-one Random bound skips last item and throws if array length <= 1"
+    },
+    {
+      "category": "concurrency",
+      "impact": "Uncaught NullPointerException in Boss update loop when DrLychee leaves map if clan or KhiGasHuyDiet is null, or when GoldenFrieza leaves map while zone is null, preventing proper cleanup and REST transition.",
+      "location": "DrLychee.java:154, GoldenFrieza.java:254",
+      "root_cause": "DrLychee.leaveMap() accesses `clan.KhiGasHuyDiet.bosses.add(...)` without null checks (unlike Hatchiyack.java:142); GoldenFrieza.leaveMap() writes `this.zone.isGoldenFriezaAlive = false;` without checking `this.zone != null` before `ChangeMapService.exitMap(this)`.",
+      "severity": "P1",
+      "title": "Missing null guards in DrLychee.leaveMap() and GoldenFrieza.leaveMap() cause NPE on cleanup"
+    },
+    {
+      "category": "security_dupe",
+      "impact": "If a pet/clone/bot (negative ID) deals the killing blow to TuanLoc or LanCon, Math.abs(plAtt.id) assigns escort/reward ownership to the positive-ID player (or wrong player), and null plAtt causes NPE.",
+      "location": "TuanLoc.java:205-206, LanCon.java:205-206",
+      "root_cause": "`this.playerId = Math.abs(plAtt.id);` does not verify `plAtt != null && plAtt.isPl()`, allowing negative-ID non-player entities to claim/trigger reward escort.",
+      "severity": "P2",
+      "title": "TuanLoc and LanCon assign reward playerId via Math.abs(plAtt.id) without isPl()/null checks"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Piercing attacks against Cumber deal 1/100th damage and still get blocked to 1 by shield, inverting piercing semantics.",
+      "location": "Cumber.java:65-74",
+      "root_cause": "`if (piercing) { damage /= 100; }` reduces piercing damage by 100x, and `if (effectSkill.isShielding)` lacks `!piercing`.",
+      "severity": "P2",
+      "title": "Cumber.injured() divides piercing damage by 100 and lets shield block piercing attacks"
+    },
+    {
+      "category": "concurrency",
+      "impact": "NullPointerException in DeathBeam.attack() if playerAtt leaves map/disconnects so playerAtt.zone becomes null; NhanBan.joinMap() and DeathOrAliveArena.joinMap() also dereference playerAtt without null checks.",
+      "location": "DeathBeam.java:34,108, NhanBan.java:51-53,116, DeathOrAliveArena.java:143",
+      "root_cause": "DeathBeam checks `!playerAtt.zone.equals(this.zone)` without `playerAtt.zone != null`, and `joinMap()` accesses `parentBoss.zone` / `playerAtt.zone` without null checks.",
+      "severity": "P2",
+      "title": "Missing null checks on playerAtt.zone, playerAtt, and parentBoss in DeathBeam, NhanBan, and DeathOrAliveArena"
+    },
+    {
+      "category": "gameplay",
+      "impact": "If plKill is null (e.g., environmental/boss kill or disconnect before death) or zone is null, reward() throws NPE in Boss.die().",
+      "location": "Cumber.java:33-46, BuiBui.java:31-64, BIDO.java:46-57, BOJACK.java:37-44, BUJIN.java:46-55, KOGU.java:41-48, SUPER_BOJACK.java:39-46, ZANGYA.java:41-48, SO1.java:38, SO2.java:37, SO3.java:38, SO4.java:38, TDT.java:51, BiMa.java:25, Doi.java:24, MaTroi.java:24, GoldenFrieza.java:42,58",
+      "root_cause": "reward(Player plKill) dereferences plKill.id / plKill.effect and this.zone.map without null guards (unlike Cooler.java:26,53 and Fide.java:22,32).",
+      "severity": "P2",
+      "title": "Most boss reward() methods dereference plKill and this.zone without null guards"
+    },
+    {
+      "category": "protocol",
+      "impact": "If Service.gI().sendMessAllPlayerInMap throws before msg.cleanup(), the Message(-45) buffer is leaked.",
+      "location": "GoldenFrieza.java:162-172",
+      "root_cause": "`Message msg = new Message(-45); ... msg.cleanup();` is not wrapped in `try-with-resources` or `finally`.",
+      "severity": "P2",
+      "title": "GoldenFrieza.prepareBom() does not clean up Message(-45) in a finally block"
+    },
+    {
+      "category": "performance_gc",
+      "impact": "Sends redundant setPos2 network packets every boss update tick for 5 consecutive seconds while NguoiVoHinh is invisible, wasting bandwidth.",
+      "location": "NguoiVoHinh.java:40-43",
+      "root_cause": "`if (!Util.canDoWithTime(this.lastTimeTanHinh, 5000))` executes `Service.gI().setPos2(...)` unconditionally on every attack() tick instead of once on entering stealth.",
+      "severity": "P2",
+      "title": "NguoiVoHinh.tanHinh() spams setPos2 packets every tick for 5 seconds"
+    },
+    {
+      "category": "performance_gc",
+      "impact": "Unnecessary heap allocations inside boss combat update ticks (new ArrayList per attack tick in DeathOrAliveArena; new Random per Cumber kill).",
+      "location": "DeathOrAliveArena.java:98, Cumber.java:40-41",
+      "root_cause": "`DeathOrAliveArena.attack()` allocates `new ArrayList<>()` every 3s attack cycle to filter skills; `Cumber.reward()` instantiates `new Random()` twice.",
+      "severity": "P3",
+      "title": "Per-tick ArrayList allocation in DeathOrAliveArena.attack() and Random allocation in Cumber.reward()"
+    },
+    {
+      "category": "architecture",
+      "impact": "High maintenance cost and bug propagation (e.g., identical bugs copied across TuanLoc/LanCon, BiMa/Doi/MaTroi, BIDO/BUJIN/KOGU/ZANGYA, SO1..SO4). Also 15 completely commented-out files clutter the codebase.",
+      "location": "TuanLoc.java, LanCon.java, BIDO.java, BOJACK.java, BUJIN.java, KOGU.java, SUPER_BOJACK.java, ZANGYA.java, SO1.java, SO2.java, SO3.java, SO4.java, BiMa.java, Doi.java, MaTroi.java, DrLychee.java, Hatchiyack.java",
+      "root_cause": "Duplicated boilerplate for joinMap, autoLeaveMap, reward item spreading, doneChatE, and injured across sibling boss classes, plus dead `currentLevel == 1` checks in single-level Earth/GinyuForce bosses and commented-out files.",
+      "severity": "P3",
+      "title": "Heavy copy-paste duplication across event/Earth/GinyuForce/DestronGas bosses and 15 commented-out classes"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Casting long player.id to int can collide or corrupt clone boss IDs if player IDs exceed Integer.MAX_VALUE.",
+      "location": "NhanBan.java:27",
+      "root_cause": "`super(Util.createIdBossClone((int) player.id), bossData);` truncates long player.id to int.",
+      "severity": "P3",
+      "title": "NhanBan constructor truncates long player.id to int"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Exceptions during boss attack, vampire drain, or DeathOrAliveArena update are completely hidden, complicating runtime diagnosis.",
+      "location": "TuanLoc.java:144-145, LanCon.java:144-145, NhanBan.java:137-139, DeathOrAliveArena.java:133-134,186-187, Dracula.java:35-36, BiMa.java:88-89, Doi.java:87-88, MaTroi.java:91-92",
+      "root_cause": "Empty `catch (Exception e) {}` blocks suppress all runtime errors.",
+      "severity": "P3",
+      "title": "Silent empty catch blocks across 9 boss classes"
+    }
+  ],
+  "key_classes": [
+    {
+      "key_methods": [
+        "DeathOrAliveArena",
+        "update",
+        "attack",
+        "injured",
+        "bayLungTung",
+        "afk",
+        "leaveMap"
+      ],
+      "name": "DeathOrAliveArena",
+      "path": "src/models/boss/boss_list/DeathOrAliveArena/DeathOrAliveArena.java",
+      "responsibility": "Abstract base boss for Death or Alive Arena (Phó bản): manages custom update loop, skill selection, arena bounds movement, and damage capping (10% maxHP)."
+    },
+    {
+      "key_methods": [
+        "GoldenFrieza",
+        "reward",
+        "injured",
+        "joinMap",
+        "attack",
+        "prepareBom",
+        "handleBomExplosion",
+        "handleSummonDeathBeam",
+        "handleNormalAttack",
+        "leaveMap"
+      ],
+      "name": "GoldenFrieza",
+      "path": "src/models/boss/boss_list/GoldenFrieza/GoldenFrieza.java",
+      "responsibility": "21H timed world boss with 3-state attack machine (self-destruct bomb, DeathBeam summon, normal attack) and zone alive flag management."
+    },
+    {
+      "key_methods": [
+        "DeathBeam",
+        "joinMap",
+        "autoLeaveMap",
+        "attack",
+        "setDie",
+        "injured"
+      ],
+      "name": "DeathBeam",
+      "path": "src/models/boss/boss_list/GoldenFrieza/DeathBeam.java",
+      "responsibility": "Immortal summoned projectile boss spawned by GoldenFrieza that chases target player and deals 2.1B lethal damage on contact."
+    },
+    {
+      "key_methods": [
+        "TuanLoc",
+        "joinMap",
+        "attack",
+        "afk",
+        "injured",
+        "autoLeaveMap"
+      ],
+      "name": "TuanLoc",
+      "path": "src/models/boss/boss_list/ChristmasEvent/TuanLoc.java",
+      "responsibility": "Event escort boss that switches to AFK escort mode on lethal hit and enables player reward collection when followed closely."
+    },
+    {
+      "key_methods": [
+        "LanCon",
+        "joinMap",
+        "attack",
+        "afk",
+        "injured",
+        "autoLeaveMap"
+      ],
+      "name": "LanCon",
+      "path": "src/models/boss/boss_list/LunarNewYearEvent/LanCon.java",
+      "responsibility": "Lunar New Year escort boss (near-identical clone of TuanLoc) with swapped BossType.CHRISTMAS_EVENT constant."
+    },
+    {
+      "key_methods": [
+        "DrLychee",
+        "injured",
+        "reward",
+        "dropCt",
+        "leaveMap"
+      ],
+      "name": "DrLychee",
+      "path": "src/models/boss/boss_list/DestronGas/DrLychee.java",
+      "responsibility": "Destron Gas (KGHD) phase-1 clan dungeon boss scaling by level and spawning Hatchiyack on leaveMap."
+    },
+    {
+      "key_methods": [
+        "Hatchiyack",
+        "injured",
+        "reward",
+        "dropCt",
+        "leaveMap"
+      ],
+      "name": "Hatchiyack",
+      "path": "src/models/boss/boss_list/DestronGas/Hatchiyack.java",
+      "responsibility": "Destron Gas (KGHD) phase-2 final clan dungeon boss that marks clan.KhiGasHuyDiet.hatchiyatchDead = true on leaveMap."
+    },
+    {
+      "key_methods": [
+        "NhanBan",
+        "active",
+        "joinMap",
+        "autoLeaveMap",
+        "attack",
+        "die",
+        "leaveMap"
+      ],
+      "name": "NhanBan",
+      "path": "src/models/boss/boss_list/Commeson/NhanBan.java",
+      "responsibility": "Commeson player clone boss with 5-minute timeout, PVP lock lifecycle, and self-removal via BossManager."
+    },
+    {
+      "key_methods": [
+        "Cooler",
+        "reward",
+        "injured",
+        "joinMap",
+        "autoLeaveMap"
+      ],
+      "name": "Cooler",
+      "path": "src/models/boss/boss_list/Cooler/Cooler.java",
+      "responsibility": "Multi-form world boss with safe damage subtraction, task progress updates, and TL/AWJ item drops."
+    },
+    {
+      "key_methods": [
+        "BuiBui",
+        "reward",
+        "injured",
+        "afk",
+        "die"
+      ],
+      "name": "BuiBui",
+      "path": "src/models/boss/boss_list/MajinBuu12H/BuiBui.java",
+      "responsibility": "MajinBuu 12H dungeon boss that grants fightMabu points, resists beam skills, and auto-revives after 60s in AFK."
+    }
+  ],
+  "module_summary": "Deep-read 46 boss implementation files across 12 boss subpackages (ChristmasEvent, Commeson, Cooler, DeathOrAliveArena, DestronGas, Earth, Frieza, GinyuForce, GoldenFrieza, HalloweenEvent, HungVuongEvent, huydiet, LunarNewYearEvent, MajinBuu12H). 31 files are active Java classes and 15 files are entirely commented-out legacy classes. Key issues include widespread `(int) damage` truncation in `long injured(...)` overrides, inverted shield logic (`damage / 1`) in Halloween bosses, swapped `BossType` constants between `TuanLoc` and `LanCon`, missing null checks in `DrLychee.leaveMap`, `GoldenFrieza.leaveMap`, `DeathBeam`, and multiple `reward()` overrides, plus an off-by-one `Random.nextInt(length - 1)` bug in `Cumber.reward()`.",
+  "protocol_touchpoints": [
+    {
+      "direction": "WRITE",
+      "location": "GoldenFrieza.java:163-169",
+      "opcode": "-45",
+      "payload_summary": "writeByte(7), writeInt((int) this.id), writeShort(104), writeShort(2000) sent to all players in map via Service.gI().sendMessAllPlayerInMap(this, msg)"
+    }
+  ]
+}

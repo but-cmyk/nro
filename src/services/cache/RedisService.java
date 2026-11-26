@@ -20,7 +20,9 @@ public class RedisService {
 
     private static volatile RedisService instance;
     private JedisPool jedisPool;
-    private boolean isConnected = false;
+    private volatile boolean isConnected = false;
+    private volatile long circuitOpenUntilMs = 0L;
+    private static final long CIRCUIT_COOLDOWN_MS = 10_000L;
 
     private String host = "127.0.0.1";
     private int port = 6379;
@@ -101,7 +103,12 @@ public class RedisService {
     }
 
     public boolean isConnected() {
-        return isConnected && jedisPool != null && !jedisPool.isClosed();
+        return isConnected && jedisPool != null && !jedisPool.isClosed()
+                && System.currentTimeMillis() >= circuitOpenUntilMs;
+    }
+
+    private void tripCircuitBreaker() {
+        circuitOpenUntilMs = System.currentTimeMillis() + CIRCUIT_COOLDOWN_MS;
     }
 
     // ==========================================
@@ -114,6 +121,7 @@ public class RedisService {
             String key = "session:user:" + userId;
             jedis.setex(key, expireSeconds, sessionToken);
         } catch (Exception e) {
+            tripCircuitBreaker();
             Logger.logException(RedisService.class, e, "Lỗi setSession trên Redis cho userId: " + userId);
         }
     }
@@ -123,6 +131,7 @@ public class RedisService {
         try (Jedis jedis = jedisPool.getResource()) {
             return jedis.get("session:user:" + userId);
         } catch (Exception e) {
+            tripCircuitBreaker();
             return null;
         }
     }
@@ -132,6 +141,7 @@ public class RedisService {
         try (Jedis jedis = jedisPool.getResource()) {
             jedis.del("session:user:" + userId);
         } catch (Exception e) {
+            tripCircuitBreaker();
             Logger.logException(RedisService.class, e);
         }
     }
@@ -145,6 +155,7 @@ public class RedisService {
         try (Jedis jedis = jedisPool.getResource()) {
             jedis.zadd("leaderboard:" + boardName, score, member);
         } catch (Exception e) {
+            tripCircuitBreaker();
             Logger.logException(RedisService.class, e);
         }
     }
@@ -158,6 +169,7 @@ public class RedisService {
                 results.add(new AbstractMap.SimpleEntry<>(t.getElement(), t.getScore()));
             }
         } catch (Exception e) {
+            tripCircuitBreaker();
             Logger.logException(RedisService.class, e);
         }
         return results;

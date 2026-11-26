@@ -1,0 +1,2613 @@
+{
+  "protocol_touchpoints_by_batch": {
+    "client_core_render_audio__p01": [
+      {
+        "direction": "WRITE",
+        "location": "GameCanvas.cs:599",
+        "opcode": "requestIcon(small.id)",
+        "payload_summary": "Requests missing SmallImage icon IDs queued in SmallImage.vt_images_watingDowload during update()."
+      },
+      {
+        "direction": "WRITE",
+        "location": "GameCanvas.cs:778-785, 3276",
+        "opcode": "setClientType / androidPack / setClientType2 / androidPack2",
+        "payload_summary": "Sends client platform/version handshake after Controller.isConnectOK for primary or secondary session."
+      },
+      {
+        "direction": "READ",
+        "location": "GameCanvas.cs:769-828, 872-941, 1075",
+        "opcode": "Controller state flags (isConnectOK, isDisconnected, isConnectionFail, isLoadingData, isMain)",
+        "payload_summary": "Polls Controller connection state flags in GameCanvas.update() to trigger handshake, reconnect, or error dialogs."
+      },
+      {
+        "direction": "DISPATCH",
+        "location": "GameCanvas.cs:3317-3566",
+        "opcode": "perform(idAction) -> Service.gI().*",
+        "payload_summary": "Dispatches UI command IDs (8886-888392, 100001-100005) to Service RPCs: addFriend, addPartyAccept/Cancel, acceptInviteTrade, crystalCollectLock, menu, textBoxId, menuId, changeName, activeAccProtect, openLockAccProtect, clearAccProtect, getFlag, openUIZone."
+      },
+      {
+        "direction": "DISPATCH",
+        "location": "Main.cs:505-509",
+        "opcode": "Session_ME.update() / Session_ME2.update()",
+        "payload_summary": "Pumps incoming/outgoing network message queues on Unity Update()."
+      }
+    ],
+    "client_core_render_audio__p02": [
+      {
+        "direction": "DISPATCH",
+        "location": "SoundMn.cs:468",
+        "opcode": "sendOptHat(0)",
+        "payload_summary": "HatToolOption() dispatches hat display option toggle to server via Service.gI().sendOptHat(0)."
+      },
+      {
+        "direction": "DISPATCH",
+        "location": "SoundMn.cs:692",
+        "opcode": "Session_ME.close()",
+        "payload_summary": "backToRegister() closes active network session and switches UI to login/register screen."
+      },
+      {
+        "direction": "READ",
+        "location": "mSystem.cs:405-419",
+        "opcode": "ConnectionStateFlags",
+        "payload_summary": "onConnectOK/onConnectionFail/onDisconnected set Controller.isConnectOK/isConnectionFail/isDisconnected flags."
+      }
+    ],
+    "client_gameplay_entities__p01": [
+      {
+        "direction": "DISPATCH",
+        "location": "Client/Client/Assets/Scripts/Game1/Assets/src/g/BigBoss.cs:183,203",
+        "opcode": "Service.gI().requestModTemplate(templateId)",
+        "payload_summary": "Requests mob EffectData template when local asset load fails"
+      },
+      {
+        "direction": "DISPATCH",
+        "location": "Client/Client/Assets/Scripts/Game1/BachTuoc.cs:141",
+        "opcode": "Service.gI().requestModTemplate(templateId)",
+        "payload_summary": "Requests mob EffectData template when local asset load fails"
+      },
+      {
+        "direction": "DISPATCH",
+        "location": "Client/Client/Assets/Scripts/Game1/BigBoss2.cs:166",
+        "opcode": "Service.gI().requestModTemplate(templateId)",
+        "payload_summary": "Requests mob EffectData template when local asset load fails"
+      },
+      {
+        "direction": "DISPATCH",
+        "location": "Client/Client/Assets/Scripts/Game1/Assets/src/g/ClientInput.cs:196",
+        "opcode": "Service.gI().sendClientInput(tf)",
+        "payload_summary": "Sends array of TField text inputs to server on OK button"
+      },
+      {
+        "direction": "DISPATCH",
+        "location": "Client/Client/Assets/Scripts/Game1/Assets/src/g/RegisterScreen.cs:388",
+        "opcode": "Service.gI().charInfo(user, pass)",
+        "payload_summary": "Sends validated account username and password for registration"
+      },
+      {
+        "direction": "DISPATCH",
+        "location": "Client/Client/Assets/Scripts/Game1/Assets/src/g/ImageSource.cs:27,73",
+        "opcode": "Service.gI().imageSource(myVector)",
+        "payload_summary": "Sends MyVector of ImageSource entries to sync (always empty due to dead 'if (false)')"
+      }
+    ],
+    "client_gameplay_entities__p02": [
+      {
+        "direction": "DISPATCH",
+        "location": "Char.cs:2476, 2495, 2519, 2958, 3414, 3442, 3959, 3971, 4096, 4158, 4187, 4191, 4300, 4305, 4495, 4511",
+        "opcode": "Service.gI().charMove()",
+        "payload_summary": "Sends local player cx, cy, cdir movement sync to server on move deltas, landing, reset point, and waypoint entry."
+      },
+      {
+        "direction": "DISPATCH",
+        "location": "Char.cs:2479, 4100",
+        "opcode": "Service.gI().getMapOffline()",
+        "payload_summary": "Requests offline training map transition when entering waypoint in training map."
+      },
+      {
+        "direction": "DISPATCH",
+        "location": "Char.cs:2484, 4104",
+        "opcode": "Service.gI().requestChangeMap()",
+        "payload_summary": "Requests map change when entering standard waypoint."
+      },
+      {
+        "direction": "DISPATCH",
+        "location": "Char.cs:2195, 2992, 3394, 3536, 3896, 4018, 5216-5280, 5404-5427",
+        "opcode": "Service.gI().skill_not_focus(sbyte)",
+        "payload_summary": "Dispatches non-target skill states (0=TDHS, 1=start Taitaonangluong, 2=tick heal, 3=stop charge, 4=charge skill, 6=monkey, 7=huyt sao, 8=de trung, 9=shield/khien, 10=tu sat/mafuba)."
+      },
+      {
+        "direction": "DISPATCH",
+        "location": "Char.cs:4682",
+        "opcode": "Service.gI().requestModTemplate(50)",
+        "payload_summary": "Requests mob template 50 data from server for special mount rendering when local asset is missing."
+      },
+      {
+        "direction": "DISPATCH",
+        "location": "Char.cs:5605",
+        "opcode": "Service.gI().sendPlayerAttack(MyVector vMob, MyVector vChar, int type)",
+        "payload_summary": "Dispatches target mobs/players and attack type (0=none, 1=mob, 2=char) at skill release frame."
+      }
+    ],
+    "client_gameplay_entities__p03": [
+      {
+        "direction": "DISPATCH",
+        "location": "Char.cs:6618",
+        "opcode": "Service.requestBagImage",
+        "payload_summary": "(sbyte)bag - requests clan bag icon sprites when bag ID missing from ClanImage.idImages"
+      },
+      {
+        "direction": "DISPATCH",
+        "location": "Char.cs:7746",
+        "opcode": "Service.useItem",
+        "payload_summary": "(0, 1, -1, arrItemBag[i].template.id) - uses potion/pea item from bag"
+      },
+      {
+        "direction": "DISPATCH",
+        "location": "Char.cs:8008",
+        "opcode": "Service.funsion",
+        "payload_summary": "(sbyte fusion) - dispatches fusion state 4 or 5"
+      },
+      {
+        "direction": "DISPATCH",
+        "location": "Char.cs:8441",
+        "opcode": "Service.new_skill_not_focus",
+        "payload_summary": "((sbyte)idTemplateSkill, (sbyte)cdir, short x, short y) - dispatches new skill attack coordinates"
+      },
+      {
+        "direction": "DISPATCH",
+        "location": "ClanImage.cs:21",
+        "opcode": "Service.clanImage",
+        "payload_summary": "(sbyte)cm.ID - requests clan image data"
+      },
+      {
+        "direction": "DISPATCH",
+        "location": "ChooseCharScr.cs:158",
+        "opcode": "Service.finishUpdate",
+        "payload_summary": "(playerData[focus].playerID) - selects character to enter game"
+      },
+      {
+        "direction": "DISPATCH",
+        "location": "CrackBallScr.cs:347, 570, 771",
+        "opcode": "Service.SendCrackBall",
+        "payload_summary": "(type 2, (byte)(checkTicket() + checkNum())) to spin/crack balls, or (typePrice, 0) to replay"
+      },
+      {
+        "direction": "DISPATCH",
+        "location": "CreateCharScr.cs:188, 201",
+        "opcode": "Service.getBgTemplate",
+        "payload_summary": "(bgItem.idImage) - requests missing background tile image"
+      },
+      {
+        "direction": "DISPATCH",
+        "location": "CreateCharScr.cs:294",
+        "opcode": "Service.finishUpdate",
+        "payload_summary": "() - signals completion of resource updates during character creation"
+      },
+      {
+        "direction": "DISPATCH",
+        "location": "CreateCharScr.cs:631",
+        "opcode": "Service.createChar",
+        "payload_summary": "(name, indexGender, hairID[indexGender][indexHair]) - submits new character creation request"
+      }
+    ],
+    "client_gameplay_entities__p04": [
+      {
+        "direction": "DISPATCH",
+        "location": "Client/Client/Assets/Scripts/Game1/Effect.cs:178, 226",
+        "opcode": "Service.gI().getEffData((short)id)",
+        "payload_summary": "Requests binary effect data and sprite sheet from server when local /x{zoomLevel}/effectdata/{id}/data file is missing."
+      }
+    ],
+    "client_gameplay_entities__p05": [
+      {
+        "direction": "READ",
+        "location": "GameScr.cs:226-259",
+        "opcode": "RMS:NRitem0",
+        "payload_summary": "vcItem (byte), type (byte), count (unsigned byte), followed by count * (name UTF, type byte) for ItemOptionTemplate."
+      },
+      {
+        "direction": "READ",
+        "location": "GameScr.cs:1613-1666",
+        "opcode": "RMS:NR_part",
+        "payload_summary": "num (short), followed by num * (type byte, pi.Length * (id short, dx byte, dy byte)) for character/item Parts."
+      },
+      {
+        "direction": "READ",
+        "location": "GameScr.cs:1668-1713",
+        "opcode": "RMS:NR_effect",
+        "payload_summary": "num (short), followed by num * (idEf short, arrEfInfoLen byte, arrEfInfoLen * (idImg short, dx byte, dy byte))."
+      },
+      {
+        "direction": "READ",
+        "location": "GameScr.cs:1735-1767",
+        "opcode": "RMS:NR_arrow",
+        "payload_summary": "num (short), followed by num * (id short, imgId[0..2] 3x short)."
+      },
+      {
+        "direction": "READ",
+        "location": "GameScr.cs:1769-1863",
+        "opcode": "RMS:NR_dart",
+        "payload_summary": "num (short), followed by num * (id, nUpdate, va*256, xdPercent, tail[], tailBorder[], xd1[], xd2[], head[][], headBorder[][]) all short-length prefixed shorts."
+      },
+      {
+        "direction": "READ",
+        "location": "GameScr.cs:1865-1955",
+        "opcode": "RMS:NR_skill",
+        "payload_summary": "num (short), followed by num * (id short, effectHappenOnMob short, numEff byte, skillStand[], skillfly[] with status byte + 12 shorts each)."
+      },
+      {
+        "direction": "DISPATCH",
+        "location": "GameScr.cs:1327",
+        "opcode": "Service.finishLoadMap()",
+        "payload_summary": "Notifies server map load completed when !isPaintOther in switchToMe()."
+      },
+      {
+        "direction": "DISPATCH",
+        "location": "GameScr.cs:1453",
+        "opcode": "Service.selectSkill(sbyte)",
+        "payload_summary": "Sends selected current skill template id in onCSkill()."
+      },
+      {
+        "direction": "DISPATCH",
+        "location": "GameScr.cs:1532, 1549",
+        "opcode": "Service.changeOnKeyScr(sbyte[])",
+        "payload_summary": "Sends 10-slot skill template ID array from both saveonScreenSkillToRMS() and saveKeySkillToRMS()."
+      },
+      {
+        "direction": "DISPATCH",
+        "location": "GameScr.cs:1874",
+        "opcode": "Service.updateData()",
+        "payload_summary": "Requests skill/data update from server when NR_skill RMS is null."
+      },
+      {
+        "direction": "DISPATCH",
+        "location": "GameScr.cs:2639, 2706, 2791",
+        "opcode": "Service.charMove()",
+        "payload_summary": "Sends updated player position during NPC interaction or melee distance adjustment in isAttack()."
+      },
+      {
+        "direction": "DISPATCH",
+        "location": "GameScr.cs:2707",
+        "opcode": "Service.openMenu(int)",
+        "payload_summary": "Requests NPC dialogue menu for npcFocus.template.npcTemplateId."
+      },
+      {
+        "direction": "DISPATCH",
+        "location": "GameScr.cs:2815-2816",
+        "opcode": "Service.getPlayerMenu(int), Service.messagePlayerMenu(int)",
+        "payload_summary": "Requests player interaction menu data for non-touch focused player."
+      }
+    ],
+    "client_gameplay_entities__p06": [
+      {
+        "direction": "READ",
+        "location": "Client/Client/Assets/Scripts/Game1/GameScr.cs:7262-7297",
+        "opcode": "openUIZone(Message)",
+        "payload_summary": "Reads zoneCount (byte); per zone: zoneId (byte), pts (byte), numPlayer (byte), maxPlayer (byte), hasRank (byte); if hasRank==1: rankName1 (UTF), rank1 (int), rankName2 (UTF), rank2 (int)."
+      },
+      {
+        "direction": "WRITE",
+        "location": "Client/Client/Assets/Scripts/Game1/GameScr.cs:3241,4656",
+        "opcode": "Service.mobCapcha",
+        "payload_summary": "Sends single char input for anti-bot mob captcha."
+      },
+      {
+        "direction": "WRITE",
+        "location": "Client/Client/Assets/Scripts/Game1/GameScr.cs:3296,3315,3336,3348,3363,3447,3507,4287,4931,7458",
+        "opcode": "Service.charMove",
+        "payload_summary": "Syncs current player position/direction to server (also invoked immediately after teleporting cx/cy in autoPlay)."
+      },
+      {
+        "direction": "WRITE",
+        "location": "Client/Client/Assets/Scripts/Game1/GameScr.cs:4505,4539,4569,4584",
+        "opcode": "Service.selectSkill",
+        "payload_summary": "Sends selected skill template ID."
+      },
+      {
+        "direction": "WRITE",
+        "location": "Client/Client/Assets/Scripts/Game1/GameScr.cs:4786,4810,4834",
+        "opcode": "Service.useItem",
+        "payload_summary": "Uses bag item (type 0, where 1, index i) for capsule 193/194 or (-1,-1,-1,-1) for dragon ball pickup action."
+      },
+      {
+        "direction": "WRITE",
+        "location": "Client/Client/Assets/Scripts/Game1/GameScr.cs:5119",
+        "opcode": "Service.checkMMove",
+        "payload_summary": "Sends elapsed wall-clock seconds per 100 client update ticks for speed-hack detection."
+      },
+      {
+        "direction": "WRITE",
+        "location": "Client/Client/Assets/Scripts/Game1/GameScr.cs:4269,4471,7209,7214,7350,7399,7405,7413,7424,7438,7439,7446,7454,7499,7502,7522,7526,7581,7597,7606,7614,7626",
+        "opcode": "Service gameplay/social actions",
+        "payload_summary": "Dispatches requestPean, pickItem, chat, chatPlayer, getFlag, petStatus, friend, giaodich, playerMenu actions, player_vs_player, returnTownFromDead, wakeUpFromDead, confirmMenu, requestChangeZone, getClan, clanInvite."
+      }
+    ],
+    "client_gameplay_entities__p07": [
+      {
+        "direction": "WRITE",
+        "location": "ImgByName.cs:36",
+        "opcode": "Service.gI().getImgByName",
+        "payload_summary": "Requests missing dynamic image asset by name (throttled every 200 calls)."
+      },
+      {
+        "direction": "WRITE",
+        "location": "ItemTime.cs:372",
+        "opcode": "Service.gI().useItem",
+        "payload_summary": "useItem(0, 1, (sbyte)targetItem.indexUI, -1) triggered by auto-use buff loop."
+      },
+      {
+        "direction": "WRITE",
+        "location": "LoginScr.cs:359",
+        "opcode": "Service.gI().requestRegister",
+        "payload_summary": "Registers account with username, password, userAo, passAo, GameMidlet.VERSION."
+      },
+      {
+        "direction": "WRITE",
+        "location": "LoginScr.cs:496,922",
+        "opcode": "Service.gI().login",
+        "payload_summary": "Logs in with username, password (or empty string on quick-play), VERSION, and isLogin2 byte flag."
+      },
+      {
+        "direction": "WRITE",
+        "location": "LoginScr.cs:916",
+        "opcode": "Service.gI().login2",
+        "payload_summary": "Requests new guest/quick-play account creation when userAo is empty."
+      },
+      {
+        "direction": "WRITE",
+        "location": "LoginScr.cs:593",
+        "opcode": "Service.gI().finishUpdate",
+        "payload_summary": "Notifies server when all client data/map/skill/item updates complete."
+      },
+      {
+        "direction": "WRITE",
+        "location": "MagicTree.cs:143,194",
+        "opcode": "Service.gI().getMagicTree / magicTree",
+        "payload_summary": "getMagicTree(2) when timer reaches 0; magicTree(1) on popup interaction."
+      },
+      {
+        "direction": "READ",
+        "location": "IMessageHandler.cs:5; ISession.cs:11; InputStream.cs:3",
+        "opcode": "IMessageHandler.onMessage / ISession.sendMessage",
+        "payload_summary": "Client message dispatch and session transport interfaces; InputStream wraps myReader."
+      }
+    ],
+    "client_gameplay_entities__p08": [
+      {
+        "direction": "READ",
+        "location": "Client/Client/Assets/Scripts/Game1/NinjaUtil.cs:23-39",
+        "opcode": "helper (Message)",
+        "payload_summary": "Reads int length then raw sbyte[] via msg.reader().readInt() / read(ref data); skips reading if length <= 1."
+      },
+      {
+        "direction": "READ",
+        "location": "Client/Client/Assets/Scripts/Game1/NinjaUtil.cs:41-55",
+        "opcode": "helper (myReader)",
+        "payload_summary": "Reads int length then raw sbyte[] via dos.readInt() / read(ref data) without length validation."
+      },
+      {
+        "direction": "DISPATCH",
+        "location": "Client/Client/Assets/Scripts/Game1/Mob.cs:437 & NewBoss.cs:158",
+        "opcode": "Service.requestModTemplate",
+        "payload_summary": "Requests missing mob template data/sprite from server by templateId."
+      },
+      {
+        "direction": "DISPATCH",
+        "location": "Client/Client/Assets/Scripts/Game1/MoneyCharge.cs:239",
+        "opcode": "Service.sendCardInfo",
+        "payload_summary": "Sends card serial and card code strings to server for top-up."
+      }
+    ],
+    "client_gameplay_entities__p09": [
+      {
+        "direction": "DISPATCH",
+        "location": "Client/Client/Assets/Scripts/Game1/RadarScr.cs:515",
+        "opcode": "Service.SendRada(1, focus_card.id)",
+        "payload_summary": "Sends sub-command 1 and card id to toggle/activate card aura on server."
+      },
+      {
+        "direction": "DISPATCH",
+        "location": "Client/Client/Assets/Scripts/Game1/ServerListScreen.cs:967,1245",
+        "opcode": "Service.getResource(1, null)",
+        "payload_summary": "Requests resource download type 1 from server."
+      },
+      {
+        "direction": "DISPATCH",
+        "location": "Client/Client/Assets/Scripts/Game1/ServerListScreen.cs:993,1025,1097",
+        "opcode": "Service.login2(string.Empty)",
+        "payload_summary": "Requests guest/virtual account creation or login."
+      },
+      {
+        "direction": "DISPATCH",
+        "location": "Client/Client/Assets/Scripts/Game1/ServerListScreen.cs:999,1000,1103,1104",
+        "opcode": "Service.setClientType() / Service.login(...)",
+        "payload_summary": "Sends client type and logs in with stored userAo username, empty password, GameMidlet.VERSION, type 1."
+      },
+      {
+        "direction": "DISPATCH",
+        "location": "Client/Client/Assets/Scripts/Game1/ServerListScreen.cs:574",
+        "opcode": "Service.finishUpdate()",
+        "payload_summary": "Notifies server that client update/auto-login step completed."
+      },
+      {
+        "direction": "WRITE",
+        "location": "Client/Client/Assets/Scripts/Game1/ServerListScreen.cs:733-772",
+        "opcode": "RMS NRlink3 (DataOutputStream)",
+        "payload_summary": "Writes language byte, server count byte, per-server (name UTF, address UTF, port short, language byte, typeSv byte, isNew byte), serverPriority byte."
+      },
+      {
+        "direction": "READ",
+        "location": "Client/Client/Assets/Scripts/Game1/ServerListScreen.cs:786-841",
+        "opcode": "RMS NRlink3 (DataInputStream)",
+        "payload_summary": "Reads language byte, server count sbyte, per-server metadata, and serverPriority byte into static arrays."
+      },
+      {
+        "direction": "READ",
+        "location": "Client/Client/Assets/Scripts/Game1/Rms.cs:61-112",
+        "opcode": "RMS UTF string (DataInputStream/DataOutputStream)",
+        "payload_summary": "Reads/writes UTF-8 length-prefixed string records (including \"enc:\" + Base64 AES payload for passwords)."
+      }
+    ],
+    "client_gameplay_entities__p10": [
+      {
+        "direction": "DISPATCH",
+        "location": "TabClanIcon.cs:354",
+        "opcode": "Service.getClan(2, iconId, text)",
+        "payload_summary": "action=2 (create clan), sbyte iconId=(sbyte)ClanImage.ID, string clanName/text"
+      },
+      {
+        "direction": "DISPATCH",
+        "location": "TabClanIcon.cs:358",
+        "opcode": "Service.getClan(4, iconId, empty)",
+        "payload_summary": "action=4 (change clan icon), sbyte iconId=(sbyte)ClanImage.ID, empty string"
+      },
+      {
+        "direction": "DISPATCH",
+        "location": "ServerScr.cs:385-394",
+        "opcode": "selectServer / clearSendingMessage",
+        "payload_summary": "Clears sending queue and connects to ServerListScreen.ipSelect server"
+      },
+      {
+        "direction": "DISPATCH",
+        "location": "SplashScr.cs:102,185,203",
+        "opcode": "getServerList / GameCanvas.connect",
+        "payload_summary": "Fetches server list from linkDefault if svselect == -1 and initiates TCP connection to GameMidlet.IP:PORT"
+      },
+      {
+        "direction": "READ",
+        "location": "Teleport.cs:434",
+        "opcode": "Controller.isStopReadMessage = false",
+        "payload_summary": "Resumes reading buffered server messages after outgoing player teleport ship leaves screen (y <= -80)"
+      }
+    ],
+    "client_gameplay_entities__p11": [
+      {
+        "direction": "WRITE",
+        "location": "Client/Client/Assets/Scripts/Game1/TransportScr.cs:173",
+        "opcode": "Service.gI().transportNow()",
+        "payload_summary": "Sent when client travel progress currSpeed reaches GameCanvas.w / 2 + 30."
+      },
+      {
+        "direction": "WRITE",
+        "location": "Client/Client/Assets/Scripts/Game1/Waypoint.cs:87, 94, 101",
+        "opcode": "Service.gI().charMove()",
+        "payload_summary": "Syncs player position before approaching or entering a waypoint."
+      },
+      {
+        "direction": "WRITE",
+        "location": "Client/Client/Assets/Scripts/Game1/Waypoint.cs:96",
+        "opcode": "Service.gI().getMapOffline()",
+        "payload_summary": "Requests offline map entry when Char.myCharz().isInEnterOfflinePoint() != null."
+      },
+      {
+        "direction": "WRITE",
+        "location": "Client/Client/Assets/Scripts/Game1/Waypoint.cs:102",
+        "opcode": "Service.gI().requestChangeMap()",
+        "payload_summary": "Requests online map transition when Char.myCharz().isInEnterOnlinePoint() != null."
+      }
+    ],
+    "client_network_protocol__p01": [
+      {
+        "direction": "READ",
+        "location": "Controller2.cs:14-1053",
+        "opcode": "-128, 127, 114, 113, 48, 31, -89, 42, 52, 51, -127, -126, -122, 102, 101, -120, -121, 100, -123, -119, -117, -116, -115, -113, -111, 125, 124, 123, 122, 121, -124, -125, -110, 93, -106, -105, -103, -102, -101, -100",
+        "payload_summary": "Extended server-to-client message handlers using raw literals instead of Cmd/NetworkOpcodes constants."
+      },
+      {
+        "direction": "WRITE",
+        "location": "Controller2.cs:412, 419, 827, 831, 962, 973, 974",
+        "opcode": "sendCheckController, sendCheckMap, sendServerData, login, setClientType",
+        "payload_summary": "Client replies triggered during latency checks (-120/-121), RMS server data sync (-110), and login fallback/virtual login (-102/-101)."
+      },
+      {
+        "direction": "DISPATCH",
+        "location": "Cmd.cs:5-580 & NetworkOpcodes.cs:12-66",
+        "opcode": "sbyte constants",
+        "payload_summary": "Protocol opcode constant definitions with duplicate values in Cmd.cs and mismatched values in NetworkOpcodes.cs."
+      }
+    ],
+    "client_network_protocol__p02": [
+      {
+        "direction": "READ",
+        "location": "Controller.cs:85-118",
+        "opcode": "cmd 90 -> requestItemPlayer",
+        "payload_summary": "unsignedByte slot, int saleCoinLock, byte sys, EOF-terminated loop of (unsignedByte optId, unsignedShort param)"
+      },
+      {
+        "direction": "DISPATCH",
+        "location": "Controller.cs:129-136",
+        "opcode": "pre-switch delegates",
+        "payload_summary": "Controller2.readMessage(msg) then PacketDispatcher.gI().Dispatch(this, msg)"
+      },
+      {
+        "direction": "READ",
+        "location": "Controller.cs:139-267",
+        "opcode": "cmd 0, 24, 20, 66, 65, 112, -98, -97, -96",
+        "payload_summary": "Login/opt/phuban/imgByName delegates; ItemTime(sbyte,UTF,short); SpecialSkill(byte,short/UTF tabs); confirm dlg; cNangdong(int); Top leaderboard"
+      },
+      {
+        "direction": "READ",
+        "location": "Controller.cs:268-529",
+        "opcode": "cmd -94, -95",
+        "payload_summary": "-94: loop (short skillId, int cd); -95: mobMe actions 0..7 (int charId, short tpl, readInt3Byte hp/dame, byte mobId)"
+      },
+      {
+        "direction": "READ",
+        "location": "Controller.cs:530-931",
+        "opcode": "cmd -92, -91, -90, -88, -87, -86, -85, -112, -84, -83, -82",
+        "payload_summary": "clientType; mapTrans; UPDATE_BODY; switch serverScreen; UPDATE_DATA; Trade(actions 0..7); Captcha; mob body; mob maxHp; DragonBall; TileMap tiles"
+      },
+      {
+        "direction": "READ",
+        "location": "Controller.cs:932-1465",
+        "opcode": "cmd -81, -80, -99, -79, -93, -77, -76, -74, -43, -59, -62, -65, -64, -63",
+        "payload_summary": "Combine; Friend/Enemy; ViewPower; Bg/SmallImg versions; Achievements; Resource download; itemRequest; PvP; ClanImage; Teleport; Bag icon"
+      },
+      {
+        "direction": "READ",
+        "location": "Controller.cs:1466-2108",
+        "opcode": "cmd -57, -51, -53, -52, -50, -47, -46, -61, -42, 1, 2, -107, -37, -36, -35",
+        "payload_summary": "Clan invite/chat/info/member/search/icon/id; Char stats(-42); Register/CreateChar; Pet info(-107); Body(-37), Bag(-36), Box(-35) items"
+      },
+      {
+        "direction": "READ",
+        "location": "Controller.cs:2109-2959",
+        "opcode": "cmd -45, -44, -41, -34, 11, -69, -68, -67, -66, -32, 92, -26, -25, 94, 47, 81, 82, 85, 86, 87",
+        "payload_summary": "SKILL_NOT_FOCUS(-45); Shop/KyGui(-44); Level captions; MagicTree; MobTemplate(11); Stamina; SmallImg/Eff/Bg bytes; Chat/Notice; Mob debuffs"
+      },
+      {
+        "direction": "READ",
+        "location": "Controller.cs:2960-3990",
+        "opcode": "cmd 56, 83, 84, 46, -29, -28, -30, 62..64, 39, 57, 58, 88, 27, 33, 40, 41, 50, 43, 90, 29, -21..-18, 68, 69, -14, -22, -70, 38, 32, 7, 6, -24, -31, -4, 54, -60",
+        "payload_summary": "Injure/Revive/ResetPoint; Sub-dispatchers(-29,-28,-30); CuuSat/TradeWait; Menus/Dialogs/Tasks/GameInfo; ItemMap; MAP_INFO(-24); BgItem(-31); Combat(-4,54,-60)"
+      },
+      {
+        "direction": "READ",
+        "location": "Controller.cs:3994-4626",
+        "opcode": "cmd -2, 95, 96, 97, -1, -3, -73, -5, -7, -6, -13, -75, -9, 45, -12, 74, -11, -10, -17, 66(dead), -8, -16, 44, 18, 19",
+        "payload_summary": "Second switch: yen/xu/power; TaskOrder; NPC hide; Char add/move/remove; Mob respawn/boss/hit/miss/die/attack; Die/Revive; Chat bubble; Batch char sync; Kill count"
+      }
+    ],
+    "client_network_protocol__p03": [
+      {
+        "direction": "DISPATCH",
+        "location": "Client/Client/Assets/Scripts/Game1/Network/PacketDispatcher.cs:49-74",
+        "opcode": "Various (NetworkOpcodes.*)",
+        "payload_summary": "Dispatches incoming Message.command to 8 IPacketHandler instances: Auth, PlayerStats, TaskNpc, Clan, Trade, Item, MapMovement, Combat."
+      },
+      {
+        "direction": "READ",
+        "location": "Client/Client/Assets/Scripts/Game1/Controller.cs:5382-5691",
+        "opcode": "messageNotMap (sub-opcodes 4,6,7,8,9,10,12,16,17,18,20,35,36)",
+        "payload_summary": "Reads data/map/skill/item template versions, cached RMS blobs, tilemap dimensions/tiles, exp table, PK status, rename dialog."
+      },
+      {
+        "direction": "READ",
+        "location": "Client/Client/Assets/Scripts/Game1/Controller.cs:5693-5727",
+        "opcode": "messageNotLogin (sub-opcode 2)",
+        "payload_summary": "Reads server list URL UTF string and CanNapTien byte flag."
+      },
+      {
+        "direction": "READ",
+        "location": "Client/Client/Assets/Scripts/Game1/Controller.cs:5729-6377",
+        "opcode": "messageSubCommand (sub 0,1,2,4,5,6,7,8,9,10,12,13,14,15,19,21,23,35,61,62,63)",
+        "payload_summary": "Reads full player info/inventory/box/skills/currencies (sub 0), HP/MP/xu updates, other player updates, skill shortcuts, skill upgrades, PK type, player context menu."
+      },
+      {
+        "direction": "READ",
+        "location": "Client/Client/Assets/Scripts/Game1/Controller.cs:6666-6784",
+        "opcode": "phuban_Info & read_opt",
+        "payload_summary": "Reads Namek battlefield HUD state (phuban_Info type 0 sub 0,1,2,4,5) and optional cosmetics/banners/water/server messages (read_opt sub 0,2,3,4)."
+      },
+      {
+        "direction": "READ",
+        "location": "Client/Client/Assets/Scripts/Game1/Network/Handlers/AuthPacketHandler.cs:13-25",
+        "opcode": "-26 (SERVER_ALERT)",
+        "payload_summary": "Reads alert UTF string and shows OK dialog, resetting login/map flags."
+      },
+      {
+        "direction": "READ",
+        "location": "Client/Client/Assets/Scripts/Game1/Network/Handlers/ClanPacketHandler.cs:13-281",
+        "opcode": "-51,-53,-52,-50,-47,-46",
+        "payload_summary": "Reads clan chat/donate messages, full clan info + member list, member add/remove/update, member view list, clan search results, clan icon catalog/update."
+      },
+      {
+        "direction": "READ",
+        "location": "Client/Client/Assets/Scripts/Game1/Network/Handlers/CombatPacketHandler.cs:17-148",
+        "opcode": "CHAR_INJURE(56), REVIVE(84), MOB_ME_ATTACK(83), SKILL_COOLDOWN(-94)",
+        "payload_summary": "Reads HP/damage/fatal/effectId, revive coordinates, pet-mob attack target index, and skillId+cooldown pairs."
+      },
+      {
+        "direction": "READ",
+        "location": "Client/Client/Assets/Scripts/Game1/Network/Handlers/ItemPacketHandler.cs:17-192",
+        "opcode": "ITEM_MAP_REMOVE(-21), PICK(-20), OTHER_PICK(-19), DROP(-18), OTHER_DROP(-14), ADD(68)",
+        "payload_summary": "Reads ItemMap IDs, template IDs, coordinates, owner ID, and picked item text/quantity."
+      },
+      {
+        "direction": "READ",
+        "location": "Client/Client/Assets/Scripts/Game1/Network/Handlers/MapMovementPacketHandler.cs:17-97",
+        "opcode": "CHANGE_MAP_PREPARE(-22), RESET_POINT(46), MOVE_FAST(58), MAP_TRANS(-91)",
+        "payload_summary": "Reads map transition prep, respawn coords, move-fast target coords/chased charId, and teleport map/planet name lists."
+      },
+      {
+        "direction": "READ",
+        "location": "Client/Client/Assets/Scripts/Game1/Network/Handlers/PlayerStatsPacketHandler.cs:13-46",
+        "opcode": "6, -69, -68, -97",
+        "payload_summary": "Reads xu (long), luong (int), luongKhoa (int), maxStamina (short), stamina (short), nangdong (int)."
+      },
+      {
+        "direction": "READ",
+        "location": "Client/Client/Assets/Scripts/Game1/Network/Handlers/TaskNpcPacketHandler.cs:13-120",
+        "opcode": "-70, 38, 32",
+        "payload_summary": "Reads server big popup message with optional action button, NPC chat text/avatar, and NPC menu options."
+      },
+      {
+        "direction": "READ",
+        "location": "Client/Client/Assets/Scripts/Game1/Network/Handlers/TradePacketHandler.cs:17-133",
+        "opcode": "TRADE_ACTION(-86), TRADE_ORDER(39)",
+        "payload_summary": "Reads trade invites, open/cancel UI, remove item index, friend lock items + friendMoneyGD, and trade order confirmation."
+      }
+    ],
+    "client_network_protocol__p04": [
+      {
+        "direction": "WRITE",
+        "location": "Session_ME.cs:383; Session_ME2.cs:363",
+        "opcode": "-27",
+        "payload_summary": "Empty handshake request sent immediately on TCP connect before XOR key exchange."
+      },
+      {
+        "direction": "READ",
+        "location": "Session_ME.cs:100-103,142-169; Session_ME2.cs:78-81,127-154",
+        "opcode": "-27",
+        "payload_summary": "keyLen (sbyte), key bytes (XOR-chained), IP2 (UTF), PORT2 (int), isConnect2 (byte)."
+      },
+      {
+        "direction": "READ",
+        "location": "Session_ME.cs:202; Session_ME2.cs:187",
+        "opcode": "-32,-66,11,-67,-74,-87,66",
+        "payload_summary": "3-byte extended length header (`readMessage2`) for large asset/data payloads (`66` omitted in Session_ME2)."
+      },
+      {
+        "direction": "WRITE",
+        "location": "Service.cs:724-822,860-897",
+        "opcode": "-29 (sub 0,1,2)",
+        "payload_summary": "messageNotLogin: sub 0 login(user,pass,version,type); sub 1 register(user,pass,[userAo,\"a\"]); sub 2 setClientType/2(type,zoom,false,w,h,qwerty,touch,platform|ver,/info bytes)."
+      },
+      {
+        "direction": "WRITE",
+        "location": "Service.cs:731-736,1008-1042,1063-1099,1760-1857,2013-2030,2172-2190,2233-2269,2300-2435",
+        "opcode": "-28 (sub 1,2,6,7,8,9,10,12,13,16,17,18,33,34,37,38,39,40,41)",
+        "payload_summary": "messageNotMap: selectChar(1), createChar(2), updateMap/Skill/Item(6-8), requestSkill/Map/Npc(9,10,12), clientOk(13), card(16), clearTask(17), changeName(18), convertUpgrade(33), clanDun(34), accProtect(37-39,41), split(40)."
+      },
+      {
+        "direction": "WRITE",
+        "location": "Service.cs:738-743,1141-1159,1364-1418,2192-2231,2651-2689,3096-3135",
+        "opcode": "-30 (sub 16,17,19,21,22,60,61,63,64,-99)",
+        "payload_summary": "messageSubCommand: upPotential(16), upSkill(17), boxSort(19), boxCoinOut(21), requestItem(22), saveRms(60), loadRMS(61), playerMenu(63,64), upPotentialPet(-99)."
+      },
+      {
+        "direction": "WRITE",
+        "location": "Service.cs:950-1006",
+        "opcode": "-7",
+        "payload_summary": "charMove: isFly(byte 0/1), cx(short), optional cy(short if dy != 0)."
+      },
+      {
+        "direction": "WRITE",
+        "location": "Service.cs:1564-1637",
+        "opcode": "-4, 67, 54, -60",
+        "payload_summary": "sendPlayerAttack: mob/char targets (byte/int IDs) + cdir(sbyte)."
+      },
+      {
+        "direction": "WRITE",
+        "location": "Service.cs:150-211,1420-1562,1859-1876",
+        "opcode": "-81, -86, 13, 14, 36, 37, 38, 39, 50",
+        "payload_summary": "Combine (-81,13,14) and Trade (-86,36,37,38,39,50) item indexUI/coin/action packets."
+      },
+      {
+        "direction": "WRITE",
+        "location": "Service.cs:1161-1204,1639-1675,2807-2851",
+        "opcode": "6, 7, -18, -20, -43, -100",
+        "payload_summary": "Shop buy/sale(6,7), pick/throw(-20,-18), useItem(-43), consignment kigui(-100)."
+      },
+      {
+        "direction": "WRITE",
+        "location": "Service.cs:34-51,2050-2072,3197-3222,3265-3283,400-417,3240-3263",
+        "opcode": "18, 24, -45",
+        "payload_summary": "Overloaded opcodes: 18 (gotoPlayer vs requestPlayerInfo), 24 (sendOptHat vs sendCT_ready), -45 (skill_not_focus vs new_skill_not_focus)."
+      },
+      {
+        "direction": "WRITE",
+        "location": "Service.cs:1733-1839,2271-2298,2437-2463,2691-2727,2951-2987,3137-3153",
+        "opcode": "-87, -67, -32, -74, -111, 66, 11, -66",
+        "payload_summary": "Asset/template requests routed via Session_ME2 when connected: updateData(-87), icon(-67), bg(-32), resource(-74), imageSource(-111), imgByName(66), mod(11), eff(-66)."
+      },
+      {
+        "direction": "WRITE",
+        "location": "Service.cs:381-659,661-722,824-858,1245-1362,1677-1731,2465-2650,2729-3238",
+        "opcode": "40,42,44,53,59,62,69,75-79,88,90,91,112,125,126,127,-15,-16,-23,-33..-41,-44,-46..-63,-71,-72,-76,-78..-80,-85,-91,-96,-99,-101,-103..-110,-113,-114,-118,-120,-121,-125..-127",
+        "payload_summary": "Remaining gameplay, clan, social, chat, radar, captcha, pet, flag, crackball, and ping/sync opcodes."
+      }
+    ],
+    "client_ui_god_mods__p01": [
+      {
+        "direction": "DISPATCH",
+        "location": "Client/Client/Assets/Scripts/Game1/God/Client/ClientManager.cs:221",
+        "opcode": "Service.requestChangeZone",
+        "payload_summary": "`k <zone>` chat command requests zone switch `(zone, -1)`."
+      },
+      {
+        "direction": "DISPATCH",
+        "location": "Client/Client/Assets/Scripts/Game1/God/Item/Items.cs:220",
+        "opcode": "Service.buyItem",
+        "payload_summary": "Auto-buy sends `((sbyte)(buyGold ? 0 : 1), item.id, 0)` every 200ms."
+      },
+      {
+        "direction": "DISPATCH",
+        "location": "Client/Client/Assets/Scripts/Game1/God/Mob/Mobs.cs:76",
+        "opcode": "Service.charMove",
+        "payload_summary": "`Mobs.GotoXY` sets `cx/cy` directly and dispatches `charMove()`."
+      },
+      {
+        "direction": "DISPATCH",
+        "location": "Client/Client/Assets/Scripts/Game1/God/Player/NPoint.cs:218, 221",
+        "opcode": "Service.upPotential / upPotentialPet",
+        "payload_summary": "Auto-stat sends `(type, num)` in 1/10/100 batches every 20 ticks for Master or Pet."
+      },
+      {
+        "direction": "DISPATCH",
+        "location": "Client/Client/Assets/Scripts/Game1/God/Player/Revive.cs:36",
+        "opcode": "Service.wakeUpFromDead",
+        "payload_summary": "Auto-revive dispatches `wakeUpFromDead()` every 20 ticks when `meDead`."
+      },
+      {
+        "direction": "DISPATCH",
+        "location": "Client/Client/Assets/Scripts/Game1/God/Skill/nSkill.cs:36, 49",
+        "opcode": "Service.sendPlayerAttack",
+        "payload_summary": "Auto-attack dispatches mob `(attackMobVector, emptyVector, 1)` or player `(emptyVector, attackCharVector, 2)` packets."
+      },
+      {
+        "direction": "DISPATCH",
+        "location": "Client/Client/Assets/Scripts/Game1/God/Utils/Utils.cs:26",
+        "opcode": "Service.useItem",
+        "payload_summary": "`Utils.UseItem` dispatches `(0, 1, (sbyte)item.indexUI, -1)` for first matching template ID."
+      },
+      {
+        "direction": "DISPATCH",
+        "location": "Client/Client/Assets/Scripts/Game1/God/Utils/Utils.cs:41",
+        "opcode": "Service.charMove",
+        "payload_summary": "`Utils.Teleport` sets `cx/cy` directly and dispatches `charMove()`."
+      }
+    ],
+    "client_ui_god_mods__p02": [
+      {
+        "direction": "DISPATCH",
+        "location": "Panel.cs:3068, 3072, 3119, 3123, 4043, 4047, 4056, 4060",
+        "opcode": "Service.gI().kigui",
+        "payload_summary": "action=4, itemId=-1, tab=(sbyte)currentTabIndex, page=currPageShop/maxPageShop±1, money=-1"
+      },
+      {
+        "direction": "DISPATCH",
+        "location": "Panel.cs:3778",
+        "opcode": "Service.gI().searchClan",
+        "payload_summary": "text=string.Empty"
+      },
+      {
+        "direction": "DISPATCH",
+        "location": "Panel.cs:4092",
+        "opcode": "Service.gI().requestChangeZone",
+        "payload_summary": "zoneId=selected, -1"
+      },
+      {
+        "direction": "DISPATCH",
+        "location": "Panel.cs:4096",
+        "opcode": "Service.gI().requestMapSelect",
+        "payload_summary": "selected map index"
+      }
+    ],
+    "client_ui_god_mods__p03": [
+      {
+        "direction": "DISPATCH",
+        "location": "Panel.cs:7735, 7789, 8204, 8210, 9847, 9858, 9864, 10464, 10491",
+        "opcode": "Service.giaodich",
+        "payload_summary": "Trade actions: 2=add item(indexUI, qty)/money(xu), 3=cancel, 4=remove item, 5=lock, 7=accept."
+      },
+      {
+        "direction": "DISPATCH",
+        "location": "Panel.cs:8269",
+        "opcode": "Service.combine",
+        "payload_summary": "Sends combine action (1, vItemCombine) to server."
+      },
+      {
+        "direction": "DISPATCH",
+        "location": "Panel.cs:9913, 9918, 9926, 9949, 9982, 9986, 10008, 10014",
+        "opcode": "Service.getItem",
+        "payload_summary": "Moves item between BAG/BOX/BODY/PET using (type, (sbyte)slotIndex)."
+      },
+      {
+        "direction": "DISPATCH",
+        "location": "Panel.cs:9930, 9934, 9967, 9971, 9995, 10003",
+        "opcode": "Service.useItem",
+        "payload_summary": "Item use/drop/delete with (useType 0/1/2/3/4, where, (sbyte)slotIndex, -1)."
+      },
+      {
+        "direction": "DISPATCH",
+        "location": "Panel.cs:10019, 10024, 10029, 10035, 10041, 10060, 10066, 10049, 10055",
+        "opcode": "Service.buyItem / saleItem",
+        "payload_summary": "Shop buy (type 0/1/2/3, templateId/index) and item sale (0/1, where, index)."
+      },
+      {
+        "direction": "DISPATCH",
+        "location": "Panel.cs:10266, 10272, 10278, 10284, 10290, 10320, 10325, 10500, 10512",
+        "opcode": "Service.kigui",
+        "payload_summary": "Consignment actions: 0=list(itemId, moneyType, price, qty), 1=cancel, 2=claim money, 3=buy, 5=upTop."
+      },
+      {
+        "direction": "DISPATCH",
+        "location": "Panel.cs:9097, 9106, 9161, 9188, 9203, 9208, 9216, 9296, 9303, 9307, 10074, 10084, 10098, 10103-10118, 10346, 10353, 10379",
+        "opcode": "Service.getClan / searchClan / clanMessage / leaveClan / clanDonate / joinClan / clanMember / clanRemote",
+        "payload_summary": "Clan management, search, chat, donate, join response, member list, role/kick actions."
+      },
+      {
+        "direction": "DISPATCH",
+        "location": "Panel.cs:7793, 8128, 8460, 8602, 8629, 8641, 8647, 8657, 8840, 9517, 9767, 9870-9883, 10122-10134, 10176-10182, 10311, 10397, 10414, 10433",
+        "opcode": "Service.sendThachDau / petStatus / petInfo / getArchivemnt / SendRada / sendDelAcc / openMenu / getFlag / openUIZone / speacialSkill / upPotential / friend / gotoPlayer / enemy / setLockInventory / chatGlobal / chatPlayer",
+        "payload_summary": "Misc UI commands for PvP challenge, pet state, achievements, radar, flags, zones, stats, social, inventory lock, and chat."
+      }
+    ],
+    "client_ui_god_mods__p04": [
+      {
+        "direction": "DISPATCH",
+        "location": "Client/Client/Assets/Scripts/Game1/Panel.cs:11342",
+        "opcode": "Service.gI().friend(0, -1)",
+        "payload_summary": "Requests friend list from server when Account option 1 is triggered"
+      },
+      {
+        "direction": "DISPATCH",
+        "location": "Client/Client/Assets/Scripts/Game1/Panel.cs:11346",
+        "opcode": "Service.gI().enemy(0, -1)",
+        "payload_summary": "Requests enemy list from server when Account option 2 is triggered"
+      }
+    ],
+    "server_boss_dungeon_pvp__p01": [
+      {
+        "direction": "WRITE",
+        "location": "src/managers/boss/BossManager.java:323-353",
+        "opcode": "-96",
+        "payload_summary": "Subcmd 0 (Máy Dò Boss): UTF title, byte count, then per boss: int index, int index, short head, (if version >= 214: short -1), short body, short leg, UTF name, UTF status, UTF location."
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/models/boss/Boss.java:1193-1199",
+        "opcode": "-45",
+        "payload_summary": "Broadcasts boss bomb charge animation to map: byte(7), int((int) boss.id), short(104), short(2000)."
+      }
+    ],
+    "server_boss_dungeon_pvp__p02": [
+      {
+        "direction": "WRITE",
+        "location": "GoldenFrieza.java:163-169",
+        "opcode": "-45",
+        "payload_summary": "writeByte(7), writeInt((int) this.id), writeShort(104), writeShort(2000) sent to all players in map via Service.gI().sendMessAllPlayerInMap(this, msg)"
+      }
+    ],
+    "server_boss_dungeon_pvp__p03": [
+      {
+        "direction": "WRITE",
+        "location": "src/models/boss/boss_list/SnakeWay/SAIBAMEN.java:140-146",
+        "opcode": "-45",
+        "payload_summary": "byte(7), int(boss.id), short(104), short(2000) - broadcast self-destruct charge effect to zone"
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/models/boss/boss_list/SuperDivineWater/Pocolo.java:122-128",
+        "opcode": "-45",
+        "payload_summary": "byte(4), int(boss.id), short(83), short(3000) - broadcast laze skill charge effect to zone"
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/models/boss/boss_list/SuperDivineWater/Pocolo.java:149-160",
+        "opcode": "-60",
+        "payload_summary": "int(boss.id), byte(83), byte(1), int(playerCall.id), byte(1), byte(1), int(1_000_000_000), boolean(true), boolean(isCrit) - scripted laze kill packet"
+      }
+    ],
+    "server_boss_dungeon_pvp__p04": [
+      {
+        "direction": "WRITE",
+        "location": "src/models/boss/boss_list/Training/TrainingBoss.java:222-225",
+        "opcode": "-6",
+        "payload_summary": "writes int boss.id to remove training boss from playerAtt client view when no interactive NPC exists"
+      },
+      {
+        "direction": "DISPATCH",
+        "location": "src/models/boss/boss_list/SuperRank/SuperRank.java:158",
+        "opcode": "Service.Send_Info_NV",
+        "payload_summary": "syncs boss HP/MP info to zone players on map join (also in TrainingBoss.java:217, Yardart.java:255)"
+      },
+      {
+        "direction": "DISPATCH",
+        "location": "src/models/boss/boss_list/Training/TrainingBoss.java:55,63,83,205",
+        "opcode": "Service.sendPlayerVS / sendPVB / sendInfoPlayerEatPea",
+        "payload_summary": "toggles PvP duel UI state and pea-heal notification between playerAtt and TrainingBoss (also Karin.java:44, TauPayPay1.java:41,56, Whis.java:92)"
+      },
+      {
+        "direction": "DISPATCH",
+        "location": "src/models/boss/boss_list/The23rdMartialArtCongress/ChanXu.java:41",
+        "opcode": "ItemTimeService.sendItemTime",
+        "payload_summary": "sends stun icon 3779 and duration in seconds to playerAtt"
+      },
+      {
+        "direction": "DISPATCH",
+        "location": "src/models/boss/boss_list/The23rdMartialArtCongress/ThienXinHangClone.java:82-83",
+        "opcode": "The23rdMartialArtCongressService.sendTypePK / PlayerService.changeAndSendTypePK",
+        "payload_summary": "sets PK_PVP state for ThienXinHangClone and playerAtt upon clone joining map"
+      }
+    ],
+    "server_boss_dungeon_pvp__p05": [
+      {
+        "direction": "READ",
+        "location": "src/models/matches/PVPService.java:45-47",
+        "opcode": "-59 (controllerThachDau)",
+        "payload_summary": "Reads byte action, byte type (3=ThachDau, 4=LuyenTap), int playerId from client Message.reader()."
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/models/matches/PVPService.java:141-146, 173-178",
+        "opcode": "-59",
+        "payload_summary": "Writes byte type (3 or 4), int (int) pl.id, int goldThachDau (or 0 for practice), UTF challenge prompt to plMap.sendMessage(msg)."
+      },
+      {
+        "direction": "DISPATCH",
+        "location": "src/models/matches/PVPService.java:55-58, 101-104, 255-256",
+        "opcode": "NpcService.createMenuConMeo (IGNORE_MENU, MAKE_MATCH_PVP, REVENGE)",
+        "payload_summary": "Dispatches gold bet selection menu (1000/10000/100000) and 1-gem revenge confirmation dialog to client."
+      },
+      {
+        "direction": "DISPATCH",
+        "location": "src/models/tournament/DeathOrAliveArena.java:297; SuperRank.java:125,250; The23rdMartialArtCongress.java:117,280",
+        "opcode": "Service.sendPlayerVS / sendTypePK",
+        "payload_summary": "Updates client VS HUD and PK state at start and end of tournament bouts."
+      }
+    ],
+    "server_boss_dungeon_pvp__p06": [
+      {
+        "direction": "WRITE",
+        "location": "src/models/tournament/whis_arena/WhisArenaService.java:737-763",
+        "opcode": "-96",
+        "payload_summary": "byte typeTop=0, UTF headerTitle, byte count, followed by per-entry int rank, int id, short head, (if version>214) short -1, short body, short leg, UTF name, UTF info1, UTF info2"
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/services/tournament/DeathOrAliveArenaService.java:162-166",
+        "opcode": "subcommand 35 (Service.messageSubCommand)",
+        "payload_summary": "int (int) boss.id, byte 3 (PK type); msg.cleanup() omitted on IOException path"
+      }
+    ],
+    "server_boss_dungeon_pvp__p07": [
+      {
+        "direction": "WRITE",
+        "location": "SuperRankService.java:100-118",
+        "opcode": "-96",
+        "payload_summary": "byte(0), UTF title, byte list.size(), per player: int rank, int (int)id, short head, [if session.version > 214: short -1], short body, short leg, UTF name, UTF status, UTF info"
+      },
+      {
+        "direction": "WRITE",
+        "location": "The23rdMartialArtCongressService.java:61-64",
+        "opcode": "subcommand 35 (via Service.messageSubCommand)",
+        "payload_summary": "int (int)boss.id, byte 3 (set PK type against tournament boss)"
+      }
+    ],
+    "server_economy_items__p01": [
+      {
+        "direction": "WRITE",
+        "location": "src/services/CombineService.java:381-395",
+        "opcode": "-81 (OPEN_TAB_COMBINE = 0)",
+        "payload_summary": "byte(0), UTF(infoTab), UTF(topTab), conditional short(npcChose.tempId if non-null)"
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/services/CombineService.java:494-514",
+        "opcode": "-81 (REOPEN_TAB_COMBINE = 1)",
+        "payload_summary": "byte(itemsCombine.size()), followed by byte(bagIndex) for each matched item still in itemsBag"
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/services/CombineService.java:464-488, 401-412, 540-563",
+        "opcode": "-81 (COMBINE_SUCCESS=2, COMBINE_FAIL=3, COMBINE_DRAGON_BALL=5, OPEN_ITEM=6, COMBINE_DA_VUN=7)",
+        "payload_summary": "byte(subOpcode), optional short(icon1), optional short(icon2)"
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/services/ConsignShopService.java:177-223",
+        "opcode": "-100 (Consign shop page)",
+        "payload_summary": "byte(tabIndex), byte(totalPages), byte(page), byte(count), per item: short(itemId), short(id), int(goldSell), int(gemSell), byte(0), int/byte(quantity by version>=222), byte(isMe), byte(optCount)+opts(byte id, short param), byte(0), optional UTF(playerName if version>=237)"
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/services/ConsignShopService.java:651-740",
+        "opcode": "-44 (Open full consign shop)",
+        "payload_summary": "byte(2), byte(5 tabs), per tab: UTF(name), byte(totalPages), byte(count), per item: short(itemId), short(id), int(goldSell), int(gemSell), byte(buyType), int(quantity), byte(isMe), opts, byte(0), byte(0), optional UTF(playerName if version>=237)"
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/services/func/EffectMapService.java:44-76",
+        "opcode": "113 (Effect map)",
+        "payload_summary": "byte(loop), byte(layer), byte(id), short(x), short(y), short(delay)"
+      }
+    ],
+    "server_economy_items__p02": [
+      {
+        "direction": "WRITE",
+        "location": "src/services/func/Input.java:767-774",
+        "opcode": "-125",
+        "payload_summary": "UTF(title), byte(count), count * [UTF(name), byte(typeInput)]"
+      },
+      {
+        "direction": "READ",
+        "location": "src/services/func/Input.java:99-102",
+        "opcode": "-125",
+        "payload_summary": "byte(count), count * UTF(text[i])"
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/services/func/LuckyRound.java:38-47,60-69,171-177",
+        "opcode": "-127",
+        "payload_summary": "Sub 0: byte(7), 7*short(icon), byte(typePrice), int(price), short(idTicket); Sub 1: byte(size), size*short(iconID)"
+      },
+      {
+        "direction": "READ",
+        "location": "src/services/func/LuckyRound.java:91-97",
+        "opcode": "-127",
+        "payload_summary": "byte(type), optional byte(count 1..7) if available() > 0"
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/services/func/SummonDragon.java:268-283 & src/services/func/SummonDragonNamek.java:104-116",
+        "opcode": "-83",
+        "payload_summary": "byte(0=appear|1=leave); if appear: short(mapId), short(bgId), byte(zoneId), [SummonDragon writes int(pl.id) / SummonDragonNamek OMITS it], UTF, short(x), short(y), byte(type)"
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/services/func/SummonDragon.java:342-345 & src/services/func/SummonDragonNamek.java:124-127",
+        "opcode": "-25",
+        "payload_summary": "UTF(server summon announcement)"
+      },
+      {
+        "direction": "READ",
+        "location": "src/services/func/TransactionService.java:49-161",
+        "opcode": "-86",
+        "payload_summary": "byte(action 0/1/2/3/5/7); 0/1: int(playerId); 2: byte(index), int(quantity)"
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/services/func/Trade.java:76-84,182-185,251-258,317-356 & TransactionService.java:173-176",
+        "opcode": "-86",
+        "payload_summary": "0: int(inviterId); 1: int(partnerId); 2: byte(index); 6: int(gold), byte(size), items[short(id), byte/int(qty), opts]; 7: close tab"
+      },
+      {
+        "direction": "READ",
+        "location": "src/services/func/UseItem.java:66-67,122-124,171",
+        "opcode": "-43 (doItem) / getItem transfer",
+        "payload_summary": "getItem: byte(type), byte(index); doItem: byte(type 0..4), byte(where), byte(index), optional short(iditem) when index==-1"
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/services/func/UseItem.java:135-141,151-165,195-200",
+        "opcode": "-43",
+        "payload_summary": "byte(type), byte(where), byte(index), UTF(confirm prompt)"
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/services/func/useitem/handlers/SkillBookItemHandler.java:54-56,68-71",
+        "opcode": "subCommand 23 / 62",
+        "payload_summary": "Sub 23: short(skillId); Sub 62: short(skillId), byte(-1)"
+      }
+    ],
+    "server_economy_items__p03": [
+      {
+        "direction": "WRITE",
+        "location": "src/services/ShopService.java:187-245",
+        "opcode": "-44 (type 0: NORMAL_SHOP)",
+        "payload_summary": "Writes shop type 0, tab count, tab names, item count, template id, gold/gem ints, option count/ids/params (plus bundle option 31), isNew, and type-5 appearance shorts."
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/services/ShopService.java:262-283",
+        "opcode": "-44 (type 1: LEARN_SKILL_SHOP)",
+        "payload_summary": "Writes shop type 1, tabs, item template id, long cost, option count/ids/params, isNew, and 0 byte."
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/services/ShopService.java:299-361",
+        "opcode": "-44 (type 3: SPEC_SHOP)",
+        "payload_summary": "Writes shop type 3, filtered tab items, template id, iconSpec short, int cost, options (replacing option 228 progress for tab 28, adding option 31 for bundles), isNew, and type-5 appearance."
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/services/ShopService.java:375-403",
+        "opcode": "-44 (type 4: ITEMS_LUCKY_ROUND)",
+        "payload_summary": "Writes shop type 4, 1 tab, crack-ball reward items with options + option 31 quantity and type-5 appearance."
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/services/ShopService.java:420-450",
+        "opcode": "-44 (type 8: ITEMS_DABAN)",
+        "payload_summary": "Writes shop type 8, 1 tab, buyback items with computed gold/gem cost ints, quantity int, options, and type-5 appearance."
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/services/ShopService.java:911-915",
+        "opcode": "7 (CONFIRM_SELL_ITEM)",
+        "payload_summary": "Writes byte where, short index (adjusted for version < 220), and UTF confirmation prompt with computed gold cost."
+      }
+    ],
+    "server_network_core__p01": [
+      {
+        "direction": "WRITE",
+        "location": "src/data/DataGame.java:108-119",
+        "opcode": "-29 / sub 4 (messageNotMap)",
+        "payload_summary": "Writes vsData, vsMap, vsSkill, vsItem, byte 0, and SM_TIEU_CHUAN long[] table."
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/data/DataGame.java:140-155",
+        "opcode": "-87 (3-byte encrypted size)",
+        "payload_summary": "Writes vsData and DART, ARROW, EFFECT, IMAGE, PART, SKILL byte arrays."
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/data/DataGame.java:169-192",
+        "opcode": "-29 / sub 6 (messageNotMap)",
+        "payload_summary": "Writes vsMap, MAP_TEMPLATES names (byte count), NPC_TEMPLATES (byte count), MOB_TEMPLATES (byte count)."
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/data/DataGame.java:206-251, 547-550",
+        "opcode": "-28 (sub 7, sub 10)",
+        "payload_summary": "Sub 7: NClass/SkillTemplate/Skill definitions (injecting dummy skills 105-106 for id==0). Sub 10: tile_map_data bytes."
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/data/ItemData.java:69-76, 81-161",
+        "opcode": "-28 (sub 8)",
+        "payload_summary": "Pre-cached sub 8 payloads: item options (0), templates part 1 (1, up to 750), templates part 2 (2), arr head 2 frames (100)."
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/data/DataGame.java:312-321, 370-375, 402-406, 419-428, 455-465, 478-483, 507-510, 526-528, 591-596, 610-613, 626-631, 664-689, 699-703",
+        "opcode": "-66, -93, -32, -31, -67, -77, 11, -82, 66, -74, -29",
+        "payload_summary": "Effect template (-66), bg item versions (-93), bg template (-32), bg items (-31), icon (-67), small version (-77), mob template (11), tileset (-82), img_by_name (66), res version/size/file/end (-74), link IP (-29)."
+      },
+      {
+        "direction": "DISPATCH",
+        "location": "src/network/netty/NettySession.java:78-82; src/network/Collector.java:49-65",
+        "opcode": "-27 (GET_SESSION_ID) & all other opcodes",
+        "payload_summary": "Cmd -27 triggers sendKey/setKey handshake; all other commands route to Controller.gI().onMessage(session, msg)."
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/network/io/KeyHandler.java:12-25; src/network/io/MyKeyHandler.java:9-13",
+        "opcode": "-27 (GET_SESSION_ID)",
+        "payload_summary": "Writes XOR-chained session key bytes, empty UTF, int 0, byte 0 (unencrypted) and triggers sendVersionRes(-74)."
+      },
+      {
+        "direction": "READ",
+        "location": "src/network/netty/NroPacketDecoder.java:33-101; src/network/io/MessageSendCollect.java:20-52",
+        "opcode": "ALL inbound frames",
+        "payload_summary": "Reads 1-byte cmd + 2-byte size (XOR decrypted if sentKey), enforces 0 <= size <= 200000, decrypts payload."
+      }
+    ],
+    "server_network_core__p02": [
+      {
+        "direction": "DISPATCH",
+        "location": "Controller.java:95-97;ServerPacketDispatcher.java:30-52;ServerTradePacketHandler.java:16-20;ServerItemPacketHandler.java:16-26",
+        "opcode": "-86, -20",
+        "payload_summary": "Dispatches trade (-86) to TransactionService and item pickup (-20, readShort itemMapId) to ItemMapService; dead duplicate switch cases remain in Controller."
+      },
+      {
+        "direction": "READ",
+        "location": "Controller.java:99-158",
+        "opcode": "-100",
+        "payload_summary": "Consign shop: readByte action; case 0 reads short idItem, byte moneyType, int money, int/byte quantity (version>=222); cases 1/2/5 readShort; case 3 readShort+readByte+readInt; case 4 readByte+readByte."
+      },
+      {
+        "direction": "READ",
+        "location": "Controller.java:190-246",
+        "opcode": "127",
+        "payload_summary": "Radar: readByte actionRadar (checks available<1); case 1 checks available<2 and readShort idC."
+      },
+      {
+        "direction": "READ",
+        "location": "Controller.java:307-326,369-373,374-420,421-460",
+        "opcode": "-34, -108, 6, 7, 21, -71, -79, -113, -103",
+        "payload_summary": "MagicTree (byte), PetStatus (byte), Buy (byte, short), Sell (byte, byte, short), ChangeZone (byte), ChatGlobal (UTF), PlayerMenu (int), SkillShortcut (10x byte with IOException fallback), Flag (byte act, optional byte)."
+      },
+      {
+        "direction": "READ",
+        "location": "Controller.java:461-535",
+        "opcode": "-7",
+        "payload_summary": "Move: readByte b, readShort toX, optional readShort toY; throttled 80ms and distance-checked unless TDLT or isNearMobInZone."
+      },
+      {
+        "direction": "READ",
+        "location": "Controller.java:544-617",
+        "opcode": "-74, -81, -67, 66, -66, -62, -63, -32, 22",
+        "payload_summary": "Res download (byte), Combine (byte + byte len + len*byte), Icon (int), ImgByName (UTF), EffTemplate (short), FlagBag (byte), EffFlag (byte), BGTemplate (short), DauThan menu (byte, byte)."
+      },
+      {
+        "direction": "READ",
+        "location": "Controller.java:625-793",
+        "opcode": "-45, -50, -47, -41, -91, 11, 44, 32, 33, 34, 54, -60",
+        "payload_summary": "SkillNotFocus (byte+service), ClanMemberList (int), ClanList (UTF), Caption (byte), Capsule/BlackBall map (byte), MobTemplate (byte), Command (UTF), MenuSelect (short, byte), MenuOpen (short), SelectSkill (short), AttackMob (byte mobId, optional int masterId), AttackPlayer (int playerId)."
+      },
+      {
+        "direction": "READ",
+        "location": "Controller.java:807-815,903-1008",
+        "opcode": "-29, -28, -30",
+        "payload_summary": "NotLogin (-29: subcmd 0 login UTF/UTF, 1 regis, 2 clientType); NotMap (-28: subcmd 2 createChar UTF/byte/byte, 6/7/8 updates, 10 mapTemp unsignedByte, 13 joinMap); SubCommand (-30: 16/18 increasePoint byte/short, 64 subMenu int/short)."
+      },
+      {
+        "direction": "READ",
+        "location": "Controller.java:827-880",
+        "opcode": "-104, -118, -78, -76",
+        "payload_summary": "MaBaoVe (int), Compete/AdminTP (int), CheckMMove (int), ConfirmAchievement (byte)."
+      },
+      {
+        "direction": "WRITE",
+        "location": "ServerNotify.java:58-99",
+        "opcode": "93, 50",
+        "payload_summary": "Opcode 93 writes UTF VIP broadcast to all players; Opcode 50 writes byte count then (short index, UTF title, UTF content) per Manager.NOTIFY entry."
+      }
+    ],
+    "server_player_combat__p01": [
+      {
+        "direction": "WRITE",
+        "location": "src/models/player/Pet.java:239-250",
+        "opcode": "125",
+        "payload_summary": "fusionEffect(int type): writeByte(type), writeInt((int) master.id); broadcast to map via sendMessAllPlayerInMap."
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/models/player/NPoint.java:38-42",
+        "opcode": "helper",
+        "payload_summary": "safeInt(long): clamps long stats to Integer.MAX_VALUE/MIN_VALUE before network writeInt serialization."
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/models/player/Inventory.java:64-70",
+        "opcode": "helper",
+        "payload_summary": "getGoldDisplay(): intended to clamp gold to Integer.MAX_VALUE for client version <= 214 (currently inactive due to null player field)."
+      }
+    ],
+    "server_player_combat__p02": [
+      {
+        "direction": "WRITE",
+        "location": "src/models/skill/PlayerSkill.java:36-55",
+        "opcode": "-30 subcommand 61 (messageSubCommand 61)",
+        "payload_summary": "Sends KSkill (10 bytes), OSkill (10 bytes), and CSkill (1 byte skillTemplate.id) skill shortcut configuration."
+      },
+      {
+        "direction": "READ",
+        "location": "src/services/player/ClanService.java:110-273",
+        "opcode": "Clan handlers (getClan, clanMessage, clanDonate, joinClan, clanRemote, clanInvite)",
+        "payload_summary": "Reads action/type bytes, playerId/clanId/clanMessageId ints, imgId byte, and name/slogan/text UTF strings."
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/services/player/ClanService.java:309-314,619-633,646-663,677-736,745-753",
+        "opcode": "-57, -47, -50, -53, -61",
+        "payload_summary": "-57 clan invite, -47 clan search list, -50 clan member list, -53 full my-clan info & messages, -61 broadcast clanId to map."
+      },
+      {
+        "direction": "READ",
+        "location": "src/services/player/FriendAndEnemyService.java:37-94,239-256,277-310",
+        "opcode": "Friend/Enemy/ChatPrivate/Yardrat handlers",
+        "payload_summary": "Reads action byte, target playerId int, and private chat UTF text."
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/services/player/FriendAndEnemyService.java:138-153,163-178,216-220",
+        "opcode": "-80, -99",
+        "payload_summary": "-80 friend list (sub 0) / remove friend (sub 2); -99 enemy list (sub 0). Note bag is byte in -80 vs short in -99, and power/online field order differs."
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/services/player/IntrinsicService.java:45-50,59-69",
+        "opcode": "112",
+        "payload_summary": "Sub 0 sends current intrinsic icon+name; Sub 1 sends tab count, tab title, and list of intrinsic icons+descriptions."
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/services/player/InventoryService.java:637-734",
+        "opcode": "-36, -37, -35",
+        "payload_summary": "-36 bag items, -37 body items + head, -35 box items (sub 0) and open box (sub 1). Option id written as byte, param as short."
+      }
+    ],
+    "server_player_combat__p03": [
+      {
+        "direction": "WRITE",
+        "location": "src/services/player/PlayerService.java:40-48",
+        "opcode": "-3",
+        "payload_summary": "sendTNSM: byte type, int (int)param, optional long power & long tiemNang"
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/services/player/PlayerService.java:83-86",
+        "opcode": "subcommand 5",
+        "payload_summary": "sendInfoHp: int safeInt(hp)"
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/services/player/PlayerService.java:95-98",
+        "opcode": "subcommand 6",
+        "payload_summary": "sendInfoMp: int safeInt(mp)"
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/services/player/PlayerService.java:127-137",
+        "opcode": "subcommand 4",
+        "payload_summary": "sendInfoHpMpMoney: long gold (if ver>214) else int gold, int gem, int safeInt(hp), int safeInt(mp), int ruby (missing cleanup)"
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/services/player/PlayerService.java:211-214",
+        "opcode": "-68",
+        "payload_summary": "sendCurrentStamina: short stamina"
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/services/player/PlayerService.java:223-226",
+        "opcode": "-69",
+        "payload_summary": "sendMaxStamina: short maxStamina"
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/services/player/PlayerService.java:244-248",
+        "opcode": "subcommand 35",
+        "payload_summary": "sendTypePk: int playerId, byte typePk"
+      },
+      {
+        "direction": "READ",
+        "location": "src/services/SkillService.java:78-87",
+        "opcode": "useSkill (status=20)",
+        "payload_summary": "Reads byte skillId, short dx, short dy, byte dir, short x, short y"
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/services/SkillService.java:298-302",
+        "opcode": "subcommand 62",
+        "payload_summary": "sendCurrLevelSpecial: short skillId, byte 0, short currLevel"
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/services/SkillService.java:316-358",
+        "opcode": "-45 (status=20/21)",
+        "payload_summary": "newSkillNotFocus: byte status, int playerId, short templateId, then frame/dir/timeGong/paint/item (20) or pointX/Y/timeDame/range/paint/num/targets/typeItem (21)"
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/services/SkillService.java:373-376",
+        "opcode": "subcommand 23",
+        "payload_summary": "learSkillSpecial: short skillId"
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/services/SkillService.java:864-870",
+        "opcode": "-60 (Tri Thuong)",
+        "payload_summary": "useSkillBuffToPlayer: int casterId, byte skillTemplateId, byte 1, int targetId, byte 0"
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/services/SkillService.java:958-966",
+        "opcode": "56",
+        "payload_summary": "phanSatThuong: int plAttId, int safeInt(hp), writeFix(dameInflicted), boolean false, byte 36"
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/services/SkillService.java:1062-1080",
+        "opcode": "-60 (Attack Player)",
+        "payload_summary": "playerAttackPlayer: int plAttId, byte skillTemplateId, byte 1, int plInjureId, byte 1, byte 0, int safeInt(dameHit), boolean isDie, boolean isCrit"
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/services/SkillService.java:1141-1146,1158-1163",
+        "opcode": "-45 (status=4/7)",
+        "payload_summary": "sendPlayerPrepareSkill (4) / sendPlayerPrepareBom (7): byte status, int playerId, short skillId, short affterMiliseconds"
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/services/SkillService.java:1458-1462",
+        "opcode": "54",
+        "payload_summary": "sendPlayerAttackMob: int plAttId, byte skillId, byte mobId"
+      }
+    ],
+    "server_services_bot_telemetry__p01": [
+      {
+        "direction": "WRITE",
+        "location": "src/services/ChatGlobalService.java:125-136",
+        "opcode": "92",
+        "payload_summary": "writeUTF(playerName), writeUTF(\"|5|\"+text), writeInt(playerId), writeShort(head), writeShort(-1), writeShort(body), writeShort(bag), writeShort(leg), writeByte(0) -> sendMessAllPlayer"
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/services/EffectSkillService.java:44-49",
+        "opcode": "-45 (sub 8)",
+        "payload_summary": "writeByte(8), writeInt(playerId), writeShort(skillId) -> sendMessAnotherNotMeInMap"
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/services/EffectSkillService.java:592-607",
+        "opcode": "-45 (sub 0)",
+        "payload_summary": "writeByte(0), writeInt(plUseSkill.id), writeShort(skillId), writeByte(mobCount), [byte mobId, byte sec], writeByte(plCount), [int plId, byte sec] -> sendMessAllPlayerInMap"
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/services/EffectSkillService.java:632-686",
+        "opcode": "-45 (sub 1/3/5/6)",
+        "payload_summary": "writeByte(sub: 1 charge / 3 stop charge / 5 end charge / 6 monkey), writeInt(playerId), writeShort(skillId or -1) -> sendMessAllPlayerInMap"
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/services/EffectSkillService.java:58-85",
+        "opcode": "-124",
+        "payload_summary": "writeByte(toggle), writeByte(targetType 0=player/1=mob), [if toggle==2 writeInt(targetId) else writeByte(effect), writeInt/Byte(targetId), writeInt(casterId)] -> sendMessAllPlayerInMap"
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/services/EffectSkillService.java:174-179",
+        "opcode": "-112",
+        "payload_summary": "writeByte(1), writeByte(mob.id), writeShort(4133) -> sendMessAllPlayerInMap (socola mob)"
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/services/FlagBagService.java:35-43",
+        "opcode": "-62",
+        "payload_summary": "writeByte(fb.id), writeByte(iconEffect.length + 1), writeShort(fb.iconId), loop writeShort(iconEffect[i]) -> player.sendMessage"
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/services/FlagBagService.java:54-61",
+        "opcode": "-63",
+        "payload_summary": "writeByte(fb.id), writeByte(iconEffect.length), loop writeShort(iconEffect[i]) -> player.sendMessage"
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/services/FlagBagService.java:71-89",
+        "opcode": "-46",
+        "payload_summary": "writeByte(1), writeByte(list.size()), loop [writeByte(fb.id), writeUTF(displayName), writeInt(fb.gold), writeInt(fb.gem)] -> pl.sendMessage"
+      }
+    ],
+    "server_services_bot_telemetry__p02": [
+      {
+        "direction": "READ",
+        "location": "src/services/Service.java:77-112",
+        "opcode": "regisAccount",
+        "payload_summary": "Reads UTF user, UTF pass; validates alphanumeric 5-18 chars."
+      },
+      {
+        "direction": "READ",
+        "location": "src/services/Service.java:1602-1617",
+        "opcode": "setClientType",
+        "payload_summary": "Reads byte typeClient, byte zoomLevel, boolean gprs, int width, int height, boolean qwerty, boolean touch, UTF platform (splits on | to parse version)."
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/services/Service.java:546-651",
+        "opcode": "-30 sub 0 (player)",
+        "payload_summary": "Writes player ID, taskId, gender, head, name, cPK, typePk, power(long), gender, skills, gold(long if v>214 else int), ruby, gem, itemsBody/Bag/Box, headAvatar, fusion, deltaTime, isNewMember, aura, effFront, hat."
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/services/Service.java:491-526",
+        "opcode": "-42 (point) & -30 sub 14 (Send_Info_NV)",
+        "payload_summary": "Writes hpg, mpg, dameg, hpMax, mpMax, hp, mp (all clamped via NPoint.safeInt), speed, dame, def, crit, tiemNang(long), defg, critg, power(long)."
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/services/Service.java:832-861",
+        "opcode": "-17 & -8 (charDie)",
+        "payload_summary": "Cmd -17 writes byte (int) pl.id, short x, short y; cmd -8 writes int pl.id, byte cPk, short x, short y."
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/services/Service.java:1292-1362",
+        "opcode": "-107 (showInfoPet / sendHavePet)",
+        "payload_summary": "Writes byte 0/1 (hasPet) or byte 2 + avatar, itemsBody, clamped hp/mp/dame, name, level, power/tiemNang(long), status, stamina, crit, def, 4 skill slots."
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/services/Service.java:2109-2132",
+        "opcode": "51 (sendMabuAttackSkill)",
+        "payload_summary": "Writes int playerId, byte skill, short x, short y, byte targetCount, then per-target int id + safeInt damage."
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/services/Service.java:2281-2341",
+        "opcode": "-96 (showListTop)",
+        "payload_summary": "Writes byte 0, UTF \"Top\", byte size, then per-entry int rank, int playerId, short head, (short -1 if v>214), short body, short leg, UTF name, UTF info1, UTF info2."
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/services/ItemTimeService.java:183-192,280-303",
+        "opcode": "-116, 65, -106",
+        "payload_summary": "-116: byte TDLT on/off; 65: byte id, UTF text, short seconds; -106: short itemId, short clamped seconds."
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/services/RadarService.java:56-166",
+        "opcode": "127 (sub 0..4)",
+        "payload_summary": "Sub 0: full radar template + player card progress; sub 1: use; sub 2: level; sub 3: amount; sub 4: aura broadcast to map."
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/services/SubMenuService.java:122-136",
+        "opcode": "-30 sub 63 (showSubMenu)",
+        "payload_summary": "Writes byte count, then UTF caption1, UTF caption2, short menuId per option."
+      }
+    ],
+    "server_services_bot_telemetry__p03": [
+      {
+        "direction": "READ",
+        "location": "src/utils/PlayerAuditLogger.java:12-16",
+        "opcode": "cmd (telemetry only)",
+        "payload_summary": "Logs incoming/handled packet byte cmd and description to AUDIT log without reading/writing Message stream."
+      }
+    ],
+    "server_task_clan_consts__p01": [
+      {
+        "direction": "DISPATCH",
+        "location": "src/consts/Cmd_message.java:5-580",
+        "opcode": "All client-server byte opcodes (e.g., LOGIN=0, LOGOUT=0, NOT_LOGIN=-29, NOT_MAP=-28, SUB_COMMAND=-30, GIAO_DICH=-86, COMBINNE=-81, SHOP=-44, KIGUI=-100)",
+        "payload_summary": "Constant definitions only; no serialization/deserialization performed in this file."
+      }
+    ],
+    "server_task_clan_consts__p02": [
+      {
+        "direction": "WRITE",
+        "location": "src/models/clan/Clan.java:147-169",
+        "opcode": "-51",
+        "payload_summary": "Clan message broadcast: type(byte), id(int), playerId(int), playerName(UTF), role(byte), time(int), plus type-0 text/color or type-1 donate counts."
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/services/AchievementService.java:27-38",
+        "opcode": "-76",
+        "payload_summary": "Open Achievement UI: sub(byte=0), count(byte), then per template info1(UTF), info2(UTF), money(short), isFinish(boolean), isRecieve(boolean)."
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/services/AchievementService.java:65-68",
+        "opcode": "-76",
+        "payload_summary": "Confirm Achievement reward: sub(byte=1), select(byte)."
+      }
+    ],
+    "server_task_clan_consts__p03": [
+      {
+        "direction": "WRITE",
+        "location": "src/services/TaskService.java:435-451",
+        "opcode": "40",
+        "payload_summary": "writeShort(tm.id), writeByte(tm.index), writeUTF(name), writeUTF(detail), writeByte(subTasks.size()), per-subtask [writeUTF(name), writeByte(npcId), writeShort(mapId), writeUTF(notify)], writeShort(currentCount), per-subtask [writeShort(maxCount)]"
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/services/TaskService.java:568-569",
+        "opcode": "41",
+        "payload_summary": "Empty payload (advance to next sub-task)"
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/services/TaskService.java:516-554",
+        "opcode": "43",
+        "payload_summary": "writeShort(stm.count), writeShort(x_hint), writeShort(y_hint)"
+      }
+    ],
+    "server_world_map_mob__p01": [
+      {
+        "direction": "WRITE",
+        "location": "src/models/map/vetinh/Satellite.java:30-37",
+        "opcode": "68",
+        "payload_summary": "short itemMapId, short templateId, short x, short y, int playerId, short range"
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/models/map/Zone.java:481-516",
+        "opcode": "-20",
+        "payload_summary": "short itemMapId, UTF pickMsg, short quantity (capped at 9999)"
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/models/map/Zone.java:682-741",
+        "opcode": "-5",
+        "payload_summary": "int playerId, int clanId, byte level, boolean, byte typePk, byte gender*2, short head, UTF name, int hp, int hpMax, short body, short leg, byte flagbag, byte -1, short x, short y, short*2, byte 0, byte spaceShip, byte isMonkey, short mount, byte cFlag, byte 0, short aura, byte effFront, short hat"
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/models/map/Zone.java:759-765",
+        "opcode": "-8",
+        "payload_summary": "int playerId, byte 0, short x, short y"
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/models/map/Zone.java:775-899",
+        "opcode": "-24",
+        "payload_summary": "Full map info: mapId, planetId, tileId, bgId, type, mapName, zoneId, player x/y, waypoints, mobs, npcs, items, bgItem raw bytes, effMap, bgType, spaceShip, isMap148"
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/models/mob/bigboss_list/Hirudegarn.java:320-330",
+        "opcode": "101",
+        "payload_summary": "byte action, followed by tail-whip/fly/AOE target list (int playerId, int damage) or coordinates"
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/models/mob/bigboss_list/VuaBachTuoc.java:44-53",
+        "opcode": "102",
+        "payload_summary": "byte action; if 3|4: byte 1, int playerId, int damage; else short x"
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/models/mob/Mob.java:445-448",
+        "opcode": "-11",
+        "payload_summary": "byte mobId, int damage (mob attack me)"
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/models/mob/Mob.java:462-466",
+        "opcode": "-10",
+        "payload_summary": "byte mobId, int playerId, int playerHp (mob attack other player)"
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/models/mob/Mob.java:500-505,1182-1187",
+        "opcode": "-13",
+        "payload_summary": "byte mobId, byte tempId, byte lvMob, int hp (mob respawn)"
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/models/mob/Mob.java:521-527,541-547,1161-1167",
+        "opcode": "-9",
+        "payload_summary": "byte mobId, int hp, int dame/hpDelta, [boolean crit, int -1] or [boolean false, byte effect]"
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/models/mob/Mob.java:561-567,1325-1327",
+        "opcode": "-12",
+        "payload_summary": "byte mobId, [int dameHit, boolean crit, byte itemCount, items...] (mob die)"
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/models/mob/Mob.java:1292-1295",
+        "opcode": "87",
+        "payload_summary": "byte mobId, int maxHp"
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/models/mob/MobEffectSkill.java:61-141",
+        "opcode": "-124",
+        "payload_summary": "byte 0, byte 1, byte effectCode (40|41|32), byte mobId"
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/models/mob/MobEffectSkill.java:155-158",
+        "opcode": "-112",
+        "payload_summary": "byte 0, byte mobId (remove socola)"
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/models/mob/MobMe.java:70-163",
+        "opcode": "-95",
+        "payload_summary": "byte subType (0=spawn, 2=atkPlayer, 3=atkMob, 5=injured, 6=die, 7=remove), followed by MobMe/target IDs and HP/damage"
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/models/npc/BaseMenu.java:18-25",
+        "opcode": "32",
+        "payload_summary": "short npcId, UTF npcSay, byte menuCount, UTF[] menuSelect"
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/models/npc/mabu/MabuEgg.java:38-44",
+        "opcode": "-122",
+        "payload_summary": "short id (50), byte 1, short 4664, byte 0, int secondsDone"
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/models/npc/mabu/MabuEgg.java:121-123",
+        "opcode": "-117",
+        "payload_summary": "byte 101 (destroy egg effect)"
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/models/npc/mabu/MagicTree.java:120-197",
+        "opcode": "-34",
+        "payload_summary": "byte subType (0=loadTree, 1=openMenu, 2=harvestUpdate) with tree level, peas, timers, or menu options"
+      }
+    ],
+    "server_world_map_mob__p02": [
+      {
+        "direction": "WRITE",
+        "location": "src/models/npc/Npc.java:64-91,106-112",
+        "opcode": "32",
+        "payload_summary": "short tempId, UTF npcSay, byte menuCount, UTF[] menuSelect"
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/models/npc/Npc.java:123-155",
+        "opcode": "124",
+        "payload_summary": "short tempId, UTF text (NPC chat bubble)"
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/models/npc/npc_list/BaHatMit.java:655-791; CayThong.java:141-204; HungVuong.java:171-237",
+        "opcode": "-81",
+        "payload_summary": "Combine/craft animation packets: sub 0 (short tempId), sub 1 (byte count, byte[] bagIndices), sub 7/8 (short iconIDs)"
+      }
+    ],
+    "server_world_map_mob__p03": [
+      {
+        "direction": "WRITE",
+        "location": "src/services/map/ChangeMapService.java:66-103",
+        "opcode": "-91",
+        "payload_summary": "byte count, then UTF mapName and UTF planetName per zone for Capsule/BlackBall/MaBu tabs."
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/services/map/ChangeMapService.java:135-153",
+        "opcode": "29",
+        "payload_summary": "byte zoneCount; per zone: byte zoneId, byte status, byte numPlayers, byte maxPlayer, byte isCompeting (+ UTF/int rank1, rank2 if 1)."
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/services/map/ChangeMapService.java:657,700,717,739,748,757,770,780",
+        "opcode": "-124",
+        "payload_summary": "Skill/effect state sync on map join (shielding 33, thoi mien 41, stun/blind 40, troi 32) for mobs and players."
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/services/map/ChangeMapService.java:667,676,791",
+        "opcode": "-95",
+        "payload_summary": "byte 0, int owner/mobMe id, short tempId, int hp for mobMe sync."
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/services/map/ChangeMapService.java:709",
+        "opcode": "-112",
+        "payload_summary": "byte 1, byte mob.id, short 4133 for mob socola state on map join."
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/services/map/ChangeMapService.java:812-814",
+        "opcode": "-65",
+        "payload_summary": "int player.id, byte typeSpace for spaceship arrive effect."
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/services/map/ChangeMapService.java:878-880",
+        "opcode": "-6",
+        "payload_summary": "int player.id broadcast to zone when player exits map."
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/services/map/ChangeMapService.java:935-938",
+        "opcode": "-105",
+        "payload_summary": "short seconds, byte type for transition effect (future/BDKB/Gas)."
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/services/map/ItemMapService.java:39-41",
+        "opcode": "-21",
+        "payload_summary": "short itemMapId broadcast to zone when ground item disappears."
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/services/map/MapService.java:481-485",
+        "opcode": "-7",
+        "payload_summary": "int player.id, short x, short y broadcast player position to others in map."
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/services/map/NpcService.java:42-52, 128-135",
+        "opcode": "32",
+        "payload_summary": "short npcTempId, UTF npcSay, byte menuCount, UTF[] menuSelect, optional short avatar."
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/services/map/NpcService.java:62-68, 77-83",
+        "opcode": "38",
+        "payload_summary": "short npcTempId, UTF npcSay, optional short avatar for NPC tutorial dialog."
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/services/map/NpcService.java:95-98, 111-114",
+        "opcode": "124",
+        "payload_summary": "short npcTempId, UTF text for NPC chat bubble."
+      },
+      {
+        "direction": "WRITE",
+        "location": "src/models/npc/NpcFactory.java:806-808, 826-829",
+        "opcode": "subcommand 23 / 62",
+        "payload_summary": "short skillId (and byte -1 for subcommand 62) when learning/upgrading skills via HOC_KY_NANG."
+      }
+    ]
+  },
+  "protocol_findings": [
+    {
+      "batch": "client_gameplay_entities__p01",
+      "category": "protocol",
+      "impact": "Client always sends an empty image-diff vector to the server when cached ImageSource RMS exists, preventing incremental image version updates.",
+      "location": "Client/Client/Assets/Scripts/Game1/Assets/src/g/ImageSource.cs:54-73",
+      "root_cause": "The version comparison loops populating myVector between vSource and vRms are disabled inside an 'if (false)' block before Service.gI().imageSource(myVector).",
+      "severity": "P1",
+      "title": "ImageSource.checkRMS disables version diffing via dead 'if (false)' block"
+    },
+    {
+      "batch": "client_gameplay_entities__p05",
+      "category": "protocol",
+      "impact": "If any skill in NR_skill has id >= sks.Length (e.g., >= max(512, num + 100)), the binary stream position becomes misaligned, causing all subsequent skills to read garbage bytes or throw EOFException, and id 1111 can overwrite sks[num - 1].",
+      "location": "GameScr.cs:1879-1935",
+      "root_cause": "In readSkill(), when num3 < 0 or num3 >= sks.Length, the if-block (line 1888) skips reading effectHappenOnMob, numEff, skillStand, and skillfly bytes instead of consuming them from DataInputStream. Also line 1884 remaps num3 == 1111 to (short)(num - 1) without collision protection.",
+      "severity": "P1",
+      "title": "Stream desync in readSkill() when skill ID exceeds sks array bounds"
+    },
+    {
+      "batch": "client_gameplay_entities__p08",
+      "category": "protocol",
+      "impact": "Stream desync if a 1-byte array is sent (1 byte left unread in Message stream), or OutOfMemoryException/OverflowException on corrupted negative/huge int lengths.",
+      "location": "Client/Client/Assets/Scripts/Game1/NinjaUtil.cs:23-55",
+      "root_cause": "readByteArray(Message) silently skips reading when `num <= 1` (`if (num > 1)`), leaving 1 byte in the stream when `num == 1`; readByteArray(myReader) allocates `new sbyte[num]` with no bounds validation on `num`.",
+      "severity": "P1",
+      "title": "NinjaUtil.readByteArray stream desync on len==1 and unchecked array allocation"
+    },
+    {
+      "batch": "client_gameplay_entities__p10",
+      "category": "protocol",
+      "impact": "Clan icon IDs >= 128 overflow to negative sbyte values when creating or updating a clan icon; request mode in TabClanIcon is dead code.",
+      "location": "TabClanIcon.cs:354-365,184-186",
+      "root_cause": "TabClanIcon.perform casts ClanImage.ID to sbyte before calling Service.gI().getClan; when isRequest is true, paintPeans() is empty and perform() fetches item into an unused local without bounds check on select.",
+      "severity": "P2",
+      "title": "TabClanIcon casts icon ID to sbyte and has unfinished request-item handling"
+    },
+    {
+      "batch": "client_network_protocol__p01",
+      "category": "protocol",
+      "impact": "Item removal via REFRESH_ITEM leaves stale item objects with quantity <= 0 in inventory arrays; out-of-range slot/type or null slot throws NullReferenceException/IndexOutOfRangeException and aborts packet handling.",
+      "location": "Controller2.cs:422-464",
+      "root_cause": "In case 100 (REFRESH_ITEM), b31 (0=body, 1=bag) and b32 (slot) are used without bounds or null checks on item2, and lines 459-462 set the local variable item2 = null instead of clearing Char.myCharz().arrItemBody[b32] or arrItemBag[b32]. Line 453 also checks num45 != -1 after readUnsignedByte() which never returns -1 (same dead check at lines 897 and 1146).",
+      "severity": "P1",
+      "title": "REFRESH_ITEM (opcode 100) nulls local ref instead of inventory slot and lacks bounds/null checks"
+    },
+    {
+      "batch": "client_network_protocol__p01",
+      "category": "protocol",
+      "impact": "Packets referencing characters, Mabu bosses, NPCs, or mobs not currently present in the client map crash mid-read and are swallowed by catch(Exception), dropping the packet and leaving partial state.",
+      "location": "Controller2.cs:104-110, 188-192, 200-225, 249-258, 612-626, 750-788",
+      "root_cause": "Unchecked GameScr.findCharInMap, findNPCInMap, and findMobInMap results and unchecked (Mabu) casts in opcodes 31, 51, 52, -122, and -124. Additionally opcode -124 reads mobId into signed sbyte b9, breaking mob IDs >= 128.",
+      "severity": "P1",
+      "title": "Missing null/type checks on map entity lookups in Controller2 packet handlers"
+    },
+    {
+      "batch": "client_network_protocol__p01",
+      "category": "protocol",
+      "impact": "Any code using NetworkOpcodes.LOGOUT, UPDATE_HP, UPDATE_MP, UPDATE_EXP, TASK_UPDATE, or NPC_CHAT will send/match completely wrong protocol commands (e.g. DIALOG_MESSAGE, MAXSTAMINA, STAMINA, BIG_MESSAGE).",
+      "location": "NetworkOpcodes.cs:13-26 vs Cmd.cs:17-579",
+      "root_cause": "NetworkOpcodes defines mismatched sbyte values compared to Cmd.cs (LOGOUT=-26 vs 0; UPDATE_HP=6 vs 5; UPDATE_MP=-69 vs MAXSTAMINA; UPDATE_EXP=-68 vs STAMINA; TASK_UPDATE=-70 vs 43; NPC_CHAT=32 vs 124). Controller2 ignores both and hardcodes numeric literals.",
+      "severity": "P1",
+      "title": "NetworkOpcodes.cs contains multiple wrong opcode values colliding with Cmd.cs"
+    },
+    {
+      "batch": "client_network_protocol__p01",
+      "category": "protocol",
+      "impact": "Truncated/malformed packets can spawn phantom effects, trigger negative array size exceptions, or cause silent protocol desyncs with zero diagnostic logs.",
+      "location": "Controller2.cs:33-53, 81-88, 206-208, 837-840, 985-995, 1063-1328",
+      "root_cause": "Signed sbyte/short lengths (b19, b20, num40, b) are used directly for array allocation or indexing arrItemShop[b] without bounds checks. Opcode 113 still calls EffecMn.addEff after catching read errors. Sub-handlers readLuckyRound, readInfoRada, readInfoEffChar, and readActionBoss use empty catch(Exception) blocks.",
+      "severity": "P2",
+      "title": "Unvalidated stream lengths and silent exception swallowing in Controller2 sub-handlers"
+    },
+    {
+      "batch": "client_network_protocol__p02",
+      "category": "protocol",
+      "impact": "Potential infinite loop / OOM freeze on malformed or EOF packet if myReader returns 0/empty string instead of throwing, or silent truncation on genuine stream errors.",
+      "location": "Controller.cs:96-104, 3203-3212",
+      "root_cause": "requestItemPlayer (L96-100) and case 33 OPEN_UI_MENU (L3203-3207) use `while (true)` relying on an Exception at EOF instead of checking `msg.reader().available() > 0` (unlike L269 and L2635). Case -4 (L3769) and case 54 (L3833) also loop up to 10 times relying on EOF catch.",
+      "severity": "P1",
+      "title": "Infinite while(true) EOF-by-exception loops in requestItemPlayer and case 33"
+    },
+    {
+      "batch": "client_network_protocol__p02",
+      "category": "protocol",
+      "impact": "Deferred map loading after receiving the requested map template fails or reads a disposed/nulled stream.",
+      "location": "Controller.cs:3685-3694, 4634-4640",
+      "root_cause": "In case -24 (MAP_INFO), when TileMap.loadMapFromResource throws, the catch block requests the map template and stores `messWait = msg;` before breaking out, but the `finally` block at L4634-4640 unconditionally calls `msg.cleanup()` immediately at the end of `onMessage`.",
+      "severity": "P1",
+      "title": "messWait saved in case -24 is immediately cleaned up in finally block"
+    },
+    {
+      "batch": "client_network_protocol__p02",
+      "category": "protocol",
+      "impact": "NullReferenceException / IndexOutOfRangeException aborts onMessage packet processing when entities despawn, bags/mobs exceed index, or unexpected indices arrive.",
+      "location": "Controller.cs:90, 336-368, 459-496, 820-825, 1412-1415, 1720, 2016-2028, 2099-2105, 2131-2187, 2207-2209, 2924-2956, 3053, 3131, 3153-3165, 3748-3773, 3903-3914",
+      "root_cause": "Multiple handlers dereference `GameScr.findMobInMap`, `GameScr.findCharInMap`, `Char.mobMe`, `Char.clan`, `GameScr.vMob.elementAt(readByte/readUnsignedByte)`, `arrItemBag[sbyte]`, `arrItemBox[sbyte]`, and `@char.attMobs[0]` without null or array bounds checks.",
+      "severity": "P1",
+      "title": "Widespread missing null and bounds checks on map entities, mobMe, and inventory arrays"
+    },
+    {
+      "batch": "client_network_protocol__p02",
+      "category": "protocol",
+      "impact": "Values overflow/truncate if server sends mapID >= 256, bag icon >= 256, pickup currency delta > 32767, or bag/box/mob indices >= 128.",
+      "location": "Controller.cs:1055, 1119, 1422, 2016, 2099, 2202, 3371, 3462, 3675, 3997, 4005, 4032, 4043",
+      "root_cause": "Inconsistent primitive widths across opcodes: `mapID` read as unsigned byte in case -24 (L3675); `bag` read as unsigned byte in -80/-64 vs short in -99 (L1119); bag/box/mob indices read as signed `sbyte` (`readByte()`); pickup currency delta read as `readShort()` in case -20 (L3371); xu/yen/power deltas read as `readInt()` in -1/-2/95/-3 vs `readLong()` in case 6.",
+      "severity": "P2",
+      "title": "Narrow or signed protocol integer widths for mapID, bag, indices, and currency deltas"
+    },
+    {
+      "batch": "client_network_protocol__p03",
+      "category": "protocol",
+      "impact": "IndexOutOfRangeException crash when serializing a single byte/bool at exact buffer boundary (e.g., byte 2048).",
+      "location": "Client/Client/Assets/Scripts/Game1/myWriter.cs:23-27,192-194",
+      "root_cause": "writeSByte calls checkLenght(0), and checkLenght checks `posWrite + ltemp > lenght`. When posWrite == lenght (e.g., 2048), `2048 + 0 > 2048` evaluates false, then `buffer[posWrite++] = value` writes out of bounds.",
+      "severity": "P1",
+      "title": "Off-by-one capacity check in myWriter.writeSByte causes IndexOutOfRangeException at buffer boundary"
+    },
+    {
+      "batch": "client_network_protocol__p03",
+      "category": "protocol",
+      "impact": "Silent packet corruption/desync on truncated payloads instead of failing fast; read(ref sbyte[]) never signals EOF.",
+      "location": "Client/Client/Assets/Scripts/Game1/myReader.cs:34-42,69-131,143-161,182-199,253-267",
+      "root_cause": "readSByte/readShort/readInt/readLong silently clamp posRead to buffer.Length and return 0 on EOF; readString truncates num to remaining bytes; read(ref sbyte[]) checks `if (posRead > buffer.Length) return -1;` which is unreachable because readSByte clamps posRead == buffer.Length.",
+      "severity": "P1",
+      "title": "myReader silently returns 0/truncated data on EOF and read(ref sbyte[]) EOF check is dead code"
+    },
+    {
+      "batch": "client_network_protocol__p03",
+      "category": "protocol",
+      "impact": "NullReferenceException crash in Controller.messageSubCommand case 35 when player has no mobFocus and another char shares cTypePk; wrong char lookup skips actual players in map.",
+      "location": "Client/Client/Assets/Scripts/Game1/Controller.cs:6309-6322",
+      "root_cause": "Loop iterates `i` from 0 to vCharInMap.size() but calls `GameScr.findCharInMap(i)` (lookup by charID instead of elementAt(i)), and accesses `Char.myCharz().mobFocus.isMobMe` without checking `mobFocus != null`.",
+      "severity": "P1",
+      "title": "Wrong char lookup and missing mobFocus null check in messageSubCommand case 35 (PK type update)"
+    },
+    {
+      "batch": "client_network_protocol__p03",
+      "category": "protocol",
+      "impact": "Potential NullReferenceException or IndexOutOfRangeException crashing packet handling on malformed or racy server updates.",
+      "location": "Client/Client/Assets/Scripts/Game1/Controller.cs:5751,5982; Client/Client/Assets/Scripts/Game1/Network/Handlers/ClanPacketHandler.cs:132,271; Client/Client/Assets/Scripts/Game1/Network/Handlers/ItemPacketHandler.cs:50,145",
+      "root_cause": "Missing null/bounds checks on Char.myCharz().charFocus (Controller.cs:5751), GameCanvas.panel.myMember index (ClanPacketHandler.cs:132), Char.myCharz().clan (ClanPacketHandler.cs:271), itemMap.template (ItemPacketHandler.cs:50), and arrItemBag[bagIndex] (ItemPacketHandler.cs:145); also signed readByte() used for array allocations in multiple places (Controller.cs:4645,5982, MapMovementPacketHandler.cs:86, TaskNpcPacketHandler.cs:89).",
+      "severity": "P2",
+      "title": "Missing null/bounds checks and signed-byte array lengths in packet handlers"
+    },
+    {
+      "batch": "client_network_protocol__p03",
+      "category": "protocol",
+      "impact": "Stream desynchronization and corrupted inventory/skill state if any error occurs while reading body items or truncated cooldown packets.",
+      "location": "Client/Client/Assets/Scripts/Game1/Controller.cs:5848-5899; Client/Client/Assets/Scripts/Game1/Network/Handlers/CombatPacketHandler.cs:130-146",
+      "root_cause": "Controller.cs:5897 swallows exceptions in arrItemBody loop and continues reading arrItemBag/arrItemBox from misaligned offset. CombatPacketHandler.cs:130 loops `while (available() > 0)` reading 6 bytes per entry without checking `available() >= 6`.",
+      "severity": "P2",
+      "title": "Exception swallowing mid-stream in arrItemBody and missing 6-byte availability guard in SKILL_COOLDOWN"
+    },
+    {
+      "batch": "client_network_protocol__p03",
+      "category": "protocol",
+      "impact": "writeString corrupts non-ASCII (Vietnamese) characters by truncating UTF-16 chars to sbyte; readString rejects strings >32767 bytes due to signed short length.",
+      "location": "Client/Client/Assets/Scripts/Game1/myWriter.cs:129-138,140-155; Client/Client/Assets/Scripts/Game1/myReader.cs:143-161",
+      "root_cause": "myWriter.writeString casts each char to sbyte (dropping high byte) instead of UTF-8 encoding; writeUTF/readString use signed short length.",
+      "severity": "P2",
+      "title": "writeString truncates UTF-16 chars and writeUTF/readString use signed short length"
+    },
+    {
+      "batch": "client_network_protocol__p04",
+      "category": "protocol",
+      "impact": "TCP stream framing permanently desyncs on partial socket reads, corrupting the XOR keystream and dropping/garbling all subsequent packets; `readMessage2` can also NRE if called before key exchange or allocate huge buffers.",
+      "location": "Client/Client/Assets/Scripts/Game1/Session_ME.cs:171-238; Client/Client/Assets/Scripts/Game1/Session_ME2.cs:156-224",
+      "root_cause": "`dis.ReadBytes(num)` is assumed to always return `num` bytes (no read-loop until `num` bytes received), and `readMessage2` unconditionally calls `readKey()` without checking `getKeyComplete` or validating `num4` upper bounds.",
+      "severity": "P0",
+      "title": "Partial TCP Read & Unchecked readMessage2 Framing Desync"
+    },
+    {
+      "batch": "client_network_protocol__p04",
+      "category": "protocol",
+      "impact": "Opcode `66` (`getImgByName`) received over `Session_ME2` is parsed with a 2-byte length instead of 3-byte `readMessage2`, corrupting the TCP stream.",
+      "location": "Client/Client/Assets/Scripts/Game1/Session_ME2.cs:187",
+      "root_cause": "`Session_ME2.MessageCollector.readMessage()` checks `b == -32 || b == -66 || b == 11 || b == -67 || b == -74 || b == -87` and omits `|| b == 66` present in `Session_ME.cs:202`.",
+      "severity": "P1",
+      "title": "Missing Extended-Length Opcode 66 in Session_ME2.readMessage"
+    },
+    {
+      "batch": "client_network_protocol__p04",
+      "category": "protocol",
+      "impact": "Sending any message with non-null payload before `getKeyComplete` silently drops all payload bytes on the wire while writing an unencrypted little-endian `ushort` length, corrupting framing.",
+      "location": "Client/Client/Assets/Scripts/Game1/Session_ME.cs:417-428; Client/Client/Assets/Scripts/Game1/Session_ME2.cs:395-406",
+      "root_cause": "In `doSendMessage`, the `if (getKeyComplete)` loop writing `data` bytes has no `else` branch for `!getKeyComplete`, and unencrypted length uses `dos.Write((ushort)num)` (little-endian) vs big-endian when encrypted.",
+      "severity": "P1",
+      "title": "Missing Unencrypted Payload Write & Endianness Mismatch in doSendMessage"
+    },
+    {
+      "batch": "client_network_protocol__p04",
+      "category": "protocol",
+      "impact": "Session XOR keystream breaks with `OverflowException` or `IndexOutOfRangeException` if server sends a key of length >= 128 bytes.",
+      "location": "Client/Client/Assets/Scripts/Game1/Session_ME.cs:146,456-480; Client/Client/Assets/Scripts/Game1/Session_ME2.cs:131,433-457",
+      "root_cause": "Key length is read via `readSByte()`, and `curR`/`curW` are `sbyte` indices that wrap negative at 128 (`curR = (sbyte)(num + 1)`).",
+      "severity": "P1",
+      "title": "Signed sbyte Overflow in XOR Key Length and curR/curW Indices"
+    },
+    {
+      "batch": "client_network_protocol__p04",
+      "category": "protocol",
+      "impact": "`Session_ME2` defaults to `isMainSession = true`, which can trigger main-session disconnect/fail handlers and infinite `GameCanvas.connect2()` recursion on secondary socket events.",
+      "location": "Client/Client/Assets/Scripts/Game1/Session_ME2.cs:110-120,146-149,237,336-344",
+      "root_cause": "`Session_ME2` was copy-pasted from `Session_ME` with `public static bool isMainSession = true;`.",
+      "severity": "P1",
+      "title": "Session_ME2 Defaults isMainSession to true"
+    },
+    {
+      "batch": "client_network_protocol__p04",
+      "category": "protocol",
+      "impact": "Opcode collisions and `sbyte` truncation risk misrouted handlers or silent slot/ID corruption when inventory/map/template indices exceed 127.",
+      "location": "Client/Client/Assets/Scripts/Game1/Service.cs:39,405,465-482,1182-1193,2055,3199,3245,3270",
+      "root_cause": "`gotoPlayer` and `requestPlayerInfo` share cmd `18`; `sendOptHat` and `sendCT_ready` share cmd `24`; `skill_not_focus` and `new_skill_not_focus` share cmd `-45`; numerous item/UI indices and IDs are written via `writeByte()`, and `useItem` uses `-1` sentinel for `template`.",
+      "severity": "P2",
+      "title": "Overloaded Opcodes (18, 24, -45) and Signed Byte Slot/ID Truncation in Service.cs"
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p02",
+      "category": "protocol",
+      "impact": "If Service.gI().sendMessAllPlayerInMap throws before msg.cleanup(), the Message(-45) buffer is leaked.",
+      "location": "GoldenFrieza.java:162-172",
+      "root_cause": "`Message msg = new Message(-45); ... msg.cleanup();` is not wrapped in `try-with-resources` or `finally`.",
+      "severity": "P2",
+      "title": "GoldenFrieza.prepareBom() does not clean up Message(-45) in a finally block"
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p04",
+      "category": "protocol",
+      "impact": "If playerAtt is null or sendMessage throws IOException, msg.cleanup() is skipped (potential ByteBuf leak) or NPE occurs during leaveMap().",
+      "location": "src/models/boss/boss_list/Training/TrainingBoss.java:220-230",
+      "root_cause": "Message(-6) is created without try-finally cleanup() and playerAtt.sendMessage(msg) is called without null check on playerAtt.",
+      "severity": "P2",
+      "title": "TrainingBoss.leaveMap() Message(-6) lacks try-finally cleanup and playerAtt null guard"
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p06",
+      "category": "protocol",
+      "impact": "If write/send throws IOException, the Netty-backed Message buffer in sendTypePK is never released.",
+      "location": "src/services/tournament/DeathOrAliveArenaService.java:159-169",
+      "root_cause": "msg.cleanup() is placed inside the try block instead of a finally block.",
+      "severity": "P2",
+      "title": "Missing finally cleanup for Message in DeathOrAliveArenaService.sendTypePK"
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p07",
+      "category": "protocol",
+      "impact": "Potential double-cleanup of Netty ByteBuf in topList, leaked Message on exception in sendTypePK, and missed SuperRankBuilder.dispose() on exception in topList.",
+      "location": "src/services/tournament/SuperRankService.java:119-130; src/services/tournament/The23rdMartialArtCongressService.java:58-68",
+      "root_cause": "topList calls msg.cleanup() in try (line 119) and again in finally (line 128), while dispose()/clear() are only in try; sendTypePK calls msg.cleanup() only in try without a finally block.",
+      "severity": "P2",
+      "title": "Double Message.cleanup() in SuperRankService.topList and missing finally cleanup in sendTypePK"
+    },
+    {
+      "batch": "server_economy_items__p01",
+      "category": "protocol",
+      "impact": "Once shop_ky_gui.id exceeds 32767, clients receive truncated/negative item IDs and cannot buy/claim items; older/newer clients or >127 items in tab 4 suffer EOFException/stream desync.",
+      "location": "src/services/ConsignShopService.java:181-213, 659-728",
+      "root_cause": "openShopKyGui writes 32-bit int itk.id via writeShort(itk.id), writes list sizes via writeByte without clamping (>127 overflows), skips null items after writing header count, and openShopKyGui(Player) omits the version>=222 check for quantity and adds an extra newItem byte compared to openShopKyGui(Player, byte, int).",
+      "severity": "P0",
+      "title": "Consign shop protocol ID truncation (writeShort on int id), byte count overflow, and version desync in openShopKyGui"
+    },
+    {
+      "batch": "server_economy_items__p01",
+      "category": "protocol",
+      "impact": "Client receives mismatched item count vs written slot bytes on REOPEN_TAB_COMBINE (-81) or truncated OPEN_TAB_COMBINE when npcChose is null, causing EOFException/UI corruption.",
+      "location": "src/services/CombineService.java:385-387, 491-507",
+      "root_cause": "reOpenItemCombine writes itemsCombine.size() as the byte count header, then skips null or consumed items that are no longer in itemsBag without adjusting the count. openTabCombine omits npcChose.tempId if null.",
+      "severity": "P1",
+      "title": "Protocol stream desync in CombineService.reOpenItemCombine and openTabCombine"
+    },
+    {
+      "batch": "server_economy_items__p02",
+      "category": "protocol",
+      "impact": "Guaranteed binary stream desync / EOFException / crash on all online clients when Namek Shenron (Porunga) is summoned or dismissed.",
+      "location": "src/services/func/SummonDragonNamek.java:101-119 vs src/services/func/SummonDragon.java:265-286",
+      "root_cause": "SummonDragonNamek.activeShenron writes opcode -83 with mapId, bgId, zoneId, then UTF(pl.name) — omitting the 4-byte int(pl.id) that SummonDragon.activeShenron writes before UTF. Also neither activeShenron cleans up Message(-83) in a finally block, leaking Netty buffers.",
+      "severity": "P0",
+      "title": "Opcode -83 Stream Desync and Message Leak in SummonDragonNamek & SummonDragon"
+    },
+    {
+      "batch": "server_economy_items__p02",
+      "category": "protocol",
+      "impact": "Trade lock packet (-86 sub 6) causes stream desync when two trading players use client versions across the 222 threshold; Maintenance during LOCK_TRADE/ACCEPT causes NPE when trade is null.",
+      "location": "src/services/func/Trade.java:324,343 & src/services/func/TransactionService.java:141-153",
+      "root_cause": "Trade.lockTran checks sender's session.version < 222 instead of receiver's session.version < 222 before sending quantity as byte vs int. TransactionService checks Maintenance.isRunning and calls trade.cancelTrade() before null-checking trade.",
+      "severity": "P1",
+      "title": "Trade Lock Version Check Mismatch & NullPointerException on Maintenance"
+    },
+    {
+      "batch": "server_economy_items__p03",
+      "category": "protocol",
+      "impact": "Buffer/memory leak on exception in openShopType3; potential byte truncation if tab/item/option counts > 127 or option IDs >= 256.",
+      "location": "src/services/ShopService.java:297-365,217-222,336-340",
+      "root_cause": "openShopType3 calls `msg.cleanup()` inside the try block (line 362) with no finally block, unlike openShopType0/1/4/8. Shop open methods also serialize list sizes and optionTemplate.id with `writeByte`, which wraps if option ID >= 256 or item count > 127.",
+      "severity": "P1",
+      "title": "Missing finally msg.cleanup() in openShopType3 and writeByte truncation risks"
+    },
+    {
+      "batch": "server_network_core__p01",
+      "category": "protocol",
+      "impact": "If Netty EventLoop flushes the -27 key packet and receives the client's next encrypted packet before the Virtual Thread executes session.setSentKey(true), NroPacketDecoder treats the encrypted packet as plaintext and corrupts/disconnects the session. Also if big commands (-32,-66,-74,11,-67,-87,66) are sent before sentKey is true, NroPacketEncoder still XORs the 3 size bytes and advances curW, desynchronizing the stream.",
+      "location": "src/network/io/KeyHandler.java:23-25; src/network/netty/NroPacketEncoder.java:39,50-57",
+      "root_cause": "KeyHandler.sendKey invokes async channel.writeAndFlush via session.doSendMessage and sets sentKey=true afterward without ChannelFuture listener synchronization; NroPacketEncoder applies writeKey to 3-byte sizes unconditionally without checking shouldEncrypt.",
+      "severity": "P1",
+      "title": "XOR handshake race condition and unconditional size-byte encryption in Netty pipeline"
+    },
+    {
+      "batch": "server_network_core__p01",
+      "category": "protocol",
+      "impact": "If item option count, map count, NPC count, or mob count exceeds 255 (or mob id > 255), writeByte silently truncates the count, causing client deserialization mismatch/crash on login or reload.",
+      "location": "src/data/ItemData.java:87; src/data/DataGame.java:171,175,183,508",
+      "root_cause": "ItemData.createCacheItemOption and DataGame.updateMap / requestMobTemplate serialize collection sizes and mob IDs as 1-byte writeByte().",
+      "severity": "P1",
+      "title": "1-byte writeByte truncation on template counts and mob IDs in DataGame/ItemData"
+    },
+    {
+      "batch": "server_player_combat__p01",
+      "category": "protocol",
+      "impact": "Version <= 214 gold display cap (Integer.MAX_VALUE) never triggers, potentially overflowing gold display on older clients.",
+      "location": "src/models/player/Inventory.java:22,64-70",
+      "root_cause": "Inventory.player is never initialized or assigned anywhere in Inventory, so `player != null` in getGoldDisplay() is always false.",
+      "severity": "P2",
+      "title": "Inventory.player field is never assigned, making getGoldDisplay() version check dead code"
+    },
+    {
+      "batch": "server_player_combat__p01",
+      "category": "protocol",
+      "impact": "If player IDs exceed Integer.MAX_VALUE, IDMark.playerTradeId truncates and mismatches; also fusionEffect casts long master.id to int.",
+      "location": "src/models/player/IDMark.java:37,162-166",
+      "root_cause": "Character.id is long, while IDMark.playerTradeId is typed as int (unlike long idPlayThachDau/killCharId/idEnemy).",
+      "severity": "P2",
+      "title": "IDMark.playerTradeId uses int instead of long Character.id"
+    },
+    {
+      "batch": "server_player_combat__p03",
+      "category": "protocol",
+      "impact": "If status==20 requests switching from a Type-2 skill (Tri Thuong) to another skill, it executes Tri Thuong first and skips switching; Type-4 skills consume MP and trigger cooldown with no combat effect.",
+      "location": "src/services/SkillService.java:110-116,172-178,211-230",
+      "root_cause": "useSkill evaluates skillSelect.template.type == 2 at line 110 before checking status == 20 skillId switching at line 172; useNewSkillNotFocus (type 4) had special cases removed (line 226) and only calls affterUseSkill.",
+      "severity": "P2",
+      "title": "useSkill checks Type-2 buff before status=20 skill switch and Type-4 skills are no-ops with MP/CD cost"
+    },
+    {
+      "batch": "server_player_combat__p03",
+      "category": "protocol",
+      "impact": "Truncating long param in sendTNSM (-3) and target count in newSkillNotFocus (-45) can overflow client-displayed TNSM or drop/corrupt target lists when >127 targets exist.",
+      "location": "src/services/player/PlayerService.java:42; src/services/SkillService.java:339-355",
+      "root_cause": "sendTNSM casts long param to int (writeInt((int) param)); newSkillNotFocus casts playersTaget.size() + mobsTaget.size() to signed byte (line 339), causing negative num if >127. Also useSkill (line 86) silently ignores IOException when reading status==20 packet fields.",
+      "severity": "P2",
+      "title": "Integer/byte truncation and silent IOException swallow in packet writers/readers"
+    },
+    {
+      "batch": "server_services_bot_telemetry__p02",
+      "category": "protocol",
+      "impact": "Client receives a mismatched player count vs written player entries when a player enters/leaves the zone mid-call, causing stream desync/EOF on the client.",
+      "location": "src/services/Service.java:2122-2127",
+      "root_cause": "`sendMabuAttackSkill()` writes `player.zone.getNotBosses().size()` as a byte, then invokes `player.zone.getNotBosses()` a second time in the for-each loop without snapshotting or locking.",
+      "severity": "P1",
+      "title": "Stream count/body desync in Service.sendMabuAttackSkill()"
+    },
+    {
+      "batch": "server_services_bot_telemetry__p02",
+      "category": "protocol",
+      "impact": "Client disconnects or throws EOF/AIOOBE on malformed platform strings, out-of-bounds `cFlag`, or `pl.id > 127` in `charDie`; `changePassword()` mutates in-memory session password even if DB update fails.",
+      "location": "src/services/Service.java:840,1128,1511-1520,1612-1613,1727-1743",
+      "root_cause": "`charDie()` writes `(int) pl.id` with `writeByte`; `sendFlagPlayerToMe()` indexes `flagIconId[pl.cFlag]` unchecked; `setClientType()` accesses `arrPlatform[1]` unchecked; `addEffectChar()` never calls `msg.cleanup()`; `changePassword()` sets `session.pp = newPass` before `executeUpdate`.",
+      "severity": "P2",
+      "title": "Multiple protocol/state edge-case bugs in Service.java"
+    },
+    {
+      "batch": "server_task_clan_consts__p01",
+      "category": "protocol",
+      "impact": "High risk of opcode misrouting or developer confusion when adding/modifying packet handlers.",
+      "location": "src/consts/Cmd_message.java:5-580",
+      "root_cause": "Top-level command IDs and sub-command IDs (NOT_LOGIN, NOT_MAP, SUB_COMMAND) are mixed in one flat class with many colliding byte values (e.g., 0, 1, 2, 3, 4, 6, 7, 13, 14, 16-18, 20-23, 35, 38, 40, 41, 50, 62-66).",
+      "severity": "P1",
+      "title": "Flat Cmd_message class mixes top-level and sub-command opcodes with widespread byte collisions"
+    },
+    {
+      "batch": "server_task_clan_consts__p02",
+      "category": "protocol",
+      "impact": "If Manager.ACHIEVEMENT_TEMPLATE.size() exceeds 127, writeByte overflows to a negative value on the client; in Clan.sendMessageClan, exceptions before cleanup() leak the Message.",
+      "location": "src/services/AchievementService.java:29 & src/models/clan/Clan.java:144-172",
+      "root_cause": "Achievement count written as signed byte; Clan.sendMessageClan lacks finally block for msg.cleanup() and silently swallows exceptions.",
+      "severity": "P2",
+      "title": "Protocol byte size truncation in AchievementService and missing finally cleanup in Clan.sendMessageClan"
+    },
+    {
+      "batch": "server_world_map_mob__p01",
+      "category": "protocol",
+      "impact": "Potential buffer/resource leak if `sendMessage` or `sendMessAllPlayerInMap` throws an exception before `msg.cleanup()`.",
+      "location": "src/models/mob/MobMe.java:70-77",
+      "root_cause": "`msg.cleanup()` is placed inside `try` instead of `finally` in `MobMe`, `BaseMenu`, `MabuEgg`, `MagicTree`, `MobEffectSkill`, `Mob.sendMobMaxHp`, and `Zone`.",
+      "severity": "P3",
+      "title": "Missing finally blocks for Message.cleanup() across map/mob/npc classes"
+    },
+    {
+      "batch": "server_world_map_mob__p02",
+      "category": "protocol",
+      "impact": "Potential client stream desync on combine/craft animation (-81) when 3 or 5 bag indices are written after count byte 2.",
+      "location": "src/models/npc/npc_list/CayThong.java:148-156,188-196; src/models/npc/npc_list/HungVuong.java:178-184,222-228",
+      "root_cause": "Message(-81) writes subcommand 1 and item count byte 2, but then writes 5 bag indices in CayThong and 3 bag indices in HungVuong.",
+      "severity": "P1",
+      "title": "Message -81 item count mismatch in CayThong and HungVuong"
+    }
+  ],
+  "cross_module_questions": [
+    {
+      "batch": "client_core_render_audio__p01",
+      "q": "How does Service.gI() handle `Session_ME` vs `Session_ME2` when `Controller.isMain` flips in `GameCanvas.update()` (lines 769-828), especially when `OnApplicationFocus(false)` drops `Update()` to 15 FPS?"
+    },
+    {
+      "batch": "client_core_render_audio__p02",
+      "q": "Does Main.Update() or another controller poll Sound.status to execute __load/__start/__stop and reset status to 0, or are background-thread audio calls permanently stalling for 500ms?"
+    },
+    {
+      "batch": "client_core_render_audio__p02",
+      "q": "Does GameCanvas or GameScr read mGraphics.getClipX/Y/Width/Height expecting actual setClip values rather than GameScr.cmx/cmy/gW/gH?"
+    },
+    {
+      "batch": "client_gameplay_entities__p01",
+      "q": "How does Mob base class and Controller invoke BigBoss/BigBoss2/BachTuoc methods (e.g., isPaint, isUpdate, startDie, setAttack(Char), updateMobAttack), given those methods use 'new' hiding instead of 'override'?"
+    },
+    {
+      "batch": "client_gameplay_entities__p01",
+      "q": "What opcode/handler in Service and Server receives ImageSource.checkRMS() (which currently sends an empty MyVector due to 'if (false)') and RegisterScreen's charInfo(user, pass)?"
+    },
+    {
+      "batch": "client_gameplay_entities__p02",
+      "q": "Does Service.gI().charMove() / Server Controller validate coordinates against tile collisions/speed, given client Char.update() and moveFast / telePortSkill directly mutate cx/cy and emit charMove()?"
+    },
+    {
+      "batch": "client_gameplay_entities__p03",
+      "q": "In Service.cs / Server Controller: what opcode and validation does Service.SendCrackBall(type, amount) use, and does the server enforce ticket/gold/gem balance and anti-replay when CrackBallScr.AutoCrackBall sends requests from a background thread?"
+    },
+    {
+      "batch": "client_gameplay_entities__p04",
+      "q": "What server opcode and handler respond to Service.gI().getEffData((short)id) called at Effect.cs:178 and 226, and how does Controller populate Effect.vEffData / EffectChar.effTemplates?"
+    },
+    {
+      "batch": "client_gameplay_entities__p05",
+      "q": "Does Service.gI().changeOnKeyScr(sbyte[]) distinguish between onScreenSkill and keySkill, or does saveKeySkillToRMS() (GameScr.cs:1535-1550) overwrite/conflict with saveonScreenSkillToRMS() (GameScr.cs:1518-1533) when addSkillShortcut() calls both sequentially (GameScr.cs:1579-1580)?"
+    },
+    {
+      "batch": "client_gameplay_entities__p05",
+      "q": "Does the server send >255 ItemOptionTemplate entries or skill IDs >= 512 in NRitem0 / NR_skill RMS payloads, which would trigger truncation in loadOptionTemplatesFromRMS() (GameScr.cs:239) or stream desync in readSkill() (GameScr.cs:1888)?"
+    },
+    {
+      "batch": "client_gameplay_entities__p06",
+      "q": "Does Server openUIZone (corresponding to GameScr.openUIZone at 7262-7297) ever send zone counts or zone IDs >= 128 where signed readByte() becomes negative?"
+    },
+    {
+      "batch": "client_gameplay_entities__p07",
+      "q": "Verify in Service.cs / Controller.cs how getImgByName, useItem, login, login2, requestRegister, getMagicTree, and magicTree serialize/deserialize payloads and whether bag indexUI > 127 can occur with (sbyte)targetItem.indexUI in ItemTime.triggerAutoUse."
+    },
+    {
+      "batch": "client_gameplay_entities__p08",
+      "q": "How does Controller.frameHT_NEWBOSS populate frame arrays for Mob (6-row) vs NewBoss (17-row) templates, and what happens if a templateId is missing from frameHT_NEWBOSS?"
+    },
+    {
+      "batch": "client_gameplay_entities__p08",
+      "q": "Do any server-sent packets still send 0-byte or 1-byte arrays to NinjaUtil.readByteArray(Message), which skips reading when length <= 1?"
+    },
+    {
+      "batch": "client_gameplay_entities__p10",
+      "q": "What opcode and stream format does Service.getClan(sbyte action, sbyte imgID, string text) send, and does the server support clan image IDs > 127 that TabClanIcon.perform() truncates via (sbyte) cast?"
+    },
+    {
+      "batch": "client_gameplay_entities__p11",
+      "q": "Does Server validate TransportScr early-arrival / Luong deduction when receiving Service.gI().transportNow(), since TransportScr.perform(2) sets isSpeed=true after checking Char.myCharz().checkLuong()>0 locally without sending a speed-up/gem-spend packet?"
+    },
+    {
+      "batch": "client_gameplay_entities__p11",
+      "q": "What does MyStream.readFile('/mymap/' + mapID) return on missing map files, and does any caller close the returned DataInputStream?"
+    },
+    {
+      "batch": "client_network_protocol__p01",
+      "q": "Verify against Controller.cs and Java server Service.java whether NetworkOpcodes.cs is an unused/broken refactor or actually referenced in Game1/God or elsewhere in Client."
+    },
+    {
+      "batch": "client_network_protocol__p01",
+      "q": "Verify server-side Cmd.java / Service.java payload layout for opcode 100 (REFRESH_ITEM), -100 (KIGUI), -124 (HOLD), and 31 (STATUS_PET) to confirm whether server sends unsigned mobId bytes or negative values."
+    },
+    {
+      "batch": "client_network_protocol__p01",
+      "q": "Check GameCanvas.panel.arrItemShop size vs opcode -100 tab index byte b, and how Char.arrItemBag/arrItemBody handle item removal when REFRESH_ITEM sends quantity <= 0."
+    },
+    {
+      "batch": "client_network_protocol__p02",
+      "q": "Does Message.cleanup() close or null msg.reader()? If so, messWait = msg in case -24 (L3692) is invalidated by finally (L4638) before deferred loadInfoMap can run."
+    },
+    {
+      "batch": "client_network_protocol__p02",
+      "q": "Does Client myReader return 0/empty string on EOF instead of throwing? If so, infinite while(true) loops in requestItemPlayer (L96-100) and case 33 (L3203-3207) will hang/OOM."
+    },
+    {
+      "batch": "client_network_protocol__p02",
+      "q": "Do Java Server handlers match the exact client read widths for bag (readUnsignedByte in -64/-80 vs readShort in -99), mapID (readUnsignedByte in -24), currency/deltas (readShort in -20 vs readInt in -1/-2/95 vs readLong in 6), and mob/bag indices (signed readByte)?"
+    },
+    {
+      "batch": "client_network_protocol__p02",
+      "q": "Are Controller.gI() and Controller.gI2() ever active simultaneously on different sessions/threads, racing on static Controller.isMain?"
+    },
+    {
+      "batch": "client_network_protocol__p02",
+      "q": "How are helper methods called by onMessage implemented in lines 4642-6894 (readLogin, read_opt, phuban_Info, readGetImgByName, messageNotLogin, messageNotMap, messageSubCommand, loadInfoMap, createData, readCharInfo, readClanMsg, readFrameBoss)?"
+    },
+    {
+      "batch": "client_network_protocol__p03",
+      "q": "Verify NetworkOpcodes.cs constants against hardcoded cases in modular handlers: PacketDispatcher registers AuthPacketHandler under NetworkOpcodes.LOGOUT while AuthPacketHandler handles -26 (SERVER_ALERT); PlayerStatsPacketHandler is registered under UPDATE_HP/UPDATE_MP/UPDATE_EXP/UPDATE_NANG_DONG while handling 6/-69/-68/-97; TaskNpcPacketHandler is registered under TASK_UPDATE/NPC_MENU/NPC_CHAT while handling -70/38/32."
+    },
+    {
+      "batch": "client_network_protocol__p03",
+      "q": "Verify Server-side validation for charMove and pickItem against client-side auto-teleportation in MobController.MoveTo, MobController.Update (tsPlayer), MapController.NextMap, and distance-bypassing item pickup in MobController.GetTypePickItem."
+    },
+    {
+      "batch": "client_network_protocol__p03",
+      "q": "Verify whether Server sends any bytes for the empty loop at Controller.cs:5106-5109 (num = msg.reader().readByte(); for (byte b2 = 0; b2 < num; b2++) {}) in loadInfoMap; if non-zero, client stream desyncs."
+    },
+    {
+      "batch": "client_network_protocol__p03",
+      "q": "Verify Server trade gold field type for TRADE_ACTION action==6: TradePacketHandler.cs:67 reads int friendMoneyGD instead of long, whereas Char.xu is long."
+    },
+    {
+      "batch": "client_network_protocol__p04",
+      "q": "Does the Java Netty server handle opcode 18 (used by both `Service.gotoPlayer` and `Service.requestPlayerInfo`), opcode 24 (used by both `Service.sendOptHat` and `Service.sendCT_ready`), and opcode -45 (`skill_not_focus` vs `new_skill_not_focus`) without payload ambiguity?"
+    },
+    {
+      "batch": "client_network_protocol__p04",
+      "q": "Does `Session_ME2.isMainSession = true` (Session_ME2.cs:237) get overwritten by `GameCanvas.connect2()` before `connect()`, or does a `Session_ME2` failure/disconnect trigger main-session disconnect dialogs and `connect2()` recursion in `getKey`?"
+    },
+    {
+      "batch": "client_network_protocol__p04",
+      "q": "Does the server expect little-endian `ushort` or big-endian 2-byte length for unencrypted messages (`getKeyComplete == false`), since `Session_ME.doSendMessage` writes `(ushort)num` (LE) when `!getKeyComplete` vs BE `(num>>8),(num&0xFF)` when `getKeyComplete`?"
+    },
+    {
+      "batch": "client_network_protocol__p04",
+      "q": "How does the Java server parse `Service.charMove` (cmd -7) conditional `cy` (3-byte vs 5-byte packet), `Service.buyItem` (cmd 6) conditional `quantity` (`if (quantity > 1)`), and `Service.useItem` (cmd -43) where `index == -1` triggers `writeShort(template)` (colliding with slot 255)?"
+    },
+    {
+      "batch": "client_ui_god_mods__p03",
+      "q": "If player bag/box capacity exceeds 127 slots, how do client sbyte casts (e.g. (sbyte)item.indexUI, (sbyte)GetInventorySelect_bag(...)) interact with server ReadByte/ReadSByte item slot handling?"
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p01",
+      "q": "How does Client handle Message(-96) subcommand 0 menu selection for 'Máy Dò Boss', and does the handler call BossManager.getBossByIndex(index)? If so, showListBoss() sends filtered validBosses indices while getBossByIndex() indexes the unfiltered bosses list."
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p02",
+      "q": "Does Zone.getNotBosses() / Zone.getPlayers() return a defensive copy or the live backing list, and are they thread-safe during concurrent player death/exit triggered inside GoldenFrieza.handleBomExplosion and TDT.bodyChangePlayerInMap?"
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p03",
+      "q": "Does Zone.getNotBosses(), Zone.getPlayers(), and Zone.getBosses() return a thread-safe snapshot/CopyOnWriteArrayList, or a mutable ArrayList that can throw ConcurrentModificationException during boss skill/aura loops?"
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p03",
+      "q": "Is `clan.doanhTrai.bosses` thread-safe when NinjaAoTim.injured() adds 4-6 NinjaClone instances from a player attack thread?"
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p03",
+      "q": "What happens in `Player.injured` / `BossManager` when `SAIBAMEN.setBom` sets `this.nPoint.hp = 0` and then busy-waits 2.5s before calling `setDie(this); die(plAtt);`? Can another thread observe `isDie() == true` or skip `setBom`?"
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p04",
+      "q": "Is TraningDAO.updatePlayer(playerAtt) (called in Whis.die() at Whis.java:97) thread-safe and properly using try-with-resources with MySQL 8 backticks?"
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p04",
+      "q": "Does Client.gI().getPlayers() return a CopyOnWriteArrayList or an unsynchronized List? (Impacts ThoDaiKa.java:222-226 safety)."
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p05",
+      "q": "How does Controller dispatch `-59` to PVPService.controllerThachDau, and does Player.inventory.subGold clamp at 0 or permit negative gold if concurrent matches occur?"
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p05",
+      "q": "Does Zone.getPlayers() return a thread-safe snapshot or the live mutable list? Several dungeon loops (DestronGas, RedRibbonHQ, SnakeWay, TreasureUnderSea) iterate zone.getPlayers() with enhanced-for loops during update() and reward distribution."
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p06",
+      "q": "Does Client or Controller validate byte x before calling BlackBallWarService.xHPKI(player, x) / xDame(player, x), or can a client send arbitrary x != 3/5/7?"
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p06",
+      "q": "How is Client opcode -96 (typeTop=0) parsed against WhisArenaService.showLeaderboard, and how does opcode -118 map targetId to WhisArenaService.competing(player, int targetId) when player.id is long?"
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p06",
+      "q": "Is Zone.getPlayers() / Zone.items backed by a thread-safe collection or copy, given concurrent iteration/mutation by NgocRongNamecService, BlackBallWarService, and GameLoop?"
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p07",
+      "q": "What is the underlying collection type of WorldMartialArtsTournamentManager.listReg (e.g., ArrayList vs CopyOnWriteArrayList) and does the tournament manager clear/lock listReg at hour boundaries when canReg transitions?"
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p07",
+      "q": "Does Message.cleanup() tolerate being called twice on the same Message instance (as in SuperRankService.topList lines 119 and 128), or does it release a Netty ByteBuf twice?"
+    },
+    {
+      "batch": "server_database_persistence__p01",
+      "q": "Where is TraningDAO.updatePlayer called? Any updates it writes to data_luyentap are overwritten at login by data_training in NDVSqlFetcher.loadPlayer."
+    },
+    {
+      "batch": "server_database_persistence__p01",
+      "q": "What readers access Manager.ACHIEVEMENT_TEMPLATE concurrently while DatabaseTemplateLoader.reloadAchievementTemplate() runs clear() + addAll()?"
+    },
+    {
+      "batch": "server_database_persistence__p02",
+      "q": "Do any SQL queries across DAO/fetcher classes rely on SELECT column aliases (e.g., COUNT(*) AS total) or MySQL 8.x DATETIME columns (which return java.time.LocalDateTime from rs.getObject(j)) when reading through ResultSetImpl?"
+    },
+    {
+      "batch": "server_economy_items__p01",
+      "q": "Does PlayerDAO.updatePlayerAsync serialize itemsBag and itemsDaBan atomically, and how is CombineService.startCombineVip invoked from the network Controller (is n validated/clamped before reaching startCombineVip)?"
+    },
+    {
+      "batch": "server_economy_items__p02",
+      "q": "Confirm on the Unity Client and Message/NpcMenuController side how opcode -83 is parsed for DRAGON_PORUNGA vs DRAGON_SHENRON (SummonDragonNamek omits int playerId that SummonDragon writes)."
+    },
+    {
+      "batch": "server_economy_items__p02",
+      "q": "Verify whether NpcFactory/Controller clears player.idMark.setTypeInput(-1) elsewhere or if -125 can be replayed directly from the client."
+    },
+    {
+      "batch": "server_economy_items__p02",
+      "q": "Verify NpcMenuController handling of ConstNpc.CONFIRM_CHANGE_PET to confirm whether player.isConfirmingChangePet / player.itemToConfirmChangePet are reset outside SpecialItemHandler.changePet."
+    },
+    {
+      "batch": "server_economy_items__p03",
+      "q": "Does the Unity C# client read optionTemplate.id in Message -44 using readUnsignedByte() or signed readByte()? ShopService writes option IDs > 127 (e.g., 206, 228, 246) via writeByte()."
+    },
+    {
+      "batch": "server_network_core__p01",
+      "q": "How does ServerManager.disconnect(ISession) handle IP tracking and does calling it twice (from Client.remove and NroChannelHandler.channelInactive) double-decrement per-IP connection counters?"
+    },
+    {
+      "batch": "server_network_core__p01",
+      "q": "Does NDVSqlFetcher.login check/kick an already-online player or synchronize with pending async PlayerDAO.updatePlayer saves from Client.removePlayerFromGame?"
+    },
+    {
+      "batch": "server_network_core__p01",
+      "q": "What does Controller.onMessage do with Message lifecycle and how are -28 subcommands dispatched?"
+    },
+    {
+      "batch": "server_network_core__p01",
+      "q": "Are Manager.ITEM_OPTION_TEMPLATES, MAP_TEMPLATES, NPC_TEMPLATES, or MOB_TEMPLATES larger than 255 entries (which would overflow DataGame/ItemData writeByte counts)?"
+    },
+    {
+      "batch": "server_network_core__p01",
+      "q": "Is the legacy socket stack (Network, Session, Collector, Sender, QueueHandler, network.Message) still referenced anywhere at runtime or completely superseded by NettyServer?"
+    },
+    {
+      "batch": "server_network_core__p02",
+      "q": "Does Client.gI().getPlayers() return a live unsynchronized ArrayList or a thread-safe CopyOnWriteArrayList/snapshot, and does Client.gI().close() already save all online players before ServerManager.cleanupResources() runs?"
+    },
+    {
+      "batch": "server_network_core__p02",
+      "q": "In Controller.java cases 54 and -60, is player.lastTimeAttack updated atomically inside Service.attackMob / Service.attackPlayer, and are those methods thread-safe against concurrent Netty/GameLoop access?"
+    },
+    {
+      "batch": "server_network_core__p02",
+      "q": "Are TransactionService.gI().controller and CombineService.gI().showInfoCombine properly synchronized when invoked from Netty worker threads?"
+    },
+    {
+      "batch": "server_network_core__p02",
+      "q": "Does PlayerDAO.updatePlayer(player) called from ServerManager.startAutoSaveTask and shutdown hooks safely snapshot player inventory/skills/pet while GameLoopManager and Netty threads mutate the same Player object?"
+    },
+    {
+      "batch": "server_network_core__p02",
+      "q": "In Manager.java SQL queries (lines 172-185), is the player column named dien_sukien or diem_sukien in the MySQL schema, and does player table have a UNIQUE constraint on name to prevent TOCTOU duplicates in Controller.createChar?"
+    },
+    {
+      "batch": "server_network_core__p02",
+      "q": "Does NettyServer / Message lifecycle handle Message.cleanup()/dispose() properly if an exception escapes Controller.onMessage's finally block (e.g. from PacketProfiler.record)?"
+    },
+    {
+      "batch": "server_player_combat__p01",
+      "q": "Does EventDAO.getRemainingTimeToIncreaseHP/MP/Dame (called in NPoint.java:812,888,1044 inside calPoint) read cached fields or execute a MySQL query on every stat recalculation?"
+    },
+    {
+      "batch": "server_player_combat__p02",
+      "q": "Does TransactionService or Trade acquire player.getTradeLock() when reading/moving items, and how does it interact with InventoryService methods that only check player.isTrade without locking?"
+    },
+    {
+      "batch": "server_player_combat__p02",
+      "q": "Does the Unity client read -99 (enemy list) bag as short and power before online, matching FriendAndEnemyService.openListEnemy, vs -80 (friend list) where bag is byte and online is before power?"
+    },
+    {
+      "batch": "server_player_combat__p02",
+      "q": "Are Clan.members / Clan.membersInGame CopyOnWriteArrayList or plain ArrayList in models/clan/Clan.java?"
+    },
+    {
+      "batch": "server_player_combat__p03",
+      "q": "Does Message.cleanup() handle double-calls safely (SkillService.learSkillSpecial calls it twice at lines 377 and 382), and does Player.sendMessage() clean up Message on error when callers like PlayerService.sendInfoHpMpMoney (lines 123-141) omit msg.cleanup()?"
+    },
+    {
+      "batch": "server_player_combat__p03",
+      "q": "In Client Unity C# Controller, how is Message(-60) parsed when useSkillBuffToPlayer writes byte(0) at line 869 vs playerAttackPlayer writing byte(1), byte(0), int(dameHit), boolean(isDie), boolean(isCrit) at lines 1071-1079?"
+    },
+    {
+      "batch": "server_player_combat__p03",
+      "q": "Does NPoint.setHp/setHP/addHp/addMp enforce [0, hpMax] bounds and thread safety, and why does SkillService.useSkillAttack (line 440) wrap HP in Util.maxIntValue() while NPoint supports long HP?"
+    },
+    {
+      "batch": "server_player_combat__p03",
+      "q": "Does Zone.getHumanoids() / getNotBosses() / getBosses() / mobs return thread-safe snapshots or live lists?"
+    },
+    {
+      "batch": "server_services_bot_telemetry__p01",
+      "q": "How does PlayerDAO.updatePlayer() interact with concurrent login/session state when AdminService.buffMoney()/buffItem() loads an offline player via NDVSqlFetcher.loadPlayerByName()?"
+    },
+    {
+      "batch": "server_services_bot_telemetry__p01",
+      "q": "Where is RedisService.setSession/getSession/updateLeaderboard invoked in the codebase, and is there an actual in-memory session/leaderboard fallback implemented when Redis is down?"
+    },
+    {
+      "batch": "server_services_bot_telemetry__p02",
+      "q": "Do ConstNpc.BAN_PLAYER and ConstNpc.BUFF_PET handlers verify player.isAdmin() before executing, given SubMenuService.controller() allows any client to open those menus via menuId 500/501?"
+    },
+    {
+      "batch": "server_services_bot_telemetry__p02",
+      "q": "Does Client Unity read msg -17 (charDie) player id as a single byte (Service.java:840) or int? If byte, player IDs > 127 will collide/truncate."
+    },
+    {
+      "batch": "server_services_bot_telemetry__p02",
+      "q": "Are Manager.topSM, Manager.topNV, etc. declared volatile or safely read across threads when TopService reassigns them every 120s (TopService.java:45-54)?"
+    },
+    {
+      "batch": "server_task_clan_consts__p01",
+      "q": "How does the packet router / Controller distinguish colliding byte opcodes in Cmd_message (e.g., 0, 1, 2, 4, 6, 7, 13, 14, 18, 21, 35, 38, 40, 41, 50, 62-66) between top-level commands and sub-commands?"
+    },
+    {
+      "batch": "server_task_clan_consts__p02",
+      "q": "Does Achievement.canReward/reward in player.achievement use internal synchronization to prevent double-claim on concurrent -76 packets?"
+    },
+    {
+      "batch": "server_world_map_mob__p01",
+      "q": "Does Client opcode -9 (mob HP update) expect delta HP or a flag when Mob.hoi_hp writes 1L for positive heal?"
+    },
+    {
+      "batch": "server_world_map_mob__p02",
+      "q": "Does PlayerDAO.updatePlayer(player) (called in BaHatMit.java:389,850,884) execute synchronously on the Netty/game thread or offload to a DB executor?"
+    },
+    {
+      "batch": "server_world_map_mob__p02",
+      "q": "How does client handler for opcode -81 parse the subcommand byte 1 item-count byte? CayThong.java:150-155 and HungVuong.java:180-183 write count=2 but emit 5 and 3 bag indices respectively."
+    },
+    {
+      "batch": "server_world_map_mob__p03",
+      "q": "Verify ConsignShopManager.getItemById / updateItemUpTopAsync thread-safety when UP_TOP_ITEM (NpcFactory.java:762-789) mutates ConsignItem.isUpTop concurrently with item purchase/cancel."
+    },
+    {
+      "batch": "server_world_map_mob__p03",
+      "q": "Verify Client-side handling of Message(-91), Message(29), Message(32), Message(38), Message(-105) for EOF edge cases when optional fields (e.g. avatar != -1 in NpcService.java:49,66,80) are omitted."
+    },
+    {
+      "batch": "tooling_and_tests__p01",
+      "q": "Does any caller read or write `AntiLogin.wrongLogin` directly without going through `synchronized` methods, or call `wrong()` while already blocked (which could trigger `byte` overflow)?"
+    }
+  ]
+}

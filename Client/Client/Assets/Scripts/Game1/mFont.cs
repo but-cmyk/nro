@@ -389,19 +389,27 @@ namespace Game1
     		return new Color(r, g, b);
     	}
     
+    	private static Color[] cachedBigColors;
+    	private static Color[] cachedOutlineColors;
+
     	public Color bigColor(int id)
     	{
-    		Color[] array = new Color[7]
+    		if (cachedBigColors == null)
     		{
-    			Color.red,
-    			Color.yellow,
-    			Color.green,
-    			Color.white,
-    			setColor(40404),
-    			Color.red,
-    			Color.black
-    		};
-    		return array[id - 25];
+    			cachedBigColors = new Color[7]
+    			{
+    				Color.red,
+    				Color.yellow,
+    				Color.green,
+    				Color.white,
+    				setColor(40404),
+    				Color.red,
+    				Color.black
+    			};
+    		}
+    		int idx = id - 25;
+    		if (idx < 0 || idx >= cachedBigColors.Length) return Color.white;
+    		return cachedBigColors[idx];
     	}
     
     	public void setColorByID(int ID)
@@ -420,25 +428,26 @@ namespace Game1
     		x--;
     		if (id > 24)
     		{
-    			Color[] array = new Color[6]
+    			if (cachedOutlineColors == null)
     			{
-    				setColor(6029312),
-    				setColor(7169025),
-    				setColor(7680),
-    				setColor(0),
-    				setColor(9264),
-    				setColor(6029312)
-    			};
-    			color1 = array[id - 25];
-    			color2 = array[id - 25];
+    				cachedOutlineColors = new Color[6]
+    				{
+    					setColor(6029312),
+    					setColor(7169025),
+    					setColor(7680),
+    					setColor(0),
+    					setColor(9264),
+    					setColor(6029312)
+    				};
+    			}
+    			int outIdx = id - 25;
+    			if (outIdx < 0 || outIdx >= cachedOutlineColors.Length) outIdx = 0;
+    			color1 = cachedOutlineColors[outIdx];
+    			color2 = cachedOutlineColors[outIdx];
     			_drawString(g, st, x + 1, y, align);
     			_drawString(g, st, x - 1, y, align);
     			_drawString(g, st, x, y - 1, align);
     			_drawString(g, st, x, y + 1, align);
-    			_drawString(g, st, x + 1, y + 1, align);
-    			_drawString(g, st, x + 1, y - 1, align);
-    			_drawString(g, st, x - 1, y - 1, align);
-    			_drawString(g, st, x - 1, y + 1, align);
     			color1 = bigColor(id);
     			color2 = bigColor(id);
     		}
@@ -527,10 +536,6 @@ namespace Game1
     
     	public void drawStringBd(mGraphics g, string st, int x, int y, int align, mFont font)
     	{
-    		setTypePaint(g, st, x - 1, y - 1, align, font.id);
-    		setTypePaint(g, st, x - 1, y + 1, align, font.id);
-            setTypePaint(g, st, x + 1, y - 1, align, font.id);
-            setTypePaint(g, st, x + 1, y + 1, align, font.id);
             setTypePaint(g, st, x, y - 1, align, font.id);
             setTypePaint(g, st, x, y + 1, align, font.id);
             setTypePaint(g, st, x + 1, y, align, font.id);

@@ -1,0 +1,96 @@
+{
+  "batch_id": "server_database_persistence__p02",
+  "concurrency_and_state": [
+    "ResultSetImpl holds mutable cursor state (indexData initialized to -1) and mutable backing collections (Map<String, Object>[] data, Object[][] values) without synchronization; safe only for single-threaded per-query usage.",
+    "dispose() and close() clear row maps and null out data/values references; subsequent navigation/getter calls throw Exception(\"No data available\") except gotoBeforeFirst() and getRows()."
+  ],
+  "cross_module_questions": [
+    "How do AlyraManager / callers invoke ResultSetImpl and close the underlying JDBC Connection when ResultSetImpl closes rs and stmt = rs.getStatement() in its finally block?",
+    "Do any SQL queries across DAO/fetcher classes rely on SELECT column aliases (e.g., COUNT(*) AS total) or MySQL 8.x DATETIME columns (which return java.time.LocalDateTime from rs.getObject(j)) when reading through ResultSetImpl?"
+  ],
+  "db_redis_touchpoints": [
+    {
+      "location": "src/database/ResultSetImpl.java:18-82",
+      "op": "JDBC ResultSet consumption & resource cleanup (rs.close(), rs.getStatement().close())",
+      "safety_note": "Closes rs and stmt in finally, does not close Connection (assumed managed by caller); buffers all rows in memory; uses getColumnName() instead of getColumnLabel().",
+      "target": "JDBC ResultSet / Statement"
+    }
+  ],
+  "files_read": [
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/database/ResultSetImpl.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/database/GEMINI.md"
+  ],
+  "findings": [
+    {
+      "category": "database",
+      "impact": "Any SQL query using column aliases (e.g., SELECT COUNT(*) AS cnt) or computed expressions fails lookup by alias name via get*(String) and may return 0/null or overwrite keys.",
+      "location": "src/database/ResultSetImpl.java:41-50",
+      "root_cause": "ResultSetImpl constructor calls rsmd.getColumnName(j) instead of rsmd.getColumnLabel(j) when populating rowMap keys.",
+      "severity": "P1",
+      "title": "getColumnName used instead of getColumnLabel breaks SQL aliases"
+    },
+    {
+      "category": "database",
+      "impact": "Calling getTimestamp() on a DATETIME column in MySQL Connector/J 8.x throws Exception(\"Cannot convert LocalDateTime to Timestamp\") at runtime.",
+      "location": "src/database/ResultSetImpl.java:42,496-541",
+      "root_cause": "Constructor extracts column values via rs.getObject(j) (which returns java.time.LocalDateTime for DATETIME in MySQL 8.x), while getTimestamp(int/String) only handles Timestamp, java.util.Date, and Long.",
+      "severity": "P1",
+      "title": "getTimestamp fails on MySQL 8.x LocalDateTime from rs.getObject"
+    },
+    {
+      "category": "performance_gc",
+      "impact": "Large query results cause high heap allocation, duplicate object references, and GC pauses.",
+      "location": "src/database/ResultSetImpl.java:33-59",
+      "root_cause": "Constructor eagerly buffers all rows into both List<Map<String, Object>> (one HashMap per row with column and table.column String keys) and List<Object[]> before closing ResultSet.",
+      "severity": "P2",
+      "title": "Eager dual-structure in-memory buffering of entire ResultSet"
+    },
+    {
+      "category": "security_dupe",
+      "impact": "Values exceeding int/short/byte bounds (e.g., BIGINT/long stats, currency, or quantities) silently wrap/truncate instead of throwing, risking stat or currency corruption.",
+      "location": "src/database/ResultSetImpl.java:185-187,207-209,229-231,251-253,555-557,577-579",
+      "root_cause": "getByte, getShort, and getInt cast any Number and call byteValue()/shortValue()/intValue() without range checking.",
+      "severity": "P2",
+      "title": "Silent numeric truncation in getByte/getShort/getInt on Number values"
+    },
+    {
+      "category": "architecture",
+      "impact": "Invalid column index throws raw ArrayIndexOutOfBoundsException; null column name throws raw NullPointerException; maintenance risk from 18 nearly identical getter implementations.",
+      "location": "src/database/ResultSetImpl.java:174-585",
+      "root_cause": "Indexed getters do not validate column bounds (1..nColumn) before indexing values[indexData][column - 1], string getters call column.toLowerCase() without null check, and cursor/conversion logic is duplicated across 18 getter methods.",
+      "severity": "P3",
+      "title": "Missing column index/null validation and heavy boilerplate duplication across getters"
+    }
+  ],
+  "key_classes": [
+    {
+      "key_methods": [
+        "ResultSetImpl(ResultSet)",
+        "dispose()",
+        "close()",
+        "next()",
+        "first()",
+        "gotoResult(int)",
+        "gotoFirst()",
+        "gotoBeforeFirst()",
+        "gotoLast()",
+        "getRows()",
+        "getByte(int/String)",
+        "getShort(int/String)",
+        "getInt(int/String)",
+        "getLong(int/String)",
+        "getFloat(int/String)",
+        "getDouble(int/String)",
+        "getBoolean(int/String)",
+        "getString(int/String)",
+        "getObject(int/String)",
+        "getTimestamp(int/String)"
+      ],
+      "name": "ResultSetImpl",
+      "path": "src/database/ResultSetImpl.java",
+      "responsibility": "Disconnected in-memory implementation of AlyraResultSet that copies a JDBC ResultSet into row maps and Object arrays, closes ResultSet/Statement, and provides typed cursor-based getters."
+    }
+  ],
+  "module_summary": "ResultSetImpl (591 lines) implements AlyraResultSet as an eagerly buffered, disconnected JDBC ResultSet wrapper. Its constructor copies every row into both a case-insensitive HashMap (indexed by column name and table.column) and an Object[] array, then closes the JDBC ResultSet and Statement in a finally block before exposing cursor navigation and typed getters.",
+  "protocol_touchpoints": []
+}

@@ -1,0 +1,1513 @@
+{
+  "p0_findings": [
+    {
+      "batch": "client_network_protocol__p04",
+      "category": "concurrency",
+      "impact": "Concurrent `AddMessage`/`RemoveAt`/`Clear` on `List<Message>` and `addElement`/`removeElementAt` on `MyVector` across threads can corrupt collections, drop packets, or throw `ArgumentOutOfRangeException`.",
+      "location": "Client/Client/Assets/Scripts/Game1/Session_ME2.cs:13-61,279,288,459-500",
+      "root_cause": "`Session_ME2` accesses `Sender.sendingMessage` and `recieveMsg` from main, sender, and collector threads without synchronization locks (unlike `Session_ME.cs`).",
+      "severity": "P0",
+      "title": "Unsynchronized Send/Receive Queues Across Threads in Session_ME2"
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p03",
+      "category": "concurrency",
+      "impact": "Freezes the attacking player's handler thread (and wastes 100% of a CPU core) for 2.5 seconds on every Saibamen suicide death, risking Netty event-loop/thread-pool stalls or timeouts.",
+      "location": "src/models/boss/boss_list/SnakeWay/SAIBAMEN.java:118-172",
+      "root_cause": "SAIBAMEN.injured() (synchronized) calls setBom(plAtt) directly when isDie() becomes true, and setBom() executes a busy-wait `while (this.playerSkill.prepareTuSat)` loop checking Util.canDoWithTime(..., 2500) instead of transitioning to a boss update state. Also dereferences plAtt without null check in Service.gI().chat(plAtt, ...) and startStun(plAtt, ...).",
+      "severity": "P0",
+      "title": "Busy-wait 2.5s spin-loop inside synchronized SAIBAMEN.injured/setBom blocks caller thread and spikes CPU"
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p06",
+      "category": "security_dupe",
+      "impact": "If client supplies any byte x other than X3/X5/X7, player gets up to x127 HP/KI/Dame multiplier for 0 gems.",
+      "location": "src/services/phoban/BlackBallWarService.java:128-181",
+      "root_cause": "xHPKI() and xDame() initialize cost=0 and only assign cost in switch cases X3/X5/X7 without a default rejection, then check checkGemAndRuby(0) (true) and assign effectSkin.xHPKI = x / xDame = x.",
+      "severity": "P0",
+      "title": "Unvalidated multiplier byte in xHPKI/xDame grants free stat multiplier"
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p06",
+      "category": "security_dupe",
+      "impact": "Two players can double-claim/lock the same Namek Ball, or two clan members can open duplicate dungeon instances and bypass cooldown/item limits.",
+      "location": "src/services/phoban/NgocRongNamecService.java:357-398; DestronGasService.java:36-75; SnakeWayService.java:38-77; TreasureUnderSeaService.java:36-64; RedRibbonHQService.java:36-71",
+      "root_cause": "Check-then-act on shared dungeon pools (isOpened / getClan() == null), clan dungeon slots, daily counters, item consumption, and Namek ball arrays lack synchronization.",
+      "severity": "P0",
+      "title": "Unsynchronized check-then-act on Namek ball pickup and PhoBan instance allocation"
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p06",
+      "category": "concurrency",
+      "impact": "Two players can be assigned the same zone simultaneously, overwrite each other's arena match, and lose entry tickets/water bottles; disconnecting during the 500ms delay leaves player.isPKDHVT=true.",
+      "location": "src/services/tournament/DeathOrAliveArenaService.java:39-109",
+      "root_cause": "getMapChallenge(112) checks DeathOrAliveArenaManager.getVDST(zone) == null synchronously, but new DeathOrAliveArena() is not added to DeathOrAliveArenaManager until 500ms later inside setTimeout().",
+      "severity": "P0",
+      "title": "500ms TOCTOU window in DeathOrAliveArenaService.startChallenge allows double-booking arena zones"
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p07",
+      "category": "security_dupe",
+      "impact": "Players can convert Ruby (Hong Ngoc) into Gem (Ngoc Xanh) by repeatedly registering and cancelling tournament entry, or exploit fee differences if cancellation occurs in a different tournament hour.",
+      "location": "src/services/tournament/WorldMartialArtsTournamentService.java:158-216",
+      "root_cause": "Registration checks and deducts Gem+Ruby via checkGemAndRuby(gem)/subGemAndRuby(gem) (lines 158, 166, 200), whereas cancellation refunds purely Gem via player.inventory.addGem(gem) (line 213) and computes the refund from current getTournament() (line 205) rather than the fee originally paid.",
+      "severity": "P0",
+      "title": "Ruby-to-Gem currency conversion and mismatched refund fee on tournament cancellation"
+    },
+    {
+      "batch": "server_economy_items__p01",
+      "category": "security_dupe",
+      "impact": "Server-side bypass of upgrade/restriction checks: players can convert already-upgraded/socketed equipment, bypass Nâng cấp 10% failure rate for 100% success, upgrade max-tier books into arbitrary item IDs, or consign untradable (opt 30) items.",
+      "location": "src/models/combine/list/ChuyenHoaBangNgoc.java:139-154; src/models/combine/list/ChuyenHoaBangVang.java:132-147; src/models/combine/list/NangCapSachTuyetKi.java:47-72; src/services/ConsignShopService.java:376-389",
+      "root_cause": "Execution methods omit validation present in showInfoCombine: ChuyenHoaBangNgoc/Vang do not check option 72/102 on trangBiCanChuyenHoa; NangCapSachTuyetKi does not restrict template IDs (1181-1183) or roll the 10% chance; ConsignShopService.itemCanConsign returns true for type 14/15 or opt 86/87 before checking opt 30 (making opt 30 check dead code).",
+      "severity": "P0",
+      "title": "Missing server-side validation in combine execution and dead opt-30 trade lock check in ConsignShopService"
+    },
+    {
+      "batch": "server_economy_items__p02",
+      "category": "security_dupe",
+      "impact": "Players can duplicate items by trading with themselves, or by mutating their real bag (via Input.BANSLL, Input.USE_CARD_QUANTITY, etc.) while Trade is open and having Trade overwrite inventory.itemsBag on commit.",
+      "location": "src/services/func/Trade.java:54-57,451-452 & src/services/func/TransactionService.java:63-107",
+      "root_cause": "1) TransactionService allows SEND_INVITE_TRADE/ACCEPT_TRADE when playerId == pl.id (creating new Trade(pl, pl)), where itemsBag2 gets itemsTrade1 added and overwrites player.inventory.itemsBag. 2) Trade snapshots itemsBag1/itemsBag2 at constructor time and overwrites real inventory on commit, while Input cases BANSLL/TANG_NGOC_HONG/USE_CARD_QUANTITY do not check isTrade/TransactionService.check.",
+      "severity": "P0",
+      "title": "Self-Trade & Snapshot-Overwrite Item Duplication in Trade/TransactionService"
+    },
+    {
+      "batch": "server_economy_items__p02",
+      "category": "security_dupe",
+      "impact": "Any client with typeInput set (or via replay) can trigger admin VND buff, item creation, bot spawning, global notice, or player rename without admin privilege checks; additionally, replayable typeInput enables concurrent race/double-spend in TANG_NGOC_HONG and BANSLL.",
+      "location": "src/services/func/Input.java:96-155,404-567,662-699",
+      "root_cause": "Input.BUFFVND, GIVE_IT, DUNGLOA, BOTQUAI*, BOTBOSS, and CHANGE_NAME lack if (!player.isAdmin()) checks (unlike SEND_ITEM_OP and GET_IT). Input.doInput never resets player.idMark.setTypeInput(-1) and lacks synchronized(player), and TANG_NGOC_HONG lacks trade checks and locks.",
+      "severity": "P0",
+      "title": "Missing Admin Checks, Unreset typeInput, and Unsynchronized Economy Cases in Input.java"
+    },
+    {
+      "batch": "server_economy_items__p02",
+      "category": "security_dupe",
+      "impact": "Players can summon 1-star/2-star/3-star Shenron without consuming the primary dragon ball, summon black/normal dragon concurrently or crash background timer into permanent server-wide Shenron lockout, and fallthrough grants two pet skill rerolls.",
+      "location": "src/services/func/SummonDragon.java:180-222,288-337,385-395,623-640",
+      "root_cause": "checkShenronBall(pl) never verifies the initiating 1/2/3-star ball is still in bag and summonShenron silently swallows NPE in try/catch when subQuantityItemsBag receives null. SHEN_RON_BI_NGO case 0 lacks break and falls into case 1. shenronLeave calls NpcService on potentially null/offline playerSummonShenron from the unsynchronized timer thread, leaving isShenronAppear=true if NPE occurs.",
+      "severity": "P0",
+      "title": "Free Shenron Summon Exploit, Case Fallthrough, and Lockout NPE in SummonDragon"
+    },
+    {
+      "batch": "server_economy_items__p02",
+      "category": "security_dupe",
+      "impact": "Players can keep or reuse the pet-change item (401) across confirmations or leave isConfirmingChangePet permanently true after changing pet.",
+      "location": "src/services/func/useitem/handlers/SpecialItemHandler.java:318-345",
+      "root_cause": "changePet stores player.itemToConfirmChangePet and sets player.isConfirmingChangePet = true, but on confirmation never checks if itemToConfirmChangePet is still in itemsBag with quantity >= 1 and never resets isConfirmingChangePet = false or itemToConfirmChangePet = null.",
+      "severity": "P0",
+      "title": "Unvalidated & Unreset Pet-Change State Exploit in SpecialItemHandler.changePet"
+    },
+    {
+      "batch": "server_economy_items__p03",
+      "category": "security_dupe",
+      "impact": "Player loses gold/gem/ruby/spec-items or food without receiving item, or pays twice (both SPEC_SHOP currency and money) when buying from BILL shop.",
+      "location": "src/services/ShopService.java:1126-1171",
+      "root_cause": "In buyItemHD, subIemByItemShop() (line 1146) executes BEFORE getCountEmptyBag < 1 check (line 1150), subMoneyByItemShopV2() (line 1155), and the food quantity >= 99 check (line 1158). Both SPEC_SHOP item deduction and money deduction can execute on the same purchase, and any subsequent failure returns without refunding already-deducted currency/items. Additionally, shopOpen null check in takeItem (line 497) is bypassed because case \"BILL\" returns at line 492, risking NPE in isEligibleForBill/buyItemHD.",
+      "severity": "P0",
+      "title": "Non-atomic deduction and missing refunds in ShopService.buyItemHD"
+    },
+    {
+      "batch": "server_economy_items__p03",
+      "category": "security_dupe",
+      "impact": "Player loses currency/spec-items if they lack coupon 459 or if shop.tagName is null; potential NPE after currency deduction.",
+      "location": "src/services/ShopService.java:746-764",
+      "root_cause": "In buyItem, subMoneyByItemShop (line 747) or subIemByItemShop (line 751) deducts player currency/items BEFORE checking `shop.tagName.equals(\"SANTA_PGG\")` and deducting item 459 (lines 755-764). If item 459 is missing, method returns without refunding. Also shop.tagName is not null-checked before `.equals`.",
+      "severity": "P0",
+      "title": "Currency deducted before SANTA_PGG coupon check in ShopService.buyItem"
+    },
+    {
+      "batch": "server_economy_items__p03",
+      "category": "security_dupe",
+      "impact": "Concurrent or spoofed menu callbacks can generate unlimited free SKH/SKH VIP items or duplicate Thần Linh sets from a single box.",
+      "location": "src/services/ItemService.java:1621-1717,2236-2273",
+      "root_cause": "OpenSKH (line 1625) and OpenSKHVIP (line 1671) call InventoryService.findItem(...) for itemUseId without checking `itemUse == null || itemUse.quantity < 1`, and neither they nor giveSetThanLinh (line 2236) nor OpenItem* methods synchronize on player.inventory.itemsBag.",
+      "severity": "P0",
+      "title": "Missing null/quantity check and inventory lock in OpenSKH/OpenSKHVIP/giveSetThanLinh"
+    },
+    {
+      "batch": "server_economy_items__p03",
+      "category": "security_dupe",
+      "impact": "Ruby spent on buyback can be converted into Gem on full bag, int cast can under-refund >2.14B gem/ruby, and negative/out-of-bounds index or race condition crashes or misprices buyback.",
+      "location": "src/services/ShopService.java:1070-1124",
+      "root_cause": "buyItemDaBan checks `index >= items.size()` (line 1074) without `index < 0`, reads `items.get(index)` and computes price outside any lock on `items` or `itemsBag`, deducts gem/ruby via `subGemAndRuby` before checking `getCountEmptyBag(player) != 0`, and on full bag refunds via `player.inventory.addGem((int) giamualaingoc)` (converting ruby to gem and truncating long to int).",
+      "severity": "P0",
+      "title": "Unsynchronized access, missing negative-index guard, and broken ruby refund in buyItemDaBan"
+    },
+    {
+      "batch": "server_network_core__p01",
+      "category": "security_dupe",
+      "impact": "Two simultaneous login requests for the same account can enter NDVSqlFetcher.login and load two Player instances concurrently, enabling item/gold duplication and session overwrite.",
+      "location": "src/network/session/MySession.java:125-172",
+      "root_cause": "ACCOUNT_LOCKS.remove(username, accountLock) in finally removes the lock object while another thread may already hold a reference waiting to enter synchronized(accountLock); a third thread then calls computeIfAbsent and gets a different lock object, running concurrently with the second thread.",
+      "severity": "P0",
+      "title": "Per-account login lock race condition in MySession.login"
+    },
+    {
+      "batch": "server_network_core__p01",
+      "category": "security_dupe",
+      "impact": "Player can reconnect milliseconds after disconnect and load stale DB state before the async Virtual Thread finishes PlayerDAO.updatePlayer, enabling rollback/item duplication.",
+      "location": "src/server/Client.java:162-197",
+      "root_cause": "removePlayerFromGame removes the player from playersByUserId/playersById immediately (lines 168-173), then dispatches PlayerDAO.updatePlayer asynchronously on a Virtual Thread (lines 186-196) with no per-user save barrier checked by MySession.login.",
+      "severity": "P0",
+      "title": "Async player save on disconnect races with immediate reconnect login"
+    },
+    {
+      "batch": "server_network_core__p02",
+      "category": "security_dupe",
+      "impact": "Any normal player can teleport arbitrarily across the map (bypassing both 80ms rate-limit and speed/distance anti-cheat) by sending MOVE coordinates within 150px of any mob in the zone, even without TDLT.",
+      "location": "Controller.java:489-513",
+      "root_cause": "isNearMobInZone trusts client-supplied (toX, toY) and checks if any mob in player.zone.mobs is within 150px, bypassing both rate-limit (line 503) and distance check (line 507) for all players, not just TDLT users.",
+      "severity": "P0",
+      "title": "Client-trusted coordinates bypass anti-speed/teleport check in MOVE (-7)"
+    },
+    {
+      "batch": "server_player_combat__p02",
+      "category": "security_dupe",
+      "impact": "Concurrent inventory packets (equip, unequip, throw, box transfer, trade) can race and duplicate or destroy items despite player.isTrade checks.",
+      "location": "src/services/player/InventoryService.java:138-187, 425-627",
+      "root_cause": "InventoryService methods mutate itemsBag, itemsBody, and itemsBox without acquiring player.getTradeLock() or any synchronization lock; itemBagToBox checks player.isTrade before null-checking player (line 584 vs 588).",
+      "severity": "P0",
+      "title": "Unlocked inventory mutations allow race-condition item dupe/loss"
+    },
+    {
+      "batch": "server_player_combat__p02",
+      "category": "security_dupe",
+      "impact": "Two players can donate simultaneously on the same clan request exceeding maxDonate, or share the exact same mutable ItemOption list reference between giver's box stack and receiver's pea.",
+      "location": "src/services/player/ClanService.java:167-216",
+      "root_cause": "clanDonate has no synchronization on Clan/ClanMessage or giver's itemsBox, and line 190 assigns peaCopy.itemOptions = pea.itemOptions by reference instead of deep-copying.",
+      "severity": "P0",
+      "title": "Clan pea donation race condition and shared ItemOption reference"
+    },
+    {
+      "batch": "server_player_combat__p03",
+      "category": "security_dupe",
+      "impact": "Players can instant-cast QCKK and Makankosappo without waiting the 4000ms/3000ms charge time by sending back-to-back attack packets (100-150ms apart).",
+      "location": "src/services/SkillService.java:478-542",
+      "root_cause": "useSkillAttack records lastTimePrepareQCKK (line 482) and lastTimePrepareLaze (line 521) when starting preparation, and returns without deducting MP or setting cooldown; on the second call (prepareQCKK/prepareLaze == true), it never validates elapsed time against lastTimePrepareQCKK or lastTimePrepareLaze (unlike TU_SAT at line 772).",
+      "severity": "P0",
+      "title": "Missing charge-time validation allows instant-cast QCKK and Makankosappo bypass"
+    },
+    {
+      "batch": "server_services_bot_telemetry__p01",
+      "category": "security_dupe",
+      "impact": "Any local process or malicious webpage visited by an admin on the same machine can execute arbitrary admin POST endpoints (buff gold/items, ban players, start maintenance, delete trade/giftcode logs) without authentication via CSRF/CORS.",
+      "location": "src/services/admin/AdminApiService.java:54,120-160",
+      "root_cause": "ADMIN_TOKEN is hardcoded (\"nro_admin_secret_2026\"), checkAuth() unconditionally returns true for 127.0.0.1 / 0:0:0:0:0:0:0:1 on all HTTP methods including state-mutating POSTs, and sendJsonResponse sets Access-Control-Allow-Origin: *.",
+      "severity": "P0",
+      "title": "Unauthenticated localhost bypass with wildcard CORS and hardcoded token in AdminApiService"
+    },
+    {
+      "batch": "server_services_bot_telemetry__p02",
+      "category": "security_dupe",
+      "impact": "Mutating a giftcode item (e.g. upgrading/adding options) mutates the shared GiftCode template list for all future players; gem/ruby can overflow int32 to negative values and wipe player currency; items may be lost if bag is full.",
+      "location": "src/services/GiftCodeService.java:45-68",
+      "root_cause": "Line 66 assigns `itemGift.itemOptions = giftcode.option.get(key)` by reference without deep copying (and may be null); lines 46 & 50 perform `int + int` before `Math.min(..., 200000000)`; lines 64 & 68 add items without checking `InventoryService.gI().getCountEmptyBag(player)` or locking `player`.",
+      "severity": "P0",
+      "title": "GiftCodeService shares mutable itemOptions reference, overflows int32 gem/ruby, and lacks bag-space check/lock"
+    },
+    {
+      "batch": "server_world_map_mob__p02",
+      "category": "security_dupe",
+      "impact": "Players can craft Cuon sach cu / Sach tuyet ky without having required materials (or trigger NPE in getIndexBag/subQuantityItemsBag), and receive items even with a full bag.",
+      "location": "src/models/npc/npc_list/BaHatMit.java:648-799",
+      "root_cause": "DONG_THANH_SACH_CU and DOI_SACH_TUYET_KY confirm handlers do not re-validate item non-null/quantities (>=9999, >=1, >=10) or empty bag slots before adding reward items and subtracting materials.",
+      "severity": "P0",
+      "title": "Missing material/bag re-validation in BaHatMit book crafting confirmMenu"
+    },
+    {
+      "batch": "server_world_map_mob__p02",
+      "category": "security_dupe",
+      "impact": "Players can craft event rewards (item 1220, Hop qua thuong/VIP, Van bay, Cai trang) without owning materials, drive player.inventory.gold negative, or cause NPEs.",
+      "location": "src/models/npc/npc_list/CayThong.java:129-216; src/models/npc/npc_list/HungVuong.java:164-303",
+      "root_cause": "Confirm menu handlers in CayThong (MENU_DOI_VPSK) and HungVuong (MENU_SINHLE, MENU_SINHLE_XIN, MENU_SINHLE_BANH_DAY, MENU_SINHLE_BANH_CHUNG) do not re-check item non-null/quantities, gold >= cost, subGemAndRuby return value, or empty bag space.",
+      "severity": "P0",
+      "title": "Missing material/currency/bag validation in CayThong and HungVuong confirm handlers"
+    }
+  ],
+  "p1_findings": [
+    {
+      "batch": "client_core_render_audio__p02",
+      "category": "concurrency",
+      "impact": "Every SFX start/stop targets SoundBGLoop's AudioSource (halting/playing on wrong channel), and background-thread sound calls block up to 500ms or fail while Sound.update() never drains Sound.status.",
+      "location": "Sound.cs:144-162,228-230,424-561",
+      "root_cause": "__load adds an AudioSource to 'Audio Player 1' and stores the same GameObject in player[pos]; GetComponent<AudioSource>() always returns component 0 (SoundBGLoop). Sound.update() is empty and status lacks synchronization.",
+      "severity": "P1",
+      "title": "Sound.player[] aliases single GameObject causing wrong AudioSource control and thread spin-wait stalls"
+    },
+    {
+      "batch": "client_gameplay_entities__p03",
+      "category": "concurrency",
+      "impact": "Race conditions, torn state updates (step, listBall, indexSkillSelect), and off-main-thread calls to Char/SoundMn/GameScr APIs during auto-crack-ball.",
+      "location": "CrackBallScr.cs:775-839",
+      "root_cause": "startAutoCrackBall() runs AutoCrackBall() on a background Thread that directly mutates CrackBallScr fields, calls doClickBall/useSkillCrackBall, invokes SoundMn and Char.myCharz().setSkillPaint, and calls Thread.ResetAbort() (line 819) without locking or main-thread marshaling.",
+      "severity": "P1",
+      "title": "Background thread in CrackBallScr.AutoCrackBall mutates game/UI state without synchronization"
+    },
+    {
+      "batch": "client_gameplay_entities__p05",
+      "category": "security_dupe",
+      "impact": "On servers where cumulative EXP exceeds int.MaxValue (~2.14B), getMaxExp returns negative or wrapped values, corrupting level/EXP bar calculations and displays.",
+      "location": "GameScr.cs:367, 1345-1353",
+      "root_cause": "exps is declared as long[], but getMaxExp(int level) returns int and accumulates num += (int)exps[i] without checked arithmetic or bounds/null validation on exps.",
+      "severity": "P1",
+      "title": "Integer overflow in getMaxExp(int level) when summing long[] exps into int"
+    },
+    {
+      "batch": "client_network_protocol__p03",
+      "category": "security_dupe",
+      "impact": "Built-in client auto-play/bot mod performs instant map coordinate teleportation, cross-map item pickup, and auto-PK teleportation; server must strictly enforce movement speed, pickup range, and cooldowns.",
+      "location": "Client/Client/Assets/Scripts/Game1/God/Mob/MobController.cs:64-103,262-264,330-335,373-384; Client/Client/Assets/Scripts/Game1/God/Map/MapController.cs:70-112",
+      "root_cause": "MobController.MoveTo and tsPlayer directly overwrite Char.myCharz().cx/cy and emit Service.gI().charMove(), while GetTypePickItem allows pickItem calls outside normal 100px radius when IsPickItemsDis/TDLT/IsTanSat is active.",
+      "severity": "P1",
+      "title": "Client God module performs arbitrary coordinate teleportation and extended-range auto-pickup"
+    },
+    {
+      "batch": "client_network_protocol__p04",
+      "category": "concurrency",
+      "impact": "Gameplay/trade/combat packets can be routed to the secondary asset session (`Session_ME2`), or `Service.session` can remain permanently stuck on `Session_ME2` if `sendMessage` throws.",
+      "location": "Client/Client/Assets/Scripts/Game1/Service.cs:9,110-120,813-816,1739-1749,1766-1776,1793-1803,1820-1830,2279-2289,2444-2454,2707-2718,2967-2978",
+      "root_cause": "Ten asset/update methods temporarily overwrite the shared `Service.session` field with `Session_ME2.gI()` before `sendMessage()` and reset it outside `finally`.",
+      "severity": "P1",
+      "title": "Shared Service.session Field Mutation Race With Session_ME2"
+    },
+    {
+      "batch": "client_ui_god_mods__p04",
+      "category": "security_dupe",
+      "impact": "Allows client to submit 0 or negative buyRuby values to confirmation commands 11000/11001; also crashes if currItem is null.",
+      "location": "Client/Client/Assets/Scripts/Game1/Panel.cs:11434-11448",
+      "root_cause": "doNotiRuby() parses chatTField.tfChat.getText() via int.Parse without validating > 0 and assigns currItem.buyRuby without null-checking currItem.",
+      "severity": "P1",
+      "title": "Unvalidated buyRuby integer input (allows <= 0) and missing currItem null check in doNotiRuby"
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p02",
+      "category": "concurrency",
+      "impact": "Uncaught NullPointerException in Boss update loop when DrLychee leaves map if clan or KhiGasHuyDiet is null, or when GoldenFrieza leaves map while zone is null, preventing proper cleanup and REST transition.",
+      "location": "DrLychee.java:154, GoldenFrieza.java:254",
+      "root_cause": "DrLychee.leaveMap() accesses `clan.KhiGasHuyDiet.bosses.add(...)` without null checks (unlike Hatchiyack.java:142); GoldenFrieza.leaveMap() writes `this.zone.isGoldenFriezaAlive = false;` without checking `this.zone != null` before `ChangeMapService.exitMap(this)`.",
+      "severity": "P1",
+      "title": "Missing null guards in DrLychee.leaveMap() and GoldenFrieza.leaveMap() cause NPE on cleanup"
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p03",
+      "category": "concurrency",
+      "impact": "Stalls the boss manager / zone update tick for 1.5s-2s whenever CADICH transforms or SAIBAMEN #1 wakes up, delaying AI and timeouts for other bosses on the same thread.",
+      "location": "src/models/boss/boss_list/SnakeWay/CADICH.java:211; src/models/boss/boss_list/SnakeWay/SAIBAMEN.java:72",
+      "root_cause": "Direct calls to Functions.sleep(2000) inside CADICH.attack() and Functions.sleep(1500) inside SAIBAMEN.afk().",
+      "severity": "P1",
+      "title": "Blocking Thread.sleep calls inside boss AI update methods (CADICH, SAIBAMEN)"
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p05",
+      "category": "security_dupe",
+      "impact": "Allows client to trigger ArrayIndexOutOfBoundsException, accept mismatched gold wagers via race/overwrite on idMark, or double-enter ThachDau matches without mutual locking.",
+      "location": "src/models/matches/PVPService.java:125, 135-136, 184-217",
+      "root_cause": "sendInvitePVP(Player, byte selectGold) indexes GOLD_CHALLENGE[selectGold] with no bounds check; idMark.idPlayThachDau and idMark.goldThachDau can be overwritten by a third player before acceptPVP; acceptPVP checks pl.pvp == null and gold without synchronizing on pl and plMap.",
+      "severity": "P1",
+      "title": "Unvalidated selectGold index and unsynchronized wager/match state in PVPService"
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p05",
+      "category": "concurrency",
+      "impact": "Concurrent update()/lose() on PVPManager can observe goldThachDau == 0 and goldReward == 0 or refund gold before constructor deducts it.",
+      "location": "src/models/matches/PVP.java:20-29; src/models/matches/pvp/ThachDau.java:19-27",
+      "root_cause": "PVP constructor invokes start() and PVPManager.gI().addPVP(this) before subclass ThachDau initializes goldThachDau/goldReward and calls subGold().",
+      "severity": "P1",
+      "title": "Unsafe publication of ThachDau in PVP constructor before wager fields and gold deduction complete"
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p05",
+      "category": "concurrency",
+      "impact": "Leaks DHVT instances in PVPManager and leaves player.pvp referencing an inactive DHVT after SuperRank or The23rdMartialArtCongress ends.",
+      "location": "src/models/matches/pvp/DHVT.java:9-13; src/models/tournament/super_rank/SuperRank.java:126, 241-280; src/models/tournament/The23rdMartialArtCongress.java:119, 265-287",
+      "root_cause": "DHVT sets p1.pvp/p2.pvp and registers itself in PVPManager via super(), and incorrectly passes TYPE_PVP.THACH_DAU instead of DAI_HOI_VO_THUAT; SuperRank and The23rdMartialArtCongress instantiate `new DHVT(...)` without retaining or disposing it in finish()/endChallenge()/dispose().",
+      "severity": "P1",
+      "title": "DHVT PVP objects leaked by SuperRank and The23rdMartialArtCongress and tagged as THACH_DAU"
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p05",
+      "category": "concurrency",
+      "impact": "Post-timeout update() execution continues on disposed dungeons (clan == null, isOpened == false), risking NullPointerException, spurious boss spawns (DestronGas), or resetting flags (SnakeWay.allMobsDead, RedRibbonHQ.winDT).",
+      "location": "src/models/phoban/DestronGas.java:60-63; src/models/phoban/RedRibbonHQ.java:208-211; src/models/phoban/SnakeWay.java:63-66; src/models/phoban/TreasureUnderSea.java:62-65",
+      "root_cause": "All four pho ban update() methods execute finish(); dispose(); when expired without returning, falling through to mob/boss checks and notifications in the same tick.",
+      "severity": "P1",
+      "title": "Missing early return after finish()/dispose() in all four pho ban update() loops"
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p05",
+      "category": "concurrency",
+      "impact": "Concurrent BlackBallWar wins or clan roster modifications can cause ConcurrentModificationException, double rewards, or missed kicks (updatePlayer does not check finishBlackBallWar).",
+      "location": "src/models/phoban/BlackBallWar.java:56-83, 85-122",
+      "root_cause": "win() spawns an unsynchronized virtual thread iterating player.clan.members while mutating onlinePlayer.rewardBlackBall; update() swallows all exceptions silently and updatePlayer() ignores zone.finishBlackBallWar.",
+      "severity": "P1",
+      "title": "Unsynchronized clan member iteration and missing finish guard in BlackBallWar.win()"
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p05",
+      "category": "concurrency",
+      "impact": "Concurrent SuperRank matches against the same rival can duplicate or corrupt ranks, and server maintenance exit leaves zone.isCompeting stuck true without deducting tickets/gems.",
+      "location": "src/models/tournament/super_rank/SuperRank.java:91-105, 149-239",
+      "root_cause": "win()/lose() perform non-atomic read-modify-write via SuperRankDAO.getRank/updatePlayer without locking; lose() uses stale rankWin/rankLose from match start; Maintenance.isRunning breaks run() loop without calling dispose(). Also `(int) rivalId` truncates long ID at line 156.",
+      "severity": "P1",
+      "title": "Rank-swap race condition, ID truncation, and maintenance leak in SuperRank"
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p05",
+      "category": "security_dupe",
+      "impact": "Spectators who bet exclusively on the losing side keep non-zero binhChonPlayer/binhChonHatMit counters after the match; integer overflow on total votes > 2386; unsynchronized gold mutation.",
+      "location": "src/models/tournament/DeathOrAliveArena.java:222-287",
+      "root_cause": "traThuongHatMit() only resets binhChonPlayer and binhChonHatMit inside the winning bettor branch (`if (cuoc > 0)`), and computes `(cuocBaHatMit + cuocPlayer) * 900_000L` in int before long multiplication without locking spectator Player instances.",
+      "severity": "P1",
+      "title": "Stale losing-bet counters and int overflow in DeathOrAliveArena.traThuongHatMit()"
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p06",
+      "category": "concurrency",
+      "impact": "Same zone can host overlapping matches, same player can be matched twice (findMatch + LobbyBot.tryMatchmaking), and same LobbyBot can be pulled into two concurrent fights.",
+      "location": "src/models/tournament/whis_arena/WhisArenaService.java:422-468,551-581,597-640; WhisArenaLobbyBot.java:221-292",
+      "root_cause": "getFreeZone() returns a zone without atomically marking zone.isCompeting=true; readyPlayerIds is mutated unsynchronized while iterated under synchronized(readyIds); LobbyBot state transitions to FIGHTING are not atomic/synchronized.",
+      "severity": "P1",
+      "title": "TOCTOU races in WhisArena matchmaking, zone reservation, and LobbyBot state transitions"
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p06",
+      "category": "concurrency",
+      "impact": "IndexOutOfBoundsException, skipped items, byte overflow (>127 items), or ConcurrentModificationException during Namek ball/stone cleanup.",
+      "location": "src/services/phoban/NgocRongNamecService.java:125-137,400-419",
+      "root_cause": "removeStoneNrNamec() uses a byte loop index j and calls zone.items.remove(j) in a forward loop without decrementing j and without synchronizing on zone.items while running on its own thread.",
+      "severity": "P1",
+      "title": "Unsafe removal and byte index overflow in NgocRongNamecService.removeStoneNrNamec"
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p07",
+      "category": "concurrency",
+      "impact": "Players can trigger duplicate 23rd Martial Arts Congress instances/fights for themselves or collide in the same arena zone, or start a match after disconnecting/leaving map 129.",
+      "location": "src/services/tournament/The23rdMartialArtCongressService.java:22-45,70-85",
+      "root_cause": "startChallenge checks plCheck(player) and acquires zone immediately, then delays The23rdMartialArtCongress instantiation and manager.add(mc) by 500ms in setTimeout without reserving the player/zone or re-validating player online/map state inside the callback. Fallback loop in getMapChallenge also ignores z.getPlayers().isEmpty().",
+      "severity": "P1",
+      "title": "500ms TOCTOU race condition and zone collision in The23rdMartialArtCongressService.startChallenge"
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p07",
+      "category": "concurrency",
+      "impact": "Concurrent challenge requests can create duplicate SuperRank matches for the same player/opponent/zone or corrupt waiting/competing lists; case 2 can pass null Zone into SuperRank constructor causing NPE.",
+      "location": "src/services/tournament/SuperRankService.java:36-92,225-242",
+      "root_cause": "competing() checks currentlyCompeting/awaitingCompetition/SPRCheck without synchronization before calling addSPR/addWSPR, and case 2 passes getZone(113) (which returns null when all zones are busy) directly to new SuperRank(player, id, ...).",
+      "severity": "P1",
+      "title": "Missing lock/reservation in SuperRankService.competing and unchecked null zone in case 2"
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p07",
+      "category": "concurrency",
+      "impact": "ConcurrentModificationException, double registration (double fee deduction), or double refund when multiple threads access listReg concurrently.",
+      "location": "src/services/tournament/WorldMartialArtsTournamentService.java:140-218",
+      "root_cause": "WorldMartialArtsTournamentManager.gI().listReg is queried and mutated via contains/add/remove without synchronization around check-then-act sequences.",
+      "severity": "P1",
+      "title": "Unsynchronized check-then-act on WorldMartialArtsTournamentManager.listReg"
+    },
+    {
+      "batch": "server_database_persistence__p01",
+      "category": "security_dupe",
+      "impact": "Purchased skills (BoughtSkills) are lost on next login and overwritten with empty array in DB on every player save.",
+      "location": "src/database/daos/NDVSqlFetcher.java:1551-1558; src/database/daos/PlayerDAO.java:1160",
+      "root_cause": "NDVSqlFetcher casts JSON-simple Long elements to primitive `(int) code`, throwing ClassCastException (silently swallowed), while PlayerDAO.extractSnapshot hardcodes `\"[]\"` for the `boughtSkills` parameter in QUERY_UPDATE_PLAYER.",
+      "severity": "P1",
+      "title": "BoughtSkills permanently wiped on save and fails to load due to Long-to-int ClassCastException"
+    },
+    {
+      "batch": "server_database_persistence__p01",
+      "category": "security_dupe",
+      "impact": "Concurrent or unchecked deduction calls can drive account.sotien or account.cash negative or cause double-spend races.",
+      "location": "src/database/daos/PlayerDAO.java:1295-1307,1641-1695",
+      "root_cause": "subvnd, subVND2, and subcash execute `SET sotien = (sotien - ?)` / `SET cash = (cash - ?)` without `AND sotien >= ?` / `AND cash >= ?` WHERE guards, ignore affected row counts, and mutate session fields without synchronization.",
+      "severity": "P1",
+      "title": "Unchecked currency deduction without SQL balance guard or row-count verification in PlayerDAO"
+    },
+    {
+      "batch": "server_database_persistence__p01",
+      "category": "concurrency",
+      "impact": "Under concurrent auto-save, trade save, and logout save, an older snapshot can overwrite newer DB state (potential item/gold rollback or dupe window), and dirty-check hash visibility is not guaranteed across threads.",
+      "location": "src/database/daos/PlayerDAO.java:374-393,1172-1260",
+      "root_cause": "updatePlayerAsync/updatePlayersInTransactionAsync launch virtual threads with no per-player DB write lock after extractSnapshot releases synchronized(player), and player.lastSaveHash is read/written outside synchronization.",
+      "severity": "P1",
+      "title": "Out-of-order async player DB writes possible due to missing per-player save serialization"
+    },
+    {
+      "batch": "server_economy_items__p01",
+      "category": "concurrency",
+      "impact": "ConcurrentModificationException when players open consign shop/sell tab while another thread registers or cancels a consign item, or corrupted combine state when packets race.",
+      "location": "src/services/ConsignShopService.java:158-165, 361, 669; src/services/CombineService.java:109-130, 370-378",
+      "root_cause": "ConsignShopService.getItemBuy(Player, int) and getItemCanKiGui(Player) iterate ConsignShopManager.listItem without listLock/snapshot. CombineService.showInfoCombine mutates player.combineNew without synchronized(player).",
+      "severity": "P1",
+      "title": "Unsynchronized shared list traversal in ConsignShopService and unlocked combineNew mutation in CombineService.showInfoCombine"
+    },
+    {
+      "batch": "server_economy_items__p02",
+      "category": "concurrency",
+      "impact": "Players who disconnect and reconnect before the 5-minute CSMM draw lose their ruby payout; concurrent login/disconnect loses rewards.",
+      "location": "src/services/func/minigame/CSMM.java:28,67-91",
+      "root_cause": "listRegNumber keys on Player object identity instead of playerId; HandleCSMM verifies online status via Client.gI().getPlayer(pl.id) != null, then credits plWins containing the stale disconnected Player reference.",
+      "severity": "P1",
+      "title": "Stale Player Reference Keying Loses Winnings on Reconnect in CSMM"
+    },
+    {
+      "batch": "server_economy_items__p02",
+      "category": "concurrency",
+      "impact": "Race conditions between UseItem.doItem/useItem and UseItem.getItem/Trade/throwItem allow double-use or IndexOutOfBoundsException crashes.",
+      "location": "src/services/func/UseItem.java:117-263",
+      "root_cause": "UseItem.doItem and useItem do not synchronize on player (unlike getItem), DO_THROW_ITEM lacks upper bounds checks on itemsBody/itemsBag index, and index == -1 passes -1 to MountPetItemHandler.handle -> itemBagToBody(player, -1).",
+      "severity": "P1",
+      "title": "Unsynchronized UseItem.doItem & Missing Index Bounds Checks"
+    },
+    {
+      "batch": "server_economy_items__p03",
+      "category": "security_dupe",
+      "impact": "Client can set arbitrary player.head ID or crash handler with NPE when SANTA_HEAD shop is open.",
+      "location": "src/services/ShopService.java:505-507",
+      "root_cause": "`tagName.equals(\"SANTA_HEAD\")` calls `createNewItem((short) tempId)` and assigns `player.head = (short) itS.template.head` without verifying tempId is in the shop or checking `itS.template != null`.",
+      "severity": "P1",
+      "title": "Unvalidated tempId in SANTA_HEAD shop allows arbitrary head spoofing or NPE"
+    },
+    {
+      "batch": "server_network_core__p01",
+      "category": "concurrency",
+      "impact": "Two concurrent connections can receive identical session.id values; SessionManager.putSession detects a duplicate key in sessionIndex and evicts the active player's session.",
+      "location": "src/network/session/Session.java:20,45,57",
+      "root_cause": "ID_INIT++ on a plain static int is not atomic when NettySession or Session instances are constructed concurrently across threads.",
+      "severity": "P1",
+      "title": "Non-atomic Session ID_INIT++ causes sessionId collisions and active session eviction"
+    },
+    {
+      "batch": "server_network_core__p01",
+      "category": "concurrency",
+      "impact": "Every Netty disconnect triggers ServerManager.gI().disconnect(session) twice, risking double-decrement of IP connection counters or duplicate disconnect side effects. Also NettySession.disconnect() returns early when channel is already inactive, skipping dispose() if called post-close.",
+      "location": "src/network/netty/NroChannelHandler.java:73-78; src/server/Client.java:154; src/network/netty/NettySession.java:119-129",
+      "root_cause": "NroChannelHandler.channelInactive calls Client.gI().remove(session) (which internally calls ServerManager.gI().disconnect(session) at line 154) and then calls ServerManager.gI().disconnect(session) again at line 74.",
+      "severity": "P1",
+      "title": "Double ServerManager.disconnect(session) invocation on Netty channelInactive"
+    },
+    {
+      "batch": "server_network_core__p02",
+      "category": "concurrency",
+      "impact": "Concurrent SimpleDateFormat usage across Netty IO threads and scheduler corrupts date strings or throws ArrayIndexOutOfBoundsException/NumberFormatException inside Controller.onMessage's finally block (uncaught).",
+      "location": "PacketProfiler.java:49-50,177,218,238,265",
+      "root_cause": "Static non-thread-safe SimpleDateFormat instances (DATE_FORMAT, DAY_FORMAT) are shared without synchronization or ThreadLocal across Netty worker threads in record() and PacketProfiler-Scheduler.",
+      "severity": "P1",
+      "title": "Non-thread-safe SimpleDateFormat on Netty IO hot path in PacketProfiler"
+    },
+    {
+      "batch": "server_network_core__p02",
+      "category": "concurrency",
+      "impact": "Causes ConcurrentModificationException, lost server-wide VIP notifications, or corrupted ArrayList state under concurrent calls to ServerNotify.notify().",
+      "location": "ServerNotify.java:14,46-48,70",
+      "root_cause": "notifies is a plain ArrayList modified concurrently by caller threads in notify() and polled via removeFirst() on the ServerNotify thread without synchronization.",
+      "severity": "P1",
+      "title": "Unsynchronized ArrayList race condition in ServerNotify.notifies"
+    },
+    {
+      "batch": "server_network_core__p02",
+      "category": "concurrency",
+      "impact": "If players leave during the loop and Client.gI().getPlayers() is a live list, players.get(i) throws IndexOutOfBoundsException, skipping player updates and aborting all Map/Zone updates for that tick.",
+      "location": "GameLoopManager.java:260-272",
+      "root_cause": "GameLoopManager.run() caches players.size() before iterating without locking or copying, and only wraps individual player.update() calls in try-catch, not players.get(i).",
+      "severity": "P1",
+      "title": "Unprotected list iteration in GameLoopManager.run() can skip all Zone updates"
+    },
+    {
+      "batch": "server_network_core__p02",
+      "category": "security_dupe",
+      "impact": "Unauthenticated clients spamming opcode -74 (type 2) can spawn unlimited JVM threads (\"SendRes-\" + ip), causing Thread/OOM DoS; pre-login clients sending opcode 127 or -76 trigger NPEs.",
+      "location": "Controller.java:190-246,544-553,876-878",
+      "root_cause": "case -74 spawns a raw unbounded Thread without session auth or rate limiting; case 127 and case -76 dereference player without checking player != null.",
+      "severity": "P1",
+      "title": "Unauthenticated thread-spawn DoS (-74) and missing player null-checks (127, -76) in Controller"
+    },
+    {
+      "batch": "server_network_core__p02",
+      "category": "concurrency",
+      "impact": "Clearing global lists/maps in reloadData() while Netty and GameLoop threads read them causes NPE, IndexOutOfBoundsException, or ConcurrentModificationException across live sessions.",
+      "location": "Manager.java:204-254",
+      "root_cause": "reloadData() clears MAPS, ITEM_TEMPLATES, MOB_TEMPLATES, CLANS, SHOPS, NOTIFY in place without setting ServerManager.isReloading=true or synchronizing readers.",
+      "severity": "P1",
+      "title": "Unsafe in-place clear in Manager.reloadData() without isReloading guard or locks"
+    },
+    {
+      "batch": "server_player_combat__p01",
+      "category": "security_dupe",
+      "impact": "If a caller passes a negative amount or omits pre-check, currency becomes negative or increases; inconsistent with subGemAndRuby() and subGold().",
+      "location": "src/models/player/Inventory.java:72-74,87-89",
+      "root_cause": "subRuby(int) and subGemDirect(int) subtract directly without checking num <= 0 or sufficient balance.",
+      "severity": "P1",
+      "title": "Inventory.subRuby() and subGemDirect() lack negative-input and underflow guards"
+    },
+    {
+      "batch": "server_player_combat__p01",
+      "category": "concurrency",
+      "impact": "Thread/memory leak if player logs out during special skill, plus OS thread exhaustion under heavy special skill usage.",
+      "location": "src/models/player/NewSkill.java:120-141",
+      "root_cause": "start() allocates a new java.util.Timer per cast without synchronization, and dispose() does not call close() to cancel timer/timerTask or clear playersTaget/mobsTaget.",
+      "severity": "P1",
+      "title": "NewSkill leaks java.util.Timer threads and skips close() in dispose()"
+    },
+    {
+      "batch": "server_player_combat__p01",
+      "category": "concurrency",
+      "impact": "ConcurrentModificationException or torn/zeroed stats when combat threads read dame/hpMax/tlDame during resetPoint().",
+      "location": "src/models/player/NPoint.java:244-255,1077-1142",
+      "root_cause": "calPoint() clears and rebuilds non-synchronized ArrayLists in resetPoint()/setPointWhenWearClothes() while combat threads access NPoint without locking. Also `if (!force && !this.isDirty && (now - lastCalPointTime < 150))` still recalculates every 150ms even when !isDirty.",
+      "severity": "P1",
+      "title": "NPoint.calPoint() mutates non-thread-safe lists during combat reads and recalculates when !isDirty"
+    },
+    {
+      "batch": "server_player_combat__p02",
+      "category": "security_dupe",
+      "impact": "Any client can send ACCEPT_JOIN_CLAN with an arbitrary clanId to join any clan without an invitation and bypass the leave-clan cooldown.",
+      "location": "src/services/player/ClanService.java:325-365",
+      "root_cause": "acceptJoinClan neither verifies a pending clan invitation nor returns when diff > 0 (lines 328-333 only send a notification and fall through into joining).",
+      "severity": "P1",
+      "title": "Clan join authorization and cooldown bypass in ClanService.acceptJoinClan"
+    },
+    {
+      "batch": "server_player_combat__p02",
+      "category": "security_dupe",
+      "impact": "With >=2 stacks totaling >2.14B items (e.g., 2B thoi vang), countItemBag overflows int negative and removeItemQuantity refuses to deduct items.",
+      "location": "src/services/player/InventoryService.java:1216-1254",
+      "root_cause": "countItemBag accumulates item.quantity into a 32-bit int even though addItemList allows stacks up to 2,000,000,000 (line 886).",
+      "severity": "P1",
+      "title": "32-bit int overflow in InventoryService.countItemBag"
+    },
+    {
+      "batch": "server_player_combat__p02",
+      "category": "concurrency",
+      "impact": "Possible NullPointerException in injured(), setDie(), kickOut(), sendMyClan(), and pet change methods; ConcurrentModificationException on Manager.CLANS.",
+      "location": "src/models/player/Player.java:937,1030,1038,1139; src/services/player/ClanService.java:931-932,738; src/services/PetService.java:136,148,171",
+      "root_cause": "Player.injured/setDie dereference this.zone.map without null checks; ClanService.kickOut calls clan.getClanMember before checking clan != null; ClanService.sendMyClan catch logs player.clan.name when player.clan may be null; PetService accesses player.pet without null check; Manager.CLANS is iterated/mutated unsynchronized.",
+      "severity": "P1",
+      "title": "Missing null checks and unsynchronized Manager.CLANS access across Player/ClanService/PetService"
+    },
+    {
+      "batch": "server_player_combat__p03",
+      "category": "security_dupe",
+      "impact": "Clients can teleport anywhere inside the map bounds in one packet (speed/teleport hack) with zero server-side distance check.",
+      "location": "src/services/player/PlayerService.java:143-163",
+      "root_cause": "playerMove(player, x, y) clamps client-supplied (x, y) only to [24, mapWidth-24] and [24, mapHeight-24] without validating movement delta against lastTimeplayerMove or player speed.",
+      "severity": "P1",
+      "title": "Client-trusted coordinates in PlayerService.playerMove allow arbitrary in-map teleportation"
+    },
+    {
+      "batch": "server_player_combat__p03",
+      "category": "concurrency",
+      "impact": "Concurrent revive requests can double-deduct gold/gem+ruby or revive a player twice.",
+      "location": "src/services/player/PlayerService.java:269-298",
+      "root_cause": "hoiSinh performs check-then-act on player.isDie(), lastTimeRevived, and inventory gold/gem deduction before calling Service.gI().hsChar without synchronizing on player or inventory.",
+      "severity": "P1",
+      "title": "Unsynchronized check-then-act in PlayerService.hoiSinh risks double-spend / double-revive"
+    },
+    {
+      "batch": "server_player_combat__p03",
+      "category": "concurrency",
+      "impact": "Potential Netty ByteBuf/Message memory leak on every PlayerService.sendInfoHpMpMoney call and on exception paths in other send methods.",
+      "location": "src/services/player/PlayerService.java:38-51,62-102,123-141,208-251",
+      "root_cause": "sendInfoHpMpMoney never calls msg.cleanup() at all; sendTNSM, sendMessageAllPlayer, sendMessageIgnore, sendInfoHp, sendInfoMp, sendCurrentStamina, sendMaxStamina, and sendTypePk call msg.cleanup() outside a finally block. Conversely, SkillService.learSkillSpecial (lines 377, 382) calls message.cleanup() twice.",
+      "severity": "P1",
+      "title": "Missing Message.cleanup() in sendInfoHpMpMoney and non-finally cleanup paths"
+    },
+    {
+      "batch": "server_services_bot_telemetry__p01",
+      "category": "concurrency",
+      "impact": "SuperRank queue permanently stalls or leaks matches/memory because WaitSuperRank entries can never be removed from waitList.",
+      "location": "src/managers/SuperRankManager.java:32,41-56",
+      "root_cause": "SuperRankManager.run() uses Iterator.remove() on waitList, which is a CopyOnWriteArrayList; CopyOnWriteArrayList iterators throw UnsupportedOperationException on remove(), and the exception is swallowed at line 55.",
+      "severity": "P1",
+      "title": "SuperRankManager throws UnsupportedOperationException on CopyOnWriteArrayList iterator.remove()"
+    },
+    {
+      "batch": "server_services_bot_telemetry__p01",
+      "category": "security_dupe",
+      "impact": "Players can chat globally with 1 gem while bypass-checking 5 gems, or lose messages when listChatting is full; NPE crashes on null player arguments.",
+      "location": "src/services/ChatGlobalService.java:54-94,109-113,152-166",
+      "root_cause": "chat() checks inventory.checkGemAndRuby(5) at line 75 but deducts only 1 via subGemAndRuby(1) at line 78; run() calls waitingChat.poll() before checking listChatting.size() < COUNT_CHAT, discarding queued messages; chat()/ChatGlobal dereference null player fields.",
+      "severity": "P1",
+      "title": "ChatGlobalService gem deduction mismatch, queue message loss, and null player NPEs"
+    },
+    {
+      "batch": "server_services_bot_telemetry__p01",
+      "category": "concurrency",
+      "impact": "Concurrent login during offline admin buff can overwrite player inventory/currency in DB; gem/ruby addition can overflow int to negative; invalid itemId causes NPE.",
+      "location": "src/services/admin/AdminService.java:226-302",
+      "root_cause": "buffMoney() and buffItem() load offline players via NDVSqlFetcher and call PlayerDAO.updatePlayer() without locking or checking concurrent login, add int gem/ruby without overflow bounds, and do not verify createNewItem() / bag space before adding.",
+      "severity": "P1",
+      "title": "AdminService offline player buff race condition, int currency overflow, and missing item checks"
+    },
+    {
+      "batch": "server_services_bot_telemetry__p01",
+      "category": "concurrency",
+      "impact": "Rapid OS thread exhaustion (OOM/CPU spike) and NullPointerException/IllegalArgumentException crashes in bot update loop when BotManager.ENABLED is set true.",
+      "location": "src/bot/Bot.java:467-495; src/bot/Sanb.java:38-78; src/bot/NewBot.java:16",
+      "root_cause": "Bot.useSkill() spawns a new Thread per cast while Sanb.GetSkil() sets lastTimeSkill1 into the past causing near-continuous triggers; Sanb.GetBoss() indexes potentially empty getBosses() and null bossAttack.zone; NewBot.PARTBOT sizes array statically from Manager.ITEM_TEMPLATES.size() at class load.",
+      "severity": "P1",
+      "title": "Bot skill thread-spawning storm, empty-list/null-zone crashes, and static PARTBOT sizing bug"
+    },
+    {
+      "batch": "server_services_bot_telemetry__p02",
+      "category": "security_dupe",
+      "impact": "Any client sending a spoofed submenu packet with menuId 500 (BAN) or 501 (BUFF_PET) can open the Ban Player or Buff Pet confirmation dialogs without admin privilege check in SubMenuService.",
+      "location": "src/services/SubMenuService.java:41-77",
+      "root_cause": "SubMenuService.controller() handles `BAN` (500) and `BUFF_PET` (501) without checking `player.isAdmin()`.",
+      "severity": "P1",
+      "title": "Missing isAdmin() authorization check for BAN and BUFF_PET in SubMenuService.controller()"
+    },
+    {
+      "batch": "server_services_bot_telemetry__p02",
+      "category": "concurrency",
+      "impact": "Concurrent player actions can corrupt `ArrayDeque` internal state or throw `ConcurrentModificationException`, and double-checked locking without `volatile` can expose partially constructed singleton instances.",
+      "location": "src/telemetry/AntiMacroFilter.java:17,23,41-79,81-90; src/telemetry/TrajectoryLogger.java:35,56-65; src/telemetry/CloudTelemetryStreamer.java:29,42-51",
+      "root_cause": "`AntiMacroFilter.PlayerActionHistory` mutates `ArrayDeque<Long> intervals` and fields without synchronization under concurrent `evaluate()` calls; telemetry singletons use non-volatile `instance` in DCL.",
+      "severity": "P1",
+      "title": "Non-thread-safe ArrayDeque mutation in AntiMacroFilter and broken non-volatile DCL in telemetry singletons"
+    },
+    {
+      "batch": "server_services_bot_telemetry__p03",
+      "category": "concurrency",
+      "impact": "Thread-safety violation: concurrent calls from Netty/game threads can corrupt SimpleDateFormat/NumberFormat internal state, producing garbled dates/numbers or throwing ArrayIndexOutOfBoundsException/NumberFormatException.",
+      "location": "src/utils/Util.java:26-30, 50-56, 39-41, 151-162, 305-307",
+      "root_cause": "Static SimpleDateFormat (dateFormat) and NumberFormat (num, numShortFormat) are used without ThreadLocal or synchronization (unlike compareDay which is synchronized).",
+      "severity": "P1",
+      "title": "Unsynchronized shared SimpleDateFormat and NumberFormat in Util"
+    },
+    {
+      "batch": "server_services_bot_telemetry__p03",
+      "category": "concurrency",
+      "impact": "Static memory leak over server uptime and potential ConcurrentModificationException/garbled logs during shutdown.",
+      "location": "src/utils/Logger.java:62-72, 87-92, 136-153, 302-319",
+      "root_cause": "THROTTLE_MAP is never evicted/bounded (keys include player context + message). During shutdown, the hook thread runs drainQueue() without stopping/joining ServerLogWorker-Thread, racing on unsynchronized WRITERS EnumMap and SimpleDateFormat instances.",
+      "severity": "P1",
+      "title": "Unbounded THROTTLE_MAP leak and shutdown race in Logger"
+    },
+    {
+      "batch": "server_task_clan_consts__p02",
+      "category": "concurrency",
+      "impact": "Two clans created concurrently can receive identical Clan.id values, causing primary key collisions in DB or corrupted clan lookups; concurrent clan messages can share identical message IDs.",
+      "location": "src/models/clan/Clan.java:28,75 & src/models/clan/ClanMessage.java:36",
+      "root_cause": "Non-atomic post-increment (NEXT_ID++ and clan.clanMessageId++) without synchronization or AtomicInteger.",
+      "severity": "P1",
+      "title": "Race condition on Clan.NEXT_ID and ClanMessage.id generation"
+    },
+    {
+      "batch": "server_task_clan_consts__p02",
+      "category": "security_dupe",
+      "impact": "Concurrent achievement claim packets (-76, sub 1) could pass canReward(select) before reward(select) executes, potentially duplicating Hồng Ngọc (Ruby) rewards.",
+      "location": "src/services/AchievementService.java:47-60",
+      "root_cause": "No lock/synchronization around check-then-act (player.achievement.canReward -> reward -> addRuby).",
+      "severity": "P1",
+      "title": "Unsynchronized achievement reward claim in AchievementService.confirmAchievement"
+    },
+    {
+      "batch": "server_task_clan_consts__p03",
+      "category": "security_dupe",
+      "impact": "Concurrent reward claims (e.g., rapid packet clicks) can pass isDone() multiple times before reset() executes at line 2139 / 2328, duplicating gold, ruby, upgrade stones, lucky wheel tickets, charms, or clan capsuleClan/memberPoint/clanPoint.",
+      "location": "src/services/TaskService.java:2035-2145, 2324-2348",
+      "root_cause": "paySideTask() and payClanTask() check sideTask.isDone() / clanTask.isDone(), grant all rewards, and only call reset() at the end without synchronizing on player.playerTask (or player.clan).",
+      "severity": "P1",
+      "title": "Missing synchronization in paySideTask() and payClanTask() allows race-condition reward duplication"
+    },
+    {
+      "batch": "server_world_map_mob__p01",
+      "category": "security_dupe",
+      "impact": "Players can gain free gold if unupgradeMagicTree() is triggered while not upgrading or via concurrent menu confirm packets.",
+      "location": "src/models/npc/mabu/MagicTree.java:217-254",
+      "root_cause": "`unupgradeMagicTree()` and `fastUpgradeMagicTree()` do not check `if (!this.isUpgrade) return;`, and upgrade/unupgrade methods lack synchronization.",
+      "severity": "P1",
+      "title": "Missing state guard and synchronization in MagicTree upgrade/cancel"
+    },
+    {
+      "batch": "server_world_map_mob__p01",
+      "category": "concurrency",
+      "impact": "Risk of ConcurrentModificationException or IndexOutOfBoundsException during zone mob updates or boss checks.",
+      "location": "src/models/map/Zone.java:140-146,917-927",
+      "root_cause": "`Zone.mobs` is a non-thread-safe `ArrayList` that is synchronized in `getTotalHP()` and `mapInfo()` but accessed without synchronization in `udMob()`, `sendBigBoss()`, and `Mob.lvMob()`.",
+      "severity": "P1",
+      "title": "Unsynchronized concurrent access to Zone.mobs ArrayList"
+    },
+    {
+      "batch": "server_world_map_mob__p02",
+      "category": "security_dupe",
+      "impact": "Players can drive gold negative when cooking Banh Chung/Banh Tet in NoiBanh1, and craft Banh Chung using only half the required ingredients.",
+      "location": "src/models/npc/npc_list/NoiBanh1.java:137-185",
+      "root_cause": "NoiBanh1 checks >= 20 for Thit/Nep/Dauxanh/Ladong (line 138) but subtracts only 10 (lines 145-148); neither menu checks player.inventory.gold >= 5_000_000 before executing gold -= 5000000 (lines 152, 179).",
+      "severity": "P1",
+      "title": "NoiBanh1 deducts wrong ingredient quantity and allows negative gold"
+    },
+    {
+      "batch": "server_world_map_mob__p03",
+      "category": "concurrency",
+      "impact": "Concurrent Netty worker thread mutations can cause NPE, lost entries, or corrupted buckets; uncleaned keys retain Player/Item references until server restart.",
+      "location": "src/models/npc/NpcFactory.java:49; src/services/map/NpcService.java:31",
+      "root_cause": "NpcFactory.PLAYERID_OBJECT is a plain HashMap shared across threads, and multiple menu handlers (MAKE_FRIEND, CONFIRM_NHUONG_PC, BAN_PLAYER, BUFF_PET, SUB_MENU, MENU_FIND_PLAYER, ThanVuTru) or cancelled menus never remove entries.",
+      "severity": "P1",
+      "title": "Non-thread-safe HashMap and memory leak in NpcFactory.PLAYERID_OBJECT"
+    }
+  ],
+  "p2_p3_security_concurrency": [
+    {
+      "batch": "client_core_render_audio__p01",
+      "category": "concurrency",
+      "impact": "Race condition if concurrent threads ever invoke `_createImage*`, and wasted per-tick check in Main.FixedUpdate(). Also potential NRE in Main.Awake/closeKeyBoard/parse.",
+      "location": "Image.cs:15-37, 138-310; Main.cs:227-238, 443-447, 623-627; GameCanvas.cs:3507",
+      "root_cause": "Image._createImage* and Image.update() share unsynchronized non-volatile static fields with Thread.Sleep(5) polling (though currently unused by public callers). Main.Awake doesn't set `main = this`. Main.closeKeyBoard/OnApplicationPause dereference TField.kb without null check. GameCanvas.perform case 888391 calls `int.Parse(s)` without try/catch.",
+      "severity": "P3",
+      "title": "Unsynchronized static IPC mailbox in Image.cs and missing null/parse guards in Main/GameCanvas"
+    },
+    {
+      "batch": "client_core_render_audio__p02",
+      "category": "security_dupe",
+      "impact": "If a malformed/huge SmallImage id is passed, imgNew resizes to new Small[id + 100], risking OutOfMemoryException or client crash; DataInputStream is unclosed on exception.",
+      "location": "SmallImage.cs:81-97,131-136,203-208,268-273",
+      "root_cause": "imgNew length check lacks an upper bound sanity cap; readImage closes DataInputStream inside try without finally/using.",
+      "severity": "P2",
+      "title": "Unbounded SmallImage.imgNew resize and unclosed DataInputStream on exception"
+    },
+    {
+      "batch": "client_gameplay_entities__p02",
+      "category": "security_dupe",
+      "impact": "Client-side cooldown check can be bypassed if system clock moves backward; item stacking lacks overflow caps.",
+      "location": "Char.cs:5181-5184, 5348-5351, 1548, 1603",
+      "root_cause": "setSkillPaint() and sendUseChargeSkill() use wall-clock `mSystem.currentTimeMillis()` and explicitly reset `lastTimeUseThisSkill = num - coolDown` whenever `num < lastTimeUseThisSkill`. bagSort()/boxSort() merge `item2.quantity += item3.quantity` without max cap checks.",
+      "severity": "P3",
+      "title": "Client skill cooldown bypass on clock rollback and uncapped client quantity merge"
+    },
+    {
+      "batch": "client_gameplay_entities__p04",
+      "category": "concurrency",
+      "impact": "When an Effect removes itself at the end of its lifetime, the next Effect in vEff shifts into index i and skips its update() for that tick.",
+      "location": "Client/Client/Assets/Scripts/Game1/EffecMn.cs:88-94",
+      "root_cause": "EffecMn.update() iterates vEff with a forward index loop (`for (int i = 0; i < vEff.size(); i++)`) while Effect.update() mutates EffecMn.vEff via removeElement(this) (Effect.cs:489, 543, 555).",
+      "severity": "P2",
+      "title": "Forward-loop removal skips next Effect update in EffecMn.update"
+    },
+    {
+      "batch": "client_gameplay_entities__p06",
+      "category": "security_dupe",
+      "impact": "Built-in autoPlay teleports client position directly to mob spawn/current coordinates and sends charMove() to server, bypassing normal pathing/movement speed if server does not validate movement deltas.",
+      "location": "Client/Client/Assets/Scripts/Game1/GameScr.cs:4282-4287",
+      "root_cause": "autoPlay() assigns Char.myCharz().cx = targetX and cy = targetY directly before calling Service.gI().charMove().",
+      "severity": "P2",
+      "title": "autoPlay() directly teleports client coordinates to mob position"
+    },
+    {
+      "batch": "client_gameplay_entities__p09",
+      "category": "security_dupe",
+      "impact": "Saved passwords encrypted with AES-CBC can be decrypted offline by anyone knowing deviceUniqueIdentifier and lack integrity/HMAC verification; cleartext HTTP URLs are used for update/host/web links.",
+      "location": "Client/Client/Assets/Scripts/Game1/Rms.cs:114-194; Client/Client/Assets/Scripts/Game1/Paint.cs:329; Client/Client/Assets/Scripts/Game1/ServerListScreen.cs:1301-1303",
+      "root_cause": "getPasswordKey derives AES key deterministically from SHA256(SystemInfo.deviceUniqueIdentifier + \"|NRO-6Tab|\" + filename) without OS keystore protection or MAC; ServerListScreen/Paint hardcode http:// endpoints.",
+      "severity": "P2",
+      "title": "Weak deterministic password key derivation in Rms and cleartext HTTP URLs"
+    },
+    {
+      "batch": "client_gameplay_entities__p09",
+      "category": "concurrency",
+      "impact": "Synchronous disk I/O executes while holding rmsLock (stalling callers), rmsCache exposes mutable sbyte[] arrays directly, clearAll() deletes files outside rmsLock, and loadRMSInt crashes on 0-byte files.",
+      "location": "Client/Client/Assets/Scripts/Game1/Rms.cs:25-59,211-215,360-365,373-410",
+      "root_cause": "rmsCache stores/returns raw sbyte[] references without cloning; clearAll releases rmsLock before deleting files; loadRMSInt reads array[0] without checking Length > 0; FileStream.Read return length is unchecked.",
+      "severity": "P2",
+      "title": "Rms cache aliasing, lock-scope race on clearAll, and missing length checks"
+    },
+    {
+      "batch": "client_gameplay_entities__p11",
+      "category": "security_dupe",
+      "impact": "Client accelerates transport locally without sending a speed-up/gem deduction request; if server does not enforce minimum travel time or deduct Luong on transportNow(), players can bypass wait time or speed up for free.",
+      "location": "Client/Client/Assets/Scripts/Game1/TransportScr.cs:170-174, 189-194",
+      "root_cause": "perform(idAction == 2) only checks Char.myCharz().checkLuong() > 0 locally and sets isSpeed = true, then later sends Service.gI().transportNow() once currSpeed reaches threshold.",
+      "severity": "P2",
+      "title": "TransportScr client-side Luong check and speed-up without server spend notification"
+    },
+    {
+      "batch": "client_gameplay_entities__p11",
+      "category": "concurrency",
+      "impact": "If an active window closes or pushes windows during Update, UpdateKey, or Paint, windows in _activeWindows can be skipped for that frame or cause ArgumentOutOfRangeException. Also re-pushing an already open window skips OnClose().",
+      "location": "Client/Client/Assets/Scripts/Game1/UI/UIWindowManager.cs:47-53, 102-141",
+      "root_cause": "UpdateKey/Update/Paint iterate _activeWindows directly by index while invoking callbacks that may mutate _activeWindows; Push removes an existing window without calling OnClose() before OnOpen().",
+      "severity": "P2",
+      "title": "UIWindowManager mutates/iterates _activeWindows unsafely and skips OnClose on re-Push"
+    },
+    {
+      "batch": "client_gameplay_entities__p11",
+      "category": "concurrency",
+      "impact": "If client_log.txt is locked by another reader on Windows, File.Move fails silently and FileMode.Create truncates the active log file. Unbounded logQueue can also grow indefinitely under log floods, and LogDir static initializer accesses Application.dataPath which fails if touched off main thread.",
+      "location": "Client/Client/Assets/Scripts/UnityLogger.cs:9, 14, 320-330, 358-389",
+      "root_cause": "RotateLogFiles swallows all exceptions in catch {}, after which ProcessLogQueue unconditionally opens LogFilePath with FileMode.Create; logQueue has no max capacity; LogDir uses Application.dataPath in static field init.",
+      "severity": "P2",
+      "title": "UnityLogger log rotation silently loses logs on locked file and lacks queue cap"
+    },
+    {
+      "batch": "client_network_protocol__p01",
+      "category": "security_dupe",
+      "impact": "Client contains built-in boss tracking/cheat state triggered directly from server VIP chat broadcasts.",
+      "location": "Controller2.cs:848-851",
+      "root_cause": "Controller2 case 93 (CHAT_VIP) checks if the message starts with BOSS/Boss and calls Game1.God.BossData.getInstance().getBOSSInfo(str).",
+      "severity": "P3",
+      "title": "Mod/cheat hook (Game1.God.BossData) embedded in Controller2 CHAT_VIP handler"
+    },
+    {
+      "batch": "client_network_protocol__p04",
+      "category": "concurrency",
+      "impact": "`doConnect` starts `collectorThread` before `key = null`, allowing a fast `-27` key response to be wiped; `cleanNetwork` can race with streams, abort threads unsafely, and retain stale queued messages across reconnects.",
+      "location": "Client/Client/Assets/Scripts/Game1/Session_ME.cs:380-385,538-599; Client/Client/Assets/Scripts/Game1/Session_ME2.cs:507-542",
+      "root_cause": "Thread startup and teardown lack synchronization, `key = null` is placed after thread start, and `recieveMsg`/`sendingMessage` are not cleared in `cleanNetwork`.",
+      "severity": "P2",
+      "title": "Unsynchronized Session Startup/Teardown and Stale Queues on Reconnect"
+    },
+    {
+      "batch": "client_network_protocol__p04",
+      "category": "security_dupe",
+      "impact": "Client controls and sends its own position, flying MP deduction, target coords, and arbitrary byte blobs (`sendOptHat`, `sendServerData`), enabling speed/teleport/skill-range exploits if server trusts them.",
+      "location": "Client/Client/Assets/Scripts/Game1/Service.cs:950-1006,3007-3034,3197-3222,3240-3263",
+      "root_cause": "`charMove` computes MP locally and sends `cx`/`cy`, `new_skill_not_focus` sends self and target coords, and `sendOptHat(1)`/`sendServerData` upload unvalidated client byte arrays.",
+      "severity": "P2",
+      "title": "Client-Trusted Coordinates, Local MP Deduction, and Raw Byte Uploads"
+    },
+    {
+      "batch": "client_ui_god_mods__p01",
+      "category": "security_dupe",
+      "impact": "Client mod exposes unguarded client-side teleportation, 100x game speedhack, and arbitrary movement speed override (`speedRun`), relying entirely on server-side validation.",
+      "location": "Client/Client/Assets/Scripts/Game1/God/Mob/Mobs.cs:72-77; Client/Client/Assets/Scripts/Game1/God/Utils/Utils.cs:36-42; Client/Client/Assets/Scripts/Game1/God/Client/ClientManager.cs:25-28, 212-217, 314-334; Client/Client/Assets/Scripts/Game1/God/Skill/nSkill.cs:152-184",
+      "root_cause": "`Mobs.GotoXY` and `Utils.Teleport` mutate `cx/cy` directly and send `charMove()`; `ClientManager` allows `gameSpeed` up to `100f` via `cheat` chat and unclamped `speedRun`; `nSkill` sends attacks up to `1.7 * dx/dy` reach without checking mana or updating char skill animation.",
+      "severity": "P2",
+      "title": "Client-side teleport, speedhack, and extended-reach auto-attack in God mods"
+    },
+    {
+      "batch": "client_ui_god_mods__p02",
+      "category": "security_dupe",
+      "impact": "Stale `isFriendAccep` flag from a prior trade can persist into a new trade; 32-bit `int` limits trade gold representation to ~2.14B.",
+      "location": "Panel.cs:85-87, 95, 2449-2459",
+      "root_cause": "`setTypeGiaoDich` resets `isAccept`, `isLock`, `isFriendLock`, `moneyGD`, `friendMoneyGD`, `vMyGD`, `vFriendGD`, but omits resetting `isFriendAccep = false`. `moneyGD` and `friendMoneyGD` are `int` rather than `long`.",
+      "severity": "P2",
+      "title": "Trade state reset omits isFriendAccep and uses 32-bit int for trade gold"
+    },
+    {
+      "batch": "client_ui_god_mods__p03",
+      "category": "security_dupe",
+      "impact": "Client allows sending 0 or negative trade xu amounts if entered via text/clipboard, relying solely on server rejection.",
+      "location": "Panel.cs:10468-10495",
+      "root_cause": "onChatFromMe trade money branch only checks num2 > Char.myCharz().xu and never checks num2 <= 0.",
+      "severity": "P2",
+      "title": "Missing <= 0 validation for trade money input in onChatFromMe"
+    },
+    {
+      "batch": "client_ui_god_mods__p04",
+      "category": "security_dupe",
+      "impact": "Username sent in plaintext over unencrypted HTTP and unescaped in query string; exception in platformRequest is silently discarded.",
+      "location": "Client/Client/Assets/Scripts/Game1/Panel.cs:11362-11373",
+      "root_cause": "doFireAccount() case 4 builds an http:// URL by raw string concatenation with GameCanvas.loginScr.tfUser.getText() without HTTPS or URL encoding, and catch only calls ex.StackTrace.ToString().",
+      "severity": "P2",
+      "title": "Cleartext HTTP URL with raw username concatenation and swallowed exception in doFireAccount"
+    },
+    {
+      "batch": "client_ui_god_mods__p04",
+      "category": "concurrency",
+      "impact": "Removing a PopUp inside command.performAction() skips the next PopUp in vPopups during that update tick.",
+      "location": "Client/Client/Assets/Scripts/Game1/PopUp.cs:265-272,328-334",
+      "root_cause": "PopUp.updateAll() iterates vPopups forward (for i = 0; i < vPopups.size(); i++) while update() executes command.performAction(), which may mutate vPopups via removePopUp().",
+      "severity": "P2",
+      "title": "Forward iteration over vPopups during updateAll() vulnerable to element skipping on removal"
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p01",
+      "category": "concurrency",
+      "impact": "Can throw IndexOutOfBoundsException in AnTrom.update() on disconnect race, and skip/double-update bosses in BossManager.update().",
+      "location": "src/models/boss/AnTrom.java:231-235 & src/managers/boss/BossManager.java:419-432",
+      "root_cause": "AnTrom.update() reads `players.size()` and then calls `players.get(Util.nextInt(playerCount))` on the live player list without synchronization; BossManager.update() uses reverse index iteration over CopyOnWriteArrayList which is not atomic against concurrent removals.",
+      "severity": "P2",
+      "title": "Unsafe concurrent list indexing in AnTrom.update() and BossManager.update()"
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p02",
+      "category": "security_dupe",
+      "impact": "If a pet/clone/bot (negative ID) deals the killing blow to TuanLoc or LanCon, Math.abs(plAtt.id) assigns escort/reward ownership to the positive-ID player (or wrong player), and null plAtt causes NPE.",
+      "location": "TuanLoc.java:205-206, LanCon.java:205-206",
+      "root_cause": "`this.playerId = Math.abs(plAtt.id);` does not verify `plAtt != null && plAtt.isPl()`, allowing negative-ID non-player entities to claim/trigger reward escort.",
+      "severity": "P2",
+      "title": "TuanLoc and LanCon assign reward playerId via Math.abs(plAtt.id) without isPl()/null checks"
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p02",
+      "category": "concurrency",
+      "impact": "NullPointerException in DeathBeam.attack() if playerAtt leaves map/disconnects so playerAtt.zone becomes null; NhanBan.joinMap() and DeathOrAliveArena.joinMap() also dereference playerAtt without null checks.",
+      "location": "DeathBeam.java:34,108, NhanBan.java:51-53,116, DeathOrAliveArena.java:143",
+      "root_cause": "DeathBeam checks `!playerAtt.zone.equals(this.zone)` without `playerAtt.zone != null`, and `joinMap()` accesses `parentBoss.zone` / `playerAtt.zone` without null checks.",
+      "severity": "P2",
+      "title": "Missing null checks on playerAtt.zone, playerAtt, and parentBoss in DeathBeam, NhanBan, and DeathOrAliveArena"
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p04",
+      "category": "security_dupe",
+      "impact": "If player HP exceeds ~429B (TaoPaiPai) or ~21B-42B (Yardart), or Whis training level is high, boss damage/HP overflows int/long and can wrap negative. SuperRank voHieuChuong recovery also overflows int when damage * voHieuChuong / 100 > Integer.MAX_VALUE.",
+      "location": "src/models/boss/boss_list/TaoPaiPai/TaoPaiPai.java:61-66, Yardart.java:182-187, Whis.java:31-33, SuperRank.java:202,320",
+      "root_cause": "Long HP/damage calculations are cast down to (int) without clamping before cast, and Whis multiplies hpMax and dame by level without overflow guard.",
+      "severity": "P2",
+      "title": "Int truncation/overflow in boss damage and scaling calculations"
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p04",
+      "category": "concurrency",
+      "impact": "Can throw IndexOutOfBoundsException or ConcurrentModificationException on boss tick when players connect/disconnect concurrently, and NPE/IndexOutOfBoundsException if mapId 0..44 has null map or empty zones.",
+      "location": "src/models/boss/boss_list/ThoDaiKa/ThoDaiKa.java:222-226,268",
+      "root_cause": "handleMapChange() reads Client.gI().getPlayers().size() then indexes players.get(Util.nextInt(playerCount)) without locking/snapshot; changeToRandomMap() indexes zones.get(0) without null/empty check.",
+      "severity": "P2",
+      "title": "Unsafe concurrent player list indexing and unchecked zone access in ThoDaiKa"
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p05",
+      "category": "concurrency",
+      "impact": "Memory leak in PVPManager and permanently locked player.pvp state if either player disconnects during the 3-second TraThu delay, plus potential ConcurrentModificationException on p1.enemies.",
+      "location": "src/models/matches/pvp/TraThu.java:39-46, 66-78",
+      "root_cause": "TraThu.start() schedules super.start() 3s later on GameLoopManager; if the disconnect check fails, dispose() is never called. sendResult() iterates and removes from p1.enemies without synchronization and calls p1.equals(plLose) without null checks.",
+      "severity": "P2",
+      "title": "TraThu 3-second scheduled start leaks PVP on disconnect and iterates p1.enemies unsafely"
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p07",
+      "category": "security_dupe",
+      "impact": "Potential truncation if player IDs exceed 32-bit int max or if SuperRank topList ever exceeds 127 entries; tournament gold fees stored in int instead of long.",
+      "location": "src/services/tournament/SuperRankService.java:103,107; src/services/tournament/The23rdMartialArtCongressService.java:62; src/services/tournament/WorldMartialArtsTournamentService.java:151,207",
+      "root_cause": "Message writes (int) sb.getId() / (int) boss.id and byte list.size(); WorldMartialArtsTournamentService stores tournamentGolds[tour] in int.",
+      "severity": "P3",
+      "title": "int narrowing on player/boss IDs, byte list size, and int gold variable"
+    },
+    {
+      "batch": "server_database_persistence__p01",
+      "category": "concurrency",
+      "impact": "Concurrent readers of Manager.ACHIEVEMENT_TEMPLATE during admin reload can hit ConcurrentModificationException or see an empty list mid-reload.",
+      "location": "src/database/loaders/DatabaseTemplateLoader.java:863-877",
+      "root_cause": "reloadAchievementTemplate() calls Manager.ACHIEVEMENT_TEMPLATE.clear() and addAll(list) without synchronization or atomic reference swap.",
+      "severity": "P2",
+      "title": "Unsynchronized in-place clear/addAll on Manager.ACHIEVEMENT_TEMPLATE during reload"
+    },
+    {
+      "batch": "server_database_persistence__p02",
+      "category": "security_dupe",
+      "impact": "Values exceeding int/short/byte bounds (e.g., BIGINT/long stats, currency, or quantities) silently wrap/truncate instead of throwing, risking stat or currency corruption.",
+      "location": "src/database/ResultSetImpl.java:185-187,207-209,229-231,251-253,555-557,577-579",
+      "root_cause": "getByte, getShort, and getInt cast any Number and call byteValue()/shortValue()/intValue() without range checking.",
+      "severity": "P2",
+      "title": "Silent numeric truncation in getByte/getShort/getInt on Number values"
+    },
+    {
+      "batch": "server_network_core__p01",
+      "category": "security_dupe",
+      "impact": "Invalid KeyHandler.setKey length <= 0 causes NegativeArraySizeException or ArithmeticException (/ by zero); sendImageByName validates ^[a-zA-Z0-9_]+$ properly, while CommandRegistry legacy fallback executes outside try-catch and buffmoney silently truncates long gem/ruby to int.",
+      "location": "src/network/io/KeyHandler.java:33-34; src/server/command/CommandRegistry.java:314-315,472-478; src/server/Command.java:103,115-122",
+      "root_cause": "Missing bounds/try-catch checks on KeyHandler.setKey byte length, CommandRegistry legacy prefix dispatch and (int) cast in buffmoney, and Command.java 'm '/'i ' admin chat commands.",
+      "severity": "P2",
+      "title": "Uncaught legacy command dispatch, int truncation in buffmoney, and missing input validation in KeyHandler/Command"
+    },
+    {
+      "batch": "server_network_core__p01",
+      "category": "concurrency",
+      "impact": "ConcurrentHashMap.computeIfAbsent throws NPE if MySession.ipAddress is null; NettySession.enqueueMessage calls O(N) ConcurrentLinkedQueue.size() on every incoming packet; AutoBtri uses non-volatile isRunning and non-thread-safe singleton.",
+      "location": "src/network/session/MySession.java:104; src/network/netty/NettySession.java:57; src/server/AutoBtri.java:13-24",
+      "root_cause": "Missing null check on ipAddress before ANTILOGIN.computeIfAbsent; ConcurrentLinkedQueue.size() traversal on hot inbound path; missing volatile/synchronized in AutoBtri.",
+      "severity": "P3",
+      "title": "Minor concurrency and null-safety hazards in MySession, NettySession, and AutoBtri"
+    },
+    {
+      "batch": "server_network_core__p02",
+      "category": "concurrency",
+      "impact": "Other threads reading Maintenance.isRunning may observe stale false values due to missing volatile; two concurrent start() calls can throw IllegalThreadStateException; start(int min) actually treats argument as seconds.",
+      "location": "Maintenance.java:8,12,25-31,51-90",
+      "root_cause": "isRunning lacks volatile, start() lacks synchronization, and countdown loop decrements time by 1 per 1000ms despite parameter name `min`.",
+      "severity": "P2",
+      "title": "Non-volatile Maintenance.isRunning and seconds/minutes unit mismatch"
+    },
+    {
+      "batch": "server_network_core__p02",
+      "category": "concurrency",
+      "impact": "All players joining a map serialize on the Controller singleton lock while executing DB queries, mapInfo, and Netty sends; sendInfo also executes blocking SuperRankDAO JDBC queries on Netty thread.",
+      "location": "Controller.java:1087-1091,1120-1207",
+      "root_cause": "handleClientJoinMap is declared `synchronized` on Controller.gI() instead of per-player synchronization; sendInfo performs synchronous SuperRankDAO calls on packet thread.",
+      "severity": "P2",
+      "title": "Global Controller singleton lock in handleClientJoinMap and blocking DAO in sendInfo"
+    },
+    {
+      "batch": "server_network_core__p02",
+      "category": "security_dupe",
+      "impact": "Mixed-case ignored names bypass IGNORE_NAME check; negative byte in combine (-81) throws NegativeArraySizeException; duplicate/non-atomic check-then-insert on createChar.",
+      "location": "Controller.java:558,1020-1042",
+      "root_cause": "createChar compares mixed-case name against DB and ConstIgnoreName before calling name.toLowerCase() during insert; case -81 passes readByte() directly as array length without >= 0 validation.",
+      "severity": "P2",
+      "title": "Input validation & case-normalization mismatch in Controller createChar and Combine (-81)"
+    },
+    {
+      "batch": "server_services_bot_telemetry__p01",
+      "category": "concurrency",
+      "impact": "Registered players can be dropped at round boundaries; ArrayIndexOutOfBoundsException if getTournament() returns -1 during reward().",
+      "location": "src/managers/tournament/WorldMartialArtsTournamentManager.java:129-173,215",
+      "root_cause": "update() iterates and clears listReg/listWait without locking against concurrent registration threads and indexes ConstTournament.tournamentNames[WorldMartialArtsTournamentService.getTournament()] without checking for -1.",
+      "severity": "P2",
+      "title": "WorldMartialArtsTournamentManager registration list race and negative tournament index crash"
+    },
+    {
+      "batch": "server_services_bot_telemetry__p01",
+      "category": "concurrency",
+      "impact": "Deleting consign items via Admin API can throw ConcurrentModificationException or diverge from DB; invalid bossId truncation if id exceeds int32; invalid giftcode detail JSON persisted to DB.",
+      "location": "src/services/admin/AdminApiService.java:841,1024,1085-1090,1165",
+      "root_cause": "ConsignHandler POST remove mutates ConsignShopManager without synchronization and ignores DB DELETE errors; GET indexes ITEM_TEMPLATES without bounds check; BossActionHandler reads bossId as int; GiftCodesHandler persists detail JSON before validation.",
+      "severity": "P2",
+      "title": "AdminApiService unsynchronized consign removal, unchecked template indexing, and unvalidated giftcode JSON"
+    },
+    {
+      "batch": "server_services_bot_telemetry__p01",
+      "category": "concurrency",
+      "impact": "Concurrent calls to getFlagsForChooseClan() can corrupt flagClan list or add null elements causing NPE in sendListFlagClan().",
+      "location": "src/services/FlagBagService.java:75,103-113",
+      "root_cause": "Lazy initialization of ArrayList flagClan is unsynchronized and adds getFlagBag(flagsId[i]) without null filtering.",
+      "severity": "P3",
+      "title": "FlagBagService unsynchronized lazy initialization and possible null FlagBag entry"
+    },
+    {
+      "batch": "server_services_bot_telemetry__p02",
+      "category": "concurrency",
+      "impact": "If an `Error` (e.g., OOM) occurs in `HttpClient.sendAsync`, `whenComplete` throws a secondary `ClassCastException`; `MemoryOptimizer` can trigger premature server shutdown/exit while Netty/game loops are still mutating player state.",
+      "location": "src/telemetry/CloudTelemetryStreamer.java:126; src/tools/MemoryOptimizer.java:51-84",
+      "root_cause": "`CloudTelemetryStreamer` casts `(Exception) throwable` inside `whenComplete`; `MemoryOptimizer` evaluates heap thresholds without post-GC verification and calls `saveAllPlayersData()` + `System.exit(0)` without stopping `ServerManager`/Netty first.",
+      "severity": "P2",
+      "title": "Unsafe Throwable cast in CloudTelemetryStreamer and unsafe mid-flight restart in MemoryOptimizer"
+    },
+    {
+      "batch": "server_services_bot_telemetry__p03",
+      "category": "security_dupe",
+      "impact": "Accounts with malformed BCrypt hashes or unmigrated hashes fall back to plaintext password comparison.",
+      "location": "src/utils/PasswordUtils.java:27-44",
+      "root_cause": "verifyPassword catches Exception around BCrypt.checkpw and falls back to password.equals(hashed), and also accepts non-BCrypt strings via plaintext equality.",
+      "severity": "P2",
+      "title": "Plaintext password fallback in PasswordUtils.verifyPassword"
+    },
+    {
+      "batch": "server_task_clan_consts__p01",
+      "category": "concurrency",
+      "impact": "Global fusion/skill constants could be accidentally mutated at runtime across threads without synchronization.",
+      "location": "src/consts/ConstPlayer.java:21-22; src/consts/ConstHocKyNang.java:7",
+      "root_cause": "HOP_THE_PORATA2, HOP_THE_PORATA3, and TimeUseSkill are declared `public static` without `final`.",
+      "severity": "P3",
+      "title": "Non-final mutable static fields in ConstPlayer and ConstHocKyNang"
+    },
+    {
+      "batch": "server_task_clan_consts__p02",
+      "category": "concurrency",
+      "impact": "IndexOutOfBoundsException if another thread removes an element from membersInGame or clanMessages between size() and get(i); CopyOnWriteArrayList copies the backing array on every add(0, cmg) and remove(i).",
+      "location": "src/models/clan/Clan.java:135-141,176-180,229-235",
+      "root_cause": "Index-based reverse iteration over CopyOnWriteArrayList instead of enhanced for-loop or concurrent deque.",
+      "severity": "P2",
+      "title": "Unsafe index-based iteration on CopyOnWriteArrayList in Clan"
+    },
+    {
+      "batch": "server_world_map_mob__p02",
+      "category": "security_dupe",
+      "impact": "Players can interact with and confirm menus for almost any NPC from anywhere in the map without being near them.",
+      "location": "src/models/npc/Npc.java:172-175",
+      "root_cause": "canOpenNpc checks (Util.getDistance(...) <= 60 || !MapService.gI().isMapBlackBallWar(mapId)), which bypasses the 60-unit distance check on every non-BlackBallWar map.",
+      "severity": "P2",
+      "title": "Npc.canOpenNpc bypasses distance check on all non-BlackBallWar maps"
+    },
+    {
+      "batch": "server_world_map_mob__p02",
+      "category": "concurrency",
+      "impact": "Race condition on Calick map/npcs list and GhiDanh.menuSelect under concurrent player interactions.",
+      "location": "src/models/npc/npc_list/Calick.java:25-39; src/models/npc/npc_list/GhiDanh.java:19,37,44",
+      "root_cause": "Calick.changeMap mutates shared map.npcs and coordinates without synchronization; GhiDanh stores per-player menuSelect array in a shared Npc instance field.",
+      "severity": "P2",
+      "title": "Unsynchronized shared state in Calick and GhiDanh NPCs"
+    },
+    {
+      "batch": "server_world_map_mob__p02",
+      "category": "concurrency",
+      "impact": "Potential NullPointerException if WorldMartialArtsTournamentManager.gI().chatText is null before loop header executes.",
+      "location": "src/models/npc/NonInteractiveNPC.java:67-75",
+      "root_cause": "For-loop condition calls chatText.size() before checking chatText != null inside the loop body.",
+      "severity": "P3",
+      "title": "Null check placed after .size() in NonInteractiveNPC.update"
+    },
+    {
+      "batch": "server_world_map_mob__p03",
+      "category": "security_dupe",
+      "impact": "Players can enable offline auto-training for free without having or spending 1 gem.",
+      "location": "src/models/npc/npc_list/ThuongDe.java:116-120; src/models/npc/npc_list/ThanVuTru.java:91-95; src/models/npc/npc_list/ToSuKaio.java:47-51",
+      "root_cause": "Menu option 1 advertises \"Đồng ý\\n1 ngọc\\nmỗi lần\", but confirmMenu sets player.dangKyTapTuDong = true without checking or deducting gem.",
+      "severity": "P2",
+      "title": "Auto-training registration does not check or deduct advertised 1 gem cost"
+    },
+    {
+      "batch": "server_world_map_mob__p03",
+      "category": "concurrency",
+      "impact": "Concurrent setWeather and Zone.mapInfo reads can throw ConcurrentModificationException; broadcastWeatherToMap resends full map info (-24) to all players in all zones.",
+      "location": "src/services/map/WeatherService.java:24, 84-114",
+      "root_cause": "WeatherService stores plain ArrayLists in activeWeatherMap/Map.effMap and mutates them in setWeather without synchronization.",
+      "severity": "P2",
+      "title": "Unsynchronized list mutation in WeatherService.setWeather"
+    },
+    {
+      "batch": "server_world_map_mob__p03",
+      "category": "security_dupe",
+      "impact": "Potential NPE if clan is null, and non-leader or forged menu state could trigger clan deletion if reached.",
+      "location": "src/models/npc/NpcFactory.java:649-662",
+      "root_cause": "CONFIRM_DISSOLUTION_CLAN calls clan.deleteDB(clan.id) without null-checking player.clan or verifying clan.isLeader(player).",
+      "severity": "P2",
+      "title": "Missing null and leader check in CONFIRM_DISSOLUTION_CLAN"
+    },
+    {
+      "batch": "tooling_and_tests__p01",
+      "category": "security_dupe",
+      "impact": "If `wrong()` is invoked 128+ times without resetting (e.g., if caller doesn't gate on `canLogin()`), `wrongLogin` wraps to -128 (`< MAX_WRONG`), bypassing the brute-force login lockout. Public visibility also permits unsynchronized external mutation.",
+      "location": "src/models/AntiLogin.java:9,43-49",
+      "root_cause": "`wrongLogin` is declared `public byte wrongLogin` and incremented unboundedly (`wrongLogin++`) in `wrong()`. Also `timeCanLogin` (line 8) is dead state (written, never read).",
+      "severity": "P2",
+      "title": "AntiLogin.wrongLogin uses signed byte that can overflow and is public non-volatile"
+    }
+  ],
+  "concurrency_and_state_notes": {
+    "client_core_render_audio__p01": [
+      "Main.cs mixes three Unity callbacks for core state: FixedUpdate() drives Rms.update(), GameCanvas.update(), Image.update(), DataInputStream.update() via a gameSpeedAccumulator loop; Update() drives Session_ME.update() and Session_ME2.update(); OnGUI() drives checkInput() and GameCanvas.paint(g).",
+      "Image.cs contains an unsynchronized single-slot static IPC mailbox (status, imgTemp, filenametemp, datatemp, imgSrcTemp, xtemp, ytemp, wtemp, htemp, transformtemp) polled with Thread.Sleep(5) up to 500x in private _createImage* methods and serviced in Image.update() on the main thread; status is non-volatile and lacks locking, though public createImage methods currently bypass it and call __createImage directly.",
+      "Main.Awake() checks `if (main != null)` to destroy duplicate MonoBehaviours, but `main = this` is only assigned later inside FixedUpdate()->setsizeChange() after `count >= 10`, leaving a 10-tick window where duplicate Main instances are not destroyed.",
+      "GameCanvas.cs holds ~90 mutable static globals (currentScreen, currentDialog, panel, panel2, keyPressed/keyHold/keyReleased, pointer flags, imgBG/yb/bgW/bgH) accessed across Main.OnGUI, Main.FixedUpdate, and action callbacks without synchronization."
+    ],
+    "client_core_render_audio__p02": [
+      "Sound.status (non-volatile static int) is read/written across main and background threads in Sound._load/_start/_stop with Thread.Sleep(5) spin-wait up to 500ms, while Sound.update() is empty so status is never reset inside Sound.cs.",
+      "Sound.player[] stores the same 'Audio Player 1' GameObject in every slot while __load calls AddComponent<AudioSource>() per slot; GetComponent<AudioSource>() in __start/__stop always returns the first AudioSource (SoundBGLoop).",
+      "mGraphics holds mutable static caches (cachedTextures, color1x1Cache) cleared wholesale on threshold (>400 / >300) via UnityEngine.Object.Destroy inside render calls.",
+      "mGraphics instance state (isClip, isTranslate, translateX/Y, translateXf/Yf, r/g/b/a) is mutated during OnGUI; reset() clears translateX/Y but does not reset translateXf/Yf or r/g/b/a.",
+      "SmallImage uses static arrays (imgbig, imgNew, smallImg) and MyVector (vt_images_watingDowload) mutated lazily during paint() via createImage() and periodically evicted every 1000 gameTicks in update()."
+    ],
+    "client_gameplay_entities__p01": [
+      "Static shared EffectData fields on boss classes (BigBoss.data, BachTuoc.data, BigBoss2.data, Mabu.data1/data2) overwrite across instances or partial loads.",
+      "BackgroudEffect mixes instance particles with static shared fields (wP, PIXEL, imgLacay, isFog, isPaintFar, nCloud, xfog, yfog, vBgEffect), causing concurrent effects of different types to clobber each other's PIXEL/wP/imgLacay.",
+      "BgItem maintains static MyHashTable imgNew, vKeysNew, vKeysLast across map transitions while clearHashTable() is empty.",
+      "ImageSource stores static MyVector vSource and vRms; ClientInput uses a static singleton instance that is not cleared on submit (perform idAction=2).",
+      "All Unity C# gameplay/render classes run on the Unity main thread; no locks or background threads are used in these files."
+    ],
+    "client_gameplay_entities__p02": [
+      "Static singleton Char.myChar and Char.myPet (Char.cs:747-749, 1497-1521): clearMyChar() nulls myChar only, leaving myPet, static flags (ischangingMap, isLockKey, isLoadingMap, isManualFocus, fallAttack), and static vItemTime unreset across account/character switches.",
+      "Static mount textures (imgMount_*, eyeTraiDat, eyeNamek) cached in Char static fields and lazily reloaded in checkLoadMount() during paintMount1/paintMount2 when mGraphics.zoomLevel changes or imgMount_NM.texture == null (Char.cs:409-456).",
+      "Char.checkHideCharName() (Char.cs:3106-3143) iterates GameScr.vCharInMap and GameScr.vNpc with empty try/catch blocks to mask out-of-range/concurrent collection mutations while reading shared static vectors.",
+      "Char.taskAction() mixes myCharz() (Char.cs:1344, 1370) and direct static field myChar (Char.cs:1428), risking NullReferenceException if myChar has not been lazily initialized.",
+      "Char.update() modifies local cHP/cMP/cStamina optimistically (buff ticks L2404-2446, charge L2982-2983, skill cost L5192-5210) asynchronously from server state updates."
+    ],
+    "client_gameplay_entities__p03": [
+      "CrackBallScr.startAutoCrackBall() spawns a background Thread (AutoCrackBall) that mutates UI/game state (indexSkillSelect, listBall[].yTo, step, timeKame, Char.myCharz().setSkillPaint, SoundMn, Service.gI().SendCrackBall) concurrently with the Unity main thread update()/paint() without locks.",
+      "CrackBallScr.AutoCrackBall() calls Thread.ResetAbort() (line 819) and checks isCallStop/isAutoCrackBall without volatile or synchronization.",
+      "DataInputStream uses static shared state (istemp, status, filenametemp) with a Thread.Sleep(5) polling loop in _getResourceAsStream() without volatile/locks, though getResourceAsStream() bypasses it and calls __getResourceAsStream() directly.",
+      "ClanImage holds unbounded static collections (vClanImage, idImages) and Char.paintCharBody() inserts placeholder new ClanImage() entries keyed by bag ID on the fly."
+    ],
+    "client_gameplay_entities__p04": [
+      "EffecMn.vEff (EffecMn.cs:5) is mutated via removeElement(this) inside Effect.update() (Effect.cs:489, 543, 555) while EffecMn.update() (EffecMn.cs:90-93) iterates forward with i++, causing the element immediately following a removed effect to be skipped for that tick.",
+      "Effect.vEffData, lastEff, newEff, dowloadEff (Effect.cs:110, 116-120) are static MyVector caches; Effect(int id, int x, int y, ...) evicts vEffData entries when lastEff.size() > 20 without checking if active Effect instances in EffecMn.vEff still reference the evicted EffectData.",
+      "Effect2.vEffect3, vEffect2, vRemoveEffect2, vEffect2Outside, vAnimateEffect, vEffectFeet (Effect2.cs:5-15) and EffectManager.lowEffects/mid_2Effects/midEffects/hiEffects (EffectManager.cs:5-11) hold global mutable static effect lists; EffectPanel.update() removes itself directly from Effect2.vEffect3 (EffectPanel.cs:85, 96, 106), whereas EffectManager.updateAll() safely iterates backwards and checks isRemove.",
+      "FireWorkMn.paint() (FireWorkMn.cs:33-41) calls fw.removeElementAt(i) during forward iteration without decrementing i and still calls firework.paint(g) on the removed item.",
+      "Effect_End mutates Char world coordinates (charUse.cx) directly during effect construction (Effect_End.cs:269-283) and during upd_Skill_Destroy (Effect_End.cs:1051-1053), coupling visual effect playback to entity position state.",
+      "GamePad.paint() (GamePad.cs:266-269) overwrites xZone/yZone/wZone/hZone every frame, discarding the screen-size-specific zone setup computed in the GamePad constructor (GamePad.cs:53-93)."
+    ],
+    "client_gameplay_entities__p05": [
+      "Static singleton GameScr.instance (clearGameScr sets instance = null at GameScr.cs:1966-1969) coexists with dozens of static fields (vCharInMap, vMob, vNpc, vItemMap, sks, parts, efs, arrs, darts, onScreenSkill, keySkill, ~35 isPaint* booleans, camera cmx/cmy, isAutoPlay), which are not reset by clearGameScr() and risk stale state across relog/server switches.",
+      "Shared static MyVector collections (vCharInMap, vMob, vNpc, vItemMap, vMobAttack, vChatVip) and static state flags (isPaintOther, isAutoPlay, isLoadAllData) have no synchronization between packet-handling updates and UI/game loop reads.",
+      "Static field initializers at GameScr.cs:571-573 eagerly call mSystem.loadImage(\"/mainImage/i_pve_bar_0.png\") and i_pve_bar_1.png at class load time, duplicating loads in loadBg() (GameScr.cs:1176-1177)."
+    ],
+    "client_gameplay_entities__p06": [
+      "GameScr is a monolithic singleton (GameScr.instance) managing input, camera, auto-play, HUD rendering, entity loops, and actionPerform callbacks on the Unity main thread.",
+      "paint() mutates gameplay/animation/input state directly: shock_scr (5483), tMabuEff/mabuEff (5678-5696), Char.tFusion (5783-5816), tPower/dxPower/isSuperPower (5882-5913), ClanImage.addClanImage (5941), consumes GameCanvas.isPointerJustRelease and pushes info1 (5959-5963), secondVS countdown (6546-6554), flareTime (6559-6564).",
+      "update() iterates shared MyVectors (vCharInMap, Teleport.vTeleport, vMob, vNpc, vItemMap, Effect2.*, Char.vItemTime, textTime) without locking; relies on Unity main-thread execution with Controller message dispatch also touching collections (try/catch around elementAt in paint() at 5637-5642 and 5797-5802 hints at concurrent/mid-frame modification).",
+      "Client-side anti-cheat / sync touchpoints: tickMove counts 100 update ticks and sends elapsed seconds via Service.gI().checkMMove(second) (5110-5120); autoPlay() directly mutates Char.myCharz().cx/cy to mob coordinates and sends charMove() (4282-4287)."
+    ],
+    "client_gameplay_entities__p07": [
+      "Static global mutable state across client systems: Hint (all coordinates/flags static), ItemTime.autoUseIconIds/lastTimeCheckAutoUse (static HashSet/long not cleared on logout/char switch), ImgByName.hashImagePath (static MyHashTable), ItemTemplates.itemTemplates (static MyHashTable), Info._gocnhon/lastZoomGocNhon (static cached texture), InfoMe.me (static singleton), MapTemplate static arrays, Key static keycode mappings.",
+      "Info_RadaScr.paintEff (Info_RadaScr.cs:263-291) mutates eff (MyVector) by calling SetEff() and eff.removeElementAt(i) during paint().",
+      "InfoMe.update (InfoMe.cs:142-314) and Info.update (Info.cs:229-247) mutate infoWaitToShow and InfoItem timers on the main Unity update thread; Info.paint (Info.cs:96-101) mutates cx/cy directly when outSide == true.",
+      "No locks or multithreading primitives present in this batch; all classes run on the Unity main loop except session callbacks via IMessageHandler/ISession."
+    ],
+    "client_gameplay_entities__p08": [
+      "All data structures (MyVector, MyHashTable, MyKeyMap.h, Mob.arrMobTemplate, Mob.lastMob, Mob.newMob) are unsynchronized and assume single-threaded Unity main-thread execution; no locks or concurrent primitives exist in this batch.",
+      "MobCapcha stores all camera, animation, and captcha state in global static fields (MobCapcha.cs:5-40), preventing multiple instances and persisting stale state across sessions.",
+      "NewBoss uses C# 'new' member hiding on 20+ Mob fields/methods (NewBoss.cs:17-86, 188-650) instead of 'override', splitting state between Mob base fields and NewBoss shadowed fields depending on reference type.",
+      "Mob.arrMobTemplate and Npc.arrNpcTemplate are global static arrays resized on demand via EnsureMobTemplateCapacity/EnsureNpcTemplateCapacity (Mob.cs:383-394, Npc.cs:55-66), while NewBoss accesses Mob.arrMobTemplate directly without capacity checks."
+    ],
+    "client_gameplay_entities__p09": [
+      "Rms.cs uses a static rmsLock around Dictionary<string, sbyte[]> rmsCache and synchronous FileStream I/O, returning direct sbyte[] array references (aliasing mutable cache entries) and clearing rmsCache before releasing rmsLock while deleting files in clearAll().",
+      "ServerListScreen relies heavily on ~25 mutable static fields (nameServer, address, port, ipSelect, loadScreen, isGetData, testConnect, isAutoConect, cmdDownload, cmdDeleteRMS) shared across screens and connection callbacks.",
+      "RadarScr stores static MyVector list/listUse and UI coordinates alongside instance state (page, maxpage, indexFocus, focus_card).",
+      "Scroll maintains pointer tracking state (pointerDownLastX[3], pointerIsDowning, cmRun) plus a static singleton gI; ScaleGUI maintains a static List<Matrix4x4> stack without synchronization.",
+      "PlayerDart and ServerEffect mutate collection membership during update (darts.removeElementAt(j) in PlayerDart.update; Effect2.vEffect2.removeElement(this) in ServerEffect.update)."
+    ],
+    "client_gameplay_entities__p10": [
+      "Teleport.update() sets Controller.isStopReadMessage = false (Teleport.cs:434) when isMe && type == 0 && y <= -80, coupling client animation completion directly to network message queue resumption.",
+      "Teleport.update() calls vTeleport.removeElement(this) (Teleport.cs:443,452) and GameScr.vCharInMap.removeElement(...) (Teleport.cs:439); if iterated with a forward index loop without reverse iteration or index adjustment, adjacent entries are skipped.",
+      "TextInfo uses static mutable fields (dx, tx, wStr, isBack, laststring in TextInfo.cs:5-13), so concurrent or multi-widget calls to TextInfo.paint() in the same frame corrupt each other's scroll state.",
+      "TField maintains static singleton state currentTField and TouchScreenKeyboard kb (TField.cs:155,199) alongside Thread.CurrentThread.Name == Main.mainThreadName checks (TField.cs:668) before opening mobile TouchScreenKeyboard.",
+      "SplashScr relies on static flags (nData, maxData, pendingScreen, splashScrStat in SplashScr.cs:9-17) and Rms persistence to transition into ServerListScreen or pendingScreen."
+    ],
+    "client_gameplay_entities__p11": [
+      "TileMap holds ~60 mutable public static fields (maps, types, imgTile, vGo, vItemBg, vCurrItem, vObject, mapID, tileID, etc.) with static cctor calling GameCanvas.loadImage('/bg/light.png').",
+      "Timer uses 4 global static fields (timeListener, idAction, timeExecute, isON); only one timer can exist globally and setTimer overwrites any active timer.",
+      "UIWindowManager is a singleton managing List<IUIWindow> _activeWindows without iteration snapshots during Update/UpdateKey/Paint.",
+      "UnityLogger spawns a background workerThread ('AsyncLoggerWorker') reading from an unbounded ConcurrentQueue<string> signaled by AutoResetEvent, fed by Application.logMessageReceivedThreaded from arbitrary threads."
+    ],
+    "client_network_protocol__p01": [
+      "ClanMessage.vMessage is a static MyVector holding up to 20 clan chat/request entries; ClanMessage.addMessage mutates it in a forward loop without index adjustment.",
+      "Controller2 is purely static and mutates global singletons/static fields directly (Char.myCharz(), GameScr.gI(), GameCanvas.panel, GameCanvas.panel2, RadarScr.list/listUse, CrackBallScr.gI(), ServerListScreen.ipSelect/waitToLogin, Service.logController/logMap, EffecMn, Rms).",
+      "Controller2.readMessage, readLuckyRound, readInfoRada, readInfoEffChar, and readActionBoss assume sequential invocation on the Unity main-thread message pump."
+    ],
+    "client_network_protocol__p02": [
+      "Static singletons me/me2 in Controller.gI() (L49-56) and Controller.gI2() (L58-65) use unguarded lazy init without locking.",
+      "Static mutable flags (isMain, isLoadingData, isConnectOK, isConnectionFail, isDisconnected, isStopReadMessage, frameHT_NEWBOSS at L17-35) are shared globally across gI() and gI2().",
+      "onConnectOK/onConnectionFail/onDisconnected (L67-83) overwrite static Controller.isMain, creating a race if main and secondary sessions emit lifecycle callbacks.",
+      "onMessage mutates global game collections and UI state directly (Char.myCharz(), Char.myPetz(), GameScr.vMob, GameScr.vCharInMap, GameScr.vItemMap, GameCanvas.panel, TileMap).",
+      "messWait (L15, L3692) caches the incoming Message instance for deferred map loading while finally (L4634-4640) immediately calls msg.cleanup()."
+    ],
+    "client_network_protocol__p03": [
+      "PacketDispatcher._handlers (Dictionary<sbyte, IPacketHandler>) is populated once in the constructor with no synchronization; safe only if dispatched solely from the Unity main thread.",
+      "MobController uses static mutable state (IsPickingItems, IsWait, TimeStartWait, TimeWait, ItemPicks, IndexItemPick, lastHarvestBeanTime) and static shared MyVector buffers (attackMobVector, emptyVector) driven from the main update loop.",
+      "MapController and PetService singletons use non-thread-safe lazy initialization (instance == null ? instance = new ... : instance).",
+      "Controller.loadCurrMap resets GameScr/Char UI and input lock flags (isStopReadMessage=false, Char.isLockKey=false, Char.ischangingMap=false) and clears pointer/key state on map load completion.",
+      "Controller.messageNotMap case 10 swaps local msg to messWait, calls loadInfoMap, and calls cleanup() on messWait before nulling it; original msg is not cleaned up (though Message.cleanup() is currently an empty stub)."
+    ],
+    "client_network_protocol__p04": [
+      "Service.cs:9,110-119,813-815,1739-1748,1766-1775,1793-1802,1820-1829,2279-2288,2444-2453,2707-2717,2967-2977: Service singleton mutates its shared instance field `this.session = Session_ME2.gI()` before `sendMessage()` and restores `Session_ME.gI()` afterwards (not in `finally`), racing with concurrent callers and permanently sticking to Session_ME2 if an exception occurs.",
+      "Session_ME.cs:241-295 & Session_ME2.cs:227-279: Both session classes store connection state, streams, threads, XOR key, and byte counters in `static` fields while keeping host/port/timeWaitConnect as instance fields, making multi-instance impossible and risking cross-state contamination.",
+      "Session_ME2.cs:13-61,279,288,459-500: Session_ME2 accesses `Sender.sendingMessage` (`List<Message>`) and `recieveMsg` (`MyVector`) without any lock across main thread (`AddMessage`, `clearSendingMessage`, `update`) and background `sendThread`/`collectorThread` (`Sender.run`, `onRecieveMsg`).",
+      "Session_ME.cs:375-384: `doConnect` starts `collectorThread` at line 380 before calling `doSendMessage(-27)` and setting `key = null` at line 384, creating a startup race if the `-27` key response arrives before line 384 executes.",
+      "Session_ME.cs:538-599 & Session_ME2.cs:507-542: `cleanNetwork` closes socket/streams without locking against `Sender`/`MessageCollector`, uses `Thread.Abort()` on main thread in `Session_ME`, and neither class clears `recieveMsg` or `sendingMessage` on disconnect/reconnect.",
+      "Session_ME.cs:352 & Session_ME2.cs:332: `NetworkInit` sets `connected = true` before `doConnect` succeeds, exposing a partially initialized session to `isConnected()` and worker threads."
+    ],
+    "client_ui_god_mods__p01": [
+      "Every Game1.God manager (AutoSettingManager, ClientManager, Boss, BossData, Items, ListChars, NPoint, PlayerInfo, Revive, nSkill, AutoControlPanel) uses non-thread-safe lazy singletons (`getInstance()`) with static/mutable state; Mobs uses purely public static fields/lists.",
+      "AutoSettingManager persists settings per character via `Rms.saveRMSString(\"nro_auto_\" + charId, ...)` and `\"nro_auto_default\"`, caching `lastLoadedCharId` in RAM across map changes (`AutoSettingManager.cs:283-392`).",
+      "ClientManager.Update (`ClientManager.cs:25-28`) unconditionally overwrites `Char.myCharz().cspeed = speedRun` every frame when `speedRun != -1`, overriding any temporary server/skill speed modifiers.",
+      "ChatPopup relies on global static state (`currChatPopup`, `serverChatPopUp`, `nextMultiChatPopUp`, `scr`, `curr`, `last`, `performDelay`, `isHavePetNpc`), so overlapping popups or countdown tags `<...>` overwrite each other's timer and scroll state (`ChatPopup.cs:31-65, 419-431`).",
+      "ListChars caches `listPlayers` in `Update()` only while `isShow` is true, leaving stale `Char` references in `listPlayers` when toggled off (`ListChars.cs:168-178`)."
+    ],
+    "client_ui_god_mods__p02": [
+      "Single-threaded Unity UI class (`Panel`) instantiated as dual globals (`GameCanvas.panel` and lazily via `EnsurePanel2()` as `GameCanvas.panel2`), yet several methods inside `Panel` directly reference `GameCanvas.panel` (`updateKey` line 2197, `paint` line 4294, `paintPetInventory` line 4871) or mutate `static` tab arrays (`boxTabName`, `boxCombine`, `boxPet`) at runtime.",
+      "Trade session state (`moneyGD`, `friendMoneyGD`, `isLock`, `isFriendLock`, `isAccept`, `isFriendAccep`, `vMyGD`, `vFriendGD`) is stored as mutable public fields on `Panel`; `setTypeGiaoDich` (lines 2453-2459) resets all trade flags except `isFriendAccep`.",
+      "Shared `static` collections (`a..h`, `a_bg..h_bg`, `vGameInfo`) and `static` state (`specialInfo`, `spearcialImage`, `lastItemInvenNew`, `cachedOptionText`, `cachedOptionFont`, `lastLogPanelPaintErrorTime`) are accessed across panel instances without synchronization."
+    ],
+    "client_ui_god_mods__p03": [
+      "Single-threaded Unity UI loop drives Panel.update() and paint*(), mutating shared Panel fields (type, currentTabIndex, selected, cSelected, newSelected, currItem, vItemCombine, vMyGD, isLock, isAccept).",
+      "Async modals (ChatTextField via onChatFromMe, GameCanvas YesNoDlg/Menu via perform) retain references to mutable currItem/selected/currInfoItem; inventory/shop/trade updates or tab switches while a modal is open can leave stale or out-of-bounds state.",
+      "Panel transitions and action execution use frame counters (waitToPerform, timeShow, delayKigui) rather than event-driven state machines.",
+      "Trade lock/accept state uses client-side booleans (isLock, isFriendLock, isAccept) paired with Service.gI().giaodich(3/5/7)."
+    ],
+    "client_ui_god_mods__p04": [
+      "Panel.cs (11283-11857) mutates shared UI state fields (selected, newSelected, size_tab, currentListLength, cmy, cmtoY, GameCanvas.isFocusPanel2, currItem.buyRuby, imgo_0..imgo_3) directly from input/render paths without synchronization; paintOptItem lazily mutates static/instance image fields inside paint().",
+      "PopUp.cs (1-336) holds global static state: vPopups (MyVector), f, tF, dir, goc, imgPopUp, imgPopUp2. PopUp.updateAll() iterates vPopups forward by index (0..vPopups.size()-1) while PopUp.update() invokes command.performAction(), which can call removePopUp() and shift indices mid-loop."
+    ],
+    "server_boss_dungeon_pvp__p01": [
+      "BossManager.bosses is a CopyOnWriteArrayList; update() uses a reverse-index loop (size()-1 down to 0) with an `if (i < size())` guard, which can skip or revisit elements if removeBoss() runs concurrently from another thread.",
+      "All 16 singleton managers in src/managers/boss/ use unsynchronized lazy initialization in gI().",
+      "Boss.injured() is synchronized on the Boss instance and mutates nPoint.hp, bossStatus, prepareBom, and playerTarger from skill/combat caller threads, while Boss.update() runs unsynchronized on the boss manager loop thread and reads/writes those same fields.",
+      "SieuBoHung.callCellCon() schedules delayed lambdas via GameLoopManager.gI().schedule(..., 2000/4000/6000) that mutate boss statuses asynchronously without checking if SieuBoHung already left map or respawned.",
+      "AnTrom.update() reads Client.gI().getPlayers() size and indexes into it without synchronization or snapshot (TOCTOU IndexOutOfBoundsException risk).",
+      "Boss.handleBom() iterates zone.mobs and zone.getNotBosses() directly without defensive copies while applying damage/death effects."
+    ],
+    "server_boss_dungeon_pvp__p02": [
+      "All injured(...) overrides are synchronized on the Boss instance (this), but player-side flags like pl.canReward and pl.haveReward in TuanLoc.afk/injured and LanCon.afk/injured are read/mutated from Boss update threads without player-level synchronization.",
+      "GoldenFrieza.handleBomExplosion (GoldenFrieza.java:183-190) iterates this.zone.getNotBosses() and invokes pl.injured(this, 2_100_000_000, true, false) from the boss loop without synchronization on players or zone.",
+      "TDT.bodyChangePlayerInMap (TDT.java:25-33) iterates this.zone.getPlayers() every 10s to apply EffectSkillService.setIsBodyChangeTechnique.",
+      "DrLychee.leaveMap (DrLychee.java:154) mutates clan.KhiGasHuyDiet.bosses.add(new Hatchiyack(...)) without null-checking clan/KhiGasHuyDiet or synchronizing on the bosses collection.",
+      "DeathOrAliveArena.update() (DeathOrAliveArena.java:162-174) falls through from case RESPAWN directly into case JOIN_MAP (no break), sets typePk = 3 magic literal, and transitions to AFK where afk() checks zone equality.",
+      "15 of 46 files are completely commented-out legacy/disabled classes (SuperXaydaGod, Chiller, Frost, DeathBeam1..5, SonTinh, ThuyTinh, berus, champa, vados, whis, bena)."
+    ],
+    "server_boss_dungeon_pvp__p03": [
+      "Every boss subclass with custom damage handling declares `synchronized long injured(...)`, acquiring the boss monitor on the caller thread (typically Netty worker/game loop) during combat.",
+      "SAIBAMEN.setBom(plAtt) (called from synchronized injured() at line 119) busy-spins in `while (this.playerSkill.prepareTuSat)` for 2500ms while holding the boss monitor and blocking the caller thread.",
+      "CADICH.attack() (line 211) and SAIBAMEN.afk() (line 72) call `Functions.sleep(2000)` / `Functions.sleep(1500)`, blocking the boss update loop thread.",
+      "Mabu2H maintains `public List<Player> maBuEat = new CopyOnWriteArrayList<>()`, which is accessed and cleared by both Mabu2H.die() and SuperBu.die().",
+      "SuperBu.injured() (synchronized on SuperBu) delegates to Mabu2H.injured() (synchronized on Mabu2H) via FinalBossManager before checking its own isDie(), while Mabu2H.injured() looks up SuperBu on death and calls changeStatus(BossStatus.DIE).",
+      "NinjaAoTim.injured() mutates `clan.doanhTrai.bosses.add(new NinjaClone(...))` from the combat caller thread.",
+      "Bosses use non-volatile timer/state fields (lastTimeAttack, lastTimeAfk, lastTimeUpdate/st, stateTimer, isEnraged, calledNinja, isLaze, currentState) read/written between boss update ticks and synchronized injured()."
+    ],
+    "server_boss_dungeon_pvp__p04": [
+      "SuperRank, The23rdMartialArtCongress, TaoPaiPai, ThoDaiKa, TrainingBoss, TauPayPay1, Whis, ToSuKaio, and Yardart synchronize injured() on the boss instance, serializing concurrent player damage per boss.",
+      "ThoDaiKa.handleMapChange() (ThoDaiKa.java:222-226) reads Client.gI().getPlayers().size() and calls players.get(Util.nextInt(playerCount)) without synchronization or copy, risking IndexOutOfBoundsException/ConcurrentModificationException if players connect/disconnect concurrently.",
+      "SuperRank.update() (149-152), The23rdMartialArtCongress.update() (118-123), and ThienXinHangClone.update() (72-76) fall through from case RESPAWN to case JOIN_MAP without break, and omit cases for DIE, LEAVE_MAP, CHAT_S, CHAT_E, and REST.",
+      "The23rdMartialArtCongress.update() (111-113) returns immediately when this.isDie() is true, preventing any status transition processing after die(plKill) sets BossStatus.DIE.",
+      "ThienXinHang.phanThan() (ThienXinHang.java:40-49) spawns 4 ThienXinHangClone instances every 30s; clones manage a 10s timeLive countdown independently and are not cleaned up when ThienXinHang dies or leaves map."
+    ],
+    "server_boss_dungeon_pvp__p05": [
+      "PVP.lose(Player, TYPE_LOSE_PVP) is synchronized on the PVP instance, but PVP constructor publishes `this` to PVPManager.gI().addPVP(this) and sets p1.pvp/p2.pvp before subclass constructors (ThachDau) initialize gold fields and deduct gold (src/models/matches/PVP.java:24-28, src/models/matches/pvp/ThachDau.java:19-27).",
+      "TraThu.start() schedules super.start() asynchronously after 3000ms on GameLoopManager; if either player disconnects or starts disposing before 3s, the scheduled lambda silently skips super.start() without calling dispose(), stranding the TraThu object in PVPManager and player.pvp (src/models/matches/pvp/TraThu.java:39-46).",
+      "BlackBallWar.win() spawns a virtual thread (BlackBallWar-RewardWorker) iterating player.clan.members without synchronization while dispatching async DB updates and mutating onlinePlayer.rewardBlackBall concurrently (src/models/phoban/BlackBallWar.java:98-119).",
+      "SuperRank.init() spawns a per-match virtual thread (SuperRank-Worker) that loops until Maintenance.isRunning || !isCompeting; Maintenance.isRunning exits the loop without calling dispose(), potentially leaving zone.isCompeting = true (src/models/tournament/super_rank/SuperRank.java:88-105).",
+      "DeathOrAliveArena uses CopyOnWriteArrayList for binhChon spectators, but traThuongHatMit() reads/mutates pl.inventory.gold, pl.binhChonPlayer, and pl.binhChonHatMit across players without per-player synchronization (src/models/tournament/DeathOrAliveArena.java:65, 222-287).",
+      "DestronGas, RedRibbonHQ, SnakeWay, and TreasureUnderSea call finish(); dispose(); in update() upon timeout without returning, causing the remainder of update() to run on a disposed instance with clan == null (src/models/phoban/DestronGas.java:60-112, RedRibbonHQ.java:208-240, SnakeWay.java:63-95, TreasureUnderSea.java:62-137)."
+    ],
+    "server_boss_dungeon_pvp__p06": [
+      "WhisArenaMatch, WhisArenaPvPMatch, WhisArenaBossMatch, WhisArenaBotVsBotMatch each spawn a dedicated Thread.ofVirtual() loop sleeping ~1000ms per tick; isFinished is non-volatile in WhisArenaMatch/PvPMatch/BossMatch/BotVsBotMatch despite cross-thread reads/writes.",
+      "WhisArenaBotManager.lobbyBots and bots use CopyOnWriteArrayList; update() runs on GameLoopManager every 150ms and calls tryMatchmaking() which mutates zone/match state concurrently with player request threads.",
+      "WhisArenaService.readyPlayerIds is ConcurrentHashMap.newKeySet(), modified unsynchronized in WhisArenaService.findMatch() while iterated under synchronized(readyIds) in WhisArenaLobbyBot.tryMatchmaking().",
+      "WhisArenaService synchronizes DB I/O (addReward, clearRewards, claimRewards) and matchmaking zone lookup (getFreeZone, getFreeZoneInMap) on the same singleton monitor.",
+      "NgocRongNamecService runs a daemon Thread.sleep(1000) loop mutating zone.items directly from its own thread without zone locking.",
+      "PhoBan services (DestronGasService, SnakeWayService, TreasureUnderSeaService, RedRibbonHQService, SuperDivineWaterService) check and allocate shared instance pools and clan fields without synchronization.",
+      "DeathOrAliveArenaService.startChallenge defers adding DeathOrAliveArena to DeathOrAliveArenaManager by 500ms via setTimeout, leaving getMapChallenge(112) unprotected against concurrent claims."
+    ],
+    "server_boss_dungeon_pvp__p07": [
+      "SuperRankService.gI() and The23rdMartialArtCongressService.gI() use unsynchronized lazy singleton initialization.",
+      "SuperRankService.competing(Player, long) checks SuperRankManager.currentlyCompeting/awaitingCompetition/SPRCheck without locking, allowing concurrent requests to start duplicate matches for the same player, opponent, or zone.",
+      "The23rdMartialArtCongressService.startChallenge(Player) defers The23rdMartialArtCongress creation and manager.add(mc) by 500ms via GameLoopManager.gI().schedule while checking plCheck(player) and getMapChallenge(129) immediately, creating a 500ms TOCTOU window for duplicate challenges, zone collisions, and stale player/zone state.",
+      "WorldMartialArtsTournamentService.dangky_huy and regCheck mutate and read WorldMartialArtsTournamentManager.gI().listReg without synchronization, risking ConcurrentModificationException, double registration, or double refund.",
+      "SuperRankService.textInfoNew iterates pl.superRank.history and indexes pl.superRank.lastTime.get(i) without bounds check or synchronization."
+    ],
+    "server_database_persistence__p01": [
+      "AlyraManager holds static HikariDataSource ds; reloadData() closes and recreates ds without synchronization against active callers.",
+      "PlayerDAO.extractSnapshot acquires synchronized(player) and synchronized(player.inventory.itemsBoxCrackBall), then releases lock before JDBC executeUpdate().",
+      "PlayerDAO.updatePlayerAsync and updatePlayersInTransactionAsync spawn unbounded virtual threads with no per-player save serialization; concurrent saves can write an older snapshot over a newer one, and player.lastSaveHash is read/written unsynchronized.",
+      "PlayerDAO.updateBlackBallReward performs non-transactional read-modify-write on data_black_ball without row lock (SELECT ... FOR UPDATE).",
+      "SuperRankDAO.loadData initializes new players using getCurrentHighestRank() + 1 without DB lock or unique constraint handling, risking duplicate rank assignment under concurrent logins.",
+      "DatabaseTemplateLoader.gI() is synchronized singleton; reloadAchievementTemplate() mutates Manager.ACHIEVEMENT_TEMPLATE in place (clear + addAll) without synchronization.",
+      "EventDAO stores global event timers in static longs (remainingTimeToIncreasePotentialAndPower, HP, MP, Dame) without volatile or synchronization."
+    ],
+    "server_database_persistence__p02": [
+      "ResultSetImpl holds mutable cursor state (indexData initialized to -1) and mutable backing collections (Map<String, Object>[] data, Object[][] values) without synchronization; safe only for single-threaded per-query usage.",
+      "dispose() and close() clear row maps and null out data/values references; subsequent navigation/getter calls throw Exception(\"No data available\") except gotoBeforeFirst() and getRows()."
+    ],
+    "server_economy_items__p01": [
+      "ConsignShopManager uses two ReentrantLocks (saveLock, listLock) and AtomicInteger nextItemId; however, async DB writers (updateItemBoughtAsync, deleteItemAsync, updateItemUpTopAsync, insertItemAsync) spawn unmanaged Virtual Threads without saveLock, racing against save() DELETE+INSERT.",
+      "ConsignShopService.getItemBuy(Player, int) and getItemCanKiGui(Player) iterate ConsignShopManager.listItem without acquiring listLock or using getItemsSnapshot(), risking ConcurrentModificationException.",
+      "ConsignShopService.buyItem holds the global ConsignShopManager.listLock across inventory copies, bag additions, DB async updates, and openShopKyGui network writes.",
+      "CombineService.startCombine and startCombineVip synchronize on player, whereas CombineService.showInfoCombine and openTabCombine mutate player.combineNew without synchronization.",
+      "CombineService.gI(), BuyBackService.gI(), and EffectMapService.gI() use unsynchronized lazy singleton initialization.",
+      "BuyBackService.addItem mutates player.inventory.itemsDaBan without synchronization."
+    ],
+    "server_economy_items__p02": [
+      "Input.PLAYER_ID_OBJECT is a non-thread-safe HashMap<Integer, Object> accessed concurrently by Netty worker threads in createFormChangeName/createFormUseCardQuantity/doInput, and player.idMark.getTypeInput() is never cleared after Input.doInput executes, allowing packet replay.",
+      "Input.java TANG_THOI_VANG, TANG_NGOC_XANH, TANG_NGOC_HONG, BANSLL, and USE_CARD_QUANTITY mutate player inventory/currency without synchronizing on player (or target player), and offline gifts race with concurrent player login.",
+      "Trade.java uses deterministic lock ordering on player.getTradeLock() (by ascending player.id) during startTrade() and synchronized methods on Trade instance, but snapshots itemsBag1/itemsBag2 at constructor time and overwrites player.inventory.itemsBag on commit without locking or invalidating concurrent inventory mutations (e.g., Input.BANSLL, Input.TANG_NGOC_HONG, Input.USE_CARD_QUANTITY).",
+      "TransactionService maintains a static ConcurrentHashMap<Player, Trade> PLAYER_TRADE and runs a background daemon loop (sleep 50-300ms) calling trade.update() for 180s timeout cancellation.",
+      "LuckyRound acquires nested synchronized(player) -> synchronized(player.inventory.itemsBoxCrackBall) cleanly for gem and ticket spins.",
+      "CSMM uses ConcurrentHashMap<Player, List<Integer>> with CopyOnWriteArrayList keyed by Player object reference; HandleCSMM and Register are synchronized on CSMM, holding the lock across ServerNotify and network sends while also failing to reward players who reconnected with a new Player instance.",
+      "SummonDragon and SummonDragonNamek store global singleton summon state (playerSummonShenron, isShenronAppear, menuShenron, select) updated by unsynchronized background threads and Netty threads; SummonDragon.pl_dragonStar is a raw HashMap<Player, Byte> that never removes entries.",
+      "UseItem.getItem synchronizes on player, whereas UseItem.doItem, UseItem.useItem, ChestBoxItemHandler, ConsumableItemHandler, and SpecialItemHandler do not synchronize on player when checking and consuming bag items.",
+      "ItemActionManager uses a plain ArrayList<ItemActionHandler> populated in a synchronized singleton constructor, with registerHandler exposed publicly without synchronization."
+    ],
+    "server_economy_items__p03": [
+      "ItemService uses double-checked locking with volatile singleton i; ShopService.gI() uses unsynchronized lazy initialization without volatile.",
+      "ShopService locks synchronized(player.inventory.itemsBag) in buyItemBua (line 645), buyItem (line 718), subIemByItemShop default branch (line 845), showConfirmSellItem (line 870), sellItem (line 928), getItemSideBoxLuckyRound (line 1005, plus nested synchronized(items) on itemsBoxCrackBall at line 1006), buyItemDaBan (line 1084), and buyItemHD (line 1128).",
+      "ShopService.buyItem enforces a 350ms per-player cooldown via player.lastTimeShop (lines 711-716); buyItemBua, buyItemHD, buyItemDaBan, and sellItem do not check lastTimeShop.",
+      "ShopService.buyItemDaBan reads items.get(index) and computes prices (lines 1078-1082) outside any lock on player.inventory.itemsDaBan or itemsBag.",
+      "ItemService.OpenSKH, OpenSKHVIP, OpenCapsuleCaiTrang, OpenItem736/648/1143/1198/1199/1200/1259/1246/1247/1305/1258/1245, and giveSetThanLinh (settltd/settlnm/settlxd) perform find/check-then-add-then-sub without synchronized(player.inventory.itemsBag).",
+      "TestConsignShopPerformance uses ConsignShopManager.gI().lockItems()/unlockItems() around Manager listItem mutations."
+    ],
+    "server_network_core__p01": [
+      "NettySession uses a lock-free ConcurrentLinkedQueue mailbox (max 300) + AtomicBoolean isProcessing spawning a Java 21 Virtual Thread per burst to guarantee FIFO in-order packet handling per session, decoupled from Netty Worker EventLoop.",
+      "NroPacketDecoder and NroPacketEncoder keep per-channel XOR cursor state (curR, curW) on the Netty channel pipeline (single EventLoop thread per channel), while reading volatile Session.KEYS and Session.sentKey written from Virtual Threads.",
+      "SessionManager uses CopyOnWriteArrayList<ISession>, ConcurrentHashMap<Long, ISession> (sessionIndex), ConcurrentHashMap<String, AtomicInteger> (ipSessionCount), and ReentrantReadWriteLock; however Session.id is generated with non-atomic ID_INIT++ across threads.",
+      "MySession.login synchronizes on per-username lock objects stored in static ConcurrentHashMap ACCOUNT_LOCKS and removes the entry in finally, which allows concurrent logins when an entry is removed while another thread is waiting.",
+      "Client maintains players (CopyOnWriteArrayList) plus ConcurrentHashMaps (playersById, playersByUserId, playersByName); disconnect removes player from maps immediately on Netty/disconnect thread while PlayerDAO.updatePlayer runs asynchronously on a Virtual Thread.",
+      "DataGame caches icons, mob templates, bg items, effect data/images, img_by_name, and zoom res files in ConcurrentHashMaps, whereas tile_set_info and tile_map_data are read synchronously from disk on every call."
+    ],
+    "server_network_core__p02": [
+      "Controller.handleClientJoinMap (Controller.java:1120) is synchronized on the Controller singleton, serializing all player map-join initialization, DB/network sends, and scheduled tasks globally.",
+      "Controller.onMessage case -74 type==2 (Controller.java:551) spawns an unbounded raw Thread (\"SendRes-\" + ip) per packet without authentication or rate limit.",
+      "PacketProfiler.DATE_FORMAT and DAY_FORMAT (PacketProfiler.java:49-50) are static non-thread-safe SimpleDateFormat instances accessed concurrently by Netty IO threads in record() and PacketProfiler-Scheduler in exportSummaryCsv().",
+      "PacketProfiler.triggerPerformanceAlert (PacketProfiler.java:202-205) is synchronized and writes tools/memory/PERFORMANCE_ALERTS.json synchronously on the Netty IO thread for every critical slow packet even if the alert is already open.",
+      "GameLoopManager.run (GameLoopManager.java:260-271) caches players.size() before iterating Client.gI().getPlayers() without snapshot/lock, risking IndexOutOfBoundsException that aborts map/zone updates for that tick.",
+      "GameLoopManager schedules 4 independent periodic tasks (run 1000ms, updateBosses 250ms, updateEventBosses 1000ms, updatePhoBans 1000ms) across a ScheduledThreadPool concurrently mutating Zone/Player/Boss state.",
+      "Maintenance.isRunning (Maintenance.java:8) is non-volatile static boolean read across Netty, GameLoop, and ServerNotify threads; Maintenance.start() is unsynchronized and extends Thread.",
+      "ServerNotify.notifies (ServerNotify.java:14,46-47,70) is an unsynchronized ArrayList mutated by arbitrary threads via notify() and polled/removed by ServerNotify thread via removeFirst().",
+      "Manager.reloadData (Manager.java:204-254) clears and reloads all global static collections (MAPS, ITEM_TEMPLATES, CLANS, etc.) in place without setting ServerManager.isReloading=true or locking readers.",
+      "ServerManager.CLIENTS (ServerManager.java:46) is a ConcurrentHashMap updated atomically via compute/computeIfPresent; ServerManager.close() sets isRunning=false before calling cleanupResources(), bypassing cleanupResources()'s parallel player-save block (line 393)."
+    ],
+    "server_player_combat__p01": [
+      "NPoint (NPoint.java:240-255,1077-1142): ArrayLists tlHp/tlMp/tlDef/tlDame/tlDameAttMob/tlTNSM/tlDameCrit are cleared and repopulated in resetPoint()/setPointWhenWearClothes() without synchronization, while combat threads read getDameAttack()/setHpMax() concurrently; only increasePoint() is synchronized.",
+      "NewSkill (NewSkill.java:103-136): Spawns a dedicated java.util.Timer + thread per player special skill cast without synchronization on isActive/timer/timerTask; dispose() does not call close().",
+      "NewPet (NewPet.java:14,20-21): Static idb-- counter is non-atomic and not synchronized, risking duplicate negative entity IDs across concurrent threads.",
+      "Pet (Pet.java:102-117): goHome() mutates goingHome and status across the caller thread and GameLoopManager scheduled lambda without volatile or locking.",
+      "EffectSkin (EffectSkin.java:110-151,421-456): updateCTHaiTac() mutates itemOptions.param on other players' body items in zone without locking or calling nPoint.setDirty(); updateTrainArmor() mutates bag/box itemOptions in place.",
+      "IDMark (IDMark.java:8-319): Monolithic mutable state bag (~40 fields) tracking menus, inputs, trade partner, combine timestamps, and dungeon transitions without state-machine encapsulation or synchronization."
+    ],
+    "server_player_combat__p02": [
+      "Player.tradeLock (ReentrantLock) exists in Player.java:86 but is never acquired in InventoryService (itemBagToBody, itemBodyToBag, itemBagToBox, itemBoxToBodyOrBag, throwItem) or ClanService.clanDonate, leaving bag/body/box mutations unprotected against concurrent packet races.",
+      "ClanService mutates and iterates Manager.CLANS (createClan, disbandClan, getClanById, getClans, close) and clan.members / clan.membersInGame without synchronization or thread-safe collections, risking ConcurrentModificationException and IndexOutOfBoundsException.",
+      "Player.temporaryEnemies, friends, enemies, Cards, itemsWoodChest, itemsTradeWVP are plain ArrayLists accessed across Netty I/O threads and Zone update loops; Player.update() allocates a new ArrayList<>(this.zone.items) every 2000ms for VeTinh range checks.",
+      "Player.injured() is synchronized on `this` (Player instance); Player.setDie() calls FriendAndEnemyService.addEnemy(this, plAtt) and BlackBallWarService/NgocRongNamecService drop methods while holding the Player monitor.",
+      "All service singletons (PetService, ClanService, FriendAndEnemyService, GiftService, IntrinsicService, InventoryService) use unsynchronized lazy initialization in gI()."
+    ],
+    "server_player_combat__p03": [
+      "PlayerService.gI() uses volatile DCL singleton, whereas SkillService.gI() (lines 37-42) uses unsynchronized non-volatile lazy initialization (race on startup).",
+      "PlayerService.hoiSinh() (lines 269-298) performs check-then-act on player.isDie(), lastTimeRevived, and gold/gem deduction without locking player or inventory, risking double-revive or double-deduction under concurrent requests.",
+      "SkillService.useSkillAttack() / useSkillAlone() mutate playerSkill state (prepareQCKK, prepareLaze, prepareTuSat, lastTimeUseThisSkill, lastTimeAttack) without synchronization; Boss/Pet TU_SAT schedules explodeTuSat() on GameLoopManager (lines 761-769) which can race with Zone/Session threads.",
+      "SkillService iterates player.zone.mobs, getHumanoids(), getNotBosses(), getBosses(), and player.newSkill.playersTaget/mobsTaget across combat methods without synchronization (depends on Zone returning snapshot copies to avoid ConcurrentModificationException).",
+      "PlayerService.playerMove() mutates player.location.x/y and player.isFly without synchronization; SkillService.updateSkillSpecial() hits all targets in range on every tick while stepSkillSpecial == 1 without per-cast hit deduplication."
+    ],
+    "server_services_bot_telemetry__p01": [
+      "BotManager.bot, PVPManager.pvps, SuperRankManager.waitList/list, DeathOrAliveArenaManager.list, The23rdMartialArtCongressManager.list, WorldMartialArtsTournamentManager.listReg/listWait/listChamp/listTournaments/chatText, and ChatGlobalService.listChatting all use CopyOnWriteArrayList across multi-threaded update loops.",
+      "SuperRankManager.run() calls Iterator.remove() on CopyOnWriteArrayList waitList (line 48, 51), which throws UnsupportedOperationException on every iteration.",
+      "GiftCodeManager uses synchronized on checkUseGiftCode/reload/createGiftCode/deleteGiftCode, but checkInfomationGiftCode iterates unsynchronized listGiftCode concurrently.",
+      "AdminApiService runs on Executors.newVirtualThreadPerTaskExecutor(); ConsignHandler GET synchronizes on ConsignShopManager.gI() while POST remove does not; AdminService.buffMoney/buffItem/saveAllPlayers mutate online/offline Player state without player locks.",
+      "AuditLogService uses a LinkedBlockingQueue drained by a single daemon worker thread plus a Collections.synchronizedList ring buffer (max 200 entries).",
+      "ChatGlobalService.run() runs a single daemon thread draining ConcurrentLinkedQueue waitingChat into CopyOnWriteArrayList listChatting; waitingChat.poll() executes before checking listChatting.size() < 100.",
+      "Bot.useSkill() spawns an unbounded new Thread per cast; Sanb.GetSkil() sets lastTimeSkill1 in the past with negative random offset, causing frequent thread spawning when BotManager.ENABLED is true.",
+      "FlagBagService.getFlagsForChooseClan() lazily populates non-thread-safe ArrayList flagClan without synchronization."
+    ],
+    "server_services_bot_telemetry__p02": [
+      "Service.gI() uses volatile double-checked locking (Service.java:51-62), while GiftCodeService (17-22), ItemTimeService (21-26), OpenPowerService (18-23), RadarService (21-26), and RewardService (21-26) use non-synchronized lazy singletons.",
+      "AntiMacroFilter, CloudTelemetryStreamer, and TrajectoryLogger use double-checked locking with non-volatile static instance fields (AntiMacroFilter.java:17,81-90; CloudTelemetryStreamer.java:29,42-51; TrajectoryLogger.java:35,56-65).",
+      "AntiMacroFilter.PlayerActionHistory mutates non-thread-safe ArrayDeque and primitive fields without per-player synchronization (AntiMacroFilter.java:41-79,104-137), and lastCleanupTime is unsynchronized (AntiMacroFilter.java:23,148-153).",
+      "TrajectoryLogger.playerTickMap (ConcurrentHashMap<Long, AtomicLong>) has no eviction/removePlayer on disconnect (TrajectoryLogger.java:41,119-121).",
+      "RadarService.initCardsByRank() is synchronized (RadarService.java:28) but getCardsByRank() (RadarService.java:37-42) reads cardsByRank without synchronization.",
+      "Service.sendMessAllPlayerInMap / sendMessAnotherNotMeInMap / sendThongBaoToAnotherNotMe iterate Zone.getPlayers() and Client.getPlayers() without locks or snapshots (Service.java:250-328,1011-1018).",
+      "Service.sendMabuEat schedules nested GameLoopManager callbacks (3000ms -> 500ms -> 1500ms) capturing mutable Player and MaBuHold state (Service.java:2053-2107).",
+      "TopService runs a single-thread daemon ScheduledExecutorService every 120s updating Manager.top* static lists (TopService.java:28-63).",
+      "MemoryOptimizer runs a single-thread daemon ScheduledExecutorService every 5 minutes and calls saveAllPlayersData() + run.bat + System.exit(0) without halting ServerManager/Netty first (MemoryOptimizer.java:31-85)."
+    ],
+    "server_services_bot_telemetry__p03": [
+      "Logger.WRITERS (EnumMap), Logger.TIME_FORMAT, and Logger.DATE_FORMAT are unsynchronized and accessed by both ServerLogWorker-Thread and the JVM shutdown hook thread during shutdown (drainQueue/checkDateRoll/writeEvent).",
+      "Logger.THROTTLE_MAP (ConcurrentHashMap<String, Long[]>) grows unboundedly without eviction and mutates Long[1] inside compute() while reading state[1] outside compute().",
+      "Util.dateFormat (SimpleDateFormat) in toDateString() and Util.num / Util.numShortFormat (NumberFormat) in format()/powerToString()/formatNumber() are shared static mutable formatters accessed without synchronization across threads.",
+      "BotTestLogger.log() and logException() synchronize on BotTestLogger.class while performing blocking FileWriter/PrintWriter disk I/O on every call."
+    ],
+    "server_task_clan_consts__p01": [
+      "No thread synchronization or DB/Redis calls exist in these consts files; however, ConstPlayer.HOP_THE_PORATA2/HOP_THE_PORATA3 (src/consts/ConstPlayer.java:21-22) and ConstHocKyNang.TimeUseSkill (src/consts/ConstHocKyNang.java:7) are non-final mutable public static fields."
+    ],
+    "server_task_clan_consts__p02": [
+      "Clan.NEXT_ID (static int) and Clan.clanMessageId (instance int) are incremented without synchronization or AtomicInteger (Clan.java:75, ClanMessage.java:36).",
+      "Clan.members, Clan.membersInGame, and Clan.clanMessages use CopyOnWriteArrayList, but addSMTNClan (Clan.java:135), removeMemberOnline (Clan.java:229), and addClanMessage (Clan.java:177) use index-based reverse loops that can throw IndexOutOfBoundsException under concurrent modification.",
+      "EventManager uses static mutable booleans (LUNNAR_NEW_YEAR, etc.) and synchronized setEventState() which re-invokes init() on every activation without cleanup/deduplication (EventManager.java:16-96).",
+      "AchievementService.confirmAchievement() performs check-then-act (canReward -> reward -> addRuby) without synchronization on player or player.achievement (AchievementService.java:47-60)."
+    ],
+    "server_task_clan_consts__p03": [
+      "TaskService.gI() (lines 388-393) uses unsynchronized lazy initialization without volatile/double-checked locking.",
+      "addDoneSubTask() (lines 1539-1575) synchronizes on player.playerTask and invokes sendNextTaskMain(player) while holding that lock.",
+      "paySideTask() (lines 2035-2145) and payClanTask() (lines 2324-2348) do NOT synchronize on player.playerTask or player.clan when checking isDone(), granting rewards, and calling reset().",
+      "checkDoneTaskTrungUy() (lines 914-936) iterates Zone.getPlayers() across DoanhTrai zones and calls doneTask() on other clan members' Player instances."
+    ],
+    "server_world_map_mob__p01": [
+      "Zone.players, notBosses, humanoids, bosses, pets, nonInteractiveNPCs use CopyOnWriteArrayList, while Zone.mobs, items, trapMaps, maBuHolds use ArrayList.",
+      "Zone.mobs is synchronized in Zone.getTotalHP() and Zone.mapInfo(), but iterated without synchronization in Zone.udMob(), Zone.sendBigBoss(), and Mob.lvMob().",
+      "Zone.items is synchronized in udItem(), addItem(), removeItemMap(), pickItem(), getSatellites(), getItemMapByItemMapId(), getItemMapByTempId(), getItemMapsForPlayer().",
+      "Mob.temporaryEnemies uses CopyOnWriteArrayList; Mob.injured() and MobMe.injured() are synchronized.",
+      "MapDataManager caches use ConcurrentHashMap, but MapDataManager.gI() and Boss10.gI() singletons lack synchronization.",
+      "MabuEgg.openEgg() uses an unsynchronized boolean isOpening and schedules a 4000ms task on GameLoopManager; if the scheduled task aborts early, isOpening stays true."
+    ],
+    "server_world_map_mob__p02": [
+      "NpcFactory.PLAYERID_OBJECT is written via Npc.createOtherMenu(..., Object) (Npc.java:79) and read in MrPoPo.java:79 and QuyLaoKame.java:195 across player threads.",
+      "GhiDanh.menuSelect (GhiDanh.java:19,37,44) is a mutable instance field on a shared Npc singleton overwritten by concurrent players in map 129.",
+      "Calick.changeMap() (Calick.java:25-39) mutates this.mapId, this.cx, this.cy, this.map and calls map.npcs.remove/add without synchronization.",
+      "BaHatMit.java:461-491 mutates DeathOrAliveArena (vdst.setCuocPlayer, setCuocBaHatMit, addBinhChon) and player.inventory.gold without locking.",
+      "NonInteractiveNPC.update() (NonInteractiveNPC.java:67-75) iterates WorldMartialArtsTournamentManager.gI().chatText without synchronization."
+    ],
+    "server_world_map_mob__p03": [
+      "NpcFactory.PLAYERID_OBJECT (src/models/npc/NpcFactory.java:49) is a static non-thread-safe HashMap accessed concurrently from Netty threads via NpcService.createMenuConMeo (NpcService.java:31), NpcFactory.createNpcConMeo, and ThanVuTru.confirmMenu (ThanVuTru.java:174).",
+      "NpcFactory.java:481-485 uses ordered locking on Player objects (firstLock = player.id < pl.id ? player : pl) for OTT_ACCEPT gold wagering to prevent deadlocks.",
+      "NpcFactory.java:666-668 synchronizes on player.inventory.itemsBoxCrackBall when clearing lucky round items.",
+      "SmartDropService.isSlotAcquired (src/services/map/SmartDropService.java:171-185) synchronizes on zone.items while iterating ground drops.",
+      "WeatherService.activeWeatherMap (src/services/map/WeatherService.java:24) is a ConcurrentHashMap storing unsynchronized ArrayList<EffectMap> instances shared with Map.effMap, mutated in setWeather without locking.",
+      "MapService.gI() uses double-checked locking with volatile (src/services/map/MapService.java:20-31), whereas ChangeMapService, ItemMapService, NpcService, SmartDropService, and WeatherService use un-synchronized lazy singleton initialization."
+    ],
+    "tooling_and_tests__p01": [
+      "src/models/AntiLogin.java: All methods (canLogin, wrong, reset, getNotifyCannotLogin, isExpired) are synchronized on `this`, and `lastActivity` is volatile, but `wrongLogin` (byte) is `public` and non-volatile, allowing unsynchronized external access.",
+      "src/models/GiftCode.java: Uses non-thread-safe `HashMap` for `detail` and `option`, and plain `int countLeft`; relies on external synchronization in GiftCode service/manager.",
+      "tools/test/TestProfilerEngine.java: Spawns 10-thread FixedThreadPool with CountDownLatch gates to stress-test `PacketProfiler.gI()`, mutating real workspace files in `logs/metrics/` and `tools/memory/PERFORMANCE_ALERTS.json`.",
+      "tools/test/TestTelemetry.java: Mutates global static `TelemetryConfig` state (`ENABLED`, `STORAGE_DESTINATION`, `cloudEndpoint`, `WHITELIST_MAPS`) without restoring defaults in `finally`."
+    ]
+  }
+}

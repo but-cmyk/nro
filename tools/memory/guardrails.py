@@ -10,6 +10,7 @@ import os
 import json
 import re
 import time
+import subprocess
 from datetime import datetime
 from pathlib import Path
 
@@ -294,6 +295,10 @@ if __name__ == "__main__":
         elif sys.argv[1] == "--ack" and len(sys.argv) > 2:
             st = sys.argv[3].upper() if len(sys.argv) > 3 else "ACK"
             sys.exit(0 if ack_alert(sys.argv[2], st) else 1)
+        elif sys.argv[1] == "--check-compile":
+            compile_tool = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "compile_check.py")
+            res = subprocess.run([sys.executable, compile_tool] + sys.argv[2:])
+            sys.exit(res.returncode)
         elif sys.argv[1] == "--lock-test":
             print("[TEST] Thử nghiệm MemoryLock...")
             with MemoryLock():

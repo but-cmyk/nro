@@ -13,7 +13,7 @@ import services.EffectSkillService;
 import services.ItemService;
 import services.map.MapService;
 import services.player.PlayerService;
-import services.Service;
+import models.DomainPorts;
 import services.TaskService;
 import utils.Logger;
 import utils.SkillUtil;
@@ -925,11 +925,11 @@ public class NPoint {
     }
 
     public static long calPercent(long param, int percent) {
-        return param * percent / 150;
+        return param * percent / 100;
     }
 
     public static int calPercent(int param, int percent) {
-        return param * percent / 150;
+        return param * percent / 100;
     }
 
     private void setDame() {
@@ -1230,7 +1230,7 @@ public class NPoint {
                 if (this.xDameChuong && this.tlDameChuong > 0) {
                     percentXDame += (this.tlDameChuong - 1) * 100;
                     this.xDameChuong = false;
-                    Service.gI().chat(player, "Uy lực đòn chưởng x" + this.tlDameChuong + "!");
+                    DomainPorts.notifier().chat(player, "Uy lực đòn chưởng x" + this.tlDameChuong + "!");
                 }
                 break;
             case Skill.GALICK:
@@ -1257,7 +1257,7 @@ public class NPoint {
                 if (this.xDameChuong && this.tlDameChuong > 0) {
                     percentXDame += (this.tlDameChuong - 1) * 100;
                     this.xDameChuong = false;
-                    Service.gI().chat(player, "Uy lực đòn chưởng x" + this.tlDameChuong + "!");
+                    DomainPorts.notifier().chat(player, "Uy lực đòn chưởng x" + this.tlDameChuong + "!");
                 }
                 break;
             case Skill.DEMON:
@@ -1284,7 +1284,7 @@ public class NPoint {
                 if (this.xDameChuong && this.tlDameChuong > 0) {
                     percentXDame += (this.tlDameChuong - 1) * 100;
                     this.xDameChuong = false;
-                    Service.gI().chat(player, "Uy lực đòn chưởng x" + this.tlDameChuong + "!");
+                    DomainPorts.notifier().chat(player, "Uy lực đòn chưởng x" + this.tlDameChuong + "!");
                 }
                 break;
             case Skill.KAIOKEN:
@@ -1796,7 +1796,7 @@ public class NPoint {
                     hpg += pointHp;
                 }
             } else {
-                Service.gI().sendThongBaoOK(player, "Vui lòng mở giới hạn sức mạnh");
+                DomainPorts.notifier().sendThongBaoOK(player, "Vui lòng mở giới hạn sức mạnh");
                 return;
             }
         }
@@ -1808,7 +1808,7 @@ public class NPoint {
                     mpg += pointMp;
                 }
             } else {
-                Service.gI().sendThongBaoOK(player, "Vui lòng mở giới hạn sức mạnh");
+                DomainPorts.notifier().sendThongBaoOK(player, "Vui lòng mở giới hạn sức mạnh");
                 return;
             }
         }
@@ -1821,7 +1821,7 @@ public class NPoint {
                 }
                 // TaskService.gI().checkDoneTaskNangCS(player);
             } else {
-                Service.gI().sendThongBaoOK(player, "Vui lòng mở giới hạn sức mạnh");
+                DomainPorts.notifier().sendThongBaoOK(player, "Vui lòng mở giới hạn sức mạnh");
                 return;
             }
         }
@@ -1833,7 +1833,7 @@ public class NPoint {
                     defg += point;
                 }
             } else {
-                Service.gI().sendThongBaoOK(player, "Vui lòng mở giới hạn sức mạnh");
+                DomainPorts.notifier().sendThongBaoOK(player, "Vui lòng mở giới hạn sức mạnh");
                 return;
             }
         }
@@ -1861,21 +1861,21 @@ public class NPoint {
                     critg += point;
                 }
             } else {
-                Service.gI().sendThongBaoOK(player, "Vui lòng mở giới hạn sức mạnh");
+                DomainPorts.notifier().sendThongBaoOK(player, "Vui lòng mở giới hạn sức mạnh");
                 return;
             }
         }
-        Service.gI().point(player);
+        DomainPorts.notifier().point(player);
         if (manualForPet) {
-            Service.gI().sendChiSoPetGoc(((Pet) player).master);
-            Service.gI().showInfoPet(((Pet) player).master);
-            Service.gI().point(((Pet) player).master);
+            DomainPorts.notifier().sendChiSoPetGoc(((Pet) player).master);
+            DomainPorts.notifier().showInfoPet(((Pet) player).master);
+            DomainPorts.notifier().point(((Pet) player).master);
         }
     }
 
     private boolean doUseTiemNang(long tiemNang) {
         if (this.tiemNang < tiemNang) {
-            Service.gI().sendThongBaoOK(player, "Bạn không đủ tiềm năng");
+            DomainPorts.notifier().sendThongBaoOK(player, "Bạn không đủ tiềm năng");
             return false;
         }
         if (this.tiemNang >= tiemNang && this.tiemNang - tiemNang >= 0) {
@@ -1923,7 +1923,7 @@ public class NPoint {
                     PlayerService.gI().hoiPhuc(player, hpRecovered, mpRecovered);
 
                     if (player.effectSkill.countCharging % 3 == 0) {
-                        Service.gI().chat(player, "Phục hồi năng lượng " + getCurrPercentHP() + "%");
+                        DomainPorts.notifier().chat(player, "Phục hồi năng lượng " + getCurrPercentHP() + "%");
                     }
                 } else {
                     EffectSkillService.gI().stopCharge(player);

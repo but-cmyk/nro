@@ -16,9 +16,18 @@ namespace Game1
     		name = filename;
     	}
     
+    	private static AudioSource cachedAudioSource;
+
     	public void Play()
     	{
-    		Main.main.GetComponent<AudioSource>().PlayOneShot(clip);
+    		if (cachedAudioSource == null && Main.main != null)
+    		{
+    			cachedAudioSource = Main.main.GetComponent<AudioSource>();
+    		}
+    		if (cachedAudioSource != null && clip != null)
+    		{
+    			cachedAudioSource.PlayOneShot(clip);
+    		}
     		timeStart = mSystem.currentTimeMillis();
     	}
     

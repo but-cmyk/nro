@@ -512,7 +512,7 @@ namespace Game1
     		}
     	}
     
-    	public void checkFrameTick(int[] array)
+    	public virtual void checkFrameTick(int[] array)
     	{
     		if (tick > array.Length - 1)
     		{
@@ -579,7 +579,7 @@ namespace Game1
     		g.setClip(GameScr.cmx, GameScr.cmy - GameCanvas.transY, GameScr.gW, GameScr.gH + 2 * GameCanvas.transY);
     	}
     
-    	public void updateSuperEff()
+    	public virtual void updateSuperEff()
     	{
     		if (typeSuperEff == 0 && GameCanvas.gameTick % 25 == 0)
     		{
@@ -880,7 +880,7 @@ namespace Game1
     		}
     	}
     
-    	public void setInjure()
+    	public virtual void setInjure()
     	{
     		if (hp > 0 && status != 3 && status != 7)
     		{
@@ -955,7 +955,7 @@ namespace Game1
     		}
     	}
     
-    	public void setAttack(Char cFocus)
+    	public virtual void setAttack(Char cFocus)
     	{
     		isBusyAttackSomeOne = true;
     		mobToAttack = null;
@@ -1132,7 +1132,7 @@ namespace Game1
     		}
     	}
     
-    	public void updateMobAttack()
+    	public virtual void updateMobAttack()
     	{
     		int[] array = ((p3 != 0) ? attack2 : attack1);
     		if (tick < array.Length)
@@ -1225,7 +1225,7 @@ namespace Game1
     		}
     	}
     
-    	public void updateMobWalk()
+    	public virtual void updateMobWalk()
     	{
     		int num = 0;
     		try
@@ -1411,7 +1411,7 @@ namespace Game1
     		return null;
     	}
     
-    	public bool isPaint()
+    	public virtual bool isPaint()
     	{
     		if (x < GameScr.cmx - 50)
     		{
@@ -1437,7 +1437,7 @@ namespace Game1
     		return true;
     	}
     
-    	public bool isUpdate()
+    	public virtual bool isUpdate()
     	{
     		MobTemplate t = getTemplate();
     		if (t == null || t.data == null || status == 0)
@@ -1447,7 +1447,7 @@ namespace Game1
     		return true;
     	}
     
-    	public bool checkIsBoss()
+    	public virtual bool checkIsBoss()
     	{
     		if (isBoss || levelBoss > 0)
     		{
@@ -1512,7 +1512,7 @@ namespace Game1
     
     	public virtual void paint(mGraphics g)
     	{
-    		if (isHide)
+    		if (isHide || !isPaint())
     		{
     			return;
     		}
@@ -1535,7 +1535,7 @@ namespace Game1
     		{
     			paintShadow(g);
     		}
-    		if (!isPaint() || (status == 1 && p3 > 0 && GameCanvas.gameTick % 3 == 0))
+    		if (status == 1 && p3 > 0 && GameCanvas.gameTick % 3 == 0)
     		{
     			return;
     		}
@@ -1598,12 +1598,12 @@ namespace Game1
     		g.drawRegion(imgHPtem, 0, 0, num, imageHeight, 0, x - (imageWidth >> 1), y - h - 5, mGraphics.TOP | mGraphics.LEFT);
     	}
     
-    	public int getHPColor()
+    	public virtual int getHPColor()
     	{
     		return 16711680;
     	}
     
-    	public void startDie()
+    	public virtual void startDie()
     	{
     		hp = 0;
     		injureThenDie = true;
@@ -1615,7 +1615,7 @@ namespace Game1
     		p3 = 0;
     	}
     
-    	public void attackOtherMob(Mob mobToAttack)
+    	public virtual void attackOtherMob(Mob mobToAttack)
     	{
     		this.mobToAttack = mobToAttack;
     		isBusyAttackSomeOne = true;
@@ -1645,27 +1645,27 @@ namespace Game1
     		}
     	}
     
-    	public int getX()
+    	public virtual int getX()
     	{
     		return x;
     	}
     
-    	public int getY()
+    	public virtual int getY()
     	{
     		return y;
     	}
     
-    	public int getH()
+    	public virtual int getH()
     	{
     		return h;
     	}
     
-    	public int getW()
+    	public virtual int getW()
     	{
     		return w;
     	}
     
-    	public void stopMoving()
+    	public virtual void stopMoving()
     	{
     		if (status == 5)
     		{
@@ -1675,12 +1675,12 @@ namespace Game1
     		}
     	}
     
-    	public bool isInvisible()
+    	public virtual bool isInvisible()
     	{
     		return status == 0 || status == 1;
     	}
     
-    	public void removeHoldEff()
+    	public virtual void removeHoldEff()
     	{
     		if (holdEffID != 0)
     		{
@@ -1688,17 +1688,17 @@ namespace Game1
     		}
     	}
     
-    	public void removeBlindEff()
+    	public virtual void removeBlindEff()
     	{
     		blindEff = false;
     	}
     
-    	public void removeSleepEff()
+    	public virtual void removeSleepEff()
     	{
     		sleepEff = false;
     	}
     
-    	public void GetFrame()
+    	public virtual void GetFrame()
     	{
     		MobTemplate t = getTemplate();
     		if (isGetFr && isTypeNewMod() && t != null && t.data != null)

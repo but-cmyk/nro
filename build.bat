@@ -8,10 +8,10 @@ if not exist "build\classes" mkdir "build\classes"
 if not exist "dist" mkdir "dist"
 
 echo [1/3] Gathering dependencies and Java source files...
-powershell -NoProfile -ExecutionPolicy Bypass -Command "$jars = (Get-ChildItem -Path lib\*.jar | ForEach-Object { 'lib/' + $_.Name }) -join ';'; $opts = @('-encoding', 'UTF-8', '-cp', ('build/classes;' + $jars), '-d', 'build/classes', '--release', '21'); [System.IO.File]::WriteAllLines('options.txt', $opts, [System.Text.UTF8Encoding]::new($false)); [System.IO.File]::WriteAllLines('sources.txt', (Get-ChildItem -Path src\*.java -Recurse | Select-Object -ExpandProperty FullName), [System.Text.UTF8Encoding]::new($false));"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$jars = (Get-ChildItem -Path lib\*.jar | ForEach-Object { 'lib/' + $_.Name }) -join ';'; $opts = @('-encoding', 'UTF-8', '-cp', ('build/classes;' + $jars), '-d', 'build/classes', '--release', '21'); [System.IO.File]::WriteAllLines('build\options.txt', $opts, [System.Text.UTF8Encoding]::new($false)); [System.IO.File]::WriteAllLines('build\sources.txt', (Get-ChildItem -Path src\*.java -Recurse | Select-Object -ExpandProperty FullName), [System.Text.UTF8Encoding]::new($false));"
 
 echo [2/3] Compiling source code with javac...
-javac @options.txt @sources.txt
+javac @build\options.txt @build\sources.txt
 
 if %errorlevel% neq 0 (
     echo.

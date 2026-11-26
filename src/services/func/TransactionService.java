@@ -63,9 +63,14 @@ public class TransactionService implements Runnable {
                 case SEND_INVITE_TRADE:
                case ACCEPT_TRADE:
                     playerId = msg.reader().readInt();
+                    if (playerId == pl.id) {
+                        Service.gI().sendThongBaoResetWait(pl, "Không thể giao dịch với chính mình!");
+                        break;
+                    }
                     plMap = pl.zone.getPlayerInMap(playerId);
-                    if (plMap != null && plMap.isPl()) {
-                        if (plMap.tradeWVP) {
+                    if (plMap != null && plMap.isPl() && plMap != pl && plMap.id != pl.id) {
+                        if (plMap.tradeWVP || pl.isTrade || plMap.isTrade) {
+                            Service.gI().sendThongBaoResetWait(pl, "Không thể thực hiện giao dịch lúc này!");
                             return;
                         }
                         trade = PLAYER_TRADE.get(pl);

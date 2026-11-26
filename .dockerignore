@@ -1,4 +1,3 @@
-6TabFixed
 data
 build
 out
@@ -7,9 +6,13 @@ out
 .idea
 .vscode
 nbproject
-src
 target
 test
 scratch
+docs
+Client
 *.dll
 *.exe
+*.log
+*.zip
+.env

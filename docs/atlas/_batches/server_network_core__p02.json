@@ -1,0 +1,447 @@
+{
+  "batch_id": "server_network_core__p02",
+  "concurrency_and_state": [
+    "Controller.handleClientJoinMap (Controller.java:1120) is synchronized on the Controller singleton, serializing all player map-join initialization, DB/network sends, and scheduled tasks globally.",
+    "Controller.onMessage case -74 type==2 (Controller.java:551) spawns an unbounded raw Thread (\"SendRes-\" + ip) per packet without authentication or rate limit.",
+    "PacketProfiler.DATE_FORMAT and DAY_FORMAT (PacketProfiler.java:49-50) are static non-thread-safe SimpleDateFormat instances accessed concurrently by Netty IO threads in record() and PacketProfiler-Scheduler in exportSummaryCsv().",
+    "PacketProfiler.triggerPerformanceAlert (PacketProfiler.java:202-205) is synchronized and writes tools/memory/PERFORMANCE_ALERTS.json synchronously on the Netty IO thread for every critical slow packet even if the alert is already open.",
+    "GameLoopManager.run (GameLoopManager.java:260-271) caches players.size() before iterating Client.gI().getPlayers() without snapshot/lock, risking IndexOutOfBoundsException that aborts map/zone updates for that tick.",
+    "GameLoopManager schedules 4 independent periodic tasks (run 1000ms, updateBosses 250ms, updateEventBosses 1000ms, updatePhoBans 1000ms) across a ScheduledThreadPool concurrently mutating Zone/Player/Boss state.",
+    "Maintenance.isRunning (Maintenance.java:8) is non-volatile static boolean read across Netty, GameLoop, and ServerNotify threads; Maintenance.start() is unsynchronized and extends Thread.",
+    "ServerNotify.notifies (ServerNotify.java:14,46-47,70) is an unsynchronized ArrayList mutated by arbitrary threads via notify() and polled/removed by ServerNotify thread via removeFirst().",
+    "Manager.reloadData (Manager.java:204-254) clears and reloads all global static collections (MAPS, ITEM_TEMPLATES, CLANS, etc.) in place without setting ServerManager.isReloading=true or locking readers.",
+    "ServerManager.CLIENTS (ServerManager.java:46) is a ConcurrentHashMap updated atomically via compute/computeIfPresent; ServerManager.close() sets isRunning=false before calling cleanupResources(), bypassing cleanupResources()'s parallel player-save block (line 393)."
+  ],
+  "cross_module_questions": [
+    "Does Client.gI().getPlayers() return a live unsynchronized ArrayList or a thread-safe CopyOnWriteArrayList/snapshot, and does Client.gI().close() already save all online players before ServerManager.cleanupResources() runs?",
+    "In Controller.java cases 54 and -60, is player.lastTimeAttack updated atomically inside Service.attackMob / Service.attackPlayer, and are those methods thread-safe against concurrent Netty/GameLoop access?",
+    "Are TransactionService.gI().controller and CombineService.gI().showInfoCombine properly synchronized when invoked from Netty worker threads?",
+    "Does PlayerDAO.updatePlayer(player) called from ServerManager.startAutoSaveTask and shutdown hooks safely snapshot player inventory/skills/pet while GameLoopManager and Netty threads mutate the same Player object?",
+    "In Manager.java SQL queries (lines 172-185), is the player column named dien_sukien or diem_sukien in the MySQL schema, and does player table have a UNIQUE constraint on name to prevent TOCTOU duplicates in Controller.createChar?",
+    "Does NettyServer / Message lifecycle handle Message.cleanup()/dispose() properly if an exception escapes Controller.onMessage's finally block (e.g. from PacketProfiler.record)?"
+  ],
+  "db_redis_touchpoints": [
+    {
+      "location": "Controller.java:1020-1055",
+      "op": "AlyraManager.executeQuery(\"select * from player where name = ?\", name) + PlayerDAO.createNewPlayer(...)",
+      "safety_note": "Manual rs.dispose() in finally instead of try-with-resources; checks mixed-case name then inserts name.toLowerCase(); TOCTOU race between check and insert.",
+      "target": "MySQL player table"
+    },
+    {
+      "location": "Controller.java:1087-1091",
+      "op": "SuperRankDAO.getRank / SuperRankDAO.insertData",
+      "safety_note": "Blocking JDBC calls executed directly on Netty IO/packet handler thread inside sendInfo().",
+      "target": "MySQL super_rank table"
+    },
+    {
+      "location": "Manager.java:154-194, 390-477",
+      "op": "PreparedStatement + ResultSet via Manager.realTop(query, con)",
+      "safety_note": "Uses try-with-resources; however queryTopSM (line 162) joins p.id = a.id instead of p.account_id = a.id, breaking admin exclusion; queryTopNap uses rs.getInt(\"danap\") risking int overflow.",
+      "target": "MySQL player, account, clan tables"
+    },
+    {
+      "location": "ServerManager.java:66, 177, 369, 416, 492",
+      "op": "HistoryTransactionDAO.deleteHistory(), PlayerDAO.updatePlayer(player), EventDAO.save()",
+      "safety_note": "PlayerDAO.updatePlayer runs in auto-save and parallel virtual threads during shutdown without per-player lock against live mutations.",
+      "target": "MySQL player, history_transaction, event tables"
+    },
+    {
+      "location": "ServerManager.java:518-550",
+      "op": "AlyraManager.executeQuery(\"SELECT id, password FROM account\") + loop AlyraManager.executeUpdate(\"UPDATE account SET password = ? WHERE id = ?\")",
+      "safety_note": "Manual rs.dispose(); loads all accounts into HashMap then issues N+1 updates on background thread after startup while logins may already occur.",
+      "target": "MySQL account table"
+    }
+  ],
+  "files_read": [
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/server/Controller.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/server/GameLoopManager.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/server/ImageResizeManager.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/server/Maintenance.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/server/Manager.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/server/MenuController.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/server/network/handlers/ServerItemPacketHandler.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/server/network/handlers/ServerTradePacketHandler.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/server/network/IServerPacketHandler.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/server/network/PacketProfiler.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/server/network/ServerPacketDispatcher.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/server/ServerManager.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/server/ServerNotify.java"
+  ],
+  "findings": [
+    {
+      "category": "security_dupe",
+      "impact": "Any normal player can teleport arbitrarily across the map (bypassing both 80ms rate-limit and speed/distance anti-cheat) by sending MOVE coordinates within 150px of any mob in the zone, even without TDLT.",
+      "location": "Controller.java:489-513",
+      "root_cause": "isNearMobInZone trusts client-supplied (toX, toY) and checks if any mob in player.zone.mobs is within 150px, bypassing both rate-limit (line 503) and distance check (line 507) for all players, not just TDLT users.",
+      "severity": "P0",
+      "title": "Client-trusted coordinates bypass anti-speed/teleport check in MOVE (-7)"
+    },
+    {
+      "category": "concurrency",
+      "impact": "Concurrent SimpleDateFormat usage across Netty IO threads and scheduler corrupts date strings or throws ArrayIndexOutOfBoundsException/NumberFormatException inside Controller.onMessage's finally block (uncaught).",
+      "location": "PacketProfiler.java:49-50,177,218,238,265",
+      "root_cause": "Static non-thread-safe SimpleDateFormat instances (DATE_FORMAT, DAY_FORMAT) are shared without synchronization or ThreadLocal across Netty worker threads in record() and PacketProfiler-Scheduler.",
+      "severity": "P1",
+      "title": "Non-thread-safe SimpleDateFormat on Netty IO hot path in PacketProfiler"
+    },
+    {
+      "category": "performance_gc",
+      "impact": "Once a command exceeds criticalThreshold, every subsequent slow packet for that command acquires the PacketProfiler monitor and synchronously rewrites PERFORMANCE_ALERTS.json on the Netty IO thread, stalling network processing.",
+      "location": "PacketProfiler.java:185-187,202-205,212-249",
+      "root_cause": "triggerPerformanceAlert() is synchronized and calls synchronous FileWriter I/O (syncAlertsJson) directly from record() on the Netty IO thread without checking if the alert is already active or offloading to the background writer.",
+      "severity": "P1",
+      "title": "Synchronous disk I/O and global lock on Netty IO thread in PacketProfiler.triggerPerformanceAlert"
+    },
+    {
+      "category": "concurrency",
+      "impact": "Causes ConcurrentModificationException, lost server-wide VIP notifications, or corrupted ArrayList state under concurrent calls to ServerNotify.notify().",
+      "location": "ServerNotify.java:14,46-48,70",
+      "root_cause": "notifies is a plain ArrayList modified concurrently by caller threads in notify() and polled via removeFirst() on the ServerNotify thread without synchronization.",
+      "severity": "P1",
+      "title": "Unsynchronized ArrayList race condition in ServerNotify.notifies"
+    },
+    {
+      "category": "concurrency",
+      "impact": "If players leave during the loop and Client.gI().getPlayers() is a live list, players.get(i) throws IndexOutOfBoundsException, skipping player updates and aborting all Map/Zone updates for that tick.",
+      "location": "GameLoopManager.java:260-272",
+      "root_cause": "GameLoopManager.run() caches players.size() before iterating without locking or copying, and only wraps individual player.update() calls in try-catch, not players.get(i).",
+      "severity": "P1",
+      "title": "Unprotected list iteration in GameLoopManager.run() can skip all Zone updates"
+    },
+    {
+      "category": "security_dupe",
+      "impact": "Unauthenticated clients spamming opcode -74 (type 2) can spawn unlimited JVM threads (\"SendRes-\" + ip), causing Thread/OOM DoS; pre-login clients sending opcode 127 or -76 trigger NPEs.",
+      "location": "Controller.java:190-246,544-553,876-878",
+      "root_cause": "case -74 spawns a raw unbounded Thread without session auth or rate limiting; case 127 and case -76 dereference player without checking player != null.",
+      "severity": "P1",
+      "title": "Unauthenticated thread-spawn DoS (-74) and missing player null-checks (127, -76) in Controller"
+    },
+    {
+      "category": "database",
+      "impact": "TOP Sức Mạnh leaderboard fails to exclude admin accounts whose account.id != player.id and wrongly excludes normal players whose player.id happens to match an admin's account.id.",
+      "location": "Manager.java:159-165",
+      "root_cause": "queryTopSM joins `LEFT JOIN account a ON p.id = a.id AND a.is_admin = 1` instead of joining on `p.account_id = a.id`.",
+      "severity": "P1",
+      "title": "Wrong JOIN key in Manager.queryTopSM breaks admin exclusion"
+    },
+    {
+      "category": "concurrency",
+      "impact": "Clearing global lists/maps in reloadData() while Netty and GameLoop threads read them causes NPE, IndexOutOfBoundsException, or ConcurrentModificationException across live sessions.",
+      "location": "Manager.java:204-254",
+      "root_cause": "reloadData() clears MAPS, ITEM_TEMPLATES, MOB_TEMPLATES, CLANS, SHOPS, NOTIFY in place without setting ServerManager.isReloading=true or synchronizing readers.",
+      "severity": "P1",
+      "title": "Unsafe in-place clear in Manager.reloadData() without isReloading guard or locks"
+    },
+    {
+      "category": "database",
+      "impact": "Leaks a FileInputStream file descriptor on server startup and on every reloadData() call.",
+      "location": "Manager.java:287-289",
+      "root_cause": "properties.load(new FileInputStream(\"data/config/alyra.properties\")) does not close the FileInputStream via try-with-resources.",
+      "severity": "P2",
+      "title": "Unclosed FileInputStream in Manager.loadProperties()"
+    },
+    {
+      "category": "concurrency",
+      "impact": "Other threads reading Maintenance.isRunning may observe stale false values due to missing volatile; two concurrent start() calls can throw IllegalThreadStateException; start(int min) actually treats argument as seconds.",
+      "location": "Maintenance.java:8,12,25-31,51-90",
+      "root_cause": "isRunning lacks volatile, start() lacks synchronization, and countdown loop decrements time by 1 per 1000ms despite parameter name `min`.",
+      "severity": "P2",
+      "title": "Non-volatile Maintenance.isRunning and seconds/minutes unit mismatch"
+    },
+    {
+      "category": "concurrency",
+      "impact": "All players joining a map serialize on the Controller singleton lock while executing DB queries, mapInfo, and Netty sends; sendInfo also executes blocking SuperRankDAO JDBC queries on Netty thread.",
+      "location": "Controller.java:1087-1091,1120-1207",
+      "root_cause": "handleClientJoinMap is declared `synchronized` on Controller.gI() instead of per-player synchronization; sendInfo performs synchronous SuperRankDAO calls on packet thread.",
+      "severity": "P2",
+      "title": "Global Controller singleton lock in handleClientJoinMap and blocking DAO in sendInfo"
+    },
+    {
+      "category": "gameplay",
+      "impact": "NullPointerException when player.zone is null during Calick menu selection, openMenuNPC, spaceship teleport (-105 type 2), or return home (-15).",
+      "location": "MenuController.java:28,33,66;Controller.java:263,818",
+      "root_cause": "Dereferences player.zone.map without checking player.zone != null (and MenuController.openMenuNPC dereferences player before any null check).",
+      "severity": "P2",
+      "title": "Missing player/zone null checks in MenuController and Controller map cases"
+    },
+    {
+      "category": "security_dupe",
+      "impact": "Mixed-case ignored names bypass IGNORE_NAME check; negative byte in combine (-81) throws NegativeArraySizeException; duplicate/non-atomic check-then-insert on createChar.",
+      "location": "Controller.java:558,1020-1042",
+      "root_cause": "createChar compares mixed-case name against DB and ConstIgnoreName before calling name.toLowerCase() during insert; case -81 passes readByte() directly as array length without >= 0 validation.",
+      "severity": "P2",
+      "title": "Input validation & case-normalization mismatch in Controller createChar and Combine (-81)"
+    },
+    {
+      "category": "architecture",
+      "impact": "ServerPacketDispatcher only handles -86 and -20 while those same opcodes remain as dead branches in Controller.java, increasing maintenance confusion and bypassing dispatcher symmetry.",
+      "location": "ServerPacketDispatcher.java:30-36;Controller.java:89-97,358-362,801-806",
+      "root_cause": "Partial refactoring left 50+ opcodes in Controller.onMessage and duplicated case -86 and case -20 after ServerPacketDispatcher.dispatch().",
+      "severity": "P3",
+      "title": "Incomplete ServerPacketDispatcher migration with dead duplicate opcodes in Controller"
+    },
+    {
+      "category": "performance_gc",
+      "impact": "When Maintenance triggers ServerManager.close(), cleanupResources() skips its parallel player-save block because isRunning was already set to false at line 330; System.exit(0) also triggers cleanupResources() a second time via shutdown hook.",
+      "location": "ServerManager.java:329-330,374,387,393-440",
+      "root_cause": "close() sets isRunning=false before invoking cleanupResources(), whose player-save block is gated on `if (isRunning)`.",
+      "severity": "P2",
+      "title": "ServerManager.close() bypasses cleanupResources() player-save guard and double-invokes cleanup"
+    },
+    {
+      "category": "database",
+      "impact": "queryTopNap reads danap as 32-bit int (overflows above ~2.14B VND); migratePasswordsToBCrypt issues N+1 sequential UPDATE statements on startup while server accepts logins.",
+      "location": "Manager.java:410-411;ServerManager.java:518-550",
+      "root_cause": "rs.getInt(\"danap\") instead of getLong; migratePasswordsToBCrypt loops over all accounts issuing individual executeUpdate calls.",
+      "severity": "P3",
+      "title": "32-bit int risk in Manager.queryTopNap and N+1 updates in BCrypt migration"
+    }
+  ],
+  "key_classes": [
+    {
+      "key_methods": [
+        "gI",
+        "onMessage",
+        "messageNotLogin",
+        "messageNotMap",
+        "messageSubCommand",
+        "createChar",
+        "login2",
+        "sendInfo",
+        "finishUpdate",
+        "handleClientJoinMap",
+        "sendThongBaoServer",
+        "getCommandName"
+      ],
+      "name": "Controller",
+      "path": "src/server/Controller.java",
+      "responsibility": "Main Netty IMessageHandler dispatching client opcodes, character creation, and map join initialization."
+    },
+    {
+      "key_methods": [
+        "gI",
+        "schedule",
+        "start",
+        "stop",
+        "updateBosses",
+        "updateEventBosses",
+        "safeUpdateBoss",
+        "updatePhoBans",
+        "run"
+      ],
+      "name": "GameLoopManager",
+      "path": "src/server/GameLoopManager.java",
+      "responsibility": "ScheduledExecutorService driving 1000ms player/zone/phoban/event-boss ticks and 250ms combat boss ticks."
+    },
+    {
+      "key_methods": [
+        "gI",
+        "initAutoResize",
+        "autoResizeAllIcons",
+        "resizeImageToAllScales",
+        "resizeIconByName",
+        "resizeImage",
+        "resizeNewIconsOnly",
+        "clearResizedIcons",
+        "printIconStatistics",
+        "forceResizeIcons",
+        "checkAndRemoveCorruptedIcons"
+      ],
+      "name": "ImageResizeManager",
+      "path": "src/server/ImageResizeManager.java",
+      "responsibility": "Startup background utility resizing PNG icons from data/icon/x4 to x3, x2, and x1 using ImageIO/Graphics2D."
+    },
+    {
+      "key_methods": [
+        "gI",
+        "start",
+        "run"
+      ],
+      "name": "Maintenance",
+      "path": "src/server/Maintenance.java",
+      "responsibility": "Countdown thread broadcasting maintenance warnings and triggering ServerManager.gI().close()."
+    },
+    {
+      "key_methods": [
+        "gI",
+        "reloadData",
+        "initMap",
+        "logLoaded",
+        "loadDatabase",
+        "loadProperties",
+        "addClan",
+        "getNumClan",
+        "getMobTemplateByTemp",
+        "getNFrameImageByName",
+        "realTop"
+      ],
+      "name": "Manager",
+      "path": "src/server/Manager.java",
+      "responsibility": "Central static registry for templates, maps, clans, shops, server config properties, and leaderboard SQL queries."
+    },
+    {
+      "key_methods": [
+        "gI",
+        "openMenuNPC",
+        "doSelectMenu"
+      ],
+      "name": "MenuController",
+      "path": "src/server/MenuController.java",
+      "responsibility": "Handles NPC menu open and option selection with distance/anti-spam checks and trade cancellation."
+    },
+    {
+      "key_methods": [
+        "handle"
+      ],
+      "name": "IServerPacketHandler",
+      "path": "src/server/network/IServerPacketHandler.java",
+      "responsibility": "Interface for modular server packet handlers decoupled from Controller."
+    },
+    {
+      "key_methods": [
+        "gI",
+        "registerHandlers",
+        "register",
+        "dispatch"
+      ],
+      "name": "ServerPacketDispatcher",
+      "path": "src/server/network/ServerPacketDispatcher.java",
+      "responsibility": "Maps opcodes (-86, -20) to IServerPacketHandler implementations."
+    },
+    {
+      "key_methods": [
+        "handle"
+      ],
+      "name": "ServerTradePacketHandler",
+      "path": "src/server/network/handlers/ServerTradePacketHandler.java",
+      "responsibility": "Handles opcode -86 by delegating to TransactionService.gI().controller."
+    },
+    {
+      "key_methods": [
+        "handle"
+      ],
+      "name": "ServerItemPacketHandler",
+      "path": "src/server/network/handlers/ServerItemPacketHandler.java",
+      "responsibility": "Handles opcode -20 (pick item) by delegating to ItemMapService.gI().pickItem."
+    },
+    {
+      "key_methods": [
+        "gI",
+        "isHandshakeOrLoginCommand",
+        "getSlowThreshold",
+        "getCriticalThreshold",
+        "record",
+        "buildContext",
+        "triggerPerformanceAlert",
+        "resolveAlert",
+        "syncAlertsJson",
+        "exportSummaryCsv",
+        "printReport",
+        "getTopLagReport"
+      ],
+      "name": "PacketProfiler",
+      "path": "src/server/network/PacketProfiler.java",
+      "responsibility": "Tracks per-opcode latency metrics, logs slow packets asynchronously, exports CSV summaries, and writes PERFORMANCE_ALERTS.json."
+    },
+    {
+      "key_methods": [
+        "init",
+        "getExecutorService",
+        "execute",
+        "gI",
+        "main",
+        "run",
+        "startAutoSaveTask",
+        "startDailyResetTask",
+        "activeServerSocket",
+        "freePort",
+        "canConnectWithIp",
+        "disconnect",
+        "close",
+        "cleanupResources",
+        "activeCommandLine",
+        "handleCommand",
+        "saveAllPlayersData",
+        "migratePasswordsToBCrypt"
+      ],
+      "name": "ServerManager",
+      "path": "src/server/ServerManager.java",
+      "responsibility": "Application entrypoint, lifecycle orchestrator, IP connection limiter, auto-save/daily-reset scheduler, and graceful shutdown."
+    },
+    {
+      "key_methods": [
+        "gI",
+        "run",
+        "sendChatVip",
+        "notify",
+        "sendNotifyTab"
+      ],
+      "name": "ServerNotify",
+      "path": "src/server/ServerNotify.java",
+      "responsibility": "Background thread broadcasting queued VIP announcements (cmd 93) and sending notification tabs (cmd 50)."
+    }
+  ],
+  "module_summary": "Core server lifecycle, game loop, packet routing/profiling, and static registry layer in src/server/ and src/server/network/. Controller remains a large God-class handler with only opcodes -86 and -20 extracted to ServerPacketDispatcher, while PacketProfiler measures every packet in Controller's finally block. ServerManager orchestrates Netty startup, background tournament/event services, BCrypt migration, auto-save, daily reset, and shutdown; GameLoopManager runs fixed-rate player, zone, boss, and dungeon ticks; Manager holds static game templates, maps, clans, and leaderboard queries.",
+  "protocol_touchpoints": [
+    {
+      "direction": "DISPATCH",
+      "location": "Controller.java:95-97;ServerPacketDispatcher.java:30-52;ServerTradePacketHandler.java:16-20;ServerItemPacketHandler.java:16-26",
+      "opcode": "-86, -20",
+      "payload_summary": "Dispatches trade (-86) to TransactionService and item pickup (-20, readShort itemMapId) to ItemMapService; dead duplicate switch cases remain in Controller."
+    },
+    {
+      "direction": "READ",
+      "location": "Controller.java:99-158",
+      "opcode": "-100",
+      "payload_summary": "Consign shop: readByte action; case 0 reads short idItem, byte moneyType, int money, int/byte quantity (version>=222); cases 1/2/5 readShort; case 3 readShort+readByte+readInt; case 4 readByte+readByte."
+    },
+    {
+      "direction": "READ",
+      "location": "Controller.java:190-246",
+      "opcode": "127",
+      "payload_summary": "Radar: readByte actionRadar (checks available<1); case 1 checks available<2 and readShort idC."
+    },
+    {
+      "direction": "READ",
+      "location": "Controller.java:307-326,369-373,374-420,421-460",
+      "opcode": "-34, -108, 6, 7, 21, -71, -79, -113, -103",
+      "payload_summary": "MagicTree (byte), PetStatus (byte), Buy (byte, short), Sell (byte, byte, short), ChangeZone (byte), ChatGlobal (UTF), PlayerMenu (int), SkillShortcut (10x byte with IOException fallback), Flag (byte act, optional byte)."
+    },
+    {
+      "direction": "READ",
+      "location": "Controller.java:461-535",
+      "opcode": "-7",
+      "payload_summary": "Move: readByte b, readShort toX, optional readShort toY; throttled 80ms and distance-checked unless TDLT or isNearMobInZone."
+    },
+    {
+      "direction": "READ",
+      "location": "Controller.java:544-617",
+      "opcode": "-74, -81, -67, 66, -66, -62, -63, -32, 22",
+      "payload_summary": "Res download (byte), Combine (byte + byte len + len*byte), Icon (int), ImgByName (UTF), EffTemplate (short), FlagBag (byte), EffFlag (byte), BGTemplate (short), DauThan menu (byte, byte)."
+    },
+    {
+      "direction": "READ",
+      "location": "Controller.java:625-793",
+      "opcode": "-45, -50, -47, -41, -91, 11, 44, 32, 33, 34, 54, -60",
+      "payload_summary": "SkillNotFocus (byte+service), ClanMemberList (int), ClanList (UTF), Caption (byte), Capsule/BlackBall map (byte), MobTemplate (byte), Command (UTF), MenuSelect (short, byte), MenuOpen (short), SelectSkill (short), AttackMob (byte mobId, optional int masterId), AttackPlayer (int playerId)."
+    },
+    {
+      "direction": "READ",
+      "location": "Controller.java:807-815,903-1008",
+      "opcode": "-29, -28, -30",
+      "payload_summary": "NotLogin (-29: subcmd 0 login UTF/UTF, 1 regis, 2 clientType); NotMap (-28: subcmd 2 createChar UTF/byte/byte, 6/7/8 updates, 10 mapTemp unsignedByte, 13 joinMap); SubCommand (-30: 16/18 increasePoint byte/short, 64 subMenu int/short)."
+    },
+    {
+      "direction": "READ",
+      "location": "Controller.java:827-880",
+      "opcode": "-104, -118, -78, -76",
+      "payload_summary": "MaBaoVe (int), Compete/AdminTP (int), CheckMMove (int), ConfirmAchievement (byte)."
+    },
+    {
+      "direction": "WRITE",
+      "location": "ServerNotify.java:58-99",
+      "opcode": "93, 50",
+      "payload_summary": "Opcode 93 writes UTF VIP broadcast to all players; Opcode 50 writes byte count then (short index, UTF title, UTF content) per Manager.NOTIFY entry."
+    }
+  ]
+}

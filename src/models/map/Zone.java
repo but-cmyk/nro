@@ -137,11 +137,16 @@ public class Zone {
     }
 
     private void udMob() {
-        for (int i = this.mobs.size() - 1; i >= 0; i--) {
-            try {
-                mobs.get(i).update();
-            } catch (Exception e) {
-                Logger.logException(Zone.class, e, "Lỗi update mobs");
+        if (this.mobs.isEmpty()) {
+            return;
+        }
+        synchronized (this.mobs) {
+            for (int i = this.mobs.size() - 1; i >= 0; i--) {
+                try {
+                    this.mobs.get(i).update();
+                } catch (Exception e) {
+                    Logger.logException(Zone.class, e, "Lỗi update mobs");
+                }
             }
         }
     }
@@ -192,10 +197,12 @@ public class Zone {
     }
 
     private void udPlayer() {
-        for (int i = this.notBosses.size() - 1; i >= 0; i--) {
-            Player pl = this.notBosses.get(i);
-            if (!pl.isPet && !pl.isBot && !pl.isNewPet) {
-                this.notBosses.get(i).update();
+        if (this.notBosses.isEmpty()) {
+            return;
+        }
+        for (Player pl : this.notBosses) {
+            if (pl != null && !pl.isPet && !pl.isBot && !pl.isNewPet) {
+                pl.update();
             }
         }
     }

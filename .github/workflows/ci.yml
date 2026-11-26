@@ -1,0 +1,36 @@
+name: NRO CI Verification Gate
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master, develop ]
+
+jobs:
+  server-verify-and-test:
+    name: Java 21 Build, Guardrails & Automated Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Server Compile Check (Java 21)
+        run: python tools/compile_check.py --server
+
+      - name: Memory Guardrails & Invariant Scanner
+        run: python tools/memory/guardrails.py --check-all
+
+      - name: Run Automated Java Tests (Security & Protocol Contract)
+        run: python tools/run_tests.py --java

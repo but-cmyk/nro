@@ -1,0 +1,263 @@
+{
+  "batch_id": "client_core_render_audio__p02",
+  "concurrency_and_state": [
+    "Sound.status (non-volatile static int) is read/written across main and background threads in Sound._load/_start/_stop with Thread.Sleep(5) spin-wait up to 500ms, while Sound.update() is empty so status is never reset inside Sound.cs.",
+    "Sound.player[] stores the same 'Audio Player 1' GameObject in every slot while __load calls AddComponent<AudioSource>() per slot; GetComponent<AudioSource>() in __start/__stop always returns the first AudioSource (SoundBGLoop).",
+    "mGraphics holds mutable static caches (cachedTextures, color1x1Cache) cleared wholesale on threshold (>400 / >300) via UnityEngine.Object.Destroy inside render calls.",
+    "mGraphics instance state (isClip, isTranslate, translateX/Y, translateXf/Yf, r/g/b/a) is mutated during OnGUI; reset() clears translateX/Y but does not reset translateXf/Yf or r/g/b/a.",
+    "SmallImage uses static arrays (imgbig, imgNew, smallImg) and MyVector (vt_images_watingDowload) mutated lazily during paint() via createImage() and periodically evicted every 1000 gameTicks in update()."
+  ],
+  "cross_module_questions": [
+    "Does Main.Update() or another controller poll Sound.status to execute __load/__start/__stop and reset status to 0, or are background-thread audio calls permanently stalling for 500ms?",
+    "Does GameCanvas or GameScr read mGraphics.getClipX/Y/Width/Height expecting actual setClip values rather than GameScr.cmx/cmy/gW/gH?",
+    "Is SmallImage.vt_images_watingDowload drained and downloaded by another module (e.g. Service/GameScr), and are server-sent SmallImage IDs bounded to prevent OOM when resizing imgNew?",
+    "Are all audio files /music/0..2 and /sound/0..38 present in Client Resources, since Sound.__load logs a warning when missing?"
+  ],
+  "db_redis_touchpoints": [
+    {
+      "location": "Client/Client/Assets/Scripts/Game1/SmallImage.cs:76-97",
+      "op": "READ",
+      "safety_note": "Rms.loadRMS('NR_image') wrapped in DataInputStream without using/finally; close() skipped on read exception.",
+      "target": "RMS:NR_image"
+    },
+    {
+      "location": "Client/Client/Assets/Scripts/Game1/SmallImage.cs:157-185",
+      "op": "READ/DELETE",
+      "safety_note": "Rms.loadRMS and Rms.DeleteStorage for '<zoomLevel>Small<id>' invoked synchronously inside drawSmallImage()->createImage() on render path.",
+      "target": "RMS:<zoom>Small<id>"
+    },
+    {
+      "location": "Client/Client/Assets/Scripts/Game1/SoundMn.cs:233-247,365-462",
+      "op": "READ/WRITE",
+      "safety_note": "Rms.loadRMSInt/saveRMSInt for client settings ('default_cfg_v1','screen_size_idx','isPlaySound','serverchat','analog','lowGraphic','isPaintAura','isPaintAura2').",
+      "target": "RMS:settings_keys"
+    }
+  ],
+  "files_read": [
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/mGraphics.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/MotherCanvas.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/mSystem.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/MyAudioClip.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/SmallImage.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/Sound.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/SoundMn.cs"
+  ],
+  "findings": [
+    {
+      "category": "concurrency",
+      "impact": "Every SFX start/stop targets SoundBGLoop's AudioSource (halting/playing on wrong channel), and background-thread sound calls block up to 500ms or fail while Sound.update() never drains Sound.status.",
+      "location": "Sound.cs:144-162,228-230,424-561",
+      "root_cause": "__load adds an AudioSource to 'Audio Player 1' and stores the same GameObject in player[pos]; GetComponent<AudioSource>() always returns component 0 (SoundBGLoop). Sound.update() is empty and status lacks synchronization.",
+      "severity": "P1",
+      "title": "Sound.player[] aliases single GameObject causing wrong AudioSource control and thread spin-wait stalls"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Multi-frame SmallImage sprites drawn from Big0-Big3 atlases render from texture origin (0, f*w) instead of their atlas coordinates smallImg[id][1..2], corrupting sprites.",
+      "location": "SmallImage.cs:307-310",
+      "root_cause": "drawSmallImage(mGraphics, id, f, x, y, w, h, ...) passes 0 instead of smallImg[id][1] as x0 and f*w without smallImg[id][2] offset as y0 to g.drawRegion.",
+      "severity": "P1",
+      "title": "SmallImage 9-arg drawSmallImage ignores atlas x0/y0 offsets in smallImg[id]"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Any non-iOS-AppStore caller of mSystem.getHeight(Image) receives image width instead of height; mSystem.arrayReplace silently leaves dest unmodified.",
+      "location": "mSystem.cs:63-70,304-322",
+      "root_cause": "getHeight returns img.getWidth() when clientType != 5; arrayReplace copies into local array without assigning dest = array.",
+      "severity": "P1",
+      "title": "mSystem.getHeight returns width and arrayReplace is a silent no-op"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Horizontal/vertical drawLine, fillTrans, and fillArg render at zoomLevel^2 coordinates/sizes instead of zoomLevel; fillRect(6-arg) ignores alpha and forces 0.5f.",
+      "location": "mGraphics.cs:311-345,1204-1208,1266-1269",
+      "root_cause": "drawLine, fillTrans, and fillArg multiply coordinates/dimensions by zoomLevel before calling fillRect, which multiplies by zoomLevel again; fillRect(..., color, alpha) hardcodes alpha2 = 0.5f.",
+      "severity": "P1",
+      "title": "Double zoomLevel scaling in mGraphics.drawLine/fillTrans/fillArg and ignored alpha in fillRect"
+    },
+    {
+      "category": "gameplay",
+      "impact": "blendColor produces completely wrong packed RGB ints; blend clamps [0..1] floats against 255f; getTimeCountDown overflows int if secondCount > 2,147,483s.",
+      "location": "mGraphics.cs:1156-1179,1212-1244; mSystem.cs:75",
+      "root_cause": "blendColor mixes [0..255] and [0..1] channels and combines them with '&' and '255 +' instead of '|'; blend clamps normalized Color floats to 255f; getTimeCountDown multiplies int secondCount * 1000 before long subtraction.",
+      "severity": "P2",
+      "title": "Bitwise/scale errors in mGraphics.blendColor/blend and 32-bit int overflow in getTimeCountDown"
+    },
+    {
+      "category": "performance_gc",
+      "impact": "Disk/RMS reads, Resources.Load, Texture2D creation, and GC allocations occur directly inside paint/OnGUI, causing frame hitches and memory churn.",
+      "location": "SmallImage.cs:121-191,218-330; mGraphics.cs:174-183,1319-1327; mSystem.cs:180-259",
+      "root_cause": "drawSmallImage calls createImage synchronously during paint; drawLine(mGraphics,...) allocates MyVector and mLine objects per call; mSystem string formatters concatenate strings in loops; color1x1Cache destroys all cached Texture2Ds at >300 entries.",
+      "severity": "P1",
+      "title": "Blocking I/O and per-frame GC allocations inside paint/render paths"
+    },
+    {
+      "category": "security_dupe",
+      "impact": "If a malformed/huge SmallImage id is passed, imgNew resizes to new Small[id + 100], risking OutOfMemoryException or client crash; DataInputStream is unclosed on exception.",
+      "location": "SmallImage.cs:81-97,131-136,203-208,268-273",
+      "root_cause": "imgNew length check lacks an upper bound sanity cap; readImage closes DataInputStream inside try without finally/using.",
+      "severity": "P2",
+      "title": "Unbounded SmallImage.imgNew resize and unclosed DataInputStream on exception"
+    },
+    {
+      "category": "architecture",
+      "impact": "UI/settings/network mutations in SoundMn, hardcoded GameScr coupling in mGraphics.getClip*, and duplicate __drawRegion/_drawRegion implementations increase regression risk.",
+      "location": "SoundMn.cs:147-296,359-470,690-696; mGraphics.cs:249-267,660-970; Sound.cs:299,310,400",
+      "root_cause": "SoundMn owns Panel menus, RMS settings, Char aura flags, and Session_ME disconnect; mGraphics.getClipX/Y/W/H ignore clipX/Y/W/H and return GameScr.cmx/cmy/gW/gH; Sound.playSoundNatural checks SoundBGLoop instead of SoundWater and stopSoundNatural/sTopSoundBG lack null checks.",
+      "severity": "P2",
+      "title": "Tight cross-module coupling in SoundMn/mGraphics and null/logic bugs in Sound channel guards"
+    },
+    {
+      "category": "gameplay",
+      "impact": "explode_2 plays EXPLODE_1 sound; charPunch/charRun divide static SoundMn.volume instead of local volumn parameter; Sound.stopAll flag is ignored by playback methods.",
+      "location": "SoundMn.cs:303-323,475-479,502-506,543-558; Sound.cs:245-396",
+      "root_cause": "Copy-paste typo in explode_2 (EXPLODE_1) and charPunch/charRun (volume vs volumn); Sound.play/playSoundRun/playSoundNatural/playRainSound/playSoundBGLoop never check Sound.stopAll.",
+      "severity": "P3",
+      "title": "Audio playback mismatches in SoundMn (explode_2, charPunch, charRun) and ignored Sound.stopAll flag"
+    },
+    {
+      "category": "gameplay",
+      "impact": "getWidthz/getHeightz add remainder modulo zoomLevel instead of ceiling division, overestimating logical viewport size by up to zoomLevel-1; translate(float,float) writes unused fields.",
+      "location": "MotherCanvas.cs:125-135; mGraphics.cs:213-222",
+      "root_cause": "getWidthz uses width / zoomLevel + width % zoomLevel; mGraphics.translate(float,float) modifies translateXf/Yf which are never read by draw calls.",
+      "severity": "P2",
+      "title": "MotherCanvas.getWidthz/getHeightz modulo math error and unused mGraphics.translate(float,float)"
+    }
+  ],
+  "key_classes": [
+    {
+      "key_methods": [
+        "get1x1Texture",
+        "clearCachedTextures",
+        "clearColor1x1Cache",
+        "setClip",
+        "fillRect",
+        "drawLine",
+        "drawRegion",
+        "__drawRegion",
+        "_drawRegion",
+        "drawlineGL"
+      ],
+      "name": "mGraphics",
+      "path": "Client/Client/Assets/Scripts/Game1/mGraphics.cs",
+      "responsibility": "Unity IMGUI/GL rendering wrapper managing zoomLevel scaling, translation, clipping, 1x1 color texture cache, and sprite region transforms."
+    },
+    {
+      "key_methods": [
+        "checkZoomLevel",
+        "setChildCanvas",
+        "paint",
+        "pointerPressed",
+        "pointerDragged",
+        "pointerReleased",
+        "getWidthz",
+        "getHeightz"
+      ],
+      "name": "MotherCanvas",
+      "path": "Client/Client/Assets/Scripts/Game1/MotherCanvas.cs",
+      "responsibility": "Top-level canvas adapter computing mGraphics.zoomLevel and forwarding scaled input/paint events to GameCanvas."
+    },
+    {
+      "key_methods": [
+        "getTimeCountDown",
+        "numberTostring2",
+        "numberTostring",
+        "currentTimeMillis",
+        "freeData",
+        "gcc",
+        "paintFlyText",
+        "getFraImage",
+        "onConnectOK",
+        "onConnectionFail",
+        "onDisconnected"
+      ],
+      "name": "mSystem",
+      "path": "Client/Client/Assets/Scripts/Game1/mSystem.cs",
+      "responsibility": "Platform/system utility helpers for time, formatting, byte/sbyte conversion, GC triggers, fly-text rendering, and connection state callbacks."
+    },
+    {
+      "key_methods": [
+        "MyAudioClip",
+        "Play",
+        "isPlaying"
+      ],
+      "name": "MyAudioClip",
+      "path": "Client/Client/Assets/Scripts/Game1/MyAudioClip.cs",
+      "responsibility": "Minimal wrapper around Unity AudioClip and Resources.Load with cached static AudioSource.PlayOneShot."
+    },
+    {
+      "key_methods": [
+        "loadBigRMS",
+        "freeBig",
+        "init",
+        "readImage",
+        "clearHastable",
+        "createImage",
+        "drawSmallImage",
+        "update"
+      ],
+      "name": "SmallImage",
+      "path": "Client/Client/Assets/Scripts/Game1/SmallImage.cs",
+      "responsibility": "Manages Big0-Big4 sprite atlases, NR_image metadata, dynamic Small icon loading/RMS caching, and periodic texture eviction."
+    },
+    {
+      "key_methods": [
+        "init",
+        "playSound",
+        "playSound1",
+        "playRainSound",
+        "stopRainSound",
+        "playMus",
+        "playSoundBGLoop",
+        "stopAllz",
+        "stopAllBg",
+        "load",
+        "start",
+        "stop"
+      ],
+      "name": "Sound",
+      "path": "Client/Client/Assets/Scripts/Game1/Sound.cs",
+      "responsibility": "Low-level Unity AudioClip/AudioSource playback manager for BGM, rain, running, and SFX slots."
+    },
+    {
+      "key_methods": [
+        "gI",
+        "loadSound",
+        "getSoundOption",
+        "getStrOption",
+        "soundToolOption",
+        "CaseSizeScr",
+        "AuraToolOption",
+        "HatToolOption",
+        "charPunch",
+        "charRun",
+        "explode_2",
+        "backToRegister"
+      ],
+      "name": "SoundMn",
+      "path": "Client/Client/Assets/Scripts/Game1/SoundMn.cs",
+      "responsibility": "High-level audio trigger facade mixed with PC/mobile option menus, RMS config persistence, and UI/session navigation helpers."
+    }
+  ],
+  "module_summary": "Client core rendering, canvas scaling, system utilities, small sprite atlas management, and Unity audio subsystem across 7 files (3,683 lines). Critical issues include double zoomLevel scaling and broken blendColor math in mGraphics, ignored SmallImage atlas offsets in multi-frame drawSmallImage, blocking I/O and GC allocations during paint(), Sound.player[] aliasing a single GameObject/AudioSource with an empty Sound.update() spin-wait hazard, and UI/network God-class responsibilities in SoundMn.",
+  "protocol_touchpoints": [
+    {
+      "direction": "DISPATCH",
+      "location": "SoundMn.cs:468",
+      "opcode": "sendOptHat(0)",
+      "payload_summary": "HatToolOption() dispatches hat display option toggle to server via Service.gI().sendOptHat(0)."
+    },
+    {
+      "direction": "DISPATCH",
+      "location": "SoundMn.cs:692",
+      "opcode": "Session_ME.close()",
+      "payload_summary": "backToRegister() closes active network session and switches UI to login/register screen."
+    },
+    {
+      "direction": "READ",
+      "location": "mSystem.cs:405-419",
+      "opcode": "ConnectionStateFlags",
+      "payload_summary": "onConnectOK/onConnectionFail/onDisconnected set Controller.isConnectOK/isConnectionFail/isDisconnected flags."
+    }
+  ]
+}

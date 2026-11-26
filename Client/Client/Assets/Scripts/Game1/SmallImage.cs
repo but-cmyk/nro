@@ -1,6 +1,7 @@
 namespace Game1
 {
     using System;
+    using UnityEngine;
     using Game1.Assets.src.e;
     
     public class SmallImage
@@ -103,6 +104,18 @@ namespace Game1
     
     	public static void clearHastable()
     	{
+    		if (imgNew != null)
+    		{
+    			for (int i = 0; i < imgNew.Length; i++)
+    			{
+    				if (imgNew[i] != null)
+    				{
+    					imgNew[i].destroyTexture();
+    					imgNew[i] = null;
+    				}
+    			}
+    		}
+    		UnityEngine.Resources.UnloadUnusedAssets();
     	}
     
     	public static void createImage(int id)
@@ -324,6 +337,7 @@ namespace Game1
     
     	public static void update()
     	{
+    		if (imgNew == null) return;
     		int num = 0;
     		if (GameCanvas.gameTick % 1000 != 0)
     		{
@@ -338,9 +352,25 @@ namespace Game1
     				smallCount++;
     			}
     		}
-    		if (num > 200 && GameCanvas.lowGraphic)
+    		if (num > 400 || (num > 150 && GameCanvas.lowGraphic))
     		{
-    			imgNew = new Small[maxSmall];
+    			int cleaned = 0;
+    			for (int j = 0; j < imgNew.Length; j++)
+    			{
+    				if (imgNew[j] != null && (Char.myCharz() == null || !Char.myCharz().isCharBodyImageID(imgNew[j].id)))
+    				{
+    					if (imgNew[j].timeUpdate - imgNew[j].timePaint > 0)
+    					{
+    						imgNew[j].destroyTexture();
+    						imgNew[j] = null;
+    						cleaned++;
+    					}
+    				}
+    			}
+    			if (cleaned > 100)
+    			{
+    				UnityEngine.Resources.UnloadUnusedAssets();
+    			}
     		}
     	}
     }

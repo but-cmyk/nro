@@ -1,0 +1,160 @@
+{
+  "batch_id": "client_gameplay_entities__p02",
+  "concurrency_and_state": [
+    "Static singleton Char.myChar and Char.myPet (Char.cs:747-749, 1497-1521): clearMyChar() nulls myChar only, leaving myPet, static flags (ischangingMap, isLockKey, isLoadingMap, isManualFocus, fallAttack), and static vItemTime unreset across account/character switches.",
+    "Static mount textures (imgMount_*, eyeTraiDat, eyeNamek) cached in Char static fields and lazily reloaded in checkLoadMount() during paintMount1/paintMount2 when mGraphics.zoomLevel changes or imgMount_NM.texture == null (Char.cs:409-456).",
+    "Char.checkHideCharName() (Char.cs:3106-3143) iterates GameScr.vCharInMap and GameScr.vNpc with empty try/catch blocks to mask out-of-range/concurrent collection mutations while reading shared static vectors.",
+    "Char.taskAction() mixes myCharz() (Char.cs:1344, 1370) and direct static field myChar (Char.cs:1428), risking NullReferenceException if myChar has not been lazily initialized.",
+    "Char.update() modifies local cHP/cMP/cStamina optimistically (buff ticks L2404-2446, charge L2982-2983, skill cost L5192-5210) asynchronously from server state updates."
+  ],
+  "cross_module_questions": [
+    "Does the Java server validate skill cooldowns, MP, and HP thresholds (e.g. skill 9 self-destruct cHP > cHPFull/10) server-side, or can client clock rollback in Char.setSkillPaint (L5181-5184) / sendUseChargeSkill (L5348-5351) bypass cooldowns?",
+    "Does Service.gI().charMove() / Server Controller validate coordinates against tile collisions/speed, given client Char.update() and moveFast / telePortSkill directly mutate cx/cy and emit charMove()?",
+    "What type is Mob.hpInjure? Char.updateEffect() (L3049) assigns long expression (cDamFull / 2 - cDamFull * rand / 100) to effPaints[i].eMob.hpInjure.",
+    "Are bagSort()/boxSort() item merges (L1548, L1603) synchronized with server inventory state, and how are item.quantity overflows prevented?",
+    "How does Service.gI().skill_not_focus(byte) and sendPlayerAttack(vMob, vChar, type) serialize payloads and validate target counts/ranges on server?"
+  ],
+  "db_redis_touchpoints": [],
+  "files_read": [
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/Char.cs (lines 1-5853)"
+  ],
+  "findings": [
+    {
+      "category": "architecture",
+      "impact": "High maintenance cost, fragile state transitions, and regressions when modifying movement, skills, or rendering.",
+      "location": "Char.cs:7-5853",
+      "root_cause": "Char is a massive God class (8754 lines total) combining entity data, inventory sorting, physics/tile collision, waypoint/map transitions, network dispatch, skill state machine, mount animation, and rendering.",
+      "severity": "P2",
+      "title": "Monolithic God Class (Char) with tightly coupled physics, network, inventory, and rendering"
+    },
+    {
+      "category": "architecture",
+      "impact": "Bug fixes must be applied twice; dead code paths obscure control flow.",
+      "location": "Char.cs:1523-1631, 1682-1734, 4698-4937",
+      "root_cause": "Duplicated methods: bagSort() vs boxSort() (L1523-1631), isInEnterOfflinePoint() vs isInEnterOnlinePoint() (L1682-1734), paintMount1() vs paintMount2() (L4698-4937, both containing unreachable `if (me) return;` inside `else`), and empty stubs (updateChargeSkill L1810, saveLoadPreviousSkill L3363, updateSkillFall L3447).",
+      "severity": "P3",
+      "title": "Extensive code duplication and dead branches in inventory sorting, waypoints, and mount rendering"
+    },
+    {
+      "category": "performance_gc",
+      "impact": "Frequent GC spikes and frame drops on mobile/Unity client during combat, charging, and crowded maps.",
+      "location": "Char.cs:1922-2367, 2168-2222, 3031-3094, 4713-4886, 5564-5648",
+      "root_cause": "Per-frame heap allocations and string concatenations inside update()/paint(): `new Effect(...)` every 5-10 ticks (L1922, 1927, 1938, 2367), `charID + string.Empty` and `Res.split` (L1951-1969), `Res.outz(... + cName + ...)` every tick during charge (L2168), `strMount + (idMount - ID_NEW_MOUNT) + \"_0\"` in paintMount1/2 (L4713, 4762, 4831, 4885), `new MyVector()`/`new EffectPaint[]` in setAttack (L5564-5648).",
+      "severity": "P1",
+      "title": "Heavy GC allocations and string concatenations in update() and paint() loops"
+    },
+    {
+      "category": "performance_gc",
+      "impact": "Main-thread stalls / frame hitches during rendering when zoom changes or special mount/mount textures first appear.",
+      "location": "Char.cs:433-456, 4667-4686, 4700, 4818, 4847, 4902",
+      "root_cause": "paintMount1() and paintMount2() invoke checkLoadMount() (synchronously loading 12 PNGs via GameCanvas.loadImage) and getMountData() (reading /Mob/50 from disk via MyStream.readFile) directly during the render pass.",
+      "severity": "P1",
+      "title": "Synchronous disk/texture I/O executed inside paintMount1/paintMount2 render path"
+    },
+    {
+      "category": "performance_gc",
+      "impact": "CPU spikes in crowded maps when multiple players are visible.",
+      "location": "Char.cs:3106-3143",
+      "root_cause": "checkHideCharName() runs every 20 ticks for every remote Char and linearly scans all GameScr.vCharInMap and GameScr.vNpc (O(N^2 + N*M)).",
+      "severity": "P2",
+      "title": "Quadratic O(N^2) proximity scan in checkHideCharName() for remote characters"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Remote players moving left during auto-jump get cvx=0 instead of jumping horizontally; potential IndexOutOfRangeException if vMovePoints is empty.",
+      "location": "Char.cs:3672-3683, 3687-3705, 3569",
+      "root_cause": "returnAct() (L3672) and setAutoJump() (L3693) compare signed `num = xEnd - cx` against positive thresholds (`num <= 5`, `num <= 6`) without `abs(num)`, so any leftward movement (`num < 0`) sets `cvx = 0`. updateCharAutoJump() (L3569) also indexes `vMovePoints.firstElement()` without a size check.",
+      "severity": "P2",
+      "title": "Missing abs() in returnAct() and setAutoJump() breaks leftward jump velocity"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Wrong animation state (ground vs air) for remote players charging skills; wrong Y-axis snapping in updateSkillStand; misaligned ice tile check.",
+      "location": "Char.cs:2056, 2092, 3513-3516",
+      "root_cause": "1) update() L2092 checks `TileMap.tileTypeAt(myCharz().cx, myCharz().cy, 2)` instead of `this.cx, this.cy` for all charging characters. 2) updateSkillStand() L3513-3516 calls `TileMap.tileXofPixel(cy + 3)` on a Y coordinate instead of `tileYofPixel`. 3) isFreez L2056 passes tile indices (`cx / TileMap.size, cy / TileMap.size`) to `TileMap.tileTypeAt` which expects pixel coordinates elsewhere.",
+      "severity": "P2",
+      "title": "Coordinate and entity-reference bugs in charging, skill stand, and freeze physics"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Crash (IndexOutOfRangeException / NullReferenceException / FormatException) on invalid item index, malformed danhHieu data, or maps with >127 waypoints.",
+      "location": "Char.cs:1635-1652, 1690, 1717, 1747, 1954-1956",
+      "root_cause": "useItem() accesses `arrItemBag[indexUI]` and `arrItemBody[item.template.type]` without bounds/null checks; danhHieuEff calls `short.Parse` without validation/try-catch; waypoint loops use `sbyte b` up to `TileMap.vGo.size()`.",
+      "severity": "P2",
+      "title": "Unchecked array indexing, unguarded parsing, and sbyte loop counter overflow"
+    },
+    {
+      "category": "security_dupe",
+      "impact": "Client-side cooldown check can be bypassed if system clock moves backward; item stacking lacks overflow caps.",
+      "location": "Char.cs:5181-5184, 5348-5351, 1548, 1603",
+      "root_cause": "setSkillPaint() and sendUseChargeSkill() use wall-clock `mSystem.currentTimeMillis()` and explicitly reset `lastTimeUseThisSkill = num - coolDown` whenever `num < lastTimeUseThisSkill`. bagSort()/boxSort() merge `item2.quantity += item3.quantity` without max cap checks.",
+      "severity": "P3",
+      "title": "Client skill cooldown bypass on clock rollback and uncapped client quantity merge"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Possible integer overflow/truncation for high-level/high-stat servers if cPower, exp, or currency exceeds Int32.MaxValue.",
+      "location": "Char.cs:121, 247-253, 367, 1316",
+      "root_cause": "Mixed numeric widths: cPower/cHPFull/cMPFull/cDamFull/xu/xuInBox are `long`, while exp, cMaxEXP, yen, gold_lock, luong, luongKhoa are `int`, and applyCharLevelPercent() casts `(int)(num2 * 10000 / num)`.",
+      "severity": "P3",
+      "title": "Inconsistent int vs long types for currencies, EXP, and level percent calculation"
+    }
+  ],
+  "key_classes": [
+    {
+      "key_methods": [
+        "update (L1814-3029)",
+        "paint (L5701-5806)",
+        "setSkillPaint (L5120-5312)",
+        "updateSkillPaint (L3163-3361)",
+        "setAttack (L5551-5649)",
+        "updateMount / paintMount1 / paintMount2 (L4556-4937)",
+        "bagSort / boxSort / useItem (L1523-1668)",
+        "updateCharStand / updateCharRun / updateCharJump / updateCharFall / updateCharFly (L3707-4513)",
+        "applyCharLevelPercent / taskAction / myCharz (L1298-1521)"
+      ],
+      "name": "Char",
+      "path": "Client/Client/Assets/Scripts/Game1/Char.cs",
+      "responsibility": "Core client entity class representing player, remote players, and pets: holds stats, equipment/bag/box arrays, skill list, movement/physics state machine, mounts, effects, and rendering."
+    }
+  ],
+  "module_summary": "Read lines 1-5853 of Client/Client/Assets/Scripts/Game1/Char.cs (Unity C# client). Char is a monolithic God class implementing IMapObject that manages character stats, inventory/equipment helpers, task hints, tile-based movement physics, skill casting/charging/cooldowns, mount logic, status effects, and frame rendering. Key issues observed include heavy per-frame GC allocations/string concats and synchronous disk/texture I/O in update()/paint(), duplicated inventory/waypoint/mount methods with dead branches, coordinate/reference bugs in remote player physics/charging, unguarded array/parse operations, and mixed int/long numeric types.",
+  "protocol_touchpoints": [
+    {
+      "direction": "DISPATCH",
+      "location": "Char.cs:2476, 2495, 2519, 2958, 3414, 3442, 3959, 3971, 4096, 4158, 4187, 4191, 4300, 4305, 4495, 4511",
+      "opcode": "Service.gI().charMove()",
+      "payload_summary": "Sends local player cx, cy, cdir movement sync to server on move deltas, landing, reset point, and waypoint entry."
+    },
+    {
+      "direction": "DISPATCH",
+      "location": "Char.cs:2479, 4100",
+      "opcode": "Service.gI().getMapOffline()",
+      "payload_summary": "Requests offline training map transition when entering waypoint in training map."
+    },
+    {
+      "direction": "DISPATCH",
+      "location": "Char.cs:2484, 4104",
+      "opcode": "Service.gI().requestChangeMap()",
+      "payload_summary": "Requests map change when entering standard waypoint."
+    },
+    {
+      "direction": "DISPATCH",
+      "location": "Char.cs:2195, 2992, 3394, 3536, 3896, 4018, 5216-5280, 5404-5427",
+      "opcode": "Service.gI().skill_not_focus(sbyte)",
+      "payload_summary": "Dispatches non-target skill states (0=TDHS, 1=start Taitaonangluong, 2=tick heal, 3=stop charge, 4=charge skill, 6=monkey, 7=huyt sao, 8=de trung, 9=shield/khien, 10=tu sat/mafuba)."
+    },
+    {
+      "direction": "DISPATCH",
+      "location": "Char.cs:4682",
+      "opcode": "Service.gI().requestModTemplate(50)",
+      "payload_summary": "Requests mob template 50 data from server for special mount rendering when local asset is missing."
+    },
+    {
+      "direction": "DISPATCH",
+      "location": "Char.cs:5605",
+      "opcode": "Service.gI().sendPlayerAttack(MyVector vMob, MyVector vChar, int type)",
+      "payload_summary": "Dispatches target mobs/players and attack type (0=none, 1=mob, 2=char) at skill release frame."
+    }
+  ]
+}

@@ -1,0 +1,3419 @@
+{
+  "total_opcodes_observed": 205,
+  "network_opcodes_constants": 33,
+  "anomalies_count": 71,
+  "matrix": [
+    {
+      "opcode": -128,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 5,
+      "server_senders_sample": [
+        "src/services/Service.java:1641",
+        "src/services/Service.java:1659",
+        "src/services/Service.java:1677",
+        "src/services/Service.java:1708",
+        "src/services/Service.java:1732"
+      ],
+      "client_handlers": [
+        "Client/Controller2.cs:14"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -127,
+      "const_names": [],
+      "server_handlers": [
+        "src/server/Controller.java:288"
+      ],
+      "server_senders_count": 3,
+      "server_senders_sample": [
+        "src/services/func/LuckyRound.java:38",
+        "src/services/func/LuckyRound.java:60",
+        "src/services/func/LuckyRound.java:171"
+      ],
+      "client_handlers": [
+        "Client/Controller2.cs:227"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -126,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 0,
+      "server_senders_sample": [],
+      "client_handlers": [
+        "Client/Controller2.cs:230"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -125,
+      "const_names": [],
+      "server_handlers": [
+        "src/server/Controller.java:293"
+      ],
+      "server_senders_count": 1,
+      "server_senders_sample": [
+        "src/services/func/Input.java:767"
+      ],
+      "client_handlers": [
+        "Client/Controller2.cs:792"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -124,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 14,
+      "server_senders_sample": [
+        "src/services/EffectSkillService.java:58",
+        "src/services/EffectSkillService.java:78",
+        "src/services/map/ChangeMapService.java:657",
+        "src/services/map/ChangeMapService.java:700",
+        "src/services/map/ChangeMapService.java:717"
+      ],
+      "client_handlers": [
+        "Client/Controller2.cs:587"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -123,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 0,
+      "server_senders_sample": [],
+      "client_handlers": [
+        "Client/Controller2.cs:465"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -122,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 1,
+      "server_senders_sample": [
+        "src/models/npc/mabu/MabuEgg.java:38"
+      ],
+      "client_handlers": [
+        "Client/Controller2.cs:247"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -121,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 0,
+      "server_senders_sample": [],
+      "client_handlers": [
+        "Client/Controller2.cs:415"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -120,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 0,
+      "server_senders_sample": [],
+      "client_handlers": [
+        "Client/Controller2.cs:408"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -119,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 1,
+      "server_senders_sample": [
+        "src/services/Service.java:2166"
+      ],
+      "client_handlers": [
+        "Client/Controller2.cs:474"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -118,
+      "const_names": [],
+      "server_handlers": [
+        "src/server/Controller.java:832"
+      ],
+      "server_senders_count": 0,
+      "server_senders_sample": [],
+      "client_handlers": [],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -117,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 2,
+      "server_senders_sample": [
+        "src/services/Service.java:1887",
+        "src/models/npc/mabu/MabuEgg.java:121"
+      ],
+      "client_handlers": [
+        "Client/Controller2.cs:477"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -116,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 1,
+      "server_senders_sample": [
+        "src/services/ItemTimeService.java:186"
+      ],
+      "client_handlers": [
+        "Client/Controller2.cs:489"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -115,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 2,
+      "server_senders_sample": [
+        "src/services/Service.java:1853",
+        "src/services/Service.java:1870"
+      ],
+      "client_handlers": [
+        "Client/Controller2.cs:493"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -114,
+      "const_names": [],
+      "server_handlers": [
+        "src/server/Controller.java:871"
+      ],
+      "server_senders_count": 0,
+      "server_senders_sample": [],
+      "client_handlers": [],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -113,
+      "const_names": [],
+      "server_handlers": [
+        "src/server/Controller.java:435"
+      ],
+      "server_senders_count": 0,
+      "server_senders_sample": [],
+      "client_handlers": [
+        "Client/Controller2.cs:496"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -112,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 4,
+      "server_senders_sample": [
+        "src/services/EffectSkillService.java:174",
+        "src/services/Service.java:1767",
+        "src/services/map/ChangeMapService.java:709",
+        "src/models/mob/MobEffectSkill.java:155"
+      ],
+      "client_handlers": [
+        "Client/Controller.cs:814"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -111,
+      "const_names": [],
+      "server_handlers": [
+        "src/server/Controller.java:798"
+      ],
+      "server_senders_count": 0,
+      "server_senders_sample": [],
+      "client_handlers": [
+        "Client/Controller2.cs:509"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -110,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 0,
+      "server_senders_sample": [],
+      "client_handlers": [
+        "Client/Controller2.cs:818"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -109,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 1,
+      "server_senders_sample": [
+        "src/services/Service.java:1261"
+      ],
+      "client_handlers": [],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": [
+        "SERVER_SENDS_BUT_NO_CLIENT_HANDLER"
+      ]
+    },
+    {
+      "opcode": -108,
+      "const_names": [],
+      "server_handlers": [
+        "src/server/Controller.java:369"
+      ],
+      "server_senders_count": 0,
+      "server_senders_sample": [],
+      "client_handlers": [],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -107,
+      "const_names": [],
+      "server_handlers": [
+        "src/server/Controller.java:363"
+      ],
+      "server_senders_count": 2,
+      "server_senders_sample": [
+        "src/services/Service.java:1296",
+        "src/services/Service.java:1560"
+      ],
+      "client_handlers": [
+        "Client/Controller.cs:1805"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -106,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 1,
+      "server_senders_sample": [
+        "src/services/ItemTimeService.java:296"
+      ],
+      "client_handlers": [
+        "Client/Controller2.cs:855"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -105,
+      "const_names": [],
+      "server_handlers": [
+        "src/server/Controller.java:248"
+      ],
+      "server_senders_count": 3,
+      "server_senders_sample": [
+        "src/services/Service.java:464",
+        "src/services/Service.java:479",
+        "src/services/map/ChangeMapService.java:935"
+      ],
+      "client_handlers": [
+        "Client/Controller2.cs:868"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -104,
+      "const_names": [],
+      "server_handlers": [
+        "src/server/Controller.java:827"
+      ],
+      "server_senders_count": 0,
+      "server_senders_sample": [],
+      "client_handlers": [],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -103,
+      "const_names": [],
+      "server_handlers": [
+        "src/server/Controller.java:450"
+      ],
+      "server_senders_count": 6,
+      "server_senders_sample": [
+        "src/services/Service.java:1055",
+        "src/services/Service.java:1086",
+        "src/services/Service.java:1093",
+        "src/services/Service.java:1102",
+        "src/services/Service.java:1109"
+      ],
+      "client_handlers": [
+        "Client/Controller2.cs:875"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -102,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 1,
+      "server_senders_sample": [
+        "src/services/Service.java:2273"
+      ],
+      "client_handlers": [
+        "Client/Controller2.cs:956"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -101,
+      "const_names": [],
+      "server_handlers": [
+        "src/server/Controller.java:447"
+      ],
+      "server_senders_count": 0,
+      "server_senders_sample": [],
+      "client_handlers": [
+        "Client/Controller2.cs:967"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -100,
+      "const_names": [],
+      "server_handlers": [
+        "src/server/Controller.java:99"
+      ],
+      "server_senders_count": 1,
+      "server_senders_sample": [
+        "src/services/ConsignShopService.java:177"
+      ],
+      "client_handlers": [
+        "Client/Controller2.cs:977"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -99,
+      "const_names": [],
+      "server_handlers": [
+        "src/server/Controller.java:327"
+      ],
+      "server_senders_count": 2,
+      "server_senders_sample": [
+        "src/services/Service.java:1449",
+        "src/services/player/FriendAndEnemyService.java:163"
+      ],
+      "client_handlers": [
+        "Client/Controller.cs:1103"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -98,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 0,
+      "server_senders_sample": [],
+      "client_handlers": [
+        "Client/Controller.cs:222"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -97,
+      "const_names": [
+        "UPDATE_NANG_DONG"
+      ],
+      "server_handlers": [],
+      "server_senders_count": 1,
+      "server_senders_sample": [
+        "src/services/Service.java:1594"
+      ],
+      "client_handlers": [
+        "Client/Controller.cs:232",
+        "PacketDispatcher(stats):55"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": [
+        "MULTIPLE_CLIENT_HANDLERS"
+      ]
+    },
+    {
+      "opcode": -96,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 4,
+      "server_senders_sample": [
+        "src/services/Service.java:2289",
+        "src/services/tournament/SuperRankService.java:100",
+        "src/models/tournament/whis_arena/WhisArenaService.java:737",
+        "src/managers/boss/BossManager.java:323"
+      ],
+      "client_handlers": [
+        "Client/Controller.cs:235"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -95,
+      "const_names": [
+        "MOB_ME_EVENT"
+      ],
+      "server_handlers": [],
+      "server_senders_count": 9,
+      "server_senders_sample": [
+        "src/services/map/ChangeMapService.java:667",
+        "src/services/map/ChangeMapService.java:676",
+        "src/services/map/ChangeMapService.java:791",
+        "src/models/mob/MobMe.java:70",
+        "src/models/mob/MobMe.java:87"
+      ],
+      "client_handlers": [
+        "Client/Controller.cs:287"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -94,
+      "const_names": [
+        "SKILL_COOLDOWN"
+      ],
+      "server_handlers": [],
+      "server_senders_count": 3,
+      "server_senders_sample": [
+        "src/services/Service.java:1174",
+        "src/services/Service.java:1193",
+        "src/services/Service.java:1228"
+      ],
+      "client_handlers": [
+        "Client/Controller.cs:268",
+        "PacketDispatcher(combat):73"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": [
+        "MULTIPLE_CLIENT_HANDLERS"
+      ]
+    },
+    {
+      "opcode": -93,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 1,
+      "server_senders_sample": [
+        "src/data/DataGame.java:370"
+      ],
+      "client_handlers": [
+        "Client/Controller.cs:1146"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -92,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 0,
+      "server_senders_sample": [],
+      "client_handlers": [
+        "Client/Controller.cs:530"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -91,
+      "const_names": [
+        "MAP_TRANS"
+      ],
+      "server_handlers": [
+        "src/server/Controller.java:710"
+      ],
+      "server_senders_count": 1,
+      "server_senders_sample": [
+        "src/services/map/ChangeMapService.java:66"
+      ],
+      "client_handlers": [
+        "Client/Controller.cs:543",
+        "PacketDispatcher(mapMove):70"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": [
+        "MULTIPLE_CLIENT_HANDLERS"
+      ]
+    },
+    {
+      "opcode": -90,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 2,
+      "server_senders_sample": [
+        "src/services/Service.java:892",
+        "src/services/Service.java:913"
+      ],
+      "client_handlers": [
+        "Client/Controller.cs:557"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -89,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 0,
+      "server_senders_sample": [],
+      "client_handlers": [
+        "Client/Controller2.cs:131"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -88,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 0,
+      "server_senders_sample": [],
+      "client_handlers": [
+        "Client/Controller.cs:654"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -87,
+      "const_names": [],
+      "server_handlers": [
+        "src/server/Controller.java:567"
+      ],
+      "server_senders_count": 1,
+      "server_senders_sample": [
+        "src/data/DataGame.java:140"
+      ],
+      "client_handlers": [
+        "Client/Controller.cs:658"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -86,
+      "const_names": [
+        "TRADE_ACTION"
+      ],
+      "server_handlers": [
+        "src/server/Controller.java:358",
+        "ServerPacketDispatcher(tradeHandler):32"
+      ],
+      "server_senders_count": 6,
+      "server_senders_sample": [
+        "src/services/func/Trade.java:76",
+        "src/services/func/Trade.java:81",
+        "src/services/func/Trade.java:182",
+        "src/services/func/Trade.java:251",
+        "src/services/func/Trade.java:317"
+      ],
+      "client_handlers": [
+        "Client/Controller.cs:681",
+        "PacketDispatcher(trade):64"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": [
+        "MULTIPLE_SERVER_HANDLERS",
+        "MULTIPLE_CLIENT_HANDLERS"
+      ]
+    },
+    {
+      "opcode": -85,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 0,
+      "server_senders_sample": [],
+      "client_handlers": [
+        "Client/Controller.cs:786"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -84,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 0,
+      "server_senders_sample": [],
+      "client_handlers": [
+        "Client/Controller.cs:829"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -83,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 2,
+      "server_senders_sample": [
+        "src/services/func/SummonDragon.java:268",
+        "src/services/func/SummonDragonNamek.java:104"
+      ],
+      "client_handlers": [
+        "Client/Controller.cs:846"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -82,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 1,
+      "server_senders_sample": [
+        "src/data/DataGame.java:526"
+      ],
+      "client_handlers": [
+        "Client/Controller.cs:909"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -81,
+      "const_names": [],
+      "server_handlers": [
+        "src/server/Controller.java:554"
+      ],
+      "server_senders_count": 31,
+      "server_senders_sample": [
+        "src/services/CombineService.java:381",
+        "src/services/CombineService.java:401",
+        "src/services/CombineService.java:464",
+        "src/services/CombineService.java:479",
+        "src/services/CombineService.java:494"
+      ],
+      "client_handlers": [
+        "Client/Controller.cs:932"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -80,
+      "const_names": [],
+      "server_handlers": [
+        "src/server/Controller.java:343"
+      ],
+      "server_senders_count": 2,
+      "server_senders_sample": [
+        "src/services/player/FriendAndEnemyService.java:138",
+        "src/services/player/FriendAndEnemyService.java:216"
+      ],
+      "client_handlers": [
+        "Client/Controller.cs:1039"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -79,
+      "const_names": [],
+      "server_handlers": [
+        "src/server/Controller.java:430"
+      ],
+      "server_senders_count": 1,
+      "server_senders_sample": [
+        "src/services/Service.java:1427"
+      ],
+      "client_handlers": [
+        "Client/Controller.cs:1133"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -78,
+      "const_names": [],
+      "server_handlers": [
+        "src/server/Controller.java:868"
+      ],
+      "server_senders_count": 0,
+      "server_senders_sample": [],
+      "client_handlers": [],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -77,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 1,
+      "server_senders_sample": [
+        "src/data/DataGame.java:478"
+      ],
+      "client_handlers": [
+        "Client/Controller.cs:1156"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -76,
+      "const_names": [],
+      "server_handlers": [
+        "src/server/Controller.java:876"
+      ],
+      "server_senders_count": 2,
+      "server_senders_sample": [
+        "src/services/AchievementService.java:27",
+        "src/services/AchievementService.java:65"
+      ],
+      "client_handlers": [
+        "Client/Controller.cs:1168"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -74,
+      "const_names": [],
+      "server_handlers": [
+        "src/server/Controller.java:544"
+      ],
+      "server_senders_count": 4,
+      "server_senders_sample": [
+        "src/data/DataGame.java:610",
+        "src/data/DataGame.java:626",
+        "src/data/DataGame.java:664",
+        "src/data/DataGame.java:686"
+      ],
+      "client_handlers": [
+        "Client/Controller.cs:1201"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -73,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 1,
+      "server_senders_sample": [
+        "src/services/Service.java:2154"
+      ],
+      "client_handlers": [],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": [
+        "SERVER_SENDS_BUT_NO_CLIENT_HANDLER"
+      ]
+    },
+    {
+      "opcode": -72,
+      "const_names": [],
+      "server_handlers": [
+        "src/server/Controller.java:338"
+      ],
+      "server_senders_count": 0,
+      "server_senders_sample": [],
+      "client_handlers": [],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -71,
+      "const_names": [],
+      "server_handlers": [
+        "src/server/Controller.java:421"
+      ],
+      "server_senders_count": 0,
+      "server_senders_sample": [],
+      "client_handlers": [],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -70,
+      "const_names": [
+        "TASK_UPDATE"
+      ],
+      "server_handlers": [],
+      "server_senders_count": 1,
+      "server_senders_sample": [
+        "src/services/Service.java:976"
+      ],
+      "client_handlers": [
+        "Client/Controller.cs:3541",
+        "PacketDispatcher(npc):58"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": [
+        "MULTIPLE_CLIENT_HANDLERS"
+      ]
+    },
+    {
+      "opcode": -69,
+      "const_names": [
+        "UPDATE_MP"
+      ],
+      "server_handlers": [],
+      "server_senders_count": 1,
+      "server_senders_sample": [
+        "src/services/player/PlayerService.java:223"
+      ],
+      "client_handlers": [
+        "Client/Controller.cs:2723",
+        "PacketDispatcher(stats):55"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": [
+        "MULTIPLE_CLIENT_HANDLERS"
+      ]
+    },
+    {
+      "opcode": -68,
+      "const_names": [
+        "UPDATE_EXP"
+      ],
+      "server_handlers": [],
+      "server_senders_count": 1,
+      "server_senders_sample": [
+        "src/services/player/PlayerService.java:211"
+      ],
+      "client_handlers": [
+        "Client/Controller.cs:2726",
+        "PacketDispatcher(stats):55"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": [
+        "MULTIPLE_CLIENT_HANDLERS"
+      ]
+    },
+    {
+      "opcode": -67,
+      "const_names": [],
+      "server_handlers": [
+        "src/server/Controller.java:570"
+      ],
+      "server_senders_count": 2,
+      "server_senders_sample": [
+        "src/data/DataGame.java:455",
+        "src/data/DataGame.java:461"
+      ],
+      "client_handlers": [
+        "Client/Controller.cs:2729"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -66,
+      "const_names": [],
+      "server_handlers": [
+        "src/server/Controller.java:577"
+      ],
+      "server_senders_count": 1,
+      "server_senders_sample": [
+        "src/data/DataGame.java:312"
+      ],
+      "client_handlers": [
+        "Client/Controller.cs:2784"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -65,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 1,
+      "server_senders_sample": [
+        "src/services/map/ChangeMapService.java:812"
+      ],
+      "client_handlers": [
+        "Client/Controller.cs:1377"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -64,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 1,
+      "server_senders_sample": [
+        "src/services/Service.java:926"
+      ],
+      "client_handlers": [
+        "Client/Controller.cs:1419"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -63,
+      "const_names": [],
+      "server_handlers": [
+        "src/server/Controller.java:601"
+      ],
+      "server_senders_count": 1,
+      "server_senders_sample": [
+        "src/services/FlagBagService.java:54"
+      ],
+      "client_handlers": [
+        "Client/Controller.cs:1447"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -62,
+      "const_names": [],
+      "server_handlers": [
+        "src/server/Controller.java:596"
+      ],
+      "server_senders_count": 1,
+      "server_senders_sample": [
+        "src/services/FlagBagService.java:35"
+      ],
+      "client_handlers": [
+        "Client/Controller.cs:1351"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -61,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 1,
+      "server_senders_sample": [
+        "src/services/player/ClanService.java:745"
+      ],
+      "client_handlers": [
+        "Client/Controller.cs:1726"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -60,
+      "const_names": [],
+      "server_handlers": [
+        "src/server/Controller.java:780"
+      ],
+      "server_senders_count": 3,
+      "server_senders_sample": [
+        "src/services/SkillService.java:864",
+        "src/services/SkillService.java:1062",
+        "src/models/boss/boss_list/SuperDivineWater/Pocolo.java:149"
+      ],
+      "client_handlers": [
+        "Client/Controller.cs:3864"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -59,
+      "const_names": [],
+      "server_handlers": [
+        "src/server/Controller.java:348"
+      ],
+      "server_senders_count": 2,
+      "server_senders_sample": [
+        "src/models/matches/PVPService.java:141",
+        "src/models/matches/PVPService.java:173"
+      ],
+      "client_handlers": [
+        "Client/Controller.cs:1345"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -57,
+      "const_names": [],
+      "server_handlers": [
+        "src/server/Controller.java:679"
+      ],
+      "server_senders_count": 1,
+      "server_senders_sample": [
+        "src/services/player/ClanService.java:309"
+      ],
+      "client_handlers": [
+        "Client/Controller.cs:1466"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -56,
+      "const_names": [],
+      "server_handlers": [
+        "src/server/Controller.java:664"
+      ],
+      "server_senders_count": 0,
+      "server_senders_sample": [],
+      "client_handlers": [],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -55,
+      "const_names": [],
+      "server_handlers": [
+        "src/server/Controller.java:674"
+      ],
+      "server_senders_count": 0,
+      "server_senders_sample": [],
+      "client_handlers": [],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -54,
+      "const_names": [],
+      "server_handlers": [
+        "src/server/Controller.java:649"
+      ],
+      "server_senders_count": 0,
+      "server_senders_sample": [],
+      "client_handlers": [],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -53,
+      "const_names": [
+        "CLAN_INFO"
+      ],
+      "server_handlers": [],
+      "server_senders_count": 1,
+      "server_senders_sample": [
+        "src/services/player/ClanService.java:677"
+      ],
+      "client_handlers": [
+        "Client/Controller.cs:1482",
+        "PacketDispatcher(clan):61"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": [
+        "MULTIPLE_CLIENT_HANDLERS"
+      ]
+    },
+    {
+      "opcode": -52,
+      "const_names": [
+        "CLAN_UPDATE"
+      ],
+      "server_handlers": [],
+      "server_senders_count": 0,
+      "server_senders_sample": [],
+      "client_handlers": [
+        "Client/Controller.cs:1558",
+        "PacketDispatcher(clan):61"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": [
+        "MULTIPLE_CLIENT_HANDLERS"
+      ]
+    },
+    {
+      "opcode": -51,
+      "const_names": [
+        "CLAN_MESSAGE"
+      ],
+      "server_handlers": [
+        "src/server/Controller.java:644"
+      ],
+      "server_senders_count": 1,
+      "server_senders_sample": [
+        "src/models/clan/Clan.java:147"
+      ],
+      "client_handlers": [
+        "Client/Controller.cs:1474",
+        "PacketDispatcher(clan):61"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": [
+        "MULTIPLE_CLIENT_HANDLERS"
+      ]
+    },
+    {
+      "opcode": -50,
+      "const_names": [
+        "CLAN_MEMBER"
+      ],
+      "server_handlers": [
+        "src/server/Controller.java:659"
+      ],
+      "server_senders_count": 1,
+      "server_senders_sample": [
+        "src/services/player/ClanService.java:646"
+      ],
+      "client_handlers": [
+        "Client/Controller.cs:1623",
+        "PacketDispatcher(clan):61"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": [
+        "MULTIPLE_CLIENT_HANDLERS"
+      ]
+    },
+    {
+      "opcode": -49,
+      "const_names": [],
+      "server_handlers": [
+        "src/server/Controller.java:654"
+      ],
+      "server_senders_count": 0,
+      "server_senders_sample": [],
+      "client_handlers": [],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -47,
+      "const_names": [
+        "CLAN_SEARCH"
+      ],
+      "server_handlers": [
+        "src/server/Controller.java:669"
+      ],
+      "server_senders_count": 1,
+      "server_senders_sample": [
+        "src/services/player/ClanService.java:619"
+      ],
+      "client_handlers": [
+        "Client/Controller.cs:1652",
+        "PacketDispatcher(clan):61"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": [
+        "MULTIPLE_CLIENT_HANDLERS"
+      ]
+    },
+    {
+      "opcode": -46,
+      "const_names": [
+        "CLAN_CREATE_INFO"
+      ],
+      "server_handlers": [
+        "src/server/Controller.java:639"
+      ],
+      "server_senders_count": 1,
+      "server_senders_sample": [
+        "src/services/FlagBagService.java:71"
+      ],
+      "client_handlers": [
+        "Client/Controller.cs:1689",
+        "PacketDispatcher(clan):61"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": [
+        "MULTIPLE_CLIENT_HANDLERS"
+      ]
+    },
+    {
+      "opcode": -45,
+      "const_names": [],
+      "server_handlers": [
+        "src/server/Controller.java:625"
+      ],
+      "server_senders_count": 13,
+      "server_senders_sample": [
+        "src/services/EffectSkillService.java:44",
+        "src/services/EffectSkillService.java:592",
+        "src/services/EffectSkillService.java:632",
+        "src/services/EffectSkillService.java:645",
+        "src/services/EffectSkillService.java:659"
+      ],
+      "client_handlers": [
+        "Client/Controller.cs:2109"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -44,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 6,
+      "server_senders_sample": [
+        "src/services/ConsignShopService.java:651",
+        "src/services/ShopService.java:187",
+        "src/services/ShopService.java:262",
+        "src/services/ShopService.java:299",
+        "src/services/ShopService.java:375"
+      ],
+      "client_handlers": [
+        "Client/Controller.cs:2416"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -43,
+      "const_names": [],
+      "server_handlers": [
+        "src/server/Controller.java:696"
+      ],
+      "server_senders_count": 4,
+      "server_senders_sample": [
+        "src/services/func/UseItem.java:135",
+        "src/services/func/UseItem.java:151",
+        "src/services/func/UseItem.java:159",
+        "src/services/func/UseItem.java:195"
+      ],
+      "client_handlers": [
+        "Client/Controller.cs:1336"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -42,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 1,
+      "server_senders_sample": [
+        "src/services/Service.java:500"
+      ],
+      "client_handlers": [
+        "Client/Controller.cs:1746"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -41,
+      "const_names": [],
+      "server_handlers": [
+        "src/server/Controller.java:693"
+      ],
+      "server_senders_count": 1,
+      "server_senders_sample": [
+        "src/services/Service.java:1545"
+      ],
+      "client_handlers": [
+        "Client/Controller.cs:2586"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -40,
+      "const_names": [],
+      "server_handlers": [
+        "src/server/Controller.java:684"
+      ],
+      "server_senders_count": 0,
+      "server_senders_sample": [],
+      "client_handlers": [],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -39,
+      "const_names": [],
+      "server_handlers": [
+        "src/server/Controller.java:722"
+      ],
+      "server_senders_count": 0,
+      "server_senders_sample": [],
+      "client_handlers": [],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -38,
+      "const_names": [],
+      "server_handlers": [
+        "src/server/Controller.java:861"
+      ],
+      "server_senders_count": 0,
+      "server_senders_sample": [],
+      "client_handlers": [],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -37,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 1,
+      "server_senders_sample": [
+        "src/services/player/InventoryService.java:669"
+      ],
+      "client_handlers": [
+        "Client/Controller.cs:1898"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -36,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 1,
+      "server_senders_sample": [
+        "src/services/player/InventoryService.java:637"
+      ],
+      "client_handlers": [
+        "Client/Controller.cs:1957"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -35,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 2,
+      "server_senders_sample": [
+        "src/services/player/InventoryService.java:701",
+        "src/services/player/InventoryService.java:729"
+      ],
+      "client_handlers": [
+        "Client/Controller.cs:2041"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -34,
+      "const_names": [],
+      "server_handlers": [
+        "src/server/Controller.java:307"
+      ],
+      "server_senders_count": 3,
+      "server_senders_sample": [
+        "src/models/npc/mabu/MagicTree.java:120",
+        "src/models/npc/mabu/MagicTree.java:152",
+        "src/models/npc/mabu/MagicTree.java:193"
+      ],
+      "client_handlers": [
+        "Client/Controller.cs:2598"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -33,
+      "const_names": [],
+      "server_handlers": [
+        "src/server/Controller.java:618"
+      ],
+      "server_senders_count": 0,
+      "server_senders_sample": [],
+      "client_handlers": [],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -32,
+      "const_names": [],
+      "server_handlers": [
+        "src/server/Controller.java:608"
+      ],
+      "server_senders_count": 1,
+      "server_senders_sample": [
+        "src/data/DataGame.java:402"
+      ],
+      "client_handlers": [
+        "Client/Controller.cs:2819"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -31,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 1,
+      "server_senders_sample": [
+        "src/data/DataGame.java:419"
+      ],
+      "client_handlers": [
+        "Client/Controller.cs:3709"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -30,
+      "const_names": [],
+      "server_handlers": [
+        "src/server/Controller.java:813"
+      ],
+      "server_senders_count": 4,
+      "server_senders_sample": [
+        "src/services/Service.java:666",
+        "src/services/Service.java:1787",
+        "src/services/Service.java:1807",
+        "src/services/Service.java:1812"
+      ],
+      "client_handlers": [
+        "Client/Controller.cs:3094"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -29,
+      "const_names": [],
+      "server_handlers": [
+        "src/server/Controller.java:810"
+      ],
+      "server_senders_count": 2,
+      "server_senders_sample": [
+        "src/data/DataGame.java:699",
+        "src/services/Service.java:654"
+      ],
+      "client_handlers": [
+        "Client/Controller.cs:3088"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -28,
+      "const_names": [],
+      "server_handlers": [
+        "src/server/Controller.java:807"
+      ],
+      "server_senders_count": 7,
+      "server_senders_sample": [
+        "src/data/DataGame.java:206",
+        "src/data/DataGame.java:547",
+        "src/data/ItemData.java:81",
+        "src/data/ItemData.java:99",
+        "src/data/ItemData.java:120"
+      ],
+      "client_handlers": [
+        "Client/Controller.cs:3091"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -27,
+      "const_names": [],
+      "server_handlers": [
+        "src/server/Controller.java:794"
+      ],
+      "server_senders_count": 0,
+      "server_senders_sample": [],
+      "client_handlers": [],
+      "client_senders_count": 2,
+      "client_senders_sample": [
+        "Client/Client/Assets/Scripts/Game1/Session_ME.cs:383",
+        "Client/Client/Assets/Scripts/Game1/Session_ME2.cs:363"
+      ],
+      "flags": []
+    },
+    {
+      "opcode": -26,
+      "const_names": [
+        "LOGOUT"
+      ],
+      "server_handlers": [],
+      "server_senders_count": 3,
+      "server_senders_sample": [
+        "src/services/Service.java:942",
+        "src/services/Service.java:954",
+        "src/services/Service.java:2373"
+      ],
+      "client_handlers": [
+        "Client/Controller.cs:2892",
+        "PacketDispatcher(auth):52"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": [
+        "MULTIPLE_CLIENT_HANDLERS"
+      ]
+    },
+    {
+      "opcode": -25,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 5,
+      "server_senders_sample": [
+        "src/services/Service.java:965",
+        "src/services/Service.java:994",
+        "src/services/Service.java:2358",
+        "src/services/func/SummonDragon.java:342",
+        "src/services/func/SummonDragonNamek.java:124"
+      ],
+      "client_handlers": [
+        "Client/Controller.cs:2904"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -24,
+      "const_names": [
+        "MAP_INFO"
+      ],
+      "server_handlers": [],
+      "server_senders_count": 1,
+      "server_senders_sample": [
+        "src/models/map/Zone.java:775"
+      ],
+      "client_handlers": [
+        "Client/Controller.cs:3662"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -23,
+      "const_names": [],
+      "server_handlers": [
+        "src/server/Controller.java:619"
+      ],
+      "server_senders_count": 0,
+      "server_senders_sample": [],
+      "client_handlers": [],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -22,
+      "const_names": [
+        "CHANGE_MAP_PREPARE"
+      ],
+      "server_handlers": [],
+      "server_senders_count": 1,
+      "server_senders_sample": [
+        "src/services/Service.java:411"
+      ],
+      "client_handlers": [
+        "Client/Controller.cs:3517",
+        "PacketDispatcher(mapMove):70"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": [
+        "MULTIPLE_CLIENT_HANDLERS"
+      ]
+    },
+    {
+      "opcode": -21,
+      "const_names": [
+        "ITEM_MAP_REMOVE"
+      ],
+      "server_handlers": [],
+      "server_senders_count": 1,
+      "server_senders_sample": [
+        "src/services/map/ItemMapService.java:39"
+      ],
+      "client_handlers": [
+        "Client/Controller.cs:3340",
+        "PacketDispatcher(item):67"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": [
+        "MULTIPLE_CLIENT_HANDLERS"
+      ]
+    },
+    {
+      "opcode": -20,
+      "const_names": [
+        "ITEM_MAP_PICK"
+      ],
+      "server_handlers": [
+        "src/server/Controller.java:801",
+        "ServerPacketDispatcher(itemHandler):35"
+      ],
+      "server_senders_count": 1,
+      "server_senders_sample": [
+        "src/models/map/Zone.java:481"
+      ],
+      "client_handlers": [
+        "Client/Controller.cs:3354",
+        "PacketDispatcher(item):67"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": [
+        "MULTIPLE_SERVER_HANDLERS",
+        "MULTIPLE_CLIENT_HANDLERS"
+      ]
+    },
+    {
+      "opcode": -19,
+      "const_names": [
+        "ITEM_MAP_OTHER_PICK"
+      ],
+      "server_handlers": [],
+      "server_senders_count": 1,
+      "server_senders_sample": [
+        "src/services/Service.java:1042"
+      ],
+      "client_handlers": [
+        "Client/Controller.cs:3430",
+        "PacketDispatcher(item):67"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": [
+        "MULTIPLE_CLIENT_HANDLERS"
+      ]
+    },
+    {
+      "opcode": -18,
+      "const_names": [
+        "ITEM_MAP_DROP"
+      ],
+      "server_handlers": [],
+      "server_senders_count": 0,
+      "server_senders_sample": [],
+      "client_handlers": [
+        "Client/Controller.cs:3459",
+        "PacketDispatcher(item):67"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": [
+        "MULTIPLE_CLIENT_HANDLERS"
+      ]
+    },
+    {
+      "opcode": -17,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 1,
+      "server_senders_sample": [
+        "src/services/Service.java:839"
+      ],
+      "client_handlers": [],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": [
+        "SERVER_SENDS_BUT_NO_CLIENT_HANDLER"
+      ]
+    },
+    {
+      "opcode": -16,
+      "const_names": [],
+      "server_handlers": [
+        "src/server/Controller.java:822"
+      ],
+      "server_senders_count": 1,
+      "server_senders_sample": [
+        "src/services/Service.java:808"
+      ],
+      "client_handlers": [],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": [
+        "SERVER_SENDS_BUT_NO_CLIENT_HANDLER"
+      ]
+    },
+    {
+      "opcode": -15,
+      "const_names": [],
+      "server_handlers": [
+        "src/server/Controller.java:816"
+      ],
+      "server_senders_count": 0,
+      "server_senders_sample": [],
+      "client_handlers": [],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -14,
+      "const_names": [
+        "ITEM_MAP_OTHER_DROP"
+      ],
+      "server_handlers": [],
+      "server_senders_count": 0,
+      "server_senders_sample": [],
+      "client_handlers": [
+        "Client/Controller.cs:3508",
+        "PacketDispatcher(item):67"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": [
+        "MULTIPLE_CLIENT_HANDLERS"
+      ]
+    },
+    {
+      "opcode": -13,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 3,
+      "server_senders_sample": [
+        "src/models/mob/Mob.java:500",
+        "src/models/mob/Mob.java:1182",
+        "src/models/mob/Mob.java:1202"
+      ],
+      "client_handlers": [],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": [
+        "SERVER_SENDS_BUT_NO_CLIENT_HANDLER"
+      ]
+    },
+    {
+      "opcode": -12,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 2,
+      "server_senders_sample": [
+        "src/models/mob/Mob.java:561",
+        "src/models/mob/Mob.java:1325"
+      ],
+      "client_handlers": [],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": [
+        "SERVER_SENDS_BUT_NO_CLIENT_HANDLER"
+      ]
+    },
+    {
+      "opcode": -11,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 1,
+      "server_senders_sample": [
+        "src/models/mob/Mob.java:445"
+      ],
+      "client_handlers": [],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": [
+        "SERVER_SENDS_BUT_NO_CLIENT_HANDLER"
+      ]
+    },
+    {
+      "opcode": -10,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 1,
+      "server_senders_sample": [
+        "src/models/mob/Mob.java:462"
+      ],
+      "client_handlers": [],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": [
+        "SERVER_SENDS_BUT_NO_CLIENT_HANDLER"
+      ]
+    },
+    {
+      "opcode": -9,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 4,
+      "server_senders_sample": [
+        "src/models/mob/Mob.java:521",
+        "src/models/mob/Mob.java:541",
+        "src/models/mob/Mob.java:1161",
+        "src/models/mob/bigboss_list/Hirudegarn.java:260"
+      ],
+      "client_handlers": [],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": [
+        "SERVER_SENDS_BUT_NO_CLIENT_HANDLER"
+      ]
+    },
+    {
+      "opcode": -8,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 2,
+      "server_senders_sample": [
+        "src/services/Service.java:848",
+        "src/models/map/Zone.java:759"
+      ],
+      "client_handlers": [],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": [
+        "SERVER_SENDS_BUT_NO_CLIENT_HANDLER"
+      ]
+    },
+    {
+      "opcode": -7,
+      "const_names": [],
+      "server_handlers": [
+        "src/server/Controller.java:461"
+      ],
+      "server_senders_count": 1,
+      "server_senders_sample": [
+        "src/services/map/MapService.java:481"
+      ],
+      "client_handlers": [],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": [
+        "SERVER_SENDS_BUT_NO_CLIENT_HANDLER"
+      ]
+    },
+    {
+      "opcode": -6,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 3,
+      "server_senders_sample": [
+        "src/services/Service.java:1841",
+        "src/services/map/ChangeMapService.java:878",
+        "src/models/boss/boss_list/Training/TrainingBoss.java:222"
+      ],
+      "client_handlers": [],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": [
+        "SERVER_SENDS_BUT_NO_CLIENT_HANDLER"
+      ]
+    },
+    {
+      "opcode": -5,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 1,
+      "server_senders_sample": [
+        "src/models/map/Zone.java:682"
+      ],
+      "client_handlers": [],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": [
+        "SERVER_SENDS_BUT_NO_CLIENT_HANDLER"
+      ]
+    },
+    {
+      "opcode": -4,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 0,
+      "server_senders_sample": [],
+      "client_handlers": [
+        "Client/Controller.cs:3734"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": -3,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 1,
+      "server_senders_sample": [
+        "src/services/player/PlayerService.java:40"
+      ],
+      "client_handlers": [],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": [
+        "SERVER_SENDS_BUT_NO_CLIENT_HANDLER"
+      ]
+    },
+    {
+      "opcode": 0,
+      "const_names": [
+        "LOGIN"
+      ],
+      "server_handlers": [],
+      "server_senders_count": 0,
+      "server_senders_sample": [],
+      "client_handlers": [
+        "Client/Controller.cs:139"
+      ],
+      "client_senders_count": 1,
+      "client_senders_sample": [
+        "Client/Client/Assets/Scripts/Game1/Service.cs:262"
+      ],
+      "flags": [
+        "CLIENT_SENDS_BUT_NO_SERVER_HANDLER"
+      ]
+    },
+    {
+      "opcode": 1,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 0,
+      "server_senders_sample": [],
+      "client_handlers": [
+        "Client/Controller.cs:1778"
+      ],
+      "client_senders_count": 1,
+      "client_senders_sample": [
+        "Client/Client/Assets/Scripts/Game1/Service.cs:283"
+      ],
+      "flags": [
+        "CLIENT_SENDS_BUT_NO_SERVER_HANDLER"
+      ]
+    },
+    {
+      "opcode": 2,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 1,
+      "server_senders_sample": [
+        "src/services/Service.java:1535"
+      ],
+      "client_handlers": [
+        "Client/Controller.cs:1793"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": 6,
+      "const_names": [
+        "UPDATE_HP"
+      ],
+      "server_handlers": [
+        "src/server/Controller.java:374"
+      ],
+      "server_senders_count": 1,
+      "server_senders_sample": [
+        "src/services/Service.java:1023"
+      ],
+      "client_handlers": [
+        "Client/Controller.cs:3652",
+        "PacketDispatcher(stats):55"
+      ],
+      "client_senders_count": 1,
+      "client_senders_sample": [
+        "Client/Client/Assets/Scripts/Game1/Service.cs:1187"
+      ],
+      "flags": [
+        "MULTIPLE_CLIENT_HANDLERS"
+      ]
+    },
+    {
+      "opcode": 7,
+      "const_names": [],
+      "server_handlers": [
+        "src/server/Controller.java:395"
+      ],
+      "server_senders_count": 1,
+      "server_senders_sample": [
+        "src/services/ShopService.java:911"
+      ],
+      "client_handlers": [
+        "Client/Controller.cs:3644"
+      ],
+      "client_senders_count": 1,
+      "client_senders_sample": [
+        "Client/Client/Assets/Scripts/Game1/Service.cs:1166"
+      ],
+      "flags": []
+    },
+    {
+      "opcode": 11,
+      "const_names": [],
+      "server_handlers": [
+        "src/server/Controller.java:727"
+      ],
+      "server_senders_count": 1,
+      "server_senders_sample": [
+        "src/data/DataGame.java:507"
+      ],
+      "client_handlers": [
+        "Client/Controller.cs:2657"
+      ],
+      "client_senders_count": 1,
+      "client_senders_sample": [
+        "Client/Client/Assets/Scripts/Game1/Service.cs:1049"
+      ],
+      "flags": []
+    },
+    {
+      "opcode": 13,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 0,
+      "server_senders_sample": [],
+      "client_handlers": [],
+      "client_senders_count": 1,
+      "client_senders_sample": [
+        "Client/Client/Assets/Scripts/Game1/Service.cs:1454"
+      ],
+      "flags": [
+        "CLIENT_SENDS_BUT_NO_SERVER_HANDLER"
+      ]
+    },
+    {
+      "opcode": 14,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 0,
+      "server_senders_sample": [],
+      "client_handlers": [],
+      "client_senders_count": 1,
+      "client_senders_sample": [
+        "Client/Client/Assets/Scripts/Game1/Service.cs:1426"
+      ],
+      "flags": [
+        "CLIENT_SENDS_BUT_NO_SERVER_HANDLER"
+      ]
+    },
+    {
+      "opcode": 16,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 0,
+      "server_senders_sample": [],
+      "client_handlers": [],
+      "client_senders_count": 1,
+      "client_senders_sample": [
+        "Client/Client/Assets/Scripts/Game1/Service.cs:2079"
+      ],
+      "flags": [
+        "CLIENT_SENDS_BUT_NO_SERVER_HANDLER"
+      ]
+    },
+    {
+      "opcode": 17,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 0,
+      "server_senders_sample": [],
+      "client_handlers": [],
+      "client_senders_count": 1,
+      "client_senders_sample": [
+        "Client/Client/Assets/Scripts/Game1/Service.cs:2098"
+      ],
+      "flags": [
+        "CLIENT_SENDS_BUT_NO_SERVER_HANDLER"
+      ]
+    },
+    {
+      "opcode": 18,
+      "const_names": [],
+      "server_handlers": [
+        "src/server/Controller.java:332"
+      ],
+      "server_senders_count": 0,
+      "server_senders_sample": [],
+      "client_handlers": [],
+      "client_senders_count": 2,
+      "client_senders_sample": [
+        "Client/Client/Assets/Scripts/Game1/Service.cs:39",
+        "Client/Client/Assets/Scripts/Game1/Service.cs:2055"
+      ],
+      "flags": []
+    },
+    {
+      "opcode": 20,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 0,
+      "server_senders_sample": [],
+      "client_handlers": [
+        "Client/Controller.cs:145"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": 21,
+      "const_names": [],
+      "server_handlers": [
+        "src/server/Controller.java:415"
+      ],
+      "server_senders_count": 0,
+      "server_senders_sample": [],
+      "client_handlers": [],
+      "client_senders_count": 1,
+      "client_senders_sample": [
+        "Client/Client/Assets/Scripts/Game1/Service.cs:922"
+      ],
+      "flags": []
+    },
+    {
+      "opcode": 22,
+      "const_names": [],
+      "server_handlers": [
+        "src/server/Controller.java:612"
+      ],
+      "server_senders_count": 0,
+      "server_senders_sample": [],
+      "client_handlers": [],
+      "client_senders_count": 1,
+      "client_senders_sample": [
+        "Client/Client/Assets/Scripts/Game1/Service.cs:1309"
+      ],
+      "flags": []
+    },
+    {
+      "opcode": 24,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 1,
+      "server_senders_sample": [
+        "src/services/Service.java:2136"
+      ],
+      "client_handlers": [
+        "Client/Controller.cs:142"
+      ],
+      "client_senders_count": 2,
+      "client_senders_sample": [
+        "Client/Client/Assets/Scripts/Game1/Service.cs:3199",
+        "Client/Client/Assets/Scripts/Game1/Service.cs:3270"
+      ],
+      "flags": [
+        "CLIENT_SENDS_BUT_NO_SERVER_HANDLER"
+      ]
+    },
+    {
+      "opcode": 27,
+      "const_names": [],
+      "server_handlers": [
+        "src/server/Controller.java:873"
+      ],
+      "server_senders_count": 0,
+      "server_senders_sample": [],
+      "client_handlers": [
+        "Client/Controller.cs:3180"
+      ],
+      "client_senders_count": 1,
+      "client_senders_sample": [
+        "Client/Client/Assets/Scripts/Game1/Service.cs:1330"
+      ],
+      "flags": []
+    },
+    {
+      "opcode": 29,
+      "const_names": [],
+      "server_handlers": [
+        "src/server/Controller.java:410"
+      ],
+      "server_senders_count": 1,
+      "server_senders_sample": [
+        "src/services/map/ChangeMapService.java:135"
+      ],
+      "client_handlers": [
+        "Client/Controller.cs:3336"
+      ],
+      "client_senders_count": 1,
+      "client_senders_sample": [
+        "Client/Client/Assets/Scripts/Game1/Service.cs:1250"
+      ],
+      "flags": []
+    },
+    {
+      "opcode": 31,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 3,
+      "server_senders_sample": [
+        "src/services/Service.java:139",
+        "src/services/Service.java:174",
+        "src/services/Service.java:214"
+      ],
+      "client_handlers": [
+        "Client/Controller2.cs:65"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": 32,
+      "const_names": [
+        "NPC_CHAT"
+      ],
+      "server_handlers": [
+        "src/server/Controller.java:740"
+      ],
+      "server_senders_count": 6,
+      "server_senders_sample": [
+        "src/services/map/NpcService.java:42",
+        "src/services/map/NpcService.java:128",
+        "src/models/npc/BaseMenu.java:18",
+        "src/models/npc/Npc.java:64",
+        "src/models/npc/Npc.java:83"
+      ],
+      "client_handlers": [
+        "Client/Controller.cs:3603",
+        "PacketDispatcher(npc):58"
+      ],
+      "client_senders_count": 1,
+      "client_senders_sample": [
+        "Client/Client/Assets/Scripts/Game1/Service.cs:1269"
+      ],
+      "flags": [
+        "MULTIPLE_CLIENT_HANDLERS"
+      ]
+    },
+    {
+      "opcode": 33,
+      "const_names": [],
+      "server_handlers": [
+        "src/server/Controller.java:747"
+      ],
+      "server_senders_count": 0,
+      "server_senders_sample": [],
+      "client_handlers": [
+        "Client/Controller.cs:3194"
+      ],
+      "client_senders_count": 1,
+      "client_senders_sample": [
+        "Client/Client/Assets/Scripts/Game1/Service.cs:1289"
+      ],
+      "flags": []
+    },
+    {
+      "opcode": 34,
+      "const_names": [],
+      "server_handlers": [
+        "src/server/Controller.java:753"
+      ],
+      "server_senders_count": 0,
+      "server_senders_sample": [],
+      "client_handlers": [],
+      "client_senders_count": 1,
+      "client_senders_sample": [
+        "Client/Client/Assets/Scripts/Game1/Service.cs:1212"
+      ],
+      "flags": []
+    },
+    {
+      "opcode": 35,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 0,
+      "server_senders_sample": [],
+      "client_handlers": [],
+      "client_senders_count": 1,
+      "client_senders_sample": [
+        "Client/Client/Assets/Scripts/Game1/Service.cs:1106"
+      ],
+      "flags": [
+        "CLIENT_SENDS_BUT_NO_SERVER_HANDLER"
+      ]
+    },
+    {
+      "opcode": 36,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 0,
+      "server_senders_sample": [],
+      "client_handlers": [],
+      "client_senders_count": 1,
+      "client_senders_sample": [
+        "Client/Client/Assets/Scripts/Game1/Service.cs:1864"
+      ],
+      "flags": [
+        "CLIENT_SENDS_BUT_NO_SERVER_HANDLER"
+      ]
+    },
+    {
+      "opcode": 37,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 0,
+      "server_senders_sample": [],
+      "client_handlers": [],
+      "client_senders_count": 1,
+      "client_senders_sample": [
+        "Client/Client/Assets/Scripts/Game1/Service.cs:1479"
+      ],
+      "flags": [
+        "CLIENT_SENDS_BUT_NO_SERVER_HANDLER"
+      ]
+    },
+    {
+      "opcode": 38,
+      "const_names": [
+        "NPC_MENU"
+      ],
+      "server_handlers": [],
+      "server_senders_count": 2,
+      "server_senders_sample": [
+        "src/services/map/NpcService.java:62",
+        "src/services/map/NpcService.java:77"
+      ],
+      "client_handlers": [
+        "Client/Controller.cs:3570",
+        "PacketDispatcher(npc):58"
+      ],
+      "client_senders_count": 1,
+      "client_senders_sample": [
+        "Client/Client/Assets/Scripts/Game1/Service.cs:1534"
+      ],
+      "flags": [
+        "CLIENT_SENDS_BUT_NO_SERVER_HANDLER",
+        "MULTIPLE_CLIENT_HANDLERS"
+      ]
+    },
+    {
+      "opcode": 39,
+      "const_names": [
+        "TRADE_ORDER"
+      ],
+      "server_handlers": [],
+      "server_senders_count": 0,
+      "server_senders_sample": [],
+      "client_handlers": [
+        "Client/Controller.cs:3133",
+        "PacketDispatcher(trade):64"
+      ],
+      "client_senders_count": 1,
+      "client_senders_sample": [
+        "Client/Client/Assets/Scripts/Game1/Service.cs:1516"
+      ],
+      "flags": [
+        "CLIENT_SENDS_BUT_NO_SERVER_HANDLER",
+        "MULTIPLE_CLIENT_HANDLERS"
+      ]
+    },
+    {
+      "opcode": 40,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 1,
+      "server_senders_sample": [
+        "src/services/TaskService.java:435"
+      ],
+      "client_handlers": [
+        "Client/Controller.cs:3225"
+      ],
+      "client_senders_count": 1,
+      "client_senders_sample": [
+        "Client/Client/Assets/Scripts/Game1/Service.cs:705"
+      ],
+      "flags": [
+        "CLIENT_SENDS_BUT_NO_SERVER_HANDLER"
+      ]
+    },
+    {
+      "opcode": 41,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 1,
+      "server_senders_sample": [
+        "src/services/TaskService.java:568"
+      ],
+      "client_handlers": [
+        "Client/Controller.cs:3276"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": 42,
+      "const_names": [],
+      "server_handlers": [
+        "src/server/Controller.java:284"
+      ],
+      "server_senders_count": 1,
+      "server_senders_sample": [
+        "src/services/Service.java:69"
+      ],
+      "client_handlers": [
+        "Client/Controller2.cs:134"
+      ],
+      "client_senders_count": 1,
+      "client_senders_sample": [
+        "Client/Client/Assets/Scripts/Game1/Service.cs:81"
+      ],
+      "flags": []
+    },
+    {
+      "opcode": 43,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 1,
+      "server_senders_sample": [
+        "src/services/TaskService.java:516"
+      ],
+      "client_handlers": [
+        "Client/Controller.cs:3308"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": 44,
+      "const_names": [],
+      "server_handlers": [
+        "src/server/Controller.java:731"
+      ],
+      "server_senders_count": 2,
+      "server_senders_sample": [
+        "src/services/Service.java:426",
+        "src/services/Service.java:439"
+      ],
+      "client_handlers": [],
+      "client_senders_count": 1,
+      "client_senders_sample": [
+        "Client/Client/Assets/Scripts/Game1/Service.cs:1719"
+      ],
+      "flags": [
+        "SERVER_SENDS_BUT_NO_CLIENT_HANDLER"
+      ]
+    },
+    {
+      "opcode": 46,
+      "const_names": [
+        "RESET_POINT"
+      ],
+      "server_handlers": [],
+      "server_senders_count": 1,
+      "server_senders_sample": [
+        "src/services/Service.java:398"
+      ],
+      "client_handlers": [
+        "Client/Controller.cs:3082",
+        "PacketDispatcher(mapMove):70"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": [
+        "MULTIPLE_CLIENT_HANDLERS"
+      ]
+    },
+    {
+      "opcode": 47,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 0,
+      "server_senders_sample": [],
+      "client_handlers": [
+        "Client/Controller.cs:2917"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": 48,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 0,
+      "server_senders_sample": [],
+      "client_handlers": [
+        "Client/Controller2.cs:55"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": 50,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 1,
+      "server_senders_sample": [
+        "src/server/ServerNotify.java:76"
+      ],
+      "client_handlers": [
+        "Client/Controller.cs:3285"
+      ],
+      "client_senders_count": 1,
+      "client_senders_sample": [
+        "Client/Client/Assets/Scripts/Game1/Service.cs:1498"
+      ],
+      "flags": [
+        "CLIENT_SENDS_BUT_NO_SERVER_HANDLER"
+      ]
+    },
+    {
+      "opcode": 51,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 1,
+      "server_senders_sample": [
+        "src/services/Service.java:2117"
+      ],
+      "client_handlers": [
+        "Client/Controller2.cs:199"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": 52,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 3,
+      "server_senders_sample": [
+        "src/services/Service.java:1996",
+        "src/services/Service.java:2010",
+        "src/services/Service.java:2043"
+      ],
+      "client_handlers": [
+        "Client/Controller2.cs:147"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": 53,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 0,
+      "server_senders_sample": [],
+      "client_handlers": [],
+      "client_senders_count": 1,
+      "client_senders_sample": [
+        "Client/Client/Assets/Scripts/Game1/Service.cs:1883"
+      ],
+      "flags": [
+        "CLIENT_SENDS_BUT_NO_SERVER_HANDLER"
+      ]
+    },
+    {
+      "opcode": 54,
+      "const_names": [],
+      "server_handlers": [
+        "src/server/Controller.java:760"
+      ],
+      "server_senders_count": 1,
+      "server_senders_sample": [
+        "src/services/SkillService.java:1458"
+      ],
+      "client_handlers": [
+        "Client/Controller.cs:3804"
+      ],
+      "client_senders_count": 1,
+      "client_senders_sample": [
+        "Client/Client/Assets/Scripts/Game1/Service.cs:1605"
+      ],
+      "flags": []
+    },
+    {
+      "opcode": 56,
+      "const_names": [
+        "CHAR_INJURE"
+      ],
+      "server_handlers": [],
+      "server_senders_count": 1,
+      "server_senders_sample": [
+        "src/services/SkillService.java:958"
+      ],
+      "client_handlers": [
+        "Client/Controller.cs:2960",
+        "PacketDispatcher(combat):73"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": [
+        "MULTIPLE_CLIENT_HANDLERS"
+      ]
+    },
+    {
+      "opcode": 57,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 0,
+      "server_senders_sample": [],
+      "client_handlers": [
+        "Client/Controller.cs:3141"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": 58,
+      "const_names": [
+        "MOVE_FAST"
+      ],
+      "server_handlers": [],
+      "server_senders_count": 1,
+      "server_senders_sample": [
+        "src/services/Service.java:2181"
+      ],
+      "client_handlers": [
+        "Client/Controller.cs:3149",
+        "PacketDispatcher(mapMove):70"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": [
+        "MULTIPLE_CLIENT_HANDLERS"
+      ]
+    },
+    {
+      "opcode": 59,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 0,
+      "server_senders_sample": [],
+      "client_handlers": [],
+      "client_senders_count": 1,
+      "client_senders_sample": [
+        "Client/Client/Assets/Scripts/Game1/Service.cs:1940"
+      ],
+      "flags": [
+        "CLIENT_SENDS_BUT_NO_SERVER_HANDLER"
+      ]
+    },
+    {
+      "opcode": 62,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 0,
+      "server_senders_sample": [],
+      "client_handlers": [
+        "Client/Controller.cs:3097"
+      ],
+      "client_senders_count": 1,
+      "client_senders_sample": [
+        "Client/Client/Assets/Scripts/Game1/Service.cs:1959"
+      ],
+      "flags": [
+        "CLIENT_SENDS_BUT_NO_SERVER_HANDLER"
+      ]
+    },
+    {
+      "opcode": 63,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 0,
+      "server_senders_sample": [],
+      "client_handlers": [
+        "Client/Controller.cs:3111"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": 64,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 0,
+      "server_senders_sample": [],
+      "client_handlers": [
+        "Client/Controller.cs:3120"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": 65,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 1,
+      "server_senders_sample": [
+        "src/services/ItemTimeService.java:283"
+      ],
+      "client_handlers": [
+        "Client/Controller.cs:151"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": 66,
+      "const_names": [],
+      "server_handlers": [
+        "src/server/Controller.java:574"
+      ],
+      "server_senders_count": 1,
+      "server_senders_sample": [
+        "src/data/DataGame.java:591"
+      ],
+      "client_handlers": [
+        "Client/Controller.cs:148"
+      ],
+      "client_senders_count": 1,
+      "client_senders_sample": [
+        "Client/Client/Assets/Scripts/Game1/Service.cs:3142"
+      ],
+      "flags": []
+    },
+    {
+      "opcode": 67,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 0,
+      "server_senders_sample": [],
+      "client_handlers": [],
+      "client_senders_count": 1,
+      "client_senders_sample": [
+        "Client/Client/Assets/Scripts/Game1/Service.cs:1581"
+      ],
+      "flags": [
+        "CLIENT_SENDS_BUT_NO_SERVER_HANDLER"
+      ]
+    },
+    {
+      "opcode": 68,
+      "const_names": [
+        "ITEM_MAP_ADD"
+      ],
+      "server_handlers": [],
+      "server_senders_count": 3,
+      "server_senders_sample": [
+        "src/services/Service.java:1244",
+        "src/services/Service.java:1279",
+        "src/models/map/vetinh/Satellite.java:30"
+      ],
+      "client_handlers": [
+        "Client/Controller.cs:3467",
+        "PacketDispatcher(item):67"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": [
+        "MULTIPLE_CLIENT_HANDLERS"
+      ]
+    },
+    {
+      "opcode": 69,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 0,
+      "server_senders_sample": [],
+      "client_handlers": [
+        "Client/Controller.cs:3505"
+      ],
+      "client_senders_count": 1,
+      "client_senders_sample": [
+        "Client/Client/Assets/Scripts/Game1/Service.cs:3226"
+      ],
+      "flags": [
+        "CLIENT_SENDS_BUT_NO_SERVER_HANDLER"
+      ]
+    },
+    {
+      "opcode": 75,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 0,
+      "server_senders_sample": [],
+      "client_handlers": [],
+      "client_senders_count": 1,
+      "client_senders_sample": [
+        "Client/Client/Assets/Scripts/Game1/Service.cs:1978"
+      ],
+      "flags": [
+        "CLIENT_SENDS_BUT_NO_SERVER_HANDLER"
+      ]
+    },
+    {
+      "opcode": 76,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 0,
+      "server_senders_sample": [],
+      "client_handlers": [],
+      "client_senders_count": 1,
+      "client_senders_sample": [
+        "Client/Client/Assets/Scripts/Game1/Service.cs:1902"
+      ],
+      "flags": [
+        "CLIENT_SENDS_BUT_NO_SERVER_HANDLER"
+      ]
+    },
+    {
+      "opcode": 77,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 0,
+      "server_senders_sample": [],
+      "client_handlers": [],
+      "client_senders_count": 1,
+      "client_senders_sample": [
+        "Client/Client/Assets/Scripts/Game1/Service.cs:1921"
+      ],
+      "flags": [
+        "CLIENT_SENDS_BUT_NO_SERVER_HANDLER"
+      ]
+    },
+    {
+      "opcode": 79,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 0,
+      "server_senders_sample": [],
+      "client_handlers": [],
+      "client_senders_count": 1,
+      "client_senders_sample": [
+        "Client/Client/Assets/Scripts/Game1/Service.cs:2037"
+      ],
+      "flags": [
+        "CLIENT_SENDS_BUT_NO_SERVER_HANDLER"
+      ]
+    },
+    {
+      "opcode": 81,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 0,
+      "server_senders_sample": [],
+      "client_handlers": [
+        "Client/Controller.cs:2921"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": 82,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 0,
+      "server_senders_sample": [],
+      "client_handlers": [
+        "Client/Controller.cs:2928"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": 83,
+      "const_names": [
+        "MOB_ME_ATTACK"
+      ],
+      "server_handlers": [],
+      "server_senders_count": 0,
+      "server_senders_sample": [],
+      "client_handlers": [
+        "Client/Controller.cs:3044",
+        "PacketDispatcher(combat):73"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": [
+        "MULTIPLE_CLIENT_HANDLERS"
+      ]
+    },
+    {
+      "opcode": 84,
+      "const_names": [
+        "REVIVE"
+      ],
+      "server_handlers": [],
+      "server_senders_count": 0,
+      "server_senders_sample": [],
+      "client_handlers": [
+        "Client/Controller.cs:3060",
+        "PacketDispatcher(combat):73"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": [
+        "MULTIPLE_CLIENT_HANDLERS"
+      ]
+    },
+    {
+      "opcode": 85,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 0,
+      "server_senders_sample": [],
+      "client_handlers": [
+        "Client/Controller.cs:2935"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": 86,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 0,
+      "server_senders_sample": [],
+      "client_handlers": [
+        "Client/Controller.cs:2942"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": 87,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 1,
+      "server_senders_sample": [
+        "src/models/mob/Mob.java:1292"
+      ],
+      "client_handlers": [
+        "Client/Controller.cs:2953"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": 88,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 0,
+      "server_senders_sample": [],
+      "client_handlers": [
+        "Client/Controller.cs:3173"
+      ],
+      "client_senders_count": 1,
+      "client_senders_sample": [
+        "Client/Client/Assets/Scripts/Game1/Service.cs:1349"
+      ],
+      "flags": [
+        "CLIENT_SENDS_BUT_NO_SERVER_HANDLER"
+      ]
+    },
+    {
+      "opcode": 90,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 0,
+      "server_senders_sample": [],
+      "client_handlers": [
+        "Client/Controller.cs:3332"
+      ],
+      "client_senders_count": 1,
+      "client_senders_sample": [
+        "Client/Client/Assets/Scripts/Game1/Service.cs:1126"
+      ],
+      "flags": [
+        "CLIENT_SENDS_BUT_NO_SERVER_HANDLER"
+      ]
+    },
+    {
+      "opcode": 91,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 0,
+      "server_senders_sample": [],
+      "client_handlers": [],
+      "client_senders_count": 1,
+      "client_senders_sample": [
+        "Client/Client/Assets/Scripts/Game1/Service.cs:2157"
+      ],
+      "flags": [
+        "CLIENT_SENDS_BUT_NO_SERVER_HANDLER"
+      ]
+    },
+    {
+      "opcode": 92,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 3,
+      "server_senders_sample": [
+        "src/services/ChatGlobalService.java:125",
+        "src/services/Service.java:1471",
+        "src/services/Service.java:1485"
+      ],
+      "client_handlers": [
+        "Client/Controller.cs:2850"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": 93,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 1,
+      "server_senders_sample": [
+        "src/server/ServerNotify.java:61"
+      ],
+      "client_handlers": [
+        "Client/Controller2.cs:844"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": 94,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 0,
+      "server_senders_sample": [],
+      "client_handlers": [
+        "Client/Controller.cs:2913"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": 95,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 1,
+      "server_senders_sample": [
+        "src/services/Service.java:2346"
+      ],
+      "client_handlers": [],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": [
+        "SERVER_SENDS_BUT_NO_CLIENT_HANDLER"
+      ]
+    },
+    {
+      "opcode": 100,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 0,
+      "server_senders_sample": [],
+      "client_handlers": [
+        "Client/Controller2.cs:422"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": 101,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 3,
+      "server_senders_sample": [
+        "src/services/Service.java:1959",
+        "src/services/Service.java:1975",
+        "src/models/mob/bigboss_list/Hirudegarn.java:320"
+      ],
+      "client_handlers": [
+        "Client/Controller2.cs:340"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": 102,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 2,
+      "server_senders_sample": [
+        "src/services/Service.java:1940",
+        "src/models/mob/bigboss_list/VuaBachTuoc.java:44"
+      ],
+      "client_handlers": [
+        "Client/Controller2.cs:261"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": 112,
+      "const_names": [],
+      "server_handlers": [
+        "src/server/Controller.java:302"
+      ],
+      "server_senders_count": 2,
+      "server_senders_sample": [
+        "src/services/player/IntrinsicService.java:45",
+        "src/services/player/IntrinsicService.java:59"
+      ],
+      "client_handlers": [
+        "Client/Controller.cs:175"
+      ],
+      "client_senders_count": 1,
+      "client_senders_sample": [
+        "Client/Client/Assets/Scripts/Game1/Service.cs:242"
+      ],
+      "flags": []
+    },
+    {
+      "opcode": 113,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 2,
+      "server_senders_sample": [
+        "src/services/func/EffectMapService.java:44",
+        "src/services/func/EffectMapService.java:63"
+      ],
+      "client_handlers": [
+        "Client/Controller2.cs:32"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": 114,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 0,
+      "server_senders_sample": [],
+      "client_handlers": [
+        "Client/Controller2.cs:20"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": 121,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 0,
+      "server_senders_sample": [],
+      "client_handlers": [
+        "Client/Controller2.cs:581"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": 122,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 1,
+      "server_senders_sample": [
+        "src/services/Service.java:1571"
+      ],
+      "client_handlers": [
+        "Client/Controller2.cs:572"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": 123,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 3,
+      "server_senders_sample": [
+        "src/services/Service.java:1382",
+        "src/services/Service.java:1396",
+        "src/services/Service.java:1412"
+      ],
+      "client_handlers": [
+        "Client/Controller2.cs:549"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": 124,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 5,
+      "server_senders_sample": [
+        "src/services/map/NpcService.java:95",
+        "src/services/map/NpcService.java:111",
+        "src/models/npc/Npc.java:123",
+        "src/models/npc/Npc.java:136",
+        "src/models/npc/Npc.java:149"
+      ],
+      "client_handlers": [
+        "Client/Controller2.cs:537"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    },
+    {
+      "opcode": 125,
+      "const_names": [],
+      "server_handlers": [],
+      "server_senders_count": 1,
+      "server_senders_sample": [
+        "src/models/player/Pet.java:242"
+      ],
+      "client_handlers": [
+        "Client/Controller2.cs:523"
+      ],
+      "client_senders_count": 1,
+      "client_senders_sample": [
+        "Client/Client/Assets/Scripts/Game1/Service.cs:2937"
+      ],
+      "flags": [
+        "CLIENT_SENDS_BUT_NO_SERVER_HANDLER"
+      ]
+    },
+    {
+      "opcode": 126,
+      "const_names": [],
+      "server_handlers": [
+        "src/server/Controller.java:866"
+      ],
+      "server_senders_count": 0,
+      "server_senders_sample": [],
+      "client_handlers": [],
+      "client_senders_count": 2,
+      "client_senders_sample": [
+        "Client/Client/Assets/Scripts/Game1/Service.cs:62",
+        "Client/Client/Assets/Scripts/Game1/Service.cs:108"
+      ],
+      "flags": []
+    },
+    {
+      "opcode": 127,
+      "const_names": [],
+      "server_handlers": [
+        "src/server/Controller.java:190"
+      ],
+      "server_senders_count": 5,
+      "server_senders_sample": [
+        "src/services/RadarService.java:58",
+        "src/services/RadarService.java:117",
+        "src/services/RadarService.java:130",
+        "src/services/RadarService.java:143",
+        "src/services/RadarService.java:157"
+      ],
+      "client_handlers": [
+        "Client/Controller2.cs:17"
+      ],
+      "client_senders_count": 0,
+      "client_senders_sample": [],
+      "flags": []
+    }
+  ]
+}

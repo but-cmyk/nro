@@ -355,11 +355,6 @@ public class Controller implements IMessageHandler {
                         PVPService.gI().controllerThachDau(player, _msg);
                     }
                     break;
-                case -86:
-                    if (player != null) {
-                        TransactionService.gI().controller(player, _msg);
-                    }
-                    break;
                 case -107:
                     if (player != null) {
                         Service.gI().sendChiSoPetGoc(player);
@@ -485,27 +480,16 @@ public class Controller implements IMessageHandler {
                         } catch (IOException e) {
                         }
 
-                        // Cho phép dịch chuyển nhanh đến quái trong map (TDLT hoặc Tàn Sát tiếp cận quái)
-                        boolean isNearMobInZone = false;
-                        if (player.zone != null && player.zone.mobs != null) {
-                            for (Mob mob : player.zone.mobs) {
-                                if (mob != null && mob.location != null) {
-                                    int dMob = Util.getDistance(mob.location.x, mob.location.y, toX, toY);
-                                    if (dMob <= 150) {
-                                        isNearMobInZone = true;
-                                        break;
-                                    }
-                                }
-                            }
-                        }
+                        // Chỉ miễn kiểm tra tốc độ khi đang bật Tự Động Luyện Tập (isUseTDLT)
+                        boolean isUseTdlt = player.itemTime != null && player.itemTime.isUseTDLT;
 
-                        // Giới hạn tần suất nhận gói move (tối đa ~12 gói/s, tương thích 60fps; không áp dụng khi TDLT hoặc tiếp cận quái)
-                        if (elapsed < 80 && !(player.itemTime != null && player.itemTime.isUseTDLT) && !isNearMobInZone) {
+                        // Giới hạn tần suất nhận gói move (tối đa ~12 gói/s, tương thích 60fps; không áp dụng khi TDLT)
+                        if (elapsed < 80 && !isUseTdlt) {
                             return;
                         }
 
-                        if (player.zone != null && ((player.itemTime != null && player.itemTime.isUseTDLT) || isNearMobInZone)) {
-                            // Người chơi đang bật Tự Động Luyện Tập hoặc Tàn Sát đến quái: Cho phép dịch chuyển đến quái trong phạm vi bản đồ
+                        if (player.zone != null && isUseTdlt) {
+                            // Người chơi đang bật Tự Động Luyện Tập: Cho phép dịch chuyển đến quái trong phạm vi bản đồ
                             if (toX < 24 || toX > player.zone.map.mapWidth - 24 || toY < 0 || toY > player.zone.map.mapHeight) {
                                 Service.gI().resetPoint(player, player.location.x, player.location.y);
                                 return;
@@ -797,12 +781,6 @@ public class Controller implements IMessageHandler {
                     break;
                 case -111:
                     DataGame.sendDataImageVersion(_session);
-                    break;
-                case -20:
-                    if (player != null && !player.isDie()) {
-                        int itemMapId = _msg.reader().readShort();
-                        ItemMapService.gI().pickItem(player, itemMapId, false);
-                    }
                     break;
                 case -28:
                     messageNotMap(_session, _msg);

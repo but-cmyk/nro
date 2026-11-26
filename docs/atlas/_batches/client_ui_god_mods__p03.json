@@ -1,0 +1,187 @@
+{
+  "batch_id": "client_ui_god_mods__p03",
+  "concurrency_and_state": [
+    "Single-threaded Unity UI loop drives Panel.update() and paint*(), mutating shared Panel fields (type, currentTabIndex, selected, cSelected, newSelected, currItem, vItemCombine, vMyGD, isLock, isAccept).",
+    "Async modals (ChatTextField via onChatFromMe, GameCanvas YesNoDlg/Menu via perform) retain references to mutable currItem/selected/currInfoItem; inventory/shop/trade updates or tab switches while a modal is open can leave stale or out-of-bounds state.",
+    "Panel transitions and action execution use frame counters (waitToPerform, timeShow, delayKigui) rather than event-driven state machines.",
+    "Trade lock/accept state uses client-side booleans (isLock, isFriendLock, isAccept) paired with Service.gI().giaodich(3/5/7)."
+  ],
+  "cross_module_questions": [
+    "Does the Java server validate Service.gI().giaodich(2, -1, -1, money) against money <= 0 when client onChatFromMe only checks num2 > Char.myCharz().xu?",
+    "Does the Java server validate Service.gI().kigui(0, ...) quantity > 0 and price > 0, and how does Panel.doNotiRuby (outside this slice) handle int.Parse errors and bounds?",
+    "If player bag/box capacity exceeds 127 slots, how do client sbyte casts (e.g. (sbyte)item.indexUI, (sbyte)GetInventorySelect_bag(...)) interact with server ReadByte/ReadSByte item slot handling?",
+    "Does the server validate skill/potential upgrade requests (upPotential) independently of the client's cMPGoc/cHPGoc UI typo and int-overflow calculations?"
+  ],
+  "db_redis_touchpoints": [],
+  "files_read": [
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/Panel.cs:5644-11282"
+  ],
+  "findings": [
+    {
+      "category": "gameplay",
+      "impact": "Clicking Back in the Change Flag menu unexpectedly disconnects the player from the game server.",
+      "location": "Panel.cs:9046, 10314-10317",
+      "root_cause": "doFireChangeFlag() creates a Back Command with idAction=10031, but perform() handles idAction==10031 by calling Session_ME.gI().close().",
+      "severity": "P1",
+      "title": "Change Flag Back button (idAction 10031) closes network session"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Non-numeric or overflowing consignment quantity input crashes with unhandled FormatException/OverflowException, and 0/negative quantities can be submitted to consignment flow.",
+      "location": "Panel.cs:10530-10551",
+      "root_cause": "onChatFromMe parses currItem.quantilyToBuy via raw int.Parse without try/catch and only checks > currItem.quantity without checking <= 0 or currItem != null.",
+      "severity": "P1",
+      "title": "Unchecked int.Parse and missing <= 0 / null validation for consignment quantity in onChatFromMe"
+    },
+    {
+      "category": "security_dupe",
+      "impact": "Client allows sending 0 or negative trade xu amounts if entered via text/clipboard, relying solely on server rejection.",
+      "location": "Panel.cs:10468-10495",
+      "root_cause": "onChatFromMe trade money branch only checks num2 > Char.myCharz().xu and never checks num2 <= 0.",
+      "severity": "P2",
+      "title": "Missing <= 0 validation for trade money input in onChatFromMe"
+    },
+    {
+      "category": "gameplay",
+      "impact": "If bag or box slots exceed 127, item indices silently wrap to negative sbyte values, targeting wrong slots or failing server lookups.",
+      "location": "Panel.cs:9655, 9687, 9847, 9858, 9913-10014, 10464",
+      "root_cause": "Item slot indices (indexUI, GetInventorySelect_bag/body) are cast to sbyte before sending via Service.gI().getItem/useItem/giaodich/saleItem.",
+      "severity": "P2",
+      "title": "Item slot indices truncated to sbyte in inventory/box/trade actions"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Clicking empty slots or stale indices in new inventory, legacy bag/box, achievement, skill, or trade panels can throw NullReferenceException or IndexOutOfRangeException.",
+      "location": "Panel.cs:8168, 8172, 8231, 8456, 8489-8520, 8523, 8566, 9522, 9656, 9688, 10337",
+      "root_cause": "doFireArchivement, doFireInventory, doFireGiaoDich, doFireShop, doFireBox, and doFireSkill index arrays/MyVectors or dereference currItem/text without null or bounds checks (and line 10337 checks text.Equals before text == null).",
+      "severity": "P1",
+      "title": "Missing null and array/vector bounds checks in doFire* handlers and onChatFromMe"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Corrupts ItemOption template/param in-place on first compare, and causes int overflow/wrong MP cost display in potential upgrade UI when defense > 21,469.",
+      "location": "Panel.cs:6945-6955, 9431-9432, 9484, 9578",
+      "root_cause": "getCompare() mutates item.itemOption[0].optionTemplate and param*=1000 in-place; doFireSkill() displays cHPGoc instead of cMPGoc for MP upgrade; cDefGoc*1000 and 500000+cDefGoc*100000 compute in 32-bit int before long assignment.",
+      "severity": "P1",
+      "title": "In-place ItemOption mutation in getCompare, MP/HP typo in doFireSkill, and 32-bit int overflow in defense cost display"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Stamina bar clipping in paintPetInfo/paintCharInfo uses wrong Y offset (X+41 / X+19 instead of 41 / 19 and missing X offset on x-coord), and the 4-arg paintCharInfo always draws stamina bar at 100%.",
+      "location": "Panel.cs:6876, 6894, 6916-6917",
+      "root_cause": "g.setClip passes (100, X + 41, num, 20) and (95, X + 19, num, 20) while drawImage uses (X + 100, 41) / (X + 95, 19); paintCharInfo(g,c,x,y) computes num but omits g.setClip.",
+      "severity": "P2",
+      "title": "Broken stamina bar clip rectangles in paintPetInfo and paintCharInfo"
+    },
+    {
+      "category": "performance_gc",
+      "impact": "High per-frame GC pressure and frame-time spikes when scrolling panels or closing UI/map.",
+      "location": "Panel.cs:5853, 5860-5901, 6080-6148, 6526-6611, 6822-6923, 7058-7085, 7479-7687, 7742, 7803, 9618",
+      "root_cause": "paint* methods allocate strings via concatenation/Res.formatNumber/NinjaUtil.getMoneys/splitFontArray every frame, paintClans allocates new ClanImage() in paint loop, and hide()/hideNow()/doFireMap() call mSystem.gcc() synchronously.",
+      "severity": "P2",
+      "title": "Per-frame allocations in paint* methods and synchronous mSystem.gcc() on panel close"
+    },
+    {
+      "category": "architecture",
+      "impact": "High maintenance cost and bug divergence across parallel code paths (e.g., hide vs hideNow missing imgMap.texture cleanup and subpanel OnClose; dead loop in new inventory).",
+      "location": "Panel.cs:5645-5741, 6164-6620, 7717-7863, 8632-8788, 9132-9133",
+      "root_cause": "Panel God class duplicates paintEnemy/paintFriend, paintCharInfo overloads, paintItemBodyBagInfo overloads, doFireTool havePet/no-pet switches, chatTField initialization, and has dead code in paintInventory (flag=true, newSelected==0 loop) plus duplicate menu.startAt in doFireClanOption.",
+      "severity": "P2",
+      "title": "God-class duplication, dead code paths, and divergent hide()/hideNow() teardown in Panel.cs"
+    }
+  ],
+  "key_classes": [
+    {
+      "key_methods": [
+        "paintEnemy",
+        "paintFriend",
+        "paintPlayerMenu",
+        "paintClans",
+        "paintArchivement",
+        "paintCombine",
+        "paintInventory",
+        "paintTab",
+        "paintTopInfo",
+        "getCompare",
+        "paintMap",
+        "paintTask",
+        "hideNow",
+        "hide",
+        "update",
+        "doFirePetMain",
+        "doFireTop",
+        "doFireGiaoDich",
+        "doFireCombine",
+        "doFireShop",
+        "doFireArchivement",
+        "doFireInventory",
+        "doFireTool",
+        "doFireClanOption",
+        "doFireMain",
+        "doFireSkill",
+        "doFireBox",
+        "perform",
+        "onChatFromMe",
+        "updateCombineEff",
+        "paintCombineEff",
+        "paintOption",
+        "doFireOption",
+        "setTabAccount"
+      ],
+      "name": "Panel (lines 5644-11282)",
+      "path": "Client/Client/Assets/Scripts/Game1/Panel.cs",
+      "responsibility": "Monolithic client UI panel controller handling list/grid rendering, tab headers, top/bottom status info, input dispatch, command execution, trade/combine/shop/clan/skill/inventory/consignment flows, and combine animations."
+    }
+  ],
+  "module_summary": "Read lines 5644-11282 of Client/Client/Assets/Scripts/Game1/Panel.cs (5639 lines). This slice covers the core rendering methods (enemy, friend, player menu, clan, achievement, combine, inventory, tabs, money/clan/char/pet/shop/map/task info, combine effects, options), lifecycle methods (hide, hideNow, update), item/stat interaction handlers (doFire*), command dispatch (perform), and modal text input callbacks (onChatFromMe).",
+  "protocol_touchpoints": [
+    {
+      "direction": "DISPATCH",
+      "location": "Panel.cs:7735, 7789, 8204, 8210, 9847, 9858, 9864, 10464, 10491",
+      "opcode": "Service.giaodich",
+      "payload_summary": "Trade actions: 2=add item(indexUI, qty)/money(xu), 3=cancel, 4=remove item, 5=lock, 7=accept."
+    },
+    {
+      "direction": "DISPATCH",
+      "location": "Panel.cs:8269",
+      "opcode": "Service.combine",
+      "payload_summary": "Sends combine action (1, vItemCombine) to server."
+    },
+    {
+      "direction": "DISPATCH",
+      "location": "Panel.cs:9913, 9918, 9926, 9949, 9982, 9986, 10008, 10014",
+      "opcode": "Service.getItem",
+      "payload_summary": "Moves item between BAG/BOX/BODY/PET using (type, (sbyte)slotIndex)."
+    },
+    {
+      "direction": "DISPATCH",
+      "location": "Panel.cs:9930, 9934, 9967, 9971, 9995, 10003",
+      "opcode": "Service.useItem",
+      "payload_summary": "Item use/drop/delete with (useType 0/1/2/3/4, where, (sbyte)slotIndex, -1)."
+    },
+    {
+      "direction": "DISPATCH",
+      "location": "Panel.cs:10019, 10024, 10029, 10035, 10041, 10060, 10066, 10049, 10055",
+      "opcode": "Service.buyItem / saleItem",
+      "payload_summary": "Shop buy (type 0/1/2/3, templateId/index) and item sale (0/1, where, index)."
+    },
+    {
+      "direction": "DISPATCH",
+      "location": "Panel.cs:10266, 10272, 10278, 10284, 10290, 10320, 10325, 10500, 10512",
+      "opcode": "Service.kigui",
+      "payload_summary": "Consignment actions: 0=list(itemId, moneyType, price, qty), 1=cancel, 2=claim money, 3=buy, 5=upTop."
+    },
+    {
+      "direction": "DISPATCH",
+      "location": "Panel.cs:9097, 9106, 9161, 9188, 9203, 9208, 9216, 9296, 9303, 9307, 10074, 10084, 10098, 10103-10118, 10346, 10353, 10379",
+      "opcode": "Service.getClan / searchClan / clanMessage / leaveClan / clanDonate / joinClan / clanMember / clanRemote",
+      "payload_summary": "Clan management, search, chat, donate, join response, member list, role/kick actions."
+    },
+    {
+      "direction": "DISPATCH",
+      "location": "Panel.cs:7793, 8128, 8460, 8602, 8629, 8641, 8647, 8657, 8840, 9517, 9767, 9870-9883, 10122-10134, 10176-10182, 10311, 10397, 10414, 10433",
+      "opcode": "Service.sendThachDau / petStatus / petInfo / getArchivemnt / SendRada / sendDelAcc / openMenu / getFlag / openUIZone / speacialSkill / upPotential / friend / gotoPlayer / enemy / setLockInventory / chatGlobal / chatPlayer",
+      "payload_summary": "Misc UI commands for PvP challenge, pet state, achievements, radar, flags, zones, stats, social, inventory lock, and chat."
+    }
+  ]
+}

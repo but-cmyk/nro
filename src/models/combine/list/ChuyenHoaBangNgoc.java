@@ -100,32 +100,47 @@ public class ChuyenHoaBangNgoc {
     }
 
     public static void ChuyenHoaBangngoc(Player player) {
-        if (player.combineNew.itemsCombine.size() == 2) {
-            if (InventoryService.gI().getCountEmptyBag(player) <= 0) {
-                Service.gI().sendThongBao(player, "Cần 1 ô trống hành trang");
-                return;
-            }
+        if (player == null || player.combineNew == null || player.inventory == null) {
+            return;
+        }
+        synchronized (player) {
+            if (player.combineNew.itemsCombine.size() == 2) {
+                if (InventoryService.gI().getCountEmptyBag(player) <= 0) {
+                    Service.gI().sendThongBao(player, "Cần 1 ô trống hành trang");
+                    return;
+                }
 
-            Item trangBiGoc = player.combineNew.itemsCombine.get(0);
-            Item trangBiCanChuyenHoa = player.combineNew.itemsCombine.get(1);
-            Item trangBiCanChuyenHoa_2 = ItemService.gI().createNewItem(trangBiCanChuyenHoa.template.id);
+                Item trangBiGoc = player.combineNew.itemsCombine.get(0);
+                Item trangBiCanChuyenHoa = player.combineNew.itemsCombine.get(1);
+                if (trangBiGoc == null || trangBiCanChuyenHoa == null
+                        || !player.inventory.itemsBag.contains(trangBiGoc)
+                        || !player.inventory.itemsBag.contains(trangBiCanChuyenHoa)
+                        || trangBiGoc.itemOptions == null || trangBiCanChuyenHoa.itemOptions == null
+                        || trangBiCanChuyenHoa.itemOptions.isEmpty()) {
+                    Service.gI().sendThongBaoOK(player, "Trang bị không hợp lệ hoặc không còn trong hành trang");
+                    return;
+                }
+                Item trangBiCanChuyenHoa_2 = ItemService.gI().createNewItem(trangBiCanChuyenHoa.template.id);
 
-            int ngocChuyenHoa = 2000;
-            int levelTrangBi = 0;
-            int soLanRotCap = 0;
-            int khongchuyenhoa = 0;
+                int ngocChuyenHoa = 2000;
+                int levelTrangBi = 0;
+                int soLanRotCap = 0;
+                int khongchuyenhoa = 0;
 
-            for (ItemOption io : trangBiGoc.itemOptions) {
-                if (io.optionTemplate.id == 72) {
-                    levelTrangBi = io.param - 1;
-                } else if (io.optionTemplate.id == 230) {
-                    soLanRotCap += io.param;
-                } else if (io.optionTemplate.id == 30) {
+                for (ItemOption io : trangBiGoc.itemOptions) {
+                    if (io.optionTemplate.id == 72) {
+                        levelTrangBi = io.param - 1;
+                    } else if (io.optionTemplate.id == 230) {
+                        soLanRotCap += io.param;
+                    } else if (io.optionTemplate.id == 30) {
+                        khongchuyenhoa = 1;
+                    }
+                }
+                if (trangBiCanChuyenHoa.isHaveOption(30)) {
                     khongchuyenhoa = 1;
                 }
-            }
 
-            int chisogoc = trangBiCanChuyenHoa.itemOptions.get(0).param;
+                int chisogoc = trangBiCanChuyenHoa.itemOptions.get(0).param;
             for (int i = 0; i < levelTrangBi; i++) {
                 chisogoc += chisogoc * 0.1;
             }
@@ -172,6 +187,7 @@ public class ChuyenHoaBangNgoc {
             InventoryService.gI().sendItemBags(player);
             CombineService.gI().reOpenItemCombine(player);
             CombineService.gI().sendEffectSuccessCombine(player);
+            }
         }
     }
 }

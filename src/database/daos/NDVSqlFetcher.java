@@ -253,9 +253,13 @@ public class NDVSqlFetcher {
                 session.lastTimeReceivedVIP1 = rsAccount.getLong("lastTimeReceivedVIP1");
                 session.lastTimeReceivedVIP2 = rsAccount.getLong("lastTimeReceivedVIP2");
 
-                long lastTimeLogin = rsAccount.getTimestamp("last_time_login").getTime();
-                long lastTimeLogout = rsAccount.getTimestamp("last_time_logout").getTime();
-                long createTime = rsAccount.getTimestamp("create_time").getTime();
+                java.sql.Timestamp tsLogin = rsAccount.getTimestamp("last_time_login");
+                java.sql.Timestamp tsLogout = rsAccount.getTimestamp("last_time_logout");
+                java.sql.Timestamp tsCreate = rsAccount.getTimestamp("create_time");
+                long nowMs = System.currentTimeMillis();
+                long lastTimeLogin = tsLogin != null ? tsLogin.getTime() : nowMs;
+                long lastTimeLogout = tsLogout != null ? tsLogout.getTime() : nowMs;
+                long createTime = tsCreate != null ? tsCreate.getTime() : nowMs;
 
                 int secondsPassLogin = (int) ((System.currentTimeMillis() - lastTimeLogin) / 1000);
                 int secondsPassLogout = (int) ((System.currentTimeMillis() - lastTimeLogout) / 1000);

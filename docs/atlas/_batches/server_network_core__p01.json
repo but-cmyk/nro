@@ -1,0 +1,371 @@
+{
+  "batch_id": "server_network_core__p01",
+  "concurrency_and_state": [
+    "NettySession uses a lock-free ConcurrentLinkedQueue mailbox (max 300) + AtomicBoolean isProcessing spawning a Java 21 Virtual Thread per burst to guarantee FIFO in-order packet handling per session, decoupled from Netty Worker EventLoop.",
+    "NroPacketDecoder and NroPacketEncoder keep per-channel XOR cursor state (curR, curW) on the Netty channel pipeline (single EventLoop thread per channel), while reading volatile Session.KEYS and Session.sentKey written from Virtual Threads.",
+    "SessionManager uses CopyOnWriteArrayList<ISession>, ConcurrentHashMap<Long, ISession> (sessionIndex), ConcurrentHashMap<String, AtomicInteger> (ipSessionCount), and ReentrantReadWriteLock; however Session.id is generated with non-atomic ID_INIT++ across threads.",
+    "MySession.login synchronizes on per-username lock objects stored in static ConcurrentHashMap ACCOUNT_LOCKS and removes the entry in finally, which allows concurrent logins when an entry is removed while another thread is waiting.",
+    "Client maintains players (CopyOnWriteArrayList) plus ConcurrentHashMaps (playersById, playersByUserId, playersByName); disconnect removes player from maps immediately on Netty/disconnect thread while PlayerDAO.updatePlayer runs asynchronously on a Virtual Thread.",
+    "DataGame caches icons, mob templates, bg items, effect data/images, img_by_name, and zoom res files in ConcurrentHashMaps, whereas tile_set_info and tile_map_data are read synchronously from disk on every call."
+  ],
+  "cross_module_questions": [
+    "How does ServerManager.disconnect(ISession) handle IP tracking and does calling it twice (from Client.remove and NroChannelHandler.channelInactive) double-decrement per-IP connection counters?",
+    "Does NDVSqlFetcher.login check/kick an already-online player or synchronize with pending async PlayerDAO.updatePlayer saves from Client.removePlayerFromGame?",
+    "What does Controller.onMessage do with Message lifecycle and how are -28 subcommands dispatched?",
+    "Are Manager.ITEM_OPTION_TEMPLATES, MAP_TEMPLATES, NPC_TEMPLATES, or MOB_TEMPLATES larger than 255 entries (which would overflow DataGame/ItemData writeByte counts)?",
+    "Is the legacy socket stack (Network, Session, Collector, Sender, QueueHandler, network.Message) still referenced anywhere at runtime or completely superseded by NettyServer?"
+  ],
+  "db_redis_touchpoints": [
+    {
+      "location": "src/server/Client.java:293-306",
+      "op": "UPDATE (PreparedStatement via AlyraManager.executeUpdate)",
+      "safety_note": "Parameterized SQL (\"UPDATE account SET last_time_logout = ? WHERE id = ?\"), runs on ForkJoinPool.commonPool via CompletableFuture.runAsync rather than Virtual Thread.",
+      "target": "account.last_time_logout"
+    },
+    {
+      "location": "src/network/session/MySession.java:133",
+      "op": "SELECT/AUTH (NDVSqlFetcher.login)",
+      "safety_note": "Called inside per-username synchronized(accountLock) block that is unsafe due to ACCOUNT_LOCKS.remove in finally.",
+      "target": "account / player login tables via NDVSqlFetcher"
+    },
+    {
+      "location": "src/server/Client.java:186-196",
+      "op": "UPDATE (PlayerDAO.updatePlayer)",
+      "safety_note": "Executed asynchronously on a Virtual Thread AFTER player is already removed from Client.playersByUserId, creating a race window on fast reconnect.",
+      "target": "player save tables via PlayerDAO"
+    },
+    {
+      "location": "src/server/Command.java:234",
+      "op": "RELOAD (AlyraManager.reloadData)",
+      "safety_note": "Triggered by admin \"reload\" chat command while ServerManager.isReloading flag is true.",
+      "target": "AlyraManager template/data caches"
+    },
+    {
+      "location": "src/server/command/CommandRegistry.java:425-433",
+      "op": "METRICS (HikariPoolMXBean)",
+      "safety_note": "Reads active, idle, and awaiting connections for console \"status\"/\"stats\" command.",
+      "target": "AlyraManager HikariDataSource pool"
+    }
+  ],
+  "files_read": [
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/data/DataGame.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/data/ItemData.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/interfaces/IBoss.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/interfaces/IKeySessionHandler.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/interfaces/IMessage.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/interfaces/IMessageHandler.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/interfaces/IMessageSendCollect.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/interfaces/INetwork.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/interfaces/IPVP.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/interfaces/IServerClose.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/interfaces/ISession.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/interfaces/ISessionAcceptHandler.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/network/Collector.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/network/io/KeyHandler.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/network/io/Message.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/network/io/MessageSendCollect.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/network/io/MyKeyHandler.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/network/Message.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/network/netty/NettyServer.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/network/netty/NettySession.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/network/netty/NroChannelHandler.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/network/netty/NroPacketDecoder.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/network/netty/NroPacketEncoder.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/network/netty/RateLimiterHandler.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/network/Network.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/network/QueueHandler.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/network/Sender.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/network/session/MySession.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/network/session/Session.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/network/session/SessionFactory.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/network/session/SessionManager.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/server/AutoBtri.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/server/Client.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/server/command/CommandRegistry.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/server/command/ConsoleCommand.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/server/Command.java"
+  ],
+  "findings": [
+    {
+      "category": "security_dupe",
+      "impact": "Two simultaneous login requests for the same account can enter NDVSqlFetcher.login and load two Player instances concurrently, enabling item/gold duplication and session overwrite.",
+      "location": "src/network/session/MySession.java:125-172",
+      "root_cause": "ACCOUNT_LOCKS.remove(username, accountLock) in finally removes the lock object while another thread may already hold a reference waiting to enter synchronized(accountLock); a third thread then calls computeIfAbsent and gets a different lock object, running concurrently with the second thread.",
+      "severity": "P0",
+      "title": "Per-account login lock race condition in MySession.login"
+    },
+    {
+      "category": "security_dupe",
+      "impact": "Player can reconnect milliseconds after disconnect and load stale DB state before the async Virtual Thread finishes PlayerDAO.updatePlayer, enabling rollback/item duplication.",
+      "location": "src/server/Client.java:162-197",
+      "root_cause": "removePlayerFromGame removes the player from playersByUserId/playersById immediately (lines 168-173), then dispatches PlayerDAO.updatePlayer asynchronously on a Virtual Thread (lines 186-196) with no per-user save barrier checked by MySession.login.",
+      "severity": "P0",
+      "title": "Async player save on disconnect races with immediate reconnect login"
+    },
+    {
+      "category": "concurrency",
+      "impact": "Two concurrent connections can receive identical session.id values; SessionManager.putSession detects a duplicate key in sessionIndex and evicts the active player's session.",
+      "location": "src/network/session/Session.java:20,45,57",
+      "root_cause": "ID_INIT++ on a plain static int is not atomic when NettySession or Session instances are constructed concurrently across threads.",
+      "severity": "P1",
+      "title": "Non-atomic Session ID_INIT++ causes sessionId collisions and active session eviction"
+    },
+    {
+      "category": "protocol",
+      "impact": "If Netty EventLoop flushes the -27 key packet and receives the client's next encrypted packet before the Virtual Thread executes session.setSentKey(true), NroPacketDecoder treats the encrypted packet as plaintext and corrupts/disconnects the session. Also if big commands (-32,-66,-74,11,-67,-87,66) are sent before sentKey is true, NroPacketEncoder still XORs the 3 size bytes and advances curW, desynchronizing the stream.",
+      "location": "src/network/io/KeyHandler.java:23-25; src/network/netty/NroPacketEncoder.java:39,50-57",
+      "root_cause": "KeyHandler.sendKey invokes async channel.writeAndFlush via session.doSendMessage and sets sentKey=true afterward without ChannelFuture listener synchronization; NroPacketEncoder applies writeKey to 3-byte sizes unconditionally without checking shouldEncrypt.",
+      "severity": "P1",
+      "title": "XOR handshake race condition and unconditional size-byte encryption in Netty pipeline"
+    },
+    {
+      "category": "concurrency",
+      "impact": "Every Netty disconnect triggers ServerManager.gI().disconnect(session) twice, risking double-decrement of IP connection counters or duplicate disconnect side effects. Also NettySession.disconnect() returns early when channel is already inactive, skipping dispose() if called post-close.",
+      "location": "src/network/netty/NroChannelHandler.java:73-78; src/server/Client.java:154; src/network/netty/NettySession.java:119-129",
+      "root_cause": "NroChannelHandler.channelInactive calls Client.gI().remove(session) (which internally calls ServerManager.gI().disconnect(session) at line 154) and then calls ServerManager.gI().disconnect(session) again at line 74.",
+      "severity": "P1",
+      "title": "Double ServerManager.disconnect(session) invocation on Netty channelInactive"
+    },
+    {
+      "category": "protocol",
+      "impact": "If item option count, map count, NPC count, or mob count exceeds 255 (or mob id > 255), writeByte silently truncates the count, causing client deserialization mismatch/crash on login or reload.",
+      "location": "src/data/ItemData.java:87; src/data/DataGame.java:171,175,183,508",
+      "root_cause": "ItemData.createCacheItemOption and DataGame.updateMap / requestMobTemplate serialize collection sizes and mob IDs as 1-byte writeByte().",
+      "severity": "P1",
+      "title": "1-byte writeByte truncation on template counts and mob IDs in DataGame/ItemData"
+    },
+    {
+      "category": "performance_gc",
+      "impact": "clearCloneSessions, cloneMySessionNotConnect, and Client.update allocate defensive ArrayList copies of all sessions every second and synchronize/mutate the local copy instead of SessionManager's backing list; clearCloneSessions/cloneMySessionNotConnect also cast blindly to (MySession).",
+      "location": "src/server/Client.java:94-112,368-397,399-430; src/network/session/SessionManager.java:219-227",
+      "root_cause": "SessionManager.getSessions() returns new ArrayList<>(sessions), but Client.java iterates, synchronizes on, and calls remove() on that local copy.",
+      "severity": "P2",
+      "title": "Client.java synchronizes and mutates defensive copy from SessionManager.getSessions() every second"
+    },
+    {
+      "category": "performance_gc",
+      "impact": "Map changes and tile info requests perform repeated synchronous disk reads; sendRes sleeps up to 500ms per file and skips msg.cleanup() if an exception is thrown mid-loop.",
+      "location": "src/data/DataGame.java:524,543,656-693",
+      "root_cause": "sendTileSetInfo and sendMapTemp call FileIO.readFile on every request without caching; sendRes polls channel.isWritable() with Thread.sleep(5) and lacks a finally block around per-iteration Message cleanup.",
+      "severity": "P2",
+      "title": "Uncached blocking FileIO reads in DataGame.sendMapTemp/sendTileSetInfo and Thread.sleep polling in sendRes"
+    },
+    {
+      "category": "security_dupe",
+      "impact": "Invalid KeyHandler.setKey length <= 0 causes NegativeArraySizeException or ArithmeticException (/ by zero); sendImageByName validates ^[a-zA-Z0-9_]+$ properly, while CommandRegistry legacy fallback executes outside try-catch and buffmoney silently truncates long gem/ruby to int.",
+      "location": "src/network/io/KeyHandler.java:33-34; src/server/command/CommandRegistry.java:314-315,472-478; src/server/Command.java:103,115-122",
+      "root_cause": "Missing bounds/try-catch checks on KeyHandler.setKey byte length, CommandRegistry legacy prefix dispatch and (int) cast in buffmoney, and Command.java 'm '/'i ' admin chat commands.",
+      "severity": "P2",
+      "title": "Uncaught legacy command dispatch, int truncation in buffmoney, and missing input validation in KeyHandler/Command"
+    },
+    {
+      "category": "architecture",
+      "impact": "Dead/duplicated code increases maintenance burden; calling Session.gI() always throws an exception, and network.Message.getData() throws NPE on read-mode messages.",
+      "location": "src/network/Message.java:11-77; src/network/Network.java:20-234; src/network/session/Session.java:36-41,67-72",
+      "root_cause": "Legacy socket stack (Network, Session, Collector, Sender, QueueHandler, network.Message) coexists with Netty 4 stack; Session.instance is never initialized; Session(Socket) constructs redundant Sender/Collector instances.",
+      "severity": "P3",
+      "title": "Coexisting legacy socket stack, duplicate Message class, and uninitialized Session.gI()"
+    },
+    {
+      "category": "concurrency",
+      "impact": "ConcurrentHashMap.computeIfAbsent throws NPE if MySession.ipAddress is null; NettySession.enqueueMessage calls O(N) ConcurrentLinkedQueue.size() on every incoming packet; AutoBtri uses non-volatile isRunning and non-thread-safe singleton.",
+      "location": "src/network/session/MySession.java:104; src/network/netty/NettySession.java:57; src/server/AutoBtri.java:13-24",
+      "root_cause": "Missing null check on ipAddress before ANTILOGIN.computeIfAbsent; ConcurrentLinkedQueue.size() traversal on hot inbound path; missing volatile/synchronized in AutoBtri.",
+      "severity": "P3",
+      "title": "Minor concurrency and null-safety hazards in MySession, NettySession, and AutoBtri"
+    }
+  ],
+  "key_classes": [
+    {
+      "key_methods": [
+        "init()",
+        "sendVersionGame(MySession)",
+        "updateData(MySession)",
+        "updateMap(MySession)",
+        "updateSkill(MySession)",
+        "sendEffectTemplate(MySession, int, int...)",
+        "sendIcon(MySession, int)",
+        "sendMapTemp(MySession, int)",
+        "sendRes(MySession)"
+      ],
+      "name": "DataGame",
+      "path": "src/data/DataGame.java",
+      "responsibility": "Builds and caches game data, resource, map, skill, mob, and image packets sent to clients."
+    },
+    {
+      "key_methods": [
+        "init()",
+        "updateItem(MySession)",
+        "createCacheItemOption()",
+        "createCacheItemTemplatePart1()",
+        "createCacheItemTemplatePart2()",
+        "createCacheArrHead2Frames()"
+      ],
+      "name": "ItemData",
+      "path": "src/data/ItemData.java",
+      "responsibility": "Pre-serializes and caches ItemOptionTemplates, ItemTemplates (split at 750), and ArrHead2Frames payloads."
+    },
+    {
+      "key_methods": [
+        "start(int)",
+        "close()",
+        "isRunning()"
+      ],
+      "name": "NettyServer",
+      "path": "src/network/netty/NettyServer.java",
+      "responsibility": "Netty 4 ServerBootstrap configuring TCP options, IdleStateHandler (180s), NroPacketDecoder, NroPacketEncoder, RateLimiterHandler (120 pkts/s), and NroChannelHandler."
+    },
+    {
+      "key_methods": [
+        "enqueueMessage(Message)",
+        "tryProcessNextMessage()",
+        "sendMessage(Message)",
+        "disconnect()",
+        "dispose()"
+      ],
+      "name": "NettySession",
+      "path": "src/network/netty/NettySession.java",
+      "responsibility": "Netty-backed ISession extending MySession with a bounded (300) ConcurrentLinkedQueue mailbox drained sequentially on Virtual Threads."
+    },
+    {
+      "key_methods": [
+        "decode(ChannelHandlerContext, ByteBuf, List)",
+        "peekKey(byte[], int, byte)"
+      ],
+      "name": "NroPacketDecoder",
+      "path": "src/network/netty/NroPacketDecoder.java",
+      "responsibility": "ByteToMessageDecoder framing NRO packets (200KB cap) and XOR-decrypting command, size, and payload with rollback-free temp cursor."
+    },
+    {
+      "key_methods": [
+        "encode(ChannelHandlerContext, Message, ByteBuf)",
+        "writeKey(byte)"
+      ],
+      "name": "NroPacketEncoder",
+      "path": "src/network/netty/NroPacketEncoder.java",
+      "responsibility": "MessageToByteEncoder framing NRO packets (2-byte or 3-byte size for resource commands) and XOR-encrypting payload."
+    },
+    {
+      "key_methods": [
+        "channelActive(ChannelHandlerContext)",
+        "channelRead0(ChannelHandlerContext, Message)",
+        "channelInactive(ChannelHandlerContext)",
+        "userEventTriggered(ChannelHandlerContext, Object)"
+      ],
+      "name": "NroChannelHandler",
+      "path": "src/network/netty/NroChannelHandler.java",
+      "responsibility": "Manages Netty channel lifecycle, IP limit check, mailbox enqueueing, idle disconnect, and cleanup on inactive."
+    },
+    {
+      "key_methods": [
+        "login(String, String)",
+        "sendKey()"
+      ],
+      "name": "MySession",
+      "path": "src/network/session/MySession.java",
+      "responsibility": "Holds player account/VIP/currency session state, anti-login IP guard, and account login/zone entry flow."
+    },
+    {
+      "key_methods": [
+        "putSession(ISession)",
+        "removeSession(ISession)",
+        "getSessions()",
+        "cleanupDeadSessions()",
+        "forceCleanupAllSessions()"
+      ],
+      "name": "SessionManager",
+      "path": "src/network/session/SessionManager.java",
+      "responsibility": "Tracks active ISession instances, enforces 5000 global / 10 per-IP limits, and runs periodic dead-session and memory monitors."
+    },
+    {
+      "key_methods": [
+        "put(Player)",
+        "remove(MySession)",
+        "removePlayerFromGame(Player)",
+        "kickSession(MySession)",
+        "update()",
+        "close()"
+      ],
+      "name": "Client",
+      "path": "src/server/Client.java",
+      "responsibility": "Indexes online Players (by id, userId, name), handles disconnect/logout cleanup and async DB save, and runs 1s session timeWait loop."
+    },
+    {
+      "key_methods": [
+        "check(Player, String)",
+        "chat(Player, String)",
+        "reloadDataAndUpdateAllPlayers(Player)"
+      ],
+      "name": "Command",
+      "path": "src/server/Command.java",
+      "responsibility": "Handles in-game admin chat commands, player pet/caitrang chat shortcuts, and live data reload broadcast."
+    },
+    {
+      "key_methods": [
+        "dispatch(String)",
+        "parseAmount(String)",
+        "printStatus()"
+      ],
+      "name": "CommandRegistry",
+      "path": "src/server/command/CommandRegistry.java",
+      "responsibility": "Maps server console commands (baotri, kick, ban, mute, buff, buffmoney, telemetry, reload, status) to AdminService."
+    }
+  ],
+  "module_summary": "Core server networking, session/client lifecycle, game template/asset packet builders, and admin/console command dispatch. Contains both a Netty 4 NIO pipeline (NettyServer/NettySession/NroPacketDecoder/NroPacketEncoder/RateLimiterHandler/NroChannelHandler) using Virtual Thread per-session FIFO mailboxes and a coexisting legacy blocking-socket stack (Network/Session/Collector/Sender/QueueHandler), alongside DataGame/ItemData caches, SessionManager, Client, Command, and CommandRegistry.",
+  "protocol_touchpoints": [
+    {
+      "direction": "WRITE",
+      "location": "src/data/DataGame.java:108-119",
+      "opcode": "-29 / sub 4 (messageNotMap)",
+      "payload_summary": "Writes vsData, vsMap, vsSkill, vsItem, byte 0, and SM_TIEU_CHUAN long[] table."
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/data/DataGame.java:140-155",
+      "opcode": "-87 (3-byte encrypted size)",
+      "payload_summary": "Writes vsData and DART, ARROW, EFFECT, IMAGE, PART, SKILL byte arrays."
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/data/DataGame.java:169-192",
+      "opcode": "-29 / sub 6 (messageNotMap)",
+      "payload_summary": "Writes vsMap, MAP_TEMPLATES names (byte count), NPC_TEMPLATES (byte count), MOB_TEMPLATES (byte count)."
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/data/DataGame.java:206-251, 547-550",
+      "opcode": "-28 (sub 7, sub 10)",
+      "payload_summary": "Sub 7: NClass/SkillTemplate/Skill definitions (injecting dummy skills 105-106 for id==0). Sub 10: tile_map_data bytes."
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/data/ItemData.java:69-76, 81-161",
+      "opcode": "-28 (sub 8)",
+      "payload_summary": "Pre-cached sub 8 payloads: item options (0), templates part 1 (1, up to 750), templates part 2 (2), arr head 2 frames (100)."
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/data/DataGame.java:312-321, 370-375, 402-406, 419-428, 455-465, 478-483, 507-510, 526-528, 591-596, 610-613, 626-631, 664-689, 699-703",
+      "opcode": "-66, -93, -32, -31, -67, -77, 11, -82, 66, -74, -29",
+      "payload_summary": "Effect template (-66), bg item versions (-93), bg template (-32), bg items (-31), icon (-67), small version (-77), mob template (11), tileset (-82), img_by_name (66), res version/size/file/end (-74), link IP (-29)."
+    },
+    {
+      "direction": "DISPATCH",
+      "location": "src/network/netty/NettySession.java:78-82; src/network/Collector.java:49-65",
+      "opcode": "-27 (GET_SESSION_ID) & all other opcodes",
+      "payload_summary": "Cmd -27 triggers sendKey/setKey handshake; all other commands route to Controller.gI().onMessage(session, msg)."
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/network/io/KeyHandler.java:12-25; src/network/io/MyKeyHandler.java:9-13",
+      "opcode": "-27 (GET_SESSION_ID)",
+      "payload_summary": "Writes XOR-chained session key bytes, empty UTF, int 0, byte 0 (unencrypted) and triggers sendVersionRes(-74)."
+    },
+    {
+      "direction": "READ",
+      "location": "src/network/netty/NroPacketDecoder.java:33-101; src/network/io/MessageSendCollect.java:20-52",
+      "opcode": "ALL inbound frames",
+      "payload_summary": "Reads 1-byte cmd + 2-byte size (XOR decrypted if sentKey), enforces 0 <= size <= 200000, decrypts payload."
+    }
+  ]
+}

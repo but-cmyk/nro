@@ -1,0 +1,377 @@
+{
+  "batch_id": "client_gameplay_entities__p07",
+  "concurrency_and_state": [
+    "Static global mutable state across client systems: Hint (all coordinates/flags static), ItemTime.autoUseIconIds/lastTimeCheckAutoUse (static HashSet/long not cleared on logout/char switch), ImgByName.hashImagePath (static MyHashTable), ItemTemplates.itemTemplates (static MyHashTable), Info._gocnhon/lastZoomGocNhon (static cached texture), InfoMe.me (static singleton), MapTemplate static arrays, Key static keycode mappings.",
+    "Info_RadaScr.paintEff (Info_RadaScr.cs:263-291) mutates eff (MyVector) by calling SetEff() and eff.removeElementAt(i) during paint().",
+    "InfoMe.update (InfoMe.cs:142-314) and Info.update (Info.cs:229-247) mutate infoWaitToShow and InfoItem timers on the main Unity update thread; Info.paint (Info.cs:96-101) mutates cx/cy directly when outSide == true.",
+    "No locks or multithreading primitives present in this batch; all classes run on the Unity main loop except session callbacks via IMessageHandler/ISession."
+  ],
+  "cross_module_questions": [
+    "Verify in Service.cs / Controller.cs how getImgByName, useItem, login, login2, requestRegister, getMagicTree, and magicTree serialize/deserialize payloads and whether bag indexUI > 127 can occur with (sbyte)targetItem.indexUI in ItemTime.triggerAutoUse.",
+    "Verify in GameScr/ServerEffect/PopUp whether Info.outSide == true is ever used in a context where Info.paint mutating cx/cy causes frame-over-frame coordinate drift.",
+    "Verify in Service/Char how ItemTemplates placeholders created by ItemTemplates.get (ItemTemplates.cs:15-19) interact with real item template loading and whether missing templates get overwritten properly.",
+    "Check GameCanvas/Menu/Panel interaction with LoginScr.paint overwriting tfUser/tfPass/cmdLogin/cmdBackFromRegister coordinates every frame and ignoring cmdMenu/cmdRes/cmdFogetPass."
+  ],
+  "db_redis_touchpoints": [
+    {
+      "location": "ImgByName.cs:48,82",
+      "op": "Rms.loadRMS / Rms.saveRMS",
+      "safety_note": "Local client persistent cache (not DB/Redis). Keyed by zoomLevel + 'ImgByName_' + nameImg; corrupt RMS bytes caught and logged via Debug.LogError.",
+      "target": "Client RMS (ImgByName)"
+    },
+    {
+      "location": "LoginScr.cs:175,184,185,262,302,304,359-361,398,403,419,420,425,435,477-481,517,522-530,913,953,957,980-981",
+      "op": "Rms.loadRMS* / Rms.saveRMS* / Rms.saveIP",
+      "safety_note": "Local client persistent settings (acc, pass, check, indServer, userAo/passAo, lowGraphic, IP). Passwords use saveRMSPassword/loadRMSPassword.",
+      "target": "Client RMS (LoginScr)"
+    }
+  ],
+  "files_read": [
+    "Client/Client/Assets/Scripts/Game1/Hint.cs",
+    "Client/Client/Assets/Scripts/Game1/HTTPHandler.cs",
+    "Client/Client/Assets/Scripts/Game1/IActionListener.cs",
+    "Client/Client/Assets/Scripts/Game1/IChatable.cs",
+    "Client/Client/Assets/Scripts/Game1/IKbAction.cs",
+    "Client/Client/Assets/Scripts/Game1/ImageInfo.cs",
+    "Client/Client/Assets/Scripts/Game1/IMapObject.cs",
+    "Client/Client/Assets/Scripts/Game1/IMessageHandler.cs",
+    "Client/Client/Assets/Scripts/Game1/ImgByName.cs",
+    "Client/Client/Assets/Scripts/Game1/Info.cs",
+    "Client/Client/Assets/Scripts/Game1/Info_RadaScr.cs",
+    "Client/Client/Assets/Scripts/Game1/InfoItem.cs",
+    "Client/Client/Assets/Scripts/Game1/InfoMe.cs",
+    "Client/Client/Assets/Scripts/Game1/InfoPhuBan.cs",
+    "Client/Client/Assets/Scripts/Game1/InputDlg.cs",
+    "Client/Client/Assets/Scripts/Game1/InputStream.cs",
+    "Client/Client/Assets/Scripts/Game1/iOSPlugins.cs",
+    "Client/Client/Assets/Scripts/Game1/IPaint.cs",
+    "Client/Client/Assets/Scripts/Game1/iPhoneGeneration.cs",
+    "Client/Client/Assets/Scripts/Game1/iPhoneSettings.cs",
+    "Client/Client/Assets/Scripts/Game1/ipKeyboard.cs",
+    "Client/Client/Assets/Scripts/Game1/ISession.cs",
+    "Client/Client/Assets/Scripts/Game1/Item.cs",
+    "Client/Client/Assets/Scripts/Game1/ItemMap.cs",
+    "Client/Client/Assets/Scripts/Game1/ItemObject.cs",
+    "Client/Client/Assets/Scripts/Game1/ItemOption.cs",
+    "Client/Client/Assets/Scripts/Game1/ItemOptionTemplate.cs",
+    "Client/Client/Assets/Scripts/Game1/ItemTemplate.cs",
+    "Client/Client/Assets/Scripts/Game1/ItemTemplates.cs",
+    "Client/Client/Assets/Scripts/Game1/ItemTime.cs",
+    "Client/Client/Assets/Scripts/Game1/Key.cs",
+    "Client/Client/Assets/Scripts/Game1/KeyConstant.cs",
+    "Client/Client/Assets/Scripts/Game1/Layer.cs",
+    "Client/Client/Assets/Scripts/Game1/Line.cs",
+    "Client/Client/Assets/Scripts/Game1/ListNew.cs",
+    "Client/Client/Assets/Scripts/Game1/LoginScr.cs",
+    "Client/Client/Assets/Scripts/Game1/MagicTree.cs",
+    "Client/Client/Assets/Scripts/Game1/MainImage.cs",
+    "Client/Client/Assets/Scripts/Game1/MapTemplate.cs",
+    "Client/Client/Assets/Scripts/Game1/Math.cs",
+    "Client/Client/Assets/Scripts/Game1/Member.cs",
+    "Client/Client/Assets/Scripts/Game1/mLine.cs"
+  ],
+  "findings": [
+    {
+      "category": "gameplay",
+      "impact": "Horizontal scroll fling velocity is computed from stale pointer history on touch-down, causing erratic horizontal scrolling/flicks in ListNew.",
+      "location": "Client/Client/Assets/Scripts/Game1/ListNew.cs:239-242",
+      "root_cause": "updatePos_LEFT_RIGHT initializes pointerDownLastX[0] inside the loop instead of pointerDownLastX[i] (unlike update_Pos_UP_DOWN at line 147).",
+      "severity": "P1",
+      "title": "Wrong array index in ListNew.updatePos_LEFT_RIGHT pointer history init"
+    },
+    {
+      "category": "gameplay",
+      "impact": "DivideByZeroException when maxPeas == 0, and IndexOutOfRangeException/NullReferenceException when isPeasEffect runs with currPeas <= 0 or null peaPostionX.",
+      "location": "Client/Client/Assets/Scripts/Game1/MagicTree.cs:146,174",
+      "root_cause": "Line 146 divides by maxPeas without checking maxPeas > 0; line 174 indexes peaPostionX[currPeas - 1] without null or bounds checks on currPeas and peaPostionX.",
+      "severity": "P1",
+      "title": "Unchecked division by zero and array bounds in MagicTree.update"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Dropped item does not animate smoothly from (x, y) to (xEnd, yEnd) because it starts already at xEnd and overshoots; debug log prints playerId before assignment.",
+      "location": "Client/Client/Assets/Scripts/Game1/ItemMap.cs:69,73-75",
+      "root_cause": "Constructor assigns this.x = xEnd instead of this.x = x while computing vx = xEnd - x >> 2, and logs playerId at line 75 before assigning it.",
+      "severity": "P2",
+      "title": "ItemMap constructor initializes x to xEnd instead of x"
+    },
+    {
+      "category": "gameplay",
+      "impact": "NullReferenceException if GameCanvas.lowGraphic is toggled from true to false while an aura ItemMap exists on map.",
+      "location": "Client/Client/Assets/Scripts/Game1/ItemMap.cs:231-239,262-266",
+      "root_cause": "setAuraItem() skips allocating xArg/yArg/xDot/yDot when GameCanvas.lowGraphic is true, while paintAuraItemEff iterates yArg.Length whenever lowGraphic becomes false.",
+      "severity": "P2",
+      "title": "Uninitialized aura dot arrays when lowGraphic toggles in ItemMap"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Buff countdown timer skips/jumps to 60s when second hits 0 (e.g., 60s input ticks to 0'60s), and negative/infinite text timers (time == -1) decrement minute unboundedly.",
+      "location": "Client/Client/Assets/Scripts/Game1/ItemTime.cs:193-197,46-65",
+      "root_cause": "update() checks if (second <= 0) { second = 60; minute--; } instead of resetting to 59 when second < 0, and does not skip countdown when dontClear is true.",
+      "severity": "P2",
+      "title": "ItemTime countdown second reset off-by-one and infinite timer decrement"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Auto-use buff settings persist across character/account switches within the same client session, and bag slot index > 127 overflows sbyte cast in useItem call.",
+      "location": "Client/Client/Assets/Scripts/Game1/ItemTime.cs:228,372",
+      "root_cause": "autoUseIconIds is a static HashSet<short> never cleared on logout/switch; triggerAutoUse casts targetItem.indexUI to (sbyte).",
+      "severity": "P2",
+      "title": "ItemTime static autoUseIconIds leaks across characters and casts indexUI to sbyte"
+    },
+    {
+      "category": "performance_gc",
+      "impact": "Per-frame heap allocations in Unity render/update loops increase GC pauses on mobile/PC clients.",
+      "location": "Client/Client/Assets/Scripts/Game1/Info.cs:124,132,134,215; ItemTime.cs:141-145,169-182,406; MagicTree.cs:167-170; Info_RadaScr.cs:252,265; LoginScr.cs:728,735",
+      "root_cause": "Info.paint calls Res.split/splitFontArray every frame; ItemTime.paint/paintText and LoginScr.paint concatenate strings every frame; MagicTree.update calls NinjaUtil.getTime(seconds) every frame; Info_RadaScr.paintEff allocates Position via SetEff inside paint.",
+      "severity": "P2",
+      "title": "Per-frame allocations and string concatenations in paint() and update() loops"
+    },
+    {
+      "category": "gameplay",
+      "impact": "If Info.outSide is true, speech bubble position drifts by (-cmx, -cmy + 35) on every paint frame; duplicate info messages are not filtered.",
+      "location": "Client/Client/Assets/Scripts/Game1/Info.cs:96-101,293-295",
+      "root_cause": "Info.paint directly mutates cx and cy when outSide is true; Info.addInfo has an empty if-block stub where duplicate-message filtering should return.",
+      "severity": "P2",
+      "title": "Info.paint mutates cx/cy when outSide is true and Info.addInfo has empty dedup stub"
+    },
+    {
+      "category": "gameplay",
+      "impact": "NullReferenceException if Item.getUpMax() or Item.isUpMax() is called on an Item with null template.",
+      "location": "Client/Client/Assets/Scripts/Game1/Item.cs:506-534",
+      "root_cause": "getUpMax() accesses template.level directly without a null check, unlike isTypeBody() and getUpgradestring().",
+      "severity": "P2",
+      "title": "Missing null check on Item.template in getUpMax()"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Copied Item loses temp appearance parts, consignor name, purchase specs, and comparison metadata when clone() is used.",
+      "location": "Client/Client/Assets/Scripts/Game1/Item.cs:357-402",
+      "root_cause": "Item.clone() omits fields including quantilyToBuy, powerRequire, buySpec, buyRuby, iconSpec, buyType, isBuySpec, headTemp/bodyTemp/legTemp/bagTemp/wpTemp, nameNguoiKyGui, info, content, reason.",
+      "severity": "P3",
+      "title": "Incomplete field copying in Item.clone()"
+    },
+    {
+      "category": "architecture",
+      "impact": "Dead/unreachable tutorial hint code and dead LoginScr methods/UI state cause confusion and double-update overhead.",
+      "location": "Client/Client/Assets/Scripts/Game1/Hint.cs:267,299-304,490-569; LoginScr.cs:247-284,368-370,564-579,629-642,763-799",
+      "root_cause": "Hint.hint() returns early for taskId > 2 making case 3 and taskId == 9 blocks unreachable; LoginScr.getServerLink creates an unused Command; LoginScr.update updates tfUser/tfPass twice per tick and conflicts with updateKey/paint over command/layout assignments.",
+      "severity": "P2",
+      "title": "Unreachable Hint branches, dead LoginScr code, and duplicated tfUser/tfPass updates"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Missing bounds/null checks on SmallImage.smallImg[id] and uninitialized placeholder caching in ItemTemplates.get.",
+      "location": "Client/Client/Assets/Scripts/Game1/MagicTree.cs:76,79,84,90,156,164; ItemTemplates.cs:12-21",
+      "root_cause": "MagicTree indexes SmallImage.smallImg[id][3]/[4] directly; ItemTemplates.get caches a synthetic 'Item <id>' template on cache miss.",
+      "severity": "P3",
+      "title": "Unchecked SmallImage array indexing in MagicTree and placeholder caching in ItemTemplates"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Incorrect alpha channel (255f instead of 1f) and 256f divisor in mLine.setColor.",
+      "location": "Client/Client/Assets/Scripts/Game1/mLine.cs:30-39",
+      "root_cause": "r/g/b are normalized to [0, 1) via /256f while a is set to 255f.",
+      "severity": "P3",
+      "title": "Inconsistent color normalization in mLine.setColor"
+    }
+  ],
+  "key_classes": [
+    {
+      "key_methods": [
+        "hint",
+        "update",
+        "paint",
+        "paintArrowPointToHint",
+        "clickNpc",
+        "clickMob"
+      ],
+      "name": "Hint",
+      "path": "Client/Client/Assets/Scripts/Game1/Hint.cs",
+      "responsibility": "Static tutorial hand/arrow hint overlay for early tasks (taskId <= 2)."
+    },
+    {
+      "key_methods": [
+        "getImagePath",
+        "getFromRms",
+        "saveRMS",
+        "checkDelHash"
+      ],
+      "name": "ImgByName",
+      "path": "Client/Client/Assets/Scripts/Game1/ImgByName.cs",
+      "responsibility": "Caches named images in memory and RMS, requesting missing images from server."
+    },
+    {
+      "key_methods": [
+        "paint",
+        "update",
+        "getInfo",
+        "addInfo",
+        "perform"
+      ],
+      "name": "Info",
+      "path": "Client/Client/Assets/Scripts/Game1/Info.cs",
+      "responsibility": "Renders and queues floating speech bubbles and server/player chat popups."
+    },
+    {
+      "key_methods": [
+        "gI",
+        "paint",
+        "update",
+        "moveCamera",
+        "addInfoWithChar",
+        "addInfo"
+      ],
+      "name": "InfoMe",
+      "path": "Client/Client/Assets/Scripts/Game1/InfoMe.cs",
+      "responsibility": "Controls player-following or HUD-anchored Info popup and camera easing."
+    },
+    {
+      "key_methods": [
+        "SetInfo",
+        "paintInfo",
+        "addItemDetail",
+        "paintEff",
+        "hasAura",
+        "isDocNhanUnlocked"
+      ],
+      "name": "Info_RadaScr",
+      "path": "Client/Client/Assets/Scripts/Game1/Info_RadaScr.cs",
+      "responsibility": "Radar/collection card data model, detail popup builder, and card effect renderer."
+    },
+    {
+      "key_methods": [
+        "getPrice",
+        "paintUpgradeEffect",
+        "isHaveOption",
+        "clone",
+        "isTypeBody",
+        "getUpMax"
+      ],
+      "name": "Item",
+      "path": "Client/Client/Assets/Scripts/Game1/Item.cs",
+      "responsibility": "Core client item entity holding template, options, pricing, upgrade state, and UI flags."
+    },
+    {
+      "key_methods": [
+        "update",
+        "paint",
+        "paintAuraItemEff",
+        "setPoint",
+        "isInViewport"
+      ],
+      "name": "ItemMap",
+      "path": "Client/Client/Assets/Scripts/Game1/ItemMap.cs",
+      "responsibility": "Ground/map item entity implementing IMapObject with drop interpolation and aura effects."
+    },
+    {
+      "key_methods": [
+        "getOptionString",
+        "getOptionName",
+        "getOptiongColor"
+      ],
+      "name": "ItemOption",
+      "path": "Client/Client/Assets/Scripts/Game1/ItemOption.cs",
+      "responsibility": "Item stat option formatting with fallback to DefaultItemOptions."
+    },
+    {
+      "key_methods": [
+        "paint",
+        "paintText",
+        "update",
+        "toggleAutoUse",
+        "triggerAutoUse",
+        "checkAutoUsePeriodic"
+      ],
+      "name": "ItemTime",
+      "path": "Client/Client/Assets/Scripts/Game1/ItemTime.cs",
+      "responsibility": "Buff/cooldown timer display, server countdown text, and client auto-use buff system."
+    },
+    {
+      "key_methods": [
+        "updateMenuKey",
+        "update_Pos_UP_DOWN",
+        "updatePos_LEFT_RIGHT",
+        "moveCamera",
+        "setMaxCamera"
+      ],
+      "name": "ListNew",
+      "path": "Client/Client/Assets/Scripts/Game1/ListNew.cs",
+      "responsibility": "Touch/key scrollable list camera controller with inertia."
+    },
+    {
+      "key_methods": [
+        "doLogin",
+        "doRegister",
+        "update",
+        "paint",
+        "updateKey",
+        "perform"
+      ],
+      "name": "LoginScr",
+      "path": "Client/Client/Assets/Scripts/Game1/LoginScr.cs",
+      "responsibility": "Login and registration screen handling credentials, RMS persistence, and server connection."
+    },
+    {
+      "key_methods": [
+        "paint",
+        "update",
+        "perform"
+      ],
+      "name": "MagicTree",
+      "path": "Client/Client/Assets/Scripts/Game1/MagicTree.cs",
+      "responsibility": "Magic pea tree NPC subclass managing growth timers, pea positions, and harvest popup."
+    }
+  ],
+  "module_summary": "Client Game1 gameplay entities, UI widgets/screens, input/network interfaces, and item/aura/hint/login models (42 files, 5961 lines). Covers item models (Item, ItemMap, ItemOption, ItemTemplate, ItemTemplates, ItemTime, ItemObject), UI/HUD info & scrolling (Hint, Info, InfoItem, InfoMe, Info_RadaScr, InfoPhuBan, InputDlg, ListNew, LoginScr, MagicTree), image/map/math helpers (ImgByName, ImageInfo, MainImage, MapTemplate, Math, Member, Line, mLine, Layer), input/platform wrappers (Key, KeyConstant, ipKeyboard, iOSPlugins, iPhoneGeneration, iPhoneSettings), and core interfaces (HTTPHandler, IActionListener, IChatable, IKbAction, IMapObject, IMessageHandler, IPaint, ISession, InputStream).",
+  "protocol_touchpoints": [
+    {
+      "direction": "WRITE",
+      "location": "ImgByName.cs:36",
+      "opcode": "Service.gI().getImgByName",
+      "payload_summary": "Requests missing dynamic image asset by name (throttled every 200 calls)."
+    },
+    {
+      "direction": "WRITE",
+      "location": "ItemTime.cs:372",
+      "opcode": "Service.gI().useItem",
+      "payload_summary": "useItem(0, 1, (sbyte)targetItem.indexUI, -1) triggered by auto-use buff loop."
+    },
+    {
+      "direction": "WRITE",
+      "location": "LoginScr.cs:359",
+      "opcode": "Service.gI().requestRegister",
+      "payload_summary": "Registers account with username, password, userAo, passAo, GameMidlet.VERSION."
+    },
+    {
+      "direction": "WRITE",
+      "location": "LoginScr.cs:496,922",
+      "opcode": "Service.gI().login",
+      "payload_summary": "Logs in with username, password (or empty string on quick-play), VERSION, and isLogin2 byte flag."
+    },
+    {
+      "direction": "WRITE",
+      "location": "LoginScr.cs:916",
+      "opcode": "Service.gI().login2",
+      "payload_summary": "Requests new guest/quick-play account creation when userAo is empty."
+    },
+    {
+      "direction": "WRITE",
+      "location": "LoginScr.cs:593",
+      "opcode": "Service.gI().finishUpdate",
+      "payload_summary": "Notifies server when all client data/map/skill/item updates complete."
+    },
+    {
+      "direction": "WRITE",
+      "location": "MagicTree.cs:143,194",
+      "opcode": "Service.gI().getMagicTree / magicTree",
+      "payload_summary": "getMagicTree(2) when timer reaches 0; magicTree(1) on popup interaction."
+    },
+    {
+      "direction": "READ",
+      "location": "IMessageHandler.cs:5; ISession.cs:11; InputStream.cs:3",
+      "opcode": "IMessageHandler.onMessage / ISession.sendMessage",
+      "payload_summary": "Client message dispatch and session transport interfaces; InputStream wraps myReader."
+    }
+  ]
+}

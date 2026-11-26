@@ -1,0 +1,370 @@
+{
+  "batch_id": "client_ui_god_mods__p01",
+  "concurrency_and_state": [
+    "Every Game1.God manager (AutoSettingManager, ClientManager, Boss, BossData, Items, ListChars, NPoint, PlayerInfo, Revive, nSkill, AutoControlPanel) uses non-thread-safe lazy singletons (`getInstance()`) with static/mutable state; Mobs uses purely public static fields/lists.",
+    "AutoSettingManager persists settings per character via `Rms.saveRMSString(\"nro_auto_\" + charId, ...)` and `\"nro_auto_default\"`, caching `lastLoadedCharId` in RAM across map changes (`AutoSettingManager.cs:283-392`).",
+    "ClientManager.Update (`ClientManager.cs:25-28`) unconditionally overwrites `Char.myCharz().cspeed = speedRun` every frame when `speedRun != -1`, overriding any temporary server/skill speed modifiers.",
+    "ChatPopup relies on global static state (`currChatPopup`, `serverChatPopUp`, `nextMultiChatPopUp`, `scr`, `curr`, `last`, `performDelay`, `isHavePetNpc`), so overlapping popups or countdown tags `<...>` overwrite each other's timer and scroll state (`ChatPopup.cs:31-65, 419-431`).",
+    "ListChars caches `listPlayers` in `Update()` only while `isShow` is true, leaving stale `Char` references in `listPlayers` when toggled off (`ListChars.cs:168-178`)."
+  ],
+  "cross_module_questions": [
+    "Server-side movement/anti-cheat: Does the Java server validate `charMove` step distance/speed (`Mobs.GotoXY`, `Utils.Teleport`, `ClientManager.speedRun`) and `Main.gameSpeed` (`cheat` up to 100x)?",
+    "Server-side combat & cooldowns: Does the Java server enforce skill range (vs `nSkill` 1.7x `dx/dy` reach), `paintCanNotUseSkill`, and mana checks when receiving `sendPlayerAttack`?",
+    "Server-side revive & shop: Does the Java server rate-limit `wakeUpFromDead()` (spammed every 20 ticks by `Revive.PlayerRevive`) and `buyItem()` (sent every 200ms by `Items.autoBuy`)?",
+    "Client integration: How does `GameScr` dispatch the synthetic `GameCanvas.keyAsciiPress` chars (`x, c, f, m, j, k, l`) injected by `ClientManager.UpdateTouch()` (`ClientManager.cs:35-108`) now that `ClientManager.KeyPressed()` is empty?"
+  ],
+  "db_redis_touchpoints": [],
+  "files_read": [
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/ChatPopup.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/Command.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/God/Boss/Boss.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/God/Boss/BossData.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/God/Client/AutoSettingManager.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/God/Client/ClientManager.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/God/Item/ItemGroup.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/God/Item/Items.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/God/Mob/Mobs.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/God/Player/AutoControlPanel.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/God/Player/ListChars.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/God/Player/NPoint.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/God/Player/PlayerInfo.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/God/Player/Revive.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/God/Player/TypePoint.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/God/Skill/nSkill.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/God/Utils/Utils.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/InfoDlg.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/Menu.cs"
+  ],
+  "findings": [
+    {
+      "category": "gameplay",
+      "impact": "Clicking the right side of the screen where ListChars was previously drawn can unintentionally focus or teleport the player to stale coordinates even when ListChars is disabled.",
+      "location": "Client/Client/Assets/Scripts/Game1/God/Player/ListChars.cs:141-178",
+      "root_cause": "ListChars.Update() returns early when `!isShow` without clearing `listPlayers`, and ListChars.UpdateTouch() has no `if (!isShow) return;` guard, so it continues hit-testing stale `listPlayers` entries and calling `Utils.Teleport`/`Utils.FocusObject`.",
+      "severity": "P1",
+      "title": "ListChars.UpdateTouch processes clicks and teleports even when ListChars is hidden"
+    },
+    {
+      "category": "gameplay",
+      "impact": "If a player queues more than one item to auto-buy, buying the first batch wipes out all queued items; starting a new buy overwrites the active quantity.",
+      "location": "Client/Client/Assets/Scripts/Game1/God/Item/Items.cs:20-21, 207-240, 301-315",
+      "root_cause": "Items.autoBuy() stores target quantity in a single shared `int quantity` field rather than inside `ItemGroup`, and clears the entire `itemBuys` list (`itemBuys.Clear()`) as soon as `quantity <= 0`.",
+      "severity": "P1",
+      "title": "Items.autoBuy uses a single shared quantity counter across the entire itemBuys list"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Any invalid chat input like `k `, `k abc`, `cheat `, or non-numeric NPoint potential input crashes the client loop with unhandled exceptions; NPoint also cannot target stats above `int.MaxValue` despite using `long` fields (`hpg`, `mpg`, `dameg`).",
+      "location": "Client/Client/Assets/Scripts/Game1/God/Client/ClientManager.cs:212-223; Client/Client/Assets/Scripts/Game1/God/Player/NPoint.cs:175",
+      "root_cause": "`ClientManager.Chat` calls `float.Parse`/`int.Parse` on `text.Split(' ')[1]` without bounds or format checks; `NPoint.onChatFromMe` calls `int.Parse` without `TryParse` and does not reset `ChatTextField` on early returns (lines 179, 204).",
+      "severity": "P1",
+      "title": "Unhandled int.Parse/float.Parse and missing bounds checks in ClientManager.Chat and NPoint.onChatFromMe"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Client will spam `wakeUpFromDead()` packets indefinitely every 20 ticks while dead, bypassing the intended `maxReviveCount = 5` limit.",
+      "location": "Client/Client/Assets/Scripts/Game1/God/Player/Revive.cs:8-10, 30-48",
+      "root_cause": "`Revive.reviveCount` is incremented and reset after 60s, but `Revive.maxReviveCount` is never checked in `PlayerRevive()`. Also `Char.myCharz()` is dereferenced without null check.",
+      "severity": "P1",
+      "title": "Revive.maxReviveCount is never enforced in PlayerRevive()"
+    },
+    {
+      "category": "performance_gc",
+      "impact": "Every frame when player lacks items 921 and 454 (and `isAnalog == 1`), `GUI()` iterates the entire bag and allocates two `.ToLower()` strings per item, causing heavy per-frame GC allocations.",
+      "location": "Client/Client/Assets/Scripts/Game1/God/Client/ClientManager.cs:146-163; Client/Client/Assets/Scripts/Game1/God/Utils/Utils.cs:85-96",
+      "root_cause": "`ClientManager.GUI()` calls `Utils.getItemFromName(\"bông tai\")` and `TileMap.zoneID.ToString()` unconditionally inside the render loop; `getItemFromName` allocates `item.template.name.ToLower()` and `name.ToLower()` on every bag item.",
+      "severity": "P1",
+      "title": "Heavy per-frame string allocations in ClientManager.GUI via Utils.getItemFromName and ToString"
+    },
+    {
+      "category": "performance_gc",
+      "impact": "Continuous GC pressure and frame drops whenever ChatPopup, Boss HUD, ListChars, AutoSettingManager, or Menu is visible.",
+      "location": "Client/Client/Assets/Scripts/Game1/ChatPopup.cs:358-484, 562-632; Client/Client/Assets/Scripts/Game1/God/Boss/BossData.cs:20-39; Client/Client/Assets/Scripts/Game1/God/Player/ListChars.cs:74-75; Client/Client/Assets/Scripts/Game1/God/Client/AutoSettingManager.cs:470; Client/Client/Assets/Scripts/Game1/Menu.cs:467",
+      "root_cause": "Multiple `paint*` methods allocate objects every frame: `ChatPopup.paint`/`paintRada` call `Res.split`, `Substring`, `new int[maxStarSlot]`, and `Res.err(...)`; `BossData.getDisplayString()`/`getElapsedTime()` concat strings every frame; `ListChars.paintPlayerMap` concats `prefix + text` every frame; `AutoSettingManager.paint` calls `GetItemValueString`; `Menu.paintMenu` allocates `new string[1]` when `subCaption` is null.",
+      "severity": "P1",
+      "title": "Per-frame heap allocations in paint() across ChatPopup, BossData, ListChars, AutoSettingManager, and Menu"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Flick velocity calculation for Menu horizontal scrolling uses stale `pointerDownLastX[1]` and `[2]` from prior touches, causing erratic inertial scroll jumps on release.",
+      "location": "Client/Client/Assets/Scripts/Game1/Menu.cs:318-321, 399-401",
+      "root_cause": "In `updateMenuKey()`, the initialization loop assigns `pointerDownLastX[0] = GameCanvas.px;` instead of `pointerDownLastX[i] = GameCanvas.px;`.",
+      "severity": "P2",
+      "title": "Menu.updateMenuKey drag initialization bug overwrites index 0 instead of filling pointerDownLastX array"
+    },
+    {
+      "category": "gameplay",
+      "impact": "NRE crash if auto-stat is active while pet is dismissed/null, or if `perform` is invoked with `p == null`, or if `ChatPopup.perform(8000)` fires after `currChatPopup` is cleared by `Menu.startAt`.",
+      "location": "Client/Client/Assets/Scripts/Game1/God/Player/NPoint.cs:29-169, 314; Client/Client/Assets/Scripts/Game1/ChatPopup.cs:118, 845",
+      "root_cause": "`NPoint` accesses `Char.myPetz()` without null check when `type == TypePoint.Pet` (and reads `Char.myCharz().expForOneAdd` even for Pet at lines 77-78); `ChatPopup.addBigMessage` accesses `c.charID` without null check and `perform(8000)` dereferences `currChatPopup.currentLine` without null check.",
+      "severity": "P2",
+      "title": "Missing null checks in NPoint (myPetz) and ChatPopup (c, currChatPopup)"
+    },
+    {
+      "category": "security_dupe",
+      "impact": "Client mod exposes unguarded client-side teleportation, 100x game speedhack, and arbitrary movement speed override (`speedRun`), relying entirely on server-side validation.",
+      "location": "Client/Client/Assets/Scripts/Game1/God/Mob/Mobs.cs:72-77; Client/Client/Assets/Scripts/Game1/God/Utils/Utils.cs:36-42; Client/Client/Assets/Scripts/Game1/God/Client/ClientManager.cs:25-28, 212-217, 314-334; Client/Client/Assets/Scripts/Game1/God/Skill/nSkill.cs:152-184",
+      "root_cause": "`Mobs.GotoXY` and `Utils.Teleport` mutate `cx/cy` directly and send `charMove()`; `ClientManager` allows `gameSpeed` up to `100f` via `cheat` chat and unclamped `speedRun`; `nSkill` sends attacks up to `1.7 * dx/dy` reach without checking mana or updating char skill animation.",
+      "severity": "P2",
+      "title": "Client-side teleport, speedhack, and extended-reach auto-attack in God mods"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Player setting `movespeed` to 4 is silently downgraded to 2 on every load; `ClientManager.onChatFromMe` speed settings desync from `AutoSettingManager` and get overridden or mis-clamped.",
+      "location": "Client/Client/Assets/Scripts/Game1/God/Client/AutoSettingManager.cs:192-213, 373-376; Client/Client/Assets/Scripts/Game1/God/Client/ClientManager.cs:324-334",
+      "root_cause": "`AutoSettingManager.Load` contains a hardcoded rewrite `if (key == \"movespeed\" && parsedVal == 4) parsedVal = 2;`; `AutoSettingManager` clamps `gameSpeed` to `[0.8, 10]` and `movespeed` to `[1, 30]`, conflicting with `ClientManager` `[0.1, 100]` and unclamped `speedRun`.",
+      "severity": "P2",
+      "title": "Conflicting speed clamps and hardcoded movespeed 4->2 rewrite in AutoSettingManager"
+    },
+    {
+      "category": "architecture",
+      "impact": "Dead code and unused allocations/methods bloat maintenance surface and can confuse debugging (e.g., `BossData` instantiates an empty `List<BossData>` per boss entry).",
+      "location": "Client/Client/Assets/Scripts/Game1/God/Boss/BossData.cs:12, 68; Client/Client/Assets/Scripts/Game1/God/Player/AutoControlPanel.cs:1-40; Client/Client/Assets/Scripts/Game1/God/Client/ClientManager.cs:181-209; Client/Client/Assets/Scripts/Game1/God/Player/PlayerInfo.cs:12, 17-24",
+      "root_cause": "Removed UI features (`AutoControlPanel`, `PlayerInfo.paintInfoPlayer`, `ClientManager.KeyPressed`/`MenuClient`) remain partially wired or dead; `BossData` mixes singleton manager and DTO roles; `AutoSettingItem` `doFire` uses `GameCanvas.px` even on keyboard confirm.",
+      "severity": "P3",
+      "title": "Mixed DTO/singleton in BossData, dead stub classes, and unused fields"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Auto-relogin waits ~13 seconds instead of 10 seconds between retries, and `ChatPopup` `<...>` countdown parser can throw `FormatException` if text contains `<` without numeric timer format.",
+      "location": "Client/Client/Assets/Scripts/Game1/God/Player/PlayerInfo.cs:39-41, 56-58; Client/Client/Assets/Scripts/Game1/ChatPopup.cs:415-421, 613-619",
+      "root_cause": "`PlayerInfo.Login` sets `timeWait = now + 10000L` while checking `now - timeWait >= 3000L` (effective interval 13s); `ChatPopup` uses `int.Parse` without `TryParse` or array length validation on `<...>` tags.",
+      "severity": "P3",
+      "title": "13s retry math quirk in PlayerInfo.Login and unsafe int.Parse in ChatPopup"
+    }
+  ],
+  "key_classes": [
+    {
+      "key_methods": [
+        "addBigMessage",
+        "addChatPopupMultiLine",
+        "addChatPopup",
+        "update",
+        "paint",
+        "paintRada",
+        "updateKey",
+        "perform"
+      ],
+      "name": "ChatPopup",
+      "path": "Client/Client/Assets/Scripts/Game1/ChatPopup.cs",
+      "responsibility": "NPC/server dialog popup and Rada text renderer with multi-line pagination, star slots, countdown tags, and scrolling."
+    },
+    {
+      "key_methods": [
+        "performAction",
+        "paint",
+        "paintOngMau",
+        "isPointerPressInside",
+        "isPointerPressInsideCamera"
+      ],
+      "name": "Command",
+      "path": "Client/Client/Assets/Scripts/Game1/Command.cs",
+      "responsibility": "UI button/action wrapper rendering sprite or 3-slice/fallback buttons and dispatching IActionListener or GameScr.actionPerform."
+    },
+    {
+      "key_methods": [
+        "paintMenu",
+        "updateMenuKey",
+        "updateMenu",
+        "startAt",
+        "doCloseMenu",
+        "performSelect"
+      ],
+      "name": "Menu",
+      "path": "Client/Client/Assets/Scripts/Game1/Menu.cs",
+      "responsibility": "Horizontal scrollable NPC/action ring menu with slide-in/out animation and touch flick physics."
+    },
+    {
+      "key_methods": [
+        "showWait",
+        "paint",
+        "update",
+        "hide"
+      ],
+      "name": "InfoDlg",
+      "path": "Client/Client/Assets/Scripts/Game1/InfoDlg.cs",
+      "responsibility": "Top-center blocking wait/info banner overlay with countdown auto-hide."
+    },
+    {
+      "key_methods": [
+        "InitDefaultItems",
+        "Load",
+        "Save",
+        "paint",
+        "doFire",
+        "UpdateCurrentMapMobs",
+        "paintMobTanSat",
+        "doFireMobTanSat"
+      ],
+      "name": "AutoSettingManager",
+      "path": "Client/Client/Assets/Scripts/Game1/God/Client/AutoSettingManager.cs",
+      "responsibility": "Mod auto-settings registry, RMS persistence per charId, and Panel tab UI renderer/input handler for toggles, steppers, and mob target selection."
+    },
+    {
+      "key_methods": [
+        "Update",
+        "UpdateTouch",
+        "GUI",
+        "Chat",
+        "perform",
+        "onChatFromMe"
+      ],
+      "name": "ClientManager",
+      "path": "Client/Client/Assets/Scripts/Game1/God/Client/ClientManager.cs",
+      "responsibility": "Top-level orchestrator ticking all Game1.God auto modules, drawing quick-action touch buttons, and handling cheat/auto chat commands."
+    },
+    {
+      "key_methods": [
+        "getIconIdByItemTemplate",
+        "isBuffActive",
+        "autoUse",
+        "autoBuy",
+        "Update",
+        "perform",
+        "onChatFromMe"
+      ],
+      "name": "Items",
+      "path": "Client/Client/Assets/Scripts/Game1/God/Item/Items.cs",
+      "responsibility": "Auto-use items (with active buff tracking via Char.vItemTime) and auto-buy item queue."
+    },
+    {
+      "key_methods": [
+        "paintPlayerMap",
+        "isBoss",
+        "UpdateTouch",
+        "Update"
+      ],
+      "name": "ListChars",
+      "path": "Client/Client/Assets/Scripts/Game1/God/Player/ListChars.cs",
+      "responsibility": "HUD player/boss list overlay with flag colors, line-of-sight lines, focus, and click-to-teleport."
+    },
+    {
+      "key_methods": [
+        "getHPPotential",
+        "getMPPotential",
+        "getDamePotential",
+        "getDefPotential",
+        "Update",
+        "onChatFromMe",
+        "perform"
+      ],
+      "name": "NPoint",
+      "path": "Client/Client/Assets/Scripts/Game1/God/Player/NPoint.cs",
+      "responsibility": "Auto-upgrade potential stats (HP/MP/Dame/Def/Crit) in batches of 1/10/100 for Master or Pet."
+    },
+    {
+      "key_methods": [
+        "sendAttack",
+        "checkSkill",
+        "vAttack",
+        "sendAttackPlayer",
+        "Update"
+      ],
+      "name": "nSkill",
+      "path": "Client/Client/Assets/Scripts/Game1/God/Skill/nSkill.cs",
+      "responsibility": "Auto-attack loop targeting charFocus (Boss/PK) and mobFocus within 1.7x skill reach."
+    },
+    {
+      "key_methods": [
+        "PaintBossInfo",
+        "getBOSSInfo",
+        "getDisplayString",
+        "getElapsedTime"
+      ],
+      "name": "Boss / BossData",
+      "path": "Client/Client/Assets/Scripts/Game1/God/Boss/BossData.cs",
+      "responsibility": "Parses boss spawn announcements into a 5-entry rolling list and renders elapsed-time HUD overlay."
+    },
+    {
+      "key_methods": [
+        "Update",
+        "GotoXY"
+      ],
+      "name": "Mobs",
+      "path": "Client/Client/Assets/Scripts/Game1/God/Mob/Mobs.cs",
+      "responsibility": "Static configuration holder for auto-farm (TanSat), auto-pick filters, bean thresholds, and direct GotoXY teleport."
+    },
+    {
+      "key_methods": [
+        "PlayerRevive",
+        "Update"
+      ],
+      "name": "Revive",
+      "path": "Client/Client/Assets/Scripts/Game1/God/Player/Revive.cs",
+      "responsibility": "Auto-revive loop calling wakeUpFromDead every 20 ticks when dead."
+    },
+    {
+      "key_methods": [
+        "Update",
+        "Login"
+      ],
+      "name": "PlayerInfo",
+      "path": "Client/Client/Assets/Scripts/Game1/God/Player/PlayerInfo.cs",
+      "responsibility": "Auto-relogin handler on ServerListScreen and LoginScr."
+    },
+    {
+      "key_methods": [
+        "startChat",
+        "UseItem",
+        "Teleport",
+        "FocusObject",
+        "getItemFromName",
+        "resetTF"
+      ],
+      "name": "Utils",
+      "path": "Client/Client/Assets/Scripts/Game1/God/Utils/Utils.cs",
+      "responsibility": "Shared mod helpers for ChatTextField prompts, bag item lookup/use, focus, and teleportation."
+    }
+  ],
+  "module_summary": "Batch p01 covers core client UI widgets (ChatPopup, Command, InfoDlg, Menu) and the Game1.God mod/automation suite (ClientManager, AutoSettingManager, Items, Mobs, ListChars, NPoint, PlayerInfo, Revive, nSkill, Boss/BossData, AutoControlPanel, Utils). Key issues identified are per-frame GC allocations in UI paint loops (`ChatPopup`, `ClientManager.GUI` via `Utils.getItemFromName`, `BossData`, `ListChars`, `Menu`), stale click/teleport handling in `ListChars.UpdateTouch` when hidden, shared quantity corruption in `Items.autoBuy`, unguarded `int.Parse`/`float.Parse` in chat/NPoint input, unenforced `Revive.maxReviveCount`, `Menu.updateMenuKey` flick array bug, and client-side teleport/speedhack/extended-reach attack helpers.",
+  "protocol_touchpoints": [
+    {
+      "direction": "DISPATCH",
+      "location": "Client/Client/Assets/Scripts/Game1/God/Client/ClientManager.cs:221",
+      "opcode": "Service.requestChangeZone",
+      "payload_summary": "`k <zone>` chat command requests zone switch `(zone, -1)`."
+    },
+    {
+      "direction": "DISPATCH",
+      "location": "Client/Client/Assets/Scripts/Game1/God/Item/Items.cs:220",
+      "opcode": "Service.buyItem",
+      "payload_summary": "Auto-buy sends `((sbyte)(buyGold ? 0 : 1), item.id, 0)` every 200ms."
+    },
+    {
+      "direction": "DISPATCH",
+      "location": "Client/Client/Assets/Scripts/Game1/God/Mob/Mobs.cs:76",
+      "opcode": "Service.charMove",
+      "payload_summary": "`Mobs.GotoXY` sets `cx/cy` directly and dispatches `charMove()`."
+    },
+    {
+      "direction": "DISPATCH",
+      "location": "Client/Client/Assets/Scripts/Game1/God/Player/NPoint.cs:218, 221",
+      "opcode": "Service.upPotential / upPotentialPet",
+      "payload_summary": "Auto-stat sends `(type, num)` in 1/10/100 batches every 20 ticks for Master or Pet."
+    },
+    {
+      "direction": "DISPATCH",
+      "location": "Client/Client/Assets/Scripts/Game1/God/Player/Revive.cs:36",
+      "opcode": "Service.wakeUpFromDead",
+      "payload_summary": "Auto-revive dispatches `wakeUpFromDead()` every 20 ticks when `meDead`."
+    },
+    {
+      "direction": "DISPATCH",
+      "location": "Client/Client/Assets/Scripts/Game1/God/Skill/nSkill.cs:36, 49",
+      "opcode": "Service.sendPlayerAttack",
+      "payload_summary": "Auto-attack dispatches mob `(attackMobVector, emptyVector, 1)` or player `(emptyVector, attackCharVector, 2)` packets."
+    },
+    {
+      "direction": "DISPATCH",
+      "location": "Client/Client/Assets/Scripts/Game1/God/Utils/Utils.cs:26",
+      "opcode": "Service.useItem",
+      "payload_summary": "`Utils.UseItem` dispatches `(0, 1, (sbyte)item.indexUI, -1)` for first matching template ID."
+    },
+    {
+      "direction": "DISPATCH",
+      "location": "Client/Client/Assets/Scripts/Game1/God/Utils/Utils.cs:41",
+      "opcode": "Service.charMove",
+      "payload_summary": "`Utils.Teleport` sets `cx/cy` directly and dispatches `charMove()`."
+    }
+  ]
+}

@@ -982,68 +982,11 @@ namespace Game1
     
     	public void drawRegion2(Image image, float x0, float y0, int w, int h, int transform, int x, int y, int anchor)
     	{
-    		GUI.color = image.colorBlend;
-    		if (isTranslate)
+    		if (image == null || image.texture == null)
     		{
-    			x += translateX;
-    			y += translateY;
+    			return;
     		}
-    		DrawRegionKey key = new DrawRegionKey(image != null ? image.GetHashCode() : 0, x0, y0, w, h, transform);
-    		Texture2D texture2D;
-    		if (!cachedTextures.TryGetValue(key, out texture2D) || texture2D == null)
-    		{
-    			Image image2 = Image.createImage(image, (int)x0, (int)y0, w, h, transform);
-    			texture2D = image2.texture;
-    			cache(key, texture2D);
-    		}
-    		int num = 0;
-    		int num2 = 0;
-    		int num3 = 0;
-    		int num4 = 0;
-    		float num5 = w;
-    		float num6 = h;
-    		float num7 = 0f;
-    		float num8 = 0f;
-    		if ((anchor & HCENTER) == HCENTER)
-    		{
-    			num7 -= num5 / 2f;
-    		}
-    		if ((anchor & VCENTER) == VCENTER)
-    		{
-    			num8 -= num6 / 2f;
-    		}
-    		if ((anchor & RIGHT) == RIGHT)
-    		{
-    			num7 -= num5;
-    		}
-    		if ((anchor & BOTTOM) == BOTTOM)
-    		{
-    			num8 -= num6;
-    		}
-    		x += (int)num7;
-    		y += (int)num8;
-    		if (isClip)
-    		{
-    			num = clipX;
-    			num2 = clipY;
-    			num3 = clipW;
-    			num4 = clipH;
-    			if (isTranslate)
-    			{
-    				num += clipTX;
-    				num2 += clipTY;
-    			}
-    		}
-    		if (isClip)
-    		{
-    			GUI.BeginGroup(new Rect(num, num2, num3, num4));
-    		}
-    		GUI.DrawTexture(new Rect(x - num, y - num2, w, h), texture2D);
-    		if (isClip)
-    		{
-    			GUI.EndGroup();
-    		}
-    		GUI.color = new Color(1f, 1f, 1f, 1f);
+    		_drawRegion(image, x0, y0, w, h, transform, x, y, anchor);
     	}
     
     	public void drawImagaByDrawTexture(Image image, float x, float y)

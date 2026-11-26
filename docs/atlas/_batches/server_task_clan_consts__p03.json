@@ -1,0 +1,105 @@
+{
+  "batch_id": "server_task_clan_consts__p03",
+  "concurrency_and_state": [
+    "TaskService.gI() (lines 388-393) uses unsynchronized lazy initialization without volatile/double-checked locking.",
+    "addDoneSubTask() (lines 1539-1575) synchronizes on player.playerTask and invokes sendNextTaskMain(player) while holding that lock.",
+    "paySideTask() (lines 2035-2145) and payClanTask() (lines 2324-2348) do NOT synchronize on player.playerTask or player.clan when checking isDone(), granting rewards, and calling reset().",
+    "checkDoneTaskTrungUy() (lines 914-936) iterates Zone.getPlayers() across DoanhTrai zones and calls doneTask() on other clan members' Player instances."
+  ],
+  "cross_module_questions": [
+    "Verify ConstTask.java bit-shift definitions against TaskService.isCurrentTask() / getIdTask() (lines 1694, 1702) where `(id << 10) + index << 1` evaluates as `((id << 10) + index) << 1` due to `+` having higher precedence than `<<`.",
+    "Verify whether ConstTask.TASK_24_2 is intentionally omitted from TRUONG_LAO_GURU (lines 607-621) and VUA_VEGETA (lines 622-636) in checkDoneTaskTalkNpc(), whereas QUY_LAO_KAME (line 605) includes it.",
+    "Verify Client Unity Msg43 handler matches sendUpdateCountSubTask() (lines 516-554) writing count + x_hint + y_hint (3 shorts)."
+  ],
+  "db_redis_touchpoints": [],
+  "files_read": [
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/services/TaskService.java"
+  ],
+  "findings": [
+    {
+      "category": "security_dupe",
+      "impact": "Concurrent reward claims (e.g., rapid packet clicks) can pass isDone() multiple times before reset() executes at line 2139 / 2328, duplicating gold, ruby, upgrade stones, lucky wheel tickets, charms, or clan capsuleClan/memberPoint/clanPoint.",
+      "location": "src/services/TaskService.java:2035-2145, 2324-2348",
+      "root_cause": "paySideTask() and payClanTask() check sideTask.isDone() / clanTask.isDone(), grant all rewards, and only call reset() at the end without synchronizing on player.playerTask (or player.clan).",
+      "severity": "P1",
+      "title": "Missing synchronization in paySideTask() and payClanTask() allows race-condition reward duplication"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Namec and Xayda players cannot complete or turn in TASK_24_2 at Trưởng Lão Guru or Vua Vegeta, blocking main quest progression if TASK_24_2 targets NPC_QUY_LAO.",
+      "location": "src/services/TaskService.java:605, 607-636",
+      "root_cause": "checkDoneTaskTalkNpc() includes doneTask(player, ConstTask.TASK_24_2) under ConstNpc.QUY_LAO_KAME (line 605) but omits it from ConstNpc.TRUONG_LAO_GURU (lines 607-621) and ConstNpc.VUA_VEGETA (lines 622-636).",
+      "severity": "P2",
+      "title": "TASK_24_2 missing from Namec and Xayda elder NPCs in checkDoneTaskTalkNpc()"
+    },
+    {
+      "category": "gameplay",
+      "impact": "If taskId in ClanTaskTemplate does not equal its index in Manager.CLAN_TASKS_TEMPLATE, getClanTaskTemplateById() returns the wrong template or throws IndexOutOfBoundsException.",
+      "location": "src/services/TaskService.java:2287-2292",
+      "root_cause": "getClanTaskTemplateById(int id) calls Manager.CLAN_TASKS_TEMPLATE.get(id) directly by list index without bounds checking or iterating to match t.id == id (unlike getSideTaskTemplateById).",
+      "severity": "P2",
+      "title": "Unchecked list index lookup in getClanTaskTemplateById()"
+    },
+    {
+      "category": "performance_gc",
+      "impact": "Unnecessary CPU and GC allocation on every main task load/transition due to compiling 14 regex Patterns per transformName() call.",
+      "location": "src/services/TaskService.java:1634-1690",
+      "root_cause": "transformName() uses String.replaceAll() 14 times per invocation instead of literal String.replace(), compiling a regex Pattern each time.",
+      "severity": "P3",
+      "title": "transformName() uses regex replaceAll() 14 times per call instead of literal replace()"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Direct ruby += rubyReward in rewardDoneTask() bypasses Inventory.addRuby() cap/validation checks used in paySideTask().",
+      "location": "src/services/TaskService.java:1477",
+      "root_cause": "rewardDoneTask() directly mutates player.inventory.ruby += rubyReward instead of calling player.inventory.addRuby(rubyReward).",
+      "severity": "P3",
+      "title": "rewardDoneTask() mutates player.inventory.ruby directly without using addRuby()"
+    }
+  ],
+  "key_classes": [
+    {
+      "key_methods": [
+        "gI",
+        "isSideTaskAccessible",
+        "getTaskMainById",
+        "sendTaskMain",
+        "sendNextTaskMain",
+        "sendUpdateCountSubTask",
+        "checkDoneTaskTalkNpc",
+        "checkDoneTaskKillBoss",
+        "checkDoneTaskKillMob",
+        "doneTask",
+        "rewardDoneTask",
+        "addDoneSubTask",
+        "autoAssignSideTask",
+        "paySideTask",
+        "payClanTask"
+      ],
+      "name": "TaskService",
+      "path": "src/services/TaskService.java",
+      "responsibility": "Singleton service managing main storyline tasks, daily Bo Mong side tasks, clan tasks, achievement/title progress hooks, and task reward distribution."
+    }
+  ],
+  "module_summary": "TaskService.java (2425 lines) handles main task progression, NPC/mob/boss/item/map completion hooks, daily SideTask assignment/rewards, ClanTask assignment/rewards, and achievement counters. Key issues found include unsynchronized reward claim paths in paySideTask/payClanTask, missing TASK_24_2 for Namec/Xayda elders, unchecked list-index lookup in getClanTaskTemplateById, and regex replaceAll overhead in transformName.",
+  "protocol_touchpoints": [
+    {
+      "direction": "WRITE",
+      "location": "src/services/TaskService.java:435-451",
+      "opcode": "40",
+      "payload_summary": "writeShort(tm.id), writeByte(tm.index), writeUTF(name), writeUTF(detail), writeByte(subTasks.size()), per-subtask [writeUTF(name), writeByte(npcId), writeShort(mapId), writeUTF(notify)], writeShort(currentCount), per-subtask [writeShort(maxCount)]"
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/services/TaskService.java:568-569",
+      "opcode": "41",
+      "payload_summary": "Empty payload (advance to next sub-task)"
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/services/TaskService.java:516-554",
+      "opcode": "43",
+      "payload_summary": "writeShort(stm.count), writeShort(x_hint), writeShort(y_hint)"
+    }
+  ]
+}

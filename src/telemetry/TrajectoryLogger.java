@@ -120,6 +120,10 @@ public class TrajectoryLogger {
         return playerTickMap.computeIfAbsent(playerId, id -> new AtomicLong(0)).incrementAndGet();
     }
 
+    public void removePlayerTick(long playerId) {
+        playerTickMap.remove(playerId);
+    }
+
     private String getSessionId(Player player) {
         if (player.getSession() != null) {
             return "sess_" + player.getSession().id + "_" + player.id;

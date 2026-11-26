@@ -222,9 +222,12 @@ namespace Game1
             }
         }
 
+        private AudioListener cachedAudioListener;
+
         private void Awake()
         {
             Application.runInBackground = true;
+            cachedAudioListener = GetComponent<AudioListener>();
             Rms.Init();
             if (main != null)
             {
@@ -344,8 +347,8 @@ namespace Game1
                 Screen.sleepTimeout = SleepTimeout.NeverSleep;
                 Screen.orientation = ScreenOrientation.AutoRotation;
                 Application.runInBackground = true;
-                Application.targetFrameRate = 120;
-                QualitySettings.vSyncCount = 0;
+                Application.targetFrameRate = 60;
+                QualitySettings.vSyncCount = GameCanvas.lowGraphic ? 0 : 1;
                 base.useGUILayout = false;
                 isCompactDevice = detectCompactDevice();
                 if (main == null)
@@ -446,10 +449,9 @@ namespace Game1
 
         private void FixedUpdate()
         {
-            AudioListener listener = GetComponent<AudioListener>();
-            if (listener != null)
+            if (cachedAudioListener != null)
             {
-                listener.enabled = true;
+                cachedAudioListener.enabled = true;
             }
             Rms.update();
             count++;
@@ -626,6 +628,18 @@ namespace Game1
             if (isQuitApp)
             {
                 Application.Quit();
+            }
+        }
+
+        private void OnApplicationFocus(bool hasFocus)
+        {
+            if (!hasFocus)
+            {
+                Application.targetFrameRate = 15;
+            }
+            else
+            {
+                Application.targetFrameRate = 60;
             }
         }
     

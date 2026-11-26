@@ -1,0 +1,252 @@
+{
+  "batch_id": "server_task_clan_consts__p02",
+  "concurrency_and_state": [
+    "Clan.NEXT_ID (static int) and Clan.clanMessageId (instance int) are incremented without synchronization or AtomicInteger (Clan.java:75, ClanMessage.java:36).",
+    "Clan.members, Clan.membersInGame, and Clan.clanMessages use CopyOnWriteArrayList, but addSMTNClan (Clan.java:135), removeMemberOnline (Clan.java:229), and addClanMessage (Clan.java:177) use index-based reverse loops that can throw IndexOutOfBoundsException under concurrent modification.",
+    "EventManager uses static mutable booleans (LUNNAR_NEW_YEAR, etc.) and synchronized setEventState() which re-invokes init() on every activation without cleanup/deduplication (EventManager.java:16-96).",
+    "AchievementService.confirmAchievement() performs check-then-act (canReward -> reward -> addRuby) without synchronization on player or player.achievement (AchievementService.java:47-60)."
+  ],
+  "cross_module_questions": [
+    "Does Achievement.canReward/reward in player.achievement use internal synchronization to prevent double-claim on concurrent -76 packets?",
+    "Where is Clan.getPlayerOnline(int) called (e.g. ClanService), and do callers expect an online-only Player or handle the detached offline Player returned by NDVSqlFetcher.loadById?",
+    "Does EventDAO.loadInternationalWomensDayEvent() properly close JDBC resources and avoid duplicate loading if EventManager.setEventState(\"INTERNATIONAL_WOMANS_DAY\", true) is called at runtime?"
+  ],
+  "db_redis_touchpoints": [
+    {
+      "location": "src/models/clan/Clan.java:323-348",
+      "op": "INSERT into clan (id, name, name_2, slogan, img_id, power_point, max_member, clan_point, level, members, tops)",
+      "safety_note": "Connection uses try-with-resources, but PreparedStatement ps is outside try-with-resources; if prepareStatement fails, finally calls ps.close() causing NPE (swallowed).",
+      "target": "MySQL: clan"
+    },
+    {
+      "location": "src/models/clan/Clan.java:377-407",
+      "op": "UPDATE clan SET slogan, img_id, power_point, max_member, clan_point, level, members, name_2, tops, bdkb_level, bdkb_time WHERE id = ? LIMIT 1",
+      "safety_note": "Connection uses try-with-resources, but PreparedStatement ps is outside try-with-resources (NPE in finally on failure); tops is hardcoded to \"[]\".",
+      "target": "MySQL: clan"
+    },
+    {
+      "location": "src/models/clan/Clan.java:409-419",
+      "op": "DELETE FROM clan WHERE id = ?",
+      "safety_note": "PreparedStatement ps is not in try-with-resources and has no finally block; leaked if executeUpdate throws.",
+      "target": "MySQL: clan"
+    },
+    {
+      "location": "src/models/clan/Clan.java:245",
+      "op": "NDVSqlFetcher.loadById(playerId)",
+      "safety_note": "Synchronous DB fetch inside getPlayerOnline() when player is not in membersInGame.",
+      "target": "MySQL via NDVSqlFetcher"
+    },
+    {
+      "location": "src/event/event_list/InternationalWomensDay.java:10",
+      "op": "EventDAO.loadInternationalWomensDayEvent()",
+      "safety_note": "Called during Event.init() and dynamically via EventManager.setEventState().",
+      "target": "MySQL via EventDAO"
+    }
+  ],
+  "files_read": [
+    "src/consts/ConstTask.java",
+    "src/consts/ConstTournament.java",
+    "src/consts/SocketType.java",
+    "src/event/Event.java",
+    "src/event/event_list/Christmas.java",
+    "src/event/event_list/Default.java",
+    "src/event/event_list/Halloween.java",
+    "src/event/event_list/HungVuong.java",
+    "src/event/event_list/InternationalWomensDay.java",
+    "src/event/event_list/LunarNewYear.java",
+    "src/event/event_list/TopUp.java",
+    "src/event/event_list/TrungThu.java",
+    "src/event/EventManager.java",
+    "src/event/ievent/IEvent.java",
+    "src/models/clan/Clan.java",
+    "src/models/clan/ClanMember.java",
+    "src/models/clan/ClanMessage.java",
+    "src/models/task/ClanTask.java",
+    "src/models/task/ClanTaskTemplate.java",
+    "src/models/task/SideTask.java",
+    "src/models/task/SideTaskTemplate.java",
+    "src/models/task/SubTaskMain.java",
+    "src/models/task/TaskDanhHieu.java",
+    "src/models/task/TaskMain.java",
+    "src/models/task/TaskPlayer.java",
+    "src/services/AchievementService.java"
+  ],
+  "findings": [
+    {
+      "category": "database",
+      "impact": "PreparedStatement leak in deleteDB() on SQL error; NPE in finally block of insert()/update() if getConnection() or prepareStatement() throws, masking or compounding DB errors.",
+      "location": "src/models/clan/Clan.java:323-419",
+      "root_cause": "PreparedStatement ps is declared outside try-with-resources in insert() and update() with unguarded ps.close() in finally; deleteDB() has no finally or try-with-resources for ps.",
+      "severity": "P1",
+      "title": "Unsafe JDBC PreparedStatement lifecycle in Clan DAO methods"
+    },
+    {
+      "category": "concurrency",
+      "impact": "Two clans created concurrently can receive identical Clan.id values, causing primary key collisions in DB or corrupted clan lookups; concurrent clan messages can share identical message IDs.",
+      "location": "src/models/clan/Clan.java:28,75 & src/models/clan/ClanMessage.java:36",
+      "root_cause": "Non-atomic post-increment (NEXT_ID++ and clan.clanMessageId++) without synchronization or AtomicInteger.",
+      "severity": "P1",
+      "title": "Race condition on Clan.NEXT_ID and ClanMessage.id generation"
+    },
+    {
+      "category": "security_dupe",
+      "impact": "Concurrent achievement claim packets (-76, sub 1) could pass canReward(select) before reward(select) executes, potentially duplicating Hồng Ngọc (Ruby) rewards.",
+      "location": "src/services/AchievementService.java:47-60",
+      "root_cause": "No lock/synchronization around check-then-act (player.achievement.canReward -> reward -> addRuby).",
+      "severity": "P1",
+      "title": "Unsynchronized achievement reward claim in AchievementService.confirmAchievement"
+    },
+    {
+      "category": "performance_gc",
+      "impact": "Callers expecting an in-memory online player lookup incur blocking MySQL I/O and receive an offline detached Player object, risking NPEs or state desync.",
+      "location": "src/models/clan/Clan.java:238-251",
+      "root_cause": "Clan.getPlayerOnline(int) falls back to NDVSqlFetcher.loadById(playerId) when the player is not in membersInGame.",
+      "severity": "P1",
+      "title": "Clan.getPlayerOnline performs synchronous DB load for offline players"
+    },
+    {
+      "category": "concurrency",
+      "impact": "IndexOutOfBoundsException if another thread removes an element from membersInGame or clanMessages between size() and get(i); CopyOnWriteArrayList copies the backing array on every add(0, cmg) and remove(i).",
+      "location": "src/models/clan/Clan.java:135-141,176-180,229-235",
+      "root_cause": "Index-based reverse iteration over CopyOnWriteArrayList instead of enhanced for-loop or concurrent deque.",
+      "severity": "P2",
+      "title": "Unsafe index-based iteration on CopyOnWriteArrayList in Clan"
+    },
+    {
+      "category": "gameplay",
+      "impact": "If a player earns Ve Chai, Nap, or Sieu Hang after midnight before renew() is called, ResetTime is updated to today, preventing DapDo and DungLoa daily counters from resetting for the day.",
+      "location": "src/models/task/TaskDanhHieu.java:51-66",
+      "root_cause": "addVeChai(), addNap(), and addSieuHang() overwrite this.ResetTime = System.currentTimeMillis() without calling renew() first.",
+      "severity": "P2",
+      "title": "TaskDanhHieu progress methods bypass daily reset by updating ResetTime"
+    },
+    {
+      "category": "gameplay",
+      "impact": "When no task is active (count == 0, maxCount == 0), getPercentProcess() returns 100% instead of 0%; if maxCount == 0 and count < 0, ArithmeticException / by zero occurs.",
+      "location": "src/models/task/ClanTask.java:88-93 & src/models/task/SideTask.java:99-104",
+      "root_cause": "getPercentProcess() checks count >= maxCount first and divides by maxCount without guarding maxCount <= 0.",
+      "severity": "P2",
+      "title": "ClanTask and SideTask getPercentProcess() lacks maxCount <= 0 guard"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Toggling an event off and on via setEventState() spawns duplicate event NPCs and bosses on maps; invalid mapId in createNpc() causes NPE.",
+      "location": "src/event/EventManager.java:62-96 & src/event/Event.java:25-27",
+      "root_cause": "EventManager.setEventState() calls new <Event>().init() on every activation without tracking initialized state or cleaning up previous NPCs/bosses; Event.createNpc() does not null-check MapService.getMapById(mapId).",
+      "severity": "P2",
+      "title": "EventManager.setEventState duplicates NPCs and bosses on re-activation"
+    },
+    {
+      "category": "protocol",
+      "impact": "If Manager.ACHIEVEMENT_TEMPLATE.size() exceeds 127, writeByte overflows to a negative value on the client; in Clan.sendMessageClan, exceptions before cleanup() leak the Message.",
+      "location": "src/services/AchievementService.java:29 & src/models/clan/Clan.java:144-172",
+      "root_cause": "Achievement count written as signed byte; Clan.sendMessageClan lacks finally block for msg.cleanup() and silently swallows exceptions.",
+      "severity": "P2",
+      "title": "Protocol byte size truncation in AchievementService and missing finally cleanup in Clan.sendMessageClan"
+    },
+    {
+      "category": "architecture",
+      "impact": "Bloated class file and constant pool; difficult to maintain task IDs.",
+      "location": "src/consts/ConstTask.java:2801-6359",
+      "root_cause": "Thousands of enumerated TASK_X_Y constants instead of a helper method computing (taskId << 11) + (index << 1).",
+      "severity": "P3",
+      "title": "ConstTask contains thousands of repetitive hardcoded task constants"
+    }
+  ],
+  "key_classes": [
+    {
+      "key_methods": [
+        "Clan()",
+        "getLeader()",
+        "addSMTNClan(Player, long)",
+        "sendMessageClan(ClanMessage)",
+        "getPlayerOnline(int)",
+        "insert()",
+        "update()",
+        "deleteDB(int)"
+      ],
+      "name": "Clan",
+      "path": "src/models/clan/Clan.java",
+      "responsibility": "Clan aggregate holding members, online players, chat messages, dungeon (Phó Bản) state, and direct JDBC persistence."
+    },
+    {
+      "key_methods": [
+        "gI()",
+        "init()",
+        "setEventState(String, boolean)",
+        "getAllEventStates()"
+      ],
+      "name": "EventManager",
+      "path": "src/event/EventManager.java",
+      "responsibility": "Manages active seasonal events and runtime event toggling."
+    },
+    {
+      "key_methods": [
+        "gI()",
+        "openAchievementUI(Player)",
+        "confirmAchievement(Player, byte)",
+        "checkDoneTask(Player, int)",
+        "checkDoneTaskKillMob(Player, Mob)"
+      ],
+      "name": "AchievementService",
+      "path": "src/services/AchievementService.java",
+      "responsibility": "Handles achievement UI sync, reward claiming, and achievement progress tracking."
+    },
+    {
+      "key_methods": [
+        "renew()",
+        "addVeChai(int)",
+        "addNap(int)",
+        "addSieuHang()",
+        "addDungLoa()",
+        "CheckItem(Player, ItemShop, int)"
+      ],
+      "name": "TaskDanhHieu",
+      "path": "src/models/task/TaskDanhHieu.java",
+      "responsibility": "Tracks lifetime and daily title (Danh Hiệu) unlock progress and validates shop purchases."
+    },
+    {
+      "key_methods": [
+        "renew()",
+        "reset()",
+        "isDone()",
+        "getPercentProcess()"
+      ],
+      "name": "SideTask",
+      "path": "src/models/task/SideTask.java",
+      "responsibility": "Tracks daily side task progress, cooldowns, and percentage completion."
+    },
+    {
+      "key_methods": [
+        "renew()",
+        "reset()",
+        "isDone()",
+        "getPercentProcess()"
+      ],
+      "name": "ClanTask",
+      "path": "src/models/task/ClanTask.java",
+      "responsibility": "Tracks daily clan task progress and percentage completion."
+    }
+  ],
+  "module_summary": "Read ConstTask (lines 2801-6359), ConstTournament, SocketType, the event subsystem (Event, IEvent, EventManager, and 8 event_list classes), clan models (Clan, ClanMember, ClanMessage), task models (ClanTask, SideTask, TaskMain, SubTaskMain, TaskPlayer, TaskDanhHieu), and AchievementService. Found P1 JDBC PreparedStatement lifecycle bugs, non-atomic ID generation races, unsynchronized achievement reward claiming, blocking DB fallback in Clan.getPlayerOnline, and P2 logic/concurrency issues in CopyOnWriteArrayList iteration, TaskDanhHieu daily resets, task percent calculation, and EventManager re-activation.",
+  "protocol_touchpoints": [
+    {
+      "direction": "WRITE",
+      "location": "src/models/clan/Clan.java:147-169",
+      "opcode": "-51",
+      "payload_summary": "Clan message broadcast: type(byte), id(int), playerId(int), playerName(UTF), role(byte), time(int), plus type-0 text/color or type-1 donate counts."
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/services/AchievementService.java:27-38",
+      "opcode": "-76",
+      "payload_summary": "Open Achievement UI: sub(byte=0), count(byte), then per template info1(UTF), info2(UTF), money(short), isFinish(boolean), isRecieve(boolean)."
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/services/AchievementService.java:65-68",
+      "opcode": "-76",
+      "payload_summary": "Confirm Achievement reward: sub(byte=1), select(byte)."
+    }
+  ]
+}

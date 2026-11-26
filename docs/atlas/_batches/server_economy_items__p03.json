@@ -1,0 +1,225 @@
+{
+  "batch_id": "server_economy_items__p03",
+  "concurrency_and_state": [
+    "ItemService uses double-checked locking with volatile singleton i; ShopService.gI() uses unsynchronized lazy initialization without volatile.",
+    "ShopService locks synchronized(player.inventory.itemsBag) in buyItemBua (line 645), buyItem (line 718), subIemByItemShop default branch (line 845), showConfirmSellItem (line 870), sellItem (line 928), getItemSideBoxLuckyRound (line 1005, plus nested synchronized(items) on itemsBoxCrackBall at line 1006), buyItemDaBan (line 1084), and buyItemHD (line 1128).",
+    "ShopService.buyItem enforces a 350ms per-player cooldown via player.lastTimeShop (lines 711-716); buyItemBua, buyItemHD, buyItemDaBan, and sellItem do not check lastTimeShop.",
+    "ShopService.buyItemDaBan reads items.get(index) and computes prices (lines 1078-1082) outside any lock on player.inventory.itemsDaBan or itemsBag.",
+    "ItemService.OpenSKH, OpenSKHVIP, OpenCapsuleCaiTrang, OpenItem736/648/1143/1198/1199/1200/1259/1246/1247/1305/1258/1245, and giveSetThanLinh (settltd/settlnm/settlxd) perform find/check-then-add-then-sub without synchronized(player.inventory.itemsBag).",
+    "TestConsignShopPerformance uses ConsignShopManager.gI().lockItems()/unlockItems() around Manager listItem mutations."
+  ],
+  "cross_module_questions": [
+    "Does BuyBackService.addItem(pl, item) deep-copy `item`? In ShopService.sellItem (lines 978-986), BuyBackService.addItem is called before subQuantityItemsBag/Body; if not copied, quantity becomes 0 in itemsDaBan.",
+    "Does the shop copy constructor `new Shop(shop)` / `new Shop(shop, player)` deep-copy TabShop, ItemShop, and ItemShop.options? ShopService.resolveShopBua (line 147) clears and mutates item.options directly.",
+    "Do callers of ItemService.OpenSKH, OpenSKHVIP, OpenItem*, and settltd/settlnm/settlxd synchronize on player.inventory.itemsBag and validate itemUse existence before invoking ItemService?",
+    "Does the Unity C# client read optionTemplate.id in Message -44 using readUnsignedByte() or signed readByte()? ShopService writes option IDs > 127 (e.g., 206, 228, 246) via writeByte().",
+    "How does InventoryService.addItemBag handle charm items bought in buyItemBua (line 656) when bag is full, since buyItemBua does not check getCountEmptyBag(player)?"
+  ],
+  "db_redis_touchpoints": [],
+  "files_read": [
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/services/ItemService.java:1-2307",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/services/ShopService.java:1-1227",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/tools/test/TestConsignShopPerformance.java:1-169"
+  ],
+  "findings": [
+    {
+      "category": "security_dupe",
+      "impact": "Player loses gold/gem/ruby/spec-items or food without receiving item, or pays twice (both SPEC_SHOP currency and money) when buying from BILL shop.",
+      "location": "src/services/ShopService.java:1126-1171",
+      "root_cause": "In buyItemHD, subIemByItemShop() (line 1146) executes BEFORE getCountEmptyBag < 1 check (line 1150), subMoneyByItemShopV2() (line 1155), and the food quantity >= 99 check (line 1158). Both SPEC_SHOP item deduction and money deduction can execute on the same purchase, and any subsequent failure returns without refunding already-deducted currency/items. Additionally, shopOpen null check in takeItem (line 497) is bypassed because case \"BILL\" returns at line 492, risking NPE in isEligibleForBill/buyItemHD.",
+      "severity": "P0",
+      "title": "Non-atomic deduction and missing refunds in ShopService.buyItemHD"
+    },
+    {
+      "category": "security_dupe",
+      "impact": "Player loses currency/spec-items if they lack coupon 459 or if shop.tagName is null; potential NPE after currency deduction.",
+      "location": "src/services/ShopService.java:746-764",
+      "root_cause": "In buyItem, subMoneyByItemShop (line 747) or subIemByItemShop (line 751) deducts player currency/items BEFORE checking `shop.tagName.equals(\"SANTA_PGG\")` and deducting item 459 (lines 755-764). If item 459 is missing, method returns without refunding. Also shop.tagName is not null-checked before `.equals`.",
+      "severity": "P0",
+      "title": "Currency deducted before SANTA_PGG coupon check in ShopService.buyItem"
+    },
+    {
+      "category": "security_dupe",
+      "impact": "Concurrent or spoofed menu callbacks can generate unlimited free SKH/SKH VIP items or duplicate Thần Linh sets from a single box.",
+      "location": "src/services/ItemService.java:1621-1717,2236-2273",
+      "root_cause": "OpenSKH (line 1625) and OpenSKHVIP (line 1671) call InventoryService.findItem(...) for itemUseId without checking `itemUse == null || itemUse.quantity < 1`, and neither they nor giveSetThanLinh (line 2236) nor OpenItem* methods synchronize on player.inventory.itemsBag.",
+      "severity": "P0",
+      "title": "Missing null/quantity check and inventory lock in OpenSKH/OpenSKHVIP/giveSetThanLinh"
+    },
+    {
+      "category": "security_dupe",
+      "impact": "Ruby spent on buyback can be converted into Gem on full bag, int cast can under-refund >2.14B gem/ruby, and negative/out-of-bounds index or race condition crashes or misprices buyback.",
+      "location": "src/services/ShopService.java:1070-1124",
+      "root_cause": "buyItemDaBan checks `index >= items.size()` (line 1074) without `index < 0`, reads `items.get(index)` and computes price outside any lock on `items` or `itemsBag`, deducts gem/ruby via `subGemAndRuby` before checking `getCountEmptyBag(player) != 0`, and on full bag refunds via `player.inventory.addGem((int) giamualaingoc)` (converting ruby to gem and truncating long to int).",
+      "severity": "P0",
+      "title": "Unsynchronized access, missing negative-index guard, and broken ruby refund in buyItemDaBan"
+    },
+    {
+      "category": "security_dupe",
+      "impact": "Client can set arbitrary player.head ID or crash handler with NPE when SANTA_HEAD shop is open.",
+      "location": "src/services/ShopService.java:505-507",
+      "root_cause": "`tagName.equals(\"SANTA_HEAD\")` calls `createNewItem((short) tempId)` and assigns `player.head = (short) itS.template.head` without verifying tempId is in the shop or checking `itS.template != null`.",
+      "severity": "P1",
+      "title": "Unvalidated tempId in SANTA_HEAD shop allows arbitrary head spoofing or NPE"
+    },
+    {
+      "category": "gameplay",
+      "impact": "getRubyPrice fails to find Ruby-priced items (returns wrong Gem-priced items or -1); subMoneyByItemShopV2 displays negative deficit amounts to players.",
+      "location": "src/services/ShopService.java:614-620,805",
+      "root_cause": "getRubyPrice (line 805) checks `is.typeSell == COST_GEM` (1) instead of `COST_RUBY` (3). subMoneyByItemShopV2 (lines 615, 619) computes `player.inventory.gold - gold` and `player.inventory.coupon - coupon` (negative values) instead of `cost - current`.",
+      "severity": "P1",
+      "title": "Wrong currency constant in getRubyPrice and inverted deficit math in subMoneyByItemShopV2"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Integer overflow in sell confirmation dialog, IndexOutOfBoundsException on bad body/bag index, and blocked selling of permanent items when a timed item of the same ID is in bag (or vice versa).",
+      "location": "src/services/ShopService.java:870-965",
+      "root_cause": "showConfirmSellItem uses `int cost` and `cost *= quantity` (lines 890-905), causing int overflow for high-value stacks; neither showConfirmSellItem nor sellItem checks upper bounds (`>= size()`) or negative index after `version < 220` adjustment (lines 879-882); sellItem line 952 checks `InventoryService.getParam(pl, 93, item.template.id) > 0` across bag instead of checking option 93 on the specific `item` being sold.",
+      "severity": "P1",
+      "title": "Int overflow, missing bounds checks, and wrong HSD check in sellItem/showConfirmSellItem"
+    },
+    {
+      "category": "protocol",
+      "impact": "Buffer/memory leak on exception in openShopType3; potential byte truncation if tab/item/option counts > 127 or option IDs >= 256.",
+      "location": "src/services/ShopService.java:297-365,217-222,336-340",
+      "root_cause": "openShopType3 calls `msg.cleanup()` inside the try block (line 362) with no finally block, unlike openShopType0/1/4/8. Shop open methods also serialize list sizes and optionTemplate.id with `writeByte`, which wraps if option ID >= 256 or item count > 127.",
+      "severity": "P1",
+      "title": "Missing finally msg.cleanup() in openShopType3 and writeByte truncation risks"
+    },
+    {
+      "category": "gameplay",
+      "impact": "SKH VIP items rolled with option 214 receive damage option ID 0 (+1) instead of their matching set bonus option; event chests drop fallback 4-star dragon ball or stone 20-40% of the time.",
+      "location": "src/services/ItemService.java:99-127,630-709,1682,1759-1966",
+      "root_cause": "OpenSKHVIP uses option 214 (line 1682), which is missing from optionIdSKH() switch (lines 99-127), causing optionIdSKH(214) to return 0. OpenItem1198/1199/1200 have vp1+vp2+vp3 = 60% leaving 40% falling through to default item 16; OpenItem1259/1246/1258/1245 sum to 80% and OpenItem1247 sums to 60%, falling through to default items.",
+      "severity": "P2",
+      "title": "Missing option 214 mapping in optionIdSKH and incomplete probability ranges in OpenItem*"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Last item in randomRac/randomRac2 arrays is never selected; timed items lose elapsed sub-day time on each check; null template causes NPE.",
+      "location": "src/services/ItemService.java:421-479,986-1007",
+      "root_cause": "randomRac (line 988) and randomRac2 (line 998) pass `racs.length - 1` to `Util.nextInt(bound)`, which is exclusive and omits the final element. isOutOfDateTime (line 472) resets `item.createTime = System.currentTimeMillis()` when `dayPass != 0`, discarding partial days. isTrainArmor/getPercentTrainArmor check `item != null` without checking `item.template != null`.",
+      "severity": "P2",
+      "title": "Off-by-one in randomRac/randomRac2, createTime drift in isOutOfDateTime, and missing template null checks"
+    },
+    {
+      "category": "performance_gc",
+      "impact": "Unnecessary GC pressure from per-call Random/Date/Arrays.asList allocations and redundant full-table scans on every special shop purchase or SKH creation.",
+      "location": "src/services/ItemService.java:35-42,52,178-237,1059-1069,1980-2156",
+      "root_cause": "ItemService allocates `new Random()` inside hot item-creation methods instead of using ThreadLocalRandom/Util; getItemIdByIcon (lines 35-42) and getListOptionItemShop (lines 1059-1069) linearly scan all templates/shops on every call without caching or breaking early (`&& list.isEmpty()` continues iterating).",
+      "severity": "P2",
+      "title": "Repeated Random allocations and uncached linear scans in ItemService"
+    }
+  ],
+  "key_classes": [
+    {
+      "key_methods": [
+        "gI",
+        "getItemIdByIcon",
+        "createItemFromItemShop",
+        "itemSKH",
+        "optionIdSKH",
+        "DoThienSu",
+        "createNewItem",
+        "createItemFromItemMap",
+        "isOutOfDateTime",
+        "OpenCapsuleCaiTrang",
+        "OpenItem736",
+        "OpenItem648",
+        "OpenItem1143",
+        "OpenItem1198",
+        "OpenItem1199",
+        "OpenItem1200",
+        "OpenSKH",
+        "OpenSKHVIP",
+        "settltd",
+        "settlnm",
+        "settlxd",
+        "giveSetThanLinh"
+      ],
+      "name": "services.ItemService",
+      "path": "src/services/ItemService.java",
+      "responsibility": "Factory and mutator for Item/ItemMap instances, SKH/Thần Linh/Thiên Sứ stat generation, timed item expiry checks, and capsule/giftbox opening flows."
+    },
+    {
+      "key_methods": [
+        "gI",
+        "opendShop",
+        "resolveShopBua",
+        "openShopType0",
+        "openShopType1",
+        "openShopType3",
+        "openShopType4",
+        "openShopType8",
+        "takeItem",
+        "isEligibleForBill",
+        "subMoneyByItemShop",
+        "subMoneyByItemShopV2",
+        "buyItemBua",
+        "learnKyNang",
+        "buyItem",
+        "getRubyPrice",
+        "subIemByItemShop",
+        "showConfirmSellItem",
+        "sellItem",
+        "getItemSideBoxLuckyRound",
+        "buyItemDaBan",
+        "buyItemHD"
+      ],
+      "name": "services.ShopService",
+      "path": "src/services/ShopService.java",
+      "responsibility": "Handles NPC/special/skill/buyback/lucky-round shop UI packets, currency and item-barter deductions, skill book purchase validation, and selling/buying items."
+    },
+    {
+      "key_methods": [
+        "main",
+        "setupMockData",
+        "testPaginationAndSorting",
+        "testPaginationThroughput",
+        "testAsyncInsertionNonBlocking"
+      ],
+      "name": "test.TestConsignShopPerformance",
+      "path": "tools/test/TestConsignShopPerformance.java",
+      "responsibility": "Standalone benchmark and verification harness for ConsignShopManager/ConsignShopService pagination, UpTop sorting, and locked memory insertion."
+    }
+  ],
+  "module_summary": "Batch server_economy_items__p03 covers item factory/lootbox logic (ItemService), shop UI/purchase/sell flows (ShopService), and the consign shop benchmark (TestConsignShopPerformance). Key risks center on non-atomic multi-currency deductions without rollback in ShopService (buyItemHD, buyItem SANTA_PGG, buyItemDaBan), missing inventory locks and null/quantity validation in ItemService lootbox/SKH openers, missing index bounds checks and int overflow in sellItem/showConfirmSellItem/buyItemDaBan, and protocol/logic defects such as uncleaned Message in openShopType3, wrong currency constant in getRubyPrice, and missing option 214 mapping in optionIdSKH.",
+  "protocol_touchpoints": [
+    {
+      "direction": "WRITE",
+      "location": "src/services/ShopService.java:187-245",
+      "opcode": "-44 (type 0: NORMAL_SHOP)",
+      "payload_summary": "Writes shop type 0, tab count, tab names, item count, template id, gold/gem ints, option count/ids/params (plus bundle option 31), isNew, and type-5 appearance shorts."
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/services/ShopService.java:262-283",
+      "opcode": "-44 (type 1: LEARN_SKILL_SHOP)",
+      "payload_summary": "Writes shop type 1, tabs, item template id, long cost, option count/ids/params, isNew, and 0 byte."
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/services/ShopService.java:299-361",
+      "opcode": "-44 (type 3: SPEC_SHOP)",
+      "payload_summary": "Writes shop type 3, filtered tab items, template id, iconSpec short, int cost, options (replacing option 228 progress for tab 28, adding option 31 for bundles), isNew, and type-5 appearance."
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/services/ShopService.java:375-403",
+      "opcode": "-44 (type 4: ITEMS_LUCKY_ROUND)",
+      "payload_summary": "Writes shop type 4, 1 tab, crack-ball reward items with options + option 31 quantity and type-5 appearance."
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/services/ShopService.java:420-450",
+      "opcode": "-44 (type 8: ITEMS_DABAN)",
+      "payload_summary": "Writes shop type 8, 1 tab, buyback items with computed gold/gem cost ints, quantity int, options, and type-5 appearance."
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/services/ShopService.java:911-915",
+      "opcode": "7 (CONFIRM_SELL_ITEM)",
+      "payload_summary": "Writes byte where, short index (adjusted for version < 220), and UTF confirmation prompt with computed gold cost."
+    }
+  ]
+}

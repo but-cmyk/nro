@@ -1,0 +1,416 @@
+{
+  "batch_id": "server_world_map_mob__p01",
+  "concurrency_and_state": [
+    "Zone.players, notBosses, humanoids, bosses, pets, nonInteractiveNPCs use CopyOnWriteArrayList, while Zone.mobs, items, trapMaps, maBuHolds use ArrayList.",
+    "Zone.mobs is synchronized in Zone.getTotalHP() and Zone.mapInfo(), but iterated without synchronization in Zone.udMob(), Zone.sendBigBoss(), and Mob.lvMob().",
+    "Zone.items is synchronized in udItem(), addItem(), removeItemMap(), pickItem(), getSatellites(), getItemMapByItemMapId(), getItemMapByTempId(), getItemMapsForPlayer().",
+    "Mob.temporaryEnemies uses CopyOnWriteArrayList; Mob.injured() and MobMe.injured() are synchronized.",
+    "MapDataManager caches use ConcurrentHashMap, but MapDataManager.gI() and Boss10.gI() singletons lack synchronization.",
+    "MabuEgg.openEgg() uses an unsynchronized boolean isOpening and schedules a 4000ms task on GameLoopManager; if the scheduled task aborts early, isOpening stays true."
+  ],
+  "cross_module_questions": [
+    "How does ItemMapService.removeItemMapAndSendClient interact with Zone.items lock when called from Zone.udItem() -> ItemMap.update()?",
+    "Where is Zone.maBuHolds populated? Zone constructor initializes it as an empty ArrayList, and setMaBuHold checks slot < z128.maBuHolds.size().",
+    "Does Client opcode -9 (mob HP update) expect delta HP or a flag when Mob.hoi_hp writes 1L for positive heal?",
+    "Why are GaChinCua, GauTuongCuop, NguaChinLmao, Piano, and VoiChinNga completely commented out while Map.initMob still references ConstMob.HIRUDEGARN, VUA_BACH_TUOC, ROBOT_BAO_VE, MAY_DO_SUC_MANH?"
+  ],
+  "db_redis_touchpoints": [
+    {
+      "location": "src/models/mob/Mob.java:648",
+      "op": "ASYNC_WRITE",
+      "safety_note": "Calls PlayerDAO.updatePlayerAsync(plReward) directly from Mob.getItemMobReward when daily mob ruby is awarded; no direct JDBC/Redis in this batch.",
+      "target": "database.daos.PlayerDAO.updatePlayerAsync"
+    }
+  ],
+  "files_read": [
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/managers/map/MapDataManager.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/managers/map/TileMapDataLoader.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/map/Boss10.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/map/EffectMap.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/map/ItemMap.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/map/MaBuHold.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/map/Map.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/map/TrapMap.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/map/vetinh/Satellite.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/map/vetinh/SatelliteDef.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/map/vetinh/SatelliteExp.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/map/vetinh/SatelliteHp.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/map/vetinh/SatelliteMp.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/map/WayPoint.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/map/Zone.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/mob/BigBoss.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/mob/bigboss_list/GaChinCua.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/mob/bigboss_list/GauTuongCuop.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/mob/bigboss_list/Hirudegarn.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/mob/bigboss_list/MayDoSucManh.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/mob/bigboss_list/NguaChinLmao.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/mob/bigboss_list/Piano.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/mob/bigboss_list/RobotBaoVe.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/mob/bigboss_list/VoiChinNga.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/mob/bigboss_list/VuaBachTuoc.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/mob/Mob.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/mob/MobEffectSkill.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/mob/MobMe.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/mob/MobPoint.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/npc/BaseMenu.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/npc/IAtionNpc.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/npc/mabu/MabuEgg.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/npc/mabu/MagicTree.java"
+  ],
+  "findings": [
+    {
+      "category": "gameplay",
+      "impact": "Dead mobs spam -124 network messages to all players in the zone on every game tick until they respawn.",
+      "location": "src/models/mob/MobEffectSkill.java:28-30",
+      "root_cause": "Operator precedence bug in `if (isBlindDCTT && (Util.canDoWithTime(lastTimeBlindDCTT, timeBlindDCTT)) || mob.isDie())` causes `mob.isDie()` alone to trigger `removeBlindDCTT()` every update tick even when `isBlindDCTT` is false.",
+      "severity": "P1",
+      "title": "Dead mobs broadcast removeBlindDCTT (-124) every update tick"
+    },
+    {
+      "category": "security_dupe",
+      "impact": "Players can gain free gold if unupgradeMagicTree() is triggered while not upgrading or via concurrent menu confirm packets.",
+      "location": "src/models/npc/mabu/MagicTree.java:217-254",
+      "root_cause": "`unupgradeMagicTree()` and `fastUpgradeMagicTree()` do not check `if (!this.isUpgrade) return;`, and upgrade/unupgrade methods lack synchronization.",
+      "severity": "P1",
+      "title": "Missing state guard and synchronization in MagicTree upgrade/cancel"
+    },
+    {
+      "category": "concurrency",
+      "impact": "Risk of ConcurrentModificationException or IndexOutOfBoundsException during zone mob updates or boss checks.",
+      "location": "src/models/map/Zone.java:140-146,917-927",
+      "root_cause": "`Zone.mobs` is a non-thread-safe `ArrayList` that is synchronized in `getTotalHP()` and `mapInfo()` but accessed without synchronization in `udMob()`, `sendBigBoss()`, and `Mob.lvMob()`.",
+      "severity": "P1",
+      "title": "Unsynchronized concurrent access to Zone.mobs ArrayList"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Potential ArrayIndexOutOfBoundsException and wrong pixel Y coordinates returned to callers.",
+      "location": "src/models/map/Map.java:394-427",
+      "root_cause": "`Map.moveXY()` accesses `tileMap[ysd][xsd]` and `tileMap[ysd - p][xsd]` without bounds checks, and returns `ysd` (tile index) instead of `ysd * 24` (pixel coordinate) at lines 414 and 425.",
+      "severity": "P2",
+      "title": "Out-of-bounds risk and tile-vs-pixel Y unit mismatch in Map.moveXY"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Pet-owned items (passed as `-player.id`) lose negative sign on construction; `pickItem` also truncates `itemMap.playerId` to `int`.",
+      "location": "src/models/map/ItemMap.java:77",
+      "root_cause": "`ItemMap` constructor normalizes `this.playerId = playerId != -1 ? Math.abs(playerId) : playerId;`, while `Zone.pickItem` checks `itemMap.playerId == -player.id` and casts `itemMap.playerId` to `int`.",
+      "severity": "P2",
+      "title": "ItemMap constructor strips negative pet-owner sign and Zone.pickItem truncates long playerId"
+    },
+    {
+      "category": "gameplay",
+      "impact": "If a player disconnects or an error occurs before the 4s timer finishes, `isOpening` remains true and the egg cannot be opened again.",
+      "location": "src/models/npc/mabu/MabuEgg.java:58-117",
+      "root_cause": "`openEgg()` sets `isOpening = true` and only clears `p.mabuEgg = null` inside the 4000ms scheduled callback without resetting `isOpening = false` in a `finally` block or offline branch.",
+      "severity": "P2",
+      "title": "MabuEgg.isOpening flag can get stuck true on disconnect or async exception"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Subsequent drop checks (Thuc An, Luong Long, Kaio, Manh Thien Su) receive the master Player instead of the pet, altering pet-vs-master checks.",
+      "location": "src/models/mob/Mob.java:861-863",
+      "root_cause": "`getItemMobReward` reassigns its `player` parameter to `((Pet) player).master` inside the Cold map God-item drop block.",
+      "severity": "P2",
+      "title": "Parameter reassignment side-effect in Mob.getItemMobReward"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Integer overflow if time elapsed exceeds ~24.8 days, corrupting `lastTimeHarvest`.",
+      "location": "src/models/npc/mabu/MagicTree.java:103",
+      "root_cause": "`(numPeaRelease * getSecondPerPea()) * 1000` multiplies `int * short * int` as 32-bit `int` before adding to `long lastTimeHarvest`.",
+      "severity": "P2",
+      "title": "32-bit int overflow in MagicTree.update harvest timestamp calculation"
+    },
+    {
+      "category": "performance_gc",
+      "impact": "Creates unnecessary stream/lambda garbage every second per active satellite and scans Zone.players twice.",
+      "location": "src/models/map/vetinh/Satellite.java:54-56",
+      "root_cause": "`Satellite.update()` calls `zone.getPlayers().stream().anyMatch(...)` followed by `zone.getPlayers().stream().filter(...).forEach(...)` every 1000ms.",
+      "severity": "P3",
+      "title": "Repeated Stream allocations in Satellite.update loop"
+    },
+    {
+      "category": "protocol",
+      "impact": "Potential buffer/resource leak if `sendMessage` or `sendMessAllPlayerInMap` throws an exception before `msg.cleanup()`.",
+      "location": "src/models/mob/MobMe.java:70-77",
+      "root_cause": "`msg.cleanup()` is placed inside `try` instead of `finally` in `MobMe`, `BaseMenu`, `MabuEgg`, `MagicTree`, `MobEffectSkill`, `Mob.sendMobMaxHp`, and `Zone`.",
+      "severity": "P3",
+      "title": "Missing finally blocks for Message.cleanup() across map/mob/npc classes"
+    }
+  ],
+  "key_classes": [
+    {
+      "key_methods": [
+        "gI",
+        "loadAllMapData",
+        "getBgItemData",
+        "getTileMapData",
+        "getEffMapData"
+      ],
+      "name": "MapDataManager",
+      "path": "src/managers/map/MapDataManager.java",
+      "responsibility": "In-memory ConcurrentHashMap cache for binary map files (bg items, tile maps, effect maps)."
+    },
+    {
+      "key_methods": [
+        "gI",
+        "initAllMaps",
+        "initWhisArenaMap",
+        "readTileIndexTileType",
+        "readTileMap"
+      ],
+      "name": "TileMapDataLoader",
+      "path": "src/managers/map/TileMapDataLoader.java",
+      "responsibility": "Loads tile_set_info and initializes all Map instances from MapTemplate."
+    },
+    {
+      "key_methods": [
+        "Map",
+        "initZone",
+        "initMob",
+        "initNpc",
+        "initBoss",
+        "yPhysicInTop",
+        "LastY",
+        "moveXY",
+        "readTileMap"
+      ],
+      "name": "Map",
+      "path": "src/models/map/Map.java",
+      "responsibility": "Represents a game map with tile collision data, waypoints, NPCs, zones, and initial mobs/items/traps."
+    },
+    {
+      "key_methods": [
+        "Zone",
+        "update",
+        "addPlayer",
+        "removePlayer",
+        "pickItem",
+        "mapInfo",
+        "infoPlayer",
+        "sendMessage"
+      ],
+      "name": "Zone",
+      "path": "src/models/map/Zone.java",
+      "responsibility": "Manages a single map channel/zone including players, bosses, pets, mobs, ground items, and network broadcasts."
+    },
+    {
+      "key_methods": [
+        "ItemMap",
+        "update",
+        "updateBlackBall",
+        "updateItemRemoval",
+        "isBelongToMe",
+        "dispose"
+      ],
+      "name": "ItemMap",
+      "path": "src/models/map/ItemMap.java",
+      "responsibility": "Represents a dropped item or satellite on the map with ownership, expiration, and special Black Ball movement logic."
+    },
+    {
+      "key_methods": [
+        "Mob",
+        "injured",
+        "update",
+        "attack",
+        "getItemMobReward",
+        "hoiSinh",
+        "sendMobDieAffterAttacked"
+      ],
+      "name": "Mob",
+      "path": "src/models/mob/Mob.java",
+      "responsibility": "Core monster entity handling combat damage, AI targeting, respawning, task drops, and loot generation."
+    },
+    {
+      "key_methods": [
+        "Hirudegarn",
+        "injured",
+        "update",
+        "handleFormTransformation",
+        "attack"
+      ],
+      "name": "Hirudegarn",
+      "path": "src/models/mob/bigboss_list/Hirudegarn.java",
+      "responsibility": "Multi-form BigBoss mob with 1% maxHP damage cap, 20M HP drop threshold, and AOE/tail-whip attacks."
+    },
+    {
+      "key_methods": [
+        "MobEffectSkill",
+        "update",
+        "isHaveEffectSkill",
+        "startStun",
+        "setThoiMien",
+        "setStartBlindDCTT",
+        "setTroi",
+        "setSocola",
+        "setBinh"
+      ],
+      "name": "MobEffectSkill",
+      "path": "src/models/mob/MobEffectSkill.java",
+      "responsibility": "Tracks and expires crowd-control status effects (stun, sleep, blind, bind, chocolate, Mafuba) on a Mob."
+    },
+    {
+      "key_methods": [
+        "MobMe",
+        "update",
+        "attack",
+        "spawn",
+        "injured",
+        "dispose"
+      ],
+      "name": "MobMe",
+      "path": "src/models/mob/MobMe.java",
+      "responsibility": "Namekian summon mob entity that attacks players/mobs and shares damage/shield-break rules."
+    },
+    {
+      "key_methods": [
+        "MagicTree",
+        "update",
+        "loadMagicTree",
+        "openMenuTree",
+        "harvestPea",
+        "upgradeMagicTree",
+        "unupgradeMagicTree"
+      ],
+      "name": "MagicTree",
+      "path": "src/models/npc/mabu/MagicTree.java",
+      "responsibility": "Manages player's Magic Tree (Dau Than) pea generation, harvesting, and timed/instant upgrades."
+    },
+    {
+      "key_methods": [
+        "MabuEgg",
+        "createMabuEgg",
+        "sendMabuEgg",
+        "openEgg",
+        "destroyEgg"
+      ],
+      "name": "MabuEgg",
+      "path": "src/models/npc/mabu/MabuEgg.java",
+      "responsibility": "Manages player's Mabu Egg hatching timer and delayed pet creation/replacement."
+    }
+  ],
+  "module_summary": "Deep-read of 33 files (5963 lines) covering map data loading/caching (MapDataManager, TileMapDataLoader), world Map/Zone/ItemMap/Satellite/TrapMap/Boss10 structures, Mob/BigBoss/MobEffectSkill/MobMe/MobPoint combat & loot systems, and MabuEgg/MagicTree NPCs.",
+  "protocol_touchpoints": [
+    {
+      "direction": "WRITE",
+      "location": "src/models/map/vetinh/Satellite.java:30-37",
+      "opcode": "68",
+      "payload_summary": "short itemMapId, short templateId, short x, short y, int playerId, short range"
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/models/map/Zone.java:481-516",
+      "opcode": "-20",
+      "payload_summary": "short itemMapId, UTF pickMsg, short quantity (capped at 9999)"
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/models/map/Zone.java:682-741",
+      "opcode": "-5",
+      "payload_summary": "int playerId, int clanId, byte level, boolean, byte typePk, byte gender*2, short head, UTF name, int hp, int hpMax, short body, short leg, byte flagbag, byte -1, short x, short y, short*2, byte 0, byte spaceShip, byte isMonkey, short mount, byte cFlag, byte 0, short aura, byte effFront, short hat"
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/models/map/Zone.java:759-765",
+      "opcode": "-8",
+      "payload_summary": "int playerId, byte 0, short x, short y"
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/models/map/Zone.java:775-899",
+      "opcode": "-24",
+      "payload_summary": "Full map info: mapId, planetId, tileId, bgId, type, mapName, zoneId, player x/y, waypoints, mobs, npcs, items, bgItem raw bytes, effMap, bgType, spaceShip, isMap148"
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/models/mob/bigboss_list/Hirudegarn.java:320-330",
+      "opcode": "101",
+      "payload_summary": "byte action, followed by tail-whip/fly/AOE target list (int playerId, int damage) or coordinates"
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/models/mob/bigboss_list/VuaBachTuoc.java:44-53",
+      "opcode": "102",
+      "payload_summary": "byte action; if 3|4: byte 1, int playerId, int damage; else short x"
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/models/mob/Mob.java:445-448",
+      "opcode": "-11",
+      "payload_summary": "byte mobId, int damage (mob attack me)"
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/models/mob/Mob.java:462-466",
+      "opcode": "-10",
+      "payload_summary": "byte mobId, int playerId, int playerHp (mob attack other player)"
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/models/mob/Mob.java:500-505,1182-1187",
+      "opcode": "-13",
+      "payload_summary": "byte mobId, byte tempId, byte lvMob, int hp (mob respawn)"
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/models/mob/Mob.java:521-527,541-547,1161-1167",
+      "opcode": "-9",
+      "payload_summary": "byte mobId, int hp, int dame/hpDelta, [boolean crit, int -1] or [boolean false, byte effect]"
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/models/mob/Mob.java:561-567,1325-1327",
+      "opcode": "-12",
+      "payload_summary": "byte mobId, [int dameHit, boolean crit, byte itemCount, items...] (mob die)"
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/models/mob/Mob.java:1292-1295",
+      "opcode": "87",
+      "payload_summary": "byte mobId, int maxHp"
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/models/mob/MobEffectSkill.java:61-141",
+      "opcode": "-124",
+      "payload_summary": "byte 0, byte 1, byte effectCode (40|41|32), byte mobId"
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/models/mob/MobEffectSkill.java:155-158",
+      "opcode": "-112",
+      "payload_summary": "byte 0, byte mobId (remove socola)"
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/models/mob/MobMe.java:70-163",
+      "opcode": "-95",
+      "payload_summary": "byte subType (0=spawn, 2=atkPlayer, 3=atkMob, 5=injured, 6=die, 7=remove), followed by MobMe/target IDs and HP/damage"
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/models/npc/BaseMenu.java:18-25",
+      "opcode": "32",
+      "payload_summary": "short npcId, UTF npcSay, byte menuCount, UTF[] menuSelect"
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/models/npc/mabu/MabuEgg.java:38-44",
+      "opcode": "-122",
+      "payload_summary": "short id (50), byte 1, short 4664, byte 0, int secondsDone"
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/models/npc/mabu/MabuEgg.java:121-123",
+      "opcode": "-117",
+      "payload_summary": "byte 101 (destroy egg effect)"
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/models/npc/mabu/MagicTree.java:120-197",
+      "opcode": "-34",
+      "payload_summary": "byte subType (0=loadTree, 1=openMenu, 2=harvestUpdate) with tree level, peas, timers, or menu options"
+    }
+  ]
+}

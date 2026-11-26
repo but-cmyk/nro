@@ -1,0 +1,149 @@
+{
+  "batch_id": "client_ui_god_mods__p02",
+  "concurrency_and_state": [
+    "Single-threaded Unity UI class (`Panel`) instantiated as dual globals (`GameCanvas.panel` and lazily via `EnsurePanel2()` as `GameCanvas.panel2`), yet several methods inside `Panel` directly reference `GameCanvas.panel` (`updateKey` line 2197, `paint` line 4294, `paintPetInventory` line 4871) or mutate `static` tab arrays (`boxTabName`, `boxCombine`, `boxPet`) at runtime.",
+    "Trade session state (`moneyGD`, `friendMoneyGD`, `isLock`, `isFriendLock`, `isAccept`, `isFriendAccep`, `vMyGD`, `vFriendGD`) is stored as mutable public fields on `Panel`; `setTypeGiaoDich` (lines 2453-2459) resets all trade flags except `isFriendAccep`.",
+    "Shared `static` collections (`a..h`, `a_bg..h_bg`, `vGameInfo`) and `static` state (`specialInfo`, `spearcialImage`, `lastItemInvenNew`, `cachedOptionText`, `cachedOptionFont`, `lastLogPanelPaintErrorTime`) are accessed across panel instances without synchronization."
+  ],
+  "cross_module_questions": [
+    "How do `InventorySubPanel`, `ChestSubPanel`, `CombineSubPanel`, `ShopSubPanel`, and `ClanSubPanel` (registered in `InitSubPanels` lines 939-946) interact with `Panel`'s legacy fields (`selected`, `cmy`, `currentTabIndex`), and which `Panel` methods in lines 5644-11857 are still called when `ISubPanel.Paint`/`UpdateKey` returns false?",
+    "Does `Service.gI().kigui` validate page bounds server-side when `updateKeyScrollView` (lines 3068-3123) or `moveCamera` (lines 4043-4060) sends negative or out-of-range page indices?",
+    "Where is `Panel.tabName[0/1/5/6]` populated before `setType()` (line 1179) runs, and are `tabName` entries guaranteed non-null on all entry points?",
+    "Does server trade handling enforce `long` vs `int` for trade gold (`moneyGD`, `friendMoneyGD` are 32-bit `int` at lines 85-87)?"
+  ],
+  "db_redis_touchpoints": [],
+  "files_read": [
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/Panel.cs:1-5643"
+  ],
+  "findings": [
+    {
+      "category": "gameplay",
+      "impact": "NullReferenceException when rendering consignment or shop rows containing a null Item slot, breaking `paintShop` and causing repeated console errors.",
+      "location": "Panel.cs:4580-4783 (specifically line 4751)",
+      "root_cause": "`paintShop` guards `if (item != null)` at line 4580, but after closing that block at line 4750, line 4751 unconditionally evaluates `item.buyType == 0` without checking `item == null`.",
+      "severity": "P1",
+      "title": "NullReferenceException in paintShop when item slot is null"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Opening clan search or tapping while `clans` is null throws NullReferenceException; switching to `setTabClans` with fewer than 4 tabs throws IndexOutOfRangeException.",
+      "location": "Panel.cs:5531, 3745, 1304, 3823",
+      "root_cause": "`getCurrClan()` reads `clans.Length` without checking `clans != null`; `setTabClans()` reads `lastSelect[3]` without bounds check; `setTabKiGui()` and `setTabShop()` read `Char.myCharz().arrItemShop[...].Length` without null/length checks.",
+      "severity": "P1",
+      "title": "Missing null and bounds checks in getCurrClan, setTabClans, setTabKiGui, and setTabShop"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Option 107 visual aura/frame effect renders the wrong tier or null whenever an item has any subsequent option with param != option 107's param.",
+      "location": "Panel.cs:1023-1055",
+      "root_cause": "`paintEff` checks `item.isHaveOption(107)` then loops over every `option` in `item.itemOption`, overwriting `img_frame` and `img_bg` based on `option.param` regardless of `option.optionTemplate.id`.",
+      "severity": "P1",
+      "title": "paintEff overwrites option 107 effect lists with unrelated item option params"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Swipe inertia velocity calculation (`num5` at line 3287) uses stale `pointerDownLastX[1]` and `pointerDownLastX[2]` values from previous drags; `sellectInventory` can go negative in `updateKeyInTabBar`.",
+      "location": "Panel.cs:3157-3160, 3400-3402",
+      "root_cause": "In `updateKeyScrollView`, the initialization loop writes `pointerDownLastX[0] = GameCanvas.py;` on every iteration instead of `pointerDownLastX[i]`; in `updateKeyInTabBar`, `if (sellectInventory < 0) {}` has an empty body.",
+      "severity": "P2",
+      "title": "Scroll pointer history loop bug and empty negative clamp in updateKeyInTabBar"
+    },
+    {
+      "category": "performance_gc",
+      "impact": "Stutter/freeze on the Unity main thread whenever the player opens or refreshes the World Map panel, plus 2x duplicate image references loaded by `loadEff()`.",
+      "location": "Panel.cs:4020-4021, 988-995",
+      "root_cause": "`setTabMap()` synchronously invokes `Resources.UnloadUnusedAssets(); GC.Collect();`; `loadEff()` loops `for (int i = 0; i < 2; i++)` without using `i`, appending all 8 `bgList`/`imgList` entries twice (16 entries per list).",
+      "severity": "P1",
+      "title": "Blocking GC.Collect/UnloadUnusedAssets on map tab open and duplicate effect image loading"
+    },
+    {
+      "category": "performance_gc",
+      "impact": "High per-frame GC pressure and frame drops in Unity UI render loops when panels are open.",
+      "location": "Panel.cs:2494-2736, 4491-4790, 4821-4980, 5075-5213, 5297-5347, 5349-5497, 5538-5594",
+      "root_cause": "`paintGiaoDich`, `paintShop`, `paintPetInventory`, `paintSkill`, `paintSpeacialSkill`, `paintBox`, and `paintLogChat` allocate strings every frame via concatenation (`+`, `Res.formatNumber`), call `splitFontArray` (`5150`, `5340`) and `Res.split` (`5586`, `5590`) inside `paint()`, and most iterate all items instead of only visible `cmy` rows.",
+      "severity": "P1",
+      "title": "Per-frame heap allocations, string splits, and unculled loops inside Panel paint methods"
+    },
+    {
+      "category": "security_dupe",
+      "impact": "Stale `isFriendAccep` flag from a prior trade can persist into a new trade; 32-bit `int` limits trade gold representation to ~2.14B.",
+      "location": "Panel.cs:85-87, 95, 2449-2459",
+      "root_cause": "`setTypeGiaoDich` resets `isAccept`, `isLock`, `isFriendLock`, `moneyGD`, `friendMoneyGD`, `vMyGD`, `vFriendGD`, but omits resetting `isFriendAccep = false`. `moneyGD` and `friendMoneyGD` are `int` rather than `long`.",
+      "severity": "P2",
+      "title": "Trade state reset omits isFriendAccep and uses 32-bit int for trade gold"
+    },
+    {
+      "category": "architecture",
+      "impact": "High maintenance risk and regression surface across ~30 panel modes and dual-panel layouts (`panel` / `panel2`).",
+      "location": "Panel.cs:1-5643 (e.g., 906-946, 1293-1351, 4294-4475, 4865, 5401, 5494)",
+      "root_cause": "God class `Panel` (11,857 lines total) mixes partial `ISubPanel` delegation (`InventorySubPanel`, `ChestSubPanel`, `CombineSubPanel`, `ShopSubPanel`, `ClanSubPanel`) with legacy monolithic switch/paint/updateKey logic, duplicated item-row rendering in 4+ methods, dead stub methods (`setTabChatPlayer`, `IsNewMessage`, `updateKeyAuto`, `subArray`, `paintPetSkill`), copy-paste ternary (`GetColor_ItemBg` twice at lines 4865/5401), and wrong log context (`\"paintPetInventory\"` in `paintBox` catch at line 5494).",
+      "severity": "P2",
+      "title": "Monolithic Panel God Class with partial ISubPanel migration and copy-paste defects"
+    }
+  ],
+  "key_classes": [
+    {
+      "key_methods": [
+        "RegisterSubPanel",
+        "GetCurrentSubPanel",
+        "EnsurePanel2",
+        "InitSubPanels",
+        "loadEff",
+        "loadBg",
+        "paintEff",
+        "setType",
+        "addItemDetail",
+        "updateKey",
+        "updateKeyScrollView",
+        "updateKeyInTabBar",
+        "setTypeGiaoDich",
+        "paintGiaoDich",
+        "moveCamera",
+        "paint",
+        "paintShop",
+        "paintPetInventory",
+        "paintSkill",
+        "paintBox",
+        "paintLogChat"
+      ],
+      "name": "Panel",
+      "path": "Client/Client/Assets/Scripts/Game1/Panel.cs",
+      "responsibility": "Central UI panel God class (`IActionListener, IChatable`) handling inventory, chest, shop, consignment, trade, combine, clans, skills, pet, map, zones, top rankings, chat logs, and sub-panel delegation."
+    },
+    {
+      "key_methods": [
+        "PlayerChat"
+      ],
+      "name": "Panel.PlayerChat",
+      "path": "Client/Client/Assets/Scripts/Game1/Panel.cs",
+      "responsibility": "Nested data class holding per-player chat history (`name`, `charID`, `isNewMessage`, `List<InfoItem> chats`)."
+    }
+  ],
+  "module_summary": "Read lines 1-5643 of `Client/Client/Assets/Scripts/Game1/Panel.cs` (part 1 of 2 of the 11,857-line UI God class). This half defines `Panel` fields/constants, `ISubPanel` registration (`InventorySubPanel`, `ChestSubPanel`, `CombineSubPanel`, `ShopSubPanel`, `ClanSubPanel`), asset loading (`loadEff`, `loadBg`), detail popups (`addItemDetail`, `addClanDetail`, `addSkillDetail`, etc.), input/scroll handling (`updateKey`, `updateKeyScrollView`, `updateKeyInTabBar`, `updateKeyMap`, `updateKeyQuest`, `updateKeyClans`), tab initialization (`setType*`, `setTab*`), camera/close transitions (`moveCamera`), and core rendering (`paint`, `paintDetail`, `paintTop`, `paintGiaoDich`, `paintShop`, `paintPetInventory`, `paintSkill`, `paintZone`, `paintSpeacialSkill`, `paintBox`, `paintLogChat`, `paintFlagChange`).",
+  "protocol_touchpoints": [
+    {
+      "direction": "DISPATCH",
+      "location": "Panel.cs:3068, 3072, 3119, 3123, 4043, 4047, 4056, 4060",
+      "opcode": "Service.gI().kigui",
+      "payload_summary": "action=4, itemId=-1, tab=(sbyte)currentTabIndex, page=currPageShop/maxPageShop±1, money=-1"
+    },
+    {
+      "direction": "DISPATCH",
+      "location": "Panel.cs:3778",
+      "opcode": "Service.gI().searchClan",
+      "payload_summary": "text=string.Empty"
+    },
+    {
+      "direction": "DISPATCH",
+      "location": "Panel.cs:4092",
+      "opcode": "Service.gI().requestChangeZone",
+      "payload_summary": "zoneId=selected, -1"
+    },
+    {
+      "direction": "DISPATCH",
+      "location": "Panel.cs:4096",
+      "opcode": "Service.gI().requestMapSelect",
+      "payload_summary": "selected map index"
+    }
+  ]
+}

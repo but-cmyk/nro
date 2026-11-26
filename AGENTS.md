@@ -63,11 +63,12 @@ Trước khi chạm vào bất kỳ file nguồn nào, hãy nạp bất biến t
 - **Zero-GC Trong Vòng Lặp Vẽ**: Cấm cấp phát `new` đối tượng trong `paint()` và `update()` của Client Unity.
 - **Cổng Phê Duyệt Hiệu Năng (Human-in-the-Loop Approval Gate)**: Khi phát hiện bất kỳ chức năng nào bị chậm (qua `PERFORMANCE_ALERTS.json` hoặc log), AI Agent bắt buộc phải: (1) Bóc tách rõ nguyên nhân gốc rễ, (2) Lập kế hoạch fix chi tiết trình User. **Chỉ khi User phê duyệt mới được bắt đầu sửa code.**
 - **Cổng Kiểm Thử & Tự Soát Lỗi Nghiêm Ngặt Trước Khi Báo Cáo (Pre-Completion Verification Gate)**:
+  - **Bắt buộc kiểm tra lỗi biên dịch (Compile Verification Gate)**: Sau khi sửa bất kỳ mã nguồn C# hoặc Java nào, BẮT BUỘC phải chạy `python tools/compile_check.py` (hoặc `--client` khi sửa Client, `--server` khi sửa Server). Tuyệt đối cấm báo cáo hoàn thành khi chưa đạt `[ALL CLEAR] 0 lỗi biên dịch`.
   - **Tuyệt đối cấm báo cáo hoàn thành khi chưa kiểm tra thực tế**: AI Agent không được tuyên bố "đã hoàn thành" hoặc "đã fix xong" nếu chưa chủ động rà soát toàn diện tác động phụ (side effects), trạng thái runtime và log phát sinh.
   - **Xác minh tài nguyên thực tế trên đĩa (Asset Reality Check)**: Khi can thiệp vào logic nạp tài nguyên (âm thanh, ảnh, animation, template), bắt buộc kiểm tra sự tồn tại thực tế của tệp tin trên ổ cứng (`.wav`, `.png`, `.meta`). Tuyệt đối không giả định hay suy đoán tài nguyên tồn tại.
   - **Ngăn chặn cảnh báo giả làm đỏ Console (No False Error Badges)**: Cân nhắc kỹ lưỡng phân cấp log (`LogWarning` vs `LogError`). Không nâng các cảnh báo tài nguyên tùy chọn (optional assets) thành `LogError`, tránh gây hoang mang hoặc làm vọt icon chấm than đỏ trên Unity Console.
   - **Checklist tự vấn trước khi phản hồi User**:
-    1. Code có lỗi biên dịch (compile error) hoặc crash ngầm không?
+    1. Đã chạy `python tools/compile_check.py` đạt 100% 0 lỗi biên dịch (CSxxxx, javac errors) chưa?
     2. Tệp tài nguyên liên quan có thực sự tồn tại trên đĩa không?
     3. Thay đổi có làm xuất hiện icon lỗi đỏ trên Console Client không?
     4. Đã chạy guardrails (`python tools/memory/guardrails.py --check-all`) để bảo toàn bất biến chưa?

@@ -120,68 +120,82 @@ public class ChestBoxItemHandler implements ItemActionHandler {
     }
 
     public static void openWoodChest(Player pl, Item item) {
-        int time = (int) TimeUtil.diffDate(new Date(), new Date(item.createTime), TimeUtil.DAY);
-        if (time == 0) {
-            Service.gI().sendThongBao(pl, "Vì bạn quên không lấy chìa nên cần đợi 24h để bẻ khóa");
+        if (pl == null || item == null || item.itemOptions == null || item.itemOptions.isEmpty() || item.quantity < 1) {
             return;
         }
+        synchronized (pl) {
+            if (!pl.inventory.itemsBag.contains(item) || item.quantity < 1) {
+                return;
+            }
+            int time = (int) TimeUtil.diffDate(new Date(), new Date(item.createTime), TimeUtil.DAY);
+            if (time <= 0) {
+                Service.gI().sendThongBao(pl, "Vì bạn quên không lấy chìa nên cần đợi 24h để bẻ khóa");
+                return;
+            }
 
-        int param = item.itemOptions.get(0).param;
-        int gold = 1000 * (int) Math.pow(param, 2) * 9;
-        int gem = 0;
-        int ruby = param; // 1-11 hồng ngọc tăng theo level rương
-        String text = "Bạn nhận được\n";
-        List<Item> rewards = new ArrayList<>();
+            int param = item.itemOptions.get(0).param;
+            if (param <= 0) {
+                return;
+            }
+            int numClothes = param < 6 ? 1 : (param < 10 ? 2 : 3);
+            int[] selectedPool = param <= 4 ? new int[]{223, 224, 225, 17, 18}
+                    : (param <= 7 ? new int[]{441, 442, 443, 444} : new int[]{445, 446, 447, 19, 20});
+            int numItems = Math.min(1 + param / 3, selectedPool.length);
+            int neededSlots = numClothes + numItems + (param >= 11 ? 1 : 0);
+            if (InventoryService.gI().getCountEmptyBag(pl) < neededSlots) {
+                Service.gI().sendThongBaoResetWait(pl, "Hành trang của bạn cần ít nhất " + neededSlots + " ô trống!");
+                return;
+            }
 
-        int[] itemT1 = { 223, 224, 225, 17, 18 };
-        int[] itemT2 = { 441, 442, 443, 444 };
-        int[] itemT3 = { 445, 446, 447, 19, 20 };
+            int gold = 1000 * (int) Math.pow(param, 2) * 9;
+            int gem = 0;
+            int ruby = param; // 1-11 hồng ngọc tăng theo level rương
+            String text = "Bạn nhận được\n";
+            List<Item> rewards = new ArrayList<>();
 
-        int numClothes = param < 6 ? 1 : (param < 10 ? 2 : 3);
-        for (int i = 0; i < numClothes; i++) {
-            int clothesId = ConstItem.LIST_ITEM_CLOTHES[Util.nextInt(0, 2)][Util.nextInt(0, 4)][param - 1];
-            Item eq = ItemService.gI().createNewItem((short) clothesId);
-            RewardService.gI().initBaseOptionClothes(eq.template.id, eq.template.type, eq.itemOptions);
-            rewards.add(eq);
+            for (int i = 0; i < numClothes; i++) {
+                int clothesId = ConstItem.LIST_ITEM_CLOTHES[Util.nextInt(0, 2)][Util.nextInt(0, 4)][param - 1];
+                Item eq = ItemService.gI().createNewItem((short) clothesId);
+                RewardService.gI().initBaseOptionClothes(eq.template.id, eq.template.type, eq.itemOptions);
+                rewards.add(eq);
+            }
+
+            int[] randomItems = Util.pickNRandInArr(selectedPool, numItems);
+            for (int id : randomItems) {
+                Item it = ItemService.gI().createNewItem((short) id);
+                it.quantity = 1;
+                RewardService.gI().initBaseOptionSaoPhaLe(it);
+                rewards.add(it);
+            }
+
+            if (param >= 11) {
+                Item manhNhan = ItemService.gI().createNewItem((short) ConstItem.MANH_NHAN);
+                manhNhan.quantity = Util.nextInt(1, 2);
+                rewards.add(manhNhan);
+            }
+
+            pl.inventory.addGold(gold);
+            pl.inventory.gem += gem;
+            pl.inventory.ruby += ruby;
+            if (gold > 0)
+                pl.textRuongGo.add(text + "|4| " + Util.powerToString(gold) + " Vàng");
+            if (gem > 0)
+                pl.textRuongGo.add(text + "|1| " + gem + " Ngọc");
+            if (ruby > 0)
+                pl.textRuongGo.add(text + "|1| " + ruby + " Hồng Ngọc");
+
+            for (Item reward : rewards) {
+                InventoryService.gI().addItemBag(pl, reward);
+                pl.textRuongGo.add(text + reward.getInfoItem());
+            }
+
+            NpcService.gI().createMenuConMeo(pl, ConstNpc.RUONG_GO, -1,
+                    "Bạn nhận được\n|1|+" + Util.powerToString(gold) + " vàng", "OK [" + pl.textRuongGo.size() + "]");
+
+            InventoryService.gI().subQuantityItemsBag(pl, item, 1);
+            InventoryService.gI().sendItemBags(pl);
+            PlayerService.gI().sendInfoHpMpMoney(pl);
         }
-
-        int[] selectedPool = param <= 4 ? itemT1 : (param <= 7 ? itemT2 : itemT3);
-        int numItems = Math.min(1 + param / 3, selectedPool.length);
-        int[] randomItems = Util.pickNRandInArr(selectedPool, numItems);
-        for (int id : randomItems) {
-            Item it = ItemService.gI().createNewItem((short) id);
-            it.quantity = 1;
-            RewardService.gI().initBaseOptionSaoPhaLe(it);
-            rewards.add(it);
-        }
-
-        if (param >= 11) {
-            Item manhNhan = ItemService.gI().createNewItem((short) ConstItem.MANH_NHAN);
-            manhNhan.quantity = Util.nextInt(1, 2);
-            rewards.add(manhNhan);
-        }
-
-        pl.inventory.addGold(gold);
-        pl.inventory.gem += gem;
-        pl.inventory.ruby += ruby;
-        if (gold > 0)
-            pl.textRuongGo.add(text + "|4| " + Util.powerToString(gold) + " Vàng");
-        if (gem > 0)
-            pl.textRuongGo.add(text + "|1| " + gem + " Ngọc");
-        if (ruby > 0)
-            pl.textRuongGo.add(text + "|1| " + ruby + " Hồng Ngọc");
-
-        for (Item reward : rewards) {
-            InventoryService.gI().addItemBag(pl, reward);
-            pl.textRuongGo.add(text + reward.getInfoItem());
-        }
-
-        NpcService.gI().createMenuConMeo(pl, ConstNpc.RUONG_GO, -1,
-                "Bạn nhận được\n|1|+" + Util.powerToString(gold) + " vàng", "OK [" + pl.textRuongGo.size() + "]");
-
-        InventoryService.gI().subQuantityItemsBag(pl, item, 1);
-        InventoryService.gI().sendItemBags(pl);
-        PlayerService.gI().sendInfoHpMpMoney(pl);
     }
 
     private void openCSKB(Player pl, Item item) {
@@ -247,15 +261,25 @@ public class ChestBoxItemHandler implements ItemActionHandler {
     }
 
     private static void open1427(Player pl, Item item) {
-        if (InventoryService.gI().getCountEmptyBag(pl) > 0) {
-            Item it = ItemService.gI().createNewItem((short) 1426);
-            InventoryService.gI().addItemBag(pl, it);
-            Service.gI().sendThongBao(pl, "Bạn Nhận Được Quả Trứng Rồng Nhí");
-            InventoryService.gI().subQuantityItemsBag(pl, item, 99);
-            InventoryService.gI().sendItemBags(pl);
-            CombineService.gI().sendEffectOpenItem(pl, item.template.iconID, (short) 15127);
-        } else {
-            Service.gI().sendThongBaoResetWait(pl, "Hành trang của bạn đã đầy, hãy dọn chỗ trống!");
+        if (pl == null || item == null || item.quantity < 99) {
+            Service.gI().sendThongBaoResetWait(pl, "Cần đủ 99 mảnh để ghép Quả Trứng Rồng Nhí!");
+            return;
+        }
+        synchronized (pl) {
+            if (!pl.inventory.itemsBag.contains(item) || item.quantity < 99) {
+                Service.gI().sendThongBaoResetWait(pl, "Cần đủ 99 mảnh để ghép Quả Trứng Rồng Nhí!");
+                return;
+            }
+            if (InventoryService.gI().getCountEmptyBag(pl) > 0) {
+                Item it = ItemService.gI().createNewItem((short) 1426);
+                InventoryService.gI().addItemBag(pl, it);
+                Service.gI().sendThongBao(pl, "Bạn Nhận Được Quả Trứng Rồng Nhí");
+                InventoryService.gI().subQuantityItemsBag(pl, item, 99);
+                InventoryService.gI().sendItemBags(pl);
+                CombineService.gI().sendEffectOpenItem(pl, item.template.iconID, (short) 15127);
+            } else {
+                Service.gI().sendThongBaoResetWait(pl, "Hành trang của bạn đã đầy, hãy dọn chỗ trống!");
+            }
         }
     }
 

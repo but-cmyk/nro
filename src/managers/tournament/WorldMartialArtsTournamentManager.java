@@ -15,11 +15,13 @@ import services.map.MapService;
 import services.Service;
 import utils.TimeUtil;
 import utils.Util;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class WorldMartialArtsTournamentManager implements Runnable {
 
     public List<Long> listReg = new CopyOnWriteArrayList<>();
+    public final java.util.Map<Long, int[]> regFees = new ConcurrentHashMap<>();
     public List<Long> listWait = new CopyOnWriteArrayList<>();
     public List<String> listChamp = new CopyOnWriteArrayList<>();
 
@@ -170,6 +172,7 @@ public class WorldMartialArtsTournamentManager implements Runnable {
                 lastWaitTime = System.currentTimeMillis();
                 waitTime = 240000;
                 listReg.clear();
+                regFees.clear();
             }
         } else {
             round = 0;
@@ -206,6 +209,7 @@ public class WorldMartialArtsTournamentManager implements Runnable {
         services.TaskService.gI().checkDoneTaskDHVT(pl);
         listChamp.add(pl.name);
         listReg.clear();
+        regFees.clear();
         listWait.clear();
         Service.gI().dropAndPickItem(pl, 77, 50);
         Service.gI().sendThongBao(pl, ConstTournament.TEXT_VO_DICH);

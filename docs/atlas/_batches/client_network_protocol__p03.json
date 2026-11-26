@@ -1,0 +1,329 @@
+{
+  "batch_id": "client_network_protocol__p03",
+  "concurrency_and_state": [
+    "PacketDispatcher._handlers (Dictionary<sbyte, IPacketHandler>) is populated once in the constructor with no synchronization; safe only if dispatched solely from the Unity main thread.",
+    "MobController uses static mutable state (IsPickingItems, IsWait, TimeStartWait, TimeWait, ItemPicks, IndexItemPick, lastHarvestBeanTime) and static shared MyVector buffers (attackMobVector, emptyVector) driven from the main update loop.",
+    "MapController and PetService singletons use non-thread-safe lazy initialization (instance == null ? instance = new ... : instance).",
+    "Controller.loadCurrMap resets GameScr/Char UI and input lock flags (isStopReadMessage=false, Char.isLockKey=false, Char.ischangingMap=false) and clears pointer/key state on map load completion.",
+    "Controller.messageNotMap case 10 swaps local msg to messWait, calls loadInfoMap, and calls cleanup() on messWait before nulling it; original msg is not cleaned up (though Message.cleanup() is currently an empty stub)."
+  ],
+  "cross_module_questions": [
+    "Verify NetworkOpcodes.cs constants against hardcoded cases in modular handlers: PacketDispatcher registers AuthPacketHandler under NetworkOpcodes.LOGOUT while AuthPacketHandler handles -26 (SERVER_ALERT); PlayerStatsPacketHandler is registered under UPDATE_HP/UPDATE_MP/UPDATE_EXP/UPDATE_NANG_DONG while handling 6/-69/-68/-97; TaskNpcPacketHandler is registered under TASK_UPDATE/NPC_MENU/NPC_CHAT while handling -70/38/32.",
+    "Verify Server-side validation for charMove and pickItem against client-side auto-teleportation in MobController.MoveTo, MobController.Update (tsPlayer), MapController.NextMap, and distance-bypassing item pickup in MobController.GetTypePickItem.",
+    "Verify whether Server sends any bytes for the empty loop at Controller.cs:5106-5109 (num = msg.reader().readByte(); for (byte b2 = 0; b2 < num; b2++) {}) in loadInfoMap; if non-zero, client stream desyncs.",
+    "Verify Server trade gold field type for TRADE_ACTION action==6: TradePacketHandler.cs:67 reads int friendMoneyGD instead of long, whereas Char.xu is long."
+  ],
+  "db_redis_touchpoints": [],
+  "files_read": [
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/Controller.cs:4642-6894",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/God/Map/MapController.cs:1-135",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/God/Mob/MobController.cs:1-677",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/God/Player/PetService.cs:1-40",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/Message.cs:1-58",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/myReader.cs:1-269",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/myWriter.cs:1-217",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/Network/Handlers/AuthPacketHandler.cs:1-35",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/Network/Handlers/ClanPacketHandler.cs:1-292",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/Network/Handlers/CombatPacketHandler.cs:1-158",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/Network/Handlers/ItemPacketHandler.cs:1-202",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/Network/Handlers/MapMovementPacketHandler.cs:1-107",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/Network/Handlers/PlayerStatsPacketHandler.cs:1-56",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/Network/Handlers/TaskNpcPacketHandler.cs:1-130",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/Network/Handlers/TradePacketHandler.cs:1-143",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/Network/IPacketHandler.cs:1-7",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/Network/PacketDispatcher.cs:1-76"
+  ],
+  "findings": [
+    {
+      "category": "protocol",
+      "impact": "IndexOutOfRangeException crash when serializing a single byte/bool at exact buffer boundary (e.g., byte 2048).",
+      "location": "Client/Client/Assets/Scripts/Game1/myWriter.cs:23-27,192-194",
+      "root_cause": "writeSByte calls checkLenght(0), and checkLenght checks `posWrite + ltemp > lenght`. When posWrite == lenght (e.g., 2048), `2048 + 0 > 2048` evaluates false, then `buffer[posWrite++] = value` writes out of bounds.",
+      "severity": "P1",
+      "title": "Off-by-one capacity check in myWriter.writeSByte causes IndexOutOfRangeException at buffer boundary"
+    },
+    {
+      "category": "protocol",
+      "impact": "Silent packet corruption/desync on truncated payloads instead of failing fast; read(ref sbyte[]) never signals EOF.",
+      "location": "Client/Client/Assets/Scripts/Game1/myReader.cs:34-42,69-131,143-161,182-199,253-267",
+      "root_cause": "readSByte/readShort/readInt/readLong silently clamp posRead to buffer.Length and return 0 on EOF; readString truncates num to remaining bytes; read(ref sbyte[]) checks `if (posRead > buffer.Length) return -1;` which is unreachable because readSByte clamps posRead == buffer.Length.",
+      "severity": "P1",
+      "title": "myReader silently returns 0/truncated data on EOF and read(ref sbyte[]) EOF check is dead code"
+    },
+    {
+      "category": "protocol",
+      "impact": "NullReferenceException crash in Controller.messageSubCommand case 35 when player has no mobFocus and another char shares cTypePk; wrong char lookup skips actual players in map.",
+      "location": "Client/Client/Assets/Scripts/Game1/Controller.cs:6309-6322",
+      "root_cause": "Loop iterates `i` from 0 to vCharInMap.size() but calls `GameScr.findCharInMap(i)` (lookup by charID instead of elementAt(i)), and accesses `Char.myCharz().mobFocus.isMobMe` without checking `mobFocus != null`.",
+      "severity": "P1",
+      "title": "Wrong char lookup and missing mobFocus null check in messageSubCommand case 35 (PK type update)"
+    },
+    {
+      "category": "protocol",
+      "impact": "Potential NullReferenceException or IndexOutOfRangeException crashing packet handling on malformed or racy server updates.",
+      "location": "Client/Client/Assets/Scripts/Game1/Controller.cs:5751,5982; Client/Client/Assets/Scripts/Game1/Network/Handlers/ClanPacketHandler.cs:132,271; Client/Client/Assets/Scripts/Game1/Network/Handlers/ItemPacketHandler.cs:50,145",
+      "root_cause": "Missing null/bounds checks on Char.myCharz().charFocus (Controller.cs:5751), GameCanvas.panel.myMember index (ClanPacketHandler.cs:132), Char.myCharz().clan (ClanPacketHandler.cs:271), itemMap.template (ItemPacketHandler.cs:50), and arrItemBag[bagIndex] (ItemPacketHandler.cs:145); also signed readByte() used for array allocations in multiple places (Controller.cs:4645,5982, MapMovementPacketHandler.cs:86, TaskNpcPacketHandler.cs:89).",
+      "severity": "P2",
+      "title": "Missing null/bounds checks and signed-byte array lengths in packet handlers"
+    },
+    {
+      "category": "protocol",
+      "impact": "Stream desynchronization and corrupted inventory/skill state if any error occurs while reading body items or truncated cooldown packets.",
+      "location": "Client/Client/Assets/Scripts/Game1/Controller.cs:5848-5899; Client/Client/Assets/Scripts/Game1/Network/Handlers/CombatPacketHandler.cs:130-146",
+      "root_cause": "Controller.cs:5897 swallows exceptions in arrItemBody loop and continues reading arrItemBag/arrItemBox from misaligned offset. CombatPacketHandler.cs:130 loops `while (available() > 0)` reading 6 bytes per entry without checking `available() >= 6`.",
+      "severity": "P2",
+      "title": "Exception swallowing mid-stream in arrItemBody and missing 6-byte availability guard in SKILL_COOLDOWN"
+    },
+    {
+      "category": "security_dupe",
+      "impact": "Built-in client auto-play/bot mod performs instant map coordinate teleportation, cross-map item pickup, and auto-PK teleportation; server must strictly enforce movement speed, pickup range, and cooldowns.",
+      "location": "Client/Client/Assets/Scripts/Game1/God/Mob/MobController.cs:64-103,262-264,330-335,373-384; Client/Client/Assets/Scripts/Game1/God/Map/MapController.cs:70-112",
+      "root_cause": "MobController.MoveTo and tsPlayer directly overwrite Char.myCharz().cx/cy and emit Service.gI().charMove(), while GetTypePickItem allows pickItem calls outside normal 100px radius when IsPickItemsDis/TDLT/IsTanSat is active.",
+      "severity": "P1",
+      "title": "Client God module performs arbitrary coordinate teleportation and extended-range auto-pickup"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Trade UI truncates or wraps opponent gold > 2,147,483,647 xu, and panel2 sets friendMoneyGD after rendering tab.",
+      "location": "Client/Client/Assets/Scripts/Game1/Network/Handlers/TradePacketHandler.cs:67,101-102",
+      "root_cause": "friendMoneyGD is read as 32-bit int via readInt() instead of 64-bit long; when GameCanvas.panel2 != null, setTabGiaoDich(false) is called on line 101 before assigning panel2.friendMoneyGD on line 102.",
+      "severity": "P2",
+      "title": "TradePacketHandler reads friendMoneyGD as 32-bit int and updates panel2 money after tab init"
+    },
+    {
+      "category": "protocol",
+      "impact": "writeString corrupts non-ASCII (Vietnamese) characters by truncating UTF-16 chars to sbyte; readString rejects strings >32767 bytes due to signed short length.",
+      "location": "Client/Client/Assets/Scripts/Game1/myWriter.cs:129-138,140-155; Client/Client/Assets/Scripts/Game1/myReader.cs:143-161",
+      "root_cause": "myWriter.writeString casts each char to sbyte (dropping high byte) instead of UTF-8 encoding; writeUTF/readString use signed short length.",
+      "severity": "P2",
+      "title": "writeString truncates UTF-16 chars and writeUTF/readString use signed short length"
+    },
+    {
+      "category": "performance_gc",
+      "impact": "Noticeable frame hitch on every map transition and continuous GC allocations during auto-farm update ticks.",
+      "location": "Client/Client/Assets/Scripts/Game1/Controller.cs:5033-5034; Client/Client/Assets/Scripts/Game1/God/Mob/MobController.cs:355,656-658",
+      "root_cause": "Controller.loadInfoMap synchronously calls Resources.UnloadUnusedAssets() and GC.Collect() on main thread; MobController allocates int[2] in GetPointYsdMax and new MovePoint in Move during Update().",
+      "severity": "P3",
+      "title": "Synchronous GC.Collect on map load and per-tick allocations in MobController"
+    },
+    {
+      "category": "architecture",
+      "impact": "Duplicated item/template parsing logic and fragile split between legacy Controller.cs (~6900 lines) and modular PacketDispatcher handlers.",
+      "location": "Client/Client/Assets/Scripts/Game1/Controller.cs:4662-4680,6503-6619; Client/Client/Assets/Scripts/Game1/Network/PacketDispatcher.cs:49-74",
+      "root_cause": "Controller remains a massive monolithic class containing createItem and newer loadItemNew side-by-side, while PacketDispatcher extracts only a subset of opcodes into IPacketHandler classes.",
+      "severity": "P3",
+      "title": "Monolithic Controller.cs retains legacy template loaders alongside partial PacketDispatcher refactor"
+    }
+  ],
+  "key_classes": [
+    {
+      "key_methods": [
+        "readLogin",
+        "createItem",
+        "createSkill",
+        "createMap",
+        "createData",
+        "loadCurrMap",
+        "loadInfoMap",
+        "keyValueAction",
+        "messageNotMap",
+        "messageNotLogin",
+        "messageSubCommand",
+        "readCharInfo",
+        "loadItemNew",
+        "phuban_Info",
+        "read_opt",
+        "read_UpdateSkill"
+      ],
+      "name": "Controller",
+      "path": "Client/Client/Assets/Scripts/Game1/Controller.cs",
+      "responsibility": "Central client packet handler and game state loader (template creation, map/NPC/mob/item loading, sub-commands, login/character setup)."
+    },
+    {
+      "key_methods": [
+        "gI",
+        "Register",
+        "Dispatch",
+        "RegisterHandlers"
+      ],
+      "name": "PacketDispatcher",
+      "path": "Client/Client/Assets/Scripts/Game1/Network/PacketDispatcher.cs",
+      "responsibility": "Maps opcode sbytes to modular IPacketHandler implementations and dispatches incoming Message instances."
+    },
+    {
+      "key_methods": [
+        "Handle"
+      ],
+      "name": "IPacketHandler (Auth, Clan, Combat, Item, MapMovement, PlayerStats, TaskNpc, Trade)",
+      "path": "Client/Client/Assets/Scripts/Game1/Network/Handlers/",
+      "responsibility": "Modular packet handlers extracted from Controller for specific functional domains (auth alerts, clan, combat, map items, movement, stats, NPC/task UI, trade)."
+    },
+    {
+      "key_methods": [
+        "getData",
+        "reader",
+        "writer",
+        "readInt3Byte",
+        "cleanup"
+      ],
+      "name": "Message",
+      "path": "Client/Client/Assets/Scripts/Game1/Message.cs",
+      "responsibility": "Binary network message wrapper holding sbyte command and myReader/myWriter streams."
+    },
+    {
+      "key_methods": [
+        "readSByte",
+        "readByte",
+        "readUnsignedByte",
+        "readShort",
+        "readUnsignedShort",
+        "readInt",
+        "readLong",
+        "readBool",
+        "readString",
+        "readUTF",
+        "readFully",
+        "available"
+      ],
+      "name": "myReader",
+      "path": "Client/Client/Assets/Scripts/Game1/myReader.cs",
+      "responsibility": "Big-endian binary stream reader over sbyte[] buffer with mark/reset support."
+    },
+    {
+      "key_methods": [
+        "writeSByte",
+        "writeByte",
+        "writeShort",
+        "writeUnsignedShort",
+        "writeInt",
+        "writeLong",
+        "writeBool",
+        "writeString",
+        "writeUTF",
+        "getData",
+        "checkLenght"
+      ],
+      "name": "myWriter",
+      "path": "Client/Client/Assets/Scripts/Game1/myWriter.cs",
+      "responsibility": "Big-endian auto-growing binary stream writer backing outgoing Message payloads."
+    },
+    {
+      "key_methods": [
+        "Update",
+        "AttackMob",
+        "MoveTo",
+        "Move",
+        "GetTypePickItem",
+        "GetMobTanSat",
+        "GetSkillAttack2",
+        "CanUseSkill"
+      ],
+      "name": "MobController",
+      "path": "Client/Client/Assets/Scripts/Game1/God/Mob/MobController.cs",
+      "responsibility": "Client-side auto-farm, auto-pick, auto-PK, auto-heal, and skill-selection bot controller."
+    },
+    {
+      "key_methods": [
+        "getInstance",
+        "LoadWayPoint",
+        "NextMap",
+        "GetYGround"
+      ],
+      "name": "MapController",
+      "path": "Client/Client/Assets/Scripts/Game1/God/Map/MapController.cs",
+      "responsibility": "Client-side helper for teleporting to map waypoints and triggering map transitions."
+    },
+    {
+      "key_methods": [
+        "getInstance",
+        "Update",
+        "getUp",
+        "setUp"
+      ],
+      "name": "PetService",
+      "path": "Client/Client/Assets/Scripts/Game1/God/Player/PetService.cs",
+      "responsibility": "Client-side auto-pet status polling and automatic Senzu bean healing loop."
+    }
+  ],
+  "module_summary": "Client network serialization, modular packet dispatchers/handlers, Controller template/map/subcommand parsing, and Game1.God automation controllers (MapController, MobController, PetService). Covers big-endian binary framing (Message/myReader/myWriter), 8 domain IPacketHandler classes registered in PacketDispatcher, the tail half of monolithic Controller.cs (lines 4642-6894), and built-in client auto-play/teleportation helpers.",
+  "protocol_touchpoints": [
+    {
+      "direction": "DISPATCH",
+      "location": "Client/Client/Assets/Scripts/Game1/Network/PacketDispatcher.cs:49-74",
+      "opcode": "Various (NetworkOpcodes.*)",
+      "payload_summary": "Dispatches incoming Message.command to 8 IPacketHandler instances: Auth, PlayerStats, TaskNpc, Clan, Trade, Item, MapMovement, Combat."
+    },
+    {
+      "direction": "READ",
+      "location": "Client/Client/Assets/Scripts/Game1/Controller.cs:5382-5691",
+      "opcode": "messageNotMap (sub-opcodes 4,6,7,8,9,10,12,16,17,18,20,35,36)",
+      "payload_summary": "Reads data/map/skill/item template versions, cached RMS blobs, tilemap dimensions/tiles, exp table, PK status, rename dialog."
+    },
+    {
+      "direction": "READ",
+      "location": "Client/Client/Assets/Scripts/Game1/Controller.cs:5693-5727",
+      "opcode": "messageNotLogin (sub-opcode 2)",
+      "payload_summary": "Reads server list URL UTF string and CanNapTien byte flag."
+    },
+    {
+      "direction": "READ",
+      "location": "Client/Client/Assets/Scripts/Game1/Controller.cs:5729-6377",
+      "opcode": "messageSubCommand (sub 0,1,2,4,5,6,7,8,9,10,12,13,14,15,19,21,23,35,61,62,63)",
+      "payload_summary": "Reads full player info/inventory/box/skills/currencies (sub 0), HP/MP/xu updates, other player updates, skill shortcuts, skill upgrades, PK type, player context menu."
+    },
+    {
+      "direction": "READ",
+      "location": "Client/Client/Assets/Scripts/Game1/Controller.cs:6666-6784",
+      "opcode": "phuban_Info & read_opt",
+      "payload_summary": "Reads Namek battlefield HUD state (phuban_Info type 0 sub 0,1,2,4,5) and optional cosmetics/banners/water/server messages (read_opt sub 0,2,3,4)."
+    },
+    {
+      "direction": "READ",
+      "location": "Client/Client/Assets/Scripts/Game1/Network/Handlers/AuthPacketHandler.cs:13-25",
+      "opcode": "-26 (SERVER_ALERT)",
+      "payload_summary": "Reads alert UTF string and shows OK dialog, resetting login/map flags."
+    },
+    {
+      "direction": "READ",
+      "location": "Client/Client/Assets/Scripts/Game1/Network/Handlers/ClanPacketHandler.cs:13-281",
+      "opcode": "-51,-53,-52,-50,-47,-46",
+      "payload_summary": "Reads clan chat/donate messages, full clan info + member list, member add/remove/update, member view list, clan search results, clan icon catalog/update."
+    },
+    {
+      "direction": "READ",
+      "location": "Client/Client/Assets/Scripts/Game1/Network/Handlers/CombatPacketHandler.cs:17-148",
+      "opcode": "CHAR_INJURE(56), REVIVE(84), MOB_ME_ATTACK(83), SKILL_COOLDOWN(-94)",
+      "payload_summary": "Reads HP/damage/fatal/effectId, revive coordinates, pet-mob attack target index, and skillId+cooldown pairs."
+    },
+    {
+      "direction": "READ",
+      "location": "Client/Client/Assets/Scripts/Game1/Network/Handlers/ItemPacketHandler.cs:17-192",
+      "opcode": "ITEM_MAP_REMOVE(-21), PICK(-20), OTHER_PICK(-19), DROP(-18), OTHER_DROP(-14), ADD(68)",
+      "payload_summary": "Reads ItemMap IDs, template IDs, coordinates, owner ID, and picked item text/quantity."
+    },
+    {
+      "direction": "READ",
+      "location": "Client/Client/Assets/Scripts/Game1/Network/Handlers/MapMovementPacketHandler.cs:17-97",
+      "opcode": "CHANGE_MAP_PREPARE(-22), RESET_POINT(46), MOVE_FAST(58), MAP_TRANS(-91)",
+      "payload_summary": "Reads map transition prep, respawn coords, move-fast target coords/chased charId, and teleport map/planet name lists."
+    },
+    {
+      "direction": "READ",
+      "location": "Client/Client/Assets/Scripts/Game1/Network/Handlers/PlayerStatsPacketHandler.cs:13-46",
+      "opcode": "6, -69, -68, -97",
+      "payload_summary": "Reads xu (long), luong (int), luongKhoa (int), maxStamina (short), stamina (short), nangdong (int)."
+    },
+    {
+      "direction": "READ",
+      "location": "Client/Client/Assets/Scripts/Game1/Network/Handlers/TaskNpcPacketHandler.cs:13-120",
+      "opcode": "-70, 38, 32",
+      "payload_summary": "Reads server big popup message with optional action button, NPC chat text/avatar, and NPC menu options."
+    },
+    {
+      "direction": "READ",
+      "location": "Client/Client/Assets/Scripts/Game1/Network/Handlers/TradePacketHandler.cs:17-133",
+      "opcode": "TRADE_ACTION(-86), TRADE_ORDER(39)",
+      "payload_summary": "Reads trade invites, open/cancel UI, remove item index, friend lock items + friendMoneyGD, and trade order confirmation."
+    }
+  ]
+}

@@ -1,0 +1,479 @@
+{
+  "batch_id": "server_economy_items__p02",
+  "concurrency_and_state": [
+    "Input.PLAYER_ID_OBJECT is a non-thread-safe HashMap<Integer, Object> accessed concurrently by Netty worker threads in createFormChangeName/createFormUseCardQuantity/doInput, and player.idMark.getTypeInput() is never cleared after Input.doInput executes, allowing packet replay.",
+    "Input.java TANG_THOI_VANG, TANG_NGOC_XANH, TANG_NGOC_HONG, BANSLL, and USE_CARD_QUANTITY mutate player inventory/currency without synchronizing on player (or target player), and offline gifts race with concurrent player login.",
+    "Trade.java uses deterministic lock ordering on player.getTradeLock() (by ascending player.id) during startTrade() and synchronized methods on Trade instance, but snapshots itemsBag1/itemsBag2 at constructor time and overwrites player.inventory.itemsBag on commit without locking or invalidating concurrent inventory mutations (e.g., Input.BANSLL, Input.TANG_NGOC_HONG, Input.USE_CARD_QUANTITY).",
+    "TransactionService maintains a static ConcurrentHashMap<Player, Trade> PLAYER_TRADE and runs a background daemon loop (sleep 50-300ms) calling trade.update() for 180s timeout cancellation.",
+    "LuckyRound acquires nested synchronized(player) -> synchronized(player.inventory.itemsBoxCrackBall) cleanly for gem and ticket spins.",
+    "CSMM uses ConcurrentHashMap<Player, List<Integer>> with CopyOnWriteArrayList keyed by Player object reference; HandleCSMM and Register are synchronized on CSMM, holding the lock across ServerNotify and network sends while also failing to reward players who reconnected with a new Player instance.",
+    "SummonDragon and SummonDragonNamek store global singleton summon state (playerSummonShenron, isShenronAppear, menuShenron, select) updated by unsynchronized background threads and Netty threads; SummonDragon.pl_dragonStar is a raw HashMap<Player, Byte> that never removes entries.",
+    "UseItem.getItem synchronizes on player, whereas UseItem.doItem, UseItem.useItem, ChestBoxItemHandler, ConsumableItemHandler, and SpecialItemHandler do not synchronize on player when checking and consuming bag items.",
+    "ItemActionManager uses a plain ArrayList<ItemActionHandler> populated in a synchronized singleton constructor, with registerHandler exposed publicly without synchronization."
+  ],
+  "cross_module_questions": [
+    "Confirm on the Unity Client and Message/NpcMenuController side how opcode -83 is parsed for DRAGON_PORUNGA vs DRAGON_SHENRON (SummonDragonNamek omits int playerId that SummonDragon writes).",
+    "Verify whether NpcFactory/Controller clears player.idMark.setTypeInput(-1) elsewhere or if -125 can be replayed directly from the client.",
+    "Check PlayerDAO.updatePlayer and NDVSqlFetcher.loadPlayerByName / loadById concurrency behavior when Input or SummonDragonNamek modifies offline players while login is in flight.",
+    "Check how ShopService.getRubyPrice vs ShopService.COST_GEM differ in MuaCtService so cosmetic inspection purchase pricing and commission currency are consistent.",
+    "Verify NpcMenuController handling of ConstNpc.CONFIRM_CHANGE_PET to confirm whether player.isConfirmingChangePet / player.itemToConfirmChangePet are reset outside SpecialItemHandler.changePet."
+  ],
+  "db_redis_touchpoints": [
+    {
+      "location": "src/services/func/Input.java:549,570",
+      "op": "AlyraManager.executeQuery(\"select * from player where name = ?\", text[0])",
+      "safety_note": "CRITICAL LEAK: Returned AlyraResultSet is never closed/disposed (no try-with-resources), leaking HikariCP Connection, PreparedStatement, and ResultSet on every name check.",
+      "target": "MySQL table player"
+    },
+    {
+      "location": "src/services/func/Input.java:553,587",
+      "op": "AlyraManager.executeUpdate(\"update player set name = ? where id = ?\", ...)",
+      "safety_note": "Parameterized update; lacks synchronization against concurrent player save/login.",
+      "target": "MySQL table player"
+    },
+    {
+      "location": "src/services/func/Input.java:224,259,341,348",
+      "op": "NDVSqlFetcher.loadPlayerByName(name) / PlayerDAO.updatePlayer(plOffline)",
+      "safety_note": "Read-modify-write on offline player JSON/columns without distributed/row lock; races with concurrent player login or concurrent gifts.",
+      "target": "MySQL player offline gift update"
+    },
+    {
+      "location": "src/services/func/Input.java:420-421",
+      "op": "PlayerDAO.Addvnd(username, addvnd) & PlayerDAO.Addtotalvnd(username, addtotalvnd)",
+      "safety_note": "Admin VND buff without player.isAdmin() check in Input.BUFFVND.",
+      "target": "MySQL account vnd/totalvnd"
+    },
+    {
+      "location": "src/services/func/Input.java:730,745",
+      "op": "clan.update() / clan.deleteDB(clan.id)",
+      "safety_note": "Executed directly on Netty thread without removing other online clan members' clan references in DISSOLUTION_CLAN.",
+      "target": "MySQL clan table"
+    },
+    {
+      "location": "src/services/func/SummonDragonNamek.java:151,154,182,190",
+      "op": "NDVSqlFetcher.loadById(m.id) / PlayerDAO.updatePlayer(pOff)",
+      "safety_note": "N+1 synchronous DB read/write loop on Netty thread for every offline clan member; races with member login.",
+      "target": "MySQL clan members offline wish rewards"
+    },
+    {
+      "location": "src/services/func/Trade.java:454,458",
+      "op": "HistoryTransactionDAO.insertAsync(...) & PlayerDAO.updatePlayersInTransactionAsync(player1, player2)",
+      "safety_note": "Async commit after atomic in-memory swap inside ordered TradeLocks.",
+      "target": "MySQL trade history & player inventories"
+    },
+    {
+      "location": "src/services/func/TransactionService.java:81-83",
+      "op": "AlyraManager.getConnection() in try-with-resources -> PlayerDAO.checkLogout(con, pl/plMap)",
+      "safety_note": "Properly closes connection via try-with-resources, but performs 2 blocking DB queries on Netty thread per trade invite.",
+      "target": "MySQL player logout check"
+    }
+  ],
+  "files_read": [
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/services/func/Input.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/services/func/LuckyRound.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/services/func/minigame/CSMM.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/services/func/MuaCtService.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/services/func/SummonDragon.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/services/func/SummonDragonNamek.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/services/func/Trade.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/services/func/TransactionService.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/services/func/useitem/handlers/CapsuleItemHandler.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/services/func/useitem/handlers/ChestBoxItemHandler.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/services/func/useitem/handlers/ConsumableItemHandler.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/services/func/useitem/handlers/MountPetItemHandler.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/services/func/useitem/handlers/SatelliteItemHandler.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/services/func/useitem/handlers/SkillBookItemHandler.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/services/func/useitem/handlers/SpecialItemHandler.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/services/func/useitem/ItemActionHandler.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/services/func/useitem/ItemActionManager.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/services/func/UseItem.java"
+  ],
+  "findings": [
+    {
+      "category": "security_dupe",
+      "impact": "Players can duplicate items by trading with themselves, or by mutating their real bag (via Input.BANSLL, Input.USE_CARD_QUANTITY, etc.) while Trade is open and having Trade overwrite inventory.itemsBag on commit.",
+      "location": "src/services/func/Trade.java:54-57,451-452 & src/services/func/TransactionService.java:63-107",
+      "root_cause": "1) TransactionService allows SEND_INVITE_TRADE/ACCEPT_TRADE when playerId == pl.id (creating new Trade(pl, pl)), where itemsBag2 gets itemsTrade1 added and overwrites player.inventory.itemsBag. 2) Trade snapshots itemsBag1/itemsBag2 at constructor time and overwrites real inventory on commit, while Input cases BANSLL/TANG_NGOC_HONG/USE_CARD_QUANTITY do not check isTrade/TransactionService.check.",
+      "severity": "P0",
+      "title": "Self-Trade & Snapshot-Overwrite Item Duplication in Trade/TransactionService"
+    },
+    {
+      "category": "security_dupe",
+      "impact": "Any client with typeInput set (or via replay) can trigger admin VND buff, item creation, bot spawning, global notice, or player rename without admin privilege checks; additionally, replayable typeInput enables concurrent race/double-spend in TANG_NGOC_HONG and BANSLL.",
+      "location": "src/services/func/Input.java:96-155,404-567,662-699",
+      "root_cause": "Input.BUFFVND, GIVE_IT, DUNGLOA, BOTQUAI*, BOTBOSS, and CHANGE_NAME lack if (!player.isAdmin()) checks (unlike SEND_ITEM_OP and GET_IT). Input.doInput never resets player.idMark.setTypeInput(-1) and lacks synchronized(player), and TANG_NGOC_HONG lacks trade checks and locks.",
+      "severity": "P0",
+      "title": "Missing Admin Checks, Unreset typeInput, and Unsynchronized Economy Cases in Input.java"
+    },
+    {
+      "category": "protocol",
+      "impact": "Guaranteed binary stream desync / EOFException / crash on all online clients when Namek Shenron (Porunga) is summoned or dismissed.",
+      "location": "src/services/func/SummonDragonNamek.java:101-119 vs src/services/func/SummonDragon.java:265-286",
+      "root_cause": "SummonDragonNamek.activeShenron writes opcode -83 with mapId, bgId, zoneId, then UTF(pl.name) — omitting the 4-byte int(pl.id) that SummonDragon.activeShenron writes before UTF. Also neither activeShenron cleans up Message(-83) in a finally block, leaking Netty buffers.",
+      "severity": "P0",
+      "title": "Opcode -83 Stream Desync and Message Leak in SummonDragonNamek & SummonDragon"
+    },
+    {
+      "category": "security_dupe",
+      "impact": "Players can summon 1-star/2-star/3-star Shenron without consuming the primary dragon ball, summon black/normal dragon concurrently or crash background timer into permanent server-wide Shenron lockout, and fallthrough grants two pet skill rerolls.",
+      "location": "src/services/func/SummonDragon.java:180-222,288-337,385-395,623-640",
+      "root_cause": "checkShenronBall(pl) never verifies the initiating 1/2/3-star ball is still in bag and summonShenron silently swallows NPE in try/catch when subQuantityItemsBag receives null. SHEN_RON_BI_NGO case 0 lacks break and falls into case 1. shenronLeave calls NpcService on potentially null/offline playerSummonShenron from the unsynchronized timer thread, leaving isShenronAppear=true if NPE occurs.",
+      "severity": "P0",
+      "title": "Free Shenron Summon Exploit, Case Fallthrough, and Lockout NPE in SummonDragon"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Players can open Wood Chest (570) infinitely without waiting for midnight, lose items when bag is full, or crash on out-of-bounds param; players can craft Dragon Egg (1426) from 1 shard instead of 99.",
+      "location": "src/services/func/useitem/handlers/ChestBoxItemHandler.java:122-185,249-260",
+      "root_cause": "openWoodChest never updates pl.lastTimeRewardWoodChest = System.currentTimeMillis() and never checks getCountEmptyBag or itemOptions bounds. open1427 calls subQuantityItemsBag(pl, item, 99) without verifying item.quantity >= 99.",
+      "severity": "P0",
+      "title": "Infinite Wood Chest Exploit & 1-for-99 Item Craft Exploit in ChestBoxItemHandler"
+    },
+    {
+      "category": "security_dupe",
+      "impact": "Players can keep or reuse the pet-change item (401) across confirmations or leave isConfirmingChangePet permanently true after changing pet.",
+      "location": "src/services/func/useitem/handlers/SpecialItemHandler.java:318-345",
+      "root_cause": "changePet stores player.itemToConfirmChangePet and sets player.isConfirmingChangePet = true, but on confirmation never checks if itemToConfirmChangePet is still in itemsBag with quantity >= 1 and never resets isConfirmingChangePet = false or itemToConfirmChangePet = null.",
+      "severity": "P0",
+      "title": "Unvalidated & Unreset Pet-Change State Exploit in SpecialItemHandler.changePet"
+    },
+    {
+      "category": "database",
+      "impact": "Exhausts HikariCP database connection pool under player rename attempts.",
+      "location": "src/services/func/Input.java:549,570",
+      "root_cause": "AlyraManager.executeQuery(\"select * from player where name = ?\", text[0]).next() discards the returned AlyraResultSet without closing/disposing it.",
+      "severity": "P1",
+      "title": "Unclosed AlyraResultSet Connection Leak in Input.CHANGE_NAME & CHANGE_NAME_BY_ITEM"
+    },
+    {
+      "category": "protocol",
+      "impact": "Trade lock packet (-86 sub 6) causes stream desync when two trading players use client versions across the 222 threshold; Maintenance during LOCK_TRADE/ACCEPT causes NPE when trade is null.",
+      "location": "src/services/func/Trade.java:324,343 & src/services/func/TransactionService.java:141-153",
+      "root_cause": "Trade.lockTran checks sender's session.version < 222 instead of receiver's session.version < 222 before sending quantity as byte vs int. TransactionService checks Maintenance.isRunning and calls trade.cancelTrade() before null-checking trade.",
+      "severity": "P1",
+      "title": "Trade Lock Version Check Mismatch & NullPointerException on Maintenance"
+    },
+    {
+      "category": "concurrency",
+      "impact": "Players who disconnect and reconnect before the 5-minute CSMM draw lose their ruby payout; concurrent login/disconnect loses rewards.",
+      "location": "src/services/func/minigame/CSMM.java:28,67-91",
+      "root_cause": "listRegNumber keys on Player object identity instead of playerId; HandleCSMM verifies online status via Client.gI().getPlayer(pl.id) != null, then credits plWins containing the stale disconnected Player reference.",
+      "severity": "P1",
+      "title": "Stale Player Reference Keying Loses Winnings on Reconnect in CSMM"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Players with a stack of Xinbato Water Bottles (456) lose up to 99 bottles on a single use; Radar cards with Max/maxLevel > 127 overflow byte maxPerLevel and grant max level for 0 cards.",
+      "location": "src/services/func/useitem/handlers/ConsumableItemHandler.java:150-151 & src/services/func/useitem/handlers/SpecialItemHandler.java:235,250,255,282",
+      "root_cause": "useBinhNuocXinbato checks item.quantity >= 1 then subtracts 99. useCardBatch casts maxPerLevel and card.Amount to signed byte (overflowing > 127 to negative).",
+      "severity": "P1",
+      "title": "Wrong Item Deduction (99 vs 1) in ConsumableItemHandler & Byte Overflow in SpecialItemHandler.useCardBatch"
+    },
+    {
+      "category": "concurrency",
+      "impact": "Race conditions between UseItem.doItem/useItem and UseItem.getItem/Trade/throwItem allow double-use or IndexOutOfBoundsException crashes.",
+      "location": "src/services/func/UseItem.java:117-263",
+      "root_cause": "UseItem.doItem and useItem do not synchronize on player (unlike getItem), DO_THROW_ITEM lacks upper bounds checks on itemsBody/itemsBag index, and index == -1 passes -1 to MountPetItemHandler.handle -> itemBagToBody(player, -1).",
+      "severity": "P1",
+      "title": "Unsynchronized UseItem.doItem & Missing Index Bounds Checks"
+    },
+    {
+      "category": "database",
+      "impact": "Namek dragon wish stalls Netty thread with up to ~50 blocking DB roundtrips and risks ConcurrentModificationException and offline login overwrite races; MuaCtService mismatches ruby/gem pricing and credits offline/unlocked sellers.",
+      "location": "src/services/func/SummonDragonNamek.java:143-193 & src/services/func/MuaCtService.java:44,70,97",
+      "root_cause": "SummonDragonNamek iterates clan.members synchronously calling NDVSqlFetcher.loadById and PlayerDAO.updatePlayer per offline member. MuaCtService previews price with getRubyPrice() but charges/matches COST_GEM and credits seller.inventory.gem without verifying online status or locking seller/buyer.",
+      "severity": "P1",
+      "title": "Blocking N+1 DB Loop in SummonDragonNamek & Price/Lock Mismatch in MuaCtService"
+    },
+    {
+      "category": "performance_gc",
+      "impact": "Memory leak of Player/Item objects, potential ConcurrentModificationException or HashMap corruption, and Message ByteBuf leak on exception in SkillBookItemHandler.",
+      "location": "src/services/func/Input.java:41,915 & src/services/func/SummonDragon.java:70,136 & src/services/func/useitem/handlers/SkillBookItemHandler.java:54-72",
+      "root_cause": "Input.PLAYER_ID_OBJECT and SummonDragon.pl_dragonStar use raw/unsynchronized HashMap and leak entries when players cancel forms or summon menus; SkillBookItemHandler.learnSkill does not place msg.cleanup() in finally.",
+      "severity": "P2",
+      "title": "Unsynchronized HashMap Leaks & Missing Message Cleanup in SkillBookItemHandler"
+    }
+  ],
+  "key_classes": [
+    {
+      "key_methods": [
+        "gI",
+        "doInput",
+        "createForm",
+        "createFormTangRuby",
+        "createFormTangGem",
+        "createFormUseCardQuantity"
+      ],
+      "name": "Input",
+      "path": "src/services/func/Input.java",
+      "responsibility": "Handles client input dialog forms (-125) for gifting currency/gold bars, admin buffs/items/bots, giftcodes, clan abbreviation/dissolution, selling gold bars, and batch radar card use."
+    },
+    {
+      "key_methods": [
+        "gI",
+        "openCrackBallUI",
+        "openCrackBallVipUI",
+        "readOpenBall",
+        "openBallByGem",
+        "openBallByTicket"
+      ],
+      "name": "LuckyRound",
+      "path": "src/services/func/LuckyRound.java",
+      "responsibility": "Manages Lucky Round (-127) UI and gacha rolls by gems or tickets into itemsBoxCrackBall."
+    },
+    {
+      "key_methods": [
+        "gI",
+        "run",
+        "HandleCSMM",
+        "giveReward",
+        "Register"
+      ],
+      "name": "CSMM",
+      "path": "src/services/func/minigame/CSMM.java",
+      "responsibility": "300-second lottery minigame (Con So May Man) collecting 1-ruby bets and splitting pot among winners."
+    },
+    {
+      "key_methods": [
+        "gI",
+        "openPurchaseConfirmationMenu",
+        "handlePurchase"
+      ],
+      "name": "MuaCtService",
+      "path": "src/services/func/MuaCtService.java",
+      "responsibility": "Allows players inspecting another player's cosmetic body slot (5) to buy it at a 5% discount while awarding 20% gem commission to the inspected player."
+    },
+    {
+      "key_methods": [
+        "gI",
+        "openMenuSummonShenron",
+        "summonShenron",
+        "summonBlackShenron",
+        "confirmWish",
+        "shenronLeave"
+      ],
+      "name": "SummonDragon",
+      "path": "src/services/func/SummonDragon.java",
+      "responsibility": "Manages global Shenron and Black/Pumpkin Shenron summoning, 5-minute wish timer thread, and wish fulfillment."
+    },
+    {
+      "key_methods": [
+        "gI",
+        "summonNamec",
+        "confirmWish",
+        "showConfirmShenron",
+        "sendWhishesNamec",
+        "shenronLeave"
+      ],
+      "name": "SummonDragonNamek",
+      "path": "src/services/func/SummonDragonNamek.java",
+      "responsibility": "Manages Namek Shenron (Porunga) summoning and clan-wide wish rewards (7-day Wisdom Charm or 50 ruby + 3 protection stones)."
+    },
+    {
+      "key_methods": [
+        "openTabTrade",
+        "addItemTrade",
+        "isItemCannotTran",
+        "lockTran",
+        "acceptTrade",
+        "startTrade",
+        "cancelTrade",
+        "dispose"
+      ],
+      "name": "Trade",
+      "path": "src/services/func/Trade.java",
+      "responsibility": "Represents a two-player trade session with snapshotted bags, lock/accept states, deterministic TradeLock ordering, and atomic swap/rollback."
+    },
+    {
+      "key_methods": [
+        "gI",
+        "controller",
+        "sendInviteTrade",
+        "cancelTrade",
+        "check",
+        "run"
+      ],
+      "name": "TransactionService",
+      "path": "src/services/func/TransactionService.java",
+      "responsibility": "Dispatches (-86) trade protocol actions, enforces 30s cooldown and logout checks, and runs timeout loop for active Trade instances."
+    },
+    {
+      "key_methods": [
+        "gI",
+        "getItem",
+        "doItem",
+        "useItem",
+        "finditem"
+      ],
+      "name": "UseItem",
+      "path": "src/services/func/UseItem.java",
+      "responsibility": "Controller/Facade for (-43) item actions, bag/box/body/pet transfers, throw confirmations, and delegating item usage to ItemActionManager."
+    },
+    {
+      "key_methods": [
+        "gI",
+        "registerHandler",
+        "dispatch"
+      ],
+      "name": "ItemActionManager",
+      "path": "src/services/func/useitem/ItemActionManager.java",
+      "responsibility": "Strategy registry and dispatcher routing item usage to 7 specialized ItemActionHandler implementations."
+    },
+    {
+      "key_methods": [
+        "canHandle",
+        "handle"
+      ],
+      "name": "ItemActionHandler",
+      "path": "src/services/func/useitem/ItemActionHandler.java",
+      "responsibility": "Strategy interface for item-use handlers."
+    },
+    {
+      "key_methods": [
+        "canHandle",
+        "handle",
+        "openCapsuleUI",
+        "choseMapCapsule"
+      ],
+      "name": "CapsuleItemHandler",
+      "path": "src/services/func/useitem/handlers/CapsuleItemHandler.java",
+      "responsibility": "Handles Capsule 193/194 map teleportation UI and target zone validation."
+    },
+    {
+      "key_methods": [
+        "canHandle",
+        "handle",
+        "openCapsuleVang",
+        "openWoodChest",
+        "openCSKB",
+        "openCapsuleTanThu"
+      ],
+      "name": "ChestBoxItemHandler",
+      "path": "src/services/func/useitem/handlers/ChestBoxItemHandler.java",
+      "responsibility": "Handles chests, gift boxes, dragon eggs (1426-1429), newbie capsule (1484), golden capsule (574), and SKH/Than Linh boxes."
+    },
+    {
+      "key_methods": [
+        "canHandle",
+        "handle",
+        "eatPea",
+        "eatGrapes",
+        "useItemTime"
+      ],
+      "name": "ConsumableItemHandler",
+      "path": "src/services/func/useitem/handlers/ConsumableItemHandler.java",
+      "responsibility": "Handles magic beans, grapes, TDLT, Xinbato water, wolf bone, Mabu egg, and timed buff consumables."
+    },
+    {
+      "key_methods": [
+        "canHandle",
+        "handle"
+      ],
+      "name": "MountPetItemHandler",
+      "path": "src/services/func/useitem/handlers/MountPetItemHandler.java",
+      "responsibility": "Equips mounts, flag bags, pets, pet follow, and titles from bag to body."
+    },
+    {
+      "key_methods": [
+        "canHandle",
+        "handle"
+      ],
+      "name": "SatelliteItemHandler",
+      "path": "src/services/func/useitem/handlers/SatelliteItemHandler.java",
+      "responsibility": "Places MP/EXP/DEF/HP satellites (type 22) in the player's current zone (max 3)."
+    },
+    {
+      "key_methods": [
+        "canHandle",
+        "handle",
+        "learnSkill",
+        "upSkillPet"
+      ],
+      "name": "SkillBookItemHandler",
+      "path": "src/services/func/useitem/handlers/SkillBookItemHandler.java",
+      "responsibility": "Handles player skill books (type 7) and pet skill upgrade books (402-404, 759)."
+    },
+    {
+      "key_methods": [
+        "canHandle",
+        "handle",
+        "usePorata",
+        "useCardBatch",
+        "changePet",
+        "itemSieuThanThuy"
+      ],
+      "name": "SpecialItemHandler",
+      "path": "src/services/func/useitem/handlers/SpecialItemHandler.java",
+      "responsibility": "Handles Porata earrings, dragon ball summon triggers, Radar Card single/batch activation, pet change item, boss radar, and Sieu Than Thuy."
+    }
+  ],
+  "module_summary": "Covers player-facing economy, trading, minigame, dragon summoning, dialog input, and item-use subsystems under services.func and services.func.useitem. Item usage was refactored into a Strategy/Facade architecture (UseItem -> ItemActionManager -> 7 handlers), while Trade uses ordered ReentrantLocks on snapshotted bags. Major P0/P1 risks center on missing privilege/trade/quantity/state checks in Input, ChestBoxItemHandler, SpecialItemHandler, and SummonDragon, self-trade and snapshot-overwrite dupes in Trade/TransactionService, an opcode -83 desync in SummonDragonNamek, and unclosed JDBC result sets in Input.",
+  "protocol_touchpoints": [
+    {
+      "direction": "WRITE",
+      "location": "src/services/func/Input.java:767-774",
+      "opcode": "-125",
+      "payload_summary": "UTF(title), byte(count), count * [UTF(name), byte(typeInput)]"
+    },
+    {
+      "direction": "READ",
+      "location": "src/services/func/Input.java:99-102",
+      "opcode": "-125",
+      "payload_summary": "byte(count), count * UTF(text[i])"
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/services/func/LuckyRound.java:38-47,60-69,171-177",
+      "opcode": "-127",
+      "payload_summary": "Sub 0: byte(7), 7*short(icon), byte(typePrice), int(price), short(idTicket); Sub 1: byte(size), size*short(iconID)"
+    },
+    {
+      "direction": "READ",
+      "location": "src/services/func/LuckyRound.java:91-97",
+      "opcode": "-127",
+      "payload_summary": "byte(type), optional byte(count 1..7) if available() > 0"
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/services/func/SummonDragon.java:268-283 & src/services/func/SummonDragonNamek.java:104-116",
+      "opcode": "-83",
+      "payload_summary": "byte(0=appear|1=leave); if appear: short(mapId), short(bgId), byte(zoneId), [SummonDragon writes int(pl.id) / SummonDragonNamek OMITS it], UTF, short(x), short(y), byte(type)"
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/services/func/SummonDragon.java:342-345 & src/services/func/SummonDragonNamek.java:124-127",
+      "opcode": "-25",
+      "payload_summary": "UTF(server summon announcement)"
+    },
+    {
+      "direction": "READ",
+      "location": "src/services/func/TransactionService.java:49-161",
+      "opcode": "-86",
+      "payload_summary": "byte(action 0/1/2/3/5/7); 0/1: int(playerId); 2: byte(index), int(quantity)"
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/services/func/Trade.java:76-84,182-185,251-258,317-356 & TransactionService.java:173-176",
+      "opcode": "-86",
+      "payload_summary": "0: int(inviterId); 1: int(partnerId); 2: byte(index); 6: int(gold), byte(size), items[short(id), byte/int(qty), opts]; 7: close tab"
+    },
+    {
+      "direction": "READ",
+      "location": "src/services/func/UseItem.java:66-67,122-124,171",
+      "opcode": "-43 (doItem) / getItem transfer",
+      "payload_summary": "getItem: byte(type), byte(index); doItem: byte(type 0..4), byte(where), byte(index), optional short(iditem) when index==-1"
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/services/func/UseItem.java:135-141,151-165,195-200",
+      "opcode": "-43",
+      "payload_summary": "byte(type), byte(where), byte(index), UTF(confirm prompt)"
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/services/func/useitem/handlers/SkillBookItemHandler.java:54-56,68-71",
+      "opcode": "subCommand 23 / 62",
+      "payload_summary": "Sub 23: short(skillId); Sub 62: short(skillId), byte(-1)"
+    }
+  ]
+}

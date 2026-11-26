@@ -1,0 +1,406 @@
+{
+  "batch_id": "server_services_bot_telemetry__p02",
+  "concurrency_and_state": [
+    "Service.gI() uses volatile double-checked locking (Service.java:51-62), while GiftCodeService (17-22), ItemTimeService (21-26), OpenPowerService (18-23), RadarService (21-26), and RewardService (21-26) use non-synchronized lazy singletons.",
+    "AntiMacroFilter, CloudTelemetryStreamer, and TrajectoryLogger use double-checked locking with non-volatile static instance fields (AntiMacroFilter.java:17,81-90; CloudTelemetryStreamer.java:29,42-51; TrajectoryLogger.java:35,56-65).",
+    "AntiMacroFilter.PlayerActionHistory mutates non-thread-safe ArrayDeque and primitive fields without per-player synchronization (AntiMacroFilter.java:41-79,104-137), and lastCleanupTime is unsynchronized (AntiMacroFilter.java:23,148-153).",
+    "TrajectoryLogger.playerTickMap (ConcurrentHashMap<Long, AtomicLong>) has no eviction/removePlayer on disconnect (TrajectoryLogger.java:41,119-121).",
+    "RadarService.initCardsByRank() is synchronized (RadarService.java:28) but getCardsByRank() (RadarService.java:37-42) reads cardsByRank without synchronization.",
+    "Service.sendMessAllPlayerInMap / sendMessAnotherNotMeInMap / sendThongBaoToAnotherNotMe iterate Zone.getPlayers() and Client.getPlayers() without locks or snapshots (Service.java:250-328,1011-1018).",
+    "Service.sendMabuEat schedules nested GameLoopManager callbacks (3000ms -> 500ms -> 1500ms) capturing mutable Player and MaBuHold state (Service.java:2053-2107).",
+    "TopService runs a single-thread daemon ScheduledExecutorService every 120s updating Manager.top* static lists (TopService.java:28-63).",
+    "MemoryOptimizer runs a single-thread daemon ScheduledExecutorService every 5 minutes and calls saveAllPlayersData() + run.bat + System.exit(0) without halting ServerManager/Netty first (MemoryOptimizer.java:31-85)."
+  ],
+  "cross_module_questions": [
+    "Does GiftCodeManager.checkUseGiftCode(player, code) atomically mark the code as used in memory and DB under a lock to prevent concurrent redemption races from GiftCodeService.giftCode()?",
+    "Do ConstNpc.BAN_PLAYER and ConstNpc.BUFF_PET handlers verify player.isAdmin() before executing, given SubMenuService.controller() allows any client to open those menus via menuId 500/501?",
+    "Does the caller of OpenPowerService.openPowerSpeed() deduct COST_SPEED_OPEN_LIMIT_POWER (100) atomically, and is ((Pet) player).master guaranteed non-null?",
+    "Does Client Unity read msg -17 (charDie) player id as a single byte (Service.java:840) or int? If byte, player IDs > 127 will collide/truncate.",
+    "Does AlyraManager.executeQuery return a pooled connection wrapper inside AlyraResultSet that leaks if rs.dispose() is bypassed on exception (Service.java:114-130)?",
+    "Are Manager.topSM, Manager.topNV, etc. declared volatile or safely read across threads when TopService reassigns them every 120s (TopService.java:45-54)?"
+  ],
+  "db_redis_touchpoints": [
+    {
+      "location": "src/services/Service.java:114-130",
+      "op": "SELECT id FROM account WHERE username = ? LIMIT 1; INSERT INTO account (username, password, is_admin, sotien, danap) VALUES(...)",
+      "safety_note": "AlyraResultSet rs is not closed via try-with-resources; if an exception occurs between line 114 and 130, rs.dispose() is skipped. Column/table names lack backticks.",
+      "target": "MySQL (AlyraManager) - account table"
+    },
+    {
+      "location": "src/services/Service.java:1514-1515",
+      "op": "UPDATE account SET password = ? WHERE id = ? and username = ?",
+      "safety_note": "Parameterized query, but session.pp in memory is mutated at line 1511 before DB executeUpdate at line 1514.",
+      "target": "MySQL (AlyraManager) - account table"
+    },
+    {
+      "location": "src/services/Service.java:2306",
+      "op": "NDVSqlFetcher.loadById(top.getId_player())",
+      "safety_note": "N+1 DB query executed inside a loop for every offline player in showListTop(), blocking the caller thread.",
+      "target": "MySQL (NDVSqlFetcher) - player table"
+    },
+    {
+      "location": "src/services/TopService.java:44-55",
+      "op": "10 sequential Manager.realTop(..., con) queries every 120s",
+      "safety_note": "Uses try-with-resources on AlyraManager.getConnection(). Runs on dedicated daemon thread.",
+      "target": "MySQL (AlyraManager) - leaderboard queries"
+    }
+  ],
+  "files_read": [
+    "src/services/GiftCodeService.java (1-79)",
+    "src/services/ItemTimeService.java (1-309)",
+    "src/services/OpenPowerService.java (1-69)",
+    "src/services/RadarService.java (1-265)",
+    "src/services/RewardService.java (1-1068)",
+    "src/services/Service.java (1-2385)",
+    "src/services/SubMenuService.java (1-140)",
+    "src/services/TopService.java (1-64)",
+    "src/telemetry/AntiMacroFilter.java (1-164)",
+    "src/telemetry/CloudTelemetryStreamer.java (1-167)",
+    "src/telemetry/TelemetryConfig.java (1-187)",
+    "src/telemetry/TrajectoryLogger.java (1-637)",
+    "src/telemetry/TrajectoryRecord.java (1-277)",
+    "src/testddos/DdosTester.java (1-24)",
+    "src/tools/MapExporter.java (1-67)",
+    "src/tools/MemoryOptimizer.java (1-86)"
+  ],
+  "findings": [
+    {
+      "category": "security_dupe",
+      "impact": "Mutating a giftcode item (e.g. upgrading/adding options) mutates the shared GiftCode template list for all future players; gem/ruby can overflow int32 to negative values and wipe player currency; items may be lost if bag is full.",
+      "location": "src/services/GiftCodeService.java:45-68",
+      "root_cause": "Line 66 assigns `itemGift.itemOptions = giftcode.option.get(key)` by reference without deep copying (and may be null); lines 46 & 50 perform `int + int` before `Math.min(..., 200000000)`; lines 64 & 68 add items without checking `InventoryService.gI().getCountEmptyBag(player)` or locking `player`.",
+      "severity": "P0",
+      "title": "GiftCodeService shares mutable itemOptions reference, overflows int32 gem/ruby, and lacks bag-space check/lock"
+    },
+    {
+      "category": "security_dupe",
+      "impact": "Any client sending a spoofed submenu packet with menuId 500 (BAN) or 501 (BUFF_PET) can open the Ban Player or Buff Pet confirmation dialogs without admin privilege check in SubMenuService.",
+      "location": "src/services/SubMenuService.java:41-77",
+      "root_cause": "SubMenuService.controller() handles `BAN` (500) and `BUFF_PET` (501) without checking `player.isAdmin()`.",
+      "severity": "P1",
+      "title": "Missing isAdmin() authorization check for BAN and BUFF_PET in SubMenuService.controller()"
+    },
+    {
+      "category": "protocol",
+      "impact": "Client receives a mismatched player count vs written player entries when a player enters/leaves the zone mid-call, causing stream desync/EOF on the client.",
+      "location": "src/services/Service.java:2122-2127",
+      "root_cause": "`sendMabuAttackSkill()` writes `player.zone.getNotBosses().size()` as a byte, then invokes `player.zone.getNotBosses()` a second time in the for-each loop without snapshotting or locking.",
+      "severity": "P1",
+      "title": "Stream count/body desync in Service.sendMabuAttackSkill()"
+    },
+    {
+      "category": "database",
+      "impact": "Clicking Leaderboard triggers up to N synchronous DB loads on the network/game thread, causing lag spikes; failure in `regisAccount()` leaks `AlyraResultSet` / connection.",
+      "location": "src/services/Service.java:114-130, 2294-2307",
+      "root_cause": "`showListTop()` calls `NDVSqlFetcher.loadById(top.getId_player())` inside a loop for every offline top player; `regisAccount()` does not wrap `AlyraResultSet rs` in try-with-resources before `rs.dispose()`.",
+      "severity": "P1",
+      "title": "N+1 DB queries in Service.showListTop() and unclosed AlyraResultSet on exception in Service.regisAccount()"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Players opening Nguoi Tuyet Bang Gia have a 25.6% chance of receiving no reward at all.",
+      "location": "src/services/RewardService.java:951-982",
+      "root_cause": "Independent sequential rolls (`if (isTrue(20,100)) ... else if (isTrue(20,100)) ... else if (isTrue(60,100))`) yield 0.2 + 0.16 + 0.384 = 74.4% total probability instead of 100%.",
+      "severity": "P1",
+      "title": "25.6% no-reward bug in RewardService.rewardNguoiTuyetBangGia()"
+    },
+    {
+      "category": "concurrency",
+      "impact": "Concurrent player actions can corrupt `ArrayDeque` internal state or throw `ConcurrentModificationException`, and double-checked locking without `volatile` can expose partially constructed singleton instances.",
+      "location": "src/telemetry/AntiMacroFilter.java:17,23,41-79,81-90; src/telemetry/TrajectoryLogger.java:35,56-65; src/telemetry/CloudTelemetryStreamer.java:29,42-51",
+      "root_cause": "`AntiMacroFilter.PlayerActionHistory` mutates `ArrayDeque<Long> intervals` and fields without synchronization under concurrent `evaluate()` calls; telemetry singletons use non-volatile `instance` in DCL.",
+      "severity": "P1",
+      "title": "Non-thread-safe ArrayDeque mutation in AntiMacroFilter and broken non-volatile DCL in telemetry singletons"
+    },
+    {
+      "category": "performance_gc",
+      "impact": "`TrajectoryLogger.playerTickMap` leaks memory indefinitely over server uptime; `Service.chatPrivate()` and `Service.sendPVB()` overwrite `msg` before calling `cleanup()`, leaking the first Message.",
+      "location": "src/telemetry/TrajectoryLogger.java:41,119-121; src/services/Service.java:1471-1503,1807-1822",
+      "root_cause": "`playerTickMap` has no removal on player logout or periodic eviction; `chatPrivate()` (line 1485) and `sendPVB()` (line 1812) reassign `msg = new Message(...)` without calling `msg.cleanup()` on the previous `Message`.",
+      "severity": "P2",
+      "title": "Unbounded playerTickMap leak in TrajectoryLogger and Message leak in Service.chatPrivate/sendPVB"
+    },
+    {
+      "category": "concurrency",
+      "impact": "If an `Error` (e.g., OOM) occurs in `HttpClient.sendAsync`, `whenComplete` throws a secondary `ClassCastException`; `MemoryOptimizer` can trigger premature server shutdown/exit while Netty/game loops are still mutating player state.",
+      "location": "src/telemetry/CloudTelemetryStreamer.java:126; src/tools/MemoryOptimizer.java:51-84",
+      "root_cause": "`CloudTelemetryStreamer` casts `(Exception) throwable` inside `whenComplete`; `MemoryOptimizer` evaluates heap thresholds without post-GC verification and calls `saveAllPlayersData()` + `System.exit(0)` without stopping `ServerManager`/Netty first.",
+      "severity": "P2",
+      "title": "Unsafe Throwable cast in CloudTelemetryStreamer and unsafe mid-flight restart in MemoryOptimizer"
+    },
+    {
+      "category": "protocol",
+      "impact": "Client disconnects or throws EOF/AIOOBE on malformed platform strings, out-of-bounds `cFlag`, or `pl.id > 127` in `charDie`; `changePassword()` mutates in-memory session password even if DB update fails.",
+      "location": "src/services/Service.java:840,1128,1511-1520,1612-1613,1727-1743",
+      "root_cause": "`charDie()` writes `(int) pl.id` with `writeByte`; `sendFlagPlayerToMe()` indexes `flagIconId[pl.cFlag]` unchecked; `setClientType()` accesses `arrPlatform[1]` unchecked; `addEffectChar()` never calls `msg.cleanup()`; `changePassword()` sets `session.pp = newPass` before `executeUpdate`.",
+      "severity": "P2",
+      "title": "Multiple protocol/state edge-case bugs in Service.java"
+    },
+    {
+      "category": "gameplay",
+      "impact": "TDLT remaining duration decreases/corrupts if turned off after timer expiry; `RadarService.getCardsByRank()` can see empty/corrupted map during `initCardsByRank()`.",
+      "location": "src/services/ItemTimeService.java:170-181; src/services/RadarService.java:28-42",
+      "root_cause": "`turnOffTDLT()` adds `(timeTDLT - elapsed)` without clamping at 0, so expired TDLT subtracts from `io.param`; `RadarService.getCardsByRank()` is unsynchronized while `initCardsByRank()` clears and rebuilds `cardsByRank`.",
+      "severity": "P2",
+      "title": "TDLT time underflow on turnOffTDLT and unsynchronized RadarService.getCardsByRank()"
+    },
+    {
+      "category": "devops",
+      "impact": "Production source tree contains a 5000-thread unclosed-socket DDoS spammer class (`DdosTester`).",
+      "location": "src/testddos/DdosTester.java:8-23",
+      "root_cause": "`DdosTester.main()` spawns 5000 threads opening sockets to `127.0.0.1:14445` and sleeping 100s without closing sockets.",
+      "severity": "P3",
+      "title": "Unclosed-socket DdosTester left in production src tree"
+    }
+  ],
+  "key_classes": [
+    {
+      "key_methods": [
+        "gI",
+        "point",
+        "player",
+        "hsChar",
+        "charDie",
+        "attackMob",
+        "attackPlayer",
+        "regisAccount",
+        "changePassword",
+        "showListTop",
+        "sendMabuEat",
+        "sendMabuAttackSkill",
+        "sendMessAllPlayerInMap"
+      ],
+      "name": "Service",
+      "path": "src/services/Service.java",
+      "responsibility": "Core 2385-line God class bridging player/pet state sync, combat dispatch, map broadcasts, account registration/password change, leaderboards, and Mabu events."
+    },
+    {
+      "key_methods": [
+        "gI",
+        "getListItemLuckyRound",
+        "initBaseOptionClothes",
+        "initBaseOptionSaoPhaLe",
+        "createRandomCardItem",
+        "rewardNguoiTuyetBangGia"
+      ],
+      "name": "RewardService",
+      "path": "src/services/RewardService.java",
+      "responsibility": "Generates equipment base options, star/pha le slots, Lucky Round (Vòng quay Thượng Đế) loot tables, and seasonal event rewards."
+    },
+    {
+      "key_methods": [
+        "gI",
+        "giftCode"
+      ],
+      "name": "GiftCodeService",
+      "path": "src/services/GiftCodeService.java",
+      "responsibility": "Validates and distributes gift code currency and items to player inventory."
+    },
+    {
+      "key_methods": [
+        "gI",
+        "sendAllItemTime",
+        "turnOnTDLT",
+        "turnOffTDLT",
+        "sendTextTime",
+        "sendItemTime"
+      ],
+      "name": "ItemTimeService",
+      "path": "src/services/ItemTimeService.java",
+      "responsibility": "Synchronizes timed buff icons (cmd -106), auto-play TDLT state (cmd -116), and dungeon countdown timers (cmd 65)."
+    },
+    {
+      "key_methods": [
+        "gI",
+        "initCardsByRank",
+        "getCardsByRank",
+        "sendRadar",
+        "sendAura",
+        "isCompletedDocNhanRequirement"
+      ],
+      "name": "RadarService",
+      "path": "src/services/RadarService.java",
+      "responsibility": "Manages radar card templates, rank lookup, client radar packet sync (cmd 127), and Red Ribbon card collection checks."
+    },
+    {
+      "key_methods": [
+        "gI",
+        "controller",
+        "handleOTT",
+        "showMenu",
+        "showSubMenu"
+      ],
+      "name": "SubMenuService",
+      "path": "src/services/SubMenuService.java",
+      "responsibility": "Builds and handles player interaction submenus (cmd -30 sub 63) for View/Buy CT, Kéo Búa Bao, Ban, and Buff Pet."
+    },
+    {
+      "key_methods": [
+        "gI",
+        "openPowerBasic",
+        "openPowerSpeed"
+      ],
+      "name": "OpenPowerService",
+      "path": "src/services/OpenPowerService.java",
+      "responsibility": "Handles power limit breakthrough (basic timed vs instant speed) for players and pets."
+    },
+    {
+      "key_methods": [
+        "gI",
+        "run"
+      ],
+      "name": "TopService",
+      "path": "src/services/TopService.java",
+      "responsibility": "Scheduled daemon (120s) refreshing 10 cached leaderboard lists in Manager from MySQL."
+    },
+    {
+      "key_methods": [
+        "gI",
+        "start",
+        "stop",
+        "logMove",
+        "logAttackMob",
+        "logAttackPlayer",
+        "capturePlayerState",
+        "flushLoop"
+      ],
+      "name": "TrajectoryLogger",
+      "path": "src/telemetry/TrajectoryLogger.java",
+      "responsibility": "Async bounded-queue recorder capturing player MDP trajectories (S_t, A_t, R_t) for AI training and dispatching batches to cloud or disk."
+    },
+    {
+      "key_methods": [
+        "gI",
+        "evaluate",
+        "periodicCleanup",
+        "removePlayer"
+      ],
+      "name": "AntiMacroFilter",
+      "path": "src/telemetry/AntiMacroFilter.java",
+      "responsibility": "Filters stationary AFK idling and low-variance deterministic auto-clicker actions from AI telemetry."
+    },
+    {
+      "key_methods": [
+        "gI",
+        "streamBatch",
+        "getCloudMetricsJson"
+      ],
+      "name": "CloudTelemetryStreamer",
+      "path": "src/telemetry/CloudTelemetryStreamer.java",
+      "responsibility": "GZIP-compresses telemetry batches in RAM and streams them asynchronously via Java HttpClient to an HTTP endpoint."
+    },
+    {
+      "key_methods": [
+        "loadFromProperties",
+        "isLoggingEnabled"
+      ],
+      "name": "TelemetryConfig",
+      "path": "src/telemetry/TelemetryConfig.java",
+      "responsibility": "Holds runtime volatile config, destination mode (NONE/CLOUD_STREAM/LOCAL_DISK), and map/player whitelist/blacklist filters."
+    },
+    {
+      "key_methods": [
+        "toJson"
+      ],
+      "name": "TrajectoryRecord",
+      "path": "src/telemetry/TrajectoryRecord.java",
+      "responsibility": "MDP JSONL schema POJO serialized with Gson."
+    },
+    {
+      "key_methods": [
+        "gI",
+        "run",
+        "restartServer"
+      ],
+      "name": "MemoryOptimizer",
+      "path": "src/tools/MemoryOptimizer.java",
+      "responsibility": "Daemon monitor checking JVM heap usage every 5 minutes and triggering save + batch restart on >95% heap threshold."
+    },
+    {
+      "key_methods": [
+        "exportTileMap",
+        "saveTileMapFile"
+      ],
+      "name": "MapExporter",
+      "path": "src/tools/MapExporter.java",
+      "responsibility": "Converts 2D tile grids into NRO binary tile_map_data files."
+    },
+    {
+      "key_methods": [
+        "main"
+      ],
+      "name": "DdosTester",
+      "path": "src/testddos/DdosTester.java",
+      "responsibility": "Standalone load/DDoS test script opening 5000 idle sockets to port 14445."
+    }
+  ],
+  "module_summary": "Batch covers core server player/reward/UI services (Service, GiftCodeService, ItemTimeService, OpenPowerService, RadarService, RewardService, SubMenuService, TopService), the AI player trajectory telemetry pipeline (TelemetryConfig, AntiMacroFilter, TrajectoryRecord, TrajectoryLogger, CloudTelemetryStreamer), and server utility tools (MemoryOptimizer, MapExporter, DdosTester). Key architectural issues include Service.java functioning as a 2385-line God class, N+1 DB reads in leaderboard display, a shared mutable itemOptions/int32-overflow bug in GiftCodeService, missing admin checks in SubMenuService, and thread-safety gaps in AntiMacroFilter and telemetry singletons.",
+  "protocol_touchpoints": [
+    {
+      "direction": "READ",
+      "location": "src/services/Service.java:77-112",
+      "opcode": "regisAccount",
+      "payload_summary": "Reads UTF user, UTF pass; validates alphanumeric 5-18 chars."
+    },
+    {
+      "direction": "READ",
+      "location": "src/services/Service.java:1602-1617",
+      "opcode": "setClientType",
+      "payload_summary": "Reads byte typeClient, byte zoomLevel, boolean gprs, int width, int height, boolean qwerty, boolean touch, UTF platform (splits on | to parse version)."
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/services/Service.java:546-651",
+      "opcode": "-30 sub 0 (player)",
+      "payload_summary": "Writes player ID, taskId, gender, head, name, cPK, typePk, power(long), gender, skills, gold(long if v>214 else int), ruby, gem, itemsBody/Bag/Box, headAvatar, fusion, deltaTime, isNewMember, aura, effFront, hat."
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/services/Service.java:491-526",
+      "opcode": "-42 (point) & -30 sub 14 (Send_Info_NV)",
+      "payload_summary": "Writes hpg, mpg, dameg, hpMax, mpMax, hp, mp (all clamped via NPoint.safeInt), speed, dame, def, crit, tiemNang(long), defg, critg, power(long)."
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/services/Service.java:832-861",
+      "opcode": "-17 & -8 (charDie)",
+      "payload_summary": "Cmd -17 writes byte (int) pl.id, short x, short y; cmd -8 writes int pl.id, byte cPk, short x, short y."
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/services/Service.java:1292-1362",
+      "opcode": "-107 (showInfoPet / sendHavePet)",
+      "payload_summary": "Writes byte 0/1 (hasPet) or byte 2 + avatar, itemsBody, clamped hp/mp/dame, name, level, power/tiemNang(long), status, stamina, crit, def, 4 skill slots."
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/services/Service.java:2109-2132",
+      "opcode": "51 (sendMabuAttackSkill)",
+      "payload_summary": "Writes int playerId, byte skill, short x, short y, byte targetCount, then per-target int id + safeInt damage."
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/services/Service.java:2281-2341",
+      "opcode": "-96 (showListTop)",
+      "payload_summary": "Writes byte 0, UTF \"Top\", byte size, then per-entry int rank, int playerId, short head, (short -1 if v>214), short body, short leg, UTF name, UTF info1, UTF info2."
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/services/ItemTimeService.java:183-192,280-303",
+      "opcode": "-116, 65, -106",
+      "payload_summary": "-116: byte TDLT on/off; 65: byte id, UTF text, short seconds; -106: short itemId, short clamped seconds."
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/services/RadarService.java:56-166",
+      "opcode": "127 (sub 0..4)",
+      "payload_summary": "Sub 0: full radar template + player card progress; sub 1: use; sub 2: level; sub 3: amount; sub 4: aura broadcast to map."
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/services/SubMenuService.java:122-136",
+      "opcode": "-30 sub 63 (showSubMenu)",
+      "payload_summary": "Writes byte count, then UTF caption1, UTF caption2, short menuId per option."
+    }
+  ]
+}

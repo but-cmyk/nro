@@ -94,13 +94,23 @@ public class Input {
     }
 
     public void doInput(Player player, Message msg) {
+        if (player == null || player.idMark == null || msg == null) {
+            return;
+        }
         try {
             Player pl = null;
-            String[] text = new String[msg.reader().readByte()];
+            byte rawLen = msg.reader().readByte();
+            if (rawLen < 0 || rawLen > 10) {
+                return;
+            }
+            String[] text = new String[rawLen];
             for (int i = 0; i < text.length; i++) {
                 text[i] = msg.reader().readUTF();
             }
-            switch (player.idMark.getTypeInput()) {
+            int typeInput = player.idMark.getTypeInput();
+            // Reset ngay lập tức để ngăn replay packet doInput nhiều lần từ cùng 1 form
+            player.idMark.setTypeInput(-1);
+            switch (typeInput) {
                 case CSMMNE:
                     try {
                         int num = Integer.parseInt(text[0]);
@@ -114,7 +124,15 @@ public class Input {
                     }
                     break;
                 case TANG_NGOC_HONG:
+                    if (player.isTrade || TransactionService.gI().check(player)) {
+                        Service.gI().sendThongBao(player, "Không thể thực hiện khi đang giao dịch!");
+                        return;
+                    }
                     pl = Client.gI().getPlayer(text[0]);
+                    if (pl == player) {
+                        Service.gI().sendThongBao(player, "Không thể tự tặng cho chính mình.");
+                        return;
+                    }
                     int numRuby;
                     try {
                         numRuby = Integer.parseInt((text[1]));
@@ -123,31 +141,35 @@ public class Input {
                         return;
                     }
                     if (pl != null) {
-                        if (numRuby >= 10 && numRuby <= 1000 && player.inventory.ruby >= numRuby) {
-                            Item item = InventoryService.gI().findVeTangNgochong(player);
-                            if (item == null || item.itemOptions == null) {
-                                Service.gI().sendThongBao(player, "Bạn không có vé tặng Hồng ngọc.");
-                                return;
+                        synchronized (player) {
+                            if (numRuby >= 10 && numRuby <= 1000 && player.inventory.ruby >= numRuby) {
+                                Item item = InventoryService.gI().findVeTangNgochong(player);
+                                if (item == null || item.itemOptions == null) {
+                                    Service.gI().sendThongBao(player, "Bạn không có vé tặng Hồng ngọc.");
+                                    return;
+                                }
+                                ItemOption option = item.itemOptions.stream()
+                                        .filter(io -> io.optionTemplate.id == 31 && io.param > 0).findAny().orElse(null);
+                                int maxNumOption = numRuby / 10;
+                                if (option == null || option.param < maxNumOption) {
+                                    Service.gI().sendThongBao(player, "Không đủ số lượt để tặng.");
+                                    return;
+                                }
+                                player.inventory.subRuby(numRuby);
+                                PlayerService.gI().sendInfoHpMpMoney(player);
+                                synchronized (pl) {
+                                    pl.inventory.addRuby(numRuby * 90 / 100);
+                                    PlayerService.gI().sendInfoHpMpMoney(pl);
+                                }
+                                Service.gI().sendThongBao(player, "Tặng Hồng ngọc thành công");
+                                Service.gI().sendThongBao(pl,
+                                        "Bạn được " + player.name + " tặng " + (numRuby * 90 / 100) + " Hồng ngọc");
+                                option.param -= maxNumOption;
+                                InventoryService.gI().sendItemBags(player);
+                            } else {
+                                Service.gI().sendThongBao(player,
+                                        "Không đủ hoặc quá giới hạn Hồng ngọc cho phép tặng (10-1000 ngọc)");
                             }
-                            ItemOption option = item.itemOptions.stream()
-                                    .filter(io -> io.optionTemplate.id == 31 && io.param > 0).findAny().orElse(null);
-                            int maxNumOption = numRuby / 10;
-                            if (option == null || option.param < maxNumOption) {
-                                Service.gI().sendThongBao(player, "Không đủ số lượt để tặng.");
-                                return;
-                            }
-                            player.inventory.subRuby(numRuby);
-                            PlayerService.gI().sendInfoHpMpMoney(player);
-                            pl.inventory.ruby += numRuby * 90 / 100;
-                            PlayerService.gI().sendInfoHpMpMoney(pl);
-                            Service.gI().sendThongBao(player, "Tặng Hồng ngọc thành công");
-                            Service.gI().sendThongBao(pl,
-                                    "Bạn được " + player.name + " tặng " + (numRuby * 90 / 100) + " Hồng ngọc");
-                            option.param -= maxNumOption;
-                            InventoryService.gI().sendItemBags(player);
-                        } else {
-                            Service.gI().sendThongBao(player,
-                                    "Không đủ hoặc quá giới hạn Hồng ngọc cho phép tặng (10-1000 ngọc)");
                         }
                     } else {
                         Service.gI().sendThongBao(player, "Người chơi không tồn tại hoặc đang offline");
@@ -402,6 +424,10 @@ public class Input {
                     }
                     break;
                 case DUNGLOA:
+                    if (!player.isAdmin()) {
+                        Service.gI().sendThongBao(player, "Không đủ quyền hạn!");
+                        break;
+                    }
                     String contentServer = text[0];
                     Integer typeNotiServer = Integer.valueOf(text[1]);
                     switch (typeNotiServer) {
@@ -413,10 +439,18 @@ public class Input {
                     break;
 
                 case BUFFVND:
+                    if (!player.isAdmin()) {
+                        Service.gI().sendThongBao(player, "Không đủ quyền hạn!");
+                        break;
+                    }
                     try {
                         String username = text[0].trim();
                         int addvnd = Integer.parseInt(text[1].trim());
                         int addtotalvnd = Integer.parseInt(text[2].trim());
+                        if (addvnd <= 0 || addtotalvnd < 0) {
+                            Service.gI().sendThongBao(player, "Số tiền không hợp lệ!");
+                            break;
+                        }
                         if (PlayerDAO.Addvnd(username, addvnd)
                                 && PlayerDAO.Addtotalvnd(username, addtotalvnd)) {
 
@@ -446,6 +480,10 @@ public class Input {
                 // }).start();
                 // break;
                 case BOTQUAI_NAPPA: {
+                    if (!player.isAdmin()) {
+                        Service.gI().sendThongBao(player, "Không đủ quyền hạn!");
+                        break;
+                    }
                     int slot = Integer.parseInt(text[0]);
                     new Thread(() -> {
                         NewBot.gI().runBot(1, slot);
@@ -453,6 +491,10 @@ public class Input {
                     break;
                 }
                 case BOTQUAI_TUONGLAI: {
+                    if (!player.isAdmin()) {
+                        Service.gI().sendThongBao(player, "Không đủ quyền hạn!");
+                        break;
+                    }
                     int slot = Integer.parseInt(text[0]);
                     new Thread(() -> {
                         NewBot.gI().runBot(2, slot);
@@ -460,6 +502,10 @@ public class Input {
                     break;
                 }
                 case BOTQUAI_COLD: {
+                    if (!player.isAdmin()) {
+                        Service.gI().sendThongBao(player, "Không đủ quyền hạn!");
+                        break;
+                    }
                     int slot = Integer.parseInt(text[0]);
                     new Thread(() -> {
                         NewBot.gI().runBot(3, slot);
@@ -467,6 +513,10 @@ public class Input {
                     break;
                 }
                 case BOTBOSS: {
+                    if (!player.isAdmin()) {
+                        Service.gI().sendThongBao(player, "Không đủ quyền hạn!");
+                        break;
+                    }
                     int slot = Integer.parseInt(text[0]);
                     new Thread(() -> {
                         NewBot.gI().runBot(2, slot);
@@ -474,6 +524,10 @@ public class Input {
                     break;
                 }
                 case BOTQUAI: {
+                    if (!player.isAdmin()) {
+                        Service.gI().sendThongBao(player, "Không đủ quyền hạn!");
+                        break;
+                    }
                     int slot = Integer.parseInt(text[0]);
                     new Thread(() -> {
                         NewBot.gI().runBot(0, slot);
@@ -482,11 +536,19 @@ public class Input {
                 }
 
                 case GIVE_IT:
+                    if (!player.isAdmin()) {
+                        Service.gI().sendThongBao(player, "Không đủ quyền hạn!");
+                        break;
+                    }
                     String name = text[0];
                     int id = Integer.parseInt(text[1]);
                     int op = Integer.parseInt(text[2]);
                     int pr = Integer.parseInt(text[3]);
                     int q = Integer.parseInt(text[4]);
+                    if (id < 0 || q <= 0) {
+                        Service.gI().sendThongBao(player, "Thông số vật phẩm không hợp lệ!");
+                        break;
+                    }
 
                     if (Client.gI().getPlayer(name) != null) {
                         Item item = ItemService.gI().createNewItem(((short) id));
@@ -511,7 +573,7 @@ public class Input {
                     pr = Integer.parseInt(text[2]);
                     q = Integer.parseInt(text[3]);
 
-                    if (player.isAdmin()) {
+                    if (player.isAdmin() && id >= 0 && q > 0) {
                         Item item = ItemService.gI().createNewItem(((short) id));
                         List<Item.ItemOption> ops = ItemService.gI().getListOptionItemShop((short) id);
                         if (!ops.isEmpty()) {
@@ -534,6 +596,10 @@ public class Input {
                     GiftCodeService.gI().giftCode(player, text[0]);
                     break;
                 case FIND_PLAYER:
+                    if (!player.isAdmin()) {
+                        Service.gI().sendThongBao(player, "Không đủ quyền hạn!");
+                        break;
+                    }
                     pl = Client.gI().getPlayer(text[0]);
                     if (pl != null) {
                         NpcService.gI().createMenuConMeo(player, ConstNpc.MENU_FIND_PLAYER, -1, "Ngài muốn..?",
@@ -544,6 +610,10 @@ public class Input {
                     }
                     break;
                 case CHANGE_NAME: {
+                    if (!player.isAdmin()) {
+                        Service.gI().sendThongBao(player, "Không đủ quyền hạn!");
+                        break;
+                    }
                     Player plChanged = (Player) PLAYER_ID_OBJECT.get((int) player.id);
                     if (plChanged != null) {
                         if (AlyraManager.executeQuery("select * from player where name = ?", text[0]).next()) {
@@ -660,39 +730,47 @@ public class Input {
                     break;
 
                 case BANSLL:
-                    // Check if the input contains only numbers
-                    String input = text[0];
-                    if (!input.matches("^[0-9\\\\s,\\\\.]+$")) {
-                        Service.gI().sendThongBao(player, "Vui lòng nhập số hợp lệ (không có ký tự đặc biệt).");
+                    if (player.isTrade || TransactionService.gI().check(player)) {
+                        Service.gI().sendThongBao(player, "Không thể thực hiện khi đang giao dịch!");
                         break;
                     }
-
-                    // Proceed with the original logic if the input is valid
-                    int sltv = Math.abs(Integer.parseInt(input));
+                    String input = text[0];
+                    if (input == null || !input.matches("^[0-9]+$")) {
+                        Service.gI().sendThongBao(player, "Vui lòng nhập số nguyên dương hợp lệ.");
+                        break;
+                    }
+                    long sltvLong = Long.parseLong(input);
+                    if (sltvLong <= 0 || sltvLong > Integer.MAX_VALUE) {
+                        Service.gI().sendThongBao(player, "Số lượng không hợp lệ.");
+                        break;
+                    }
+                    int sltv = (int) sltvLong;
                     long cost = (long) sltv * 37000000;
 
-                    Item ThoiVang = InventoryService.gI().findItemBag(player, 457);
-                    if (ThoiVang != null) {
-                        if (ThoiVang.quantity < sltv) {
-                            Service.gI().sendThongBao(player, "Bạn chỉ có " + ThoiVang.quantity + " Thỏi vàng");
-                        } else {
-                            if (player.inventory.gold + cost > player.inventory.getGoldLimit()) {
-                                int slban = (int) ((player.inventory.getGoldLimit() - player.inventory.gold)
-                                        / 37000000);
-                                if (slban < 1) {
-                                    Service.gI().sendThongBao(player, "Vàng sau khi bán vượt quá giới hạn");
-                                } else if (slban < 2) {
-                                    Service.gI().sendThongBao(player, "Bạn chỉ có thể bán 1 Thỏi vàng");
-                                } else {
-                                    Service.gI().sendThongBao(player, "Số lượng trong khoảng 1 tới " + slban);
-                                }
+                    synchronized (player) {
+                        Item ThoiVang = InventoryService.gI().findItemBag(player, 457);
+                        if (ThoiVang != null) {
+                            if (ThoiVang.quantity < sltv) {
+                                Service.gI().sendThongBao(player, "Bạn chỉ có " + ThoiVang.quantity + " Thỏi vàng");
                             } else {
-                                InventoryService.gI().subQuantityItemsBag(player, ThoiVang, sltv);
-                                InventoryService.gI().sendItemBags(player);
-                                player.inventory.addGold(cost);
-                                Service.gI().sendMoney(player);
-                                Service.gI().sendThongBao(player,
-                                        "Đã bán " + sltv + " Thỏi vàng thu được " + Util.powerToString(cost) + " vàng");
+                                if (player.inventory.gold + cost > player.inventory.getGoldLimit()) {
+                                    int slban = (int) ((player.inventory.getGoldLimit() - player.inventory.gold)
+                                            / 37000000);
+                                    if (slban < 1) {
+                                        Service.gI().sendThongBao(player, "Vàng sau khi bán vượt quá giới hạn");
+                                    } else if (slban < 2) {
+                                        Service.gI().sendThongBao(player, "Bạn chỉ có thể bán 1 Thỏi vàng");
+                                    } else {
+                                        Service.gI().sendThongBao(player, "Số lượng trong khoảng 1 tới " + slban);
+                                    }
+                                } else {
+                                    InventoryService.gI().subQuantityItemsBag(player, ThoiVang, sltv);
+                                    InventoryService.gI().sendItemBags(player);
+                                    player.inventory.addGold(cost);
+                                    Service.gI().sendMoney(player);
+                                    Service.gI().sendThongBao(player,
+                                            "Đã bán " + sltv + " Thỏi vàng thu được " + Util.powerToString(cost) + " vàng");
+                                }
                             }
                         }
                     }

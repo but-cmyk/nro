@@ -230,7 +230,7 @@ namespace Game1.Assets.src.g
 			return false;
 		}
 
-		public new void checkFrameTick(int[] array)
+		public override void checkFrameTick(int[] array)
 		{
 			tick++;
 			if (tick > array.Length - 1)
@@ -280,7 +280,7 @@ namespace Game1.Assets.src.g
 			g.setClip(GameScr.cmx, GameScr.cmy - GameCanvas.transY, GameScr.gW, GameScr.gH + 2 * GameCanvas.transY);
 		}
 
-		public new void updateSuperEff()
+		public override void updateSuperEff()
 		{
 		}
 
@@ -374,11 +374,11 @@ namespace Game1.Assets.src.g
 			}
 		}
 
-		public new void setInjure()
+		public override void setInjure()
 		{
 		}
 
-		public new void setAttack(Char cFocus)
+		public override void setAttack(Char cFocus)
 		{
 			isBusyAttackSomeOne = true;
 			mobToAttack = null;
@@ -465,7 +465,7 @@ namespace Game1.Assets.src.g
 			}
 		}
 
-		public new void updateMobAttack()
+		public override void updateMobAttack()
 		{
 			if (type == 7)
 			{
@@ -538,11 +538,11 @@ namespace Game1.Assets.src.g
 			}
 		}
 
-		public new void updateMobWalk()
+		public override void updateMobWalk()
 		{
 		}
 
-		public new bool isPaint()
+		public override bool isPaint()
 		{
 			if (x < GameScr.cmx)
 			{
@@ -567,7 +567,7 @@ namespace Game1.Assets.src.g
 			return true;
 		}
 
-		public new bool isUpdate()
+		public override bool isUpdate()
 		{
 			if (status == 0)
 			{
@@ -576,7 +576,7 @@ namespace Game1.Assets.src.g
 			return true;
 		}
 
-		public new bool checkIsBoss()
+		public override bool checkIsBoss()
 		{
 			if (isBoss || levelBoss > 0)
 			{
@@ -643,12 +643,12 @@ namespace Game1.Assets.src.g
 			}
 		}
 
-		public new int getHPColor()
+		public override int getHPColor()
 		{
 			return 16711680;
 		}
 
-		public new void startDie()
+		public override void startDie()
 		{
 			hp = 0;
 			injureThenDie = true;
@@ -659,7 +659,7 @@ namespace Game1.Assets.src.g
 			p3 = 0;
 		}
 
-		public new void attackOtherMob(Mob mobToAttack)
+		public override void attackOtherMob(Mob mobToAttack)
 		{
 			this.mobToAttack = mobToAttack;
 			isBusyAttackSomeOne = true;
@@ -689,27 +689,27 @@ namespace Game1.Assets.src.g
 			}
 		}
 
-		public new int getX()
+		public override int getX()
 		{
 			return x;
 		}
 
-		public new int getY()
+		public override int getY()
 		{
 			return (!haftBody) ? (y - 60) : (y - 20);
 		}
 
-		public new int getH()
+		public override int getH()
 		{
 			return 40;
 		}
 
-		public new int getW()
+		public override int getW()
 		{
 			return 60;
 		}
 
-		public new void stopMoving()
+		public override void stopMoving()
 		{
 			if (status == 5)
 			{
@@ -719,12 +719,12 @@ namespace Game1.Assets.src.g
 			}
 		}
 
-		public new bool isInvisible()
+		public override bool isInvisible()
 		{
 			return status == 0 || status == 1;
 		}
 
-		public new void removeHoldEff()
+		public override void removeHoldEff()
 		{
 			if (holdEffID != 0)
 			{
@@ -732,12 +732,12 @@ namespace Game1.Assets.src.g
 			}
 		}
 
-		public new void removeBlindEff()
+		public override void removeBlindEff()
 		{
 			blindEff = false;
 		}
 
-		public new void removeSleepEff()
+		public override void removeSleepEff()
 		{
 			sleepEff = false;
 		}

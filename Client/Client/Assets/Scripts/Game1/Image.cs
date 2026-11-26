@@ -362,21 +362,37 @@ namespace Game1
     	private static Image __createImage(Image src, int x, int y, int w, int h, int transform)
     	{
     		Image image = new Image();
-    		image.texture = new Texture2D(w, h);
-    		y = src.texture.height - y - h;
-    		for (int i = 0; i < w; i++)
+    		if (src == null || src.texture == null)
     		{
-    			for (int j = 0; j < h; j++)
-    			{
-    				int num = i;
-    				if (transform == 2)
-    				{
-    					num = w - i;
-    				}
-    				int num2 = j;
-    				image.texture.SetPixel(i, j, src.texture.GetPixel(x + num, y + num2));
-    			}
+    			return image;
     		}
+    		y = src.texture.height - y - h;
+    		if (x < 0) x = 0;
+    		if (y < 0) y = 0;
+    		if (x + w > src.texture.width) w = src.texture.width - x;
+    		if (y + h > src.texture.height) h = src.texture.height - y;
+    		if (w <= 0 || h <= 0)
+    		{
+    			image.texture = new Texture2D(1, 1);
+    			return image;
+    		}
+
+    		image.texture = new Texture2D(w, h);
+    		Color[] srcPixels = src.texture.GetPixels(x, y, w, h);
+    		if (transform == 2)
+    		{
+    			Color[] flipped = new Color[srcPixels.Length];
+    			for (int row = 0; row < h; row++)
+    			{
+    				int rowOffset = row * w;
+    				for (int col = 0; col < w; col++)
+    				{
+    					flipped[rowOffset + col] = srcPixels[rowOffset + (w - 1 - col)];
+    				}
+    			}
+    			srcPixels = flipped;
+    		}
+    		image.texture.SetPixels(srcPixels);
     		image.texture.Apply();
     		image.w = image.texture.width;
     		image.h = image.texture.height;

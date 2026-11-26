@@ -362,7 +362,7 @@ public class PlayerDAO {
                     + "values ()", userId, name, hair, gender, 0, -1, inventory, location, point, magicTree,
                     itemsBody, itemsBag, itemsBox, itemsBoxLuckyRound, itemsDaBan, friends, enemies, intrinsic,
                     itemTime, itemTime_ndung, task, mabuEgg, charms, skills, skillsShortcut, petData, dataBlackBall,
-                    dataSideTask, dataDanhhieu, 0, 0, 0, boughtSkills);
+                    dataSideTask, dataDanhhieu, 0, "[]", "[]", boughtSkills);
             Logger.success("Tạo player mới thành công!\n");
             return true;
         } catch (Exception e) {
@@ -1143,6 +1143,16 @@ public class PlayerDAO {
                 hocKyNang.add(player.hocKyNang.Time);
                 String sHocKyNang = hocKyNang.toJSONString();
 
+                JSONArray boughtSkillsArr = new JSONArray();
+                if (player.BoughtSkills != null) {
+                    for (Integer skId : player.BoughtSkills) {
+                        if (skId != null) {
+                            boughtSkillsArr.add(skId);
+                        }
+                    }
+                }
+                String boughtSkills = boughtSkillsArr.toJSONString();
+
                 Object[] params = new Object[] {
                         player.getHead(), player.haveTennisSpaceShip, (player.clan != null ? player.clan.id : -1),
                         inventory, location, point, magicTree,
@@ -1157,7 +1167,7 @@ public class PlayerDAO {
                         player.superRank.rank, achievement, giftCode, shopDanhHieu, dataClan,
                         Util.toDateString(player.firstTimeLogin), buarandom, skhe, player.banhtet,
                         player.banhtrung,
-                        sHocKyNang, "[]", player.arenaWins, player.luckySpins, player.id
+                        sHocKyNang, boughtSkills, player.arenaWins, player.luckySpins, player.id
                 };
 
                 return new PlayerSaveSnapshot(player, player.id, player.name, player.isOffline, params);
@@ -1293,13 +1303,19 @@ public class PlayerDAO {
     }
 
     public static boolean subcash(Player player, int num) {
+        if (num <= 0 || player == null || player.getSession() == null) {
+            return false;
+        }
         try (Connection con = AlyraManager.getConnection();
-                PreparedStatement ps = con.prepareStatement("update account set cash = (cash - ?) where id = ?")) {
+                PreparedStatement ps = con.prepareStatement("update account set cash = (cash - ?) where id = ? and cash >= ?")) {
             ps.setInt(1, num);
             ps.setInt(2, player.getSession().userId);
-            ps.executeUpdate();
-            player.getSession().cash -= num;
-            return true;
+            ps.setInt(3, num);
+            if (ps.executeUpdate() > 0) {
+                player.getSession().cash -= num;
+                return true;
+            }
+            return false;
         } catch (Exception e) {
             Logger.logException(PlayerDAO.class, e, "Lỗi update cash" + player.name);
             return false;
@@ -1639,16 +1655,19 @@ public class PlayerDAO {
     }
 
     public static boolean subvnd(Player player, int num) {
-        PreparedStatement ps;
-        try (Connection con = AlyraManager.getConnection();) {
-            ps = con.prepareStatement("update account set sotien = (sotien - ?) where id = ?");
+        if (num <= 0 || player == null || player.getSession() == null) {
+            return false;
+        }
+        try (Connection con = AlyraManager.getConnection();
+                PreparedStatement ps = con.prepareStatement("update account set sotien = (sotien - ?) where id = ? and sotien >= ?")) {
             ps.setInt(1, num);
             ps.setInt(2, player.getSession().userId);
-            ps.executeUpdate();
-            player.getSession().sotien -= num;
-            ps.close();
-            con.close();
-            return true;
+            ps.setInt(3, num);
+            if (ps.executeUpdate() > 0) {
+                player.getSession().sotien -= num;
+                return true;
+            }
+            return false;
         } catch (Exception e) {
             Logger.logException(PlayerDAO.class, e, "Lỗi trừ vnd");
             return false;
@@ -1656,17 +1675,25 @@ public class PlayerDAO {
     }
 
     public static boolean subVND2(Player player, int sotien) {
+        if (player == null || player.getSession() == null) {
+            return false;
+        }
         if (player.getSession().isAdmin) {
             sotien = 0;
         }
-        PreparedStatement ps;
-        try (Connection con = AlyraManager.getConnection();) {
-            ps = con.prepareStatement("UPDATE account SET sotien = (sotien - ?) WHERE id = ?");
+        if (sotien < 0) {
+            return false;
+        }
+        try (Connection con = AlyraManager.getConnection();
+                PreparedStatement ps = con.prepareStatement("UPDATE account SET sotien = (sotien - ?) WHERE id = ? AND sotien >= ?")) {
             ps.setInt(1, sotien);
             ps.setInt(2, player.getSession().userId);
-            ps.executeUpdate();
-            player.getSession().sotien -= sotien;
-            return true;
+            ps.setInt(3, sotien);
+            if (ps.executeUpdate() > 0) {
+                player.getSession().sotien -= sotien;
+                return true;
+            }
+            return false;
         } catch (SQLException e) {
             Logger.logException(PlayerDAO.class, e, "Lỗi update vnd " + player.name);
         }

@@ -159,7 +159,7 @@ public final class Manager {
     public static final String queryTopSM = "SELECT p.id,\n"
             + "       CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(p.data_point, ',', 2), ',', -1) AS UNSIGNED) AS sm\n"
             + "FROM player p\n"
-            + "LEFT JOIN account a ON p.id = a.id AND a.is_admin = 1\n"
+            + "LEFT JOIN account a ON p.account_id = a.id AND a.is_admin = 1\n"
             + "WHERE a.id IS NULL\n"
             + "ORDER BY sm DESC\n"
             + "LIMIT 100;";

@@ -1,0 +1,327 @@
+{
+  "batch_id": "server_database_persistence__p01",
+  "concurrency_and_state": [
+    "AlyraManager holds static HikariDataSource ds; reloadData() closes and recreates ds without synchronization against active callers.",
+    "PlayerDAO.extractSnapshot acquires synchronized(player) and synchronized(player.inventory.itemsBoxCrackBall), then releases lock before JDBC executeUpdate().",
+    "PlayerDAO.updatePlayerAsync and updatePlayersInTransactionAsync spawn unbounded virtual threads with no per-player save serialization; concurrent saves can write an older snapshot over a newer one, and player.lastSaveHash is read/written unsynchronized.",
+    "PlayerDAO.updateBlackBallReward performs non-transactional read-modify-write on data_black_ball without row lock (SELECT ... FOR UPDATE).",
+    "SuperRankDAO.loadData initializes new players using getCurrentHighestRank() + 1 without DB lock or unique constraint handling, risking duplicate rank assignment under concurrent logins.",
+    "DatabaseTemplateLoader.gI() is synchronized singleton; reloadAchievementTemplate() mutates Manager.ACHIEVEMENT_TEMPLATE in place (clear + addAll) without synchronization.",
+    "EventDAO stores global event timers in static longs (remainingTimeToIncreasePotentialAndPower, HP, MP, Dame) without volatile or synchronization."
+  ],
+  "cross_module_questions": [
+    "Which callers invoke AlyraManager.login vs NDVSqlFetcher.login? AlyraManager.login passes a id-only ResultSet to NDVSqlFetcher.loadPlayer and skips ban/maintenance checks.",
+    "Where is TraningDAO.updatePlayer called? Any updates it writes to data_luyentap are overwritten at login by data_training in NDVSqlFetcher.loadPlayer.",
+    "Are PlayerDAO.subvnd, subVND2, and subcash guarded by caller locks and balance checks, or can concurrent requests drive account.sotien / cash negative?",
+    "How is player.BoughtSkills used elsewhere in skill purchase/validation, given NDVSqlFetcher fails with ClassCastException on Long->int and PlayerDAO hardcodes \"[]\" on save?",
+    "What readers access Manager.ACHIEVEMENT_TEMPLATE concurrently while DatabaseTemplateLoader.reloadAchievementTemplate() runs clear() + addAll()?"
+  ],
+  "db_redis_touchpoints": [
+    {
+      "location": "src/database/AlyraManager.java:44-58,447-480",
+      "op": "HikariCP MySQL pool init & getConnection()",
+      "safety_note": "Single HikariDataSource; sslMode defaults to DISABLED for localhost and VERIFY_IDENTITY for remote; executeQuery copies RS into ResultSetImpl and closes RS/PS/Con in finally/try, executeUpdate uses try-with-resources.",
+      "target": "MySQL HikariCP Pool"
+    },
+    {
+      "location": "src/database/AlyraManager.java:256-332,367-382",
+      "op": "SELECT account + SELECT id FROM player",
+      "safety_note": "Uses PreparedStatement with ? params; however SELECT id FROM player is passed directly to loadPlayer() causing missing-column SQLException; misses ban/DEBUG checks.",
+      "target": "account, player"
+    },
+    {
+      "location": "src/database/daos/NDVSqlFetcher.java:202-366,368-420",
+      "op": "SELECT account, SELECT player, UPDATE account last_time_login/ip_address",
+      "safety_note": "Uses parameterized queries; SELECT * FROM player; login() reads last_time_login/create_time Timestamps without null guards.",
+      "target": "account, player"
+    },
+    {
+      "location": "src/database/daos/PlayerDAO.java:31-372,1320-1639",
+      "op": "INSERT INTO player (createNewPlayer, createPlAo)",
+      "safety_note": "Uses AlyraManager.executeUpdate with values() auto-expansion; createNewPlayer writes \"0\" for data_achievement/giftcode instead of \"[]\".",
+      "target": "player"
+    },
+    {
+      "location": "src/database/daos/PlayerDAO.java:395-404,1172-1260",
+      "op": "UPDATE player (updatePlayer, updatePlayersInTransaction)",
+      "safety_note": "Uses PreparedStatement; `rank` properly backticked; transaction sets autoCommit(false)/commit/rollback; hardcodes boughtSkills = \"[]\"; no per-player save ordering lock.",
+      "target": "player"
+    },
+    {
+      "location": "src/database/daos/PlayerDAO.java:1282-1307,1641-1785",
+      "op": "UPDATE account (cash, sotien, danap, diem_da_nhan, vip*)",
+      "safety_note": "subvnd/subVND2/subcash lack `AND sotien >= ?` / `AND cash >= ?` guards and ignore affected row count; subvnd/subVND2 do not wrap PreparedStatement in try-with-resources.",
+      "target": "account"
+    },
+    {
+      "location": "src/database/daos/PlayerDAO.java:1788-1859",
+      "op": "SELECT + UPDATE player.data_black_ball",
+      "safety_note": "Try-with-resources used, but non-transactional read-modify-write without FOR UPDATE lock.",
+      "target": "player"
+    },
+    {
+      "location": "src/database/daos/EventDAO.java:30-63",
+      "op": "SELECT/UPDATE event WHERE name = 'international_womens_day'",
+      "safety_note": "Backticked columns, but PreparedStatement and ResultSet are not in try-with-resources and never explicitly closed.",
+      "target": "event"
+    },
+    {
+      "location": "src/database/daos/HistoryTransactionDAO.java:85,105-174",
+      "op": "INSERT/DELETE/SELECT history_transaction",
+      "safety_note": "Parameterized queries with try-with-resources; insert() silently catches and ignores exceptions.",
+      "target": "history_transaction"
+    },
+    {
+      "location": "src/database/daos/ShopDAO.java:25-112",
+      "op": "SELECT shop, SELECT tab_shop (twice per tab)",
+      "safety_note": "Try-with-resources used, but severe N+1 pattern querying tab_shop again per tab when loadShopTab already fetched the tab_shop row.",
+      "target": "shop, tab_shop"
+    },
+    {
+      "location": "src/database/daos/SuperRankDAO.java:21-81,159-350",
+      "op": "SELECT/INSERT/UPDATE super_rank, UPDATE player.data_inventory",
+      "safety_note": "`rank` backticked; parameterized queries via AlyraManager; non-atomic highestRank+1 insert on new player; several silent catch blocks.",
+      "target": "super_rank, player"
+    },
+    {
+      "location": "src/database/daos/TraningDAO.java:10-38",
+      "op": "UPDATE player SET data_luyentap = ?",
+      "safety_note": "Parameterized query; writes 10-element data_luyentap while PlayerDAO writes 5-element data_luyentap + data_training, causing login desync.",
+      "target": "player"
+    },
+    {
+      "location": "src/database/loaders/DatabaseTemplateLoader.java:67-877",
+      "op": "Startup SELECT across ~20 template/world/top tables",
+      "safety_note": "Try-with-resources used for all queries; exits JVM on startup error; reloadAchievementTemplate mutates Manager.ACHIEVEMENT_TEMPLATE unsafely.",
+      "target": "part, bg_item_template, array_head_2_frames, clan, skill_template, head_avatar, flag_bag, intrinsic, task_main_template, task_sub_template, side_task_template, clan_task_template, achievement_template, item_template, item_option_template, shop, tab_shop, notify, img_by_name, mob_template, npc_template, shop_ky_gui, map_template, radar, giftcode"
+    }
+  ],
+  "files_read": [
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/database/AlyraManager.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/database/AlyraResultSet.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/database/daos/EventDAO.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/database/daos/HistoryTransactionDAO.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/database/daos/NDVSqlFetcher.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/database/daos/PlayerDAO.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/database/daos/ShopDAO.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/database/daos/SuperRankDAO.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/database/daos/TraningDAO.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/database/loaders/DatabaseTemplateLoader.java"
+  ],
+  "findings": [
+    {
+      "category": "architecture",
+      "impact": "Calling AlyraManager.login() crashes with SQLException on existing players (missing columns in rsPlayer) and allows banned/non-admin players to bypass ban and maintenance checks.",
+      "location": "src/database/AlyraManager.java:256-332,367-445",
+      "root_cause": "AlyraManager.login duplicates NDVSqlFetcher.login, passes `SELECT id FROM player` ResultSet directly into NDVSqlFetcher.loadPlayer() which expects all player columns, omits `ban` and `Manager.DEBUG` checks, omits `last_time_login` update, and omits `isAdmin` wait-time bypass.",
+      "severity": "P0",
+      "title": "Broken duplicate login() in AlyraManager passes id-only ResultSet to loadPlayer() and skips ban/maintenance checks"
+    },
+    {
+      "category": "security_dupe",
+      "impact": "Purchased skills (BoughtSkills) are lost on next login and overwritten with empty array in DB on every player save.",
+      "location": "src/database/daos/NDVSqlFetcher.java:1551-1558; src/database/daos/PlayerDAO.java:1160",
+      "root_cause": "NDVSqlFetcher casts JSON-simple Long elements to primitive `(int) code`, throwing ClassCastException (silently swallowed), while PlayerDAO.extractSnapshot hardcodes `\"[]\"` for the `boughtSkills` parameter in QUERY_UPDATE_PLAYER.",
+      "severity": "P1",
+      "title": "BoughtSkills permanently wiped on save and fails to load due to Long-to-int ClassCastException"
+    },
+    {
+      "category": "security_dupe",
+      "impact": "Concurrent or unchecked deduction calls can drive account.sotien or account.cash negative or cause double-spend races.",
+      "location": "src/database/daos/PlayerDAO.java:1295-1307,1641-1695",
+      "root_cause": "subvnd, subVND2, and subcash execute `SET sotien = (sotien - ?)` / `SET cash = (cash - ?)` without `AND sotien >= ?` / `AND cash >= ?` WHERE guards, ignore affected row counts, and mutate session fields without synchronization.",
+      "severity": "P1",
+      "title": "Unchecked currency deduction without SQL balance guard or row-count verification in PlayerDAO"
+    },
+    {
+      "category": "concurrency",
+      "impact": "Under concurrent auto-save, trade save, and logout save, an older snapshot can overwrite newer DB state (potential item/gold rollback or dupe window), and dirty-check hash visibility is not guaranteed across threads.",
+      "location": "src/database/daos/PlayerDAO.java:374-393,1172-1260",
+      "root_cause": "updatePlayerAsync/updatePlayersInTransactionAsync launch virtual threads with no per-player DB write lock after extractSnapshot releases synchronized(player), and player.lastSaveHash is read/written outside synchronization.",
+      "severity": "P1",
+      "title": "Out-of-order async player DB writes possible due to missing per-player save serialization"
+    },
+    {
+      "category": "gameplay",
+      "impact": "talkToThanMeo state is lost/corrupted on relog (overwritten with talkToThuongDe), and Whis training/luyentap updates saved via TraningDAO are discarded on next login.",
+      "location": "src/database/daos/NDVSqlFetcher.java:1315-1321,1419-1479; src/database/daos/TraningDAO.java:10-38",
+      "root_cause": "NDVSqlFetcher reads index 2 twice for both talkToThuongDe and talkToThanMeo instead of index 3; TraningDAO writes 10 elements to data_luyentap without updating data_training, which NDVSqlFetcher reads second and uses to overwrite player.traning.",
+      "severity": "P1",
+      "title": "CDRD index copy-paste bug and TraningDAO vs data_training persistence mismatch on loadPlayer"
+    },
+    {
+      "category": "database",
+      "impact": "New players fail to initialize achievement entries (swallowed ClassCastException) and players created via createPlAo or with null JSON columns fail to load at login.",
+      "location": "src/database/daos/PlayerDAO.java:361-365,1623-1632; src/database/daos/NDVSqlFetcher.java:716-789,983-1041,1114-1141,1259",
+      "root_cause": "createNewPlayer inserts integer 0 for data_achievement and giftcode which JSONValue.parse parses as Long (causing ClassCastException when cast to JSONArray), and loadPlayer parses several columns with raw `(JSONArray) JSONValue.parse(...)` without null checks.",
+      "severity": "P1",
+      "title": "Unchecked JSONArray casts in NDVSqlFetcher.loadPlayer and invalid scalar '0' defaults in PlayerDAO.createNewPlayer"
+    },
+    {
+      "category": "database",
+      "impact": "Violates JDBC try-with-resources invariant; leaves PreparedStatement/ResultSet open until Connection returns/closes or garbage collection, risking statement/cursor leaks under load.",
+      "location": "src/database/daos/EventDAO.java:31-33,51-59; src/database/daos/PlayerDAO.java:1642-1651,1662-1669",
+      "root_cause": "EventDAO and PlayerDAO.subvnd/subVND2 open PreparedStatement (and ResultSet in EventDAO) outside try-with-resources; EventDAO and subVND2 never close ps/rs explicitly.",
+      "severity": "P2",
+      "title": "PreparedStatement and ResultSet not managed with try-with-resources in EventDAO and PlayerDAO.subvnd/subVND2"
+    },
+    {
+      "category": "database",
+      "impact": "Causes N+1 redundant queries on server startup/reload and wastes DB roundtrips on tab_shop.",
+      "location": "src/database/daos/ShopDAO.java:25-112",
+      "root_cause": "loadShopTab runs `SELECT * FROM tab_shop WHERE shop_id = ?`, then for every tab calls loadItemShop which executes `SELECT * FROM tab_shop WHERE tab_index = ? AND shop_id = ?` on the exact same table/row instead of reading the `items` column directly.",
+      "severity": "P2",
+      "title": "Redundant N+1 queries re-fetching tab_shop for every tab in ShopDAO"
+    },
+    {
+      "category": "database",
+      "impact": "Concurrent SuperRank first-time initializations can assign duplicate ranks; concurrent BlackBall rewards can drop a star update; high stats (>2.14B) truncate in SuperRank display.",
+      "location": "src/database/daos/SuperRankDAO.java:122-124,219-231; src/database/daos/PlayerDAO.java:1788-1859",
+      "root_cause": "SuperRankDAO.loadData computes getCurrentHighestRank() + 1 outside a lock/transaction, and readData casts Long hp/dame/def to intValue(). PlayerDAO.updateBlackBallReward does SELECT then UPDATE without FOR UPDATE.",
+      "severity": "P2",
+      "title": "Non-atomic read-modify-write in SuperRankDAO/updateBlackBallReward and int truncation in SuperRankDAO.readData"
+    },
+    {
+      "category": "concurrency",
+      "impact": "Concurrent readers of Manager.ACHIEVEMENT_TEMPLATE during admin reload can hit ConcurrentModificationException or see an empty list mid-reload.",
+      "location": "src/database/loaders/DatabaseTemplateLoader.java:863-877",
+      "root_cause": "reloadAchievementTemplate() calls Manager.ACHIEVEMENT_TEMPLATE.clear() and addAll(list) without synchronization or atomic reference swap.",
+      "severity": "P2",
+      "title": "Unsynchronized in-place clear/addAll on Manager.ACHIEVEMENT_TEMPLATE during reload"
+    },
+    {
+      "category": "database",
+      "impact": "Transaction audit errors and JSON parse errors are silently dropped; goldP1/goldP2 use int instead of long and gold1Before/After/gold2Before/After are never persisted.",
+      "location": "src/database/daos/HistoryTransactionDAO.java:20-88,166-174; src/database/daos/SuperRankDAO.java:29-78,126-151,216,255; src/database/daos/TraningDAO.java:34-36",
+      "root_cause": "Empty catch blocks swallow exceptions in HistoryTransactionDAO.insert, SuperRankDAO, and NDVSqlFetcher; HistoryTransactionDAO.insert uses += string concat in loops and ignores gold before/after args.",
+      "severity": "P3",
+      "title": "Swallowed SQL/JSON exceptions and unused/int-typed gold parameters in HistoryTransactionDAO and SuperRankDAO"
+    }
+  ],
+  "key_classes": [
+    {
+      "key_methods": [
+        "getConnection",
+        "executeQuery",
+        "executeUpdate",
+        "login",
+        "createConfig",
+        "reloadData"
+      ],
+      "name": "AlyraManager",
+      "path": "src/database/AlyraManager.java",
+      "responsibility": "Manages HikariCP MySQL connection pool, executes parameterized SQL queries/updates, and contains a duplicate/broken login() method."
+    },
+    {
+      "key_methods": [
+        "getInt",
+        "getLong",
+        "getString",
+        "next",
+        "first",
+        "dispose"
+      ],
+      "name": "AlyraResultSet",
+      "path": "src/database/AlyraResultSet.java",
+      "responsibility": "ResultSet abstraction interface decoupling callers from JDBC ResultSet lifecycle."
+    },
+    {
+      "key_methods": [
+        "loadInternationalWomensDayEvent",
+        "saveInternationalWomensDayEvent",
+        "save"
+      ],
+      "name": "EventDAO",
+      "path": "src/database/daos/EventDAO.java",
+      "responsibility": "Loads and persists global event countdown timers from/to `event` table."
+    },
+    {
+      "key_methods": [
+        "insert",
+        "insertAsync",
+        "deleteHistory",
+        "searchTransactions",
+        "deleteTransaction"
+      ],
+      "name": "HistoryTransactionDAO",
+      "path": "src/database/daos/HistoryTransactionDAO.java",
+      "responsibility": "Records, searches, and cleans up player trade history in `history_transaction`."
+    },
+    {
+      "key_methods": [
+        "login",
+        "loadById",
+        "loadPlayerByName",
+        "loadPlayer",
+        "parseItemSafe",
+        "loadOptionCard"
+      ],
+      "name": "NDVSqlFetcher",
+      "path": "src/database/daos/NDVSqlFetcher.java",
+      "responsibility": "Primary account login validator and full player/pet/inventory/task/JSON hydration from MySQL."
+    },
+    {
+      "key_methods": [
+        "createNewPlayer",
+        "createPlAo",
+        "extractSnapshot",
+        "updatePlayer",
+        "updatePlayerAsync",
+        "updatePlayersInTransaction",
+        "subvnd",
+        "subVND2",
+        "subcash",
+        "updateBlackBallReward"
+      ],
+      "name": "PlayerDAO",
+      "path": "src/database/daos/PlayerDAO.java",
+      "responsibility": "Creates new/bot players, serializes PlayerSaveSnapshot, persists player state (sync/async/transactional), and mutates account balances/VIP flags."
+    },
+    {
+      "key_methods": [
+        "getShops",
+        "loadShopTab",
+        "loadItemShop"
+      ],
+      "name": "ShopDAO",
+      "path": "src/database/daos/ShopDAO.java",
+      "responsibility": "Loads NPC shops, tabs, and shop item definitions from `shop` and `tab_shop`."
+    },
+    {
+      "key_methods": [
+        "getPlayerListInRankRange",
+        "getPlayerListInRank",
+        "readData",
+        "loadData",
+        "insertData",
+        "updateData",
+        "updatePlayer"
+      ],
+      "name": "SuperRankDAO",
+      "path": "src/database/daos/SuperRankDAO.java",
+      "responsibility": "Loads, initializes, queries, and updates Super Rank tournament standings and history in `super_rank`."
+    },
+    {
+      "key_methods": [
+        "updatePlayer"
+      ],
+      "name": "TraningDAO",
+      "path": "src/database/daos/TraningDAO.java",
+      "responsibility": "Persists `data_luyentap` JSON column for a player."
+    },
+    {
+      "key_methods": [
+        "gI",
+        "loadAllTemplates",
+        "reloadAchievementTemplate",
+        "getCardDescription",
+        "getBalancedRadarOptions"
+      ],
+      "name": "DatabaseTemplateLoader",
+      "path": "src/database/loaders/DatabaseTemplateLoader.java",
+      "responsibility": "Loads all game templates, clans, consign items, giftcodes, radar cards, and leaderboards on startup and exports `data/update_data/part`."
+    }
+  ],
+  "module_summary": "Persistence layer built on HikariCP (`AlyraManager`) with JSON-packed player columns (`NDVSqlFetcher`, `PlayerDAO`), startup template hydration (`DatabaseTemplateLoader`), and feature DAOs (`ShopDAO`, `SuperRankDAO`, `HistoryTransactionDAO`, `EventDAO`, `TraningDAO`). Contains several critical issues including a broken duplicate login method in `AlyraManager`, `BoughtSkills` load/save loss, unchecked currency deductions, async save ordering races, missing try-with-resources in `EventDAO`/`PlayerDAO`, and N+1 `tab_shop` queries in `ShopDAO`.",
+  "protocol_touchpoints": []
+}

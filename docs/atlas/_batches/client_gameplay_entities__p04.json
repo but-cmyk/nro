@@ -1,0 +1,328 @@
+{
+  "batch_id": "client_gameplay_entities__p04",
+  "concurrency_and_state": [
+    "EffecMn.vEff (EffecMn.cs:5) is mutated via removeElement(this) inside Effect.update() (Effect.cs:489, 543, 555) while EffecMn.update() (EffecMn.cs:90-93) iterates forward with i++, causing the element immediately following a removed effect to be skipped for that tick.",
+    "Effect.vEffData, lastEff, newEff, dowloadEff (Effect.cs:110, 116-120) are static MyVector caches; Effect(int id, int x, int y, ...) evicts vEffData entries when lastEff.size() > 20 without checking if active Effect instances in EffecMn.vEff still reference the evicted EffectData.",
+    "Effect2.vEffect3, vEffect2, vRemoveEffect2, vEffect2Outside, vAnimateEffect, vEffectFeet (Effect2.cs:5-15) and EffectManager.lowEffects/mid_2Effects/midEffects/hiEffects (EffectManager.cs:5-11) hold global mutable static effect lists; EffectPanel.update() removes itself directly from Effect2.vEffect3 (EffectPanel.cs:85, 96, 106), whereas EffectManager.updateAll() safely iterates backwards and checks isRemove.",
+    "FireWorkMn.paint() (FireWorkMn.cs:33-41) calls fw.removeElementAt(i) during forward iteration without decrementing i and still calls firework.paint(g) on the removed item.",
+    "Effect_End mutates Char world coordinates (charUse.cx) directly during effect construction (Effect_End.cs:269-283) and during upd_Skill_Destroy (Effect_End.cs:1051-1053), coupling visual effect playback to entity position state.",
+    "GamePad.paint() (GamePad.cs:266-269) overwrites xZone/yZone/wZone/hZone every frame, discarding the screen-size-specific zone setup computed in the GamePad constructor (GamePad.cs:53-93)."
+  ],
+  "cross_module_questions": [
+    "What server opcode and handler respond to Service.gI().getEffData((short)id) called at Effect.cs:178 and 226, and how does Controller populate Effect.vEffData / EffectChar.effTemplates?",
+    "Does GameScr iterate Effect2.vEffect3 backwards (like EffectManager) or forwards when calling EffectPanel.update(), given EffectPanel removes itself directly from vEffect3?",
+    "How does Char.cx mutation inside Effect_End (lines 269-283, 1051-1053) interact with server position sync or skill range checks?",
+    "Are FireWorkEff, FireWorkMn, and Firework still reachable from GameCanvas/GameScr or superseded by Effect_End typeEffect == 3 (End_FireWork)?"
+  ],
+  "db_redis_touchpoints": [],
+  "files_read": [
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/DefaultItemOptions.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/Dialog.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/EffecMn.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/Effect.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/Effect2.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/Effect_End.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/EffectChar.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/EffectCharPaint.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/EffectData.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/EffectFeet.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/EffectInfoPaint.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/EffectManager.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/EffectPaint.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/EffectPanel.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/EffectTemplate.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/EPosition.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/Firework.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/FireWorkEff.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/FireWorkMn.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/Frame.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/FrameImage.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/Friend.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/GameMidlet.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/GamePad.cs"
+  ],
+  "findings": [
+    {
+      "category": "gameplay",
+      "impact": "NullReferenceException when rendering under-background effects whose EffectData was evicted by lastEff (>20 entries) or failed to load, crashing or failing the paint pass.",
+      "location": "Client/Client/Assets/Scripts/Game1/Effect.cs:308",
+      "root_cause": "paintUnderBackground calls getEffDataById(effId).img != null without checking if getEffDataById(effId) is null (unlike paint() at line 346).",
+      "severity": "P1",
+      "title": "Unchecked null dereference in Effect.paintUnderBackground"
+    },
+    {
+      "category": "gameplay",
+      "impact": "If EffectData.get() returns null, Effect.update() throws NullReferenceException on data.Length - 1, enters the catch block, and prematurely removes the Effect from EffecMn.vEff.",
+      "location": "Client/Client/Assets/Scripts/Game1/Effect.cs:382-481",
+      "root_cause": "The `if (data != null)` block ends at line 480, but `if (t >= data.Length - 1)` at line 481 executes outside that null check.",
+      "severity": "P1",
+      "title": "Effect.update dereferences data.Length outside null check"
+    },
+    {
+      "category": "concurrency",
+      "impact": "When an Effect removes itself at the end of its lifetime, the next Effect in vEff shifts into index i and skips its update() for that tick.",
+      "location": "Client/Client/Assets/Scripts/Game1/EffecMn.cs:88-94",
+      "root_cause": "EffecMn.update() iterates vEff with a forward index loop (`for (int i = 0; i < vEff.size(); i++)`) while Effect.update() mutates EffecMn.vEff via removeElement(this) (Effect.cs:489, 543, 555).",
+      "severity": "P2",
+      "title": "Forward-loop removal skips next Effect update in EffecMn.update"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Throws ArgumentNullException when anim_data[num7] is null (if num7 != 0) or leaves anim_data[0] zero-initialized, breaking boss/effect animations with ID >= 201 that lack negative sentinel markers.",
+      "location": "Client/Client/Assets/Scripts/Game1/EffectData.cs:235-240",
+      "root_cause": "When `!flag`, readData allocates `anim_data[0] = new short[num8]` on line 237, but copies into `anim_data[num7]` on line 238 instead of `anim_data[0]`.",
+      "severity": "P1",
+      "title": "Array.Copy targets wrong slot anim_data[num7] instead of anim_data[0] in EffectData.readData"
+    },
+    {
+      "category": "performance_gc",
+      "impact": "Unnecessary GC allocations during EffectData binary parsing and per-frame Effect.update() calls for missing animation states.",
+      "location": "Client/Client/Assets/Scripts/Game1/EffectData.cs:48-51, 217-223",
+      "root_cause": "EffectData.get(int index) allocates `new short[1]` on every call when `anim_data[index] == null` (called from Effect.update() for typeEff == 5). Additionally, readData() builds an unused string `text = text + num9 + \",\"` in a loop (line 222).",
+      "severity": "P2",
+      "title": "Per-frame short[1] allocation in EffectData.get and dead string concat in readData"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Potential IndexOutOfRangeException / OverflowException on malformed or large (>=128 images) EffectData payloads.",
+      "location": "Client/Client/Assets/Scripts/Game1/EffectData.cs:91, 127, 161, 196, 326, 369",
+      "root_cause": "Image count `b` is read as signed `sbyte` via `readByte()` instead of `readUnsignedByte()`, and bounding-box calculation directly indexes `imgInfo[frame[j].idImg[k]]` instead of calling `getImageInfo(...)`.",
+      "severity": "P2",
+      "title": "Signed byte count and unvalidated imgInfo indexing in EffectData parsers"
+    },
+    {
+      "category": "architecture",
+      "impact": "High maintenance cost, brittle state handling, and client-side character position desync when costume 1265 or Destroy skill runs.",
+      "location": "Client/Client/Assets/Scripts/Game1/Effect_End.cs:5, 269-283, 1051-1053",
+      "root_cause": "Effect_End is a 1926-line monolith switching across 12+ effect types; its constructor (lines 269-283) and upd_Skill_Destroy (lines 1051-1053) directly mutate `charUse.cx`, altering character world coordinates from visual effect code.",
+      "severity": "P2",
+      "title": "Effect_End monolith mutates Char world position directly"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Skill-end audio is never played, and setFrameAngle throws IndexOutOfRangeException if `goc > 345` reaches the `num = 24` clamp (e.g., non-normalized angle > 359).",
+      "location": "Client/Client/Assets/Scripts/Game1/Effect_End.cs:345-360, 628-640",
+      "root_cause": "In setSoundSkill_END, `int num = -1;` is never assigned before `if (num >= 0)`, leaving SoundMn.playSound unreachable. In setFrameAngle, `num` is clamped to 24 and used to index `mpaintone_Arrow[num]` whose length is 24 (max valid index 23).",
+      "severity": "P2",
+      "title": "Dead sound logic in setSoundSkill_END and off-by-one clamp in setFrameAngle"
+    },
+    {
+      "category": "performance_gc",
+      "impact": "Broken firework trajectory math, zero-sized screen clear in FireWorkEff, skipped/double-painted elements on removal, and GC allocations inside paint().",
+      "location": "Client/Client/Assets/Scripts/Game1/Firework.cs:67-83; FireWorkEff.cs:7-8, 55, 63-77, 126-127; FireWorkMn.cs:33-41",
+      "root_cause": "Firework.preDraw and FireWorkEff.animate convert `angle` to radians before calling `Res.cos`/`Res.sin` which expect integer degrees (0..359). FireWorkEff.w and h are never initialized (remain 0). FireWorkEff.paint() calls preDraw()/keyPressed() and allocates `new FireWorkMn(...)` inside paint(). FireWorkMn.paint() removes from `fw` in a forward loop without adjusting index `i`.",
+      "severity": "P2",
+      "title": "Broken trigonometry, uninitialized bounds, and update/allocation inside Firework paint loops"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Analog joystick loses device-specific touch zone sizing, has a dead zone in the 21-40 degree diagonal sector, and blocks click-to-move across the entire lower screen width.",
+      "location": "Client/Client/Assets/Scripts/Game1/GamePad.cs:159-202, 266-269, 293",
+      "root_cause": "GamePad.paint() unconditionally overwrites xZone/yZone/wZone/hZone every frame (lines 266-269), overriding constructor sizing. Angle branching (lines 159-202) skips angles 21..40. disableClickMove() (line 293) includes `(px >= xZone && px <= GameCanvas.w && py >= yZone && py <= yZone + hZone)` which subsumes the smaller analog zone check.",
+      "severity": "P2",
+      "title": "GamePad overwrites zone bounds in paint, misses 21-40 deg angle sector, and over-blocks clicks"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Potential IndexOutOfRangeException when server sends negative or out-of-range effect templateId, or when FrameImage(ID) is called with ID outside arrInfoEff bounds.",
+      "location": "Client/Client/Assets/Scripts/Game1/EffectChar.cs:21; FrameImage.cs:24-30",
+      "root_cause": "EffectChar constructor indexes `effTemplates[templateId]` with signed `sbyte templateId` without null/bounds checks. FrameImage(int ID) indexes `Effect_End.arrInfoEff[ID]` without bounds checks (`arrInfoEff` length is 29).",
+      "severity": "P2",
+      "title": "Unchecked array indexing in EffectChar and FrameImage constructors"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Wrong sprite dimensions used when drawing imgFeet3, and redundant initialization / unvalidated OpenURL calls in GameMidlet.",
+      "location": "Client/Client/Assets/Scripts/Game1/EffectFeet.cs:57; GameMidlet.cs:38-47, 87-88, 109-124",
+      "root_cause": "EffectFeet.paint() uses `imgFeet1.getWidth(), imgFeet1.getHeight()` even when `!isF` selects `imgFeet3`. GameMidlet.initGame() sets `instance = this` twice and calls `SplashScr.loadImg()/loadSplashScr()` twice; `flatForm` and `platformRequest` are duplicated wrappers calling `Application.OpenURL(url)` without scheme validation.",
+      "severity": "P3",
+      "title": "EffectFeet dimension mismatch and duplicate init/URL wrappers in GameMidlet"
+    }
+  ],
+  "key_classes": [
+    {
+      "key_methods": [
+        "GetOptionName",
+        "CreateTemplate",
+        "CreateAllTemplates"
+      ],
+      "name": "DefaultItemOptions",
+      "path": "Client/Client/Assets/Scripts/Game1/DefaultItemOptions.cs",
+      "responsibility": "Static fallback table mapping 247 item option IDs (0..246) to Vietnamese display strings and creating ItemOptionTemplate objects."
+    },
+    {
+      "key_methods": [
+        "paint",
+        "keyPress",
+        "update",
+        "show"
+      ],
+      "name": "Dialog",
+      "path": "Client/Client/Assets/Scripts/Game1/Dialog.cs",
+      "responsibility": "Abstract base class for modal UI dialogs handling soft-key command bars and pointer/key dispatch."
+    },
+    {
+      "key_methods": [
+        "addEff",
+        "removeEff",
+        "getEffById",
+        "paintBackGroundUnderLayer",
+        "paintLayer1",
+        "paintLayer2",
+        "paintLayer3",
+        "paintLayer4",
+        "update"
+      ],
+      "name": "EffecMn",
+      "path": "Client/Client/Assets/Scripts/Game1/EffecMn.cs",
+      "responsibility": "Static manager storing active Effect instances in vEff and dispatching layered paint and update calls."
+    },
+    {
+      "key_methods": [
+        "Effect",
+        "removeEffData",
+        "addEffData",
+        "getEffDataById",
+        "paintUnderBackground",
+        "paint",
+        "update",
+        "getnFrame"
+      ],
+      "name": "Effect",
+      "path": "Client/Client/Assets/Scripts/Game1/Effect.cs",
+      "responsibility": "Runtime map/character sprite effect entity managing frame progression, loop counts, data caching (vEffData/lastEff), and rendering."
+    },
+    {
+      "key_methods": [
+        "update",
+        "paint"
+      ],
+      "name": "Effect2",
+      "path": "Client/Client/Assets/Scripts/Game1/Effect2.cs",
+      "responsibility": "Abstract base class holding static MyVector registries for legacy/panel/feet visual effects."
+    },
+    {
+      "key_methods": [
+        "Effect_End",
+        "create_Effect",
+        "update",
+        "paint",
+        "removeEff",
+        "set_Skill_Kamex10",
+        "set_Skill_Destroy",
+        "set_Skill_MaFuba",
+        "get_Img_Skill"
+      ],
+      "name": "Effect_End",
+      "path": "Client/Client/Assets/Scripts/Game1/Effect_End.cs",
+      "responsibility": "Monolithic controller for end-of-match strings, fireworks, rock/ice particles, and multi-stage special skills (Kame x10, Destroy, Mafuba)."
+    },
+    {
+      "key_methods": [
+        "getImageInfo",
+        "get",
+        "readData",
+        "readData2",
+        "readEffect",
+        "readDataNewBoss",
+        "paintFrame",
+        "readMobNew"
+      ],
+      "name": "EffectData",
+      "path": "Client/Client/Assets/Scripts/Game1/EffectData.cs",
+      "responsibility": "Binary parser and atlas frame renderer for effect and new-boss sprite sheets."
+    },
+    {
+      "key_methods": [
+        "addFeet",
+        "update",
+        "paint"
+      ],
+      "name": "EffectFeet",
+      "path": "Client/Client/Assets/Scripts/Game1/EffectFeet.cs",
+      "responsibility": "Temporary footprint/wing ground trail effect extending Effect2."
+    },
+    {
+      "key_methods": [
+        "updateAll",
+        "update",
+        "paintAll",
+        "removeAll",
+        "remove",
+        "addHiEffect",
+        "addMidEffects",
+        "addMid_2Effects",
+        "addLowEffect"
+      ],
+      "name": "EffectManager",
+      "path": "Client/Client/Assets/Scripts/Game1/EffectManager.cs",
+      "responsibility": "Layered MyVector container managing lifecycle and rendering of Effect_End instances across 4 depth buckets."
+    },
+    {
+      "key_methods": [
+        "addServerEffect",
+        "paint",
+        "update"
+      ],
+      "name": "EffectPanel",
+      "path": "Client/Client/Assets/Scripts/Game1/EffectPanel.cs",
+      "responsibility": "Server-triggered small-image effect (EffectCharPaint) attached to coordinates, Char, or Mob."
+    },
+    {
+      "key_methods": [
+        "preDraw",
+        "paint",
+        "keyPressed",
+        "add",
+        "animate"
+      ],
+      "name": "FireWorkEff",
+      "path": "Client/Client/Assets/Scripts/Game1/FireWorkEff.cs",
+      "responsibility": "Legacy standalone firework screen effect driving FireWorkMn/Firework particle bursts."
+    },
+    {
+      "key_methods": [
+        "FrameImage",
+        "drawFrame"
+      ],
+      "name": "FrameImage",
+      "path": "Client/Client/Assets/Scripts/Game1/FrameImage.cs",
+      "responsibility": "Vertical/grid sprite-sheet frame slicer and drawer backed by Image and Effect_End.arrInfoEff metadata."
+    },
+    {
+      "key_methods": [
+        "GameMidlet",
+        "initGame",
+        "exit",
+        "flatForm",
+        "platformRequest"
+      ],
+      "name": "GameMidlet",
+      "path": "Client/Client/Assets/Scripts/Game1/GameMidlet.cs",
+      "responsibility": "Client entry point configuring server IP/PORT, Netty/socket session handlers, RMS defaults, and splash/server-list boot flow."
+    },
+    {
+      "key_methods": [
+        "GamePad",
+        "update",
+        "checkPointerMove",
+        "resetHold",
+        "paint",
+        "disableCheckDrag",
+        "disableClickMove"
+      ],
+      "name": "GamePad",
+      "path": "Client/Client/Assets/Scripts/Game1/GamePad.cs",
+      "responsibility": "On-screen virtual analog joystick translating touch drag vectors into directional keyHold/keyPressed inputs."
+    }
+  ],
+  "module_summary": "Client Game1 visual effect subsystems (Effect, EffecMn, EffectData, Effect_End, EffectManager, EffectPanel, EffectFeet, Firework*), shared data/UI primitives (DefaultItemOptions, Dialog, Frame, FrameImage, Friend, EffectChar/Template/Paint/InfoPaint, EPosition), and input/bootstrap controllers (GamePad, GameMidlet). No direct DB/Redis code; network interaction is limited to requesting missing effect data via Service.gI().getEffData and wiring Session_ME/Session_ME2 to Controller.gI(). Several client Zero-GC violations, loop-removal bugs, unchecked array/null accesses, and character-coordinate mutations in effect code were observed.",
+  "protocol_touchpoints": [
+    {
+      "direction": "DISPATCH",
+      "location": "Client/Client/Assets/Scripts/Game1/Effect.cs:178, 226",
+      "opcode": "Service.gI().getEffData((short)id)",
+      "payload_summary": "Requests binary effect data and sprite sheet from server when local /x{zoomLevel}/effectdata/{id}/data file is missing."
+    }
+  ]
+}

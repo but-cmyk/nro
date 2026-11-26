@@ -138,7 +138,7 @@ public class SetClothes {
                     }
                 }
             } else {
-                break;
+                continue;
             }
         }
     }
@@ -178,7 +178,7 @@ public class SetClothes {
                     }
                 }
             } else {
-                break;
+                continue;
             }
         }
     }

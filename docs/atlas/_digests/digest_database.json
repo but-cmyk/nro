@@ -1,0 +1,902 @@
+{
+  "db_redis_touchpoints_by_batch": {
+    "client_core_render_audio__p01": [
+      {
+        "location": "GameCanvas.cs:425-534, 776-777, 3037; Main.cs:143-145, 231, 275-283, 431-436, 456",
+        "op": "Client local RMS persistence (Rms.Init, Rms.update, Rms.loadRMS/Int/String, Rms.saveRMSInt/saveIP, Rms.clearAll)",
+        "safety_note": "Main.doClearRMS() (Main.cs:427-439) calls Rms.clearAll() whenever `lastZoomlevel != mGraphics.zoomLevel` on PC, wiping saved client settings/RMS cache on zoom change.",
+        "target": "Client RMS local storage (PlayerPrefs/File)"
+      }
+    ],
+    "client_core_render_audio__p02": [
+      {
+        "location": "Client/Client/Assets/Scripts/Game1/SmallImage.cs:76-97",
+        "op": "READ",
+        "safety_note": "Rms.loadRMS('NR_image') wrapped in DataInputStream without using/finally; close() skipped on read exception.",
+        "target": "RMS:NR_image"
+      },
+      {
+        "location": "Client/Client/Assets/Scripts/Game1/SmallImage.cs:157-185",
+        "op": "READ/DELETE",
+        "safety_note": "Rms.loadRMS and Rms.DeleteStorage for '<zoomLevel>Small<id>' invoked synchronously inside drawSmallImage()->createImage() on render path.",
+        "target": "RMS:<zoom>Small<id>"
+      },
+      {
+        "location": "Client/Client/Assets/Scripts/Game1/SoundMn.cs:233-247,365-462",
+        "op": "READ/WRITE",
+        "safety_note": "Rms.loadRMSInt/saveRMSInt for client settings ('default_cfg_v1','screen_size_idx','isPlaySound','serverchat','analog','lowGraphic','isPaintAura','isPaintAura2').",
+        "target": "RMS:settings_keys"
+      }
+    ],
+    "client_gameplay_entities__p07": [
+      {
+        "location": "ImgByName.cs:48,82",
+        "op": "Rms.loadRMS / Rms.saveRMS",
+        "safety_note": "Local client persistent cache (not DB/Redis). Keyed by zoomLevel + 'ImgByName_' + nameImg; corrupt RMS bytes caught and logged via Debug.LogError.",
+        "target": "Client RMS (ImgByName)"
+      },
+      {
+        "location": "LoginScr.cs:175,184,185,262,302,304,359-361,398,403,419,420,425,435,477-481,517,522-530,913,953,957,980-981",
+        "op": "Rms.loadRMS* / Rms.saveRMS* / Rms.saveIP",
+        "safety_note": "Local client persistent settings (acc, pass, check, indServer, userAo/passAo, lowGraphic, IP). Passwords use saveRMSPassword/loadRMSPassword.",
+        "target": "Client RMS (LoginScr)"
+      }
+    ],
+    "server_boss_dungeon_pvp__p04": [
+      {
+        "location": "src/models/boss/boss_list/Training/Whis.java:93-99",
+        "op": "TraningDAO.updatePlayer(playerAtt)",
+        "safety_note": "Called synchronously inside Whis.die() (damage/boss thread) with an empty catch (Exception e) {} block that silently swallows DB/runtime failures; can also be triggered multiple times due to premature-death bug in Whis.injured().",
+        "target": "MySQL via TraningDAO"
+      }
+    ],
+    "server_boss_dungeon_pvp__p05": [
+      {
+        "location": "src/models/phoban/BlackBallWar.java:95, 110, 112",
+        "op": "ASYNC_WRITE / UPDATE",
+        "safety_note": "Calls PlayerDAO.updatePlayerAsync(player) for online players and PlayerDAO.updateBlackBallReward(m.id, (byte) star) for offline clan members inside an unsynchronized virtual thread iterating clan.members.",
+        "target": "MySQL via PlayerDAO (player / black ball reward)"
+      },
+      {
+        "location": "src/models/phoban/TreasureUnderSea.java:116",
+        "op": "UPDATE",
+        "safety_note": "Calls clan.update() synchronously inside TreasureUnderSea.update() when a new BDKB level/time record is set.",
+        "target": "MySQL via Clan.update()"
+      },
+      {
+        "location": "src/models/tournament/DeathOrAliveArena.java:199",
+        "op": "SYNC_WRITE / UPDATE",
+        "safety_note": "Calls blocking PlayerDAO.updatePlayer(player) synchronously on the arena update thread inside champion().",
+        "target": "MySQL via PlayerDAO.updatePlayer"
+      },
+      {
+        "location": "src/models/tournament/super_rank/SuperRank.java:156, 167, 180, 210, 223",
+        "op": "SYNC_READ / SYNC_WRITE",
+        "safety_note": "Calls SuperRankDAO.getRank((int) rivalId) and SuperRankDAO.updatePlayer(...) synchronously in win()/lose() without cross-player DB transaction or lock, allowing rank-swap race conditions across concurrent matches. Note also cast `(int) rivalId` truncates long ID.",
+        "target": "MySQL via SuperRankDAO"
+      }
+    ],
+    "server_boss_dungeon_pvp__p06": [
+      {
+        "location": "src/models/tournament/whis_arena/WhisArenaService.java:163-187",
+        "op": "SELECT `rewards` FROM `whis_arena_rewards` WHERE `player_id` = ?",
+        "safety_note": "Uses try-with-resources and backticks; however addReward() does not load existing DB rows first if pendingArenaRewards cache is cold, so saveRewardsToDB() overwrites existing DB rewards.",
+        "target": "whis_arena_rewards"
+      },
+      {
+        "location": "src/models/tournament/whis_arena/WhisArenaService.java:189-206",
+        "op": "INSERT INTO `whis_arena_rewards` ... ON DUPLICATE KEY UPDATE `rewards` = ?",
+        "safety_note": "Uses try-with-resources and backticks; executed synchronously inside synchronized WhisArenaService.addReward() while holding singleton lock.",
+        "target": "whis_arena_rewards"
+      },
+      {
+        "location": "src/models/tournament/whis_arena/WhisArenaService.java:208-216",
+        "op": "DELETE FROM `whis_arena_rewards` WHERE `player_id` = ?",
+        "safety_note": "Uses try-with-resources and backticks; executed inside synchronized clearRewards()/claimRewards().",
+        "target": "whis_arena_rewards"
+      },
+      {
+        "location": "src/models/tournament/whis_arena/WhisArenaBotManager.java:445-470",
+        "op": "NDVSqlFetcher.loadById(top.getId_player()) in loop",
+        "safety_note": "N+1 DB queries (up to 15 sequential player loads) inside getLeaderboardEntries() on every leaderboard view or findMatch() call.",
+        "target": "player (via NDVSqlFetcher.loadById)"
+      },
+      {
+        "location": "src/services/tournament/DeathOrAliveArenaWeeklyService.java:126-145",
+        "op": "SELECT id, name, arena_wins FROM player WHERE arena_wins > 0 ORDER BY arena_wins DESC, id ASC LIMIT 5",
+        "safety_note": "Uses try-with-resources; no transaction spans reward distribution, UPDATE reset, and JSON file write.",
+        "target": "player"
+      },
+      {
+        "location": "src/services/tournament/DeathOrAliveArenaWeeklyService.java:170-176",
+        "op": "UPDATE player SET arena_wins = 0",
+        "safety_note": "Uses try-with-resources; resets DB before resetting online players in RAM (lines 179-183), creating a window where logout/PlayerDAO.updatePlayer can write stale arenaWins back.",
+        "target": "player"
+      },
+      {
+        "location": "src/models/tournament/whis_arena/WhisArenaMatch.java:359,366; WhisArenaBossMatch.java:285,325,340; WhisArenaPvPMatch.java:292,298; WhisArenaService.java:710; DeathOrAliveArenaService.java:66,145; DeathOrAliveArenaWeeklyService.java:155,244",
+        "op": "PlayerDAO.updatePlayer(player)",
+        "safety_note": "Synchronous full-player DB persistence on match end / challenge start / reward claim.",
+        "target": "player"
+      }
+    ],
+    "server_boss_dungeon_pvp__p07": [
+      {
+        "location": "SuperRankService.java:70",
+        "op": "SuperRankDAO.loadData(player)",
+        "safety_note": "Synchronous DB read executed on caller thread AFTER rank/ticket/gem validation checks (lines 57-68), risking stale checks or overwriting in-memory superRank fields.",
+        "target": "MySQL (SuperRankDAO)"
+      },
+      {
+        "location": "SuperRankService.java:99",
+        "op": "SuperRankDAO.getPlayerListInRank / getPlayerListInRankRange",
+        "safety_note": "Synchronous DB query executed on Netty/caller thread when opening top-100 or challenge list.",
+        "target": "MySQL (SuperRankDAO)"
+      },
+      {
+        "location": "SuperRankService.java:135",
+        "op": "NDVSqlFetcher.loadById(id)",
+        "safety_note": "Synchronous full player DB load executed on caller thread in competing() -> loadPlayer(id).",
+        "target": "MySQL (NDVSqlFetcher)"
+      }
+    ],
+    "server_database_persistence__p01": [
+      {
+        "location": "src/database/AlyraManager.java:44-58,447-480",
+        "op": "HikariCP MySQL pool init & getConnection()",
+        "safety_note": "Single HikariDataSource; sslMode defaults to DISABLED for localhost and VERIFY_IDENTITY for remote; executeQuery copies RS into ResultSetImpl and closes RS/PS/Con in finally/try, executeUpdate uses try-with-resources.",
+        "target": "MySQL HikariCP Pool"
+      },
+      {
+        "location": "src/database/AlyraManager.java:256-332,367-382",
+        "op": "SELECT account + SELECT id FROM player",
+        "safety_note": "Uses PreparedStatement with ? params; however SELECT id FROM player is passed directly to loadPlayer() causing missing-column SQLException; misses ban/DEBUG checks.",
+        "target": "account, player"
+      },
+      {
+        "location": "src/database/daos/NDVSqlFetcher.java:202-366,368-420",
+        "op": "SELECT account, SELECT player, UPDATE account last_time_login/ip_address",
+        "safety_note": "Uses parameterized queries; SELECT * FROM player; login() reads last_time_login/create_time Timestamps without null guards.",
+        "target": "account, player"
+      },
+      {
+        "location": "src/database/daos/PlayerDAO.java:31-372,1320-1639",
+        "op": "INSERT INTO player (createNewPlayer, createPlAo)",
+        "safety_note": "Uses AlyraManager.executeUpdate with values() auto-expansion; createNewPlayer writes \"0\" for data_achievement/giftcode instead of \"[]\".",
+        "target": "player"
+      },
+      {
+        "location": "src/database/daos/PlayerDAO.java:395-404,1172-1260",
+        "op": "UPDATE player (updatePlayer, updatePlayersInTransaction)",
+        "safety_note": "Uses PreparedStatement; `rank` properly backticked; transaction sets autoCommit(false)/commit/rollback; hardcodes boughtSkills = \"[]\"; no per-player save ordering lock.",
+        "target": "player"
+      },
+      {
+        "location": "src/database/daos/PlayerDAO.java:1282-1307,1641-1785",
+        "op": "UPDATE account (cash, sotien, danap, diem_da_nhan, vip*)",
+        "safety_note": "subvnd/subVND2/subcash lack `AND sotien >= ?` / `AND cash >= ?` guards and ignore affected row count; subvnd/subVND2 do not wrap PreparedStatement in try-with-resources.",
+        "target": "account"
+      },
+      {
+        "location": "src/database/daos/PlayerDAO.java:1788-1859",
+        "op": "SELECT + UPDATE player.data_black_ball",
+        "safety_note": "Try-with-resources used, but non-transactional read-modify-write without FOR UPDATE lock.",
+        "target": "player"
+      },
+      {
+        "location": "src/database/daos/EventDAO.java:30-63",
+        "op": "SELECT/UPDATE event WHERE name = 'international_womens_day'",
+        "safety_note": "Backticked columns, but PreparedStatement and ResultSet are not in try-with-resources and never explicitly closed.",
+        "target": "event"
+      },
+      {
+        "location": "src/database/daos/HistoryTransactionDAO.java:85,105-174",
+        "op": "INSERT/DELETE/SELECT history_transaction",
+        "safety_note": "Parameterized queries with try-with-resources; insert() silently catches and ignores exceptions.",
+        "target": "history_transaction"
+      },
+      {
+        "location": "src/database/daos/ShopDAO.java:25-112",
+        "op": "SELECT shop, SELECT tab_shop (twice per tab)",
+        "safety_note": "Try-with-resources used, but severe N+1 pattern querying tab_shop again per tab when loadShopTab already fetched the tab_shop row.",
+        "target": "shop, tab_shop"
+      },
+      {
+        "location": "src/database/daos/SuperRankDAO.java:21-81,159-350",
+        "op": "SELECT/INSERT/UPDATE super_rank, UPDATE player.data_inventory",
+        "safety_note": "`rank` backticked; parameterized queries via AlyraManager; non-atomic highestRank+1 insert on new player; several silent catch blocks.",
+        "target": "super_rank, player"
+      },
+      {
+        "location": "src/database/daos/TraningDAO.java:10-38",
+        "op": "UPDATE player SET data_luyentap = ?",
+        "safety_note": "Parameterized query; writes 10-element data_luyentap while PlayerDAO writes 5-element data_luyentap + data_training, causing login desync.",
+        "target": "player"
+      },
+      {
+        "location": "src/database/loaders/DatabaseTemplateLoader.java:67-877",
+        "op": "Startup SELECT across ~20 template/world/top tables",
+        "safety_note": "Try-with-resources used for all queries; exits JVM on startup error; reloadAchievementTemplate mutates Manager.ACHIEVEMENT_TEMPLATE unsafely.",
+        "target": "part, bg_item_template, array_head_2_frames, clan, skill_template, head_avatar, flag_bag, intrinsic, task_main_template, task_sub_template, side_task_template, clan_task_template, achievement_template, item_template, item_option_template, shop, tab_shop, notify, img_by_name, mob_template, npc_template, shop_ky_gui, map_template, radar, giftcode"
+      }
+    ],
+    "server_database_persistence__p02": [
+      {
+        "location": "src/database/ResultSetImpl.java:18-82",
+        "op": "JDBC ResultSet consumption & resource cleanup (rs.close(), rs.getStatement().close())",
+        "safety_note": "Closes rs and stmt in finally, does not close Connection (assumed managed by caller); buffers all rows in memory; uses getColumnName() instead of getColumnLabel().",
+        "target": "JDBC ResultSet / Statement"
+      }
+    ],
+    "server_economy_items__p01": [
+      {
+        "location": "src/managers/ConsignShopManager.java:54-125",
+        "op": "DELETE FROM shop_ky_gui + batched INSERT INTO shop_ky_gui(...)",
+        "safety_note": "Uses try-with-resources and manual transaction (autoCommit=false), but lacks rollback() on error, un-backticked table/columns, skips save when itemsToSave is empty leaving stale DB rows, and races with async Virtual Thread SQL ops that do not acquire saveLock.",
+        "target": "MySQL: shop_ky_gui"
+      },
+      {
+        "location": "src/managers/ConsignShopManager.java:132-219",
+        "op": "SELECT shop_ky_gui.*, player.name AS player_name FROM shop_ky_gui LEFT JOIN player ... ORDER BY shop_ky_gui.created_at ASC",
+        "safety_note": "Uses try-with-resources; un-backticked table/column names; sets nextItemId via max(id) of active rows only.",
+        "target": "MySQL: shop_ky_gui, player"
+      },
+      {
+        "location": "src/managers/ConsignShopManager.java:268-352",
+        "op": "Virtual Thread async UPDATE isBuy=1 / DELETE / UPDATE isUpTop / INSERT INTO shop_ky_gui",
+        "safety_note": "Uses try-with-resources and backticked identifiers, but spawns unqueued Virtual Threads per call with no ordering guarantee (delete can overtake insert) and no saveLock coordination.",
+        "target": "MySQL: shop_ky_gui"
+      },
+      {
+        "location": "src/managers/ConsignShopManager.java:356-408",
+        "op": "INSERT INTO shop_ky_gui(..., RETURN_GENERATED_KEYS)",
+        "safety_note": "Uses try-with-resources; falls back to in-memory nextItemId on SQL exception and still adds item to listItem, causing memory/DB divergence.",
+        "target": "MySQL: shop_ky_gui"
+      },
+      {
+        "location": "src/services/ConsignShopService.java:392-404",
+        "op": "SELECT COALESCE(MAX(id), 0) as max_id FROM shop_ky_gui",
+        "safety_note": "Uses try-with-resources; un-backticked table name.",
+        "target": "MySQL: shop_ky_gui"
+      },
+      {
+        "location": "src/services/ConsignShopService.java:407-482",
+        "op": "INSERT INTO shop_ky_gui(..., RETURN_GENERATED_KEYS) with commit/rollback",
+        "safety_note": "Uses try-with-resources and explicit rollback on error, restoring autoCommit=true in finally.",
+        "target": "MySQL: shop_ky_gui"
+      }
+    ],
+    "server_economy_items__p02": [
+      {
+        "location": "src/services/func/Input.java:549,570",
+        "op": "AlyraManager.executeQuery(\"select * from player where name = ?\", text[0])",
+        "safety_note": "CRITICAL LEAK: Returned AlyraResultSet is never closed/disposed (no try-with-resources), leaking HikariCP Connection, PreparedStatement, and ResultSet on every name check.",
+        "target": "MySQL table player"
+      },
+      {
+        "location": "src/services/func/Input.java:553,587",
+        "op": "AlyraManager.executeUpdate(\"update player set name = ? where id = ?\", ...)",
+        "safety_note": "Parameterized update; lacks synchronization against concurrent player save/login.",
+        "target": "MySQL table player"
+      },
+      {
+        "location": "src/services/func/Input.java:224,259,341,348",
+        "op": "NDVSqlFetcher.loadPlayerByName(name) / PlayerDAO.updatePlayer(plOffline)",
+        "safety_note": "Read-modify-write on offline player JSON/columns without distributed/row lock; races with concurrent player login or concurrent gifts.",
+        "target": "MySQL player offline gift update"
+      },
+      {
+        "location": "src/services/func/Input.java:420-421",
+        "op": "PlayerDAO.Addvnd(username, addvnd) & PlayerDAO.Addtotalvnd(username, addtotalvnd)",
+        "safety_note": "Admin VND buff without player.isAdmin() check in Input.BUFFVND.",
+        "target": "MySQL account vnd/totalvnd"
+      },
+      {
+        "location": "src/services/func/Input.java:730,745",
+        "op": "clan.update() / clan.deleteDB(clan.id)",
+        "safety_note": "Executed directly on Netty thread without removing other online clan members' clan references in DISSOLUTION_CLAN.",
+        "target": "MySQL clan table"
+      },
+      {
+        "location": "src/services/func/SummonDragonNamek.java:151,154,182,190",
+        "op": "NDVSqlFetcher.loadById(m.id) / PlayerDAO.updatePlayer(pOff)",
+        "safety_note": "N+1 synchronous DB read/write loop on Netty thread for every offline clan member; races with member login.",
+        "target": "MySQL clan members offline wish rewards"
+      },
+      {
+        "location": "src/services/func/Trade.java:454,458",
+        "op": "HistoryTransactionDAO.insertAsync(...) & PlayerDAO.updatePlayersInTransactionAsync(player1, player2)",
+        "safety_note": "Async commit after atomic in-memory swap inside ordered TradeLocks.",
+        "target": "MySQL trade history & player inventories"
+      },
+      {
+        "location": "src/services/func/TransactionService.java:81-83",
+        "op": "AlyraManager.getConnection() in try-with-resources -> PlayerDAO.checkLogout(con, pl/plMap)",
+        "safety_note": "Properly closes connection via try-with-resources, but performs 2 blocking DB queries on Netty thread per trade invite.",
+        "target": "MySQL player logout check"
+      }
+    ],
+    "server_network_core__p01": [
+      {
+        "location": "src/server/Client.java:293-306",
+        "op": "UPDATE (PreparedStatement via AlyraManager.executeUpdate)",
+        "safety_note": "Parameterized SQL (\"UPDATE account SET last_time_logout = ? WHERE id = ?\"), runs on ForkJoinPool.commonPool via CompletableFuture.runAsync rather than Virtual Thread.",
+        "target": "account.last_time_logout"
+      },
+      {
+        "location": "src/network/session/MySession.java:133",
+        "op": "SELECT/AUTH (NDVSqlFetcher.login)",
+        "safety_note": "Called inside per-username synchronized(accountLock) block that is unsafe due to ACCOUNT_LOCKS.remove in finally.",
+        "target": "account / player login tables via NDVSqlFetcher"
+      },
+      {
+        "location": "src/server/Client.java:186-196",
+        "op": "UPDATE (PlayerDAO.updatePlayer)",
+        "safety_note": "Executed asynchronously on a Virtual Thread AFTER player is already removed from Client.playersByUserId, creating a race window on fast reconnect.",
+        "target": "player save tables via PlayerDAO"
+      },
+      {
+        "location": "src/server/Command.java:234",
+        "op": "RELOAD (AlyraManager.reloadData)",
+        "safety_note": "Triggered by admin \"reload\" chat command while ServerManager.isReloading flag is true.",
+        "target": "AlyraManager template/data caches"
+      },
+      {
+        "location": "src/server/command/CommandRegistry.java:425-433",
+        "op": "METRICS (HikariPoolMXBean)",
+        "safety_note": "Reads active, idle, and awaiting connections for console \"status\"/\"stats\" command.",
+        "target": "AlyraManager HikariDataSource pool"
+      }
+    ],
+    "server_network_core__p02": [
+      {
+        "location": "Controller.java:1020-1055",
+        "op": "AlyraManager.executeQuery(\"select * from player where name = ?\", name) + PlayerDAO.createNewPlayer(...)",
+        "safety_note": "Manual rs.dispose() in finally instead of try-with-resources; checks mixed-case name then inserts name.toLowerCase(); TOCTOU race between check and insert.",
+        "target": "MySQL player table"
+      },
+      {
+        "location": "Controller.java:1087-1091",
+        "op": "SuperRankDAO.getRank / SuperRankDAO.insertData",
+        "safety_note": "Blocking JDBC calls executed directly on Netty IO/packet handler thread inside sendInfo().",
+        "target": "MySQL super_rank table"
+      },
+      {
+        "location": "Manager.java:154-194, 390-477",
+        "op": "PreparedStatement + ResultSet via Manager.realTop(query, con)",
+        "safety_note": "Uses try-with-resources; however queryTopSM (line 162) joins p.id = a.id instead of p.account_id = a.id, breaking admin exclusion; queryTopNap uses rs.getInt(\"danap\") risking int overflow.",
+        "target": "MySQL player, account, clan tables"
+      },
+      {
+        "location": "ServerManager.java:66, 177, 369, 416, 492",
+        "op": "HistoryTransactionDAO.deleteHistory(), PlayerDAO.updatePlayer(player), EventDAO.save()",
+        "safety_note": "PlayerDAO.updatePlayer runs in auto-save and parallel virtual threads during shutdown without per-player lock against live mutations.",
+        "target": "MySQL player, history_transaction, event tables"
+      },
+      {
+        "location": "ServerManager.java:518-550",
+        "op": "AlyraManager.executeQuery(\"SELECT id, password FROM account\") + loop AlyraManager.executeUpdate(\"UPDATE account SET password = ? WHERE id = ?\")",
+        "safety_note": "Manual rs.dispose(); loads all accounts into HashMap then issues N+1 updates on background thread after startup while logins may already occur.",
+        "target": "MySQL account table"
+      }
+    ],
+    "server_player_combat__p01": [
+      {
+        "location": "src/models/player/NPoint.java:812,888,1044",
+        "op": "READ (EventDAO.getRemainingTimeToIncreaseHP/MP/Dame)",
+        "safety_note": "Called inside setHpMax/setMpMax/setDame on every calPoint(); verify EventDAO caches these timestamps in memory rather than querying MySQL.",
+        "target": "EventDAO"
+      },
+      {
+        "location": "src/models/player/dto/MagicTreeDTO.java:19-47",
+        "op": "JSON_DESERIALIZE",
+        "safety_note": "Supports JSONObject and legacy JSONArray; parseByte/parseLong via String.valueOf fails if JSON contains floating-point numbers (e.g., 100.0).",
+        "target": "magic_tree JSON column"
+      },
+      {
+        "location": "src/models/player/dto/PlayerPointDTO.java:28-72",
+        "op": "JSON_DESERIALIZE",
+        "safety_note": "Supports JSONObject and legacy JSONArray with bounds checks; same String.valueOf numeric parsing caveat for floating-point JSON values.",
+        "target": "data_point JSON column"
+      }
+    ],
+    "server_player_combat__p02": [
+      {
+        "location": "src/services/player/GiftService.java:148-159",
+        "op": "SELECT 1 FROM gift_code_histories",
+        "safety_note": "P0 Connection Leak: AlyraManager.getConnection() is called outside try-with-resources (only PreparedStatement and ResultSet are closed), leaking a HikariCP connection on every call. (Note: GiftService.use() is commented out, but isUsedGiftCode remains).",
+        "target": "gift_code_histories"
+      },
+      {
+        "location": "src/services/player/ClanService.java:971-979",
+        "op": "UPDATE player SET clan_id = -1 WHERE id = ? LIMIT 1",
+        "safety_note": "Uses try-with-resources for Connection and PreparedStatement, retries 3 times synchronously on the caller thread during kickOut.",
+        "target": "player"
+      },
+      {
+        "location": "src/services/player/ClanService.java:1065-1105",
+        "op": "Batch UPDATE clan SET slogan, img_id, power_point, max_member, clan_point, level, members, name_2, tops WHERE id = ? LIMIT 1",
+        "safety_note": "PreparedStatement ps is NOT inside try-with-resources (only Connection con is) and catch (Exception e) is completely empty, swallowing batch update failures.",
+        "target": "clan"
+      },
+      {
+        "location": "src/models/player/SuperRank.java:77",
+        "op": "SuperRankDAO.updatePlayer(player)",
+        "safety_note": "Called synchronously inside SuperRank.reward(), which is invoked from Player.update() on the zone/player tick loop after midnight.",
+        "target": "super_rank (via SuperRankDAO)"
+      },
+      {
+        "location": "src/services/player/ClanService.java:202,427,855,899,957",
+        "op": "PlayerDAO.updatePlayerAsync(player)",
+        "safety_note": "Async player persistence after clan pea donate (if offline), offline clan join, leave, disband, kick. Note NDVSqlFetcher.loadById at line 397 also runs synchronously during acceptAskJoinClan.",
+        "target": "player (via PlayerDAO / NDVSqlFetcher)"
+      }
+    ],
+    "server_player_combat__p03": [
+      {
+        "location": "src/services/player/PlayerService.java:253-258",
+        "op": "UPDATE account set ban = 1 where id = ? and username = ?",
+        "safety_note": "Parameterized via AlyraManager.executeUpdate (no SQL injection), but runs synchronously on caller thread (blocking I/O), lacks null-check on playerBaned.getSession(), and silently swallows exceptions.",
+        "target": "MySQL: account table"
+      }
+    ],
+    "server_services_bot_telemetry__p01": [
+      {
+        "location": "src/managers/GiftCodeManager.java:61",
+        "op": "UPDATE giftcode SET count_left = ? WHERE id = ?",
+        "safety_note": "Parameterized via AlyraManager.executeUpdate; exception silently swallowed; updateGiftCode() itself is unsynchronized.",
+        "target": "MySQL: giftcode"
+      },
+      {
+        "location": "src/managers/GiftCodeManager.java:81-83",
+        "op": "SELECT * FROM giftcode ORDER BY id DESC",
+        "safety_note": "try-with-resources; rs.getBoolean(\"allGender\") throws SQLException if column holds non-boolean string other than \"all\".",
+        "target": "MySQL: giftcode"
+      },
+      {
+        "location": "src/managers/GiftCodeManager.java:135-144",
+        "op": "INSERT INTO giftcode (code, count_left, detail, allGender, datecreate, expired) VALUES (?, ?, ?, ?, ?, ?)",
+        "safety_note": "try-with-resources, parameterized; inserts detailJson before JSON validation in reload().",
+        "target": "MySQL: giftcode"
+      },
+      {
+        "location": "src/managers/GiftCodeManager.java:156-160",
+        "op": "DELETE FROM giftcode WHERE id = ?",
+        "safety_note": "try-with-resources, parameterized.",
+        "target": "MySQL: giftcode"
+      },
+      {
+        "location": "src/services/admin/AdminApiService.java:1089",
+        "op": "DELETE FROM shop_ky_gui WHERE id = ?",
+        "safety_note": "Parameterized via AlyraManager.executeUpdate; exception silently ignored causing possible memory/DB divergence.",
+        "target": "MySQL: shop_ky_gui"
+      },
+      {
+        "location": "src/services/admin/AdminApiService.java:1123-1125",
+        "op": "SELECT * FROM giftcode ORDER BY id DESC",
+        "safety_note": "try-with-resources, read-only.",
+        "target": "MySQL: giftcode"
+      },
+      {
+        "location": "src/services/admin/AdminService.java:75-79, 92-96",
+        "op": "UPDATE `account` SET `ban` = 1 WHERE `id` = ? / JOIN `player` WHERE p.`name` = ?",
+        "safety_note": "try-with-resources, parameterized, backticked columns; ignores hours parameter (always permanent ban).",
+        "target": "MySQL: account, player"
+      },
+      {
+        "location": "src/services/admin/AdminService.java:113-125",
+        "op": "UPDATE `account` SET `ban` = 0 WHERE `username` = ? / JOIN `player` WHERE p.`name` = ?",
+        "safety_note": "try-with-resources, parameterized, backticked columns.",
+        "target": "MySQL: account, player"
+      },
+      {
+        "location": "src/services/admin/AuditLogService.java:76-102, 132-140, 168-172",
+        "op": "SELECT 1 / CREATE TABLE IF NOT EXISTS / INSERT INTO / SELECT FROM `admin_audit_log`",
+        "safety_note": "try-with-resources, parameterized, backticked; falls back to in-memory ring buffer if startup check/DDL fails without retry.",
+        "target": "MySQL: admin_audit_log"
+      },
+      {
+        "location": "src/services/cache/RedisService.java:111-137",
+        "op": "SETEX / GET / DEL session:user:<userId>",
+        "safety_note": "try-with-resources Jedis with expireSeconds TTL; no-op fallback if !isConnected(), though isConnected never flips to false on runtime failure.",
+        "target": "Redis: session:user:<userId>"
+      },
+      {
+        "location": "src/services/cache/RedisService.java:143-164",
+        "op": "ZADD / ZREVRANGEWITHSCORES leaderboard:<boardName>",
+        "safety_note": "try-with-resources Jedis, no TTL on leaderboard ZSET; returns empty list if disconnected.",
+        "target": "Redis: leaderboard:<boardName>"
+      }
+    ],
+    "server_services_bot_telemetry__p02": [
+      {
+        "location": "src/services/Service.java:114-130",
+        "op": "SELECT id FROM account WHERE username = ? LIMIT 1; INSERT INTO account (username, password, is_admin, sotien, danap) VALUES(...)",
+        "safety_note": "AlyraResultSet rs is not closed via try-with-resources; if an exception occurs between line 114 and 130, rs.dispose() is skipped. Column/table names lack backticks.",
+        "target": "MySQL (AlyraManager) - account table"
+      },
+      {
+        "location": "src/services/Service.java:1514-1515",
+        "op": "UPDATE account SET password = ? WHERE id = ? and username = ?",
+        "safety_note": "Parameterized query, but session.pp in memory is mutated at line 1511 before DB executeUpdate at line 1514.",
+        "target": "MySQL (AlyraManager) - account table"
+      },
+      {
+        "location": "src/services/Service.java:2306",
+        "op": "NDVSqlFetcher.loadById(top.getId_player())",
+        "safety_note": "N+1 DB query executed inside a loop for every offline player in showListTop(), blocking the caller thread.",
+        "target": "MySQL (NDVSqlFetcher) - player table"
+      },
+      {
+        "location": "src/services/TopService.java:44-55",
+        "op": "10 sequential Manager.realTop(..., con) queries every 120s",
+        "safety_note": "Uses try-with-resources on AlyraManager.getConnection(). Runs on dedicated daemon thread.",
+        "target": "MySQL (AlyraManager) - leaderboard queries"
+      }
+    ],
+    "server_task_clan_consts__p02": [
+      {
+        "location": "src/models/clan/Clan.java:323-348",
+        "op": "INSERT into clan (id, name, name_2, slogan, img_id, power_point, max_member, clan_point, level, members, tops)",
+        "safety_note": "Connection uses try-with-resources, but PreparedStatement ps is outside try-with-resources; if prepareStatement fails, finally calls ps.close() causing NPE (swallowed).",
+        "target": "MySQL: clan"
+      },
+      {
+        "location": "src/models/clan/Clan.java:377-407",
+        "op": "UPDATE clan SET slogan, img_id, power_point, max_member, clan_point, level, members, name_2, tops, bdkb_level, bdkb_time WHERE id = ? LIMIT 1",
+        "safety_note": "Connection uses try-with-resources, but PreparedStatement ps is outside try-with-resources (NPE in finally on failure); tops is hardcoded to \"[]\".",
+        "target": "MySQL: clan"
+      },
+      {
+        "location": "src/models/clan/Clan.java:409-419",
+        "op": "DELETE FROM clan WHERE id = ?",
+        "safety_note": "PreparedStatement ps is not in try-with-resources and has no finally block; leaked if executeUpdate throws.",
+        "target": "MySQL: clan"
+      },
+      {
+        "location": "src/models/clan/Clan.java:245",
+        "op": "NDVSqlFetcher.loadById(playerId)",
+        "safety_note": "Synchronous DB fetch inside getPlayerOnline() when player is not in membersInGame.",
+        "target": "MySQL via NDVSqlFetcher"
+      },
+      {
+        "location": "src/event/event_list/InternationalWomensDay.java:10",
+        "op": "EventDAO.loadInternationalWomensDayEvent()",
+        "safety_note": "Called during Event.init() and dynamically via EventManager.setEventState().",
+        "target": "MySQL via EventDAO"
+      }
+    ],
+    "server_world_map_mob__p01": [
+      {
+        "location": "src/models/mob/Mob.java:648",
+        "op": "ASYNC_WRITE",
+        "safety_note": "Calls PlayerDAO.updatePlayerAsync(plReward) directly from Mob.getItemMobReward when daily mob ruby is awarded; no direct JDBC/Redis in this batch.",
+        "target": "database.daos.PlayerDAO.updatePlayerAsync"
+      }
+    ],
+    "server_world_map_mob__p02": [
+      {
+        "location": "src/models/npc/npc_list/BaHatMit.java:389,850,884",
+        "op": "PlayerDAO.updatePlayer(player)",
+        "safety_note": "Called directly from NPC menu handlers (VDST reward, free VDST ticket, buy water bottle); if synchronous JDBC, blocks game/Netty thread.",
+        "target": "MySQL player table (via PlayerDAO)"
+      }
+    ],
+    "server_world_map_mob__p03": [
+      {
+        "location": "src/models/npc/NpcFactory.java:653",
+        "op": "DELETE (via Clan.deleteDB)",
+        "safety_note": "Called without checking if clan != null or clan.isLeader(player) in CONFIRM_DISSOLUTION_CLAN.",
+        "target": "clan table (via Clan.deleteDB)"
+      },
+      {
+        "location": "src/models/npc/NpcFactory.java:779",
+        "op": "UPDATE (async)",
+        "safety_note": "Updates consign item isUpTop without locking the ConsignItem against concurrent buy/cancel.",
+        "target": "consign shop DB (via ConsignShopManager.updateItemUpTopAsync)"
+      },
+      {
+        "location": "src/models/npc/NpcFactory.java:780",
+        "op": "UPDATE (async)",
+        "safety_note": "Persists player after gem deduction in UP_TOP_ITEM.",
+        "target": "player table (via PlayerDAO.updatePlayerAsync)"
+      }
+    ],
+    "tooling_and_tests__p01": [
+      {
+        "location": "test/TestWhisArenaLogic.java:246-248",
+        "op": "SELECT name, tile_id FROM map_template WHERE id = 187",
+        "safety_note": "Uses try-with-resources; hardcoded localhost:3308 root/root credentials; catches exception to skip test if DB unavailable.",
+        "target": "nro_data.map_template"
+      },
+      {
+        "location": "tools/scripts/TestConnection.java:13-28",
+        "op": "SELECT ip_address FROM account LIMIT 1; SELECT is_admin FROM account LIMIT 1",
+        "safety_note": "Uses try-with-resources; hardcoded 127.0.0.1:3306 root/(empty) credentials.",
+        "target": "nro_acc.account"
+      },
+      {
+        "location": "tools/TestMobParse.java:13-21",
+        "op": "DriverManager.getConnection + createStatement (no query executed)",
+        "safety_note": "UNSAFE: Neither Connection nor Statement uses try-with-resources; Statement is never closed and Connection leaks if an exception is thrown before line 21.",
+        "target": "nro_data"
+      },
+      {
+        "location": "tools/TestMobRuntime.java:16",
+        "op": "DatabaseTemplateLoader.gI().loadAllTemplates()",
+        "safety_note": "Delegates to DatabaseTemplateLoader (not in this batch).",
+        "target": "nro_data templates"
+      }
+    ]
+  },
+  "database_findings": [
+    {
+      "batch": "server_boss_dungeon_pvp__p06",
+      "category": "database",
+      "impact": "Winning a Whis Arena match before getRewards() loads existing rewards from DB permanently wipes all previously stored unclaimed rewards in whis_arena_rewards.",
+      "location": "src/models/tournament/whis_arena/WhisArenaService.java:68-104",
+      "root_cause": "addReward() uses pendingArenaRewards.computeIfAbsent(playerId, k -> new CopyOnWriteArrayList<>()) without loading from DB first, and saveRewardsToDB() executes ON DUPLICATE KEY UPDATE rewards = ? overwriting the DB JSON array.",
+      "severity": "P1",
+      "title": "WhisArenaService.addReward overwrites uncached DB rewards on cold cache"
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p06",
+      "category": "database",
+      "impact": "Crash during Sunday reset can cause double weekly gem payouts, stale arenaWins persistence on logout, or corrupted vdst_weekly.json losing unclaimed records.",
+      "location": "src/services/tournament/DeathOrAliveArenaWeeklyService.java:121-201,259-289",
+      "root_cause": "rewardAndReset() performs SELECT, gem payout + PlayerDAO.updatePlayer, UPDATE player SET arena_wins = 0, RAM reset, and FileWriter saveData() without a DB transaction or atomic file write; RAM reset happens after SQL UPDATE.",
+      "severity": "P1",
+      "title": "Non-atomic weekly VDST reset and non-atomic JSON persistence"
+    },
+    {
+      "batch": "server_database_persistence__p01",
+      "category": "database",
+      "impact": "New players fail to initialize achievement entries (swallowed ClassCastException) and players created via createPlAo or with null JSON columns fail to load at login.",
+      "location": "src/database/daos/PlayerDAO.java:361-365,1623-1632; src/database/daos/NDVSqlFetcher.java:716-789,983-1041,1114-1141,1259",
+      "root_cause": "createNewPlayer inserts integer 0 for data_achievement and giftcode which JSONValue.parse parses as Long (causing ClassCastException when cast to JSONArray), and loadPlayer parses several columns with raw `(JSONArray) JSONValue.parse(...)` without null checks.",
+      "severity": "P1",
+      "title": "Unchecked JSONArray casts in NDVSqlFetcher.loadPlayer and invalid scalar '0' defaults in PlayerDAO.createNewPlayer"
+    },
+    {
+      "batch": "server_database_persistence__p01",
+      "category": "database",
+      "impact": "Violates JDBC try-with-resources invariant; leaves PreparedStatement/ResultSet open until Connection returns/closes or garbage collection, risking statement/cursor leaks under load.",
+      "location": "src/database/daos/EventDAO.java:31-33,51-59; src/database/daos/PlayerDAO.java:1642-1651,1662-1669",
+      "root_cause": "EventDAO and PlayerDAO.subvnd/subVND2 open PreparedStatement (and ResultSet in EventDAO) outside try-with-resources; EventDAO and subVND2 never close ps/rs explicitly.",
+      "severity": "P2",
+      "title": "PreparedStatement and ResultSet not managed with try-with-resources in EventDAO and PlayerDAO.subvnd/subVND2"
+    },
+    {
+      "batch": "server_database_persistence__p01",
+      "category": "database",
+      "impact": "Causes N+1 redundant queries on server startup/reload and wastes DB roundtrips on tab_shop.",
+      "location": "src/database/daos/ShopDAO.java:25-112",
+      "root_cause": "loadShopTab runs `SELECT * FROM tab_shop WHERE shop_id = ?`, then for every tab calls loadItemShop which executes `SELECT * FROM tab_shop WHERE tab_index = ? AND shop_id = ?` on the exact same table/row instead of reading the `items` column directly.",
+      "severity": "P2",
+      "title": "Redundant N+1 queries re-fetching tab_shop for every tab in ShopDAO"
+    },
+    {
+      "batch": "server_database_persistence__p01",
+      "category": "database",
+      "impact": "Concurrent SuperRank first-time initializations can assign duplicate ranks; concurrent BlackBall rewards can drop a star update; high stats (>2.14B) truncate in SuperRank display.",
+      "location": "src/database/daos/SuperRankDAO.java:122-124,219-231; src/database/daos/PlayerDAO.java:1788-1859",
+      "root_cause": "SuperRankDAO.loadData computes getCurrentHighestRank() + 1 outside a lock/transaction, and readData casts Long hp/dame/def to intValue(). PlayerDAO.updateBlackBallReward does SELECT then UPDATE without FOR UPDATE.",
+      "severity": "P2",
+      "title": "Non-atomic read-modify-write in SuperRankDAO/updateBlackBallReward and int truncation in SuperRankDAO.readData"
+    },
+    {
+      "batch": "server_database_persistence__p01",
+      "category": "database",
+      "impact": "Transaction audit errors and JSON parse errors are silently dropped; goldP1/goldP2 use int instead of long and gold1Before/After/gold2Before/After are never persisted.",
+      "location": "src/database/daos/HistoryTransactionDAO.java:20-88,166-174; src/database/daos/SuperRankDAO.java:29-78,126-151,216,255; src/database/daos/TraningDAO.java:34-36",
+      "root_cause": "Empty catch blocks swallow exceptions in HistoryTransactionDAO.insert, SuperRankDAO, and NDVSqlFetcher; HistoryTransactionDAO.insert uses += string concat in loops and ignores gold before/after args.",
+      "severity": "P3",
+      "title": "Swallowed SQL/JSON exceptions and unused/int-typed gold parameters in HistoryTransactionDAO and SuperRankDAO"
+    },
+    {
+      "batch": "server_database_persistence__p02",
+      "category": "database",
+      "impact": "Any SQL query using column aliases (e.g., SELECT COUNT(*) AS cnt) or computed expressions fails lookup by alias name via get*(String) and may return 0/null or overwrite keys.",
+      "location": "src/database/ResultSetImpl.java:41-50",
+      "root_cause": "ResultSetImpl constructor calls rsmd.getColumnName(j) instead of rsmd.getColumnLabel(j) when populating rowMap keys.",
+      "severity": "P1",
+      "title": "getColumnName used instead of getColumnLabel breaks SQL aliases"
+    },
+    {
+      "batch": "server_database_persistence__p02",
+      "category": "database",
+      "impact": "Calling getTimestamp() on a DATETIME column in MySQL Connector/J 8.x throws Exception(\"Cannot convert LocalDateTime to Timestamp\") at runtime.",
+      "location": "src/database/ResultSetImpl.java:42,496-541",
+      "root_cause": "Constructor extracts column values via rs.getObject(j) (which returns java.time.LocalDateTime for DATETIME in MySQL 8.x), while getTimestamp(int/String) only handles Timestamp, java.util.Date, and Long.",
+      "severity": "P1",
+      "title": "getTimestamp fails on MySQL 8.x LocalDateTime from rs.getObject"
+    },
+    {
+      "batch": "server_economy_items__p01",
+      "category": "database",
+      "impact": "Consigned items, purchases, or cancellations can be lost, resurrected, or fail with duplicate key errors during periodic save().",
+      "location": "src/managers/ConsignShopManager.java:42-129, 268-352",
+      "root_cause": "save() deletes all rows from shop_ky_gui and re-inserts a snapshot under saveLock, while async Virtual Thread methods (updateItemBoughtAsync, deleteItemAsync, updateItemUpTopAsync, insertItemAsync) execute concurrent SQL writes without acquiring saveLock. Also save() skips deleting DB rows when itemsToSave is empty.",
+      "severity": "P0",
+      "title": "Race condition and data loss between ConsignShopManager.save() and async Virtual Thread DB writes"
+    },
+    {
+      "batch": "server_economy_items__p02",
+      "category": "database",
+      "impact": "Exhausts HikariCP database connection pool under player rename attempts.",
+      "location": "src/services/func/Input.java:549,570",
+      "root_cause": "AlyraManager.executeQuery(\"select * from player where name = ?\", text[0]).next() discards the returned AlyraResultSet without closing/disposing it.",
+      "severity": "P1",
+      "title": "Unclosed AlyraResultSet Connection Leak in Input.CHANGE_NAME & CHANGE_NAME_BY_ITEM"
+    },
+    {
+      "batch": "server_economy_items__p02",
+      "category": "database",
+      "impact": "Namek dragon wish stalls Netty thread with up to ~50 blocking DB roundtrips and risks ConcurrentModificationException and offline login overwrite races; MuaCtService mismatches ruby/gem pricing and credits offline/unlocked sellers.",
+      "location": "src/services/func/SummonDragonNamek.java:143-193 & src/services/func/MuaCtService.java:44,70,97",
+      "root_cause": "SummonDragonNamek iterates clan.members synchronously calling NDVSqlFetcher.loadById and PlayerDAO.updatePlayer per offline member. MuaCtService previews price with getRubyPrice() but charges/matches COST_GEM and credits seller.inventory.gem without verifying online status or locking seller/buyer.",
+      "severity": "P1",
+      "title": "Blocking N+1 DB Loop in SummonDragonNamek & Price/Lock Mismatch in MuaCtService"
+    },
+    {
+      "batch": "server_network_core__p02",
+      "category": "database",
+      "impact": "TOP Sức Mạnh leaderboard fails to exclude admin accounts whose account.id != player.id and wrongly excludes normal players whose player.id happens to match an admin's account.id.",
+      "location": "Manager.java:159-165",
+      "root_cause": "queryTopSM joins `LEFT JOIN account a ON p.id = a.id AND a.is_admin = 1` instead of joining on `p.account_id = a.id`.",
+      "severity": "P1",
+      "title": "Wrong JOIN key in Manager.queryTopSM breaks admin exclusion"
+    },
+    {
+      "batch": "server_network_core__p02",
+      "category": "database",
+      "impact": "Leaks a FileInputStream file descriptor on server startup and on every reloadData() call.",
+      "location": "Manager.java:287-289",
+      "root_cause": "properties.load(new FileInputStream(\"data/config/alyra.properties\")) does not close the FileInputStream via try-with-resources.",
+      "severity": "P2",
+      "title": "Unclosed FileInputStream in Manager.loadProperties()"
+    },
+    {
+      "batch": "server_network_core__p02",
+      "category": "database",
+      "impact": "queryTopNap reads danap as 32-bit int (overflows above ~2.14B VND); migratePasswordsToBCrypt issues N+1 sequential UPDATE statements on startup while server accepts logins.",
+      "location": "Manager.java:410-411;ServerManager.java:518-550",
+      "root_cause": "rs.getInt(\"danap\") instead of getLong; migratePasswordsToBCrypt loops over all accounts issuing individual executeUpdate calls.",
+      "severity": "P3",
+      "title": "32-bit int risk in Manager.queryTopNap and N+1 updates in BCrypt migration"
+    },
+    {
+      "batch": "server_player_combat__p02",
+      "category": "database",
+      "impact": "Every call to isUsedGiftCode leaks a MySQL connection from HikariCP until pool exhaustion.",
+      "location": "src/services/player/GiftService.java:148",
+      "root_cause": "AlyraManager.getConnection().prepareStatement(query) only wraps PreparedStatement in try-with-resources, never closing the Connection.",
+      "severity": "P0",
+      "title": "JDBC Connection leak in GiftService.isUsedGiftCode"
+    },
+    {
+      "batch": "server_player_combat__p02",
+      "category": "database",
+      "impact": "PreparedStatement is not closed on exception and batch update failures are silently ignored; SuperRankDAO.updatePlayer blocks the Player.update() loop.",
+      "location": "src/services/player/ClanService.java:1063-1106; src/models/player/SuperRank.java:77",
+      "root_cause": "ClanService.close() omits PreparedStatement from try-with-resources and has an empty catch block; SuperRank.reward() runs synchronous JDBC inside Player.update().",
+      "severity": "P2",
+      "title": "Resource/exception handling in ClanService.close and sync DB write in Player.update"
+    },
+    {
+      "batch": "server_player_combat__p03",
+      "category": "database",
+      "impact": "NullPointerException if a banned player has null session (silently swallowed, account not banned in DB) and blocking JDBC call on Netty/game thread.",
+      "location": "src/services/player/PlayerService.java:253-263",
+      "root_cause": "banPlayer accesses playerBaned.getSession().userId/uu without null-checking getSession(), runs AlyraManager.executeUpdate synchronously on caller thread, and swallows all exceptions in an empty catch block.",
+      "severity": "P2",
+      "title": "PlayerService.banPlayer lacks session null-check, blocks caller thread, and swallows exceptions"
+    },
+    {
+      "batch": "server_services_bot_telemetry__p01",
+      "category": "database",
+      "impact": "Transient DB or Redis outage at startup or runtime permanently degrades AuditLogService DB persistence or stalls JedisPool borrows up to 3s per call.",
+      "location": "src/services/admin/AuditLogService.java:74-108,129; src/services/cache/RedisService.java:23,97-105",
+      "root_cause": "AuditLogService sets dbTableAvailable = false permanently if startup check/DDL fails; RedisService.isConnected is non-volatile and never updated on runtime Jedis exceptions or reconnection.",
+      "severity": "P2",
+      "title": "AuditLogService and RedisService lack runtime health recovery for transient outages"
+    },
+    {
+      "batch": "server_services_bot_telemetry__p02",
+      "category": "database",
+      "impact": "Clicking Leaderboard triggers up to N synchronous DB loads on the network/game thread, causing lag spikes; failure in `regisAccount()` leaks `AlyraResultSet` / connection.",
+      "location": "src/services/Service.java:114-130, 2294-2307",
+      "root_cause": "`showListTop()` calls `NDVSqlFetcher.loadById(top.getId_player())` inside a loop for every offline top player; `regisAccount()` does not wrap `AlyraResultSet rs` in try-with-resources before `rs.dispose()`.",
+      "severity": "P1",
+      "title": "N+1 DB queries in Service.showListTop() and unclosed AlyraResultSet on exception in Service.regisAccount()"
+    },
+    {
+      "batch": "server_task_clan_consts__p02",
+      "category": "database",
+      "impact": "PreparedStatement leak in deleteDB() on SQL error; NPE in finally block of insert()/update() if getConnection() or prepareStatement() throws, masking or compounding DB errors.",
+      "location": "src/models/clan/Clan.java:323-419",
+      "root_cause": "PreparedStatement ps is declared outside try-with-resources in insert() and update() with unguarded ps.close() in finally; deleteDB() has no finally or try-with-resources for ps.",
+      "severity": "P1",
+      "title": "Unsafe JDBC PreparedStatement lifecycle in Clan DAO methods"
+    },
+    {
+      "batch": "tooling_and_tests__p01",
+      "category": "database",
+      "impact": "JDBC `Statement` is leaked on every run, and `Connection` is leaked if `RedRibbonHQService` or any statement throws an exception.",
+      "location": "tools/TestMobParse.java:13-21",
+      "root_cause": "`DriverManager.getConnection(...)` and `conn.createStatement()` are not wrapped in `try-with-resources`; `stmt` is unused and never closed, and `conn.close()` is outside `finally`.",
+      "severity": "P3",
+      "title": "Resource leak in TestMobParse (missing try-with-resources)"
+    }
+  ],
+  "cross_module_questions": [
+    {
+      "batch": "client_gameplay_entities__p01",
+      "q": "How does TileMap/GameScr trigger BgItem.clearHashTable() and clear BigBoss/BachTuoc/BigBoss2/Mabu static EffectData textures on map exit?"
+    },
+    {
+      "batch": "client_gameplay_entities__p07",
+      "q": "Check GameCanvas/Menu/Panel interaction with LoginScr.paint overwriting tfUser/tfPass/cmdLogin/cmdBackFromRegister coordinates every frame and ignoring cmdMenu/cmdRes/cmdFogetPass."
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p01",
+      "q": "Does BrolyManager.gI().update() get invoked by GameLoopManager/ServerManager? BrolyManager.start() is a stub printing 'Broly đã spawn (fake).', yet BossManager.loadBoss() spawns 10 Broly instances registered into BrolyManager."
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p05",
+      "q": "How do SuperRankDAO.getRank and SuperRankDAO.updatePlayer handle concurrent rank swaps, and does Rival boss constructor or Boss.dispose() clean up anything else?"
+    },
+    {
+      "batch": "server_boss_dungeon_pvp__p06",
+      "q": "How does PlayerDAO.updatePlayer(player) handle concurrent saves when DeathOrAliveArenaWeeklyService.rewardAndReset() updates DB directly via UPDATE player SET arena_wins = 0?"
+    },
+    {
+      "batch": "server_database_persistence__p01",
+      "q": "Which callers invoke AlyraManager.login vs NDVSqlFetcher.login? AlyraManager.login passes a id-only ResultSet to NDVSqlFetcher.loadPlayer and skips ban/maintenance checks."
+    },
+    {
+      "batch": "server_database_persistence__p01",
+      "q": "Are PlayerDAO.subvnd, subVND2, and subcash guarded by caller locks and balance checks, or can concurrent requests drive account.sotien / cash negative?"
+    },
+    {
+      "batch": "server_database_persistence__p01",
+      "q": "How is player.BoughtSkills used elsewhere in skill purchase/validation, given NDVSqlFetcher fails with ClassCastException on Long->int and PlayerDAO hardcodes \"[]\" on save?"
+    },
+    {
+      "batch": "server_database_persistence__p02",
+      "q": "How do AlyraManager / callers invoke ResultSetImpl and close the underlying JDBC Connection when ResultSetImpl closes rs and stmt = rs.getStatement() in its finally block?"
+    },
+    {
+      "batch": "server_economy_items__p02",
+      "q": "Check PlayerDAO.updatePlayer and NDVSqlFetcher.loadPlayerByName / loadById concurrency behavior when Input or SummonDragonNamek modifies offline players while login is in flight."
+    },
+    {
+      "batch": "server_player_combat__p02",
+      "q": "How does Client.gI().getPlayer(int) vs getPlayerByUser(int) behave for offline/online status in FriendAndEnemyService.openListFriend/openListEnemy and ClanService.acceptAskJoinClan (where NDVSqlFetcher.loadById(plxinvao) loads an offline Player and adds it to clan.membersInGame via addMemberOnline)?"
+    },
+    {
+      "batch": "server_services_bot_telemetry__p01",
+      "q": "In AdminService.banPlayer(), is there an account ban expiry column in DB or another module handling temporary bans, since banPlayer() ignores the hours parameter?"
+    },
+    {
+      "batch": "server_services_bot_telemetry__p02",
+      "q": "Does GiftCodeManager.checkUseGiftCode(player, code) atomically mark the code as used in memory and DB under a lock to prevent concurrent redemption races from GiftCodeService.giftCode()?"
+    },
+    {
+      "batch": "server_services_bot_telemetry__p02",
+      "q": "Does AlyraManager.executeQuery return a pooled connection wrapper inside AlyraResultSet that leaks if rs.dispose() is bypassed on exception (Service.java:114-130)?"
+    },
+    {
+      "batch": "server_services_bot_telemetry__p03",
+      "q": "Are legacy plaintext passwords still present in the account table requiring PasswordUtils.verifyPassword() plaintext fallback, or can it be removed?"
+    },
+    {
+      "batch": "server_task_clan_consts__p02",
+      "q": "Where is Clan.getPlayerOnline(int) called (e.g. ClanService), and do callers expect an online-only Player or handle the detached offline Player returned by NDVSqlFetcher.loadById?"
+    },
+    {
+      "batch": "server_task_clan_consts__p02",
+      "q": "Does EventDAO.loadInternationalWomensDayEvent() properly close JDBC resources and avoid duplicate loading if EventManager.setEventState(\"INTERNATIONAL_WOMANS_DAY\", true) is called at runtime?"
+    }
+  ]
+}

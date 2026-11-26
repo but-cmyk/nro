@@ -54,11 +54,25 @@ namespace Game1.Assets.src.e
 			}
 		}
 
+		public void destroyTexture()
+		{
+			if (img != null && img != SmallImage.imgEmpty && img.texture != null)
+			{
+				try
+				{
+					UnityEngine.Object.Destroy(img.texture);
+				}
+				catch (System.Exception) { }
+				img.texture = null;
+			}
+		}
+
 		public void update()
 		{
 			timeUpdate++;
 			if (timeUpdate - timePaint > 1 && !Char.myCharz().isCharBodyImageID(id))
 			{
+				destroyTexture();
 				SmallImage.imgNew[id] = null;
 			}
 		}

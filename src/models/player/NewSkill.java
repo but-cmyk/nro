@@ -49,7 +49,7 @@ public class NewSkill {
     public byte typeItem = 0;
 
     private void update() {
-        if (this.isStartSkillSpecial = true) {
+        if (this.isStartSkillSpecial) {
             SkillService.gI().updateSkillSpecial(player);
         }
     }

@@ -1,0 +1,63 @@
+{
+  "total_batches_targeted": 11,
+  "completed": 11,
+  "errors": 0,
+  "total_raw_findings": 108,
+  "results": [
+    {
+      "batch_id": "server_network_core__p01",
+      "status": "skipped",
+      "findings": 11
+    },
+    {
+      "batch_id": "server_player_combat__p01",
+      "status": "skipped",
+      "findings": 18
+    },
+    {
+      "batch_id": "server_services_bot_telemetry__p02",
+      "status": "skipped",
+      "findings": 11
+    },
+    {
+      "batch_id": "server_services_bot_telemetry__p03",
+      "status": "ok",
+      "findings": 10
+    },
+    {
+      "batch_id": "server_task_clan_consts__p01",
+      "status": "ok",
+      "findings": 7
+    },
+    {
+      "batch_id": "server_task_clan_consts__p02",
+      "status": "ok",
+      "findings": 10
+    },
+    {
+      "batch_id": "server_task_clan_consts__p03",
+      "status": "ok",
+      "findings": 5
+    },
+    {
+      "batch_id": "server_world_map_mob__p01",
+      "status": "ok",
+      "findings": 10
+    },
+    {
+      "batch_id": "server_world_map_mob__p02",
+      "status": "ok",
+      "findings": 11
+    },
+    {
+      "batch_id": "server_world_map_mob__p03",
+      "status": "ok",
+      "findings": 10
+    },
+    {
+      "batch_id": "tooling_and_tests__p01",
+      "status": "ok",
+      "findings": 5
+    }
+  ]
+}

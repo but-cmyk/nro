@@ -178,11 +178,17 @@ public class ConsignShopService {
             msg.writer().writeByte(index);
             msg.writer().writeByte((byte) pageResult.totalPages); // max page
             msg.writer().writeByte(page);
-            msg.writer().writeByte(pageResult.itemsSend.size());
-            for (int j = 0; j < pageResult.itemsSend.size(); j++) {
-                ConsignItem itk = pageResult.itemsSend.get(j);
-                if (itk == null)
-                    continue;
+            List<ConsignItem> validItems = new ArrayList<>();
+            if (pageResult.itemsSend != null) {
+                for (ConsignItem item : pageResult.itemsSend) {
+                    if (item != null && validItems.size() < 255) {
+                        validItems.add(item);
+                    }
+                }
+            }
+            msg.writer().writeByte(validItems.size());
+            for (int j = 0; j < validItems.size(); j++) {
+                ConsignItem itk = validItems.get(j);
                 msg.writer().writeShort(itk.itemId);
                 msg.writer().writeShort(itk.id);
                 msg.writer().writeInt(itk.goldSell);
@@ -375,15 +381,15 @@ public class ConsignShopService {
 
     public boolean itemCanConsign(Item it) {
         if (it != null && it.template != null) {
+            // Chặn tuyệt đối vật phẩm có Option 30 (Không thể giao dịch) trước mọi kiểm tra khác
+            if (it.isHaveOption(30)) {
+                return false;
+            }
             boolean hasConsignOption = it.itemOptions.stream()
                     .anyMatch(op -> op != null && op.optionTemplate != null
                             && (op.optionTemplate.id == 86 || op.optionTemplate.id == 87));
             if (hasConsignOption || it.template.type == 14 || it.template.type == 15) {
                 return true;
-            }
-            // Chặn nếu vật phẩm có Option 30 (Không thể giao dịch) mà không có Option ký gửi
-            if (it.isHaveOption(30)) {
-                return false;
             }
         }
         return false;
@@ -653,15 +659,20 @@ public class ConsignShopService {
             msg.writer().writeByte(5);
             for (byte i = 0; i < 5; i++) {
                 if (i == 4) {
-                    List<ConsignItem> canKiGui = getItemCanKiGui(pl);
+                    List<ConsignItem> rawCanKiGui = getItemCanKiGui(pl);
+                    List<ConsignItem> canKiGui = new ArrayList<>();
+                    if (rawCanKiGui != null) {
+                        for (ConsignItem item : rawCanKiGui) {
+                            if (item != null && canKiGui.size() < 255) {
+                                canKiGui.add(item);
+                            }
+                        }
+                    }
                     msg.writer().writeUTF(ConsignShopManager.gI().tabName[i]);
                     msg.writer().writeByte(0);
                     msg.writer().writeByte(canKiGui.size());
                     for (int j = 0; j < canKiGui.size(); j++) {
                         ConsignItem itk = canKiGui.get(j);
-                        if (itk == null) {
-                            continue;
-                        }
                         msg.writer().writeShort(itk.itemId);
                         msg.writer().writeShort(itk.id);
                         msg.writer().writeInt(itk.goldSell);
@@ -695,13 +706,19 @@ public class ConsignShopService {
                     }
                 } else {
                     ConsignPage pageResult = getConsignPage(i, 0, 20);
+                    List<ConsignItem> validItems = new ArrayList<>();
+                    if (pageResult.itemsSend != null) {
+                        for (ConsignItem item : pageResult.itemsSend) {
+                            if (item != null && validItems.size() < 255) {
+                                validItems.add(item);
+                            }
+                        }
+                    }
                     msg.writer().writeUTF(ConsignShopManager.gI().tabName[i]);
                     msg.writer().writeByte((byte) pageResult.totalPages); // max page
-                    msg.writer().writeByte(pageResult.itemsSend.size());
-                    for (int j = 0; j < pageResult.itemsSend.size(); j++) {
-                        ConsignItem itk = pageResult.itemsSend.get(j);
-                        if (itk == null)
-                            continue;
+                    msg.writer().writeByte(validItems.size());
+                    for (int j = 0; j < validItems.size(); j++) {
+                        ConsignItem itk = validItems.get(j);
                         msg.writer().writeShort(itk.itemId);
                         msg.writer().writeShort(itk.id);
                         msg.writer().writeInt(itk.goldSell);

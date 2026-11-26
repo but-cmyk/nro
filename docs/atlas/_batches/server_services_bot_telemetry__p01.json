@@ -1,0 +1,449 @@
+{
+  "batch_id": "server_services_bot_telemetry__p01",
+  "concurrency_and_state": [
+    "BotManager.bot, PVPManager.pvps, SuperRankManager.waitList/list, DeathOrAliveArenaManager.list, The23rdMartialArtCongressManager.list, WorldMartialArtsTournamentManager.listReg/listWait/listChamp/listTournaments/chatText, and ChatGlobalService.listChatting all use CopyOnWriteArrayList across multi-threaded update loops.",
+    "SuperRankManager.run() calls Iterator.remove() on CopyOnWriteArrayList waitList (line 48, 51), which throws UnsupportedOperationException on every iteration.",
+    "GiftCodeManager uses synchronized on checkUseGiftCode/reload/createGiftCode/deleteGiftCode, but checkInfomationGiftCode iterates unsynchronized listGiftCode concurrently.",
+    "AdminApiService runs on Executors.newVirtualThreadPerTaskExecutor(); ConsignHandler GET synchronizes on ConsignShopManager.gI() while POST remove does not; AdminService.buffMoney/buffItem/saveAllPlayers mutate online/offline Player state without player locks.",
+    "AuditLogService uses a LinkedBlockingQueue drained by a single daemon worker thread plus a Collections.synchronizedList ring buffer (max 200 entries).",
+    "ChatGlobalService.run() runs a single daemon thread draining ConcurrentLinkedQueue waitingChat into CopyOnWriteArrayList listChatting; waitingChat.poll() executes before checking listChatting.size() < 100.",
+    "Bot.useSkill() spawns an unbounded new Thread per cast; Sanb.GetSkil() sets lastTimeSkill1 in the past with negative random offset, causing frequent thread spawning when BotManager.ENABLED is true.",
+    "FlagBagService.getFlagsForChooseClan() lazily populates non-thread-safe ArrayList flagClan without synchronization."
+  ],
+  "cross_module_questions": [
+    "In models.tournament.WorldMartialArtsTournament, does finish() remove itself from WorldMartialArtsTournamentManager.listTournaments, and how do other callers add/remove listReg to avoid races during round transitions?",
+    "How does PlayerDAO.updatePlayer() interact with concurrent login/session state when AdminService.buffMoney()/buffItem() loads an offline player via NDVSqlFetcher.loadPlayerByName()?",
+    "Does models.GiftCode.isUsedGiftCode() perform case-insensitive matching, given GiftCodeManager.createGiftCode() lowercases the code while checkUseGiftCode() uses String.equals()?",
+    "Where is RedisService.setSession/getSession/updateLeaderboard invoked in the codebase, and is there an actual in-memory session/leaderboard fallback implemented when Redis is down?",
+    "In AdminService.banPlayer(), is there an account ban expiry column in DB or another module handling temporary bans, since banPlayer() ignores the hours parameter?"
+  ],
+  "db_redis_touchpoints": [
+    {
+      "location": "src/managers/GiftCodeManager.java:61",
+      "op": "UPDATE giftcode SET count_left = ? WHERE id = ?",
+      "safety_note": "Parameterized via AlyraManager.executeUpdate; exception silently swallowed; updateGiftCode() itself is unsynchronized.",
+      "target": "MySQL: giftcode"
+    },
+    {
+      "location": "src/managers/GiftCodeManager.java:81-83",
+      "op": "SELECT * FROM giftcode ORDER BY id DESC",
+      "safety_note": "try-with-resources; rs.getBoolean(\"allGender\") throws SQLException if column holds non-boolean string other than \"all\".",
+      "target": "MySQL: giftcode"
+    },
+    {
+      "location": "src/managers/GiftCodeManager.java:135-144",
+      "op": "INSERT INTO giftcode (code, count_left, detail, allGender, datecreate, expired) VALUES (?, ?, ?, ?, ?, ?)",
+      "safety_note": "try-with-resources, parameterized; inserts detailJson before JSON validation in reload().",
+      "target": "MySQL: giftcode"
+    },
+    {
+      "location": "src/managers/GiftCodeManager.java:156-160",
+      "op": "DELETE FROM giftcode WHERE id = ?",
+      "safety_note": "try-with-resources, parameterized.",
+      "target": "MySQL: giftcode"
+    },
+    {
+      "location": "src/services/admin/AdminApiService.java:1089",
+      "op": "DELETE FROM shop_ky_gui WHERE id = ?",
+      "safety_note": "Parameterized via AlyraManager.executeUpdate; exception silently ignored causing possible memory/DB divergence.",
+      "target": "MySQL: shop_ky_gui"
+    },
+    {
+      "location": "src/services/admin/AdminApiService.java:1123-1125",
+      "op": "SELECT * FROM giftcode ORDER BY id DESC",
+      "safety_note": "try-with-resources, read-only.",
+      "target": "MySQL: giftcode"
+    },
+    {
+      "location": "src/services/admin/AdminService.java:75-79, 92-96",
+      "op": "UPDATE `account` SET `ban` = 1 WHERE `id` = ? / JOIN `player` WHERE p.`name` = ?",
+      "safety_note": "try-with-resources, parameterized, backticked columns; ignores hours parameter (always permanent ban).",
+      "target": "MySQL: account, player"
+    },
+    {
+      "location": "src/services/admin/AdminService.java:113-125",
+      "op": "UPDATE `account` SET `ban` = 0 WHERE `username` = ? / JOIN `player` WHERE p.`name` = ?",
+      "safety_note": "try-with-resources, parameterized, backticked columns.",
+      "target": "MySQL: account, player"
+    },
+    {
+      "location": "src/services/admin/AuditLogService.java:76-102, 132-140, 168-172",
+      "op": "SELECT 1 / CREATE TABLE IF NOT EXISTS / INSERT INTO / SELECT FROM `admin_audit_log`",
+      "safety_note": "try-with-resources, parameterized, backticked; falls back to in-memory ring buffer if startup check/DDL fails without retry.",
+      "target": "MySQL: admin_audit_log"
+    },
+    {
+      "location": "src/services/cache/RedisService.java:111-137",
+      "op": "SETEX / GET / DEL session:user:<userId>",
+      "safety_note": "try-with-resources Jedis with expireSeconds TTL; no-op fallback if !isConnected(), though isConnected never flips to false on runtime failure.",
+      "target": "Redis: session:user:<userId>"
+    },
+    {
+      "location": "src/services/cache/RedisService.java:143-164",
+      "op": "ZADD / ZREVRANGEWITHSCORES leaderboard:<boardName>",
+      "safety_note": "try-with-resources Jedis, no TTL on leaderboard ZSET; returns empty list if disconnected.",
+      "target": "Redis: leaderboard:<boardName>"
+    }
+  ],
+  "files_read": [
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/bot/Bot.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/bot/BotCold1.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/bot/BotManager.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/bot/BotNappa.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/bot/BotState.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/bot/BotTuonglai.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/bot/GenericBotAI.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/bot/Mobb.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/bot/NamecImitationAI.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/bot/NewBot.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/bot/Sanb.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/managers/GiftCodeManager.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/managers/PVPManager.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/managers/SuperRankManager.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/managers/tournament/DeathOrAliveArenaManager.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/managers/tournament/The23rdMartialArtCongressManager.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/managers/tournament/WorldMartialArtsTournamentManager.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/services/admin/AdminApiService.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/services/admin/AdminService.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/services/admin/AuditLogService.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/services/cache/RedisService.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/services/ChatGlobalService.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/services/EffectSkillService.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/services/FlagBagService.java"
+  ],
+  "findings": [
+    {
+      "category": "security_dupe",
+      "impact": "Any local process or malicious webpage visited by an admin on the same machine can execute arbitrary admin POST endpoints (buff gold/items, ban players, start maintenance, delete trade/giftcode logs) without authentication via CSRF/CORS.",
+      "location": "src/services/admin/AdminApiService.java:54,120-160",
+      "root_cause": "ADMIN_TOKEN is hardcoded (\"nro_admin_secret_2026\"), checkAuth() unconditionally returns true for 127.0.0.1 / 0:0:0:0:0:0:0:1 on all HTTP methods including state-mutating POSTs, and sendJsonResponse sets Access-Control-Allow-Origin: *.",
+      "severity": "P0",
+      "title": "Unauthenticated localhost bypass with wildcard CORS and hardcoded token in AdminApiService"
+    },
+    {
+      "category": "concurrency",
+      "impact": "SuperRank queue permanently stalls or leaks matches/memory because WaitSuperRank entries can never be removed from waitList.",
+      "location": "src/managers/SuperRankManager.java:32,41-56",
+      "root_cause": "SuperRankManager.run() uses Iterator.remove() on waitList, which is a CopyOnWriteArrayList; CopyOnWriteArrayList iterators throw UnsupportedOperationException on remove(), and the exception is swallowed at line 55.",
+      "severity": "P1",
+      "title": "SuperRankManager throws UnsupportedOperationException on CopyOnWriteArrayList iterator.remove()"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Expired giftcodes remain redeemable indefinitely; empty listGiftCode crashes info tutorial with StringIndexOutOfBoundsException; case-mismatched codes fail lookup.",
+      "location": "src/managers/GiftCodeManager.java:35-57,74,89-95,138",
+      "root_cause": "checkUseGiftCode() never validates giftCode.dateexpired, creates case-sensitive equals() against lowercased DB inserts, checkInfomationGiftCode() calls sb.deleteCharAt(sb.length() - 1) when empty without synchronization, and reload() invokes rs.getBoolean(\"allGender\") for non-\"all\" strings.",
+      "severity": "P1",
+      "title": "GiftCodeManager skips expiration check and has unsynchronized iteration/empty crash"
+    },
+    {
+      "category": "security_dupe",
+      "impact": "Players can chat globally with 1 gem while bypass-checking 5 gems, or lose messages when listChatting is full; NPE crashes on null player arguments.",
+      "location": "src/services/ChatGlobalService.java:54-94,109-113,152-166",
+      "root_cause": "chat() checks inventory.checkGemAndRuby(5) at line 75 but deducts only 1 via subGemAndRuby(1) at line 78; run() calls waitingChat.poll() before checking listChatting.size() < COUNT_CHAT, discarding queued messages; chat()/ChatGlobal dereference null player fields.",
+      "severity": "P1",
+      "title": "ChatGlobalService gem deduction mismatch, queue message loss, and null player NPEs"
+    },
+    {
+      "category": "concurrency",
+      "impact": "Concurrent login during offline admin buff can overwrite player inventory/currency in DB; gem/ruby addition can overflow int to negative; invalid itemId causes NPE.",
+      "location": "src/services/admin/AdminService.java:226-302",
+      "root_cause": "buffMoney() and buffItem() load offline players via NDVSqlFetcher and call PlayerDAO.updatePlayer() without locking or checking concurrent login, add int gem/ruby without overflow bounds, and do not verify createNewItem() / bag space before adding.",
+      "severity": "P1",
+      "title": "AdminService offline player buff race condition, int currency overflow, and missing item checks"
+    },
+    {
+      "category": "concurrency",
+      "impact": "Rapid OS thread exhaustion (OOM/CPU spike) and NullPointerException/IllegalArgumentException crashes in bot update loop when BotManager.ENABLED is set true.",
+      "location": "src/bot/Bot.java:467-495; src/bot/Sanb.java:38-78; src/bot/NewBot.java:16",
+      "root_cause": "Bot.useSkill() spawns a new Thread per cast while Sanb.GetSkil() sets lastTimeSkill1 into the past causing near-continuous triggers; Sanb.GetBoss() indexes potentially empty getBosses() and null bossAttack.zone; NewBot.PARTBOT sizes array statically from Manager.ITEM_TEMPLATES.size() at class load.",
+      "severity": "P1",
+      "title": "Bot skill thread-spawning storm, empty-list/null-zone crashes, and static PARTBOT sizing bug"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Body Change Technique effect flag never clears on removal; Mafuba uses wrong typeBinh multiplier on mobs; null zone/skill crashes in skill effects.",
+      "location": "src/services/EffectSkillService.java:335,395,401,697,703-706",
+      "root_cause": "removeBodyChangeTechnique() resets isTanHinh = false instead of isBodyChangeTechnique = false; finishUseMafuba() reads player.effectSkill.typeBinh instead of player.newSkill.typeItem for mobs; multiple methods lack null checks on player.zone and SkillUtil.getSkillbyId().",
+      "severity": "P2",
+      "title": "EffectSkillService copy-paste state reset bug and missing null checks"
+    },
+    {
+      "category": "concurrency",
+      "impact": "Registered players can be dropped at round boundaries; ArrayIndexOutOfBoundsException if getTournament() returns -1 during reward().",
+      "location": "src/managers/tournament/WorldMartialArtsTournamentManager.java:129-173,215",
+      "root_cause": "update() iterates and clears listReg/listWait without locking against concurrent registration threads and indexes ConstTournament.tournamentNames[WorldMartialArtsTournamentService.getTournament()] without checking for -1.",
+      "severity": "P2",
+      "title": "WorldMartialArtsTournamentManager registration list race and negative tournament index crash"
+    },
+    {
+      "category": "concurrency",
+      "impact": "Deleting consign items via Admin API can throw ConcurrentModificationException or diverge from DB; invalid bossId truncation if id exceeds int32; invalid giftcode detail JSON persisted to DB.",
+      "location": "src/services/admin/AdminApiService.java:841,1024,1085-1090,1165",
+      "root_cause": "ConsignHandler POST remove mutates ConsignShopManager without synchronization and ignores DB DELETE errors; GET indexes ITEM_TEMPLATES without bounds check; BossActionHandler reads bossId as int; GiftCodesHandler persists detail JSON before validation.",
+      "severity": "P2",
+      "title": "AdminApiService unsynchronized consign removal, unchecked template indexing, and unvalidated giftcode JSON"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Temporary bans configured with hours > 0 permanently ban accounts while displaying a timed ban message to the player and audit log.",
+      "location": "src/services/admin/AdminService.java:67-105",
+      "root_cause": "banPlayer() formats durationStr and logs hours, but executes UPDATE `account` SET `ban` = 1 without storing or scheduling unban duration.",
+      "severity": "P2",
+      "title": "AdminService.banPlayer ignores duration parameter and applies permanent ban"
+    },
+    {
+      "category": "architecture",
+      "impact": "4 nearly identical bot AI classes and 3 duplicated zone/map-routing methods increase maintenance cost; getRandomZone1/2/3 fallback retries call wrong map pool.",
+      "location": "src/bot/Bot.java:127-344; src/bot/BotCold1.java; src/bot/BotNappa.java; src/bot/BotTuonglai.java; src/bot/Mobb.java",
+      "root_cause": "Copy-pasted BotCold1/BotNappa/BotTuonglai/Mobb classes and MapToPow*/getRandomZone* methods with identical dead gender branches and recursive fallback calling getRandomZone(MapToPow*()) instead of getRandomZone1/2/3.",
+      "severity": "P2",
+      "title": "Heavy code duplication in legacy Bot controllers and broken recursive zone retry routing"
+    },
+    {
+      "category": "database",
+      "impact": "Transient DB or Redis outage at startup or runtime permanently degrades AuditLogService DB persistence or stalls JedisPool borrows up to 3s per call.",
+      "location": "src/services/admin/AuditLogService.java:74-108,129; src/services/cache/RedisService.java:23,97-105",
+      "root_cause": "AuditLogService sets dbTableAvailable = false permanently if startup check/DDL fails; RedisService.isConnected is non-volatile and never updated on runtime Jedis exceptions or reconnection.",
+      "severity": "P2",
+      "title": "AuditLogService and RedisService lack runtime health recovery for transient outages"
+    },
+    {
+      "category": "concurrency",
+      "impact": "Concurrent calls to getFlagsForChooseClan() can corrupt flagClan list or add null elements causing NPE in sendListFlagClan().",
+      "location": "src/services/FlagBagService.java:75,103-113",
+      "root_cause": "Lazy initialization of ArrayList flagClan is unsynchronized and adds getFlagBag(flagsId[i]) without null filtering.",
+      "severity": "P3",
+      "title": "FlagBagService unsynchronized lazy initialization and possible null FlagBag entry"
+    },
+    {
+      "category": "performance_gc",
+      "impact": "Unnecessary object allocations per bot tick, linear template scan per search request, uncached disk read on dashboard load, and stop-the-world pauses via System.gc().",
+      "location": "src/bot/Bot.java:51,58; src/bot/BotCold1.java:29,52; src/services/admin/AdminApiService.java:770,925,1246",
+      "root_cause": "Legacy bots instantiate new Random() on every call; ItemSearchHandler scans all templates linearly; loadDashboardHtml() reads from disk on every request; ServerActionHandler exposes System.gc().",
+      "severity": "P3",
+      "title": "Minor GC/CPU inefficiencies in legacy Bot RNGs and AdminApiService handlers"
+    }
+  ],
+  "key_classes": [
+    {
+      "key_methods": [
+        "update",
+        "joinMap",
+        "getRandomZone",
+        "leakSkill",
+        "increasePoint",
+        "useSkill"
+      ],
+      "name": "Bot",
+      "path": "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/bot/Bot.java",
+      "responsibility": "Player subclass representing server-side bots, handling map routing, stat upgrades, appearance, and delegating AI updates."
+    },
+    {
+      "key_methods": [
+        "update",
+        "doScan",
+        "doMove",
+        "doAttack",
+        "doHeal",
+        "doChangeMap"
+      ],
+      "name": "GenericBotAI",
+      "path": "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/bot/GenericBotAI.java",
+      "responsibility": "Finite-state-machine AI controller for general bots (boss/PvP/mob targeting, smart skill selection, healing, random chat)."
+    },
+    {
+      "key_methods": [
+        "update",
+        "doScan",
+        "doMove",
+        "doAttack",
+        "selectNamecSkill",
+        "checkHeal"
+      ],
+      "name": "NamecImitationAI",
+      "path": "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/bot/NamecImitationAI.java",
+      "responsibility": "Telemetry-trained Namec bot AI replicating human stride movement, Demon/Masenko probabilities, and Gaussian reaction jitter."
+    },
+    {
+      "key_methods": [
+        "LoadPart",
+        "runBot",
+        "spawnNamecArmy"
+      ],
+      "name": "NewBot",
+      "path": "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/bot/NewBot.java",
+      "responsibility": "Bot factory loading equipment templates and spawning generic or Namec-army bot fleets."
+    },
+    {
+      "key_methods": [
+        "gI",
+        "run",
+        "clearAllBots"
+      ],
+      "name": "BotManager",
+      "path": "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/bot/BotManager.java",
+      "responsibility": "Singleton daemon loop ticking active Bot instances (currently disabled via ENABLED = false)."
+    },
+    {
+      "key_methods": [
+        "checkUseGiftCode",
+        "reload",
+        "createGiftCode",
+        "deleteGiftCode"
+      ],
+      "name": "GiftCodeManager",
+      "path": "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/managers/GiftCodeManager.java",
+      "responsibility": "In-memory cache and DB CRUD manager for giftcodes and redemption validation."
+    },
+    {
+      "key_methods": [
+        "run",
+        "update",
+        "addWMAT",
+        "getZoneTournament",
+        "reward"
+      ],
+      "name": "WorldMartialArtsTournamentManager",
+      "path": "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/managers/tournament/WorldMartialArtsTournamentManager.java",
+      "responsibility": "Scheduler and bracket manager for World Martial Arts Tournament registrations, rounds, wait lists, and champion rewards."
+    },
+    {
+      "key_methods": [
+        "run",
+        "canCompete",
+        "SPRCheck",
+        "addWSPR"
+      ],
+      "name": "SuperRankManager",
+      "path": "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/managers/SuperRankManager.java",
+      "responsibility": "Matchmaking queue and active match tracker for Super Rank arena."
+    },
+    {
+      "key_methods": [
+        "start",
+        "stop",
+        "checkAuth"
+      ],
+      "name": "AdminApiService",
+      "path": "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/services/admin/AdminApiService.java",
+      "responsibility": "Embedded Java HttpServer on port 14446 exposing Live Ops web dashboard and REST endpoints for players, bosses, consign, giftcodes, events, audit logs, and telemetry."
+    },
+    {
+      "key_methods": [
+        "kickPlayer",
+        "banPlayer",
+        "unbanAccount",
+        "buffMoney",
+        "buffItem",
+        "reloadGameData"
+      ],
+      "name": "AdminService",
+      "path": "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/services/admin/AdminService.java",
+      "responsibility": "Administrative actions service for moderation, teleportation, currency/item granting, broadcasts, maintenance, and server reload."
+    },
+    {
+      "key_methods": [
+        "log",
+        "getRecentLogs",
+        "persistLog"
+      ],
+      "name": "AuditLogService",
+      "path": "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/services/admin/AuditLogService.java",
+      "responsibility": "Asynchronous admin audit logger writing to MySQL admin_audit_log with a 200-entry in-memory ring buffer fallback."
+    },
+    {
+      "key_methods": [
+        "setSession",
+        "getSession",
+        "removeSession",
+        "updateLeaderboard",
+        "getTopLeaderboard"
+      ],
+      "name": "RedisService",
+      "path": "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/services/cache/RedisService.java",
+      "responsibility": "JedisPool wrapper for session tokens and ZSET leaderboards with graceful disconnect fallback."
+    },
+    {
+      "key_methods": [
+        "chat",
+        "chatVip",
+        "sendThongBaoTheGioi",
+        "run"
+      ],
+      "name": "ChatGlobalService",
+      "path": "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/services/ChatGlobalService.java",
+      "responsibility": "Queued world-chat dispatcher managing rate limits, gem checks, and message broadcast opcode 92."
+    },
+    {
+      "key_methods": [
+        "sendEffectPlayer",
+        "sendEffectMob",
+        "setIsMonkey",
+        "finishUseMafuba",
+        "sendEffectBlindThaiDuongHaSan",
+        "setChibi"
+      ],
+      "name": "EffectSkillService",
+      "path": "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/services/EffectSkillService.java",
+      "responsibility": "Manages skill status effects (stun, hold, chocolate, stone, monkey, mafuba, chibi, charge, shield) and broadcasts effect packets."
+    }
+  ],
+  "module_summary": "Batch server_services_bot_telemetry__p01 spans the Bot AI subsystem (legacy mob/boss bots plus FSM GenericBotAI and telemetry-based NamecImitationAI), tournament/PVP/giftcode managers, Admin LiveOps HTTP API & moderation/audit services, Jedis Redis cache service, and global chat/skill effect/flagbag services. Key risks center on an unauthenticated localhost bypass with wildcard CORS on the Admin HTTP server (P0), CopyOnWriteArrayList Iterator.remove() crash in SuperRankManager, expired giftcodes and currency/race vulnerabilities in GiftCodeManager/ChatGlobalService/AdminService, and thread-spawning/NPE defects in the disabled Bot subsystem.",
+  "protocol_touchpoints": [
+    {
+      "direction": "WRITE",
+      "location": "src/services/ChatGlobalService.java:125-136",
+      "opcode": "92",
+      "payload_summary": "writeUTF(playerName), writeUTF(\"|5|\"+text), writeInt(playerId), writeShort(head), writeShort(-1), writeShort(body), writeShort(bag), writeShort(leg), writeByte(0) -> sendMessAllPlayer"
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/services/EffectSkillService.java:44-49",
+      "opcode": "-45 (sub 8)",
+      "payload_summary": "writeByte(8), writeInt(playerId), writeShort(skillId) -> sendMessAnotherNotMeInMap"
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/services/EffectSkillService.java:592-607",
+      "opcode": "-45 (sub 0)",
+      "payload_summary": "writeByte(0), writeInt(plUseSkill.id), writeShort(skillId), writeByte(mobCount), [byte mobId, byte sec], writeByte(plCount), [int plId, byte sec] -> sendMessAllPlayerInMap"
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/services/EffectSkillService.java:632-686",
+      "opcode": "-45 (sub 1/3/5/6)",
+      "payload_summary": "writeByte(sub: 1 charge / 3 stop charge / 5 end charge / 6 monkey), writeInt(playerId), writeShort(skillId or -1) -> sendMessAllPlayerInMap"
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/services/EffectSkillService.java:58-85",
+      "opcode": "-124",
+      "payload_summary": "writeByte(toggle), writeByte(targetType 0=player/1=mob), [if toggle==2 writeInt(targetId) else writeByte(effect), writeInt/Byte(targetId), writeInt(casterId)] -> sendMessAllPlayerInMap"
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/services/EffectSkillService.java:174-179",
+      "opcode": "-112",
+      "payload_summary": "writeByte(1), writeByte(mob.id), writeShort(4133) -> sendMessAllPlayerInMap (socola mob)"
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/services/FlagBagService.java:35-43",
+      "opcode": "-62",
+      "payload_summary": "writeByte(fb.id), writeByte(iconEffect.length + 1), writeShort(fb.iconId), loop writeShort(iconEffect[i]) -> player.sendMessage"
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/services/FlagBagService.java:54-61",
+      "opcode": "-63",
+      "payload_summary": "writeByte(fb.id), writeByte(iconEffect.length), loop writeShort(iconEffect[i]) -> player.sendMessage"
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/services/FlagBagService.java:71-89",
+      "opcode": "-46",
+      "payload_summary": "writeByte(1), writeByte(list.size()), loop [writeByte(fb.id), writeUTF(displayName), writeInt(fb.gold), writeInt(fb.gem)] -> pl.sendMessage"
+    }
+  ]
+}

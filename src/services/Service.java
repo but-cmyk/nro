@@ -43,7 +43,10 @@ import models.npc.Npc;
 import network.session.Session;
 import models.player.NPoint;
 
-public class Service {
+import interfaces.IGameNotifier;
+import models.DomainPorts;
+
+public class Service implements IGameNotifier {
 
     public static final int[] flagTempId = {363, 364, 365, 366, 367, 368, 369, 370, 371, 519, 520, 747};
     public static final int[] flagIconId = {2761, 2330, 2323, 2327, 2326, 2324, 2329, 2328, 2331, 4386, 4385, 2325};
@@ -55,6 +58,7 @@ public class Service {
         synchronized (Service.class) {
             if (instance == null) {
                 instance = new Service();
+                DomainPorts.registerNotifier(instance);
             }
         }
     }

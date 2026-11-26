@@ -1,0 +1,255 @@
+{
+  "batch_id": "server_world_map_mob__p02",
+  "concurrency_and_state": [
+    "NpcFactory.PLAYERID_OBJECT is written via Npc.createOtherMenu(..., Object) (Npc.java:79) and read in MrPoPo.java:79 and QuyLaoKame.java:195 across player threads.",
+    "GhiDanh.menuSelect (GhiDanh.java:19,37,44) is a mutable instance field on a shared Npc singleton overwritten by concurrent players in map 129.",
+    "Calick.changeMap() (Calick.java:25-39) mutates this.mapId, this.cx, this.cy, this.map and calls map.npcs.remove/add without synchronization.",
+    "BaHatMit.java:461-491 mutates DeathOrAliveArena (vdst.setCuocPlayer, setCuocBaHatMit, addBinhChon) and player.inventory.gold without locking.",
+    "NonInteractiveNPC.update() (NonInteractiveNPC.java:67-75) iterates WorldMartialArtsTournamentManager.gI().chatText without synchronization."
+  ],
+  "cross_module_questions": [
+    "Does PlayerDAO.updatePlayer(player) (called in BaHatMit.java:389,850,884) execute synchronously on the Netty/game thread or offload to a DB executor?",
+    "How does client handler for opcode -81 parse the subcommand byte 1 item-count byte? CayThong.java:150-155 and HungVuong.java:180-183 write count=2 but emit 5 and 3 bag indices respectively.",
+    "Does NoiBanh's cooking completion handler (in Player/Task/Update) subtract ingredients and gold at completion, or are they never deducted?",
+    "Is NpcFactory.PLAYERID_OBJECT a ConcurrentHashMap and are stale entries cleaned up on disconnect?"
+  ],
+  "db_redis_touchpoints": [
+    {
+      "location": "src/models/npc/npc_list/BaHatMit.java:389,850,884",
+      "op": "PlayerDAO.updatePlayer(player)",
+      "safety_note": "Called directly from NPC menu handlers (VDST reward, free VDST ticket, buy water bottle); if synchronous JDBC, blocks game/Netty thread.",
+      "target": "MySQL player table (via PlayerDAO)"
+    }
+  ],
+  "files_read": [
+    "src/models/npc/NonInteractiveNPC.java",
+    "src/models/npc/Npc.java",
+    "src/models/npc/npc_list/Appule.java",
+    "src/models/npc/npc_list/Babiday.java",
+    "src/models/npc/npc_list/BaHatMit.java",
+    "src/models/npc/npc_list/Bardock.java",
+    "src/models/npc/npc_list/Berry.java",
+    "src/models/npc/npc_list/Bill.java",
+    "src/models/npc/npc_list/BoMong.java",
+    "src/models/npc/npc_list/Bulma.java",
+    "src/models/npc/npc_list/BulmaTuongLai.java",
+    "src/models/npc/npc_list/Calick.java",
+    "src/models/npc/npc_list/Cargo.java",
+    "src/models/npc/npc_list/CayThong.java",
+    "src/models/npc/npc_list/Champa.java",
+    "src/models/npc/npc_list/ChiChi.java",
+    "src/models/npc/npc_list/Cui.java",
+    "src/models/npc/npc_list/DaiThienSu.java",
+    "src/models/npc/npc_list/DauThan.java",
+    "src/models/npc/npc_list/Dende.java",
+    "src/models/npc/npc_list/DocNhan.java",
+    "src/models/npc/npc_list/DrDrief.java",
+    "src/models/npc/npc_list/DuongTang.java",
+    "src/models/npc/npc_list/GhiDanh.java",
+    "src/models/npc/npc_list/GiuMaDauBo.java",
+    "src/models/npc/npc_list/GokuSSJ.java",
+    "src/models/npc/npc_list/GokuSSJ2.java",
+    "src/models/npc/npc_list/HungVuong.java",
+    "src/models/npc/npc_list/Jaco.java",
+    "src/models/npc/npc_list/Karin.java",
+    "src/models/npc/npc_list/Kibit.java",
+    "src/models/npc/npc_list/KyGui.java",
+    "src/models/npc/npc_list/LinhCanh.java",
+    "src/models/npc/npc_list/LyTieuNuong.java",
+    "src/models/npc/npc_list/MrPoPo.java",
+    "src/models/npc/npc_list/NgoKhong.java",
+    "src/models/npc/npc_list/NoiBanh.java",
+    "src/models/npc/npc_list/NoiBanh1.java",
+    "src/models/npc/npc_list/OngGohan.java",
+    "src/models/npc/npc_list/OngMoori.java",
+    "src/models/npc/npc_list/OngParagus.java",
+    "src/models/npc/npc_list/Osin.java",
+    "src/models/npc/npc_list/Potage.java",
+    "src/models/npc/npc_list/QuaTrung.java",
+    "src/models/npc/npc_list/QuocVuong.java",
+    "src/models/npc/npc_list/QuyLaoKame.java",
+    "src/models/npc/npc_list/Rong1Sao.java",
+    "src/models/npc/npc_list/Rong2Sao.java",
+    "src/models/npc/npc_list/Rong3Sao.java",
+    "src/models/npc/npc_list/Rong4Sao.java",
+    "src/models/npc/npc_list/Rong5Sao.java"
+  ],
+  "findings": [
+    {
+      "category": "security_dupe",
+      "impact": "Players can craft Cuon sach cu / Sach tuyet ky without having required materials (or trigger NPE in getIndexBag/subQuantityItemsBag), and receive items even with a full bag.",
+      "location": "src/models/npc/npc_list/BaHatMit.java:648-799",
+      "root_cause": "DONG_THANH_SACH_CU and DOI_SACH_TUYET_KY confirm handlers do not re-validate item non-null/quantities (>=9999, >=1, >=10) or empty bag slots before adding reward items and subtracting materials.",
+      "severity": "P0",
+      "title": "Missing material/bag re-validation in BaHatMit book crafting confirmMenu"
+    },
+    {
+      "category": "security_dupe",
+      "impact": "Players can craft event rewards (item 1220, Hop qua thuong/VIP, Van bay, Cai trang) without owning materials, drive player.inventory.gold negative, or cause NPEs.",
+      "location": "src/models/npc/npc_list/CayThong.java:129-216; src/models/npc/npc_list/HungVuong.java:164-303",
+      "root_cause": "Confirm menu handlers in CayThong (MENU_DOI_VPSK) and HungVuong (MENU_SINHLE, MENU_SINHLE_XIN, MENU_SINHLE_BANH_DAY, MENU_SINHLE_BANH_CHUNG) do not re-check item non-null/quantities, gold >= cost, subGemAndRuby return value, or empty bag space.",
+      "severity": "P0",
+      "title": "Missing material/currency/bag validation in CayThong and HungVuong confirm handlers"
+    },
+    {
+      "category": "security_dupe",
+      "impact": "Players can drive gold negative when cooking Banh Chung/Banh Tet in NoiBanh1, and craft Banh Chung using only half the required ingredients.",
+      "location": "src/models/npc/npc_list/NoiBanh1.java:137-185",
+      "root_cause": "NoiBanh1 checks >= 20 for Thit/Nep/Dauxanh/Ladong (line 138) but subtracts only 10 (lines 145-148); neither menu checks player.inventory.gold >= 5_000_000 before executing gold -= 5000000 (lines 152, 179).",
+      "severity": "P1",
+      "title": "NoiBanh1 deducts wrong ingredient quantity and allows negative gold"
+    },
+    {
+      "category": "gameplay",
+      "impact": "CayThong NPC menu in maps 0, 7, 14 is broken and immediately replaced by the map 184 exit menu.",
+      "location": "src/models/npc/npc_list/CayThong.java:32-47",
+      "root_cause": "Switch cases 0, 7, 14 in CayThong.openBaseMenu are missing a break statement and fall through into case 184, overwriting the menu with 'Quay ve / Dong'.",
+      "severity": "P1",
+      "title": "CayThong.openBaseMenu missing break falls through to map 184 menu"
+    },
+    {
+      "category": "protocol",
+      "impact": "Potential client stream desync on combine/craft animation (-81) when 3 or 5 bag indices are written after count byte 2.",
+      "location": "src/models/npc/npc_list/CayThong.java:148-156,188-196; src/models/npc/npc_list/HungVuong.java:178-184,222-228",
+      "root_cause": "Message(-81) writes subcommand 1 and item count byte 2, but then writes 5 bag indices in CayThong and 3 bag indices in HungVuong.",
+      "severity": "P1",
+      "title": "Message -81 item count mismatch in CayThong and HungVuong"
+    },
+    {
+      "category": "security_dupe",
+      "impact": "Players can interact with and confirm menus for almost any NPC from anywhere in the map without being near them.",
+      "location": "src/models/npc/Npc.java:172-175",
+      "root_cause": "canOpenNpc checks (Util.getDistance(...) <= 60 || !MapService.gI().isMapBlackBallWar(mapId)), which bypasses the 60-unit distance check on every non-BlackBallWar map.",
+      "severity": "P2",
+      "title": "Npc.canOpenNpc bypasses distance check on all non-BlackBallWar maps"
+    },
+    {
+      "category": "gameplay",
+      "impact": "BaHatMit case 7 leaves client bag UI out of sync after consuming item 1211; case 6 duplicates case 7 logic when only 1211 is in bag.",
+      "location": "src/models/npc/npc_list/BaHatMit.java:542-566",
+      "root_cause": "In case 7, sendItemBags(player) is called at line 562 before subQuantityItemsBag(player, item, 1) at line 563. In case 6, sendItemBags is not called after subQuantityItemsBag.",
+      "severity": "P2",
+      "title": "BaHatMit snowman turn-in calls sendItemBags before subtracting item"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Same-day clan members (0 days in clan) can enter Doanh Trai and Khi Gas Huy Diet despite the 1-day requirement message.",
+      "location": "src/models/npc/npc_list/LinhCanh.java:35; src/models/npc/npc_list/MrPoPo.java:49",
+      "root_cause": "Both check getNumDateFromJoinTimeToToday() < 0 instead of < 1 while displaying 'Gia nhap bang hoi tren 1 ngay moi duoc tham gia'.",
+      "severity": "P2",
+      "title": "Off-by-one clan join day check in LinhCanh and MrPoPo"
+    },
+    {
+      "category": "concurrency",
+      "impact": "Race condition on Calick map/npcs list and GhiDanh.menuSelect under concurrent player interactions.",
+      "location": "src/models/npc/npc_list/Calick.java:25-39; src/models/npc/npc_list/GhiDanh.java:19,37,44",
+      "root_cause": "Calick.changeMap mutates shared map.npcs and coordinates without synchronization; GhiDanh stores per-player menuSelect array in a shared Npc instance field.",
+      "severity": "P2",
+      "title": "Unsynchronized shared state in Calick and GhiDanh NPCs"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Players who have completed TASK_34_0 cannot teleport to map 155 via Osin in map 154.",
+      "location": "src/models/npc/npc_list/Osin.java:117-125",
+      "root_cause": "In mapId 154 case 0, only the branch TaskService.gI().getIdTask(player) < ConstTask.TASK_34_0 has code; there is no else branch for >= TASK_34_0.",
+      "severity": "P3",
+      "title": "Osin map 154 missing teleport logic when task >= TASK_34_0"
+    },
+    {
+      "category": "concurrency",
+      "impact": "Potential NullPointerException if WorldMartialArtsTournamentManager.gI().chatText is null before loop header executes.",
+      "location": "src/models/npc/NonInteractiveNPC.java:67-75",
+      "root_cause": "For-loop condition calls chatText.size() before checking chatText != null inside the loop body.",
+      "severity": "P3",
+      "title": "Null check placed after .size() in NonInteractiveNPC.update"
+    }
+  ],
+  "key_classes": [
+    {
+      "key_methods": [
+        "initNonInteractiveNPC",
+        "update",
+        "move",
+        "init",
+        "getReferee"
+      ],
+      "name": "NonInteractiveNPC",
+      "path": "src/models/npc/NonInteractiveNPC.java",
+      "responsibility": "Spawns and updates non-interactive Player-backed NPCs (Mr.PoPo, Yajiro, Khi Bubbles, Trong Tai) across maps and tournament arenas."
+    },
+    {
+      "key_methods": [
+        "createOtherMenu",
+        "openBaseMenu",
+        "npcChat",
+        "canOpenNpc"
+      ],
+      "name": "Npc",
+      "path": "src/models/npc/Npc.java",
+      "responsibility": "Abstract base class for interactive NPCs; manages menu message serialization (opcode 32), NPC chat (opcode 124), and open validation."
+    },
+    {
+      "key_methods": [
+        "openBaseMenu",
+        "confirmMenu",
+        "nhanTicketVDSTFree",
+        "buyBinhNuoc",
+        "showHuongDanVDST"
+      ],
+      "name": "BaHatMit",
+      "path": "src/models/npc/npc_list/BaHatMit.java",
+      "responsibility": "Handles item combine/upgrade menus, book crafting, charm shop, and DeathOrAliveArena (VDST) registration/betting/rewards."
+    },
+    {
+      "key_methods": [
+        "openBaseMenu",
+        "confirmMenu",
+        "handleBaseMenu",
+        "tryChallenge",
+        "handleRewardMenu"
+      ],
+      "name": "GhiDanh",
+      "path": "src/models/npc/npc_list/GhiDanh.java",
+      "responsibility": "Handles tournament registration and rewards for WorldMartialArtsTournament (map 52) and DHVT23 (map 129)."
+    },
+    {
+      "key_methods": [
+        "openBaseMenu",
+        "confirmMenu"
+      ],
+      "name": "QuyLaoKame",
+      "path": "src/models/npc/npc_list/QuyLaoKame.java",
+      "responsibility": "Handles skill shop, clan area teleport/disband, TreasureUnderSea (BDKB) dungeon entry, and event turn-in."
+    },
+    {
+      "key_methods": [
+        "openBaseMenu",
+        "confirmMenu"
+      ],
+      "name": "Osin",
+      "path": "src/models/npc/npc_list/Osin.java",
+      "responsibility": "Handles Kaio/Bill/Prison planet travel, MajinBuu event entry, and Mabu tower floor progression/buffs."
+    }
+  ],
+  "module_summary": "Read all 50 files in the NPC subsystem (NonInteractiveNPC, Npc base class, and 48 npc_list classes). Npc extends/implements menu creation (opcode 32), NPC chat (opcode 124), and distance/map checks via canOpenNpc. Individual NPCs in npc_list route player menu selections to CombineService, ShopService, ChangeMapService, TaskService, InventoryService, and pho ban / tournament services. Three NPCs (ChiChi, DuongTang, NgoKhong) are completely commented out, and OngGohan's old VND/Giftcode logic is commented out.",
+  "protocol_touchpoints": [
+    {
+      "direction": "WRITE",
+      "location": "src/models/npc/Npc.java:64-91,106-112",
+      "opcode": "32",
+      "payload_summary": "short tempId, UTF npcSay, byte menuCount, UTF[] menuSelect"
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/models/npc/Npc.java:123-155",
+      "opcode": "124",
+      "payload_summary": "short tempId, UTF text (NPC chat bubble)"
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/models/npc/npc_list/BaHatMit.java:655-791; CayThong.java:141-204; HungVuong.java:171-237",
+      "opcode": "-81",
+      "payload_summary": "Combine/craft animation packets: sub 0 (short tempId), sub 1 (byte count, byte[] bagIndices), sub 7/8 (short iconIDs)"
+    }
+  ]
+}

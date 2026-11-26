@@ -124,18 +124,50 @@ public class SAIBAMEN extends Boss {
         }
     }
 
+    private Player bombTarget;
+
+    @Override
+    public void update() {
+        if (this.playerSkill != null && this.playerSkill.prepareTuSat
+                && Util.canDoWithTime(this.playerSkill.lastTimePrepareTuSat, 2500)) {
+            this.playerSkill.prepareTuSat = false;
+            Player target = this.bombTarget;
+            this.bombTarget = null;
+            setDie(this);
+            die(target);
+            long dame = (long) this.nPoint.hpMax * 100L;
+            if (this.zone != null && !MapService.gI().isMapOffline(this.zone.map.mapId)) {
+                List<Player> playersMap = this.zone.getNotBosses();
+                for (Player pl : playersMap) {
+                    if (!this.equals(pl)) {
+                        pl.injured(this, dame, false, false);
+                        PlayerService.gI().sendInfoHpMpMoney(pl);
+                        Service.gI().Send_Info_NV(pl);
+                    }
+                }
+            }
+            return;
+        }
+        super.update();
+    }
+
     @Override
     public void setBom(Player plAtt) {
         if (!this.playerSkill.prepareTuSat) {
-            for (Player pl : this.zone.getPlayers()) {
-                Service.gI().sendThongBao(pl, pl.name + " coi chừng đấy!");
+            if (this.zone != null) {
+                for (Player pl : this.zone.getPlayers()) {
+                    Service.gI().sendThongBao(pl, pl.name + " coi chừng đấy!");
+                }
             }
-            Service.gI().chat(plAtt, "Trời ơi muộn mất rồi");
-            EffectSkillService.gI().startStun(plAtt, System.currentTimeMillis(), 3500);
-            //gồng tự sát
+            if (plAtt != null) {
+                Service.gI().chat(plAtt, "Trời ơi muộn mất rồi");
+                EffectSkillService.gI().startStun(plAtt, System.currentTimeMillis(), 3500);
+            }
+            this.bombTarget = plAtt;
+            //gồng tự sát (non-blocking: trạng thái được xử lý trong update())
             this.playerSkill.prepareTuSat = true;
             this.playerSkill.lastTimePrepareTuSat = System.currentTimeMillis();
-            Message msg;
+            Message msg = null;
             try {
                 msg = new Message(-45);
                 msg.writer().writeByte(7);
@@ -143,31 +175,14 @@ public class SAIBAMEN extends Boss {
                 msg.writer().writeShort(104);
                 msg.writer().writeShort(2000);
                 Service.gI().sendMessAllPlayerInMap(this, msg);
-                msg.cleanup();
             } catch (Exception e) {
-            }
-            this.nPoint.hp = 0;
-        }
-        Service.gI().chat(this, "He he he");
-        while (this.playerSkill.prepareTuSat) {
-            if (Util.canDoWithTime(this.playerSkill.lastTimePrepareTuSat, 2500)) {
-//                EffectSkillService.gI().removeStun(plAtt);
-                this.playerSkill.prepareTuSat = false;
-                setDie(this);
-                die(plAtt);
-                long dame = (long) this.nPoint.hpMax * 100L;
-                List<Player> playersMap = null;
-                playersMap = this.zone.getNotBosses();
-                if (!MapService.gI().isMapOffline(this.zone.map.mapId)) {
-                    for (Player pl : playersMap) {
-                        if (!this.equals(pl)) {
-                            pl.injured(this, dame, false, false);
-                            PlayerService.gI().sendInfoHpMpMoney(pl);
-                            Service.gI().Send_Info_NV(pl);
-                        }
-                    }
+            } finally {
+                if (msg != null) {
+                    msg.cleanup();
                 }
             }
+            this.nPoint.hp = 0;
+            Service.gI().chat(this, "He he he");
         }
     }
 }

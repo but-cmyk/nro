@@ -40,18 +40,35 @@ public class NangCapSachTuyetKi {
     }
 
     public static void NangCapSachTuyetki(Player player) {
-        if (player.combineNew.itemsCombine.size() == 2) {
-            Item sachTuyetKy = null;
-            Item kimBamGiay = null;
-            for (Item item : player.combineNew.itemsCombine) {
-                if (CombineService.gI().issachTuyetKy(item)) {
-                    sachTuyetKy = item;
-                } else if (item.template.id == 1153) {
-                    kimBamGiay = item;
+        if (player == null || player.combineNew == null || player.inventory == null) {
+            return;
+        }
+        synchronized (player) {
+            if (player.combineNew.itemsCombine.size() == 2) {
+                Item sachTuyetKy = null;
+                Item kimBamGiay = null;
+                for (Item item : player.combineNew.itemsCombine) {
+                    if (item == null || item.template == null) {
+                        continue;
+                    }
+                    if (CombineService.gI().issachTuyetKy(item)
+                            && (item.template.id == 1181 || item.template.id == 1182 || item.template.id == 1183)) {
+                        sachTuyetKy = item;
+                    } else if (item.template.id == 1153) {
+                        kimBamGiay = item;
+                    }
                 }
-            }
-            Item sachTuyetKy_2 = ItemService.gI().createNewItem((short) ((short) sachTuyetKy.template.id + 1));
-            if (sachTuyetKy != null && kimBamGiay != null) {
+                if (sachTuyetKy == null || kimBamGiay == null
+                        || !player.inventory.itemsBag.contains(sachTuyetKy)
+                        || !player.inventory.itemsBag.contains(kimBamGiay)
+                        || sachTuyetKy.quantity < 1) {
+                    Service.gI().sendThongBao(player, "Cần Sách Tuyệt Kỹ hợp lệ và 10 Kìm bấm giấy.");
+                    return;
+                }
+                if (InventoryService.gI().getCountEmptyBag(player) <= 0) {
+                    Service.gI().sendThongBao(player, "Cần 1 ô trống hành trang");
+                    return;
+                }
                 if (kimBamGiay.quantity < 10) {
                     Service.gI().sendThongBao(player, "Không đủ Kìm bấm giấy");
                     return;
@@ -60,12 +77,19 @@ public class NangCapSachTuyetKi {
                     Service.gI().sendThongBao(player, "Chưa giám định");
                     return;
                 }
-                for (int i = 0; i < sachTuyetKy.itemOptions.size(); i++) {
-                    sachTuyetKy_2.itemOptions.add(new ItemOption(sachTuyetKy.itemOptions.get(i).optionTemplate.id, sachTuyetKy.itemOptions.get(i).param));
+                if (Util.isTrue(10, 100)) {
+                    Item sachTuyetKy_2 = ItemService.gI().createNewItem((short) (sachTuyetKy.template.id + 1));
+                    for (int i = 0; i < sachTuyetKy.itemOptions.size(); i++) {
+                        sachTuyetKy_2.itemOptions.add(new ItemOption(
+                                sachTuyetKy.itemOptions.get(i).optionTemplate.id,
+                                sachTuyetKy.itemOptions.get(i).param));
+                    }
+                    CombineService.gI().sendEffectSuccessCombine(player);
+                    InventoryService.gI().addItemBag(player, sachTuyetKy_2);
+                    InventoryService.gI().subQuantityItemsBag(player, sachTuyetKy, 1);
+                } else {
+                    CombineService.gI().sendEffectFailCombine(player);
                 }
-                CombineService.gI().sendEffectSuccessCombine(player);
-                InventoryService.gI().addItemBag(player, sachTuyetKy_2);
-                InventoryService.gI().subQuantityItemsBag(player, sachTuyetKy, 1);
                 InventoryService.gI().subQuantityItemsBag(player, kimBamGiay, 10);
                 InventoryService.gI().sendItemBags(player);
                 CombineService.gI().reOpenItemCombine(player);

@@ -49,13 +49,13 @@ namespace Game1
         private void RegisterHandlers()
         {
             AuthPacketHandler auth = new AuthPacketHandler();
-            Register(auth, NetworkOpcodes.LOGOUT);
+            Register(auth, NetworkOpcodes.SERVER_ALERT);
 
             PlayerStatsPacketHandler stats = new PlayerStatsPacketHandler();
-            Register(stats, NetworkOpcodes.UPDATE_HP, NetworkOpcodes.UPDATE_MP, NetworkOpcodes.UPDATE_EXP, NetworkOpcodes.UPDATE_NANG_DONG);
+            Register(stats, NetworkOpcodes.UPDATE_CURRENCY, NetworkOpcodes.UPDATE_MAX_STAMINA, NetworkOpcodes.UPDATE_STAMINA, NetworkOpcodes.UPDATE_NANG_DONG);
 
             TaskNpcPacketHandler npc = new TaskNpcPacketHandler();
-            Register(npc, NetworkOpcodes.TASK_UPDATE, NetworkOpcodes.NPC_MENU, NetworkOpcodes.NPC_CHAT);
+            Register(npc, NetworkOpcodes.NPC_BIG_MESSAGE, NetworkOpcodes.OPEN_UI_SAY, NetworkOpcodes.NPC_MENU);
 
             ClanPacketHandler clan = new ClanPacketHandler();
             Register(clan, NetworkOpcodes.CLAN_MESSAGE, NetworkOpcodes.CLAN_INFO, NetworkOpcodes.CLAN_UPDATE, NetworkOpcodes.CLAN_MEMBER, NetworkOpcodes.CLAN_SEARCH, NetworkOpcodes.CLAN_CREATE_INFO);

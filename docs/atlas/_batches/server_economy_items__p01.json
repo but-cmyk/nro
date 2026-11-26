@@ -1,0 +1,350 @@
+{
+  "batch_id": "server_economy_items__p01",
+  "concurrency_and_state": [
+    "ConsignShopManager uses two ReentrantLocks (saveLock, listLock) and AtomicInteger nextItemId; however, async DB writers (updateItemBoughtAsync, deleteItemAsync, updateItemUpTopAsync, insertItemAsync) spawn unmanaged Virtual Threads without saveLock, racing against save() DELETE+INSERT.",
+    "ConsignShopService.getItemBuy(Player, int) and getItemCanKiGui(Player) iterate ConsignShopManager.listItem without acquiring listLock or using getItemsSnapshot(), risking ConcurrentModificationException.",
+    "ConsignShopService.buyItem holds the global ConsignShopManager.listLock across inventory copies, bag additions, DB async updates, and openShopKyGui network writes.",
+    "CombineService.startCombine and startCombineVip synchronize on player, whereas CombineService.showInfoCombine and openTabCombine mutate player.combineNew without synchronization.",
+    "CombineService.gI(), BuyBackService.gI(), and EffectMapService.gI() use unsynchronized lazy singleton initialization.",
+    "BuyBackService.addItem mutates player.inventory.itemsDaBan without synchronization."
+  ],
+  "cross_module_questions": [
+    "Where is ConstNpc.UP_TOP_ITEM handled in NPC menu routing, and does the caller set idMark.setIdItemUpTop before/after ConsignShopService.upItemToTop since upItemToTop does not store the consign item id?",
+    "What is the authoritative meaning of item option ID 230 in item_option_template — CuongHoaLoSao/EpSaoTrangBi treat 230 as 8th star-slot strengthening (starvip=1), whereas ChuyenHoaBangNgoc/ChuyenHoaBangVang treat 230 as downgrade count (soLanRotCap)?",
+    "Does PlayerDAO.updatePlayerAsync serialize itemsBag and itemsDaBan atomically, and how is CombineService.startCombineVip invoked from the network Controller (is n validated/clamped before reaching startCombineVip)?",
+    "In ShopService, is BuyBackService.addItem called inside synchronized(player), and how does ShopService handle TabShopHocKyNang?"
+  ],
+  "db_redis_touchpoints": [
+    {
+      "location": "src/managers/ConsignShopManager.java:54-125",
+      "op": "DELETE FROM shop_ky_gui + batched INSERT INTO shop_ky_gui(...)",
+      "safety_note": "Uses try-with-resources and manual transaction (autoCommit=false), but lacks rollback() on error, un-backticked table/columns, skips save when itemsToSave is empty leaving stale DB rows, and races with async Virtual Thread SQL ops that do not acquire saveLock.",
+      "target": "MySQL: shop_ky_gui"
+    },
+    {
+      "location": "src/managers/ConsignShopManager.java:132-219",
+      "op": "SELECT shop_ky_gui.*, player.name AS player_name FROM shop_ky_gui LEFT JOIN player ... ORDER BY shop_ky_gui.created_at ASC",
+      "safety_note": "Uses try-with-resources; un-backticked table/column names; sets nextItemId via max(id) of active rows only.",
+      "target": "MySQL: shop_ky_gui, player"
+    },
+    {
+      "location": "src/managers/ConsignShopManager.java:268-352",
+      "op": "Virtual Thread async UPDATE isBuy=1 / DELETE / UPDATE isUpTop / INSERT INTO shop_ky_gui",
+      "safety_note": "Uses try-with-resources and backticked identifiers, but spawns unqueued Virtual Threads per call with no ordering guarantee (delete can overtake insert) and no saveLock coordination.",
+      "target": "MySQL: shop_ky_gui"
+    },
+    {
+      "location": "src/managers/ConsignShopManager.java:356-408",
+      "op": "INSERT INTO shop_ky_gui(..., RETURN_GENERATED_KEYS)",
+      "safety_note": "Uses try-with-resources; falls back to in-memory nextItemId on SQL exception and still adds item to listItem, causing memory/DB divergence.",
+      "target": "MySQL: shop_ky_gui"
+    },
+    {
+      "location": "src/services/ConsignShopService.java:392-404",
+      "op": "SELECT COALESCE(MAX(id), 0) as max_id FROM shop_ky_gui",
+      "safety_note": "Uses try-with-resources; un-backticked table name.",
+      "target": "MySQL: shop_ky_gui"
+    },
+    {
+      "location": "src/services/ConsignShopService.java:407-482",
+      "op": "INSERT INTO shop_ky_gui(..., RETURN_GENERATED_KEYS) with commit/rollback",
+      "safety_note": "Uses try-with-resources and explicit rollback on error, restoring autoCommit=true in finally.",
+      "target": "MySQL: shop_ky_gui"
+    }
+  ],
+  "files_read": [
+    "src/managers/ConsignShopManager.java (1-430)",
+    "src/models/combine/list/CheTaoDoThienSu.java (1-128)",
+    "src/models/combine/list/ChuyenHoaBangNgoc.java (1-177)",
+    "src/models/combine/list/ChuyenHoaBangVang.java (1-169)",
+    "src/models/combine/list/Combine.java (1-51)",
+    "src/models/combine/list/CuongHoaLoSao.java (1-118)",
+    "src/models/combine/list/DoiDoThan.java (1-109)",
+    "src/models/combine/list/EpSaoTrangBi.java (1-194)",
+    "src/models/combine/list/GiamDinhSach.java (1-82)",
+    "src/models/combine/list/LamPhepNhapDa.java (1-110)",
+    "src/models/combine/list/NangCapBongTai.java (1-154)",
+    "src/models/combine/list/NangCapSachTuyetKi.java (1-75)",
+    "src/models/combine/list/NangCapSaoPhaLe.java (1-153)",
+    "src/models/combine/list/NangCapSetKichHoat.java (1-126)",
+    "src/models/combine/list/NangCapVatPham.java (1-322)",
+    "src/models/combine/list/NangChiSoBongTai.java (1-146)",
+    "src/models/combine/list/NhapNgocRong.java (1-84)",
+    "src/models/combine/list/PhaLeHoaTrangBi.java (1-214)",
+    "src/models/combine/list/PhanRaDoThan.java (1-87)",
+    "src/models/combine/list/PhanRaSach.java (1-79)",
+    "src/models/combine/list/PhucHoiSach.java (1-90)",
+    "src/models/combine/list/TaySach.java (1-81)",
+    "src/models/ConsignItem.java (1-42)",
+    "src/models/item/Item.java (1-275)",
+    "src/models/item/ItemTime.java (1-323)",
+    "src/models/shop/ItemShop.java (1-57)",
+    "src/models/shop/Shop.java (1-82)",
+    "src/models/shop/TabShop.java (1-70)",
+    "src/models/shop/TabShopHocKyNang.java (1-65)",
+    "src/services/CombineService.java (1-875)",
+    "src/services/ConsignShopService.java (1-742)",
+    "src/services/func/BuyBackService.java (1-30)",
+    "src/services/func/EffectMapService.java (1-79)"
+  ],
+  "findings": [
+    {
+      "category": "database",
+      "impact": "Consigned items, purchases, or cancellations can be lost, resurrected, or fail with duplicate key errors during periodic save().",
+      "location": "src/managers/ConsignShopManager.java:42-129, 268-352",
+      "root_cause": "save() deletes all rows from shop_ky_gui and re-inserts a snapshot under saveLock, while async Virtual Thread methods (updateItemBoughtAsync, deleteItemAsync, updateItemUpTopAsync, insertItemAsync) execute concurrent SQL writes without acquiring saveLock. Also save() skips deleting DB rows when itemsToSave is empty.",
+      "severity": "P0",
+      "title": "Race condition and data loss between ConsignShopManager.save() and async Virtual Thread DB writes"
+    },
+    {
+      "category": "protocol",
+      "impact": "Once shop_ky_gui.id exceeds 32767, clients receive truncated/negative item IDs and cannot buy/claim items; older/newer clients or >127 items in tab 4 suffer EOFException/stream desync.",
+      "location": "src/services/ConsignShopService.java:181-213, 659-728",
+      "root_cause": "openShopKyGui writes 32-bit int itk.id via writeShort(itk.id), writes list sizes via writeByte without clamping (>127 overflows), skips null items after writing header count, and openShopKyGui(Player) omits the version>=222 check for quantity and adds an extra newItem byte compared to openShopKyGui(Player, byte, int).",
+      "severity": "P0",
+      "title": "Consign shop protocol ID truncation (writeShort on int id), byte count overflow, and version desync in openShopKyGui"
+    },
+    {
+      "category": "security_dupe",
+      "impact": "Server-side bypass of upgrade/restriction checks: players can convert already-upgraded/socketed equipment, bypass Nâng cấp 10% failure rate for 100% success, upgrade max-tier books into arbitrary item IDs, or consign untradable (opt 30) items.",
+      "location": "src/models/combine/list/ChuyenHoaBangNgoc.java:139-154; src/models/combine/list/ChuyenHoaBangVang.java:132-147; src/models/combine/list/NangCapSachTuyetKi.java:47-72; src/services/ConsignShopService.java:376-389",
+      "root_cause": "Execution methods omit validation present in showInfoCombine: ChuyenHoaBangNgoc/Vang do not check option 72/102 on trangBiCanChuyenHoa; NangCapSachTuyetKi does not restrict template IDs (1181-1183) or roll the 10% chance; ConsignShopService.itemCanConsign returns true for type 14/15 or opt 86/87 before checking opt 30 (making opt 30 check dead code).",
+      "severity": "P0",
+      "title": "Missing server-side validation in combine execution and dead opt-30 trade lock check in ConsignShopService"
+    },
+    {
+      "category": "performance_gc",
+      "impact": "Client sending a large n to startCombineVip(PHA_LE_HOA_TRANG_BI) can stall a Netty worker thread (holding player lock) for hundreds of millions of loop iterations, or hang infinitely if star is out of bounds (goldCost=0, gemCost=0).",
+      "location": "src/models/combine/list/PhaLeHoaTrangBi.java:137-188; src/services/CombineService.java:332-354",
+      "root_cause": "startCombineVip passes arbitrary n to phaLeHoa without validating against {1, 5, 10} or player.combineNew.quantities, and phaLeHoa loops maxAttempts times synchronously with no upper bound.",
+      "severity": "P1",
+      "title": "Unbounded loop DoS in PhaLeHoaTrangBi.phaLeHoa via startCombineVip"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Players lose gold, gems, and materials while receiving no output item when bag is full, or encounter NullPointerException crashes.",
+      "location": "src/models/combine/list/NangCapSachTuyetKi.java:53-70; src/models/combine/list/GiamDinhSach.java:70-73; src/models/combine/list/TaySach.java:74-76; src/models/combine/list/DoiDoThan.java:54-60; src/models/combine/list/NangCapSaoPhaLe.java:52-58, 107-113, 143-148",
+      "root_cause": "These combine handlers call InventoryService.addItemBag BEFORE subtracting source items and without checking getCountEmptyBag(player) > 0. NangCapSachTuyetKi line 53 also dereferences sachTuyetKy.template.id before its null check.",
+      "severity": "P1",
+      "title": "Missing bag-space checks and item-add-before-remove causing item loss and NPE in multiple combine handlers"
+    },
+    {
+      "category": "concurrency",
+      "impact": "ConcurrentModificationException when players open consign shop/sell tab while another thread registers or cancels a consign item, or corrupted combine state when packets race.",
+      "location": "src/services/ConsignShopService.java:158-165, 361, 669; src/services/CombineService.java:109-130, 370-378",
+      "root_cause": "ConsignShopService.getItemBuy(Player, int) and getItemCanKiGui(Player) iterate ConsignShopManager.listItem without listLock/snapshot. CombineService.showInfoCombine mutates player.combineNew without synchronized(player).",
+      "severity": "P1",
+      "title": "Unsynchronized shared list traversal in ConsignShopService and unlocked combineNew mutation in CombineService.showInfoCombine"
+    },
+    {
+      "category": "performance_gc",
+      "impact": "Unbounded heap growth over server uptime leading to OOM, as every distinct option name + param integer creates a permanent String cache entry.",
+      "location": "src/models/item/Item.java:118-122",
+      "root_cause": "ItemOption.OPTION_STRING is a static ConcurrentHashMap with computeIfAbsent(name + \"#\" + param + \"#\") and no size limit or eviction policy.",
+      "severity": "P1",
+      "title": "Unbounded static ConcurrentHashMap cache memory leak in Item.ItemOption.OPTION_STRING"
+    },
+    {
+      "category": "protocol",
+      "impact": "Client receives mismatched item count vs written slot bytes on REOPEN_TAB_COMBINE (-81) or truncated OPEN_TAB_COMBINE when npcChose is null, causing EOFException/UI corruption.",
+      "location": "src/services/CombineService.java:385-387, 491-507",
+      "root_cause": "reOpenItemCombine writes itemsCombine.size() as the byte count header, then skips null or consumed items that are no longer in itemsBag without adjusting the count. openTabCombine omits npcChose.tempId if null.",
+      "severity": "P1",
+      "title": "Protocol stream desync in CombineService.reOpenItemCombine and openTabCombine"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Players can re-strengthen an already-strengthened 8-star item if option 230 precedes option 107; ChuyenHoaBangNgoc/Vang misinterpret option 230 as downgrade penalty and corrupt/duplicate item options on conversion.",
+      "location": "src/models/combine/list/CuongHoaLoSao.java:83-90; src/models/combine/list/ChuyenHoaBangNgoc.java:26-37, 156-165; src/models/combine/list/ChuyenHoaBangVang.java:26-37, 149-157",
+      "root_cause": "Option ID 230 has conflicting meanings across modules; CuongHoaLoSao overwrites checkOption=0 when option 107 appears after 230; ChuyenHoaBangNgoc/Vang copy all options from index 1..n of trangBiGoc onto trangBiCanChuyenHoa without filtering base stats or duplicate option IDs.",
+      "severity": "P1",
+      "title": "Conflicting option 230 semantics, option-order bug in CuongHoaLoSao, and option corruption in ChuyenHoaBangNgoc/Vang"
+    },
+    {
+      "category": "gameplay",
+      "impact": "TaySach never reduces option 225 (luotTay) when decrementing option 232 instead; PhucHoiSach advertises 10M gold but charges 200M gold; CuongHoaLoSao advertises 100% rate but uses 35%; NangCapVatPham NPEs if item lacks base stat option and is missing from startCombineVip; NangCapSaoPhaLe/DoiDoThan lack showInfoCombine cases in CombineService.",
+      "location": "src/models/combine/list/TaySach.java:49-72; src/models/combine/list/PhucHoiSach.java:25, 41, 77; src/models/combine/list/CuongHoaLoSao.java:35, 103; src/models/combine/list/NangCapVatPham.java:82, 183-186; src/services/CombineService.java:131-217, 346-353",
+      "root_cause": "Mismatched UI text vs execution parameters, missing switch cases in CombineService.showInfoCombine and startCombineVip, and unguarded option null dereference.",
+      "severity": "P2",
+      "title": "UI/cost/rate mismatches, TaySach wrong option ID, and missing CombineService routing cases"
+    },
+    {
+      "category": "gameplay",
+      "impact": "ConsignShopService.KiGui duplicate listing check fails for items with options because ItemOption does not override equals(). ConsignShopService.claimOrDel action 2 casts gemSell long to int and ignores gem limits; BuyBackService.addItem NPEs if tagNameShop is null.",
+      "location": "src/services/ConsignShopService.java:568-572, 342; src/models/item/Item.java:91-136; src/services/func/BuyBackService.java:26",
+      "root_cause": "Item.ItemOption lacks equals()/hashCode(), and getTagNameShop() is not null-checked before .equals().",
+      "severity": "P2",
+      "title": "Broken duplicate consign item check (ItemOption.equals) and potential NPE in BuyBackService"
+    },
+    {
+      "category": "performance_gc",
+      "impact": "ItemTime.update() recalculates and sends full player stats multiple times in a single tick when multiple buffs expire simultaneously; Item.getInfo/getInfoItem concatenate Strings in loops.",
+      "location": "src/models/item/ItemTime.java:131-246; src/models/item/Item.java:52-72",
+      "root_cause": "Each expired buff branch directly invokes Service.gI().point(player) instead of setting a boolean dirty flag to recalculate once at the end of update().",
+      "severity": "P3",
+      "title": "Redundant Service.point(player) recalculations in ItemTime.update() and String concatenation in Item.java"
+    }
+  ],
+  "key_classes": [
+    {
+      "key_methods": [
+        "gI",
+        "save",
+        "load",
+        "init",
+        "addItem",
+        "removeItem",
+        "getItemById",
+        "updateItemBoughtAsync",
+        "deleteItemAsync",
+        "updateItemUpTopAsync",
+        "insertItemAsync",
+        "insertItem",
+        "lockItems",
+        "unlockItems",
+        "nextItemId",
+        "getItemsSnapshot"
+      ],
+      "name": "ConsignShopManager",
+      "path": "src/managers/ConsignShopManager.java",
+      "responsibility": "Singleton manager holding in-memory consignment shop list, locks, ID sequence, and MySQL persistence/async updates for shop_ky_gui."
+    },
+    {
+      "key_methods": [
+        "gI",
+        "getConsignPage",
+        "buyItem",
+        "openShopKyGui",
+        "upItemToTop",
+        "claimOrDel",
+        "getItemCanKiGui",
+        "itemCanConsign",
+        "insertConsignItemAndGetId",
+        "KiGui"
+      ],
+      "name": "ConsignShopService",
+      "path": "src/services/ConsignShopService.java",
+      "responsibility": "Handles player consignment listing, purchasing, cancellation, payout claiming with 10% fee, and shop packet serialization."
+    },
+    {
+      "key_methods": [
+        "gI",
+        "showInfoCombine",
+        "startCombine",
+        "startCombineVip",
+        "openTabCombine",
+        "reOpenItemCombine",
+        "sendEffectSuccessCombine",
+        "sendEffectFailCombine"
+      ],
+      "name": "CombineService",
+      "path": "src/services/CombineService.java",
+      "responsibility": "Central router and network message (-81) handler dispatching all item combination/upgrade operations for Ba Hat Mit, Whis, and Shop New."
+    },
+    {
+      "key_methods": [
+        "showInfoCombine",
+        "phaLeHoa",
+        "nangCapVatPham",
+        "epSaoTrangBi",
+        "nangCapBongTai",
+        "nangChiSoBongTai",
+        "nangCapSetKichHoat",
+        "startCombine"
+      ],
+      "name": "Combine Handlers (PhaLeHoaTrangBi, NangCapVatPham, EpSaoTrangBi, etc.)",
+      "path": "src/models/combine/list/",
+      "responsibility": "Individual combine recipes validating materials, gold/gems, success rates, and mutating/creating player equipment, books, star gems, and earrings."
+    },
+    {
+      "key_methods": [
+        "isNotNullItem",
+        "canConsign",
+        "canPhaLeHoa",
+        "addOptionParam",
+        "getOptionParam",
+        "isHaveOption",
+        "getOptionString",
+        "dispose"
+      ],
+      "name": "Item & ItemOption",
+      "path": "src/models/item/Item.java",
+      "responsibility": "Core item instance and option model with template checks, option manipulation, and cached option string formatting."
+    },
+    {
+      "key_methods": [
+        "update",
+        "dispose"
+      ],
+      "name": "ItemTime",
+      "path": "src/models/item/ItemTime.java",
+      "responsibility": "Tracks active timed consumable buffs, radar, auto-play, and power limit timers per player and clears expired buffs on tick."
+    },
+    {
+      "key_methods": [
+        "getItemShop",
+        "isSkillLearned",
+        "getSkillLevel",
+        "dispose"
+      ],
+      "name": "Shop / TabShop / TabShopHocKyNang / ItemShop",
+      "path": "src/models/shop/Shop.java",
+      "responsibility": "NPC shop data hierarchy, gender/skill filtering for shop tabs, and copy constructors per player."
+    },
+    {
+      "key_methods": [
+        "addItem"
+      ],
+      "name": "BuyBackService",
+      "path": "src/services/func/BuyBackService.java",
+      "responsibility": "Maintains up to 100 sold items per player in itemsDaBan for shop buyback."
+    },
+    {
+      "key_methods": [
+        "sendEffectMapToAllInMap"
+      ],
+      "name": "EffectMapService",
+      "path": "src/services/func/EffectMapService.java",
+      "responsibility": "Broadcasts map visual effect packets (opcode 113) to players in a zone."
+    }
+  ],
+  "module_summary": "Read all 33 assigned files (5,819 lines) covering the consignment shop (ConsignShopManager, ConsignShopService, ConsignItem), item combination/upgrade system (CombineService, Combine, and 18 combine recipe classes), item & buff models (Item, ItemTime), NPC shop models (Shop, TabShop, TabShopHocKyNang, ItemShop), and helper services (BuyBackService, EffectMapService). Key risks center on consign shop DB/memory synchronization races, consign protocol ID/size truncation, missing server-side validation and unbounded loops in combine handlers, and conflicting option/bag-space handling across upgrades.",
+  "protocol_touchpoints": [
+    {
+      "direction": "WRITE",
+      "location": "src/services/CombineService.java:381-395",
+      "opcode": "-81 (OPEN_TAB_COMBINE = 0)",
+      "payload_summary": "byte(0), UTF(infoTab), UTF(topTab), conditional short(npcChose.tempId if non-null)"
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/services/CombineService.java:494-514",
+      "opcode": "-81 (REOPEN_TAB_COMBINE = 1)",
+      "payload_summary": "byte(itemsCombine.size()), followed by byte(bagIndex) for each matched item still in itemsBag"
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/services/CombineService.java:464-488, 401-412, 540-563",
+      "opcode": "-81 (COMBINE_SUCCESS=2, COMBINE_FAIL=3, COMBINE_DRAGON_BALL=5, OPEN_ITEM=6, COMBINE_DA_VUN=7)",
+      "payload_summary": "byte(subOpcode), optional short(icon1), optional short(icon2)"
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/services/ConsignShopService.java:177-223",
+      "opcode": "-100 (Consign shop page)",
+      "payload_summary": "byte(tabIndex), byte(totalPages), byte(page), byte(count), per item: short(itemId), short(id), int(goldSell), int(gemSell), byte(0), int/byte(quantity by version>=222), byte(isMe), byte(optCount)+opts(byte id, short param), byte(0), optional UTF(playerName if version>=237)"
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/services/ConsignShopService.java:651-740",
+      "opcode": "-44 (Open full consign shop)",
+      "payload_summary": "byte(2), byte(5 tabs), per tab: UTF(name), byte(totalPages), byte(count), per item: short(itemId), short(id), int(goldSell), int(gemSell), byte(buyType), int(quantity), byte(isMe), opts, byte(0), byte(0), optional UTF(playerName if version>=237)"
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/services/func/EffectMapService.java:44-76",
+      "opcode": "113 (Effect map)",
+      "payload_summary": "byte(loop), byte(layer), byte(id), short(x), short(y), short(delay)"
+    }
+  ]
+}

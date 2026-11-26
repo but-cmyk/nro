@@ -1,0 +1,1353 @@
+{
+  "sql_files": [
+    "docker/initdb/01_init.sql",
+    "docker/initdb/02_nro_data.sql",
+    "docker/initdb/03_optimize_db.sql",
+    "docker/initdb/04_audit_log.sql"
+  ],
+  "table_count": 44,
+  "tables": {
+    "account": {
+      "defined_in": "docker/initdb/02_nro_data.sql",
+      "engine": "unknown",
+      "column_count": 2,
+      "columns": [
+        {
+          "name": "id",
+          "type": "int"
+        },
+        {
+          "name": "username",
+          "type": "varchar(20"
+        }
+      ],
+      "indexes": [],
+      "referenced_by_java": [
+        "src/database/AlyraManager.java",
+        "src/database/daos/NDVSqlFetcher.java",
+        "src/database/daos/PlayerDAO.java",
+        "src/server/Client.java",
+        "src/server/Manager.java",
+        "src/server/ServerManager.java",
+        "src/services/admin/AdminService.java",
+        "src/services/player/PlayerService.java",
+        "src/services/Service.java"
+      ]
+    },
+    "achievement_template": {
+      "defined_in": "docker/initdb/02_nro_data.sql",
+      "engine": "unknown",
+      "column_count": 5,
+      "columns": [
+        {
+          "name": "id",
+          "type": "int"
+        },
+        {
+          "name": "info1",
+          "type": "text"
+        },
+        {
+          "name": "info2",
+          "type": "text"
+        },
+        {
+          "name": "money",
+          "type": "int"
+        },
+        {
+          "name": "max_count",
+          "type": "bigint"
+        }
+      ],
+      "indexes": [
+        "PRIMARY KEY (`id`"
+      ],
+      "referenced_by_java": [
+        "src/database/loaders/DatabaseTemplateLoader.java"
+      ]
+    },
+    "adminpanel": {
+      "defined_in": "docker/initdb/02_nro_data.sql",
+      "engine": "unknown",
+      "column_count": 2,
+      "columns": [
+        {
+          "name": "id",
+          "type": "int"
+        },
+        {
+          "name": "domain",
+          "type": "varchar(255"
+        }
+      ],
+      "indexes": [],
+      "referenced_by_java": []
+    },
+    "array_head_2_frames": {
+      "defined_in": "docker/initdb/02_nro_data.sql",
+      "engine": "unknown",
+      "column_count": 2,
+      "columns": [
+        {
+          "name": "id",
+          "type": "int"
+        },
+        {
+          "name": "data",
+          "type": "text"
+        }
+      ],
+      "indexes": [
+        "PRIMARY KEY (`id`"
+      ],
+      "referenced_by_java": [
+        "src/database/loaders/DatabaseTemplateLoader.java"
+      ]
+    },
+    "bg_item_template": {
+      "defined_in": "docker/initdb/02_nro_data.sql",
+      "engine": "unknown",
+      "column_count": 5,
+      "columns": [
+        {
+          "name": "id",
+          "type": "int"
+        },
+        {
+          "name": "image_id",
+          "type": "int"
+        },
+        {
+          "name": "layer",
+          "type": "int"
+        },
+        {
+          "name": "dx",
+          "type": "int"
+        },
+        {
+          "name": "dy",
+          "type": "int"
+        }
+      ],
+      "indexes": [
+        "PRIMARY KEY (`id`"
+      ],
+      "referenced_by_java": [
+        "src/database/loaders/DatabaseTemplateLoader.java"
+      ]
+    },
+    "clan": {
+      "defined_in": "docker/initdb/02_nro_data.sql",
+      "engine": "unknown",
+      "column_count": 2,
+      "columns": [
+        {
+          "name": "id",
+          "type": "int"
+        },
+        {
+          "name": "NAME",
+          "type": "varchar(255"
+        }
+      ],
+      "indexes": [],
+      "referenced_by_java": [
+        "src/database/loaders/DatabaseTemplateLoader.java",
+        "src/models/clan/Clan.java",
+        "src/server/Manager.java",
+        "src/services/player/ClanService.java"
+      ]
+    },
+    "clan_task_template": {
+      "defined_in": "docker/initdb/02_nro_data.sql",
+      "engine": "unknown",
+      "column_count": 2,
+      "columns": [
+        {
+          "name": "id",
+          "type": "int"
+        },
+        {
+          "name": "NAME",
+          "type": "varchar(255"
+        }
+      ],
+      "indexes": [],
+      "referenced_by_java": [
+        "src/database/loaders/DatabaseTemplateLoader.java"
+      ]
+    },
+    "comments": {
+      "defined_in": "docker/initdb/02_nro_data.sql",
+      "engine": "unknown",
+      "column_count": 3,
+      "columns": [
+        {
+          "name": "id",
+          "type": "int"
+        },
+        {
+          "name": "post_id",
+          "type": "int"
+        },
+        {
+          "name": "nguoidung",
+          "type": "varchar(255"
+        }
+      ],
+      "indexes": [],
+      "referenced_by_java": []
+    },
+    "event": {
+      "defined_in": "docker/initdb/02_nro_data.sql",
+      "engine": "unknown",
+      "column_count": 3,
+      "columns": [
+        {
+          "name": "id",
+          "type": "int"
+        },
+        {
+          "name": "name",
+          "type": "text"
+        },
+        {
+          "name": "data",
+          "type": "text"
+        }
+      ],
+      "indexes": [
+        "PRIMARY KEY (`id`"
+      ],
+      "referenced_by_java": [
+        "src/database/daos/EventDAO.java"
+      ]
+    },
+    "flag_bag": {
+      "defined_in": "docker/initdb/02_nro_data.sql",
+      "engine": "unknown",
+      "column_count": 2,
+      "columns": [
+        {
+          "name": "id",
+          "type": "int"
+        },
+        {
+          "name": "icon_data",
+          "type": "varchar(1000"
+        }
+      ],
+      "indexes": [],
+      "referenced_by_java": [
+        "src/database/loaders/DatabaseTemplateLoader.java"
+      ]
+    },
+    "giftcode": {
+      "defined_in": "docker/initdb/02_nro_data.sql",
+      "engine": "unknown",
+      "column_count": 7,
+      "columns": [
+        {
+          "name": "id",
+          "type": "int"
+        },
+        {
+          "name": "code",
+          "type": "text"
+        },
+        {
+          "name": "count_left",
+          "type": "int"
+        },
+        {
+          "name": "detail",
+          "type": "text"
+        },
+        {
+          "name": "allGender",
+          "type": "text"
+        },
+        {
+          "name": "datecreate",
+          "type": "timestamp"
+        },
+        {
+          "name": "expired",
+          "type": "timestamp"
+        }
+      ],
+      "indexes": [
+        "PRIMARY KEY (`id`"
+      ],
+      "referenced_by_java": [
+        "src/database/loaders/DatabaseTemplateLoader.java",
+        "src/managers/GiftCodeManager.java",
+        "src/services/admin/AdminApiService.java"
+      ]
+    },
+    "head_avatar": {
+      "defined_in": "docker/initdb/02_nro_data.sql",
+      "engine": "unknown",
+      "column_count": 2,
+      "columns": [
+        {
+          "name": "head_id",
+          "type": "int"
+        },
+        {
+          "name": "avatar_id",
+          "type": "int"
+        }
+      ],
+      "indexes": [
+        "PRIMARY KEY (`head_id`"
+      ],
+      "referenced_by_java": [
+        "src/database/loaders/DatabaseTemplateLoader.java"
+      ]
+    },
+    "history_transaction": {
+      "defined_in": "docker/initdb/02_nro_data.sql",
+      "engine": "unknown",
+      "column_count": 2,
+      "columns": [
+        {
+          "name": "id",
+          "type": "int"
+        },
+        {
+          "name": "player_1",
+          "type": "varchar(255"
+        }
+      ],
+      "indexes": [],
+      "referenced_by_java": [
+        "src/database/daos/HistoryTransactionDAO.java"
+      ]
+    },
+    "img_by_name": {
+      "defined_in": "docker/initdb/02_nro_data.sql",
+      "engine": "unknown",
+      "column_count": 2,
+      "columns": [
+        {
+          "name": "id",
+          "type": "int"
+        },
+        {
+          "name": "NAME",
+          "type": "varchar(55"
+        }
+      ],
+      "indexes": [],
+      "referenced_by_java": [
+        "src/database/loaders/DatabaseTemplateLoader.java"
+      ]
+    },
+    "intrinsic": {
+      "defined_in": "docker/initdb/02_nro_data.sql",
+      "engine": "unknown",
+      "column_count": 2,
+      "columns": [
+        {
+          "name": "id",
+          "type": "int"
+        },
+        {
+          "name": "NAME",
+          "type": "varchar(255"
+        }
+      ],
+      "indexes": [],
+      "referenced_by_java": [
+        "src/database/loaders/DatabaseTemplateLoader.java"
+      ]
+    },
+    "item_option_template": {
+      "defined_in": "docker/initdb/02_nro_data.sql",
+      "engine": "unknown",
+      "column_count": 2,
+      "columns": [
+        {
+          "name": "id",
+          "type": "int"
+        },
+        {
+          "name": "NAME",
+          "type": "varchar(255"
+        }
+      ],
+      "indexes": [],
+      "referenced_by_java": [
+        "src/database/loaders/DatabaseTemplateLoader.java"
+      ]
+    },
+    "item_template": {
+      "defined_in": "docker/initdb/02_nro_data.sql",
+      "engine": "unknown",
+      "column_count": 4,
+      "columns": [
+        {
+          "name": "id",
+          "type": "int"
+        },
+        {
+          "name": "TYPE",
+          "type": "int"
+        },
+        {
+          "name": "gender",
+          "type": "smallint"
+        },
+        {
+          "name": "NAME",
+          "type": "varchar(255"
+        }
+      ],
+      "indexes": [],
+      "referenced_by_java": [
+        "src/database/loaders/DatabaseTemplateLoader.java"
+      ]
+    },
+    "map_template": {
+      "defined_in": "docker/initdb/02_nro_data.sql",
+      "engine": "unknown",
+      "column_count": 2,
+      "columns": [
+        {
+          "name": "id",
+          "type": "int"
+        },
+        {
+          "name": "NAME",
+          "type": "varchar(55"
+        }
+      ],
+      "indexes": [],
+      "referenced_by_java": [
+        "src/database/loaders/DatabaseTemplateLoader.java"
+      ]
+    },
+    "mbbank_log": {
+      "defined_in": "docker/initdb/02_nro_data.sql",
+      "engine": "unknown",
+      "column_count": 2,
+      "columns": [
+        {
+          "name": "id",
+          "type": "int"
+        },
+        {
+          "name": "name",
+          "type": "varchar(255"
+        }
+      ],
+      "indexes": [],
+      "referenced_by_java": []
+    },
+    "messages": {
+      "defined_in": "docker/initdb/02_nro_data.sql",
+      "engine": "unknown",
+      "column_count": 2,
+      "columns": [
+        {
+          "name": "id",
+          "type": "int"
+        },
+        {
+          "name": "username",
+          "type": "varchar(255"
+        }
+      ],
+      "indexes": [],
+      "referenced_by_java": []
+    },
+    "mob_template": {
+      "defined_in": "docker/initdb/02_nro_data.sql",
+      "engine": "unknown",
+      "column_count": 3,
+      "columns": [
+        {
+          "name": "id",
+          "type": "int"
+        },
+        {
+          "name": "TYPE",
+          "type": "int"
+        },
+        {
+          "name": "NAME",
+          "type": "varchar(50"
+        }
+      ],
+      "indexes": [],
+      "referenced_by_java": [
+        "src/database/loaders/DatabaseTemplateLoader.java"
+      ]
+    },
+    "momo_trans": {
+      "defined_in": "docker/initdb/02_nro_data.sql",
+      "engine": "unknown",
+      "column_count": 2,
+      "columns": [
+        {
+          "name": "ID",
+          "type": "int"
+        },
+        {
+          "name": "tranId",
+          "type": "varchar(255"
+        }
+      ],
+      "indexes": [],
+      "referenced_by_java": []
+    },
+    "napthe": {
+      "defined_in": "docker/initdb/02_nro_data.sql",
+      "engine": "unknown",
+      "column_count": 2,
+      "columns": [
+        {
+          "name": "id",
+          "type": "int"
+        },
+        {
+          "name": "user_nap",
+          "type": "varchar(100"
+        }
+      ],
+      "indexes": [],
+      "referenced_by_java": []
+    },
+    "naptien": {
+      "defined_in": "docker/initdb/02_nro_data.sql",
+      "engine": "unknown",
+      "column_count": 12,
+      "columns": [
+        {
+          "name": "id",
+          "type": "int"
+        },
+        {
+          "name": "uid",
+          "type": "text"
+        },
+        {
+          "name": "type",
+          "type": "text"
+        },
+        {
+          "name": "sotien",
+          "type": "text"
+        },
+        {
+          "name": "seri",
+          "type": "text"
+        },
+        {
+          "name": "code",
+          "type": "text"
+        },
+        {
+          "name": "loaithe",
+          "type": "text"
+        },
+        {
+          "name": "time",
+          "type": "timestamp"
+        },
+        {
+          "name": "noidung",
+          "type": "text"
+        },
+        {
+          "name": "tinhtrang",
+          "type": "text"
+        },
+        {
+          "name": "tranid",
+          "type": "text"
+        },
+        {
+          "name": "magioithieu",
+          "type": "text"
+        }
+      ],
+      "indexes": [
+        "PRIMARY KEY (`id`"
+      ],
+      "referenced_by_java": []
+    },
+    "notify": {
+      "defined_in": "docker/initdb/02_nro_data.sql",
+      "engine": "unknown",
+      "column_count": 3,
+      "columns": [
+        {
+          "name": "id",
+          "type": "int"
+        },
+        {
+          "name": "name",
+          "type": "text"
+        },
+        {
+          "name": "text",
+          "type": "text"
+        }
+      ],
+      "indexes": [
+        "PRIMARY KEY (`id`"
+      ],
+      "referenced_by_java": [
+        "src/database/loaders/DatabaseTemplateLoader.java"
+      ]
+    },
+    "npc_template": {
+      "defined_in": "docker/initdb/02_nro_data.sql",
+      "engine": "unknown",
+      "column_count": 2,
+      "columns": [
+        {
+          "name": "id",
+          "type": "int"
+        },
+        {
+          "name": "NAME",
+          "type": "varchar(50"
+        }
+      ],
+      "indexes": [],
+      "referenced_by_java": [
+        "src/database/loaders/DatabaseTemplateLoader.java"
+      ]
+    },
+    "part": {
+      "defined_in": "docker/initdb/02_nro_data.sql",
+      "engine": "unknown",
+      "column_count": 3,
+      "columns": [
+        {
+          "name": "id",
+          "type": "int"
+        },
+        {
+          "name": "TYPE",
+          "type": "int"
+        },
+        {
+          "name": "DATA",
+          "type": "text"
+        }
+      ],
+      "indexes": [
+        "PRIMARY KEY (`id`"
+      ],
+      "referenced_by_java": [
+        "src/database/loaders/DatabaseTemplateLoader.java"
+      ]
+    },
+    "payments": {
+      "defined_in": "docker/initdb/02_nro_data.sql",
+      "engine": "unknown",
+      "column_count": 2,
+      "columns": [
+        {
+          "name": "id",
+          "type": "int"
+        },
+        {
+          "name": "name",
+          "type": "varchar(255"
+        }
+      ],
+      "indexes": [],
+      "referenced_by_java": []
+    },
+    "player": {
+      "defined_in": "docker/initdb/02_nro_data.sql",
+      "engine": "unknown",
+      "column_count": 3,
+      "columns": [
+        {
+          "name": "id",
+          "type": "int"
+        },
+        {
+          "name": "account_id",
+          "type": "int"
+        },
+        {
+          "name": "name",
+          "type": "varchar(20"
+        }
+      ],
+      "indexes": [],
+      "referenced_by_java": [
+        "src/database/AlyraManager.java",
+        "src/database/daos/NDVSqlFetcher.java",
+        "src/database/daos/PlayerDAO.java",
+        "src/database/daos/SuperRankDAO.java",
+        "src/database/daos/TraningDAO.java",
+        "src/managers/ConsignShopManager.java",
+        "src/server/Controller.java",
+        "src/server/GameLoopManager.java",
+        "src/server/Manager.java",
+        "src/services/admin/AdminService.java",
+        "src/services/ConsignShopService.java",
+        "src/services/func/Input.java",
+        "src/services/player/ClanService.java",
+        "src/services/tournament/DeathOrAliveArenaWeeklyService.java",
+        "src/telemetry/AntiMacroFilter.java"
+      ]
+    },
+    "posts": {
+      "defined_in": "docker/initdb/02_nro_data.sql",
+      "engine": "unknown",
+      "column_count": 2,
+      "columns": [
+        {
+          "name": "id",
+          "type": "int"
+        },
+        {
+          "name": "username",
+          "type": "varchar(50"
+        }
+      ],
+      "indexes": [],
+      "referenced_by_java": []
+    },
+    "radar": {
+      "defined_in": "docker/initdb/02_nro_data.sql",
+      "engine": "unknown",
+      "column_count": 7,
+      "columns": [
+        {
+          "name": "id",
+          "type": "int"
+        },
+        {
+          "name": "iconId",
+          "type": "int"
+        },
+        {
+          "name": "rank",
+          "type": "tinyint"
+        },
+        {
+          "name": "max",
+          "type": "int"
+        },
+        {
+          "name": "type",
+          "type": "int"
+        },
+        {
+          "name": "template",
+          "type": "int"
+        },
+        {
+          "name": "body",
+          "type": "varchar(500"
+        }
+      ],
+      "indexes": [],
+      "referenced_by_java": [
+        "src/database/loaders/DatabaseTemplateLoader.java"
+      ]
+    },
+    "recharge": {
+      "defined_in": "docker/initdb/02_nro_data.sql",
+      "engine": "unknown",
+      "column_count": 2,
+      "columns": [
+        {
+          "name": "id",
+          "type": "int"
+        },
+        {
+          "name": "account_id",
+          "type": "varchar(999"
+        }
+      ],
+      "indexes": [],
+      "referenced_by_java": []
+    },
+    "sell_item": {
+      "defined_in": "docker/initdb/02_nro_data.sql",
+      "engine": "unknown",
+      "column_count": 8,
+      "columns": [
+        {
+          "name": "id",
+          "type": "int"
+        },
+        {
+          "name": "price",
+          "type": "int"
+        },
+        {
+          "name": "item",
+          "type": "int"
+        },
+        {
+          "name": "slot",
+          "type": "int"
+        },
+        {
+          "name": "options",
+          "type": "text"
+        },
+        {
+          "name": "users_buy",
+          "type": "text"
+        },
+        {
+          "name": "status",
+          "type": "int"
+        },
+        {
+          "name": "time",
+          "type": "varchar(999"
+        }
+      ],
+      "indexes": [],
+      "referenced_by_java": []
+    },
+    "setting": {
+      "defined_in": "docker/initdb/02_nro_data.sql",
+      "engine": "unknown",
+      "column_count": 2,
+      "columns": [
+        {
+          "name": "id",
+          "type": "int"
+        },
+        {
+          "name": "title",
+          "type": "varchar(999"
+        }
+      ],
+      "indexes": [],
+      "referenced_by_java": []
+    },
+    "shop": {
+      "defined_in": "docker/initdb/02_nro_data.sql",
+      "engine": "unknown",
+      "column_count": 3,
+      "columns": [
+        {
+          "name": "id",
+          "type": "int"
+        },
+        {
+          "name": "npc_id",
+          "type": "int"
+        },
+        {
+          "name": "tag_name",
+          "type": "varchar(50"
+        }
+      ],
+      "indexes": [],
+      "referenced_by_java": [
+        "src/database/daos/ShopDAO.java"
+      ]
+    },
+    "shop_ky_gui": {
+      "defined_in": "docker/initdb/02_nro_data.sql",
+      "engine": "unknown",
+      "column_count": 8,
+      "columns": [
+        {
+          "name": "id",
+          "type": "int"
+        },
+        {
+          "name": "player_id",
+          "type": "int"
+        },
+        {
+          "name": "tab",
+          "type": "int"
+        },
+        {
+          "name": "item_id",
+          "type": "int"
+        },
+        {
+          "name": "gold",
+          "type": "int"
+        },
+        {
+          "name": "gem",
+          "type": "int"
+        },
+        {
+          "name": "quantity",
+          "type": "int"
+        },
+        {
+          "name": "itemOption",
+          "type": "varchar(2000"
+        }
+      ],
+      "indexes": [],
+      "referenced_by_java": [
+        "src/database/loaders/DatabaseTemplateLoader.java",
+        "src/managers/ConsignShopManager.java",
+        "src/services/admin/AdminApiService.java",
+        "src/services/ConsignShopService.java"
+      ]
+    },
+    "side_task_template": {
+      "defined_in": "docker/initdb/02_nro_data.sql",
+      "engine": "unknown",
+      "column_count": 2,
+      "columns": [
+        {
+          "name": "id",
+          "type": "int"
+        },
+        {
+          "name": "NAME",
+          "type": "varchar(255"
+        }
+      ],
+      "indexes": [],
+      "referenced_by_java": [
+        "src/database/loaders/DatabaseTemplateLoader.java"
+      ]
+    },
+    "skill_template": {
+      "defined_in": "docker/initdb/02_nro_data.sql",
+      "engine": "unknown",
+      "column_count": 3,
+      "columns": [
+        {
+          "name": "nclass_id",
+          "type": "int"
+        },
+        {
+          "name": "id",
+          "type": "int"
+        },
+        {
+          "name": "NAME",
+          "type": "varchar(50"
+        }
+      ],
+      "indexes": [],
+      "referenced_by_java": [
+        "src/database/loaders/DatabaseTemplateLoader.java"
+      ]
+    },
+    "super_rank": {
+      "defined_in": "docker/initdb/02_nro_data.sql",
+      "engine": "unknown",
+      "column_count": 12,
+      "columns": [
+        {
+          "name": "id",
+          "type": "int"
+        },
+        {
+          "name": "player_id",
+          "type": "int"
+        },
+        {
+          "name": "name",
+          "type": "text"
+        },
+        {
+          "name": "rank",
+          "type": "int"
+        },
+        {
+          "name": "last_pk_time",
+          "type": "bigint"
+        },
+        {
+          "name": "last_reward_time",
+          "type": "bigint"
+        },
+        {
+          "name": "ticket",
+          "type": "int"
+        },
+        {
+          "name": "win",
+          "type": "int"
+        },
+        {
+          "name": "lose",
+          "type": "int"
+        },
+        {
+          "name": "history",
+          "type": "text"
+        },
+        {
+          "name": "info",
+          "type": "text"
+        },
+        {
+          "name": "received",
+          "type": "int"
+        }
+      ],
+      "indexes": [
+        "PRIMARY KEY (`id`"
+      ],
+      "referenced_by_java": [
+        "src/database/daos/SuperRankDAO.java"
+      ]
+    },
+    "tab_shop": {
+      "defined_in": "docker/initdb/02_nro_data.sql",
+      "engine": "unknown",
+      "column_count": 3,
+      "columns": [
+        {
+          "name": "id",
+          "type": "int"
+        },
+        {
+          "name": "shop_id",
+          "type": "int"
+        },
+        {
+          "name": "tab_name",
+          "type": "varchar(50"
+        }
+      ],
+      "indexes": [],
+      "referenced_by_java": [
+        "src/database/daos/ShopDAO.java"
+      ]
+    },
+    "task_main_template": {
+      "defined_in": "docker/initdb/02_nro_data.sql",
+      "engine": "unknown",
+      "column_count": 2,
+      "columns": [
+        {
+          "name": "id",
+          "type": "int"
+        },
+        {
+          "name": "NAME",
+          "type": "varchar(255"
+        }
+      ],
+      "indexes": [],
+      "referenced_by_java": [
+        "src/database/loaders/DatabaseTemplateLoader.java"
+      ]
+    },
+    "task_sub_template": {
+      "defined_in": "docker/initdb/02_nro_data.sql",
+      "engine": "unknown",
+      "column_count": 2,
+      "columns": [
+        {
+          "name": "task_main_id",
+          "type": "int"
+        },
+        {
+          "name": "NAME",
+          "type": "varchar(255"
+        }
+      ],
+      "indexes": [],
+      "referenced_by_java": [
+        "src/database/loaders/DatabaseTemplateLoader.java"
+      ]
+    },
+    "trans_log": {
+      "defined_in": "docker/initdb/02_nro_data.sql",
+      "engine": "unknown",
+      "column_count": 10,
+      "columns": [
+        {
+          "name": "id",
+          "type": "int"
+        },
+        {
+          "name": "name",
+          "type": "text"
+        },
+        {
+          "name": "amount",
+          "type": "bigint"
+        },
+        {
+          "name": "seri",
+          "type": "text"
+        },
+        {
+          "name": "pin",
+          "type": "text"
+        },
+        {
+          "name": "type",
+          "type": "text"
+        },
+        {
+          "name": "status",
+          "type": "int"
+        },
+        {
+          "name": "trans_id",
+          "type": "text"
+        },
+        {
+          "name": "date",
+          "type": "timestamp"
+        },
+        {
+          "name": "giatri",
+          "type": "int"
+        }
+      ],
+      "indexes": [
+        "PRIMARY KEY (`id`"
+      ],
+      "referenced_by_java": []
+    },
+    "admin_audit_log": {
+      "defined_in": "docker/initdb/04_audit_log.sql",
+      "engine": "unknown",
+      "column_count": 2,
+      "columns": [
+        {
+          "name": "id",
+          "type": "BIGINT"
+        },
+        {
+          "name": "admin_name",
+          "type": "VARCHAR(50"
+        }
+      ],
+      "indexes": [],
+      "referenced_by_java": [
+        "src/services/admin/AuditLogService.java"
+      ]
+    }
+  },
+  "jdbc_and_redis_files": {
+    "src/database/AlyraManager.java": {
+      "getConnection": 8,
+      "try_with_resources": 2,
+      "executeQuery": 6,
+      "executeUpdate": 4,
+      "redis_refs": 0
+    },
+    "src/database/daos/EventDAO.java": {
+      "getConnection": 2,
+      "try_with_resources": 2,
+      "executeQuery": 1,
+      "executeUpdate": 1,
+      "redis_refs": 0
+    },
+    "src/database/daos/HistoryTransactionDAO.java": {
+      "getConnection": 2,
+      "try_with_resources": 2,
+      "executeQuery": 1,
+      "executeUpdate": 3,
+      "redis_refs": 0
+    },
+    "src/database/daos/NDVSqlFetcher.java": {
+      "getConnection": 0,
+      "try_with_resources": 0,
+      "executeQuery": 5,
+      "executeUpdate": 1,
+      "redis_refs": 0
+    },
+    "src/database/daos/PlayerDAO.java": {
+      "getConnection": 13,
+      "try_with_resources": 13,
+      "executeQuery": 2,
+      "executeUpdate": 17,
+      "redis_refs": 0
+    },
+    "src/database/daos/ShopDAO.java": {
+      "getConnection": 0,
+      "try_with_resources": 0,
+      "executeQuery": 3,
+      "executeUpdate": 0,
+      "redis_refs": 0
+    },
+    "src/database/daos/SuperRankDAO.java": {
+      "getConnection": 0,
+      "try_with_resources": 0,
+      "executeQuery": 7,
+      "executeUpdate": 3,
+      "redis_refs": 0
+    },
+    "src/database/daos/TraningDAO.java": {
+      "getConnection": 0,
+      "try_with_resources": 0,
+      "executeQuery": 0,
+      "executeUpdate": 1,
+      "redis_refs": 0
+    },
+    "src/database/loaders/DatabaseTemplateLoader.java": {
+      "getConnection": 25,
+      "try_with_resources": 25,
+      "executeQuery": 25,
+      "executeUpdate": 0,
+      "redis_refs": 0
+    },
+    "src/managers/ConsignShopManager.java": {
+      "getConnection": 7,
+      "try_with_resources": 7,
+      "executeQuery": 1,
+      "executeUpdate": 5,
+      "redis_refs": 0
+    },
+    "src/managers/GiftCodeManager.java": {
+      "getConnection": 3,
+      "try_with_resources": 3,
+      "executeQuery": 1,
+      "executeUpdate": 3,
+      "redis_refs": 0
+    },
+    "src/models/clan/Clan.java": {
+      "getConnection": 3,
+      "try_with_resources": 3,
+      "executeQuery": 0,
+      "executeUpdate": 3,
+      "redis_refs": 0
+    },
+    "src/models/tournament/whis_arena/WhisArenaService.java": {
+      "getConnection": 3,
+      "try_with_resources": 3,
+      "executeQuery": 1,
+      "executeUpdate": 2,
+      "redis_refs": 0
+    },
+    "src/server/Client.java": {
+      "getConnection": 0,
+      "try_with_resources": 0,
+      "executeQuery": 0,
+      "executeUpdate": 1,
+      "redis_refs": 0
+    },
+    "src/server/Controller.java": {
+      "getConnection": 0,
+      "try_with_resources": 0,
+      "executeQuery": 1,
+      "executeUpdate": 0,
+      "redis_refs": 0
+    },
+    "src/server/Manager.java": {
+      "getConnection": 0,
+      "try_with_resources": 0,
+      "executeQuery": 1,
+      "executeUpdate": 0,
+      "redis_refs": 0
+    },
+    "src/server/ServerManager.java": {
+      "getConnection": 0,
+      "try_with_resources": 0,
+      "executeQuery": 1,
+      "executeUpdate": 1,
+      "redis_refs": 0
+    },
+    "src/services/ConsignShopService.java": {
+      "getConnection": 2,
+      "try_with_resources": 2,
+      "executeQuery": 1,
+      "executeUpdate": 1,
+      "redis_refs": 0
+    },
+    "src/services/Service.java": {
+      "getConnection": 0,
+      "try_with_resources": 0,
+      "executeQuery": 1,
+      "executeUpdate": 2,
+      "redis_refs": 0
+    },
+    "src/services/TopService.java": {
+      "getConnection": 1,
+      "try_with_resources": 1,
+      "executeQuery": 0,
+      "executeUpdate": 0,
+      "redis_refs": 0
+    },
+    "src/services/admin/AdminApiService.java": {
+      "getConnection": 1,
+      "try_with_resources": 1,
+      "executeQuery": 1,
+      "executeUpdate": 1,
+      "redis_refs": 0
+    },
+    "src/services/admin/AdminService.java": {
+      "getConnection": 3,
+      "try_with_resources": 3,
+      "executeQuery": 0,
+      "executeUpdate": 4,
+      "redis_refs": 0
+    },
+    "src/services/admin/AuditLogService.java": {
+      "getConnection": 4,
+      "try_with_resources": 4,
+      "executeQuery": 2,
+      "executeUpdate": 2,
+      "redis_refs": 0
+    },
+    "src/services/cache/RedisService.java": {
+      "getConnection": 0,
+      "try_with_resources": 0,
+      "executeQuery": 0,
+      "executeUpdate": 0,
+      "redis_refs": 23
+    },
+    "src/services/func/Input.java": {
+      "getConnection": 0,
+      "try_with_resources": 0,
+      "executeQuery": 2,
+      "executeUpdate": 2,
+      "redis_refs": 0
+    },
+    "src/services/func/TransactionService.java": {
+      "getConnection": 1,
+      "try_with_resources": 1,
+      "executeQuery": 0,
+      "executeUpdate": 0,
+      "redis_refs": 0
+    },
+    "src/services/player/ClanService.java": {
+      "getConnection": 2,
+      "try_with_resources": 2,
+      "executeQuery": 0,
+      "executeUpdate": 1,
+      "redis_refs": 0
+    },
+    "src/services/player/GiftService.java": {
+      "getConnection": 3,
+      "try_with_resources": 3,
+      "executeQuery": 2,
+      "executeUpdate": 1,
+      "redis_refs": 0
+    },
+    "src/services/player/PlayerService.java": {
+      "getConnection": 0,
+      "try_with_resources": 0,
+      "executeQuery": 0,
+      "executeUpdate": 1,
+      "redis_refs": 0
+    },
+    "src/services/tournament/DeathOrAliveArenaWeeklyService.java": {
+      "getConnection": 2,
+      "try_with_resources": 2,
+      "executeQuery": 1,
+      "executeUpdate": 1,
+      "redis_refs": 0
+    }
+  }
+}

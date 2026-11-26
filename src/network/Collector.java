@@ -84,15 +84,6 @@ public final class Collector implements Runnable {
     private void cleanup() {
         running = false;
 
-        // Thông báo session disconnect
-        try {
-            if (session != null) {
-                Network.gI().getAcceptHandler().sessionDisconnect(session);
-            }
-        } catch (Exception ex) {
-            Logger.errorln("Error notifying session disconnect: " + ex.getMessage());
-        }
-
         // Disconnect session
         if (this.session != null) {
             this.session.disconnect();

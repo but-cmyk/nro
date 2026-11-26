@@ -1,0 +1,221 @@
+{
+  "batch_id": "client_gameplay_entities__p05",
+  "concurrency_and_state": [
+    "Static singleton GameScr.instance (clearGameScr sets instance = null at GameScr.cs:1966-1969) coexists with dozens of static fields (vCharInMap, vMob, vNpc, vItemMap, sks, parts, efs, arrs, darts, onScreenSkill, keySkill, ~35 isPaint* booleans, camera cmx/cmy, isAutoPlay), which are not reset by clearGameScr() and risk stale state across relog/server switches.",
+    "Shared static MyVector collections (vCharInMap, vMob, vNpc, vItemMap, vMobAttack, vChatVip) and static state flags (isPaintOther, isAutoPlay, isLoadAllData) have no synchronization between packet-handling updates and UI/game loop reads.",
+    "Static field initializers at GameScr.cs:571-573 eagerly call mSystem.loadImage(\"/mainImage/i_pve_bar_0.png\") and i_pve_bar_1.png at class load time, duplicating loads in loadBg() (GameScr.cs:1176-1177)."
+  ],
+  "cross_module_questions": [
+    "Does Service.gI().changeOnKeyScr(sbyte[]) distinguish between onScreenSkill and keySkill, or does saveKeySkillToRMS() (GameScr.cs:1535-1550) overwrite/conflict with saveonScreenSkillToRMS() (GameScr.cs:1518-1533) when addSkillShortcut() calls both sequentially (GameScr.cs:1579-1580)?",
+    "Does the server validate Char.myCharz() position updates sent via Service.gI().charMove() when GameScr.isAttack() teleports cx/cy client-side during melee range adjustment (GameScr.cs:2590-2640, 2683-2686, 2779-2792)?",
+    "Where is GameScr.getMaxExp(int level) called, and does any caller break when getMaxExp returns a truncated/overflowed int from long[] exps (GameScr.cs:1345-1353)?",
+    "Does the server send >255 ItemOptionTemplate entries or skill IDs >= 512 in NRitem0 / NR_skill RMS payloads, which would trigger truncation in loadOptionTemplatesFromRMS() (GameScr.cs:239) or stream desync in readSkill() (GameScr.cs:1888)?"
+  ],
+  "db_redis_touchpoints": [],
+  "files_read": [
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/GameScr.cs:1-2835"
+  ],
+  "findings": [
+    {
+      "category": "architecture",
+      "impact": "High coupling across camera, HUD textures, RMS binary parsers, entity lists, combat targeting, trade state, and event UI makes changes risky and hard to isolate; clearGameScr() leaves static state behind.",
+      "location": "GameScr.cs:8-1092, 1957-1969",
+      "root_cause": "GameScr (8333 lines) acts as a monolithic God Class storing ~100+ static fields (entity MyVectors, ~35 isPaint* booleans, Image assets, templates, camera coordinates, trade/event/auto-play state) alongside instance combat/input state.",
+      "severity": "P1",
+      "title": "God Class architecture with extensive unreset static state in GameScr"
+    },
+    {
+      "category": "protocol",
+      "impact": "If any skill in NR_skill has id >= sks.Length (e.g., >= max(512, num + 100)), the binary stream position becomes misaligned, causing all subsequent skills to read garbage bytes or throw EOFException, and id 1111 can overwrite sks[num - 1].",
+      "location": "GameScr.cs:1879-1935",
+      "root_cause": "In readSkill(), when num3 < 0 or num3 >= sks.Length, the if-block (line 1888) skips reading effectHappenOnMob, numEff, skillStand, and skillfly bytes instead of consuming them from DataInputStream. Also line 1884 remaps num3 == 1111 to (short)(num - 1) without collision protection.",
+      "severity": "P1",
+      "title": "Stream desync in readSkill() when skill ID exceeds sks array bounds"
+    },
+    {
+      "category": "gameplay",
+      "impact": "In saveKeySkillToRMS(), keySkill is sent using the exact same Service.changeOnKeyScr(array) call as saveonScreenSkillToRMS(); calling both in addSkillShortcut() causes the second call to overwrite the first or lose keySkill bindings.",
+      "location": "GameScr.cs:1518-1550, 1579-1580",
+      "root_cause": "saveKeySkillToRMS() invokes Service.gI().changeOnKeyScr(array) instead of a keySkill-specific method/parameter, mirroring saveonScreenSkillToRMS().",
+      "severity": "P1",
+      "title": "saveKeySkillToRMS() calls changeOnKeyScr identical to saveonScreenSkillToRMS()"
+    },
+    {
+      "category": "security_dupe",
+      "impact": "On servers where cumulative EXP exceeds int.MaxValue (~2.14B), getMaxExp returns negative or wrapped values, corrupting level/EXP bar calculations and displays.",
+      "location": "GameScr.cs:367, 1345-1353",
+      "root_cause": "exps is declared as long[], but getMaxExp(int level) returns int and accumulates num += (int)exps[i] without checked arithmetic or bounds/null validation on exps.",
+      "severity": "P1",
+      "title": "Integer overflow in getMaxExp(int level) when summing long[] exps into int"
+    },
+    {
+      "category": "gameplay",
+      "impact": "When NR_arrow RMS data is missing or null, readArrow() throws an exception and then throws a secondary NullReferenceException in finally when calling dataInputStream.close().",
+      "location": "GameScr.cs:1735-1767",
+      "root_cause": "readArrow() passes Rms.loadRMS(\"NR_arrow\") directly to new DataInputStream(...) without a null check, and calls dataInputStream.close() in finally without checking dataInputStream != null.",
+      "severity": "P2",
+      "title": "Missing null checks in readArrow() cause NullReferenceException in finally"
+    },
+    {
+      "category": "performance_gc",
+      "impact": "DataInputStream in loadOptionTemplatesFromRMS() is never closed (resource leak), and readUnsignedByte() truncates template counts if count > 255.",
+      "location": "GameScr.cs:226-259",
+      "root_cause": "loadOptionTemplatesFromRMS() creates DataInputStream at line 233 without a finally/close() block, and reads count using d.readUnsignedByte() at line 239.",
+      "severity": "P2",
+      "title": "Unclosed DataInputStream and 8-bit count limit in loadOptionTemplatesFromRMS()"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Calling playerMenu(Char c) when charFocus or myskill is null throws NullReferenceException; also checkClickToBotton/PvP positioning in isAttack() can snap player into walls or onto unexpected Y coordinates without collision checks.",
+      "location": "GameScr.cs:2397-2443, 2683-2686, 2779-2792",
+      "root_cause": "playerMenu(Char c) ignores parameter c and directly dereferences Char.myCharz().charFocus.charID and Char.myCharz().myskill.template.type without null guards. In isAttack(), PvP separation (lines 2779-2792) and NPC Y-snap (lines 2683-2686) directly mutate Char.myCharz().cx/cy without tile collision checks (unlike mob separation at lines 2597-2628).",
+      "severity": "P2",
+      "title": "NullReferenceException risk in playerMenu() and unguarded client teleport in isAttack()"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Attacking/clicking a mob forces isAutoPlay = true even when the mob cannot be attacked or the player is blocked by captcha or invalid skill state.",
+      "location": "GameScr.cs:2484-2534",
+      "root_cause": "isAttack() sets isAutoPlay = true at line 2491 before validating isMeCanAttackMob, mobCapcha == null, myskill != null, and checkSkillValid().",
+      "severity": "P2",
+      "title": "isAutoPlay enabled prematurely in isAttack() before attack validity checks"
+    },
+    {
+      "category": "gameplay",
+      "impact": "On screens where width != height, gW23 is miscalculated from screen height gH, potentially distorting UI/camera offsets that depend on gW23; loadCamera also reads Rms.loadRMSInt(\"viewchat\") twice.",
+      "location": "GameScr.cs:2024, 2153-2160",
+      "root_cause": "loadCamera() assigns gW23 = gH - 120 instead of using gW, and evaluates Rms.loadRMSInt(\"viewchat\") twice instead of caching the return value in a local variable.",
+      "severity": "P3",
+      "title": "gW23 computed from gH and duplicate RMS read in loadCamera()"
+    },
+    {
+      "category": "performance_gc",
+      "impact": "Every out-of-range attack tick allocates new MovePoint and Command objects, and missing/corrupt RMS files log Cout.LogError (creating red Console error badges in Unity) even when fallback/re-fetch is handled.",
+      "location": "GameScr.cs:1636, 1650, 1697, 1730, 1754, 1843, 1939, 2561-2562, 2653-2654, 2713-2714, 2802-2803, 2822-2823",
+      "root_cause": "isAttack() instantiates new MovePoint(...) and new Command(null, null, 8002, null) repeatedly while approaching targets; RMS loaders emit Cout.LogError on parse/load failures.",
+      "severity": "P3",
+      "title": "Repeated object allocations in isAttack() and LogError usage in RMS loaders"
+    }
+  ],
+  "key_classes": [
+    {
+      "key_methods": [
+        "getSkillPaint",
+        "getItemOptionTemplate",
+        "loadOptionTemplatesFromRMS",
+        "initVersionFromRMS",
+        "GameScr",
+        "loadBg",
+        "initSelectChar",
+        "paintOngMauPercent",
+        "switchToMe",
+        "getMaxExp",
+        "resetAllvector",
+        "onOSkill",
+        "onKSkill",
+        "onCSkill",
+        "doSetOnScreenSkill",
+        "doSetKeySkill",
+        "saveonScreenSkillToRMS",
+        "saveKeySkillToRMS",
+        "addSkillShortcut",
+        "readPart",
+        "readEfect",
+        "getEffect",
+        "readArrow",
+        "readDart",
+        "readSkill",
+        "loadCamera",
+        "updateUIPositions",
+        "setSkillBarPosition",
+        "updateCamera",
+        "playerMenu",
+        "isAttack"
+      ],
+      "name": "GameScr",
+      "path": "Client/Client/Assets/Scripts/Game1/GameScr.cs",
+      "responsibility": "Central gameplay screen (God Class) managing camera/viewport layout, HUD textures, RMS binary asset/template loading, entity vector lists, skill shortcut bars, player interaction menus, and melee/ranged auto-approach & attack targeting."
+    }
+  ],
+  "module_summary": "Lines 1-2835 of GameScr.cs define the core state and setup of the main in-game screen God Class: static HUD/entity/UI-flag fields, RMS binary template loaders (NRitem0, NR_part, NR_effect, NR_arrow, NR_dart, NR_skill), skill shortcut slot management (onScreenSkill/keySkill), camera & responsive touch/PC UI layout (loadCamera/updateCamera/setSkillBarPosition), and target interaction/attack routing (playerMenu, isAttack).",
+  "protocol_touchpoints": [
+    {
+      "direction": "READ",
+      "location": "GameScr.cs:226-259",
+      "opcode": "RMS:NRitem0",
+      "payload_summary": "vcItem (byte), type (byte), count (unsigned byte), followed by count * (name UTF, type byte) for ItemOptionTemplate."
+    },
+    {
+      "direction": "READ",
+      "location": "GameScr.cs:1613-1666",
+      "opcode": "RMS:NR_part",
+      "payload_summary": "num (short), followed by num * (type byte, pi.Length * (id short, dx byte, dy byte)) for character/item Parts."
+    },
+    {
+      "direction": "READ",
+      "location": "GameScr.cs:1668-1713",
+      "opcode": "RMS:NR_effect",
+      "payload_summary": "num (short), followed by num * (idEf short, arrEfInfoLen byte, arrEfInfoLen * (idImg short, dx byte, dy byte))."
+    },
+    {
+      "direction": "READ",
+      "location": "GameScr.cs:1735-1767",
+      "opcode": "RMS:NR_arrow",
+      "payload_summary": "num (short), followed by num * (id short, imgId[0..2] 3x short)."
+    },
+    {
+      "direction": "READ",
+      "location": "GameScr.cs:1769-1863",
+      "opcode": "RMS:NR_dart",
+      "payload_summary": "num (short), followed by num * (id, nUpdate, va*256, xdPercent, tail[], tailBorder[], xd1[], xd2[], head[][], headBorder[][]) all short-length prefixed shorts."
+    },
+    {
+      "direction": "READ",
+      "location": "GameScr.cs:1865-1955",
+      "opcode": "RMS:NR_skill",
+      "payload_summary": "num (short), followed by num * (id short, effectHappenOnMob short, numEff byte, skillStand[], skillfly[] with status byte + 12 shorts each)."
+    },
+    {
+      "direction": "DISPATCH",
+      "location": "GameScr.cs:1327",
+      "opcode": "Service.finishLoadMap()",
+      "payload_summary": "Notifies server map load completed when !isPaintOther in switchToMe()."
+    },
+    {
+      "direction": "DISPATCH",
+      "location": "GameScr.cs:1453",
+      "opcode": "Service.selectSkill(sbyte)",
+      "payload_summary": "Sends selected current skill template id in onCSkill()."
+    },
+    {
+      "direction": "DISPATCH",
+      "location": "GameScr.cs:1532, 1549",
+      "opcode": "Service.changeOnKeyScr(sbyte[])",
+      "payload_summary": "Sends 10-slot skill template ID array from both saveonScreenSkillToRMS() and saveKeySkillToRMS()."
+    },
+    {
+      "direction": "DISPATCH",
+      "location": "GameScr.cs:1874",
+      "opcode": "Service.updateData()",
+      "payload_summary": "Requests skill/data update from server when NR_skill RMS is null."
+    },
+    {
+      "direction": "DISPATCH",
+      "location": "GameScr.cs:2639, 2706, 2791",
+      "opcode": "Service.charMove()",
+      "payload_summary": "Sends updated player position during NPC interaction or melee distance adjustment in isAttack()."
+    },
+    {
+      "direction": "DISPATCH",
+      "location": "GameScr.cs:2707",
+      "opcode": "Service.openMenu(int)",
+      "payload_summary": "Requests NPC dialogue menu for npcFocus.template.npcTemplateId."
+    },
+    {
+      "direction": "DISPATCH",
+      "location": "GameScr.cs:2815-2816",
+      "opcode": "Service.getPlayerMenu(int), Service.messagePlayerMenu(int)",
+      "payload_summary": "Requests player interaction menu data for non-touch focused player."
+    }
+  ]
+}

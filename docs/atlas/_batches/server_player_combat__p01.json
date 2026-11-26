@@ -1,0 +1,323 @@
+{
+  "batch_id": "server_player_combat__p01",
+  "concurrency_and_state": [
+    "NPoint (NPoint.java:240-255,1077-1142): ArrayLists tlHp/tlMp/tlDef/tlDame/tlDameAttMob/tlTNSM/tlDameCrit are cleared and repopulated in resetPoint()/setPointWhenWearClothes() without synchronization, while combat threads read getDameAttack()/setHpMax() concurrently; only increasePoint() is synchronized.",
+    "NewSkill (NewSkill.java:103-136): Spawns a dedicated java.util.Timer + thread per player special skill cast without synchronization on isActive/timer/timerTask; dispose() does not call close().",
+    "NewPet (NewPet.java:14,20-21): Static idb-- counter is non-atomic and not synchronized, risking duplicate negative entity IDs across concurrent threads.",
+    "Pet (Pet.java:102-117): goHome() mutates goingHome and status across the caller thread and GameLoopManager scheduled lambda without volatile or locking.",
+    "EffectSkin (EffectSkin.java:110-151,421-456): updateCTHaiTac() mutates itemOptions.param on other players' body items in zone without locking or calling nPoint.setDirty(); updateTrainArmor() mutates bag/box itemOptions in place.",
+    "IDMark (IDMark.java:8-319): Monolithic mutable state bag (~40 fields) tracking menus, inputs, trade partner, combine timestamps, and dungeon transitions without state-machine encapsulation or synchronization."
+  ],
+  "cross_module_questions": [
+    "Does EventDAO.getRemainingTimeToIncreaseHP/MP/Dame (called in NPoint.java:812,888,1044 inside calPoint) read cached fields or execute a MySQL query on every stat recalculation?",
+    "Do Trade/Combine/Shop services enforce player-level locks around Inventory.subRuby()/subGemDirect() and IDMark.playerTradeId (int vs long Character.id)?",
+    "Does SkillService.useSkill() check skill cooldown when Pet.java:470-475 calls it for Mob ranged skill 2 without canUseSkillWithCooldown() or canAttack()?",
+    "Where is Inventory.trainArmor cleared when a player unequips, trades, drops, or sells the training armor item in bag?",
+    "How does SkillService.updateSkillSpecial() handle NewSkill.isStartSkillSpecial when NewSkill.update() unconditionally assigns isStartSkillSpecial = true?"
+  ],
+  "db_redis_touchpoints": [
+    {
+      "location": "src/models/player/NPoint.java:812,888,1044",
+      "op": "READ (EventDAO.getRemainingTimeToIncreaseHP/MP/Dame)",
+      "safety_note": "Called inside setHpMax/setMpMax/setDame on every calPoint(); verify EventDAO caches these timestamps in memory rather than querying MySQL.",
+      "target": "EventDAO"
+    },
+    {
+      "location": "src/models/player/dto/MagicTreeDTO.java:19-47",
+      "op": "JSON_DESERIALIZE",
+      "safety_note": "Supports JSONObject and legacy JSONArray; parseByte/parseLong via String.valueOf fails if JSON contains floating-point numbers (e.g., 100.0).",
+      "target": "magic_tree JSON column"
+    },
+    {
+      "location": "src/models/player/dto/PlayerPointDTO.java:28-72",
+      "op": "JSON_DESERIALIZE",
+      "safety_note": "Supports JSONObject and legacy JSONArray with bounds checks; same String.valueOf numeric parsing caveat for floating-point JSON values.",
+      "target": "data_point JSON column"
+    }
+  ],
+  "files_read": [
+    "src/models/intrinsic/Intrinsic.java:1-46",
+    "src/models/intrinsic/IntrinsicPlayer.java:1-17",
+    "src/models/player/Achievement.java:1-96",
+    "src/models/player/Character.java:1-19",
+    "src/models/player/Charms.java:1-78",
+    "src/models/player/DropItem.java:1-37",
+    "src/models/player/dto/MagicTreeDTO.java:1-85",
+    "src/models/player/dto/PlayerPointDTO.java:1-125",
+    "src/models/player/EffectSkill.java:1-279",
+    "src/models/player/EffectSkin.java:1-473",
+    "src/models/player/Enemy.java:1-5",
+    "src/models/player/FightMabu.java:1-45",
+    "src/models/player/Friend.java:1-14",
+    "src/models/player/Fusion.java:1-34",
+    "src/models/player/GiftCode.java:1-29",
+    "src/models/player/HocKyNang.java:1-8",
+    "src/models/player/IDMark.java:1-319",
+    "src/models/player/Inventory.java:1-206",
+    "src/models/player/ItemEvent.java:1-60",
+    "src/models/player/Location.java:1-9",
+    "src/models/player/NewPet.java:1-110",
+    "src/models/player/NewSkill.java:1-143",
+    "src/models/player/NPoint.java:1-1969",
+    "src/models/player/Pet.java:1-1021"
+  ],
+  "findings": [
+    {
+      "category": "gameplay",
+      "impact": "Special skill update continues running after closeSkillSpecial() or races with close(), and cannot properly gate on isStartSkillSpecial == true.",
+      "location": "src/models/player/NewSkill.java:51-55",
+      "root_cause": "Assignment operator used instead of equality comparison: `if (this.isStartSkillSpecial = true)`.",
+      "severity": "P0",
+      "title": "NewSkill.update() uses assignment (=) instead of comparison (==) on isStartSkillSpecial"
+    },
+    {
+      "category": "gameplay",
+      "impact": "All callers of NPoint.calPercent receive 66.7% of the intended percentage value (e.g., 50% becomes 33.3%).",
+      "location": "src/models/player/NPoint.java:927-933",
+      "root_cause": "Both calPercent(long, int) and calPercent(int, int) divide by 150 instead of 100.",
+      "severity": "P0",
+      "title": "NPoint.calPercent() divides by 150 instead of 100"
+    },
+    {
+      "category": "security_dupe",
+      "impact": "If a caller passes a negative amount or omits pre-check, currency becomes negative or increases; inconsistent with subGemAndRuby() and subGold().",
+      "location": "src/models/player/Inventory.java:72-74,87-89",
+      "root_cause": "subRuby(int) and subGemDirect(int) subtract directly without checking num <= 0 or sufficient balance.",
+      "severity": "P1",
+      "title": "Inventory.subRuby() and subGemDirect() lack negative-input and underflow guards"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Punch stack bonus (+1% per punch up to tlDamePunchMax) is wiped out on every stat recalculation (every ~150ms or equip/buff).",
+      "location": "src/models/player/NPoint.java:1126-1129",
+      "root_cause": "resetPoint() sets `this.tlDamePunchMax = 0;` and immediately checks `if (this.tlDamePunchMax == 0) { this.stackDamePunch = 0; }`, which is always true.",
+      "severity": "P1",
+      "title": "NPoint.resetPoint() unconditionally resets stackDamePunch to 0"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Whenever a pet is to the left of its master (disX < 0), disX < 50 is always true, causing continuous teleportation and playerMove packet spam on every update tick.",
+      "location": "src/models/player/Pet.java:722-735",
+      "root_cause": "followMaster(int dis) compares signed `disX < 50` (where `disX = this.location.x - mX`) instead of `Math.abs(disX) < 50`.",
+      "severity": "P1",
+      "title": "Pet.followMaster() checks signed disX < 50, triggering infinite move/packet spam when pet is left of master"
+    },
+    {
+      "category": "concurrency",
+      "impact": "Thread/memory leak if player logs out during special skill, plus OS thread exhaustion under heavy special skill usage.",
+      "location": "src/models/player/NewSkill.java:120-141",
+      "root_cause": "start() allocates a new java.util.Timer per cast without synchronization, and dispose() does not call close() to cancel timer/timerTask or clear playersTaget/mobsTaget.",
+      "severity": "P1",
+      "title": "NewSkill leaks java.util.Timer threads and skips close() in dispose()"
+    },
+    {
+      "category": "concurrency",
+      "impact": "ConcurrentModificationException or torn/zeroed stats when combat threads read dame/hpMax/tlDame during resetPoint().",
+      "location": "src/models/player/NPoint.java:244-255,1077-1142",
+      "root_cause": "calPoint() clears and rebuilds non-synchronized ArrayLists in resetPoint()/setPointWhenWearClothes() while combat threads access NPoint without locking. Also `if (!force && !this.isDirty && (now - lastCalPointTime < 150))` still recalculates every 150ms even when !isDirty.",
+      "severity": "P1",
+      "title": "NPoint.calPoint() mutates non-thread-safe lists during combat reads and recalculates when !isDirty"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Player retains training armor dame% buff permanently after selling, dropping, trading, or banking the item; also cannot switch to a different training armor while stale reference exists.",
+      "location": "src/models/player/NPoint.java:613-642",
+      "root_cause": "setDameTrainArmor() caches an unequipped bag training armor in inventory.trainArmor when null and continues applying its dame bonus without verifying the item still exists in itemsBag.",
+      "severity": "P1",
+      "title": "NPoint.setDameTrainArmor() retains stale inventory.trainArmor reference after item leaves bag"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Throws ArithmeticException: / by zero if mpMax is 0 (e.g. during stat reset or before initial calPoint).",
+      "location": "src/models/player/NPoint.java:1426-1428",
+      "root_cause": "getCurrPercentMP() divides by this.mpMax without checking `if (this.mpMax == 0)` (unlike getCurrPercentHP()).",
+      "severity": "P1",
+      "title": "NPoint.getCurrPercentMP() lacks zero-division guard on mpMax"
+    },
+    {
+      "category": "gameplay",
+      "impact": "In ATTACK mode against mobs at range, pet fires skill 2 ignoring cooldown, master idle check (canAttack), and askPea() when out of mana.",
+      "location": "src/models/player/Pet.java:470-476",
+      "root_cause": "Mob ranged skill-2 branch in Pet.update() omits canUseSkillWithCooldown(), canAttack(), and else askPea() present in the PROTECT branch.",
+      "severity": "P1",
+      "title": "Pet.update() ATTACK mode skips cooldown, canAttack, and askPea checks for ranged mob skill 2"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Unnecessary network traffic every 60s per player; training armors stored after an empty slot in bag/box never lose durability/time.",
+      "location": "src/models/player/EffectSkin.java:421-456",
+      "root_cause": "updateTrainArmor() breaks loop on first empty slot (`!item.isNotNullItem()`) and unconditionally calls sendItemBags() and point() even if no trainArmor was modified.",
+      "severity": "P2",
+      "title": "EffectSkin.updateTrainArmor() aborts scan at first empty slot and spams bag/point packets every 60s"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Pet in Xayda home map (mapId 23) never patrols at home; duplicate condition at line 516 is unreachable.",
+      "location": "src/models/player/Pet.java:495-524",
+      "root_cause": "GOHOME branch checks `this.zone.map.mapId == 22` twice (lines 508 and 516) instead of `== 23`.",
+      "severity": "P2",
+      "title": "Pet.update() GOHOME checks mapId == 22 twice instead of mapId == 23"
+    },
+    {
+      "category": "protocol",
+      "impact": "Version <= 214 gold display cap (Integer.MAX_VALUE) never triggers, potentially overflowing gold display on older clients.",
+      "location": "src/models/player/Inventory.java:22,64-70",
+      "root_cause": "Inventory.player is never initialized or assigned anywhere in Inventory, so `player != null` in getGoldDisplay() is always false.",
+      "severity": "P2",
+      "title": "Inventory.player field is never assigned, making getGoldDisplay() version check dead code"
+    },
+    {
+      "category": "protocol",
+      "impact": "If player IDs exceed Integer.MAX_VALUE, IDMark.playerTradeId truncates and mismatches; also fusionEffect casts long master.id to int.",
+      "location": "src/models/player/IDMark.java:37,162-166",
+      "root_cause": "Character.id is long, while IDMark.playerTradeId is typed as int (unlike long idPlayThachDau/killCharId/idEnemy).",
+      "severity": "P2",
+      "title": "IDMark.playerTradeId uses int instead of long Character.id"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Clients receive pre-damage HP/MP packets right before damage is actually applied.",
+      "location": "src/models/player/EffectSkin.java:193-195,226-228",
+      "root_cause": "updateXenHutXungQuanh() and updateOdo() call sendInfoHpMpMoney(pl) and Send_Info_NV(pl) before calling pl.injured().",
+      "severity": "P2",
+      "title": "EffectSkin sends HP/MP info packets before calling pl.injured()"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Redundant buff packet/state updates sent for every nearby player in range on a single 10s tick; incorrect message text in textBuffSD.",
+      "location": "src/models/player/EffectSkin.java:268-279",
+      "root_cause": "updateThoBulma() calls EffectSkillService.gI().setDameBuff(player, ...) inside the nearby-players loop instead of once after finding at least one target.",
+      "severity": "P2",
+      "title": "EffectSkin.updateThoBulma() redundantly applies setDameBuff to self for each nearby player"
+    },
+    {
+      "category": "architecture",
+      "impact": "GiftCode state is split/duplicated across Inventory.giftCode and GiftCode.rewards; NPoint.tlDameCrit and Inventory.giftCode leak in dispose().",
+      "location": "src/models/player/Inventory.java:14,164-204",
+      "root_cause": "Inventory maintains giftCode list separately from GiftCode class and omits it in dispose(); NPoint.dispose() nulls 6 lists but omits tlDameCrit.",
+      "severity": "P3",
+      "title": "Duplicated GiftCode list and incomplete dispose() cleanup in Inventory and NPoint"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Repeated map item scans and potential duplicate item drops on every tick while player is in map 183.",
+      "location": "src/models/player/DropItem.java:19-32",
+      "root_cause": "DropItem.update() executes ItemMapService.findItemMapByPlayer() and drops item 726 on every player update tick without any cooldown timer.",
+      "severity": "P3",
+      "title": "DropItem.update() checks and drops quest item on map 183 every tick without cooldown"
+    }
+  ],
+  "key_classes": [
+    {
+      "key_methods": [
+        "calPoint(boolean)",
+        "setPointWhenWearClothes()",
+        "setHpMax()",
+        "setMpMax()",
+        "setDame()",
+        "getDameAttack(boolean)",
+        "calSucManhTiemNang(long)",
+        "increasePoint(byte, short, boolean)",
+        "safeInt(long)"
+      ],
+      "name": "NPoint",
+      "path": "src/models/player/NPoint.java",
+      "responsibility": "Computes all base, equipment, card, fusion, buff, and skill stats/damage/potential for players and pets."
+    },
+    {
+      "key_methods": [
+        "update()",
+        "changeStatus(byte)",
+        "fusion(boolean)",
+        "fusion2(boolean)",
+        "fusion3(boolean)",
+        "unFusion()",
+        "useSkill3()",
+        "useSkill4()",
+        "followMaster(int)"
+      ],
+      "name": "Pet",
+      "path": "src/models/player/Pet.java",
+      "responsibility": "AI, combat, fusion lifecycle, skill unlocking, and home/follow behavior for player disciples."
+    },
+    {
+      "key_methods": [
+        "update()",
+        "updateCTHaiTac()",
+        "updateXenHutXungQuanh()",
+        "updateOdo()",
+        "updateThoBulma()",
+        "updateTrainArmor()",
+        "updateVoHinh()"
+      ],
+      "name": "EffectSkin",
+      "path": "src/models/player/EffectSkin.java",
+      "responsibility": "Periodic AoE skin/aura effects, invisibility, and training armor durability/time updates."
+    },
+    {
+      "key_methods": [
+        "update()",
+        "removeSkillEffectWhenDie()",
+        "isHaveEffectSkill()",
+        "dispose()"
+      ],
+      "name": "EffectSkill",
+      "path": "src/models/player/EffectSkill.java",
+      "responsibility": "Tracks active CC/buff/transformation skill timers and cleans them up on expiration or death."
+    },
+    {
+      "key_methods": [
+        "setSkillSpecial(byte, short, short, short, short)",
+        "closeSkillSpecial()",
+        "start(int)",
+        "close()"
+      ],
+      "name": "NewSkill",
+      "path": "src/models/player/NewSkill.java",
+      "responsibility": "Manages timed execution and target lists for special skills via java.util.Timer."
+    },
+    {
+      "key_methods": [
+        "getGemAndRuby()",
+        "checkGemAndRuby(long)",
+        "subGemAndRuby(long)",
+        "addGold(long)",
+        "subGold(long)",
+        "getGoldDisplay()"
+      ],
+      "name": "Inventory",
+      "path": "src/models/player/Inventory.java",
+      "responsibility": "Holds item containers (body/bag/box/crackball/daban), currencies (gold/gem/ruby/coupon), and currency mutations."
+    },
+    {
+      "key_methods": [
+        "isBaseMenu()",
+        "dispose()"
+      ],
+      "name": "IDMark",
+      "path": "src/models/player/IDMark.java",
+      "responsibility": "Stores transient per-player NPC, menu, trade, shop, captcha, and dungeon interaction flags/timestamps."
+    }
+  ],
+  "module_summary": "Core player/pet state, stat calculation, skin/skill effects, inventory, and DTO models in src/models/player and src/models/intrinsic. NPoint acts as the central stat/damage engine with additive equipment percent calculation and long-based overflow protection, while Pet, EffectSkin, EffectSkill, and NewSkill drive autonomous updates and combat/fusion state. Several high-impact gameplay and concurrency issues were observed directly in the source (NewSkill assignment bug, NPoint calPercent / 150, Pet followMaster packet spam, non-thread-safe NPoint/NewSkill timers, and missing subRuby/subGemDirect guards).",
+  "protocol_touchpoints": [
+    {
+      "direction": "WRITE",
+      "location": "src/models/player/Pet.java:239-250",
+      "opcode": "125",
+      "payload_summary": "fusionEffect(int type): writeByte(type), writeInt((int) master.id); broadcast to map via sendMessAllPlayerInMap."
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/models/player/NPoint.java:38-42",
+      "opcode": "helper",
+      "payload_summary": "safeInt(long): clamps long stats to Integer.MAX_VALUE/MIN_VALUE before network writeInt serialization."
+    },
+    {
+      "direction": "WRITE",
+      "location": "src/models/player/Inventory.java:64-70",
+      "opcode": "helper",
+      "payload_summary": "getGoldDisplay(): intended to clamp gold to Integer.MAX_VALUE for client version <= 214 (currently inactive due to null player field)."
+    }
+  ]
+}

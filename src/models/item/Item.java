@@ -115,8 +115,15 @@ public class Item {
         public String getOptionString() {
             return Util.replace(this.optionTemplate.name, "#", String.valueOf(this.param));
         }
+        private static final int MAX_OPTION_STRING_CACHE = 10000;
         private static final Map<String, String> OPTION_STRING = new java.util.concurrent.ConcurrentHashMap<>();
         public String getOptionString(int param) {
+            if (this.optionTemplate == null) {
+                return "";
+            }
+            if (OPTION_STRING.size() >= MAX_OPTION_STRING_CACHE) {
+                OPTION_STRING.clear();
+            }
             String key = this.optionTemplate.name + "#" + param + "#";
             return OPTION_STRING.computeIfAbsent(key, k -> Util.replace(this.optionTemplate.name, "#", String.valueOf(param)));
         }

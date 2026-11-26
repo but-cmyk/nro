@@ -1,0 +1,229 @@
+{
+  "batch_id": "server_services_bot_telemetry__p03",
+  "concurrency_and_state": [
+    "Logger.WRITERS (EnumMap), Logger.TIME_FORMAT, and Logger.DATE_FORMAT are unsynchronized and accessed by both ServerLogWorker-Thread and the JVM shutdown hook thread during shutdown (drainQueue/checkDateRoll/writeEvent).",
+    "Logger.THROTTLE_MAP (ConcurrentHashMap<String, Long[]>) grows unboundedly without eviction and mutates Long[1] inside compute() while reading state[1] outside compute().",
+    "Util.dateFormat (SimpleDateFormat) in toDateString() and Util.num / Util.numShortFormat (NumberFormat) in format()/powerToString()/formatNumber() are shared static mutable formatters accessed without synchronization across threads.",
+    "BotTestLogger.log() and logException() synchronize on BotTestLogger.class while performing blocking FileWriter/PrintWriter disk I/O on every call."
+  ],
+  "cross_module_questions": [
+    "Does Player.zone.map.yPhysicInTop or Zone initialization guarantee every mapId in 0..20 has at least one zone with zoneId != 0 (otherwise Util.randomAllMap loops infinitely)?",
+    "Are legacy plaintext passwords still present in the account table requiring PasswordUtils.verifyPassword() plaintext fallback, or can it be removed?",
+    "Do callers of Util.nextInt(int[] percen) handle the case where the sum of percentages is < 1000 and it returns percen.length?"
+  ],
+  "db_redis_touchpoints": [],
+  "files_read": [
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/utils/BotTestLogger.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/utils/CombineUtil.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/utils/ErrorRes.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/utils/FileIO.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/utils/FileRunner.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/utils/Functions.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/utils/ItemUtil.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/utils/JsonUtil.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/utils/Logger.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/utils/PasswordUtils.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/utils/PlayerAuditLogger.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/utils/SkillUtil.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/utils/SystemMetrics.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/utils/TimeUtil.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/utils/Util.java"
+  ],
+  "findings": [
+    {
+      "category": "concurrency",
+      "impact": "Thread-safety violation: concurrent calls from Netty/game threads can corrupt SimpleDateFormat/NumberFormat internal state, producing garbled dates/numbers or throwing ArrayIndexOutOfBoundsException/NumberFormatException.",
+      "location": "src/utils/Util.java:26-30, 50-56, 39-41, 151-162, 305-307",
+      "root_cause": "Static SimpleDateFormat (dateFormat) and NumberFormat (num, numShortFormat) are used without ThreadLocal or synchronization (unlike compareDay which is synchronized).",
+      "severity": "P1",
+      "title": "Unsynchronized shared SimpleDateFormat and NumberFormat in Util"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Server thread hang (100% CPU infinite loop) if the randomly picked mapId (0..20) has no zone or only zoneId == 0.",
+      "location": "src/utils/Util.java:84-95",
+      "root_cause": "mapId is selected once before the while(zoneJoin == null || zoneJoin.zoneId == 0) loop; getMapWithRandZone(mapId) is retried on the same mapId forever without a retry cap or re-rolling mapId.",
+      "severity": "P1",
+      "title": "Potential infinite loop in Util.randomAllMap"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Boss clone/random boss ID can become positive (0..100000), colliding with normal player or NPC IDs.",
+      "location": "src/utils/Util.java:281-287",
+      "root_cause": "Initial bossId is Util.nextInt(-1000000, -100000), but the retry inside the while loop uses Util.nextInt(-1000000, 100000) with a positive upper bound.",
+      "severity": "P2",
+      "title": "Wrong random upper bound in Util.randomBossId retry loop"
+    },
+    {
+      "category": "concurrency",
+      "impact": "Static memory leak over server uptime and potential ConcurrentModificationException/garbled logs during shutdown.",
+      "location": "src/utils/Logger.java:62-72, 87-92, 136-153, 302-319",
+      "root_cause": "THROTTLE_MAP is never evicted/bounded (keys include player context + message). During shutdown, the hook thread runs drainQueue() without stopping/joining ServerLogWorker-Thread, racing on unsynchronized WRITERS EnumMap and SimpleDateFormat instances.",
+      "severity": "P1",
+      "title": "Unbounded THROTTLE_MAP leak and shutdown race in Logger"
+    },
+    {
+      "category": "security_dupe",
+      "impact": "Accounts with malformed BCrypt hashes or unmigrated hashes fall back to plaintext password comparison.",
+      "location": "src/utils/PasswordUtils.java:27-44",
+      "root_cause": "verifyPassword catches Exception around BCrypt.checkpw and falls back to password.equals(hashed), and also accepts non-BCrypt strings via plaintext equality.",
+      "severity": "P2",
+      "title": "Plaintext password fallback in PasswordUtils.verifyPassword"
+    },
+    {
+      "category": "gameplay",
+      "impact": "ArrayIndexOutOfBoundsException or NullPointerException on invalid skill level or null playerSkill/skillSelect.",
+      "location": "src/utils/SkillUtil.java:47-57, 119-131",
+      "root_cause": "getTempMobMe and getHPMobMe index 7-element arrays with (level - 1) without bounds checks; isUseSkillDam/isUseSkillChuong dereference player.playerSkill.skillSelect.template without null checks.",
+      "severity": "P2",
+      "title": "Missing bounds and null checks in SkillUtil"
+    },
+    {
+      "category": "gameplay",
+      "impact": "NoSuchElementException or NullPointerException when inspecting a type-30 star stone with empty or null itemOptions.",
+      "location": "src/utils/CombineUtil.java:23-26, 47-50",
+      "root_cause": "getOptionDaPhaLe and getParamDaPhaLe call daPhaLe.itemOptions.getFirst() without checking if daPhaLe or itemOptions is null/empty.",
+      "severity": "P2",
+      "title": "Unchecked itemOptions.getFirst() in CombineUtil"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Integer overflow when lastTime is 0 or far in the past, and Util.contains returns false positives on substring matches.",
+      "location": "src/utils/TimeUtil.java:106-129, src/utils/Util.java:102-104",
+      "root_cause": "TimeUtil casts (System.currentTimeMillis() - lastTime) / 1000 to int instead of long. Util.contains uses Arrays.toString(arr).contains(key) instead of element-wise equality.",
+      "severity": "P2",
+      "title": "Int overflow in TimeUtil and substring bug in Util.contains"
+    },
+    {
+      "category": "performance_gc",
+      "impact": "Unnecessary object allocations and blocking I/O on caller threads.",
+      "location": "src/utils/BotTestLogger.java:23-25, src/utils/ItemUtil.java:63-98, src/utils/Util.java:256-261",
+      "root_cause": "BotTestLogger opens/closes FileWriter per log line under class monitor; ItemUtil and Functions allocate new Random() per call; Util.haveSpecialCharacter compiles Pattern on every call.",
+      "severity": "P3",
+      "title": "Repeated Random/Pattern allocations and per-call FileWriter in utils"
+    },
+    {
+      "category": "devops",
+      "impact": "External URL launch or unvalidated cmd execution if invoked in production.",
+      "location": "src/utils/ErrorRes.java:8-15, src/utils/FileRunner.java:7-10",
+      "root_cause": "ErrorRes.howToFix opens chatgpt.com with raw error text; FileRunner.runBatchFile passes batchFilePath directly to cmd /c start.",
+      "severity": "P3",
+      "title": "Dev helper ErrorRes and unvalidated ProcessBuilder in FileRunner"
+    }
+  ],
+  "key_classes": [
+    {
+      "key_methods": [
+        "info",
+        "warn",
+        "error",
+        "audit",
+        "economy",
+        "metrics",
+        "enqueue",
+        "workerLoop"
+      ],
+      "name": "Logger",
+      "path": "src/utils/Logger.java",
+      "responsibility": "Async multi-category file logger with console output, error throttling, and player context formatting."
+    },
+    {
+      "key_methods": [
+        "nextInt",
+        "nextLong",
+        "isTrue",
+        "getDistance",
+        "randomAllMap",
+        "randomBossId",
+        "formatNumber",
+        "toDateString"
+      ],
+      "name": "Util",
+      "path": "src/utils/Util.java",
+      "responsibility": "General-purpose math, RNG, distance, formatting, date, and map/boss helper utilities."
+    },
+    {
+      "key_methods": [
+        "createSkill",
+        "getSkillbyId",
+        "upSkillPet",
+        "getTempSkillSkillByItemID",
+        "getSkillByItemID",
+        "setSkill"
+      ],
+      "name": "SkillUtil",
+      "path": "src/utils/SkillUtil.java",
+      "responsibility": "Skill template lookup, skill creation, pet skill upgrade, and item-to-skill mapping."
+    },
+    {
+      "key_methods": [
+        "isTrangBiPhaLeHoa",
+        "isDaPhaLe",
+        "getOptionDaPhaLe",
+        "getParamDaPhaLe",
+        "getGoldNangCapDo",
+        "getTileNangCapDo"
+      ],
+      "name": "CombineUtil",
+      "path": "src/utils/CombineUtil.java",
+      "responsibility": "Item upgrade/socket (pha le hoa / nang cap) validation and cost/rate tables."
+    },
+    {
+      "key_methods": [
+        "diffDate",
+        "convertTime",
+        "getTimeLeft",
+        "getSecondLeft",
+        "isBlackBallWarOpen",
+        "isBlackBallWarCanPick"
+      ],
+      "name": "TimeUtil",
+      "path": "src/utils/TimeUtil.java",
+      "responsibility": "Date/time calculations, countdown formatting, and scheduled event window checks (Mabu, BlackBallWar)."
+    },
+    {
+      "key_methods": [
+        "toJson",
+        "fromJson",
+        "parseTree",
+        "getLongSafely",
+        "getIntSafely",
+        "getStringSafely"
+      ],
+      "name": "JsonUtil",
+      "path": "src/utils/JsonUtil.java",
+      "responsibility": "Thread-safe Jackson ObjectMapper wrapper and safe JsonNode array accessors."
+    },
+    {
+      "key_methods": [
+        "logAction",
+        "logPacket",
+        "logSkillSelect",
+        "logSkillUsage",
+        "logAttackMob",
+        "logAttackPlayer"
+      ],
+      "name": "PlayerAuditLogger",
+      "path": "src/utils/PlayerAuditLogger.java",
+      "responsibility": "Structured player action, packet, skill, and combat audit logging via Logger."
+    },
+    {
+      "key_methods": [
+        "hashPassword",
+        "verifyPassword"
+      ],
+      "name": "PasswordUtils",
+      "path": "src/utils/PasswordUtils.java",
+      "responsibility": "BCrypt password hashing and verification with legacy plaintext fallback."
+    }
+  ],
+  "module_summary": "Batch server_services_bot_telemetry__p03 covers 15 utility classes in src/utils/ providing async/audit/bot logging, JSON serialization, BCrypt password hashing, system metrics, time/event helpers, skill/combine/item helpers, file I/O, and general RNG/formatting utilities.",
+  "protocol_touchpoints": [
+    {
+      "direction": "READ",
+      "location": "src/utils/PlayerAuditLogger.java:12-16",
+      "opcode": "cmd (telemetry only)",
+      "payload_summary": "Logs incoming/handled packet byte cmd and description to AUDIT log without reading/writing Message stream."
+    }
+  ]
+}

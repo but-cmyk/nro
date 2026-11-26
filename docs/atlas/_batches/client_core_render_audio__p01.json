@@ -1,0 +1,229 @@
+{
+  "batch_id": "client_core_render_audio__p01",
+  "concurrency_and_state": [
+    "Main.cs mixes three Unity callbacks for core state: FixedUpdate() drives Rms.update(), GameCanvas.update(), Image.update(), DataInputStream.update() via a gameSpeedAccumulator loop; Update() drives Session_ME.update() and Session_ME2.update(); OnGUI() drives checkInput() and GameCanvas.paint(g).",
+    "Image.cs contains an unsynchronized single-slot static IPC mailbox (status, imgTemp, filenametemp, datatemp, imgSrcTemp, xtemp, ytemp, wtemp, htemp, transformtemp) polled with Thread.Sleep(5) up to 500x in private _createImage* methods and serviced in Image.update() on the main thread; status is non-volatile and lacks locking, though public createImage methods currently bypass it and call __createImage directly.",
+    "Main.Awake() checks `if (main != null)` to destroy duplicate MonoBehaviours, but `main = this` is only assigned later inside FixedUpdate()->setsizeChange() after `count >= 10`, leaving a 10-tick window where duplicate Main instances are not destroyed.",
+    "GameCanvas.cs holds ~90 mutable static globals (currentScreen, currentDialog, panel, panel2, keyPressed/keyHold/keyReleased, pointer flags, imgBG/yb/bgW/bgH) accessed across Main.OnGUI, Main.FixedUpdate, and action callbacks without synchronization."
+  ],
+  "cross_module_questions": [
+    "Does any external script invoke Image._createImage* via reflection, or is the entire static status/imgTemp mailbox dead code that can be removed from Main.FixedUpdate()?",
+    "How does Service.gI() handle `Session_ME` vs `Session_ME2` when `Controller.isMain` flips in `GameCanvas.update()` (lines 769-828), especially when `OnApplicationFocus(false)` drops `Update()` to 15 FPS?",
+    "Where is `Main.gameSpeed` modified at runtime, and how does `gameSpeedAccumulator` in `Main.FixedUpdate()` interact with server-side movement/attack cooldown validation?",
+    "Does `mFont.bigNumber_black` (id 31) get called anywhere when `mGraphics.zoomLevel > 1`, which would trigger `IndexOutOfRangeException` in `mFont.setTypePaint()`?"
+  ],
+  "db_redis_touchpoints": [
+    {
+      "location": "GameCanvas.cs:425-534, 776-777, 3037; Main.cs:143-145, 231, 275-283, 431-436, 456",
+      "op": "Client local RMS persistence (Rms.Init, Rms.update, Rms.loadRMS/Int/String, Rms.saveRMSInt/saveIP, Rms.clearAll)",
+      "safety_note": "Main.doClearRMS() (Main.cs:427-439) calls Rms.clearAll() whenever `lastZoomlevel != mGraphics.zoomLevel` on PC, wiping saved client settings/RMS cache on zoom change.",
+      "target": "Client RMS local storage (PlayerPrefs/File)"
+    }
+  ],
+  "files_read": [
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/GameCanvas.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/Image.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/Main.cs",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/Client/Client/Assets/Scripts/Game1/mFont.cs"
+  ],
+  "findings": [
+    {
+      "category": "gameplay",
+      "impact": "Every frame when a panel is open without an active chat field, panel.updateKey() or panel2.updateKey() executes twice per tick, causing double-clicks, double-scrolls, or unintended item/tab activations.",
+      "location": "GameCanvas.cs:699-729",
+      "root_cause": "GameCanvas.update() calls panel/panel2.updateKey() at lines 699-713 and then calls panel/panel2.updateKey() a second time in the else-if chain at lines 714-729 when chatTField is not shown.",
+      "severity": "P1",
+      "title": "Double panel.updateKey() invocation in GameCanvas.update()"
+    },
+    {
+      "category": "gameplay",
+      "impact": "IndexOutOfRangeException crashes rendering whenever bigNumber_black is drawn at zoomLevel > 1.",
+      "location": "mFont.cs:360, 421-433",
+      "root_cause": "mFont.init() instantiates bigNumber_black with id = 31 (line 360). bigColor(31) indexes a 7-element array (valid), but setTypePaint() allocates a 6-element Color[6] outline array and indexes `array[id - 25]` (6), throwing IndexOutOfRangeException.",
+      "severity": "P1",
+      "title": "IndexOutOfRangeException in mFont.setTypePaint for bigNumber_black (id=31)"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Key 15 stays stuck in keyHold/keyPressed after releasing Enter/OK, and numpad keys stay stuck in keyHold when isMoveNumberPad is false.",
+      "location": "GameCanvas.cs:2463-2469, 2349-2423 vs 2474-2548",
+      "root_cause": "In mapKeyRelease, case -5 / 10 sets `keyHold[15] = true; keyPressed[15] = true;` (copy-pasted from mapKeyPress) instead of false/released. Also mapKeyPress records numpad keys 1-8 without checking `isMoveNumberPad`, while mapKeyRelease only clears them if `isMoveNumberPad` is true.",
+      "severity": "P1",
+      "title": "Stuck keyHold/keyPressed state in mapKeyRelease and asymmetric isMoveNumberPad check"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Mouse press/drag/release events fire multiple times per Unity frame (Layout, Repaint, MouseDown, etc.), causing missed or duplicate clicks and wasted work.",
+      "location": "Main.cs:313-317, 511-561",
+      "root_cause": "OnGUI() invokes checkInput() on every IMGUI event pass, and checkInput() polls frame-level Input.GetMouseButtonDown/GetMouseButton/GetMouseButtonUp(0) and Input.GetAxis(\"Mouse ScrollWheel\") instead of guarding by Event.current.type.",
+      "severity": "P1",
+      "title": "Frame-level Input.GetMouseButton* polled on every OnGUI pass in Main.checkInput()"
+    },
+    {
+      "category": "performance_gc",
+      "impact": "Causes continuous GC allocations during combat/damage rendering on every frame at zoomLevel > 1, plus 5x GUI.Label draw calls per string.",
+      "location": "mFont.cs:392-405, 421-446, 524-531",
+      "root_cause": "setTypePaint allocates `new Color[6]` and calls bigColor() twice (each allocating `new Color[7]`) on every call for id > 24, alongside 5 `_drawString` passes per outlined text/number.",
+      "severity": "P1",
+      "title": "Per-frame Color[] heap allocations in mFont.setTypePaint and bigColor"
+    },
+    {
+      "category": "performance_gc",
+      "impact": "Orphans a Texture2D GPU/native allocation on every Image.createImage(Image) call and leaks sampled Textures in loadBG until scene unload.",
+      "location": "Image.cs:66-72; GameCanvas.cs:1834-1835",
+      "root_cause": "Image.createImage(Image img) calls createImage(img.w, img.h) (allocating a new Texture2D) and immediately overwrites `image.texture = img.texture` without destroying the allocated Texture2D, then calls Apply() again. GameCanvas.loadBG loads a temporary Image to read 1 pixel via getRGB without destroying its texture.",
+      "severity": "P2",
+      "title": "Texture2D native memory leak in Image.createImage(Image) and loadBG"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Throws NullReferenceException when dragons/fireworks render before imgBG is initialized (e.g. lowGraphic or loading). Also sets wrong yfog on map transition.",
+      "location": "GameCanvas.cs:1145 vs 1161, 1704-1728",
+      "root_cause": "paintBackgroundtLayer accesses `imgBG.Length` at line 1145 before the null check `imgBG == null` at line 1161. In loadBG(int typeBG), line 1709 checks static `typeBg == 12` before assigning `typeBg = typeBG` at line 1728, reading the previous map's background type.",
+      "severity": "P2",
+      "title": "NullReferenceException in paintBackgroundtLayer and stale typeBg read in loadBG"
+    },
+    {
+      "category": "performance_gc",
+      "impact": "Double draw cost every frame a dialog is open and visual double-darkening of semi-transparent dialog backdrops.",
+      "location": "GameCanvas.cs:2740-2744, 2777-2780",
+      "root_cause": "GameCanvas.paint() paints `currentDialog.paint(g)` at line 2743 and paints it a second time at line 2779.",
+      "severity": "P2",
+      "title": "currentDialog.paint(g) called twice per frame in GameCanvas.paint()"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Can throw IndexOutOfRangeException during word wrapping (caught and logged as warning, falling back to unsplit line), or freeze the client if lineWidth < 1 char width.",
+      "location": "mFont.cs:595-619, 680-691",
+      "root_cause": "splitStrInLineA increments `num++` at line 683 and immediately accesses `src[num]` at line 684 without bounds check; splitFontVector has no progress guarantee if `num == 0` when `getWidth(1 char) > lineWidth`.",
+      "severity": "P2",
+      "title": "Off-by-one IndexOutOfRangeException in splitStrInLineA and potential infinite loop in splitFontVector"
+    },
+    {
+      "category": "performance_gc",
+      "impact": "Generates per-frame GC garbage in paint/input loops (Position object on every drag, string concats on HUD money/loading/text comparison).",
+      "location": "GameCanvas.cs:2593, 2705, 2789, 2926-2943; mFont.cs:753",
+      "root_cause": "pointerDragged allocates `new Position(x, y)` instead of reusing existing elements; getMoneys allocates multiple concatenated strings in a loop; paint/paintChangeMap build strings via `+`; mFont.compare allocates `string.Empty + strSource[i]` per character.",
+      "severity": "P2",
+      "title": "Per-frame allocations in GameCanvas pointerDragged/paint/getMoneys and mFont.compare"
+    },
+    {
+      "category": "devops",
+      "impact": "Floods Unity Console with false red error badges during normal image loading and slows network message pumping to 15 Hz when window loses focus.",
+      "location": "Image.cs:319-320; Main.cs:505-509, 634-644",
+      "root_cause": "Image.loadData unconditionally calls `Debug.LogError(\"CHIEU DAI MANG BYTE IMAGE CREAT = \" + array.Length)` after an unused `ArrayCast.cast`. Main.OnApplicationFocus(false) sets `Application.targetFrameRate = 15`, throttling Update() where Session_ME.update() drains network packets.",
+      "severity": "P2",
+      "title": "False Debug.LogError in Image.loadData and network throttling on focus loss in Main.cs"
+    },
+    {
+      "category": "concurrency",
+      "impact": "Race condition if concurrent threads ever invoke `_createImage*`, and wasted per-tick check in Main.FixedUpdate(). Also potential NRE in Main.Awake/closeKeyBoard/parse.",
+      "location": "Image.cs:15-37, 138-310; Main.cs:227-238, 443-447, 623-627; GameCanvas.cs:3507",
+      "root_cause": "Image._createImage* and Image.update() share unsynchronized non-volatile static fields with Thread.Sleep(5) polling (though currently unused by public callers). Main.Awake doesn't set `main = this`. Main.closeKeyBoard/OnApplicationPause dereference TField.kb without null check. GameCanvas.perform case 888391 calls `int.Parse(s)` without try/catch.",
+      "severity": "P3",
+      "title": "Unsynchronized static IPC mailbox in Image.cs and missing null/parse guards in Main/GameCanvas"
+    }
+  ],
+  "key_classes": [
+    {
+      "key_methods": [
+        "initGame()",
+        "update()",
+        "paint(mGraphics gx)",
+        "paintBGGameScr(mGraphics g)",
+        "paintBackgroundtLayer(mGraphics g, int layer, int deltaY, int color1, int color2)",
+        "loadBG(int typeBG)",
+        "applyMapWeatherEffect(int typeBG)",
+        "mapKeyPress(int keyCode)",
+        "mapKeyRelease(int keyCode)",
+        "perform(int idAction, object p)",
+        "onDisconnected()",
+        "onConnectionFail()",
+        "doResetToLoginScr(mScreen screen)"
+      ],
+      "name": "GameCanvas",
+      "path": "Client/Client/Assets/Scripts/Game1/GameCanvas.cs",
+      "responsibility": "Central God-class orchestrating screen/dialog/panel lifecycle, keyboard/pointer input mapping, map background & weather rendering, network reconnect/reset transitions, and UI action dispatching (IActionListener)."
+    },
+    {
+      "key_methods": [
+        "Start()",
+        "Awake()",
+        "FixedUpdate()",
+        "Update()",
+        "OnGUI()",
+        "checkInput()",
+        "setResolutionPC(int width, int height, int sizeIdx)",
+        "onScreenSizeChanged(int forceW, int forceH)",
+        "OnApplicationFocus(bool hasFocus)",
+        "OnApplicationQuit()"
+      ],
+      "name": "Main",
+      "path": "Client/Client/Assets/Scripts/Game1/Main.cs",
+      "responsibility": "Unity MonoBehaviour entrypoint bridging FixedUpdate (game simulation), Update (network session pump), OnGUI (input polling + canvas paint), Win32 window resizing, and app lifecycle hooks."
+    },
+    {
+      "key_methods": [
+        "createImage(string filename)",
+        "createImage(byte[] imageData)",
+        "createImage(Image src, int x, int y, int w, int h, int transform)",
+        "createRGBImage(int[] rbg, int w, int h, bool bl)",
+        "loadData(string filename)",
+        "getRGB(ref int[] data, int x1, int x2, int x, int y, int w, int h)",
+        "update()"
+      ],
+      "name": "Image",
+      "path": "Client/Client/Assets/Scripts/Game1/Image.cs",
+      "responsibility": "Texture2D wrapper providing resource/byte/region image creation, pixel readback, and texture filtering setup."
+    },
+    {
+      "key_methods": [
+        "init()",
+        "drawString(mGraphics g, string st, int x, int y, int align)",
+        "setTypePaint(mGraphics g, string st, int x, int y, int align, sbyte idFont)",
+        "_drawString(mGraphics g, string st, int x0, int y0, int align)",
+        "splitFontVector(string src, int lineWidth)",
+        "splitStrInLineA(string src, int lineWidth)",
+        "getWidth(string s)",
+        "getWidthExactOf(string s)",
+        "getHeight()"
+      ],
+      "name": "mFont",
+      "path": "Client/Client/Assets/Scripts/Game1/mFont.cs",
+      "responsibility": "Text measurement, line wrapping, bitmap-atlas font rendering (zoomLevel==1), and Unity GUIStyle/TTF font rendering (zoomLevel>1)."
+    }
+  ],
+  "module_summary": "Read all 4 files (5,676 lines) in the client core & rendering batch: Main.cs (Unity MonoBehaviour lifecycle & input bridge), GameCanvas.cs (central UI/game loop, input map, map background/weather renderer, dialog/action dispatcher), Image.cs (Texture2D image loader/slicer), and mFont.cs (bitmap & Unity Font/GUIStyle text rendering and word-wrapping). Observed high-impact UI/input/rendering bugs (double panel.updateKey(), double currentDialog.paint(), stuck keyHold[15], OnGUI frame-input polling), a crash bug in mFont.setTypePaint for bigNumber_black (id=31), per-frame Color[]/Position/string GC allocations in rendering, and Texture2D leaks/false LogError in Image.cs.",
+  "protocol_touchpoints": [
+    {
+      "direction": "WRITE",
+      "location": "GameCanvas.cs:599",
+      "opcode": "requestIcon(small.id)",
+      "payload_summary": "Requests missing SmallImage icon IDs queued in SmallImage.vt_images_watingDowload during update()."
+    },
+    {
+      "direction": "WRITE",
+      "location": "GameCanvas.cs:778-785, 3276",
+      "opcode": "setClientType / androidPack / setClientType2 / androidPack2",
+      "payload_summary": "Sends client platform/version handshake after Controller.isConnectOK for primary or secondary session."
+    },
+    {
+      "direction": "READ",
+      "location": "GameCanvas.cs:769-828, 872-941, 1075",
+      "opcode": "Controller state flags (isConnectOK, isDisconnected, isConnectionFail, isLoadingData, isMain)",
+      "payload_summary": "Polls Controller connection state flags in GameCanvas.update() to trigger handshake, reconnect, or error dialogs."
+    },
+    {
+      "direction": "DISPATCH",
+      "location": "GameCanvas.cs:3317-3566",
+      "opcode": "perform(idAction) -> Service.gI().*",
+      "payload_summary": "Dispatches UI command IDs (8886-888392, 100001-100005) to Service RPCs: addFriend, addPartyAccept/Cancel, acceptInviteTrade, crystalCollectLock, menu, textBoxId, menuId, changeName, activeAccProtect, openLockAccProtect, clearAccProtect, getFlag, openUIZone."
+    },
+    {
+      "direction": "DISPATCH",
+      "location": "Main.cs:505-509",
+      "opcode": "Session_ME.update() / Session_ME2.update()",
+      "payload_summary": "Pumps incoming/outgoing network message queues on Unity Update()."
+    }
+  ]
+}

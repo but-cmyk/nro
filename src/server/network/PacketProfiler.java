@@ -196,20 +196,26 @@ public class PacketProfiler {
         return String.format("Player %s (ID: %d, %s)", player.name, player.id, mapInfo);
     }
 
+    private final ExecutorService alertWriterExecutor = Executors.newSingleThreadExecutor(r -> {
+        Thread t = new Thread(r, "PacketProfiler-AlertWriter");
+        t.setDaemon(true);
+        return t;
+    });
+
     /**
-     * Tự động ghi vết sự cố vào tools/memory/PERFORMANCE_ALERTS.json
+     * Tự động ghi vết sự cố vào tools/memory/PERFORMANCE_ALERTS.json (bất đồng bộ, không block Netty IO)
      */
-    private synchronized void triggerPerformanceAlert(byte cmd, CommandMetric metric, long peakLatencyMs) {
+    private void triggerPerformanceAlert(byte cmd, CommandMetric metric, long peakLatencyMs) {
         activeAlerts.put(cmd, Boolean.TRUE);
-        syncAlertsJson();
+        alertWriterExecutor.execute(this::syncAlertsJson);
     }
 
-    public synchronized void resolveAlert(byte cmd) {
+    public void resolveAlert(byte cmd) {
         activeAlerts.remove(cmd);
-        syncAlertsJson();
+        alertWriterExecutor.execute(this::syncAlertsJson);
     }
 
-    private void syncAlertsJson() {
+    private synchronized void syncAlertsJson() {
         File file = new File("tools/memory/PERFORMANCE_ALERTS.json");
         try (BufferedWriter bw = new BufferedWriter(new FileWriter(file, false))) {
             StringBuilder sb = new StringBuilder();

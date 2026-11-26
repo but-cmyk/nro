@@ -1,0 +1,222 @@
+{
+  "batch_id": "tooling_and_tests__p01",
+  "concurrency_and_state": [
+    "src/models/AntiLogin.java: All methods (canLogin, wrong, reset, getNotifyCannotLogin, isExpired) are synchronized on `this`, and `lastActivity` is volatile, but `wrongLogin` (byte) is `public` and non-volatile, allowing unsynchronized external access.",
+    "src/models/GiftCode.java: Uses non-thread-safe `HashMap` for `detail` and `option`, and plain `int countLeft`; relies on external synchronization in GiftCode service/manager.",
+    "tools/test/TestProfilerEngine.java: Spawns 10-thread FixedThreadPool with CountDownLatch gates to stress-test `PacketProfiler.gI()`, mutating real workspace files in `logs/metrics/` and `tools/memory/PERFORMANCE_ALERTS.json`.",
+    "tools/test/TestTelemetry.java: Mutates global static `TelemetryConfig` state (`ENABLED`, `STORAGE_DESTINATION`, `cloudEndpoint`, `WHITELIST_MAPS`) without restoring defaults in `finally`."
+  ],
+  "cross_module_questions": [
+    "Does GiftCodeService/GiftCodeManager synchronize or lock around `GiftCode.countLeft` and `player.giftCode.isUsedGiftCode(code)` during redemption to prevent race-condition dupes?",
+    "Does any caller read or write `AntiLogin.wrongLogin` directly without going through `synchronized` methods, or call `wrong()` while already blocked (which could trigger `byte` overflow)?",
+    "Are `MobTemplate.hp` and `MapTemplate.mobHp` (`int` in `Template.java`) overflowing or capped for high-HP custom mobs/bosses compared to `NPoint.hpMax` (`long`)?",
+    "Is `TestProfilerEngine` safe to run in CI/dev without polluting `tools/memory/PERFORMANCE_ALERTS.json` and `logs/metrics/`?"
+  ],
+  "db_redis_touchpoints": [
+    {
+      "location": "test/TestWhisArenaLogic.java:246-248",
+      "op": "SELECT name, tile_id FROM map_template WHERE id = 187",
+      "safety_note": "Uses try-with-resources; hardcoded localhost:3308 root/root credentials; catches exception to skip test if DB unavailable.",
+      "target": "nro_data.map_template"
+    },
+    {
+      "location": "tools/scripts/TestConnection.java:13-28",
+      "op": "SELECT ip_address FROM account LIMIT 1; SELECT is_admin FROM account LIMIT 1",
+      "safety_note": "Uses try-with-resources; hardcoded 127.0.0.1:3306 root/(empty) credentials.",
+      "target": "nro_acc.account"
+    },
+    {
+      "location": "tools/TestMobParse.java:13-21",
+      "op": "DriverManager.getConnection + createStatement (no query executed)",
+      "safety_note": "UNSAFE: Neither Connection nor Statement uses try-with-resources; Statement is never closed and Connection leaks if an exception is thrown before line 21.",
+      "target": "nro_data"
+    },
+    {
+      "location": "tools/TestMobRuntime.java:16",
+      "op": "DatabaseTemplateLoader.gI().loadAllTemplates()",
+      "safety_note": "Delegates to DatabaseTemplateLoader (not in this batch).",
+      "target": "nro_data templates"
+    }
+  ],
+  "files_read": [
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/AntiLogin.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/GiftCode.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/src/models/Template.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/test/TestWhisArenaLogic.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/build/tls-test/TestTlsContext.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/build/tls-test/TestTlsHandshake.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/tools/scripts/TestConnection.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/tools/test/TestNamecAI.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/tools/test/TestProfilerEngine.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/tools/test/TestTelemetry.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/tools/TestMobParse.java",
+    "C:/Users/PC/OneDrive/Desktop/SRC_NRO_219/tools/TestMobRuntime.java"
+  ],
+  "findings": [
+    {
+      "category": "security_dupe",
+      "impact": "If `wrong()` is invoked 128+ times without resetting (e.g., if caller doesn't gate on `canLogin()`), `wrongLogin` wraps to -128 (`< MAX_WRONG`), bypassing the brute-force login lockout. Public visibility also permits unsynchronized external mutation.",
+      "location": "src/models/AntiLogin.java:9,43-49",
+      "root_cause": "`wrongLogin` is declared `public byte wrongLogin` and incremented unboundedly (`wrongLogin++`) in `wrong()`. Also `timeCanLogin` (line 8) is dead state (written, never read).",
+      "severity": "P2",
+      "title": "AntiLogin.wrongLogin uses signed byte that can overflow and is public non-volatile"
+    },
+    {
+      "category": "database",
+      "impact": "JDBC `Statement` is leaked on every run, and `Connection` is leaked if `RedRibbonHQService` or any statement throws an exception.",
+      "location": "tools/TestMobParse.java:13-21",
+      "root_cause": "`DriverManager.getConnection(...)` and `conn.createStatement()` are not wrapped in `try-with-resources`; `stmt` is unused and never closed, and `conn.close()` is outside `finally`.",
+      "severity": "P3",
+      "title": "Resource leak in TestMobParse (missing try-with-resources)"
+    },
+    {
+      "category": "gameplay",
+      "impact": "Calling `timeCode()` on a `GiftCode` with null `datecreate` or `dateexpired` throws `NullPointerException`.",
+      "location": "src/models/GiftCode.java:23-25",
+      "root_cause": "`this.datecreate.getTime() > this.dateexpired.getTime()` lacks null checks on either `Timestamp` field.",
+      "severity": "P3",
+      "title": "Potential NPE in GiftCode.timeCode() when timestamps are null"
+    },
+    {
+      "category": "architecture",
+      "impact": "Increases risk of inconsistent state between `skills` array and `skillss` list, and fragile index alignment across parallel arrays in `MapTemplate`.",
+      "location": "src/models/Template.java:117-125,152-154",
+      "root_cause": "`SkillTemplate` declares both `Skill[] skills` and `List<Skill> skillss = new ArrayList<>()`; `MapTemplate` stores mob/npc attributes in separate parallel primitive arrays.",
+      "severity": "P3",
+      "title": "Template.java has duplicated skill collections and parallel arrays in MapTemplate"
+    },
+    {
+      "category": "devops",
+      "impact": "Test 18 fails whenever `WhisArenaService.getRemainingMinutes()` is not 101; TestProfilerEngine pollutes real `PERFORMANCE_ALERTS.json` and `logs/metrics/` files.",
+      "location": "test/TestWhisArenaLogic.java:299; tools/test/TestProfilerEngine.java:135-221",
+      "root_cause": "`TestWhisArenaLogic` asserts `expectedHeader.contains(\"101 phút nữa\")`, and `TestProfilerEngine` writes directly to production metrics/alert paths instead of temp directories.",
+      "severity": "P3",
+      "title": "Brittle time-dependent assertion in TestWhisArenaLogic and side-effects in TestProfilerEngine"
+    }
+  ],
+  "key_classes": [
+    {
+      "key_methods": [
+        "AntiLogin",
+        "canLogin",
+        "wrong",
+        "reset",
+        "getNotifyCannotLogin",
+        "isExpired"
+      ],
+      "name": "AntiLogin",
+      "path": "src/models/AntiLogin.java",
+      "responsibility": "Tracks failed login attempts per IP/account and enforces temporary 60s lockout after 5 wrong attempts."
+    },
+    {
+      "key_methods": [
+        "isUsedGiftCode",
+        "timeCode"
+      ],
+      "name": "GiftCode",
+      "path": "src/models/GiftCode.java",
+      "responsibility": "Data model for gift codes, item rewards, options, usage count, and validity timestamps."
+    },
+    {
+      "key_methods": [
+        "ItemOptionTemplate",
+        "ItemTemplate",
+        "MapTemplate",
+        "Part",
+        "PartDetail",
+        "HeadAvatar",
+        "WaitSuperRank",
+        "AchievementTemplate",
+        "AchievementQuest"
+      ],
+      "name": "Template",
+      "path": "src/models/Template.java",
+      "responsibility": "Container for static game template data classes (items, mobs, NPCs, maps, skills, parts, achievements)."
+    },
+    {
+      "key_methods": [
+        "main"
+      ],
+      "name": "TestWhisArenaLogic",
+      "path": "test/TestWhisArenaLogic.java",
+      "responsibility": "Standalone 18-case verification suite for Whis Arena bots, rankings, U6 bosses, rewards, and map 187 DB/binary files."
+    },
+    {
+      "key_methods": [
+        "main",
+        "testConcurrencyAndAccuracy",
+        "testCsvExport",
+        "testSlowLogFlushing",
+        "testPerformanceAlertsJson",
+        "testInGameReportFormatting",
+        "testResolveAlert"
+      ],
+      "name": "TestProfilerEngine",
+      "path": "tools/test/TestProfilerEngine.java",
+      "responsibility": "Multi-threaded stress and integration test for PacketProfiler, CSV/slow-log output, and PERFORMANCE_ALERTS.json lifecycle."
+    },
+    {
+      "key_methods": [
+        "main",
+        "testConfig",
+        "testRecordSchema",
+        "testAntiMacroFilter",
+        "testLoggerFlush",
+        "testCloudStreamZeroDisk"
+      ],
+      "name": "TestTelemetry",
+      "path": "tools/test/TestTelemetry.java",
+      "responsibility": "Unit/integration test for AI telemetry config, JSONL record schema, AntiMacroFilter, TrajectoryLogger, and GZIP HTTP cloud streaming."
+    },
+    {
+      "key_methods": [
+        "main"
+      ],
+      "name": "TestTlsContext",
+      "path": "build/tls-test/TestTlsContext.java",
+      "responsibility": "Verifies Netty SslContext creation with dev-cert.pem/dev-key.pem for TLSv1.3/TLSv1.2."
+    },
+    {
+      "key_methods": [
+        "main"
+      ],
+      "name": "TestTlsHandshake",
+      "path": "build/tls-test/TestTlsHandshake.java",
+      "responsibility": "Starts a temporary Netty TLS echo server on 127.0.0.1:18443 for 15s to test TLS handshake."
+    },
+    {
+      "key_methods": [
+        "main"
+      ],
+      "name": "TestConnection",
+      "path": "tools/scripts/TestConnection.java",
+      "responsibility": "Checks MySQL connectivity to nro_acc and existence of ip_address and is_admin columns on account table."
+    },
+    {
+      "key_methods": [
+        "main"
+      ],
+      "name": "TestNamecAI",
+      "path": "tools/test/TestNamecAI.java",
+      "responsibility": "Verifies NamecImitationAI policy constants and Namec farming map array."
+    },
+    {
+      "key_methods": [
+        "main"
+      ],
+      "name": "TestMobParse",
+      "path": "tools/TestMobParse.java",
+      "responsibility": "Diagnostic script printing RedRibbonHQ (Doanh Trai) zone mob counts."
+    },
+    {
+      "key_methods": [
+        "main"
+      ],
+      "name": "TestMobRuntime",
+      "path": "tools/TestMobRuntime.java",
+      "responsibility": "Simulates loading templates/maps and opening RedRibbonHQ for a mock player to inspect spawned mobs and bosses."
+    }
+  ],
+  "module_summary": "Batch tooling_and_tests__p01 covers 3 core model classes (AntiLogin, GiftCode, Template) and 9 standalone test/diagnostic runners (Whis Arena, TLS, MySQL connection, Namec AI, PacketProfiler, Telemetry, and RedRibbonHQ mob loading). No custom game protocol opcodes are serialized/deserialized in this batch. Key issues include byte overflow & public field exposure in AntiLogin, an unclosed JDBC Connection/Statement in TestMobParse, and test side-effects/brittle assertions in TestProfilerEngine and TestWhisArenaLogic.",
+  "protocol_touchpoints": []
+}
