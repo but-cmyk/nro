@@ -88,11 +88,12 @@ namespace Game1
     
         public static string pasteText;
 
-#if UNITY_EDITOR
-        public static float gameSpeed = 0.8f;
-#else
-        private const float gameSpeed = 0.8f;
-#endif
+        private static float _gameSpeed = 0.8f;
+        public static float gameSpeed
+        {
+            get => _gameSpeed;
+            set => _gameSpeed = Mathf.Clamp(value, 0.1f, 10f);
+        }
 
         private float gameSpeedAccumulator;
 
@@ -490,7 +491,7 @@ namespace Game1
                 updateCount++;
 
                 gameSpeedAccumulator += Mathf.Max(0.1f, gameSpeed);
-                int simulationSteps = Mathf.Clamp((int)gameSpeedAccumulator, 0, 2);
+                int simulationSteps = Mathf.Clamp((int)gameSpeedAccumulator, 0, 10);
                 gameSpeedAccumulator -= simulationSteps;
                 for (int simulationStep = 0; simulationStep < simulationSteps; simulationStep++)
                 {
