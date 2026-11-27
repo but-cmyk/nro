@@ -129,7 +129,7 @@ public class Broly extends Boss {
             }
             
         } catch (Exception ex) {
-            ex.printStackTrace();
+            utils.Logger.logException(Broly.class, ex, "Broly exception");
         }
     }
 
@@ -197,7 +197,7 @@ public class Broly extends Boss {
                 new SuperBroly(zoneJoin, x, y);
             }
         } catch (Exception ex) {
-            ex.printStackTrace();
+            utils.Logger.logException(Broly.class, ex, "Broly exception");
         }
         // -----------------------
 

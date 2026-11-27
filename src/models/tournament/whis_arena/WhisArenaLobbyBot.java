@@ -320,7 +320,7 @@ public class WhisArenaLobbyBot extends SuperRank {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            utils.Logger.logException(WhisArenaLobbyBot.class, e, "WhisArenaLobbyBot exception");
         }
     }
 }

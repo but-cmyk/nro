@@ -84,7 +84,7 @@ public class WorldMartialArtsTournamentManager implements Runnable {
                 updateChatText();
                 Functions.sleep(Math.max(1000 - (System.currentTimeMillis() - start), 10));
             } catch (Exception e) {
-                e.printStackTrace();
+                utils.Logger.logException(WorldMartialArtsTournamentManager.class, e, "WorldMartialArtsTournamentManager exception");
             }
         }
     }

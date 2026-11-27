@@ -165,7 +165,7 @@ public class NewBot {
      */
     public void spawnNamecArmy(int count) {
         if (!BotManager.ENABLED) {
-            System.out.println("Chức năng Bot đã bị vô hiệu hóa.");
+            utils.Logger.log(String.valueOf("Chức năng Bot đã bị vô hiệu hóa.") + "\n");
             return;
         }
         LoadPart();
@@ -227,10 +227,10 @@ public class NewBot {
                 spawned++;
 
                 if (spawned % 200 == 0) {
-                    System.out.println("Đang khởi tạo Hạm Đội Namec: " + spawned + " / " + count + " bots...");
+                    utils.Logger.log(String.valueOf("Đang khởi tạo Hạm Đội Namec: " + spawned + " / " + count + " bots...") + "\n");
                 }
             }
         }
-        System.out.println("Đã khởi tạo thành công " + spawned + " Bot AI Hành Tinh Namec trên 14 bản đồ cày cuốc!");
+        utils.Logger.log(String.valueOf("Đã khởi tạo thành công " + spawned + " Bot AI Hành Tinh Namec trên 14 bản đồ cày cuốc!") + "\n");
     }
 }

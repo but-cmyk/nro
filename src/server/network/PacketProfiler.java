@@ -294,10 +294,10 @@ public class PacketProfiler {
      * In báo cáo ra Server Console (phục vụ lệnh console `latency`)
      */
     public void printReport() {
-        System.out.println("============================== PACKET LATENCY REPORT ==============================");
+        utils.Logger.log(String.valueOf("============================== PACKET LATENCY REPORT ==============================") + "\n");
         System.out.printf("%-6s %-20s %-10s %-10s %-10s %-10s %-25s\n",
                 "CMD", "NAME", "CALLS", "AVG(ms)", "MAX(ms)", "SLOW", "SLOWEST CONTEXT");
-        System.out.println("-----------------------------------------------------------------------------------");
+        utils.Logger.log(String.valueOf("-----------------------------------------------------------------------------------") + "\n");
 
         metrics.values().stream()
                 .filter(m -> m.callCount.sum() > 0)
@@ -312,7 +312,7 @@ public class PacketProfiler {
                         m.slowCount.sum(),
                         m.slowestContext.length() > 25 ? m.slowestContext.substring(0, 22) + "..." : m.slowestContext
                 ));
-        System.out.println("===================================================================================");
+        utils.Logger.log(String.valueOf("===================================================================================") + "\n");
     }
 
     /**

@@ -88,7 +88,7 @@ public class RedRibbonHQ {
             this.isOpened = true;
             this.init();
         } catch (Exception e) {
-            e.printStackTrace();
+            utils.Logger.logException(RedRibbonHQ.class, e, "RedRibbonHQ exception");
             if (player != null && player.clan != null) {
                 player.clan.lastTimeOpenDoanhTrai = 0;
                 player.clan.haveGoneDoanhTrai = false;

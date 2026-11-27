@@ -99,7 +99,7 @@ public class SuperBroly extends Boss {
 
         try {
             this.detu = new DetuBroly(this.zone, this.location.x - 30, this.location.y, this);
-        } catch (Exception e) { e.printStackTrace(); }
+        } catch (Exception e) { utils.Logger.logException(SuperBroly.class, e, "SuperBroly exception"); }
 
         st = System.currentTimeMillis();
     }
@@ -250,7 +250,7 @@ public class SuperBroly extends Boss {
             }
             
         } catch (Exception ex) {
-            ex.printStackTrace();
+            utils.Logger.logException(SuperBroly.class, ex, "SuperBroly exception");
         }
     }
 

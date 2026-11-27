@@ -755,7 +755,7 @@ public class WhisArenaService {
             }
             player.sendMessage(msg);
         } catch (Exception e) {
-            e.printStackTrace();
+            utils.Logger.logException(WhisArenaService.class, e, "WhisArenaService exception");
         } finally {
             if (msg != null) {
                 msg.cleanup();

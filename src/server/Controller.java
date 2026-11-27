@@ -65,6 +65,7 @@ import utils.PlayerAuditLogger;
 public class Controller implements IMessageHandler {
 
     private final java.util.concurrent.ConcurrentHashMap<Byte, Long> lastErrorLogTime = new java.util.concurrent.ConcurrentHashMap<>();
+    private static final java.util.concurrent.Semaphore SEND_RES_SEMAPHORE = new java.util.concurrent.Semaphore(16);
 
     private static Controller instance;
 
@@ -532,7 +533,20 @@ public class Controller implements IMessageHandler {
                     } else if (type == 2) {
                         String ip = _session.ipAddress;
                         Logger.warning(ip + " dang tai du lieu\n");
-                        new Thread(() -> DataGame.sendRes(_session), "SendRes-" + ip).start();
+                        Thread.ofVirtual().name("SendRes-" + ip).start(() -> {
+                            boolean acquired = false;
+                            try {
+                                SEND_RES_SEMAPHORE.acquire();
+                                acquired = true;
+                                DataGame.sendRes(_session);
+                            } catch (InterruptedException e) {
+                                Thread.currentThread().interrupt();
+                            } finally {
+                                if (acquired) {
+                                    SEND_RES_SEMAPHORE.release();
+                                }
+                            }
+                        });
                     }
                     break;
                 case -81:
@@ -1079,7 +1093,7 @@ public class Controller implements IMessageHandler {
                                 player.getLegThuCung());
                         services.Service.gI().point(player);
                     } catch (Exception e) {
-                        e.printStackTrace();
+                        utils.Logger.logException(Controller.class, e, "Controller exception");
                     }
                 }, 1000);
             }

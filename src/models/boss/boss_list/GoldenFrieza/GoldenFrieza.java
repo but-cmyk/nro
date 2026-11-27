@@ -145,7 +145,7 @@ public class GoldenFrieza extends Boss {
                         break;
                 }
             } catch (Exception ex) {
-                ex.printStackTrace();
+                utils.Logger.logException(GoldenFrieza.class, ex, "GoldenFrieza exception");
             }
         }
     }
@@ -168,7 +168,7 @@ public class GoldenFrieza extends Boss {
             Service.gI().sendMessAllPlayerInMap(this, msg);
             msg.cleanup();
         } catch (Exception e) {
-            e.printStackTrace();
+            utils.Logger.logException(GoldenFrieza.class, e, "GoldenFrieza exception");
         }
     }
 

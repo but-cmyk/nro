@@ -16,8 +16,110 @@ namespace Game1
     
         public static string filename;
 
+        private struct RmsCacheEntry
+        {
+            public string key;
+            public sbyte[] data;
+            public bool pinned;
+        }
+
+        private const int MAX_CACHE_ENTRIES = 200;
+        private static long MaxCacheBytes => GameCanvas.lowGraphic ? (8L * 1024 * 1024) : (16L * 1024 * 1024);
+
         private static readonly object rmsLock = new object();
-        private static readonly Dictionary<string, sbyte[]> rmsCache = new Dictionary<string, sbyte[]>();
+        private static readonly Dictionary<string, LinkedListNode<RmsCacheEntry>> rmsCache = new Dictionary<string, LinkedListNode<RmsCacheEntry>>();
+        private static readonly LinkedList<RmsCacheEntry> rmsLru = new LinkedList<RmsCacheEntry>();
+        private static long currentCacheBytes = 0;
+
+        private static bool isPinnedKey(string filename)
+        {
+            return filename == "acc" || filename == "pass" || filename == "check"
+                || filename == "svselect" || filename == "NRIPlink"
+                || filename == "screen_width" || filename == "screen_height"
+                || filename == "screen_size_idx" || filename == "levelScreenKN"
+                || filename == "lowGraphic" || filename == "lastZoomlevel"
+                || filename == "isSound" || filename == "isSoundBG";
+        }
+
+        private static void cachePut(string filename, sbyte[] data)
+        {
+            if (data == null)
+            {
+                cacheRemove(filename);
+                return;
+            }
+            bool pinned = isPinnedKey(filename);
+            if (!pinned && data.Length > MaxCacheBytes / 2)
+            {
+                cacheRemove(filename);
+                return;
+            }
+            LinkedListNode<RmsCacheEntry> existing;
+            if (rmsCache.TryGetValue(filename, out existing))
+            {
+                currentCacheBytes -= (existing.Value.data != null ? existing.Value.data.Length : 0);
+                rmsLru.Remove(existing);
+                rmsCache.Remove(filename);
+            }
+            var entry = new RmsCacheEntry { key = filename, data = data, pinned = pinned };
+            var node = rmsLru.AddLast(entry);
+            rmsCache[filename] = node;
+            currentCacheBytes += data.Length;
+            evictIfNeeded();
+        }
+
+        private static sbyte[] cacheGet(string filename)
+        {
+            LinkedListNode<RmsCacheEntry> node;
+            if (rmsCache.TryGetValue(filename, out node))
+            {
+                rmsLru.Remove(node);
+                rmsLru.AddLast(node);
+                return node.Value.data;
+            }
+            return null;
+        }
+
+        private static void cacheRemove(string filename)
+        {
+            LinkedListNode<RmsCacheEntry> node;
+            if (rmsCache.TryGetValue(filename, out node))
+            {
+                currentCacheBytes -= (node.Value.data != null ? node.Value.data.Length : 0);
+                if (currentCacheBytes < 0) currentCacheBytes = 0;
+                rmsLru.Remove(node);
+                rmsCache.Remove(filename);
+            }
+        }
+
+        private static void cacheClear()
+        {
+            rmsCache.Clear();
+            rmsLru.Clear();
+            currentCacheBytes = 0;
+        }
+
+        private static void evictIfNeeded()
+        {
+            long maxBytes = MaxCacheBytes;
+            int safety = rmsLru.Count;
+            while (safety-- > 0 && (currentCacheBytes > maxBytes || rmsCache.Count > MAX_CACHE_ENTRIES))
+            {
+                LinkedListNode<RmsCacheEntry> node = rmsLru.First;
+                while (node != null && node.Value.pinned)
+                {
+                    node = node.Next;
+                }
+                if (node == null)
+                {
+                    break;
+                }
+                currentCacheBytes -= (node.Value.data != null ? node.Value.data.Length : 0);
+                if (currentCacheBytes < 0) currentCacheBytes = 0;
+                rmsCache.Remove(node.Value.key);
+                rmsLru.Remove(node);
+            }
+        }
 
         private static string cachedPath = null;
         public static string rootPersistentPath = null;
@@ -29,30 +131,30 @@ namespace Game1
             {
                 if (data != null)
                 {
-                    rmsCache[filename] = data;
+                    cachePut(filename, data);
                 }
                 else
                 {
-                    rmsCache.Remove(filename);
+                    cacheRemove(filename);
                 }
                 __saveRMS(filename, data);
             }
         }
-    
+
         public static sbyte[] loadRMS(string filename)
         {
             if (string.IsNullOrEmpty(filename)) return null;
             lock (rmsLock)
             {
-                sbyte[] cached;
-                if (rmsCache.TryGetValue(filename, out cached))
+                sbyte[] cached = cacheGet(filename);
+                if (cached != null)
                 {
                     return cached;
                 }
                 sbyte[] diskData = __loadRMS(filename);
                 if (diskData != null)
                 {
-                    rmsCache[filename] = diskData;
+                    cachePut(filename, diskData);
                 }
                 return diskData;
             }
@@ -376,7 +478,7 @@ namespace Game1
             {
                 lock (rmsLock)
                 {
-                    rmsCache.Clear();
+                    cacheClear();
                 }
                 Cout.Log("clean rms");
                 string dirPath = GetiPhoneDocumentsPath();
@@ -504,12 +606,19 @@ namespace Game1
 
         public static void DeleteStorage(string path)
         {
-            try
+            lock (rmsLock)
             {
-                File.Delete(GetiPhoneDocumentsPath() + "/" + path);
-            }
-            catch (Exception)
-            {
+                if (!string.IsNullOrEmpty(path))
+                {
+                    cacheRemove(path);
+                }
+                try
+                {
+                    File.Delete(GetiPhoneDocumentsPath() + "/" + path);
+                }
+                catch (Exception)
+                {
+                }
             }
         }
 
@@ -536,7 +645,7 @@ namespace Game1
             {
                 if (!string.IsNullOrEmpty(name))
                 {
-                    rmsCache.Remove(name);
+                    cacheRemove(name);
                 }
                 try
                 {

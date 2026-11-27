@@ -70,7 +70,7 @@ public class WhisArenaMatch implements Runnable {
 
             Thread.ofVirtual().name("WhisArenaMatch-" + player.id).start(this);
         } catch (Exception e) {
-            e.printStackTrace();
+            utils.Logger.logException(WhisArenaMatch.class, e, "WhisArenaMatch exception");
             dispose();
         }
     }
@@ -134,7 +134,7 @@ public class WhisArenaMatch implements Runnable {
                 PlayerService.gI().changeAndSendTypePK(opp, ConstPlayer.NON_PK);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            utils.Logger.logException(WhisArenaMatch.class, e, "WhisArenaMatch exception");
             dispose();
             return;
         }
@@ -144,7 +144,7 @@ public class WhisArenaMatch implements Runnable {
             try {
                 update();
             } catch (Exception e) {
-                e.printStackTrace();
+                utils.Logger.logException(WhisArenaMatch.class, e, "WhisArenaMatch exception");
             }
             long elapsed = System.currentTimeMillis() - startTick;
             Functions.sleep(Math.max(1000 - elapsed, 10));
@@ -372,7 +372,7 @@ public class WhisArenaMatch implements Runnable {
                 WhisArenaBotManager.gI().sortBots();
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            utils.Logger.logException(WhisArenaMatch.class, e, "WhisArenaMatch exception");
         } finally {
             dispose();
         }
@@ -437,7 +437,7 @@ public class WhisArenaMatch implements Runnable {
                 zone.rankName2 = null;
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            utils.Logger.logException(WhisArenaMatch.class, e, "WhisArenaMatch exception");
         }
     }
 }

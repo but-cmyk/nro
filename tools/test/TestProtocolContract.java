@@ -28,9 +28,28 @@ public class TestProtocolContract {
         testExtended3BytePacketEncodingNoKey();
         testEmptyPayloadEncoding();
         testXorKeystreamRoundTrip();
+        testSessionManagerAndBurstLimiter();
 
         System.out.println("[ALL PASS] ✅ Protocol contract tests passed!");
         System.exit(0);
+    }
+
+    private static void testSessionManagerAndBurstLimiter() {
+        network.session.SessionManager mgr = network.session.SessionManager.gI();
+        MySession s = new MySession("10.0.0.1");
+        mgr.addSession(s);
+        assertTrue(mgr.getNumSession() >= 1, "SessionManager must contain added session");
+        assertTrue(mgr.removeSession(s), "SessionManager must remove session in O(1)");
+
+        String testIp = "203.0.113.99";
+        int accepted = 0;
+        for (int i = 0; i < 20; i++) {
+            if (server.ServerManager.canConnectWithIp(testIp)) {
+                accepted++;
+            }
+        }
+        assertTrue(accepted <= 15, "Burst limiter must block >15 connections/sec per IP, accepted=" + accepted);
+        System.out.println("[PASS] SessionManager O(1) lookup & Per-IP Burst Limiter (" + accepted + "/20 accepted)");
     }
 
     private static void testStandardPacketEncodingNoKey() throws Exception {

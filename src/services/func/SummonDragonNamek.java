@@ -65,7 +65,7 @@ public class SummonDragonNamek {
                     }
                     Thread.sleep(1000);
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    utils.Logger.logException(SummonDragonNamek.class, e, "SummonDragonNamek exception");
                 }
             }
         });
@@ -116,6 +116,7 @@ public class SummonDragonNamek {
             }
             Service.gI().sendMessAllPlayer(msg);
         } catch (Exception e) {
+            utils.Logger.error("[SummonDragonNamek] " + e.getMessage());
         } finally {
             if (msg != null) {
                 msg.cleanup();
@@ -131,6 +132,7 @@ public class SummonDragonNamek {
                     + playerSummonShenron.zone.map.mapName + " khu vực " + playerSummonShenron.zone.zoneId);
             Service.gI().sendMessAllPlayerIgnoreMe(playerSummonShenron, msg);
         } catch (Exception e) {
+            utils.Logger.error("[SummonDragonNamek] " + e.getMessage());
         } finally {
             if (msg != null) {
                 msg.cleanup();
@@ -214,7 +216,7 @@ public class SummonDragonNamek {
                             break;
                     }
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    utils.Logger.logException(SummonDragonNamek.class, e, "SummonDragonNamek exception");
                 }
                 break;
         }

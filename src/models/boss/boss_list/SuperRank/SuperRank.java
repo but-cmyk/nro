@@ -112,7 +112,7 @@ public abstract class SuperRank extends Boss {
                 this.leaveMap();
             }
         } catch (Exception ex) {
-            ex.printStackTrace();
+            utils.Logger.logException(SuperRank.class, ex, "SuperRank exception");
         }
     }
 
@@ -170,7 +170,7 @@ public abstract class SuperRank extends Boss {
                     break;
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            utils.Logger.logException(SuperRank.class, e, "SuperRank exception");
         }
     }
 

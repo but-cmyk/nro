@@ -183,7 +183,7 @@
 //                    checkPlayerDie(pl);
 //                }
 //            } catch (Exception ex) {
-////                ex.printStackTrace();
+////                utils.Logger.logException(NhatThan.class, ex, "NhatThan exception");
 //            }
 //        }
 //    }

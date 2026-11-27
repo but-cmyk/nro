@@ -226,6 +226,7 @@ public class SkillService {
             // Skill special cases (SUPER_KAME, LIEN_HOAN_CHUONG, MA_PHONG_BA) removed
             affterUseSkill(player, skillId != -1 ? skillId : player.playerSkill.skillSelect.template.id);
         } catch (Exception ignored) {
+            utils.Logger.error("[SkillService] " + ignored.getMessage());
         }
     }
 
@@ -770,7 +771,7 @@ public class SkillService {
                                     explodeTuSat(p);
                                 }
                             } catch (Exception ex) {
-                                ex.printStackTrace();
+                                utils.Logger.logException(SkillService.class, ex, "SkillService exception");
                             }
                         }, 1500);
                     }
@@ -896,7 +897,8 @@ public class SkillService {
                         }
                         Service.gI().Send_Info_NV(pl);
                     } catch (Exception ignored) {
-                    } finally {
+            utils.Logger.error("[SkillService] " + ignored.getMessage());
+        } finally {
                         if (msg != null) {
                             msg.cleanup();
                         }
@@ -1151,6 +1153,7 @@ public class SkillService {
             msg.writer().writeShort(affterMiliseconds);
             Service.gI().sendMessAllPlayerInMap(player, msg);
         } catch (Exception ignored) {
+            utils.Logger.error("[SkillService] " + ignored.getMessage());
         } finally {
             if (msg != null) {
                 msg.cleanup();
@@ -1168,6 +1171,7 @@ public class SkillService {
             msg.writer().writeShort(affterMiliseconds);
             Service.gI().sendMessAllPlayerInMap(player, msg);
         } catch (Exception ignored) {
+            utils.Logger.error("[SkillService] " + ignored.getMessage());
         } finally {
             if (msg != null) {
                 msg.cleanup();

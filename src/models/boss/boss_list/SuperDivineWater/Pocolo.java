@@ -259,7 +259,7 @@ public class Pocolo extends Boss {
                     }
                 }
             } catch (Exception ex) {
-                ex.printStackTrace();
+                utils.Logger.logException(Pocolo.class, ex, "Pocolo exception");
             }
         }
     }

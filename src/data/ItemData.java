@@ -50,7 +50,7 @@ public class ItemData {
             Logger.success("Init ItemData (Cache) thành công! (" + (System.currentTimeMillis() - st) + "ms)");
         } catch (Exception e) {
             Logger.error("Lỗi khởi tạo ItemData: " + e.getMessage());
-            e.printStackTrace();
+            utils.Logger.logException(ItemData.class, e, "ItemData exception");
             System.exit(1); // Lỗi dữ liệu nghiêm trọng -> Dừng server
         }
     }
@@ -183,7 +183,7 @@ public class ItemData {
             session.doSendMessage(msg);
         } catch (Exception e) {
             Logger.error("Lỗi gửi gói tin cache ItemData");
-            e.printStackTrace();
+            utils.Logger.logException(ItemData.class, e, "ItemData exception");
         } finally {
             if (msg != null) {
                 msg.cleanup();

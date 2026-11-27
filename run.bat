@@ -16,26 +16,24 @@ if %errorlevel% neq 0 goto RUN_NATIVE
 echo [OK] Da phat hien Docker dang hoat dong san sang!
 echo.
 echo Vui long chon che do khoi chay:
-echo   [1] KHOI DONG SIEU TOC (Native Java + Auto Docker MySQL 3308 va Redis) - [MUC DINH: 1.5 giay]
-echo   [2] Chay toan bo cum trong Docker (MySQL + Redis + Server)
-echo   [3] Chi bat Redis Cache trong Docker
-echo   [4] Dung (Down) toan bo cum Docker
+echo   [1] KHOI DONG SIEU TOC (Native Java + Auto Docker MySQL 3308) - [MAC DINH: 1.5 giay]
+echo   [2] Chay toan bo cum trong Docker (MySQL + Server)
+echo   [3] Dung (Down) toan bo cum Docker
 echo.
 echo Tu dong khoi dong Sieu Toc [1] sau 2 giay...
 echo -------------------------------------------------------------------
-choice /c 1234 /t 2 /d 1 /n /m "Nhap lua chon [1, 2, 3, 4] (Mac dinh: 1): "
+choice /c 123 /t 2 /d 1 /n /m "Nhap lua chon [1, 2, 3] (Mac dinh: 1): "
 
-if errorlevel 4 goto DOCKER_DOWN
-if errorlevel 3 goto RUN_REDIS_ONLY
+if errorlevel 3 goto DOCKER_DOWN
 if errorlevel 2 goto RUN_DOCKER_COMPOSE
-if errorlevel 1 goto RUN_NATIVE_REDIS
+if errorlevel 1 goto RUN_NATIVE_MYSQL
 
-:RUN_NATIVE_REDIS
+:RUN_NATIVE_MYSQL
 echo.
 echo [DOCKER] Dung container backend server (neu co) de tranh xung dot port 14445...
 docker stop nro_backend nro_server >nul 2>&1
-echo [DOCKER] Kich hoat nhanh MySQL (3308) va Redis Cache trong Docker...
-docker start nro_mysql nro_redis >nul 2>&1 || docker compose up -d mysql redis >nul 2>&1
+echo [DOCKER] Kich hoat nhanh MySQL (3308) trong Docker...
+docker start nro_mysql >nul 2>&1 || docker compose up -d mysql >nul 2>&1
 timeout /t 2 /nobreak >nul 2>&1
 goto RUN_NATIVE
 
@@ -57,14 +55,6 @@ echo.
 docker compose logs -f nro_server
 goto END
 
-:RUN_REDIS_ONLY
-echo.
-echo [DOCKER] Dang bat Redis Cache trong Docker...
-docker compose up -d redis
-echo [OK] Redis Cache da hoat dong tai localhost:6379!
-pause
-goto END
-
 :DOCKER_DOWN
 echo.
 echo [DOCKER] Dang dung toan bo cum containers Docker...
@@ -79,18 +69,14 @@ echo ===================================================================
 echo           KHOI DONG NRO GAME SERVER (NATIVE JAVA)
 echo ===================================================================
 
-echo [PORT] Kiem tra va giai phong port 14445, 14446 truoc khi khoi dong...
-for /f "tokens=5" %%a in ('netstat -ano ^| findstr :14445 ^| findstr LISTENING') do (
-    echo [PORT] Phat hien tien trinh PID %%a dang chiem port 14445. Dang giai phong...
-    taskkill /f /pid %%a >nul 2>&1
-)
-for /f "tokens=5" %%a in ('netstat -ano ^| findstr :14446 ^| findstr LISTENING') do (
-    echo [PORT] Phat hien tien trinh PID %%a dang chiem port 14446. Dang giai phong...
+echo [PORT] Kiem tra va giai phong port 14445 / 14446 truoc khi khoi dong...
+for /f "tokens=5" %%a in ('netstat -ano ^| findstr ":14445 :14446" ^| findstr LISTENING') do (
+    echo [PORT] Phat hien tien trinh PID %%a dang chiem port. Dang giai phong...
     taskkill /f /pid %%a >nul 2>&1
 )
 timeout /t 1 /nobreak >nul 2>&1
 
-java -server -Xms128M -Xmx1024M -XX:+UseG1GC --sun-misc-unsafe-memory-access=allow --add-opens java.base/jdk.internal.misc=ALL-UNNAMED --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.nio=ALL-UNNAMED "-Dio.netty.tryReflectionSetAccessible=true" "-Dfile.encoding=UTF-8" -cp "build\classes;dist\NROK.jar;lib\*" server.ServerManager
+java -server -Xms512M -Xmx1536M -XX:MaxDirectMemorySize=256M -XX:MaxMetaspaceSize=192M -XX:+UseG1GC -XX:MaxGCPauseMillis=20 -XX:+UseStringDeduplication --add-opens java.base/jdk.internal.misc=ALL-UNNAMED --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.nio=ALL-UNNAMED "-Dio.netty.tryReflectionSetAccessible=true" "-Dfile.encoding=UTF-8" -cp "build\classes;dist\NROK.jar;lib\*" server.ServerManager
 
 if %errorlevel% neq 0 (
     echo.

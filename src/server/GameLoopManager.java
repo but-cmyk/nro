@@ -47,19 +47,19 @@ public class GameLoopManager implements Runnable {
 
     public void start() {
         if (updateTask == null || updateTask.isCancelled()) {
-            updateTask = scheduler.scheduleAtFixedRate(this, 0, UPDATE_RATE, TimeUnit.MILLISECONDS);
+            updateTask = scheduler.scheduleWithFixedDelay(this, 0, UPDATE_RATE, TimeUnit.MILLISECONDS);
             Logger.log("GameLoopManager started with rate: " + UPDATE_RATE + "ms");
         }
         if (bossUpdateTask == null || bossUpdateTask.isCancelled()) {
-            bossUpdateTask = scheduler.scheduleAtFixedRate(this::updateBosses, 0, BOSS_UPDATE_RATE, TimeUnit.MILLISECONDS);
+            bossUpdateTask = scheduler.scheduleWithFixedDelay(this::updateBosses, 0, BOSS_UPDATE_RATE, TimeUnit.MILLISECONDS);
             Logger.log("BossUpdateTask started with rate: " + BOSS_UPDATE_RATE + "ms");
         }
         if (eventBossUpdateTask == null || eventBossUpdateTask.isCancelled()) {
-            eventBossUpdateTask = scheduler.scheduleAtFixedRate(this::updateEventBosses, 0, EVENT_BOSS_UPDATE_RATE, TimeUnit.MILLISECONDS);
+            eventBossUpdateTask = scheduler.scheduleWithFixedDelay(this::updateEventBosses, 0, EVENT_BOSS_UPDATE_RATE, TimeUnit.MILLISECONDS);
             Logger.log("EventBossUpdateTask started with rate: " + EVENT_BOSS_UPDATE_RATE + "ms");
         }
         if (phoBanUpdateTask == null || phoBanUpdateTask.isCancelled()) {
-            phoBanUpdateTask = scheduler.scheduleAtFixedRate(this::updatePhoBans, 0, 1000, TimeUnit.MILLISECONDS);
+            phoBanUpdateTask = scheduler.scheduleWithFixedDelay(this::updatePhoBans, 0, 1000, TimeUnit.MILLISECONDS);
             Logger.log("PhoBanUpdateTask started with rate: 1000ms");
         }
     }

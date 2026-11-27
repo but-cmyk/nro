@@ -31,8 +31,12 @@ CMD ["java", \
      "-server", \
      "-XX:+UseG1GC", \
      "-XX:MaxGCPauseMillis=20", \
-     "-Xms128M", \
-     "-Xmx1024M", \
+     "-XX:+UseStringDeduplication", \
+     "-XX:+ExitOnOutOfMemoryError", \
+     "-Xms512M", \
+     "-Xmx1536M", \
+     "-XX:MaxDirectMemorySize=256M", \
+     "-XX:MaxMetaspaceSize=192M", \
      "--add-opens", "java.base/jdk.internal.misc=ALL-UNNAMED", \
      "--add-opens", "java.base/java.lang=ALL-UNNAMED", \
      "--add-opens", "java.base/java.nio=ALL-UNNAMED", \

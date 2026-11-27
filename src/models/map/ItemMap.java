@@ -372,7 +372,7 @@ public class ItemMap {
             
             return false;
         } catch (Exception e) {
-            e.printStackTrace();
+            utils.Logger.logException(ItemMap.class, e, "ItemMap exception");
             return false;
         }
     }

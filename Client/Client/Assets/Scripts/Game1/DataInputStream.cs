@@ -20,8 +20,8 @@ namespace Game1
     
     	public DataInputStream(string filename)
     	{
-    		TextAsset textAsset = (TextAsset)Resources.Load(filename, typeof(TextAsset));
-    		r = new myReader(ArrayCast.cast(textAsset.bytes));
+    		byte[] bytes = AssetLoader.LoadBytes(filename);
+    		r = new myReader(ArrayCast.cast(bytes));
     	}
     
     	public DataInputStream(sbyte[] data)

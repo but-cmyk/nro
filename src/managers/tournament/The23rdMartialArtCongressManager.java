@@ -34,7 +34,7 @@ public class The23rdMartialArtCongressManager implements Runnable {
                     Thread.sleep(1000 - timeUpdate);
                 }
             } catch (Exception e) {
-                e.printStackTrace();
+                utils.Logger.logException(The23rdMartialArtCongressManager.class, e, "The23rdMartialArtCongressManager exception");
             }
         }
     }

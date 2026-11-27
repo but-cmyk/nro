@@ -60,7 +60,7 @@ public class WhisArenaBossMatch implements Runnable {
 
             Thread.ofVirtual().name("WhisArenaBossMatch-" + player.id).start(this);
         } catch (Exception e) {
-            e.printStackTrace();
+            utils.Logger.logException(WhisArenaBossMatch.class, e, "WhisArenaBossMatch exception");
             dispose();
         }
     }
@@ -102,7 +102,7 @@ public class WhisArenaBossMatch implements Runnable {
                 PlayerService.gI().changeAndSendTypePK(boss, ConstPlayer.NON_PK);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            utils.Logger.logException(WhisArenaBossMatch.class, e, "WhisArenaBossMatch exception");
         }
     }
 
@@ -119,7 +119,7 @@ public class WhisArenaBossMatch implements Runnable {
             ItemTimeService.gI().removeItemTime(player, 3779);
             spawnCurrentBoss();
         } catch (Exception e) {
-            e.printStackTrace();
+            utils.Logger.logException(WhisArenaBossMatch.class, e, "WhisArenaBossMatch exception");
             dispose();
             return;
         }
@@ -129,7 +129,7 @@ public class WhisArenaBossMatch implements Runnable {
             try {
                 update();
             } catch (Exception e) {
-                e.printStackTrace();
+                utils.Logger.logException(WhisArenaBossMatch.class, e, "WhisArenaBossMatch exception");
             }
             long elapsed = System.currentTimeMillis() - startTick;
             Functions.sleep(Math.max(1000 - elapsed, 10));
@@ -287,7 +287,7 @@ public class WhisArenaBossMatch implements Runnable {
                 }
                 WhisArenaBotManager.gI().sortBots();
             } catch (Exception e) {
-                e.printStackTrace();
+                utils.Logger.logException(WhisArenaBossMatch.class, e, "WhisArenaBossMatch exception");
             } finally {
                 dispose();
             }
@@ -353,7 +353,7 @@ public class WhisArenaBossMatch implements Runnable {
                     }
                 }
             } catch (Exception e) {
-                e.printStackTrace();
+                utils.Logger.logException(WhisArenaBossMatch.class, e, "WhisArenaBossMatch exception");
             } finally {
                 dispose();
             }
@@ -406,7 +406,7 @@ public class WhisArenaBossMatch implements Runnable {
                 zone.rankName2 = null;
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            utils.Logger.logException(WhisArenaBossMatch.class, e, "WhisArenaBossMatch exception");
         }
     }
 }

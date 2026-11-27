@@ -36,7 +36,7 @@ public class BotTestLogger {
                 pw.println("--------------------------------------------------------------------------------");
             }
         } catch (IOException e) {
-            System.err.println("Failed to write to bot_test.log: " + e.getMessage());
+            utils.Logger.error(String.valueOf("Failed to write to bot_test.log: " + e.getMessage()));
         }
     }
 }

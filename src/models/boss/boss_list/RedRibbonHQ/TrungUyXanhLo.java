@@ -203,7 +203,7 @@ public class TrungUyXanhLo extends Boss {
                     
                 }
             } catch (Exception ex) {
-                ex.printStackTrace();
+                utils.Logger.logException(TrungUyXanhLo.class, ex, "TrungUyXanhLo exception");
             }
         }
     }

@@ -85,7 +85,8 @@ public class ConsumableItemHandler implements ItemActionHandler {
                     lvPea = Integer.parseInt(numStr);
                 }
             } catch (Exception ignored) {
-            }
+            utils.Logger.error("[ConsumableItemHandler] " + ignored.getMessage());
+        }
             for (Item.ItemOption io : pea.itemOptions) {
                 if (io.optionTemplate.id == 2) {
                     hpKiHoiPhuc = io.param * 1000;

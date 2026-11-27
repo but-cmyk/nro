@@ -1,9 +1,12 @@
 namespace Game1
 {
     using System;
+    using System.Collections.Concurrent;
     using System.Collections.Generic;
     using System.IO;
+    using System.Net.Security;
     using System.Net.Sockets;
+    using System.Security.Cryptography.X509Certificates;
     using System.Text;
     using System.Threading;
     using UnityEngine;
@@ -12,34 +15,37 @@ namespace Game1
     {
     	public class Sender
     	{
-    		public List<Message> sendingMessage;
+    		public Queue<Message> sendingMessage;
     		private readonly object sendLock = new object();
-    
+    		private byte[] sendBuffer = new byte[4096];
+
     		public Sender()
     		{
-    			sendingMessage = new List<Message>();
+    			sendingMessage = new Queue<Message>();
     		}
-    
+
     		public void AddMessage(Message message)
     		{
     			lock (sendLock)
     			{
-    				sendingMessage.Add(message);
+    				sendingMessage.Enqueue(message);
     				Monitor.Pulse(sendLock);
     			}
     		}
-    
+
     		public void Clear()
     		{
     			lock (sendLock)
     			{
     				sendingMessage.Clear();
+    				Monitor.PulseAll(sendLock);
     			}
     		}
-    
+
     		public void run()
     		{
-    			while (connected)
+    			int myGen = sessionGeneration;
+    			while (connected && myGen == sessionGeneration)
     			{
     				try
     				{
@@ -50,8 +56,7 @@ namespace Game1
     						{
     							if (sendingMessage.Count > 0)
     							{
-    								m = sendingMessage[0];
-    								sendingMessage.RemoveAt(0);
+    								m = sendingMessage.Dequeue();
     							}
     							else
     							{
@@ -60,7 +65,7 @@ namespace Game1
     						}
     						if (m != null)
     						{
-    							doSendMessage(m);
+    							doSendMessage(m, ref sendBuffer);
     							continue;
     						}
     					}
@@ -69,14 +74,13 @@ namespace Game1
     						Thread.Sleep(10);
     					}
     				}
-    				catch (ThreadAbortException)
-    				{
-    					// Expected on disconnect
-    					break;
-    				}
     				catch (Exception ex)
     				{
-    					Cout.LogError(ex.ToString());
+    					if (connected && myGen == sessionGeneration)
+    					{
+    						Cout.LogError(ex.ToString());
+    					}
+    					break;
     				}
     			}
     		}
@@ -86,9 +90,10 @@ namespace Game1
     	{
     		public void run()
     		{
+    			int myGen = sessionGeneration;
     			try
     			{
-    				while (connected)
+    				while (connected && myGen == sessionGeneration)
     				{
     					Message message = readMessage();
     					if (message == null)
@@ -110,28 +115,37 @@ namespace Game1
     					{
     						Cout.println("LOI NHAN  MESS THU 1");
     					}
-    
+
     				}
     			}
     			catch (Exception ex3)
     			{
-    				Debug.Log("error read message!");
-    				Debug.Log(ex3.Message.ToString());
+    				if (connected && myGen == sessionGeneration)
+    				{
+    					Debug.Log("error read message!");
+    					Debug.Log(ex3.Message.ToString());
+    				}
     			}
-    			if (!connected)
+    			if (!connected || myGen != sessionGeneration)
     			{
     				return;
     			}
-    			if (messageHandler != null)
+    			IMessageHandler handler = messageHandler;
+    			if (handler != null)
     			{
-    				if (currentTimeMillis() - timeConnected > 500)
+    				bool disconnected = (currentTimeMillis() - timeConnected > 500);
+    				bool mainFlag = isMainSession;
+    				mainThreadCallbacks.Enqueue(() =>
     				{
-    					messageHandler.onDisconnected(isMainSession);
-    				}
-    				else
-    				{
-    					messageHandler.onConnectionFail(isMainSession);
-    				}
+    					if (disconnected)
+    					{
+    						handler.onDisconnected(mainFlag);
+    					}
+    					else
+    					{
+    						handler.onConnectionFail(mainFlag);
+    					}
+    				});
     			}
     			if (sc != null)
     			{
@@ -158,10 +172,6 @@ namespace Game1
     				GameMidlet.IP2 = message.reader().readUTF();
     				GameMidlet.PORT2 = message.reader().readInt();
     				GameMidlet.isConnect2 = ((message.reader().readByte() != 0) ? true : false);
-    				if (isMainSession && GameMidlet.isConnect2)
-    				{
-    					GameCanvas.connect2();
-    				}
     			}
     			catch (Exception)
     			{
@@ -201,8 +211,6 @@ namespace Game1
     			byte[] src = ReadExactBytes(dis, num4);
     			sbyte[] array = ArrayCast.cast(src);
     			recvByteCount += 5 + num4;
-    			int num6 = recvByteCount + sendByteCount;
-    			strRecvByteCount = num6 / 1024 + "." + num6 % 1024 / 102 + "Kb";
     			if (getKeyComplete)
     			{
     				for (int i = 0; i < array.Length; i++)
@@ -242,8 +250,6 @@ namespace Game1
     				byte[] src = ReadExactBytes(dis, num);
     				sbyte[] array = ArrayCast.cast(src);
                     recvByteCount += 5 + num;
-    				int num4 = recvByteCount + sendByteCount;
-    				strRecvByteCount = num4 / 1024 + "." + num4 % 1024 / 102 + "Kb";
     				if (getKeyComplete)
     				{
     					for (int i = 0; i < array.Length; i++)
@@ -261,44 +267,48 @@ namespace Game1
     	}
     
     	protected static Session_ME instance = new Session_ME();
-    
-    	private static NetworkStream dataStream;
-    
+
+    	private static Stream dataStream;
+
     	private static BinaryReader dis;
-    
+
     	private static BinaryWriter dos;
-    
+
     	public static IMessageHandler messageHandler;
-    
+
     	public static bool isMainSession = true;
-    
+
     	private static TcpClient sc;
-    
-    	public static bool connected;
-    
-    	public static bool connecting;
-    
+
+    	public static volatile bool connected;
+
+    	public static volatile bool connecting;
+
+    	private static volatile int sessionGeneration;
+
+    	private static readonly ConcurrentQueue<Action> mainThreadCallbacks = new ConcurrentQueue<Action>();
+
     	private static Sender sender = new Sender();
-    
+
     	public static Thread initThread;
-    
+
     	public static Thread collectorThread;
-    
+
     	public static Thread sendThread;
-    
-    	public static int sendByteCount;
-    
-    	public static int recvByteCount;
-    
-    	private static bool getKeyComplete;
-    
+
+    	public static long sendByteCount;
+
+    	public static long recvByteCount;
+
+    	private static volatile bool getKeyComplete;
+
     	public static sbyte[] key = null;
-    
+
     	private static int curR;
-    
+
     	private static int curW;
-    
-    	private static int timeConnected;
+
+    	private static long timeConnected;
     
     	private long lastTimeConn;
     
@@ -372,37 +382,80 @@ namespace Game1
     		connecting = true;
     		Thread.CurrentThread.Priority = System.Threading.ThreadPriority.Highest;
     		connected = true;
+    		int myGen = sessionGeneration;
     		try
     		{
     			doConnect(host, port);
-    			messageHandler.onConnectOK(isMainSession);
+    			IMessageHandler handler = messageHandler;
+    			if (handler != null && myGen == sessionGeneration)
+    			{
+    				bool mainFlag = isMainSession;
+    				mainThreadCallbacks.Enqueue(() => handler.onConnectOK(mainFlag));
+    			}
     		}
     		catch (Exception)
     		{
-    			if (messageHandler != null)
+    			IMessageHandler handler = messageHandler;
+    			if (handler != null)
     			{
     				close();
-    				messageHandler.onConnectionFail(isMainSession);
+    				bool mainFlag = isMainSession;
+    				mainThreadCallbacks.Enqueue(() => handler.onConnectionFail(mainFlag));
     			}
     		}
     	}
-    
+
+    	private static bool ValidateServerCertificate(object senderObj, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors, string targetHost)
+    	{
+    		if (sslPolicyErrors == SslPolicyErrors.None)
+    		{
+    			return true;
+    		}
+    		if (targetHost == "127.0.0.1" || targetHost == "localhost")
+    		{
+    			return true;
+    		}
+    		return false;
+    	}
+
     	public void doConnect(string host, int port)
     	{
     		sc = new TcpClient();
+    		sc.NoDelay = true;
+    		sc.SendTimeout = 10000;
+    		try
+    		{
+    			sc.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, true);
+    		}
+    		catch (Exception)
+    		{
+    		}
     		sc.Connect(host, port);
-    		dataStream = sc.GetStream();
+    		Stream rawStream = sc.GetStream();
+    		if (port == 14446)
+    		{
+    			SslStream sslStream = new SslStream(rawStream, false, (s, cert, chain, err) => ValidateServerCertificate(s, cert, chain, err, host));
+    			sslStream.AuthenticateAsClient(host);
+    			dataStream = sslStream;
+    		}
+    		else
+    		{
+    			dataStream = rawStream;
+    		}
     		dis = new BinaryReader(dataStream, new UTF8Encoding());
     		dos = new BinaryWriter(dataStream, new UTF8Encoding());
     		sendThread = new Thread(sender.run);
+    		sendThread.IsBackground = true;
     		sendThread.Start();
     		MessageCollector @object = new MessageCollector();
     		Cout.Log("new -----");
     		collectorThread = new Thread(@object.run);
+    		collectorThread.IsBackground = true;
     		collectorThread.Start();
     		timeConnected = currentTimeMillis();
     		connecting = false;
-    		doSendMessage(new Message(-27));
+    		byte[] handshakeBuf = new byte[16];
+    		doSendMessage(new Message(-27), ref handshakeBuf);
     		key = null;
     	}
     
@@ -412,78 +465,47 @@ namespace Game1
     		sender.AddMessage(message);
     	}
     
-    	private static void doSendMessage(Message m)
+    	private static void doSendMessage(Message m, ref byte[] buffer)
     	{
     		sbyte[] data = m.getData();
     		try
     		{
+    			int dataLen = (data != null) ? data.Length : 0;
+    			int totalLen = 3 + dataLen;
+    			if (buffer == null || buffer.Length < totalLen)
+    			{
+    				buffer = new byte[totalLen];
+    			}
     			if (getKeyComplete)
     			{
-    				sbyte value = writeKey(m.command);
-    				dos.Write(value);
+    				buffer[0] = (byte)writeKey(m.command);
+    				buffer[1] = (byte)writeKey((sbyte)(dataLen >> 8));
+    				buffer[2] = (byte)writeKey((sbyte)(dataLen & 0xFF));
+    				for (int i = 0; i < dataLen; i++)
+    				{
+    					buffer[3 + i] = (byte)writeKey(data[i]);
+    				}
     			}
     			else
     			{
-    				dos.Write(m.command);
-    			}
-    			if (data != null)
-    			{
-    				int num = data.Length;
-    				if (getKeyComplete)
+    				buffer[0] = (byte)m.command;
+    				buffer[1] = (byte)(dataLen >> 8);
+    				buffer[2] = (byte)(dataLen & 0xFF);
+    				for (int i = 0; i < dataLen; i++)
     				{
-    					int num2 = writeKey((sbyte)(num >> 8));
-    					dos.Write((sbyte)num2);
-    					int num3 = writeKey((sbyte)(num & 0xFF));
-    					dos.Write((sbyte)num3);
+    					buffer[3 + i] = (byte)data[i];
     				}
-    				else
-				{
-					dos.Write((byte)(num >> 8));
-					dos.Write((byte)(num & 0xFF));
-				}
-				if (getKeyComplete)
-				{
-					for (int i = 0; i < data.Length; i++)
-					{
-						sbyte value2 = writeKey(data[i]);
-						dos.Write(value2);
-					}
-				}
-				else
-				{
-					for (int i = 0; i < data.Length; i++)
-					{
-						dos.Write(data[i]);
-					}
-				}
-    				sendByteCount += 5 + data.Length;
     			}
-    			else
-    			{
-    				if (getKeyComplete)
-    				{
-    					int num4 = 0;
-    					int num5 = writeKey((sbyte)(num4 >> 8));
-    					dos.Write((sbyte)num5);
-    					int num6 = writeKey((sbyte)(num4 & 0xFF));
-    					dos.Write((sbyte)num6);
-    				}
-    				else
-				{
-					dos.Write((byte)0);
-					dos.Write((byte)0);
-				}
-    				sendByteCount += 5;
-    			}
+    			dos.Write(buffer, 0, totalLen);
     			dos.Flush();
+    			sendByteCount += 5 + dataLen;
     		}
     		catch (Exception ex)
     		{
     			Debug.Log(ex.StackTrace);
-    			dos.Flush();
     		}
     	}
-    
+
     	public static sbyte readKey(sbyte b)
 	{
 		sbyte[] array = key;
@@ -525,6 +547,17 @@ namespace Game1
     
     	public static void update()
     	{
+    		while (mainThreadCallbacks.TryDequeue(out Action cb))
+    		{
+    			try
+    			{
+    				cb?.Invoke();
+    			}
+    			catch (Exception ex)
+    			{
+    				Cout.LogError("Lỗi callback mạng: " + ex.Message);
+    			}
+    		}
     		while (true)
     		{
     			if (Controller.isStopReadMessage)
@@ -566,6 +599,7 @@ namespace Game1
     
     	private static void cleanNetwork()
     	{
+    		Interlocked.Increment(ref sessionGeneration);
     		key = null;
     		curR = 0;
     		curW = 0;
@@ -573,6 +607,7 @@ namespace Game1
     		{
     			connected = false;
     			connecting = false;
+    			sender.Clear();
     			if (sc != null)
     			{
     				sc.Close();
@@ -593,30 +628,9 @@ namespace Game1
     				dis.Close();
     				dis = null;
     			}
-    			if (Thread.CurrentThread.Name == Main.mainThreadName)
-    			{
-    				if (sendThread != null)
-    				{
-    					sendThread.Abort();
-    				}
-    				sendThread = null;
-    				if (initThread != null)
-    				{
-    					initThread.Abort();
-    				}
-    				initThread = null;
-    				if (collectorThread != null)
-    				{
-    					collectorThread.Abort();
-    				}
-    				collectorThread = null;
-    			}
-    			else
-    			{
-    				sendThread = null;
-    				initThread = null;
-    				collectorThread = null;
-    			}
+    			sendThread = null;
+    			initThread = null;
+    			collectorThread = null;
     			if (isMainSession)
     			{
     				ServerListScreen.testConnect = 0;
@@ -626,10 +640,10 @@ namespace Game1
     		{
     		}
     	}
-    
-    	public static int currentTimeMillis()
+
+    	public static long currentTimeMillis()
     	{
-    		return Environment.TickCount;
+    		return mSystem.currentTimeMillis();
     	}
     
     	public static byte convertSbyteToByte(sbyte var)

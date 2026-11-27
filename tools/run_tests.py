@@ -50,6 +50,7 @@ def run_java_tests():
     test_files = [
         os.path.join(ROOT_DIR, "tools", "test", "TestP0SecurityFixes.java"),
         os.path.join(ROOT_DIR, "tools", "test", "TestProtocolContract.java"),
+        os.path.join(ROOT_DIR, "tools", "test", "LoadTestClient.java"),
     ]
     java_sources.extend(test_files)
 

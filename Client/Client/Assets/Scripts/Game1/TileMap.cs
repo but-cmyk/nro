@@ -304,9 +304,25 @@ namespace Game1
     		return false;
     	}
     
+    	private static void releaseImgTile()
+    	{
+    		if (imgTile != null)
+    		{
+    			for (int j = 0; j < imgTile.Length; j++)
+    			{
+    				if (imgTile[j] != null)
+    				{
+    					imgTile[j].releaseTexture();
+    					imgTile[j] = null;
+    				}
+    			}
+    			imgTile = null;
+    		}
+    	}
+
     	public static void freeTilemap()
     	{
-    		imgTile = null;
+    		releaseImgTile();
     		mSystem.gcc();
     	}
     
@@ -379,6 +395,7 @@ namespace Game1
     
     	public static void loadMap(int tileId)
     	{
+    		AssetLoader.UnloadUnusedAssetsIfNeeded();
     		pxh = tmh * size;
     		pxw = tmw * size;
     		Res.outz("load tile ID= " + tileID);
@@ -435,20 +452,9 @@ namespace Game1
     			}
     			return;
     		}
+    		releaseImgTile();
     		if (mGraphics.zoomLevel == 1)
     		{
-    			if (imgTile != null)
-    			{
-    				for (int j = 0; j < imgTile.Length; j++)
-    				{
-    					if (imgTile[j] != null)
-    					{
-    						imgTile[j].texture = null;
-    						imgTile[j] = null;
-    					}
-    				}
-    				mSystem.gcc();
-    			}
     			imgTile = new Image[100];
     			string empty = string.Empty;
     			for (int k = 0; k < imgTile.Length; k++)

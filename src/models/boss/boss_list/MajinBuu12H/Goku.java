@@ -181,7 +181,7 @@ public class Goku extends Boss {
                     checkPlayerDie(pl);
                 }
             } catch (Exception ex) {
-                ex.printStackTrace();
+                utils.Logger.logException(Goku.class, ex, "Goku exception");
             }
         }
     }

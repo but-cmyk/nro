@@ -186,6 +186,7 @@ public class DeathOrAliveArenaService {
                 }
             }
         } catch (Exception e) {
+            utils.Logger.error("[DeathOrAliveArenaService] " + e.getMessage());
         }
         return zone;
     }

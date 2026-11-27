@@ -576,7 +576,7 @@ public class NpcFactory {
                         try {
                             ItemService.gI().OpenSKH(player, player.idMark.getIndexMenu(), select);
                         } catch (Exception e) {
-                            e.printStackTrace();
+                            utils.Logger.logException(NpcFactory.class, e, "NpcFactory exception");
                             Logger.error("Lỗi mở hộp quà");
                         }
                     }
@@ -584,7 +584,7 @@ public class NpcFactory {
                         try {
                             ItemService.gI().OpenSKH(player, player.idMark.getIndexMenu(), select);
                         } catch (Exception e) {
-                            e.printStackTrace();
+                            utils.Logger.logException(NpcFactory.class, e, "NpcFactory exception");
                             Logger.error("Lỗi mở hộp quà");
                         }
                     }
@@ -592,7 +592,7 @@ public class NpcFactory {
                         try {
                             ItemService.gI().OpenSKH(player, player.idMark.getIndexMenu(), select);
                         } catch (Exception e) {
-                            e.printStackTrace();
+                            utils.Logger.logException(NpcFactory.class, e, "NpcFactory exception");
                             Logger.error("Lỗi mở hộp quà");
                         }
                     }
@@ -600,7 +600,7 @@ public class NpcFactory {
                         try {
                             ItemService.gI().OpenSKHVIP(player, player.idMark.getIndexMenu(), select);
                         } catch (Exception e) {
-                            e.printStackTrace();
+                            utils.Logger.logException(NpcFactory.class, e, "NpcFactory exception");
                             Logger.error("Lỗi mở hộp quà");
                         }
                     }
@@ -609,7 +609,7 @@ public class NpcFactory {
                             ItemService.gI().OpenSKHVIP(player, player.idMark.getIndexMenu(), select);
                         } catch (Exception e) {
 
-                            e.printStackTrace();
+                            utils.Logger.logException(NpcFactory.class, e, "NpcFactory exception");
                             Logger.error("Lỗi mở hộp quà");
                         }
                     }
@@ -617,7 +617,7 @@ public class NpcFactory {
                         try {
                             ItemService.gI().OpenSKHVIP(player, player.idMark.getIndexMenu(), select);
                         } catch (Exception e) {
-                            e.printStackTrace();
+                            utils.Logger.logException(NpcFactory.class, e, "NpcFactory exception");
                             Logger.error("Lỗi mở hộp quà");
                         }
                     }
@@ -637,7 +637,7 @@ public class NpcFactory {
                             }
                             case 2 -> {
                                 if (player.isAdmin()) {
-                                    System.out.println(player.name + " Đang bảo trì game!");
+                                    utils.Logger.log(String.valueOf(player.name + " Đang bảo trì game!") + "\n");
                                     Maintenance.gI().start(60);
                                 }
                             }
@@ -821,7 +821,7 @@ public class NpcFactory {
                                         if (curSkill.point + 1 == level) {
                                             curSkill = SkillUtil.createSkill(SkillUtil.getTempSkillSkillByItemID(
                                                     player.hocKyNang.ItemTemplateSkillId), level);
-                                            // System.out.println(curSkill.template.name + " - " + curSkill.point);
+                                            // utils.Logger.log(String.valueOf(curSkill.template.name + " - " + curSkill.point) + "\n");
                                             SkillUtil.setSkill(player, curSkill);
                                             msg = Service.gI().messageSubCommand((byte) 62);
                                             msg.writer().writeShort(curSkill.skillId);

@@ -17,34 +17,18 @@ services:
       - --collation-server=utf8mb4_unicode_ci
       - --default-authentication-plugin=mysql_native_password
       - --performance-schema=OFF
-      - --innodb-buffer-pool-size=512M
+      - --innodb-buffer-pool-size=384M
       - --innodb-log-buffer-size=16M
-      - --max-connections=200
+      - --max-connections=60
+      - --table-open-cache=400
       - --wait-timeout=28800
       - --interactive-timeout=28800
-    mem_limit: 1024m
+    mem_limit: 768m
     healthcheck:
       test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p$$MYSQL_ROOT_PASSWORD || exit 1"]
       interval: 5s
       timeout: 3s
       retries: 10
-
-  # Redis In-Memory Cache Service
-  redis:
-    image: redis:7-alpine
-    container_name: nro_redis
-    restart: unless-stopped
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
-    command: redis-server --appendonly yes
-    mem_limit: 256m
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 3s
-      retries: 5
 
   # NRO Backend Game Server
   nro_server:
@@ -56,25 +40,23 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
-      redis:
-        condition: service_healthy
     environment:
       - DATABASE_HOST=${DATABASE_HOST:-mysql}
       - DATABASE_PORT=${DATABASE_PORT:-3306}
       - DATABASE_NAME=${DATABASE_NAME:-nro_data}
       - DATABASE_USER=${DATABASE_USER:-root}
       - DATABASE_PASS=${DATABASE_PASS:-change_me_strong_password}
-      - REDIS_HOST=${REDIS_HOST:-redis}
-      - REDIS_PORT=${REDIS_PORT:-6379}
-      - NRO_ADMIN_TOKEN=${NRO_ADMIN_TOKEN:-}
-      - NRO_CORS_ORIGIN=${NRO_CORS_ORIGIN:-http://localhost:3000}
+      - SERVER_TLS_ENABLED=${SERVER_TLS_ENABLED:-true}
+      - SERVER_TLS_PORT=${SERVER_TLS_PORT:-14446}
+      - SERVER_TLS_CERT=${SERVER_TLS_CERT:-/app/certs/fullchain.pem}
+      - SERVER_TLS_KEY=${SERVER_TLS_KEY:-/app/certs/privkey.pem}
     ports:
       - "14445:14445"
       - "14446:14446"
     volumes:
       - ./data:/app/data
-    mem_limit: 1280m
+      - ./certs:/app/certs:ro
+    mem_limit: 2304m
 
 volumes:
   mysql_data:
-  redis_data:

@@ -389,8 +389,7 @@ namespace Game1
     
     	public static void gcc()
     	{
-    		Resources.UnloadUnusedAssets();
-    		GC.Collect();
+    		GC.Collect(0, GCCollectionMode.Optimized);
     	}
     
     	public static mSystem gI()

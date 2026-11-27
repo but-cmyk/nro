@@ -157,5 +157,126 @@ namespace Game1
             }
             paintScrollArrow(g);
         }
+
+        private void setTabBox()
+        {
+            currentListLength = checkCurrentListLength(Char.myCharz().arrItemBox.Length);
+            ITEM_HEIGHT = 24;
+            cmyLim = currentListLength * ITEM_HEIGHT - hScroll;
+            if (cmyLim < 0)
+            {
+                cmyLim = 9;
+            }
+            cmy = (cmtoY = cmyLast[currentTabIndex]);
+            if (cmy < 0)
+            {
+                cmy = (cmtoY = 0);
+            }
+            if (cmy > cmyLim)
+            {
+                cmy = (cmtoY = cmyLim);
+            }
+            selected = (GameCanvas.isTouch ? (-1) : 0);
+        }
+
+        private void doFireBox()
+        {
+            if (selected < 0)
+            {
+                return;
+            }
+            currItem = null;
+            MyVector myVector = new MyVector();
+            if (currentTabIndex == 0 && !Equals(GameCanvas.panel2))
+            {
+                if (selected == 0)
+                {
+                    setNewSelected(Char.myCharz().arrItemBox.Length, false);
+                }
+                else
+                {
+                    sbyte b = (sbyte)GetInventorySelect_body(selected, newSelected);
+                    Item item = Char.myCharz().arrItemBox[b];
+                    if (item != null)
+                    {
+                        if (isBoxClan)
+                        {
+                            myVector.addElement(new Command(mResources.GETOUT, this, 1000, item));
+                            myVector.addElement(new Command(mResources.USE, this, 2010, item));
+                        }
+                        else if (item.isTypeBody())
+                        {
+                            myVector.addElement(new Command(mResources.GETOUT, this, 1000, item));
+                        }
+                        else
+                        {
+                            myVector.addElement(new Command(mResources.GETOUT, this, 1000, item));
+                        }
+                        currItem = item;
+                    }
+                }
+            }
+            if (currentTabIndex == 1 || Equals(GameCanvas.panel2))
+            {
+                if (selected == 0)
+                {
+                    setNewSelected(Char.myCharz().arrItemBody.Length + Char.myCharz().arrItemBag.Length, true);
+                }
+                else
+                {
+                    Item[] arrItemBody = Char.myCharz().arrItemBody;
+                    if (!GetInventorySelect_isbody(selected, newSelected, arrItemBody))
+                    {
+                        sbyte b2 = (sbyte)GetInventorySelect_bag(selected, newSelected, arrItemBody);
+                        Item item2 = Char.myCharz().arrItemBag[b2];
+                        if (item2 != null)
+                        {
+                            myVector.addElement(new Command(mResources.move_to_chest, this, 1001, item2));
+                            if (item2.isTypeBody())
+                            {
+                                myVector.addElement(new Command(mResources.USE, this, 2000, item2));
+                            }
+                            else
+                            {
+                                myVector.addElement(new Command(mResources.USE, this, 2001, item2));
+                                if (item2 != null && item2.template.type == 33)
+                                {
+                                    myVector.addElement(new Command("Dùng nhiều", this, 2026, item2));
+                                }
+                            }
+                            currItem = item2;
+                        }
+                    }
+                    else
+                    {
+                        Item item3 = Char.myCharz().arrItemBody[GetInventorySelect_body(selected, newSelected)];
+                        if (item3 != null)
+                        {
+                            myVector.addElement(new Command(mResources.move_to_chest2, this, 1002, item3));
+                            currItem = item3;
+                        }
+                    }
+                }
+            }
+            if (currItem != null)
+            {
+                Char.myCharz().setPartTemp(currItem.headTemp, currItem.bodyTemp, currItem.legTemp, currItem.bagTemp);
+                if (isBoxClan)
+                {
+                    myVector.addElement(new Command(mResources.MOVEOUT, this, 2011, currItem));
+                }
+                GameCanvas.menu.startAt(myVector, X, (selected + 1) * ITEM_HEIGHT - cmy + yScroll);
+                addItemDetail(currItem);
+            }
+            else
+            {
+                cp = null;
+            }
+            cmyLim = currentListLength * ITEM_HEIGHT - hScroll;
+            if (cmyLim < 0)
+            {
+                cmyLim = 0;
+            }
+        }
     }
 }

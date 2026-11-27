@@ -105,53 +105,53 @@ public class ShopService {
         return allGender ? new Shop(shop) : new Shop(shop, player);
     }
 
+    private long getCharmExpiry(Player player, int itemTempId) {
+        switch (itemTempId) {
+            case 213:
+                return player.charms.tdTriTue;
+            case 214:
+                return player.charms.tdManhMe;
+            case 215:
+                return player.charms.tdDaTrau;
+            case 216:
+                return player.charms.tdOaiHung;
+            case 217:
+                return player.charms.tdBatTu;
+            case 218:
+                return player.charms.tdDeoDai;
+            case 219:
+                return player.charms.tdThuHut;
+            case 522:
+                return player.charms.tdDeTu;
+            case 671:
+                return player.charms.tdTriTue3;
+            case 672:
+                return player.charms.tdTriTue4;
+            default:
+                return 0L;
+        }
+    }
+
     private Shop resolveShopBua(Player player, Shop s) {
+        long current = System.currentTimeMillis();
         for (TabShop tabShop : s.tabShops) {
             for (ItemShop item : tabShop.itemShops) {
-                long min = 0;
-                switch (item.temp.id) {
-                    case 213:
-                        long timeTriTue = player.charms.tdTriTue;
-                        long current = System.currentTimeMillis();
-                        min = (timeTriTue - current) / 60000;
-
-                        break;
-                    case 214:
-                        min = (player.charms.tdManhMe - System.currentTimeMillis()) / 60000;
-                        break;
-                    case 215:
-                        min = (player.charms.tdDaTrau - System.currentTimeMillis()) / 60000;
-                        break;
-                    case 216:
-                        min = (player.charms.tdOaiHung - System.currentTimeMillis()) / 60000;
-                        break;
-                    case 217:
-                        min = (player.charms.tdBatTu - System.currentTimeMillis()) / 60000;
-                        break;
-                    case 218:
-                        min = (player.charms.tdDeoDai - System.currentTimeMillis()) / 60000;
-                        break;
-                    case 219:
-                        min = (player.charms.tdThuHut - System.currentTimeMillis()) / 60000;
-                        break;
-                    case 522:
-                        min = (player.charms.tdDeTu - System.currentTimeMillis()) / 60000;
-                        break;
-                    case 671:
-                        min = (player.charms.tdTriTue3 - System.currentTimeMillis()) / 60000;
-                        break;
-                    case 672:
-                        min = (player.charms.tdTriTue4 - System.currentTimeMillis()) / 60000;
-                        break;
-                }
+                long expiry = getCharmExpiry(player, item.temp.id);
+                // Làm tròn lên theo phút để giây lẻ ngay sau khi mua không làm hụt 1 phút hiển thị
+                long min = expiry > current ? (expiry - current + 59_999L) / 60_000L : 0L;
                 item.options.clear();
                 if (min > 0) {
-                    if (min >= 1440) {
-                        item.options.add(new Item.ItemOption(63, (int) (min / 1440)));
-                    } else if (min >= 60) {
-                        item.options.add(new Item.ItemOption(64, (int) (min / 60)));
-                    } else {
-                        item.options.add(new Item.ItemOption(65, (int) min));
+                    long days = min / 1440;
+                    long hours = (min % 1440) / 60;
+                    long mins = min % 60;
+                    if (days > 0) {
+                        item.options.add(new Item.ItemOption(63, (int) days));
+                    }
+                    if (hours > 0) {
+                        item.options.add(new Item.ItemOption(64, (int) hours));
+                    }
+                    if (mins > 0) {
+                        item.options.add(new Item.ItemOption(65, (int) mins));
                     }
                 } else {
                     item.options.add(new Item.ItemOption(66, 0));
@@ -788,7 +788,7 @@ public class ShopService {
 
         // Duyệt qua tất cả các shop trong server
         if (Manager.SHOPS == null || Manager.SHOPS.isEmpty()) {
-            System.out.println("!!! LỖI: Danh sách Manager.SHOPS rỗng hoặc null!");
+            utils.Logger.log(String.valueOf("!!! LỖI: Danh sách Manager.SHOPS rỗng hoặc null!") + "\n");
             return -1;
         }
 
@@ -914,7 +914,8 @@ public class ShopService {
                 msg.writer().writeUTF(text);
                 pl.sendMessage(msg);
             } catch (Exception ignored) {
-            } finally {
+            utils.Logger.error("[ShopService] " + ignored.getMessage());
+        } finally {
                 if (msg != null) {
                     msg.cleanup();
                 }

@@ -63,7 +63,7 @@ public class ChanXu extends The23rdMartialArtCongress {
                 }
             }
         } catch (Exception ex) {
-            ex.printStackTrace();
+            utils.Logger.logException(ChanXu.class, ex, "ChanXu exception");
         }
     }
 }

@@ -1,24 +1,11 @@
 package interfaces;
 
 import network.io.Message;
-import network.QueueHandler;
 import consts.SocketType;
 
 public interface ISession {
 
-    ISession setSendCollect(final IMessageSendCollect p0);
-
-    ISession setMessageHandler(final IMessageHandler p0);
-
     ISession setKeyHandler(final IKeySessionHandler p0);
-
-    ISession startSend();
-
-    ISession startCollect();
-    
-    ISession startQueueHandler();
-    
-    ISession start();
 
     String getIP();
 
@@ -47,6 +34,4 @@ public interface ISession {
     void setSentKey(final boolean p0);
 
     SocketType getSocketType();
-    
-    QueueHandler getQueueHandler();
 }

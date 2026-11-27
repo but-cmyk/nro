@@ -46,6 +46,7 @@ public class InventoryService {
                 }
             }
         } catch (Exception e) {
+            utils.Logger.error("[InventoryService] " + e.getMessage());
         }
         return null;
     }
@@ -731,6 +732,7 @@ public class InventoryService {
             player.sendMessage(msg);
             msg.cleanup();
         } catch (Exception e) {
+            utils.Logger.error("[InventoryService] " + e.getMessage());
         }
     }
 
@@ -752,7 +754,8 @@ public class InventoryService {
                     min = 60 * 24 * 30;
                 }
             } catch (Exception e) {
-            }
+            utils.Logger.error("[InventoryService] " + e.getMessage());
+        }
             player.charms.addTimeCharms(item.template.id, min);
             return true;
         }

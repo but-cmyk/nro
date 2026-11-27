@@ -166,5 +166,51 @@ namespace Game1
             }
             paintScrollArrow(g);
         }
+
+        public void setTabClans()
+        {
+            GameScr.isNewClanMessage = false;
+            ITEM_HEIGHT = 24;
+            if (lastSelect != null && lastSelect[3] == 0)
+            {
+                lastSelect[3] = -1;
+            }
+            currentListLength = 2;
+            if (Char.myCharz().clan != null)
+            {
+                isMessage = true;
+                isViewMember = false;
+                isSearchClan = false;
+            }
+            else
+            {
+                isMessage = false;
+                isViewMember = false;
+                isSearchClan = true;
+            }
+            if (Char.myCharz().clan != null)
+            {
+                currentListLength = ClanMessage.vMessage.size() + 2;
+            }
+            initTabClans();
+            cSelected = -1;
+            if (chatTField == null)
+            {
+                chatTField = new ChatTextField();
+                chatTField.tfChat.y = GameCanvas.h - 35 - ChatTextField.gI().tfChat.height;
+                chatTField.initChatTextField();
+                chatTField.parentScreen = GameCanvas.panel;
+            }
+            if (Char.myCharz().clan == null)
+            {
+                clanReport = mResources.findingClan;
+                Service.gI().searchClan(string.Empty);
+            }
+            selected = lastSelect[currentTabIndex];
+            if (GameCanvas.isTouch)
+            {
+                selected = -1;
+            }
+        }
     }
 }

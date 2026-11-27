@@ -392,7 +392,7 @@ public class MapService {
                 zone = map.zones.get(Util.nextInt(map.zones.size()));
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            utils.Logger.logException(MapService.class, e, "MapService exception");
         }
         return zone;
     }

@@ -47,7 +47,7 @@ public class WhisArenaBotVsBotMatch implements Runnable {
 
             Thread.ofVirtual().name("WhisArenaBotMatch-" + bot1.id + "-" + bot2.id).start(this);
         } catch (Exception e) {
-            e.printStackTrace();
+            utils.Logger.logException(WhisArenaBotVsBotMatch.class, e, "WhisArenaBotVsBotMatch exception");
             dispose();
         }
     }
@@ -95,7 +95,7 @@ public class WhisArenaBotVsBotMatch implements Runnable {
             PlayerService.gI().changeAndSendTypePK(bot1, ConstPlayer.NON_PK);
             PlayerService.gI().changeAndSendTypePK(bot2, ConstPlayer.NON_PK);
         } catch (Exception e) {
-            e.printStackTrace();
+            utils.Logger.logException(WhisArenaBotVsBotMatch.class, e, "WhisArenaBotVsBotMatch exception");
             dispose();
             return;
         }
@@ -105,7 +105,7 @@ public class WhisArenaBotVsBotMatch implements Runnable {
             try {
                 update();
             } catch (Exception e) {
-                e.printStackTrace();
+                utils.Logger.logException(WhisArenaBotVsBotMatch.class, e, "WhisArenaBotVsBotMatch exception");
             }
             long elapsed = System.currentTimeMillis() - startTick;
             Functions.sleep(Math.max(1000 - elapsed, 10));
@@ -276,7 +276,7 @@ public class WhisArenaBotVsBotMatch implements Runnable {
                 }
                 WhisArenaBotManager.gI().sortBots();
             } catch (Exception e) {
-                e.printStackTrace();
+                utils.Logger.logException(WhisArenaBotVsBotMatch.class, e, "WhisArenaBotVsBotMatch exception");
             } finally {
                 dispose();
             }
@@ -325,7 +325,7 @@ public class WhisArenaBotVsBotMatch implements Runnable {
                 zone.rankName2 = null;
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            utils.Logger.logException(WhisArenaBotVsBotMatch.class, e, "WhisArenaBotVsBotMatch exception");
         }
     }
 }

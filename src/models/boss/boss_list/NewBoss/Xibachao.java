@@ -77,7 +77,7 @@ public class Xibachao extends Boss {
                 } else {
                     this.moveToPlayer(pl);
                 }
-            } catch (Exception e) { e.printStackTrace(); }
+            } catch (Exception e) { utils.Logger.logException(Xibachao.class, e, "Xibachao exception"); }
         }
     }
 

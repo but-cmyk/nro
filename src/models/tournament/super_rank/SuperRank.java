@@ -97,7 +97,7 @@ public final class SuperRank implements Runnable {
             } catch (Exception e) {
                 if (error < 5) {
                     error++;
-                    System.err.println(e);
+                    utils.Logger.error(String.valueOf(e));
                 }
             }
             Functions.sleep(Math.max(1000 - (System.currentTimeMillis() - startTime), 10));
@@ -194,7 +194,7 @@ public final class SuperRank implements Runnable {
                 rv.superRank.history("Thua " + (player != null ? player.name : "Đối thủ") + "[" + rankWin + "]", System.currentTimeMillis());
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            utils.Logger.logException(SuperRank.class, e, "SuperRank exception");
         }
         dispose();
     }
@@ -233,7 +233,7 @@ public final class SuperRank implements Runnable {
                 rv.superRank.history("Hạ " + (player != null ? player.name : "Đối thủ") + "[" + rankLose + "]", System.currentTimeMillis());
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            utils.Logger.logException(SuperRank.class, e, "SuperRank exception");
         }
         dispose();
     }

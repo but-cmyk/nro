@@ -175,7 +175,7 @@ public class RobotVeSi extends Boss {
 
                 }
             } catch (Exception ex) {
-                ex.printStackTrace();
+                utils.Logger.logException(RobotVeSi.class, ex, "RobotVeSi exception");
             }
         }
     }

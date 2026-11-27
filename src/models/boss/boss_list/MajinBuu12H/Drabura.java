@@ -143,7 +143,7 @@ public class Drabura extends Boss {
                     }
                 }
             } catch (Exception ex) {
-                ex.printStackTrace();
+                utils.Logger.logException(Drabura.class, ex, "Drabura exception");
             }
         }
     }

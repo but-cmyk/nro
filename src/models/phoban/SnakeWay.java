@@ -137,8 +137,8 @@ public class SnakeWay {
             // Trong SnakeWay.java - hàm init()
             if (zone.map.mapId == 144) {
                 try {
-                    long baseDamage = 5000 * level;
-                    long baseHP = 1000000 * level; // 1 triệu mỗi level
+                    long baseDamage = 5000L * level;
+                    long baseHP = 1000000L * level; // 1 triệu mỗi level
 
                     // SAIBAMEN (6 con) - HP giảm 20 lần
                     for (int i = 6; i > 0; i--) {
@@ -170,9 +170,9 @@ public class SnakeWay {
                     long cadichHP;
 
                     if (level <= 50) {
-                        cadichHP = 5000000 + (level - 1) * 1122449L;
+                        cadichHP = 5000000L + (level - 1) * 1122449L;
                     } else {
-                        cadichHP = 60000000 + (long)((level - 50) * (level - 50) * 538888);
+                        cadichHP = 60000000L + (long) (level - 50) * (level - 50) * 538888L;
                     }
 
                     bosses.add(new CADICH(
@@ -184,7 +184,7 @@ public class SnakeWay {
                     ));
 
                 } catch (Exception exception) {
-                    exception.printStackTrace();
+                    utils.Logger.logException(SnakeWay.class, exception, "SnakeWay exception");
                 }
             }
         }

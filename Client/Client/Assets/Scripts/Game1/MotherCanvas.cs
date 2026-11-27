@@ -65,6 +65,10 @@ namespace Game1
     				mGraphics.zoomLevel = 2;
     			}
     		}
+    		if (GameCanvas.lowGraphic && mGraphics.zoomLevel > 2)
+    		{
+    			mGraphics.zoomLevel = 2;
+    		}
     		if (mGraphics.zoomLevel < 1)
     		{
     			mGraphics.zoomLevel = 1;

@@ -173,7 +173,7 @@ public class NinjaClone extends Boss {
             }
             
         } catch (Exception ex) {
-            ex.printStackTrace();
+            utils.Logger.logException(NinjaClone.class, ex, "NinjaClone exception");
         }
     }
 }

@@ -241,6 +241,7 @@ public class NgocRongNamecService implements Runnable {
                 }
             }
         } catch (Exception e) {
+            utils.Logger.error("[NgocRongNamecService] " + e.getMessage());
         }
         return getDisPlayer(pl, id, temp);
     }
@@ -280,6 +281,7 @@ public class NgocRongNamecService implements Runnable {
                 }
             }
         } catch (Exception e) {
+            utils.Logger.error("[NgocRongNamecService] " + e.getMessage());
         }
         if (isReinit) {
             return getDisStone(pl, id, (short) 362);
@@ -325,6 +327,7 @@ public class NgocRongNamecService implements Runnable {
                 }
             }
         } catch (Exception e) {
+            utils.Logger.error("[NgocRongNamecService] " + e.getMessage());
         }
         return "Hóa thạch Ngọc Rồng:Namếc ( ? m)";
     }
@@ -419,7 +422,8 @@ public class NgocRongNamecService implements Runnable {
 
                 Thread.sleep(1000);
             } catch (Exception e) {
-            }
+            utils.Logger.error("[NgocRongNamecService] " + e.getMessage());
+        }
         }
     }
 

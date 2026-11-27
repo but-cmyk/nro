@@ -195,7 +195,7 @@
 //                    checkPlayerDie(pl);
 //                }
 //            } catch (Exception ex) {
-////                ex.printStackTrace();
+////                utils.Logger.logException(ThuyTinh.class, ex, "ThuyTinh exception");
 //            }
 //        }
 //    }

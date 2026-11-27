@@ -157,7 +157,7 @@ public class BlackGoku extends Boss {
             }
         } catch (Exception ex) {
             // Log lỗi để debug nếu cần, tránh in spam console quá nhiều
-            System.out.println("Boss Black Goku Error Attack");
+            utils.Logger.log(String.valueOf("Boss Black Goku Error Attack") + "\n");
         }
     }
 }

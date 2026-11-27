@@ -214,7 +214,8 @@ public class SummonDragon {
 
                             }
                         } catch (Exception ex) {
-                        }
+            utils.Logger.error("[SummonDragon] " + ex.getMessage());
+        }
                     }
                     InventoryService.gI().sendItemBags(pl);
                     sendNotifyShenronAppear();
@@ -282,6 +283,7 @@ public class SummonDragon {
             }
             Service.gI().sendMessAllPlayer(msg);
         } catch (Exception e) {
+            utils.Logger.error("[SummonDragon] " + e.getMessage());
         }
     }
 
@@ -344,6 +346,7 @@ public class SummonDragon {
                     + playerSummonShenron.zone.map.mapName + " khu vực " + playerSummonShenron.zone.zoneId);
             Service.gI().sendMessAllPlayerIgnoreMe(playerSummonShenron, msg);
         } catch (Exception e) {
+            utils.Logger.error("[SummonDragon] " + e.getMessage());
         } finally {
             if (msg != null) {
                 msg.cleanup();

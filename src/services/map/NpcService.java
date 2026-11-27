@@ -68,6 +68,7 @@ public class NpcService {
             player.sendMessage(msg);
             msg.cleanup();
         } catch (Exception e) {
+            utils.Logger.error("[NpcService] " + e.getMessage());
         }
     }
 
@@ -83,6 +84,7 @@ public class NpcService {
             player.sendMessage(msg);
             msg.cleanup();
         } catch (Exception e) {
+            utils.Logger.error("[NpcService] " + e.getMessage());
         }
     }
 

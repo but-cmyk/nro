@@ -14,8 +14,6 @@ import server.ServerManager;
 import utils.Logger;
 
 import java.io.IOException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
  * NroChannelHandler: Xử lý vòng đời kết nối và phân phối Message tới Controller.
@@ -24,9 +22,7 @@ import java.util.concurrent.Executors;
 public class NroChannelHandler extends SimpleChannelInboundHandler<Message> {
 
     public static final AttributeKey<NettySession> SESSION_ATTR = AttributeKey.valueOf("NETTY_SESSION");
-
-    // Game Worker Pool xử lý logic packet (Tách biệt hoàn toàn với Netty I/O EventLoop)
-    private static final ExecutorService GAME_WORKER_POOL = Executors.newVirtualThreadPerTaskExecutor();
+    private int idleTicks = 0;
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
@@ -61,6 +57,7 @@ public class NroChannelHandler extends SimpleChannelInboundHandler<Message> {
             return;
         }
 
+        this.idleTicks = 0;
         // Đẩy vào Mailbox của Session để xử lý tuần tự (FIFO In-Order) trên Virtual Thread
         session.enqueueMessage(msg);
     }
@@ -85,8 +82,13 @@ public class NroChannelHandler extends SimpleChannelInboundHandler<Message> {
     public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
         if (evt instanceof IdleStateEvent idleEvent) {
             if (idleEvent.state() == IdleState.READER_IDLE) {
-                Logger.warning("Đóng kết nối Zombie/Idle quá 3 phút từ " + ctx.channel().remoteAddress());
-                ctx.close();
+                idleTicks++;
+                NettySession session = ctx.channel().attr(SESSION_ATTR).get();
+                // Pre-auth zombie: ngắt ngay sau 30s (1 tick). Đã login: ngắt sau 180s (6 ticks)
+                if (session == null || session.player == null || idleTicks >= 6) {
+                    Logger.warning("Đóng kết nối Idle (" + (idleTicks * 30) + "s) từ " + ctx.channel().remoteAddress());
+                    ctx.close();
+                }
             }
         } else {
             super.userEventTriggered(ctx, evt);

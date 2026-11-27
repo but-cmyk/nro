@@ -42,7 +42,8 @@ public class FlagBagService {
                 player.sendMessage(msg);
                 msg.cleanup();
             } catch (Exception e) {
-            }
+            utils.Logger.error("[FlagBagService] " + e.getMessage());
+        }
         }
     }
 
@@ -60,7 +61,8 @@ public class FlagBagService {
                 player.sendMessage(msg);
                 msg.cleanup();
             } catch (Exception e) {
-            }
+            utils.Logger.error("[FlagBagService] " + e.getMessage());
+        }
         }
     }
 
@@ -88,6 +90,7 @@ public class FlagBagService {
             pl.sendMessage(msg);
             msg.cleanup();
         } catch (Exception e) {
+            utils.Logger.error("[FlagBagService] " + e.getMessage());
         }
     }
 

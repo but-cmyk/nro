@@ -539,7 +539,7 @@ public class Pet extends Player {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            utils.Logger.logException(Pet.class, e, "Pet exception");
         }
     }
 

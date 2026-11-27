@@ -40,7 +40,7 @@ public class CSMM implements Runnable {
                 }
                 Thread.sleep(1000);
             } catch (Exception e) {
-                e.printStackTrace();
+                utils.Logger.logException(CSMM.class, e, "CSMM exception");
             }
         }
     }

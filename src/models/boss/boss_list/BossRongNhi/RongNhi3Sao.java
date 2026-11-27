@@ -104,7 +104,7 @@
 //                    move(this.location.x + (dir == 1 ? move : -move), pl.location.y);
 //                }
 //            } catch (Exception ex) {
-//                ex.printStackTrace();
+//                utils.Logger.logException(RongNhi3Sao.class, ex, "RongNhi3Sao exception");
 //            }
 //        }
 //    }

@@ -87,7 +87,8 @@ public class TransactionService implements Runnable {
                                         checkLogout1 = PlayerDAO.checkLogout(con, pl);
                                         checkLogout2 = PlayerDAO.checkLogout(con, plMap);
                                     } catch (Exception e) {
-                                    }
+            utils.Logger.error("[TransactionService] " + e.getMessage());
+        }
                                     if (checkLogout1) {
                                         Client.gI().kickSession(pl.getSession());
                                         break;
@@ -180,6 +181,7 @@ public class TransactionService implements Runnable {
             msg.writer().writeInt((int) plInvite.id);
             plReceive.sendMessage(msg);
         } catch (Exception e) {
+            utils.Logger.error("[TransactionService] " + e.getMessage());
         } finally {
             if (msg != null) {
                 msg.cleanup();
@@ -222,7 +224,8 @@ public class TransactionService implements Runnable {
                 Thread.currentThread().interrupt();
                 break;
             } catch (Exception ignored) {
-            }
+            utils.Logger.error("[TransactionService] " + ignored.getMessage());
+        }
         }
     }
 }

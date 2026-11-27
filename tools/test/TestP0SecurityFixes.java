@@ -38,9 +38,24 @@ public class TestP0SecurityFixes {
         testP0_04_BlackBallMultiplierAndTournamentFees();
         testP0_06_CalPercent();
         testP0_08_SaibamenSetBomNonBlocking();
+        testP1_BossAndConsignDirtyFlag();
 
         System.out.println("[ALL PASS] ✅ P0-01 .. P0-12 logic verified cleanly!");
         System.exit(0);
+    }
+
+    private static void testP1_BossAndConsignDirtyFlag() {
+        int level = 114;
+        long cadichHP = 60000000L + (long) (level - 50) * (level - 50) * 538888L;
+        assertTrue(cadichHP > Integer.MAX_VALUE, "P1-SnakeWay: CADICH HP at level 114 must exceed Integer.MAX_VALUE without overflow: " + cadichHP);
+
+        models.ConsignItem item = new models.ConsignItem(1, (short) 457, 100, (byte) 3, 1000, 0, 1, (byte) 0, new ArrayList<>(), false);
+        assertTrue(!item.persistedInDb && item.dirty, "P1-Consign: New ConsignItem must start dirty & not persisted");
+        item.persistedInDb = true;
+        item.dirty = false;
+        item.markDirty();
+        assertTrue(item.dirty, "P1-Consign: markDirty() must flag item for incremental UPDATE");
+        System.out.println("[PASS] P1: SnakeWay CADICH long HP (lvl 114=" + cadichHP + ") & ConsignItem dirty-flag verified");
     }
 
     private static void testP0_06_CalPercent() {

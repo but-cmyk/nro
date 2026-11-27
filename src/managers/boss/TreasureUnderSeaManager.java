@@ -23,7 +23,7 @@ public class TreasureUnderSeaManager extends BossManager {
                 try {
                     boss.update();
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    utils.Logger.logException(TreasureUnderSeaManager.class, e, "TreasureUnderSeaManager exception");
                     try {
                         removeBoss(boss);
                     } catch (Exception ex) {

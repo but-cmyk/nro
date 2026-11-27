@@ -120,7 +120,7 @@ public class Mabu2H extends Boss {
                     }
                 }
             } catch (Exception ex) {
-                ex.printStackTrace();
+                utils.Logger.logException(Mabu2H.class, ex, "Mabu2H exception");
             }
         }
     }

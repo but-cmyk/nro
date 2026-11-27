@@ -27,6 +27,7 @@ public class SuperRankDAO {
                 list.add(readData(rs));
             }
         } catch (Exception e) {
+            utils.Logger.error("[SuperRankDAO] " + e.getMessage());
         } finally {
             if (rs != null) {
                 rs.dispose();
@@ -41,6 +42,7 @@ public class SuperRankDAO {
                 }
             }
         } catch (Exception e) {
+            utils.Logger.error("[SuperRankDAO] " + e.getMessage());
         } finally {
             if (rs != null) {
                 rs.dispose();
@@ -59,6 +61,7 @@ public class SuperRankDAO {
                 list.add(readData(rs));
             }
         } catch (Exception e) {
+            utils.Logger.error("[SuperRankDAO] " + e.getMessage());
         } finally {
             if (rs != null) {
                 rs.dispose();
@@ -72,6 +75,7 @@ public class SuperRankDAO {
                 }
             }
         } catch (Exception e) {
+            utils.Logger.error("[SuperRankDAO] " + e.getMessage());
         } finally {
             if (rs != null) {
                 rs.dispose();
@@ -124,7 +128,8 @@ public class SuperRankDAO {
                     text.append("Giáp: ").append(Util.formatNumber(((Long) info.get("def")).intValue())).append("\n");
                 }
             } catch (Exception e) {
-            }
+            utils.Logger.error("[SuperRankDAO] " + e.getMessage());
+        }
 
             JSONArray historyList;
 
@@ -148,7 +153,8 @@ public class SuperRankDAO {
                     text.append("Thắng/Thua: ").append(rs.getInt("win")).append("/").append(rs.getInt("lose"));
                 }
             } catch (Exception e) {
-            }
+            utils.Logger.error("[SuperRankDAO] " + e.getMessage());
+        }
 
             superRankbuilder.setInfo(text.toString());
         }
@@ -214,7 +220,8 @@ public class SuperRankDAO {
                         }
                     }
                 } catch (Exception e) {
-                }
+            utils.Logger.error("[SuperRankDAO] " + e.getMessage());
+        }
             } else {
                 // Người chơi mới chưa có rank: Tự động khởi tạo rank cuối bảng
                 int highestRank = getCurrentHighestRank();
@@ -253,6 +260,7 @@ public class SuperRankDAO {
                 return rs.getInt("rank");
             }
         } catch (Exception e) {
+            utils.Logger.error("[SuperRankDAO] " + e.getMessage());
         } finally {
             if (rs != null) {
                 rs.dispose();

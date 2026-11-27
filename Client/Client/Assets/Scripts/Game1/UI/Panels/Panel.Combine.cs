@@ -167,5 +167,70 @@ namespace Game1
             }
             paintScrollArrow(g);
         }
+
+        public void setTabCombine()
+        {
+            currentListLength = vItemCombine.size() + 1;
+            ITEM_HEIGHT = 24;
+            cmyLim = currentListLength * ITEM_HEIGHT - hScroll;
+            if (cmyLim < 0)
+            {
+                cmyLim = 9;
+            }
+            cmy = (cmtoY = cmyLast[currentTabIndex]);
+            if (cmy < 0)
+            {
+                cmy = (cmtoY = 0);
+            }
+            if (cmy > cmyLim)
+            {
+                cmy = (cmtoY = cmyLim);
+            }
+            selected = (GameCanvas.isTouch ? (-1) : 0);
+        }
+
+        private void doFireCombine()
+        {
+            if (currentTabIndex == 0)
+            {
+                if (selected == -1)
+                {
+                    return;
+                }
+                if (vItemCombine.size() == 0)
+                {
+                    GameCanvas.startOKDlg("Vui lòng đặt trang bị và nguyên liệu cần nâng cấp vào ô trước!");
+                    return;
+                }
+                if (selected == vItemCombine.size())
+                {
+                    keyTouchCombine = -1;
+                    selected = (GameCanvas.isTouch ? (-1) : 0);
+                    InfoDlg.showWait();
+                    Service.gI().combine(1, vItemCombine);
+                    return;
+                }
+                if (selected > vItemCombine.size() - 1)
+                {
+                    return;
+                }
+                currItem = (Item)GameCanvas.panel.vItemCombine.elementAt(selected);
+                MyVector myVector = new MyVector();
+                myVector.addElement(new Command(mResources.GETOUT, this, 6001, currItem));
+                if (currItem != null)
+                {
+                    GameCanvas.menu.startAt(myVector, X, (selected + 1) * ITEM_HEIGHT - cmy + yScroll);
+                    addItemDetail(currItem);
+                }
+                else
+                {
+                    cp = null;
+                }
+            }
+            if (currentTabIndex == 1)
+            {
+                doFireInventory();
+            }
+        }
     }
 }

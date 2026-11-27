@@ -122,7 +122,7 @@ public class SuperRankService {
             }
             list.clear();
         } catch (Exception e) {
-            e.printStackTrace();
+            utils.Logger.logException(SuperRankService.class, e, "SuperRankService exception");
         } finally {
             if (msg != null) {
                 msg.cleanup();
@@ -236,7 +236,7 @@ public class SuperRankService {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            utils.Logger.logException(SuperRankService.class, e, "SuperRankService exception");
         }
         return null;
     }

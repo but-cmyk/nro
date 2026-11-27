@@ -164,7 +164,7 @@ public class CayThong extends Npc {
                                     player.sendMessage(msg);
                                     msg.cleanup();
                                 } catch (Exception e) {
-                                    System.out.println("lỗi 4");
+                                    utils.Logger.log(String.valueOf("lỗi 4") + "\n");
                                 }
                                 InventoryService.gI().addItemList(player.inventory.itemsBag, sachTuyetKy);
                                 InventoryService.gI().subQuantityItemsBag(player, chuong, 30);

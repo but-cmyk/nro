@@ -68,7 +68,7 @@ public class ResultSetImpl implements AlyraResultSet {
                 }
             } catch (final Exception ex) {
                 // Log but don't throw
-                System.err.println("Warning: Failed to close ResultSet: " + ex.getMessage());
+                utils.Logger.error(String.valueOf("Warning: Failed to close ResultSet: " + ex.getMessage()));
             }
             
             try {
@@ -77,7 +77,7 @@ public class ResultSetImpl implements AlyraResultSet {
                 }
             } catch (final Exception ex) {
                 // Log but don't throw
-                System.err.println("Warning: Failed to close Statement: " + ex.getMessage());
+                utils.Logger.error(String.valueOf("Warning: Failed to close Statement: " + ex.getMessage()));
             }
         }
     }

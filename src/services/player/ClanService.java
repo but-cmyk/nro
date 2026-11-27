@@ -159,6 +159,7 @@ public class ClanService {
                     break;
             }
         } catch (Exception e) {
+            utils.Logger.error("[ClanService] " + e.getMessage());
         }
 
     }
@@ -229,6 +230,7 @@ public class ClanService {
                     break;
             }
         } catch (Exception e) {
+            utils.Logger.error("[ClanService] " + e.getMessage());
         }
 
     }
@@ -253,6 +255,7 @@ public class ClanService {
             }
 
         } catch (Exception e) {
+            utils.Logger.error("[ClanService] " + e.getMessage());
         }
     }
 
@@ -268,6 +271,7 @@ public class ClanService {
                     break;
             }
         } catch (Exception e) {
+            utils.Logger.error("[ClanService] " + e.getMessage());
         }
 
     }
@@ -313,7 +317,8 @@ public class ClanService {
                 pl.sendMessage(msg);
                 msg.cleanup();
             } catch (Exception e) {
-            }
+            utils.Logger.error("[ClanService] " + e.getMessage());
+        }
         } else {
             Service.gI().sendThongBao(player, "Bang đã đủ thành viên, không thể mời thêm.");
         }
@@ -632,7 +637,7 @@ public class ClanService {
             player.sendMessage(msg);
             msg.cleanup();
         } catch (Exception e) {
-
+            utils.Logger.error("[ClanService] " + e.getMessage());
         }
     }
 
@@ -752,6 +757,7 @@ public class ClanService {
             Service.gI().sendMessAllPlayerInMap(player, msg);
             msg.cleanup();
         } catch (Exception e) {
+            utils.Logger.error("[ClanService] " + e.getMessage());
         }
     }
 
@@ -1103,6 +1109,7 @@ public class ClanService {
             ps.executeBatch();
             ps.close();
         } catch (Exception e) {
+            utils.Logger.error("[ClanService] " + e.getMessage());
         }
     }
 

@@ -154,7 +154,7 @@ public class TrungUyTrang extends Boss {
             }
 
         } catch (Exception ex) {
-            ex.printStackTrace(); // Ghi log lỗi nếu có
+            utils.Logger.logException(TrungUyTrang.class, ex, "TrungUyTrang exception"); // Ghi log lỗi nếu có
         }
     }
 

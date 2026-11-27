@@ -126,7 +126,7 @@ public class NADIC extends Boss {
                     }
                 }
             } catch (Exception ex) {
-                ex.printStackTrace();
+                utils.Logger.logException(NADIC.class, ex, "NADIC exception");
             }
         }
     }

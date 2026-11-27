@@ -114,7 +114,7 @@ public class BuiBui2 extends Boss {
                     }
                 }
             } catch (Exception ex) {
-                ex.printStackTrace();
+                utils.Logger.logException(BuiBui2.class, ex, "BuiBui2 exception");
             }
         }
     }

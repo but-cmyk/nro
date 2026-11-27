@@ -168,7 +168,7 @@
 //                    checkPlayerDie(pl);
 //                }
 //            } catch (Exception ex) {
-////                ex.printStackTrace();
+////                utils.Logger.logException(BrolySSJ3.class, ex, "BrolySSJ3 exception");
 //            }
 //        }
 //    }

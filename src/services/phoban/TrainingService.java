@@ -194,7 +194,8 @@ public class TrainingService {
                                 Service.gI().sendMoney(p);
                             }
                         } catch (Exception e) {
-                        }
+            utils.Logger.error("[TrainingService] " + e.getMessage());
+        }
                     }, 1000);
                 } else {
                     player.dangKyTapTuDong = false;

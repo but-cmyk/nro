@@ -10,6 +10,7 @@ import utils.Logger;
 import java.net.InetSocketAddress;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * NettySession: Quản lý phiên kết nối của người chơi dựa trên Netty Channel.
@@ -20,6 +21,7 @@ public class NettySession extends MySession {
 
     private final Channel channel;
     private final ConcurrentLinkedQueue<Message> messageMailbox = new ConcurrentLinkedQueue<>();
+    private final AtomicInteger mailboxSize = new AtomicInteger(0);
     private final AtomicBoolean isProcessing = new AtomicBoolean(false);
     private static final int MAX_MAILBOX_SIZE = 300;
 
@@ -54,13 +56,14 @@ public class NettySession extends MySession {
             msg.cleanup();
             return;
         }
-        if (this.messageMailbox.size() >= MAX_MAILBOX_SIZE) {
+        if (this.mailboxSize.get() >= MAX_MAILBOX_SIZE) {
             Logger.warning("Session " + this.getIP() + " Mailbox vượt ngưỡng (> " + MAX_MAILBOX_SIZE + ") -> Drop & Disconnect!");
             msg.cleanup();
             this.disconnect();
             return;
         }
         messageMailbox.offer(msg);
+        mailboxSize.incrementAndGet();
         tryProcessNextMessage();
     }
 
@@ -74,6 +77,7 @@ public class NettySession extends MySession {
                 try {
                     Message currentMsg;
                     while ((currentMsg = messageMailbox.poll()) != null) {
+                        mailboxSize.decrementAndGet();
                         try {
                             if (currentMsg.command == -27) { // Cmd_message.GET_SESSION_ID
                                 this.sendKey();
@@ -101,7 +105,8 @@ public class NettySession extends MySession {
     public void sendMessage(Message msg) {
         if (this.isConnected() && msg != null) {
             if (!this.channel.isWritable() && msg.command != -74 && msg.command != -27) {
-                // Outbound buffer của Netty bị đầy (client lag mạng), bỏ qua packet không quan trọng để chống tràn RAM
+                // Outbound buffer của Netty bị đầy (client lag mạng), bỏ qua & giải phóng packet chống tràn RAM
+                msg.cleanup();
                 return;
             }
             // Đồng bộ hóa trích xuất payload trước khi chuyển giao bất đồng bộ cho Netty EventLoop
@@ -136,6 +141,7 @@ public class NettySession extends MySession {
         while ((remainingMsg = messageMailbox.poll()) != null) {
             remainingMsg.cleanup();
         }
+        mailboxSize.set(0);
         // Giữ lại IP để ServerManager.disconnect() và SessionManager.removeSession() có thể giảm IP counter chính xác
     }
 

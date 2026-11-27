@@ -59,7 +59,7 @@ public final class WorldMartialArtsTournament implements Runnable {
                     Functions.sleep(sleepTime);
                 }
             } catch (Exception e) {
-                e.printStackTrace();
+                utils.Logger.logException(WorldMartialArtsTournament.class, e, "WorldMartialArtsTournament exception");
                 dispose();
                 break;
             }

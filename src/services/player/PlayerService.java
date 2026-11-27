@@ -47,7 +47,8 @@ public class PlayerService {
                 player.sendMessage(msg);
                 msg.cleanup();
             } catch (Exception e) {
-            }
+            utils.Logger.error("[PlayerService] " + e.getMessage());
+        }
         }
     }
     public void dailyLogin(Player player) {
@@ -194,7 +195,8 @@ public class PlayerService {
                     int type = player.zone.map.tileMap[player.location.y / 24][player.location.x / 24];
                     player.isFly = type == 0;
                 } catch (Exception e) {
-                }
+            utils.Logger.error("[PlayerService] " + e.getMessage());
+        }
                 if (player.isFly && player.getMount() == -1) {
                     long mp = player.nPoint.mpg / (100 * (player.effectSkill.isMonkey ? 2 : 1));
                     hoiPhuc(player, 0, -mp);
@@ -247,6 +249,7 @@ public class PlayerService {
             Service.gI().sendMessAllPlayerInMap(player, msg);
             msg.cleanup();
         } catch (Exception e) {
+            utils.Logger.error("[PlayerService] " + e.getMessage());
         }
     }
 
@@ -255,6 +258,7 @@ public class PlayerService {
             AlyraManager.executeUpdate("update account set ban = 1 where id = ? and username = ?",
                     playerBaned.getSession().userId, playerBaned.getSession().uu);
         } catch (Exception e) {
+            utils.Logger.error("[PlayerService] " + e.getMessage());
         }
         Service.gI().sendThongBao(playerBaned,
                 "Tài khoản của bạn đã bị khóa\nGame sẽ mất kết nối sau 5 giây...");

@@ -471,5 +471,171 @@ namespace Game1
             }
             paintScrollArrow(g);
         }
+
+        private void setTabInventory(bool resetSelect)
+        {
+            if (Char.myCharz().arrItemBody == null || Char.myCharz().arrItemBag == null)
+            {
+                return;
+            }
+            if (isnewInventory)
+            {
+                int num = Char.myCharz().arrItemBody.Length + Char.myCharz().arrItemBag.Length;
+                currentListLength = checkCurrentListLength(num);
+                currentListLength = 3;
+                newSelected = 0;
+                size_tab = (sbyte)(num / 20 + ((num % 20 > 0) ? 1 : 0));
+                Res.outz("sizeTab = " + size_tab);
+                return;
+            }
+            currentListLength = checkCurrentListLength(Char.myCharz().arrItemBody.Length + Char.myCharz().arrItemBag.Length);
+            ITEM_HEIGHT = 24;
+            cmyLim = currentListLength * ITEM_HEIGHT - hScroll;
+            cmy = (cmtoY = cmyLast[currentTabIndex]);
+            if (cmyLim < 0)
+            {
+                cmyLim = 0;
+            }
+            if (cmy < 0)
+            {
+                cmy = (cmtoY = 0);
+            }
+            if (cmy > cmyLim)
+            {
+                cmy = (cmtoY = 0);
+            }
+            if (resetSelect)
+            {
+                selected = (GameCanvas.isTouch ? (-1) : 0);
+            }
+        }
+
+        private void doFireInventory()
+        {
+            Res.outz("fire inventory");
+            if (Char.myCharz().statusMe == 14)
+            {
+                GameCanvas.startOKDlg(mResources.can_not_do_when_die);
+            }
+            else
+            {
+                if (selected == -1)
+                {
+                    return;
+                }
+                if (selected == 0)
+                {
+                    setNewSelected(Char.myCharz().arrItemBody.Length + Char.myCharz().arrItemBag.Length, false);
+                    return;
+                }
+                currItem = null;
+                MyVector myVector = new MyVector();
+                if (isnewInventory && isnewInventory)
+                {
+                    currItem = itemInvenNew;
+                    if (newSelected == 0)
+                    {
+                        myVector.addElement(new Command(mResources.GETOUT, this, 2002, currItem));
+                    }
+                    else if (GameCanvas.panel.type == 12)
+                    {
+                        myVector.addElement(new Command(mResources.use_for_combine, this, 6000, currItem));
+                    }
+                    else if (GameCanvas.panel.type == 13)
+                    {
+                        myVector.addElement(new Command(mResources.use_for_trade, this, 7000, currItem));
+                    }
+                    else if (currItem.isTypeBody())
+                    {
+                        myVector.addElement(new Command(mResources.USE, this, 2000, currItem));
+                        if (Char.myCharz().havePet)
+                        {
+                            myVector.addElement(new Command(mResources.MOVEFORPET, this, 2005, currItem));
+                        }
+                    }
+                    else
+                    {
+                        myVector.addElement(new Command(mResources.USE, this, 2001, currItem));
+                        if (currItem != null && currItem.template.type == 33)
+                        {
+                            myVector.addElement(new Command("Dùng nhiều", this, 2026, currItem));
+                        }
+                    }
+                }
+                else if (!GetInventorySelect_isbody(selected, newSelected, Char.myCharz().arrItemBody))
+                {
+                    Item item = Char.myCharz().arrItemBag[GetInventorySelect_bag(selected, newSelected, Char.myCharz().arrItemBody)];
+                    if (item != null)
+                    {
+                        currItem = item;
+                        if (GameCanvas.panel.type == 12)
+                        {
+                            myVector.addElement(new Command(mResources.use_for_combine, this, 6000, currItem));
+                        }
+                        else if (GameCanvas.panel.type == 13)
+                        {
+                            myVector.addElement(new Command(mResources.use_for_trade, this, 7000, currItem));
+                        }
+                        else if (item.isTypeBody())
+                        {
+                            myVector.addElement(new Command(mResources.USE, this, 2000, currItem));
+                            if (Char.myCharz().havePet)
+                            {
+                                myVector.addElement(new Command(mResources.MOVEFORPET, this, 2005, currItem));
+                            }
+                        }
+                        else
+                        {
+                            myVector.addElement(new Command(mResources.USE, this, 2001, currItem));
+                            if (currItem != null && currItem.template.type == 33)
+                            {
+                                myVector.addElement(new Command("Dùng nhiều", this, 2026, currItem));
+                            }
+                            if ((currItem.template.type == 29 || Items.isItemTimeBuff(currItem.template.id)) && currItem.template.id != 457)
+                            {
+                                if (!Items.getInstance().checkContains(currItem.template.id))
+                                {
+                                    myVector.addElement(new Command("Auto Dùng", Items.getInstance(), 1, new ItemGroup(currItem.template.id, currItem.indexUI, false, false)));
+                                }
+                                else
+                                {
+                                    myVector.addElement(new Command("Ngưng Dùng", Items.getInstance(), 2, currItem.template.id));
+                                }
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    Item item2 = Char.myCharz().arrItemBody[GetInventorySelect_body(selected, newSelected)];
+                    if (item2 != null)
+                    {
+                        currItem = item2;
+                        myVector.addElement(new Command(mResources.GETOUT, this, 2002, currItem));
+                    }
+                }
+                if (currItem != null)
+                {
+                    Char.myCharz().setPartTemp(currItem.headTemp, currItem.bodyTemp, currItem.legTemp, currItem.bagTemp);
+                    if (GameCanvas.panel.type != 12 && GameCanvas.panel.type != 13)
+                    {
+                        if (position == 0)
+                        {
+                            myVector.addElement(new Command(mResources.MOVEOUT, this, 2003, currItem));
+                        }
+                        if (position == 1)
+                        {
+                            myVector.addElement(new Command(mResources.SALE, this, 3002, currItem));
+                        }
+                    }
+                    GameCanvas.menu.startAt(myVector, X, (selected + 1) * ITEM_HEIGHT - cmy + yScroll);
+                    addItemDetail(currItem);
+                }
+                else
+                {
+                    cp = null;
+                }
+            }
+        }
     }
 }

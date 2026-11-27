@@ -192,7 +192,7 @@ public class HungVuong extends Npc {
                                 player.sendMessage(msg);
                                 msg.cleanup();
                             } catch (Exception e) {
-                                System.out.println("lỗi 4");
+                                utils.Logger.log(String.valueOf("lỗi 4") + "\n");
                             }
                             InventoryService.gI().addItemList(player.inventory.itemsBag, hopQuaThuong);
                             InventoryService.gI().subQuantityItemsBag(player, ngaVoi, 9);
@@ -236,7 +236,7 @@ public class HungVuong extends Npc {
                                 player.sendMessage(msg);
                                 msg.cleanup();
                             } catch (Exception e) {
-                                System.out.println("lỗi 4");
+                                utils.Logger.log(String.valueOf("lỗi 4") + "\n");
                             }
                             InventoryService.gI().addItemList(player.inventory.itemsBag, hopQuaVip);
                             InventoryService.gI().subQuantityItemsBag(player, ngaVoii, 9);

@@ -17,6 +17,12 @@ public class ConsignItem {
     public List<ItemOption> options = new ArrayList<>();
     public boolean isBuy;
     public String playerName = "";
+    public volatile boolean dirty = true;
+    public volatile boolean persistedInDb = false;
+
+    public void markDirty() {
+        this.dirty = true;
+    }
 
 //    public ConsignItem(){
 //    }

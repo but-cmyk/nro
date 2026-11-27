@@ -128,7 +128,7 @@ public abstract class TrainingBoss extends Boss {
                 this.leaveMap();
             }
         } catch (Exception ex) {
-            ex.printStackTrace();
+            utils.Logger.logException(TrainingBoss.class, ex, "TrainingBoss exception");
         }
     }
 

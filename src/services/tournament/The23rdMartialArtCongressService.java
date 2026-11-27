@@ -51,7 +51,8 @@ public class The23rdMartialArtCongressService {
                     runnable.run();
                 }
             } catch (Exception e) {
-            }
+            utils.Logger.error("[The23rdMartialArtCongressService] " + e.getMessage());
+        }
         }, delay);
     }
 
@@ -64,6 +65,7 @@ public class The23rdMartialArtCongressService {
             player.sendMessage(msg);
             msg.cleanup();
         } catch (Exception e) {
+            utils.Logger.error("[The23rdMartialArtCongressService] " + e.getMessage());
         }
     }
 

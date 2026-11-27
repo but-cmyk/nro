@@ -605,7 +605,7 @@ public class Boss extends Player implements IBoss {
 
         } catch (Exception e) {
             Logger.error("Lỗi join map boss: " + e.getMessage() + " - Boss: " + this.name);
-            e.printStackTrace();
+            utils.Logger.logException(Boss.class, e, "Boss exception");
 
             if (error < 3) {
                 error++;

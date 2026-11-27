@@ -83,6 +83,7 @@ public class Trade {
             msg.writer().writeInt((int) player2.id);
             player1.sendMessage(msg);
         } catch (Exception ignored) {
+            utils.Logger.error("[Trade] " + ignored.getMessage());
         } finally {
             if (msg != null) {
                 msg.cleanup();
@@ -185,6 +186,7 @@ public class Trade {
             pl.sendMessage(msg);
             Service.gI().sendThongBao(pl, "Không thể giao dịch vật phẩm này");
         } catch (Exception ignored) {
+            utils.Logger.error("[Trade] " + ignored.getMessage());
         } finally {
             if (msg != null) {
                 msg.cleanup();
@@ -257,6 +259,7 @@ public class Trade {
                 player2.sendMessage(msg);
             }
         } catch (Exception ignored) {
+            utils.Logger.error("[Trade] " + ignored.getMessage());
         } finally {
             if (msg != null) {
                 msg.cleanup();

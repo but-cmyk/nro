@@ -37,6 +37,7 @@ public class AchievementService {
             }
             player.sendMessage(msg);
         } catch (Exception e) {
+            utils.Logger.error("[AchievementService] " + e.getMessage());
         } finally {
             if (msg != null) {
                 msg.cleanup();
@@ -67,7 +68,8 @@ public class AchievementService {
         msg.writer().writeByte(select);
         player.sendMessage(msg);
     } catch (Exception e) {
-    } finally {
+            utils.Logger.error("[AchievementService] " + e.getMessage());
+        } finally {
         if (msg != null) {
             msg.cleanup();
         }
@@ -107,6 +109,7 @@ public class AchievementService {
                 checkDoneTask(player, ConstAchievement.TAP_LUYEN_BAI_BAN);
             }
         } catch (Exception e) {
+            utils.Logger.error("[AchievementService] " + e.getMessage());
         }
     }
 

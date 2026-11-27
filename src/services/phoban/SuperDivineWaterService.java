@@ -111,7 +111,8 @@ public class SuperDivineWaterService {
                                     bossMaxHealth
                             );
                         } catch (Exception e) {
-                        }
+            utils.Logger.error("[SuperDivineWaterService] " + e.getMessage());
+        }
                         player.callBossPocolo = true;
                     }
                 } else if (player.winSTT && Util.canDoWithTime(player.lastTimeWinSTT, 3500)) {
@@ -132,6 +133,7 @@ public class SuperDivineWaterService {
                 }
             }
         } catch (Exception e) {
+            utils.Logger.error("[SuperDivineWaterService] " + e.getMessage());
         }
     }
 }

@@ -48,13 +48,13 @@ public class HistoryTransactionDAO {
         for (Item item : doGD1) {
             if (item.isNotNullItem()) {
                 itemPlayer1 += item.template.name + " (x" + item.quantityGD + "),";
-//                System.out.println(item.template.name + " (x" + item.quantityGD + "),");
+//                utils.Logger.log(String.valueOf(item.template.name + " (x" + item.quantityGD + "),") + "\n");
             }
         }
         for (Item item : doGD2) {
             if (item.isNotNullItem()) {
                 itemPlayer2 += item.template.name + " (x" + item.quantityGD + "),";
-//                System.out.println(item.template.name + " (x" + item.quantityGD + "),");
+//                utils.Logger.log(String.valueOf(item.template.name + " (x" + item.quantityGD + "),") + "\n");
             }
         }
         String beforeTran1 = "";
@@ -84,6 +84,7 @@ public class HistoryTransactionDAO {
         try {
             AlyraManager.executeUpdate("INSERT INTO history_transaction (player_1, player_2, item_player_1, item_player_2, bag_1_before_tran, bag_2_before_tran, bag_1_after_tran, bag_2_after_tran, time_tran) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", player1, player2, itemPlayer1, itemPlayer2, beforeTran1, beforeTran2, afterTran1, afterTran2, new Timestamp(System.currentTimeMillis()));
         } catch (Exception ex) {
+            utils.Logger.error("[HistoryTransactionDAO] " + ex.getMessage());
         }
     }
 

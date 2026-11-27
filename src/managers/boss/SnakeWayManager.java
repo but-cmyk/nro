@@ -22,7 +22,7 @@ public class SnakeWayManager extends BossManager {
                 try {
                     boss.update();
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    utils.Logger.logException(SnakeWayManager.class, e, "SnakeWayManager exception");
                     try {
                         removeBoss(boss);
                     } catch (Exception ex) {

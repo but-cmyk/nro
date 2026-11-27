@@ -4,7 +4,6 @@ import interfaces.ISession;
 import utils.Logger;
 
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -27,8 +26,7 @@ public class SessionManager {
     private static volatile SessionManager instance;
     private static final Object instanceLock = new Object();
     
-    // Thread-safe collections - Tối ưu initial capacity
-    private final CopyOnWriteArrayList<ISession> sessions;
+    // Thread-safe collections - ConcurrentHashMap O(1) thay thế CopyOnWriteArrayList tránh copy mảng O(N)
     private final ConcurrentHashMap<Long, ISession> sessionIndex;
     private final ConcurrentHashMap<String, AtomicInteger> ipSessionCount; // Track sessions per IP
     private final ReentrantReadWriteLock sessionLock = new ReentrantReadWriteLock();
@@ -57,7 +55,6 @@ public class SessionManager {
 
     private SessionManager() {
         // Khởi tạo với initial capacity để giảm resize
-        this.sessions = new CopyOnWriteArrayList<>();
         this.sessionIndex = new ConcurrentHashMap<>(1024, 0.75f, 16); // Tối ưu concurrency level
         this.ipSessionCount = new ConcurrentHashMap<>(256, 0.75f, 8);
         
@@ -136,7 +133,7 @@ public class SessionManager {
         }
         
         // Check session limit
-        if (sessions.size() >= MAX_SESSIONS) {
+        if (sessionIndex.size() >= MAX_SESSIONS) {
             Logger.error("Session limit reached (" + MAX_SESSIONS + "), rejecting new session from " + session.getIP());
             session.disconnect();
             return;
@@ -163,12 +160,11 @@ public class SessionManager {
                 removeSessionInternal(existingSession);
             }
             
-            sessions.add(session);
             sessionIndex.put(session.getID(), session);
             totalSessionsCreated.incrementAndGet();
             
             Logger.log("Added session: " + session.getID() + " from " + ip + 
-                      " (Total: " + sessions.size() + "/" + MAX_SESSIONS + ")");
+                      " (Total: " + sessionIndex.size() + "/" + MAX_SESSIONS + ")");
                       
         } finally {
             sessionLock.writeLock().unlock();
@@ -191,10 +187,9 @@ public class SessionManager {
     private boolean removeSessionInternal(ISession session) {
         if (session == null) return false;
         
-        boolean removed = sessions.remove(session);
         ISession indexRemoved = sessionIndex.remove(session.getID());
         
-        if (removed || indexRemoved != null) {
+        if (indexRemoved != null) {
             totalSessionsRemoved.incrementAndGet();
             
             // Giảm IP counter
@@ -209,7 +204,7 @@ public class SessionManager {
             }
             
             Logger.log("Removed session: " + session.getID() + " from " + ip + 
-                      " (Remaining: " + sessions.size() + ")");
+                      " (Remaining: " + sessionIndex.size() + ")");
             return true;
         }
         
@@ -218,12 +213,7 @@ public class SessionManager {
 
     public List<ISession> getSessions() {
         // Return defensive copy to prevent external modification
-        sessionLock.readLock().lock();
-        try {
-            return new ArrayList<>(sessions);
-        } finally {
-            sessionLock.readLock().unlock();
-        }
+        return new ArrayList<>(sessionIndex.values());
     }
     
     /**
@@ -256,20 +246,24 @@ public class SessionManager {
 //    }
 
     public int getNumSession() {
-        return sessions.size();
+        return sessionIndex.size();
     }
     
     public int getSessionCount() {
-        return sessions.size();
+        return sessionIndex.size();
     }
     
     /**
      * Get connected session count
      */
     public int getConnectedSessionCount() {
-        return (int) sessions.stream()
-                .filter(session -> session != null && session.isConnected())
-                .count();
+        int count = 0;
+        for (ISession session : sessionIndex.values()) {
+            if (session != null && session.isConnected()) {
+                count++;
+            }
+        }
+        return count;
     }
 
     /**
@@ -287,7 +281,7 @@ public class SessionManager {
             List<ISession> deadSessions = new ArrayList<>();
             
             // Tìm dead sessions
-            for (ISession session : sessions) {
+            for (ISession session : sessionIndex.values()) {
                 if (session == null || !session.isConnected()) {
                     deadSessions.add(session);
                     if (deadSessions.size() >= CLEANUP_BATCH_SIZE) {
@@ -387,13 +381,13 @@ public class SessionManager {
         
         sessionLock.writeLock().lock();
         try {
-            int count = sessions.size();
+            int count = sessionIndex.size();
             
             // Disconnect all sessions in batches
             int batchSize = 50;
             List<ISession> batch = new ArrayList<>(batchSize);
             
-            for (ISession session : sessions) {
+            for (ISession session : sessionIndex.values()) {
                 if (session != null) {
                     batch.add(session);
                     
@@ -418,7 +412,6 @@ public class SessionManager {
             }
             
             // Clear all collections
-            sessions.clear();
             sessionIndex.clear();
             ipSessionCount.clear();
             
@@ -458,7 +451,7 @@ public class SessionManager {
             if (ipCount != null && ipCount.get() > 0) {
                 result = new ArrayList<>(ipCount.get());
                 
-                for (ISession session : sessions) {
+                for (ISession session : sessionIndex.values()) {
                     if (session != null && ip.equals(session.getIP())) {
                         result.add(session);
                     }
@@ -511,7 +504,7 @@ public class SessionManager {
     public SessionManagerStats getStats() {
         sessionLock.readLock().lock();
         try {
-            int totalSessions = sessions.size();
+            int totalSessions = sessionIndex.size();
             int connectedSessions = getConnectedSessionCount();
             int deadSessions = totalSessions - connectedSessions;
             

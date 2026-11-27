@@ -159,7 +159,7 @@ public class DrLychee extends Boss {
                     bossMaxHealth
             ));
         } catch (Exception ex) {
-            ex.printStackTrace();
+            utils.Logger.logException(DrLychee.class, ex, "DrLychee exception");
         }
         ChangeMapService.gI().exitMap(this);
         this.lastZone = null;

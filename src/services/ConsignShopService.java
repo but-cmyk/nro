@@ -136,6 +136,7 @@ public class ConsignShopService {
             }
 
             it.isBuy = true;
+            it.markDirty();
             manager.updateItemBoughtAsync(it.id);
             database.daos.PlayerDAO.updatePlayerAsync(pl);
             Player seller = server.Client.gI().getPlayer(it.player_sell);
@@ -220,7 +221,7 @@ public class ConsignShopService {
             }
             pl.sendMessage(msg);
         } catch (IOException e) {
-            e.printStackTrace();
+            utils.Logger.logException(ConsignShopService.class, e, "ConsignShopService exception");
         } finally {
             if (msg != null) {
                 msg.cleanup();
@@ -748,7 +749,7 @@ public class ConsignShopService {
             }
             pl.sendMessage(msg);
         } catch (IOException e) {
-            e.printStackTrace();
+            utils.Logger.logException(ConsignShopService.class, e, "ConsignShopService exception");
         } finally {
             if (msg != null) {
                 msg.cleanup();

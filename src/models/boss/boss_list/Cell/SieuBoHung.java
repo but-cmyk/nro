@@ -148,9 +148,14 @@ public class SieuBoHung extends Boss {
                 }
                 damage = damage / 2;
             }
+            if (damage >= this.nPoint.hp) {
+                setBom(plAtt);
+                return 0;
+            }
             this.nPoint.subHP(damage);
             if (isDie()) {
-                setBom(plAtt);
+                this.setDie(plAtt);
+                die(plAtt);
                 return 0;
             }
             return (int) damage;

@@ -438,7 +438,6 @@ public class CommandRegistry {
                  - RAM JVM Used / Max   : %d MB / %d MB (%d%%)
                  - Active JVM Threads   : %d
                  - HikariCP Pool        : %d Active | %d Idle | %d Waiting
-                 - Web Live Dashboard   : http://localhost:14446/dashboard
                 ====================================================================
                 """.formatted(ccu, usedMB, maxMB, (maxMB > 0 ? (usedMB * 100 / maxMB) : 0),
                 activeThreads, dbActive, dbIdle, dbWaiting));

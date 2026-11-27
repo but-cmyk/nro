@@ -112,6 +112,8 @@ namespace Game1
         }
 
         public static Dictionary<DrawRegionKey, Texture2D> cachedTextures = new Dictionary<DrawRegionKey, Texture2D>();
+
+        private static readonly GUIContent sharedLabelContent = new GUIContent();
     
     	public static int addYWhenOpenKeyBoard;
     
@@ -175,7 +177,7 @@ namespace Game1
     			{
     				clearColor1x1Cache();
     			}
-    			tex = new Texture2D(1, 1);
+    			tex = new Texture2D(1, 1, TextureFormat.RGBA32, false);
     			Color color = new Color(r, g, b, a);
     			tex.SetPixel(0, 0, color);
     			Image.setTextureQuality(tex);
@@ -187,7 +189,7 @@ namespace Game1
 
     	private void cache(DrawRegionKey key, Texture2D value)
     	{
-    		if (cachedTextures.Count > 400)
+    		if (cachedTextures.Count > 150)
     		{
     			clearCachedTextures();
     		}
@@ -532,7 +534,8 @@ namespace Game1
     		{
     			GUI.BeginGroup(new Rect(num, num2, num3, num4));
     		}
-    		GUI.Label(new Rect(x - num, y - num2, ScaleGUI.WIDTH, 100f), s, style);
+    		sharedLabelContent.text = s ?? string.Empty;
+    		GUI.Label(new Rect(x - num, y - num2, ScaleGUI.WIDTH, 100f), sharedLabelContent, style);
     		if (isClip)
     		{
     			GUI.EndGroup();
@@ -579,7 +582,8 @@ namespace Game1
     		{
     			GUI.BeginGroup(new Rect(num, num2, num3, num4));
     		}
-    		GUI.Label(new Rect(x - num, y - num2 - 4, w, 100f), s, style);
+    		sharedLabelContent.text = s ?? string.Empty;
+    		GUI.Label(new Rect(x - num, y - num2 - 4, w, 100f), sharedLabelContent, style);
     		if (isClip)
     		{
     			GUI.EndGroup();
@@ -1134,56 +1138,26 @@ namespace Game1
     
     	public static Image blend(Image img0, float level, int rgb)
     	{
-    		int num = rgb & 0xFF;
-    		int num2 = (rgb >> 8) & 0xFF;
-    		int num3 = (rgb >> 16) & 0xFF;
-    		float num4 = (float)num / 256f;
-    		float num5 = (float)num2 / 256f;
-    		float num6 = (float)num3 / 256f;
-    		Color color = new Color(num6, num5, num4);
-    		Color[] pixels = img0.texture.GetPixels();
-    		float num7 = color.r;
-    		float num8 = color.g;
-    		float num9 = color.b;
+    		int bTarget = rgb & 0xFF;
+    		int gTarget = (rgb >> 8) & 0xFF;
+    		int rTarget = (rgb >> 16) & 0xFF;
+    		Color32[] pixels = img0.texture.GetPixels32();
+    		Color32 trans32 = transParentColor;
     		for (int i = 0; i < pixels.Length; i++)
     		{
-    			Color color2 = pixels[i];
-    			if (isNotTranColor(color2))
+    			Color32 p = pixels[i];
+    			if (p.a != 0 && !(p.r == trans32.r && p.g == trans32.g && p.b == trans32.b && p.a == trans32.a))
     			{
-    				float num10 = (num7 - color2.r) * level + color2.r;
-    				float num11 = (num8 - color2.g) * level + color2.g;
-    				float num12 = (num9 - color2.b) * level + color2.b;
-    				if (num10 > 255f)
-    				{
-    					num10 = 255f;
-    				}
-    				if (num10 < 0f)
-    				{
-    					num10 = 0f;
-    				}
-    				if (num11 > 255f)
-    				{
-    					num11 = 255f;
-    				}
-    				if (num11 < 0f)
-    				{
-    					num11 = 0f;
-    				}
-    				if (num12 < 0f)
-    				{
-    					num12 = 0f;
-    				}
-    				if (num12 > 255f)
-    				{
-    					num12 = 255f;
-    				}
-    				pixels[i].r = num10;
-    				pixels[i].g = num11;
-    				pixels[i].b = num12;
+    				int nr = Mathf.Clamp((int)((rTarget - p.r) * level + p.r), 0, 255);
+    				int ng = Mathf.Clamp((int)((gTarget - p.g) * level + p.g), 0, 255);
+    				int nb = Mathf.Clamp((int)((bTarget - p.b) * level + p.b), 0, 255);
+    				pixels[i].r = (byte)nr;
+    				pixels[i].g = (byte)ng;
+    				pixels[i].b = (byte)nb;
     			}
     		}
     		Image image = Image.createImage(img0.getRealImageWidth(), img0.getRealImageHeight());
-    		image.texture.SetPixels(pixels);
+    		image.texture.SetPixels32(pixels);
     		Image.setTextureQuality(image.texture);
     		image.texture.Apply();
     		Cout.LogError2("BLEND ----------------------------------------------------");

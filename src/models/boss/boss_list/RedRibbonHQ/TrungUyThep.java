@@ -169,7 +169,7 @@ public void attack() {
         }
     } catch (Exception ex) {
         // Nên log ra lỗi để debug nếu cần
-        ex.printStackTrace();
+        utils.Logger.logException(TrungUyThep.class, ex, "TrungUyThep exception");
     }
 }
 

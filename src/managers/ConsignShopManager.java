@@ -44,14 +44,54 @@ public class ConsignShopManager {
     public long lastTimeUpdate;
     public String[] tabName = {"Áo Quần", "Găng Tay", "Phụ Kiện", "Linh tinh", ""};
     public List<ConsignItem> listItem = new ArrayList<>();
+    private final java.util.Set<Integer> pendingDeleteIds = java.util.concurrent.ConcurrentHashMap.newKeySet();
+
+    @SuppressWarnings("unchecked")
+    private static String serializeOptions(ConsignItem it) {
+        if (it == null || it.options == null || it.options.isEmpty()) {
+            return "[]";
+        }
+        try {
+            JSONArray array = new JSONArray();
+            for (Item.ItemOption option : it.options) {
+                if (option != null && option.optionTemplate != null) {
+                    JSONObject obj = new JSONObject();
+                    obj.put("id", option.optionTemplate.id);
+                    obj.put("param", option.param);
+                    array.add(obj);
+                }
+            }
+            return JSONValue.toJSONString(array);
+        } catch (Exception ignored) {
+            return "[]";
+        }
+    }
 
    @SuppressWarnings("unchecked")
     public void save() {
         saveLock.lock();
         try {
             listLock.lock();
-            List<ConsignItem> itemsToSave = new ArrayList<>(this.listItem);
+            List<ConsignItem> snapshot = new ArrayList<>(this.listItem);
             listLock.unlock();
+
+            List<ConsignItem> toInsert = new ArrayList<>();
+            List<ConsignItem> toUpdate = new ArrayList<>();
+            for (ConsignItem it : snapshot) {
+                if (it == null || it.player_sell <= 0 || it.itemId <= 0 || it.quantity <= 0) {
+                    continue;
+                }
+                if (!it.persistedInDb) {
+                    toInsert.add(it);
+                } else if (it.dirty) {
+                    toUpdate.add(it);
+                }
+            }
+            List<Integer> toDelete = new ArrayList<>(pendingDeleteIds);
+
+            if (toInsert.isEmpty() && toUpdate.isEmpty() && toDelete.isEmpty()) {
+                return;
+            }
 
             try (Connection con = AlyraManager.getConnection()) {
                 if (con == null) {
@@ -62,64 +102,90 @@ public class ConsignShopManager {
                 con.setAutoCommit(false);
 
                 try {
-                    try (Statement stmt = con.createStatement()) {
-                        stmt.execute("DELETE FROM shop_ky_gui");
-                    }
+                    final int BATCH_SIZE = 100;
 
-                    if (!itemsToSave.isEmpty()) {
-                        String sql = "INSERT INTO shop_ky_gui(id, player_id, tab, item_id, gold, gem, quantity, itemOption, isUpTop, isBuy) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-                        try (PreparedStatement ps = con.prepareStatement(sql)) {
+                    if (!toDelete.isEmpty()) {
+                        String deleteSql = "DELETE FROM `shop_ky_gui` WHERE `id` = ?";
+                        try (PreparedStatement psDel = con.prepareStatement(deleteSql)) {
                             int batchCount = 0;
-                            final int BATCH_SIZE = 100;
-
-                            for (ConsignItem it : itemsToSave) {
-                                if (it == null || it.player_sell <= 0 || it.itemId <= 0 || it.quantity <= 0) {
-                                    continue;
-                                }
-
-                                String optionsJson = "[]";
-                                if (it.options != null && !it.options.isEmpty()) {
-                                    JSONArray array = new JSONArray();
-                                    for (Item.ItemOption option : it.options) {
-                                        if (option != null && option.optionTemplate != null) {
-                                            JSONObject obj = new JSONObject();
-                                            obj.put("id", option.optionTemplate.id);
-                                            obj.put("param", option.param);
-                                            array.add(obj);
-                                        }
-                                    }
-                                    optionsJson = JSONValue.toJSONString(array);
-                                }
-
-                                ps.setInt(1, it.id);
-                                ps.setInt(2, it.player_sell);
-                                ps.setByte(3, it.tab);
-                                ps.setInt(4, it.itemId);
-                                ps.setInt(5, it.goldSell);
-                                ps.setInt(6, it.gemSell);
-                                ps.setInt(7, it.quantity);
-                                ps.setString(8, optionsJson);
-                                ps.setByte(9, it.isUpTop);
-                                ps.setBoolean(10, it.isBuy);
-
-                                ps.addBatch();
-                                batchCount++;
-
-                                if (batchCount >= BATCH_SIZE) {
-                                    ps.executeBatch();
-                                    ps.clearBatch();
+                            for (Integer id : toDelete) {
+                                psDel.setInt(1, id);
+                                psDel.addBatch();
+                                if (++batchCount >= BATCH_SIZE) {
+                                    psDel.executeBatch();
+                                    psDel.clearBatch();
                                     batchCount = 0;
                                 }
                             }
-
                             if (batchCount > 0) {
-                                ps.executeBatch();
+                                psDel.executeBatch();
+                            }
+                        }
+                    }
+
+                    if (!toInsert.isEmpty()) {
+                        String insertSql = "INSERT INTO `shop_ky_gui`(`id`, `player_id`, `tab`, `item_id`, `gold`, `gem`, `quantity`, `itemOption`, `isUpTop`, `isBuy`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                        try (PreparedStatement psIns = con.prepareStatement(insertSql)) {
+                            int batchCount = 0;
+                            for (ConsignItem it : toInsert) {
+                                psIns.setInt(1, it.id);
+                                psIns.setInt(2, it.player_sell);
+                                psIns.setByte(3, it.tab);
+                                psIns.setInt(4, it.itemId);
+                                psIns.setInt(5, it.goldSell);
+                                psIns.setInt(6, it.gemSell);
+                                psIns.setInt(7, it.quantity);
+                                psIns.setString(8, serializeOptions(it));
+                                psIns.setByte(9, it.isUpTop);
+                                psIns.setBoolean(10, it.isBuy);
+                                psIns.addBatch();
+                                if (++batchCount >= BATCH_SIZE) {
+                                    psIns.executeBatch();
+                                    psIns.clearBatch();
+                                    batchCount = 0;
+                                }
+                            }
+                            if (batchCount > 0) {
+                                psIns.executeBatch();
+                            }
+                        }
+                    }
+
+                    if (!toUpdate.isEmpty()) {
+                        String updateSql = "UPDATE `shop_ky_gui` SET `gold` = ?, `gem` = ?, `quantity` = ?, `itemOption` = ?, `isUpTop` = ?, `isBuy` = ? WHERE `id` = ?";
+                        try (PreparedStatement psUpd = con.prepareStatement(updateSql)) {
+                            int batchCount = 0;
+                            for (ConsignItem it : toUpdate) {
+                                psUpd.setInt(1, it.goldSell);
+                                psUpd.setInt(2, it.gemSell);
+                                psUpd.setInt(3, it.quantity);
+                                psUpd.setString(4, serializeOptions(it));
+                                psUpd.setByte(5, it.isUpTop);
+                                psUpd.setBoolean(6, it.isBuy);
+                                psUpd.setInt(7, it.id);
+                                psUpd.addBatch();
+                                if (++batchCount >= BATCH_SIZE) {
+                                    psUpd.executeBatch();
+                                    psUpd.clearBatch();
+                                    batchCount = 0;
+                                }
+                            }
+                            if (batchCount > 0) {
+                                psUpd.executeBatch();
                             }
                         }
                     }
 
                     con.commit();
-                    Logger.log("Successfully saved " + itemsToSave.size() + " items\n");
+                    for (ConsignItem it : toInsert) {
+                        it.persistedInDb = true;
+                        it.dirty = false;
+                    }
+                    for (ConsignItem it : toUpdate) {
+                        it.dirty = false;
+                    }
+                    pendingDeleteIds.removeAll(toDelete);
+                    Logger.log("ConsignShop incremental save: +" + toInsert.size() + " ~" + toUpdate.size() + " -" + toDelete.size() + "\n");
                 } catch (Exception txEx) {
                     try {
                         con.rollback();
@@ -205,6 +271,8 @@ public class ConsignShopManager {
                         }
 
                         ConsignItem consignItem = new ConsignItem(id, itemId, idPl, tab, gold, gem, quantity, isUp, options, isBuy, plName);
+                        consignItem.persistedInDb = true;
+                        consignItem.dirty = false;
                         this.listItem.add(consignItem);
                         loadedCount++;
 
@@ -292,6 +360,7 @@ public class ConsignShopManager {
 
     // Atomic DB operations - Xóa item khi hủy hoặc nhận tiền (tuần tự dưới saveLock)
     public void deleteItemAsync(int itemId) {
+        pendingDeleteIds.add(itemId);
         dbExecutor.execute(() -> {
             saveLock.lock();
             try {
@@ -300,6 +369,7 @@ public class ConsignShopManager {
                      PreparedStatement ps = con.prepareStatement(sql)) {
                     ps.setInt(1, itemId);
                     ps.executeUpdate();
+                    pendingDeleteIds.remove(itemId);
                 } catch (Exception e) {
                     Logger.logException(ConsignShopManager.class, e, "Lỗi deleteItemAsync ID: " + itemId);
                 }
@@ -369,6 +439,8 @@ public class ConsignShopManager {
                     ps.setByte(9, item.isUpTop);
                     ps.setBoolean(10, item.isBuy);
                     ps.executeUpdate();
+                    item.persistedInDb = true;
+                    item.dirty = false;
                 } catch (Exception e) {
                     Logger.logException(ConsignShopManager.class, e, "Lỗi insertItemAsync ID: " + item.id);
                 }

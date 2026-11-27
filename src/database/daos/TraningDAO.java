@@ -32,7 +32,7 @@ public class TraningDAO {
                 String query = "UPDATE player SET data_luyentap = ? WHERE id = ?";
                 AlyraManager.executeUpdate(query, dataLuyenTap, player.id);
             } catch (Exception e) {
-                e.printStackTrace();
+                utils.Logger.logException(TraningDAO.class, e, "TraningDAO exception");
             }
         }
     }

@@ -130,6 +130,7 @@ public class NDVSqlFetcher {
                 return (JSONArray) obj;
             }
         } catch (Exception ignored) {
+            utils.Logger.error("[NDVSqlFetcher] " + ignored.getMessage());
         }
         return new JSONArray();
     }
@@ -554,7 +555,7 @@ public class NDVSqlFetcher {
 //              //  player.event.luotNhanNgocMienPhi = 1;
 //             //   player.event.luotNhanCapsuleBang = 1;
 //                player.lastCheckIn = null;
-//                System.err.println("Lỗi đọc checkNhanQua: " + e.getMessage());
+//                utils.Logger.error(String.valueOf("Lỗi đọc checkNhanQua: " + e.getMessage()));
 //            }
             try {
                 player.arenaWins = rs.getInt("arena_wins");
@@ -601,7 +602,7 @@ public class NDVSqlFetcher {
                 // player.event.luotNhanNgocMienPhi = 1;
                 // player.event.luotNhanCapsuleBang = 1;
                 player.lastCheckIn = null;
-                System.err.println("Lỗi phân tích cú pháp checkNhanQua: " + e.getMessage());
+                utils.Logger.error(String.valueOf("Lỗi phân tích cú pháp checkNhanQua: " + e.getMessage()));
             }
 
             //data tọa độ
@@ -740,7 +741,7 @@ public class NDVSqlFetcher {
                             Date startDate = formatter.parse("15/03/2024");
                             Date endDate = formatter.parse("28/03/2024");
                             if (currentDate.compareTo(startDate) >= 0 && currentDate.compareTo(endDate) <= 0) {
-                                System.out.println("Thu hồi cải trang rồng lộn bug.");
+                                utils.Logger.log(String.valueOf("Thu hồi cải trang rồng lộn bug.") + "\n");
                                 item = ItemService.gI().createItemNull();
                             }
                         } catch (ParseException e) {
@@ -1376,7 +1377,8 @@ public class NDVSqlFetcher {
                 player.lastTimeWinSTT = Long.parseLong(dataArray.get(1).toString());
                 player.callBossPocolo = Boolean.parseBoolean(dataArray.get(2).toString());
             } catch (Exception e) {
-            }
+            utils.Logger.error("[NDVSqlFetcher] " + e.getMessage());
+        }
 
             //data Võ đài sinh tử
             try {
@@ -1395,7 +1397,8 @@ public class NDVSqlFetcher {
                     player.lastTimeResetTicketVDST = Long.parseLong(dataArray.get(6).toString());
                 }
             } catch (Exception e) {
-            }
+            utils.Logger.error("[NDVSqlFetcher] " + e.getMessage());
+        }
 
             //Thời gian gọi rồng
             player.lastTimeShenronAppeared = rs.getLong("rongxuong");
@@ -1515,7 +1518,8 @@ public class NDVSqlFetcher {
                     player.nhanSKHVIP = Boolean.parseBoolean(String.valueOf(dataArray.get(4)));
                 }
             } catch (Exception e) {
-            }
+            utils.Logger.error("[NDVSqlFetcher] " + e.getMessage());
+        }
 
             //data super rank
             SuperRankDAO.loadData(player);
@@ -1541,7 +1545,8 @@ public class NDVSqlFetcher {
                 }
                 dataArray.clear();
             } catch (Exception e) {
-            }
+            utils.Logger.error("[NDVSqlFetcher] " + e.getMessage());
+        }
 
             //Giftcode
             try {
@@ -1551,7 +1556,8 @@ public class NDVSqlFetcher {
                 }
                 dataArray.clear();
             } catch (Exception e) {
-            }
+            utils.Logger.error("[NDVSqlFetcher] " + e.getMessage());
+        }
             try {
                 dataArray = (JSONArray) JSONValue.parse(rs.getString("boughtSkills"));
                 for (Object code : dataArray) {
@@ -1559,7 +1565,8 @@ public class NDVSqlFetcher {
                 }
                 dataArray.clear();
             } catch (Exception e) {
-            }
+            utils.Logger.error("[NDVSqlFetcher] " + e.getMessage());
+        }
             //Clan
             try {
                 dataArray = (JSONArray) JSONValue.parse(rs.getString("data_clan"));
@@ -1567,7 +1574,8 @@ public class NDVSqlFetcher {
                 player.lastTimeRemoveClan = Long.parseLong(String.valueOf(dataArray.get(1)));
                 dataArray.clear();
             } catch (Exception e) {
-            }
+            utils.Logger.error("[NDVSqlFetcher] " + e.getMessage());
+        }
             try {
                 player.luckySpins = rs.getInt("lucky_spins");
             } catch (Exception e) {
@@ -1583,7 +1591,8 @@ public class NDVSqlFetcher {
 
                 dataArray.clear();
             } catch (Exception e) {
-            }
+            utils.Logger.error("[NDVSqlFetcher] " + e.getMessage());
+        }
 
             player.nPoint.hp = plHp;
             player.nPoint.mp = plMp;

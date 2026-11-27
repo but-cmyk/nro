@@ -88,7 +88,11 @@ namespace Game1
     
         public static string pasteText;
 
+#if UNITY_EDITOR
         public static float gameSpeed = 0.8f;
+#else
+        private const float gameSpeed = 0.8f;
+#endif
 
         private float gameSpeedAccumulator;
 
@@ -314,8 +318,17 @@ namespace Game1
         {
             if (count >= 10)
             {
+                if (Event.current == null)
+                {
+                    return;
+                }
+                EventType evtType = Event.current.type;
+                if (evtType == EventType.Layout || evtType == EventType.Ignore || evtType == EventType.Used)
+                {
+                    return;
+                }
                 checkInput();
-                if (Event.current.type == EventType.Repaint)
+                if (evtType == EventType.Repaint)
                 {
                     if (fps == 0)
                     {
@@ -347,8 +360,7 @@ namespace Game1
                 Screen.sleepTimeout = SleepTimeout.NeverSleep;
                 Screen.orientation = ScreenOrientation.AutoRotation;
                 Application.runInBackground = true;
-                Application.targetFrameRate = 60;
-                QualitySettings.vSyncCount = GameCanvas.lowGraphic ? 0 : 1;
+                ApplyFrameRatePolicy(isWindowFocused);
                 base.useGUILayout = false;
                 isCompactDevice = detectCompactDevice();
                 if (main == null)
@@ -478,7 +490,7 @@ namespace Game1
                 updateCount++;
 
                 gameSpeedAccumulator += Mathf.Max(0.1f, gameSpeed);
-                int simulationSteps = Mathf.Clamp((int)gameSpeedAccumulator, 0, 100);
+                int simulationSteps = Mathf.Clamp((int)gameSpeedAccumulator, 0, 2);
                 gameSpeedAccumulator -= simulationSteps;
                 for (int simulationStep = 0; simulationStep < simulationSteps; simulationStep++)
                 {
@@ -505,37 +517,50 @@ namespace Game1
         private void Update()
         {
             Session_ME.update();
-            Session_ME2.update();
         }
+
+        private int lastMouseInputFrame = -1;
 
         internal void checkInput()
         {
             if (Event.current == null || GameMidlet.gameCanvas == null) return;
-            if (Input.GetMouseButtonDown(0))
+            int currentFrame = Time.frameCount;
+            if (lastMouseInputFrame != currentFrame)
             {
-                Vector3 mousePosition = Input.mousePosition;
-                GameMidlet.gameCanvas.pointerPressed((int)(mousePosition.x / (float)mGraphics.zoomLevel), (int)(((float)Screen.height - mousePosition.y) / (float)mGraphics.zoomLevel) + mGraphics.addYWhenOpenKeyBoard);
-                lastMousePos.x = mousePosition.x / (float)mGraphics.zoomLevel;
-                lastMousePos.y = mousePosition.y / (float)mGraphics.zoomLevel + (float)mGraphics.addYWhenOpenKeyBoard;
+                lastMouseInputFrame = currentFrame;
+                if (Input.GetMouseButtonDown(0))
+                {
+                    Vector3 mousePosition = Input.mousePosition;
+                    GameMidlet.gameCanvas.pointerPressed((int)(mousePosition.x / (float)mGraphics.zoomLevel), (int)(((float)Screen.height - mousePosition.y) / (float)mGraphics.zoomLevel) + mGraphics.addYWhenOpenKeyBoard);
+                    lastMousePos.x = mousePosition.x / (float)mGraphics.zoomLevel;
+                    lastMousePos.y = mousePosition.y / (float)mGraphics.zoomLevel + (float)mGraphics.addYWhenOpenKeyBoard;
+                }
+                if (Input.GetMouseButton(0))
+                {
+                    Vector3 mousePosition2 = Input.mousePosition;
+                    GameMidlet.gameCanvas.pointerDragged((int)(mousePosition2.x / (float)mGraphics.zoomLevel), (int)(((float)Screen.height - mousePosition2.y) / (float)mGraphics.zoomLevel) + mGraphics.addYWhenOpenKeyBoard);
+                    lastMousePos.x = mousePosition2.x / (float)mGraphics.zoomLevel;
+                    lastMousePos.y = mousePosition2.y / (float)mGraphics.zoomLevel + (float)mGraphics.addYWhenOpenKeyBoard;
+                }
+                if (Input.GetMouseButtonUp(0))
+                {
+                    Vector3 mousePosition3 = Input.mousePosition;
+                    lastMousePos.x = mousePosition3.x / (float)mGraphics.zoomLevel;
+                    lastMousePos.y = mousePosition3.y / (float)mGraphics.zoomLevel + (float)mGraphics.addYWhenOpenKeyBoard;
+                    GameMidlet.gameCanvas.pointerReleased((int)(mousePosition3.x / (float)mGraphics.zoomLevel), (int)(((float)Screen.height - mousePosition3.y) / (float)mGraphics.zoomLevel) + mGraphics.addYWhenOpenKeyBoard);
+                }
+
+                GameMidlet.gameCanvas.scrollMouse((int)(Input.GetAxis("Mouse ScrollWheel") * 10f));
+                float x = Input.mousePosition.x;
+                float y = Input.mousePosition.y;
+                int x2 = (int)x / mGraphics.zoomLevel;
+                int y2 = (Screen.height - (int)y) / mGraphics.zoomLevel;
+                GameMidlet.gameCanvas.pointerMouse(x2, y2);
             }
-            if (Input.GetMouseButton(0))
-            {
-                Vector3 mousePosition2 = Input.mousePosition;
-                GameMidlet.gameCanvas.pointerDragged((int)(mousePosition2.x / (float)mGraphics.zoomLevel), (int)(((float)Screen.height - mousePosition2.y) / (float)mGraphics.zoomLevel) + mGraphics.addYWhenOpenKeyBoard);
-                lastMousePos.x = mousePosition2.x / (float)mGraphics.zoomLevel;
-                lastMousePos.y = mousePosition2.y / (float)mGraphics.zoomLevel + (float)mGraphics.addYWhenOpenKeyBoard;
-            }
-            if (Input.GetMouseButtonUp(0))
-            {
-                Vector3 mousePosition3 = Input.mousePosition;
-                lastMousePos.x = mousePosition3.x / (float)mGraphics.zoomLevel;
-                lastMousePos.y = mousePosition3.y / (float)mGraphics.zoomLevel + (float)mGraphics.addYWhenOpenKeyBoard;
-                GameMidlet.gameCanvas.pointerReleased((int)(mousePosition3.x / (float)mGraphics.zoomLevel), (int)(((float)Screen.height - mousePosition3.y) / (float)mGraphics.zoomLevel) + mGraphics.addYWhenOpenKeyBoard);
-            }
-    
+
             if (TField.currentTField != null && TField.currentTField.isFocus)
                 TField.currentTField.HandleInputText();
-    
+
             if (Input.anyKeyDown && Event.current.type == EventType.KeyDown)
             {
                 int num = MyKeyMap.map(Event.current.keyCode);
@@ -550,15 +575,6 @@ namespace Game1
                 if (num2 != 0)
                     GameMidlet.gameCanvas.keyReleasedz(num2);
             }
-            //if (isPC)
-            //{
-            GameMidlet.gameCanvas.scrollMouse((int)(Input.GetAxis("Mouse ScrollWheel") * 10f));
-            float x = Input.mousePosition.x;
-            float y = Input.mousePosition.y;
-            int x2 = (int)x / mGraphics.zoomLevel;
-            int y2 = (Screen.height - (int)y) / mGraphics.zoomLevel;
-            GameMidlet.gameCanvas.pointerMouse(x2, y2);
-            //}
         }
         internal static void CheckBackButtonPress()
         {
@@ -599,7 +615,6 @@ namespace Game1
             Debug.LogWarning("APP QUIT");
             GameCanvas.bRun = false;
             Session_ME.gI().close();
-            Session_ME2.gI().close();
             if (isPC)
             {
                 Application.Quit();
@@ -631,16 +646,26 @@ namespace Game1
             }
         }
 
-        private void OnApplicationFocus(bool hasFocus)
+        public static bool isWindowFocused = true;
+
+        public static void ApplyFrameRatePolicy(bool hasFocus)
         {
+            isWindowFocused = hasFocus;
             if (!hasFocus)
             {
-                Application.targetFrameRate = 15;
+                QualitySettings.vSyncCount = 0;
+                Application.targetFrameRate = 5;
             }
             else
             {
+                QualitySettings.vSyncCount = GameCanvas.lowGraphic ? 0 : 1;
                 Application.targetFrameRate = 60;
             }
+        }
+
+        private void OnApplicationFocus(bool hasFocus)
+        {
+            ApplyFrameRatePolicy(hasFocus);
         }
     
         public static void exit()

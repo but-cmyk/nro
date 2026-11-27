@@ -198,7 +198,7 @@
 //                    checkPlayerDie(pl);
 //                }
 //            } catch (Exception ex) {
-////                ex.printStackTrace();
+////                utils.Logger.logException(SonTinh.class, ex, "SonTinh exception");
 //            }
 //        }
 //    }

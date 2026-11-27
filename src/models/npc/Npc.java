@@ -71,7 +71,7 @@ public abstract class Npc implements IAtionNpc {
             player.sendMessage(msg);
             msg.cleanup();
         } catch (Exception e) {
-            e.printStackTrace();
+            utils.Logger.logException(Npc.class, e, "Npc exception");
         }
     }
 
@@ -90,7 +90,7 @@ public abstract class Npc implements IAtionNpc {
             player.sendMessage(msg);
             msg.cleanup();
         } catch (Exception e) {
-            e.printStackTrace();
+            utils.Logger.logException(Npc.class, e, "Npc exception");
         }
     }
 

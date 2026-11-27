@@ -79,7 +79,7 @@ public abstract class The23rdMartialArtCongress extends Boss {
                 this.leaveMap();
             }
         } catch (Exception ex) {
-            ex.printStackTrace();
+            utils.Logger.logException(The23rdMartialArtCongress.class, ex, "The23rdMartialArtCongress exception");
         }
     }
 
@@ -133,7 +133,7 @@ public abstract class The23rdMartialArtCongress extends Boss {
                     break;
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            utils.Logger.logException(The23rdMartialArtCongress.class, e, "The23rdMartialArtCongress exception");
         }
     }
 

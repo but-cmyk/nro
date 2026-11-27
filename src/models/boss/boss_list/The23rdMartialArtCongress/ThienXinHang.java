@@ -32,7 +32,7 @@ public class ThienXinHang extends The23rdMartialArtCongress {
                 phanThan();
             }
         } catch (Exception ex) {
-            ex.printStackTrace();
+            utils.Logger.logException(ThienXinHang.class, ex, "ThienXinHang exception");
         }
         super.attack();
     }
@@ -44,7 +44,7 @@ public class ThienXinHang extends The23rdMartialArtCongress {
             new ThienXinHangClone(BossID.THIEN_XIN_HANG_CLONE2, playerAtt);
             new ThienXinHangClone(BossID.THIEN_XIN_HANG_CLONE3, playerAtt);
         } catch (Exception e) {
-            e.printStackTrace();
+            utils.Logger.logException(ThienXinHang.class, e, "ThienXinHang exception");
         }
     }
 }

@@ -1323,12 +1323,12 @@ public class PlayerDAO {
     }
 
     public static void LogAddPoint(String name, int id, int point, String type) {
-        System.out.println(name + " - " + id + " - " + point + " - " + type);
+        utils.Logger.log(String.valueOf(name + " - " + id + " - " + point + " - " + type) + "\n");
         // try {
         // NDVDB.executeUpdate("INSERT INTO histotyevent(name, id_account, event_point,
         // type) VALUES ()", "cc", "cc", "cc", "cc");
         // } catch (Exception ex) {
-        // ex.printStackTrace();
+        // utils.Logger.logException(PlayerDAO.class, ex, "PlayerDAO exception");
         // }
     }
 
@@ -1840,7 +1840,8 @@ public class PlayerDAO {
                 try {
                     dataArray = (JSONArray) JSONValue.parse(currentData);
                 } catch (Exception ignored) {
-                }
+            utils.Logger.error("[PlayerDAO] " + ignored.getMessage());
+        }
             }
 
             long[] timeOutOfDate = new long[7];
@@ -1859,7 +1860,8 @@ public class PlayerDAO {
                             }
                         }
                     } catch (Exception ignored) {
-                    }
+            utils.Logger.error("[PlayerDAO] " + ignored.getMessage());
+        }
                 }
             }
 
@@ -1894,7 +1896,8 @@ public class PlayerDAO {
                 if (val != null)
                     return Long.parseLong(String.valueOf(val).trim());
             } catch (Exception ignored) {
-            }
+            utils.Logger.error("[PlayerDAO] " + ignored.getMessage());
+        }
         }
         return defaultValue;
     }
@@ -1908,7 +1911,8 @@ public class PlayerDAO {
                 if (val != null)
                     return Integer.parseInt(String.valueOf(val).trim());
             } catch (Exception ignored) {
-            }
+            utils.Logger.error("[PlayerDAO] " + ignored.getMessage());
+        }
         }
         return defaultValue;
     }

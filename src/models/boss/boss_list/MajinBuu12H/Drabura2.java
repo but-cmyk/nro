@@ -125,11 +125,6 @@ public class Drabura2 extends Boss {
             damage = 199999;
         }
 
-            if (damage >= this.nPoint.hp) {
-                this.changeStatus(BossStatus.AFK);
-                damage = 0;
-            }
-
             this.nPoint.subHP(damage);
 
             if (isDie()) {

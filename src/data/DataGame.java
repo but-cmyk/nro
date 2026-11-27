@@ -92,7 +92,7 @@ public class DataGame {
             Logger.success("Load DataGame (Cache) thành công!");
         } catch (Exception e) {
             Logger.error("Lỗi load DataGame: " + e.getMessage());
-            e.printStackTrace();
+            utils.Logger.logException(DataGame.class, e, "DataGame exception");
             System.exit(1);
         }
     }
@@ -320,7 +320,7 @@ public class DataGame {
             msg.writer().write(effImg);
             session.sendMessage(msg);
         } catch (Exception e) {
-            e.printStackTrace();
+            utils.Logger.logException(DataGame.class, e, "DataGame exception");
         } finally {
             if (msg != null) {
                 msg.cleanup();

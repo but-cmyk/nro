@@ -586,6 +586,7 @@ public class ChangeMapService {
             player.zone.load_Me_To_Another(player);
             player.zone.load_Another_To_Me(player);
         } catch (Exception e) {
+            utils.Logger.error("[ChangeMapService] " + e.getMessage());
         }
         player.idMark.setIdSpaceShip(NON_SPACE_SHIP);
         if (player.location.y <= 10 && player.zone != null && player.zone.map != null) {
@@ -639,6 +640,7 @@ public class ChangeMapService {
                 }
             }
         } catch (Exception e) {
+            utils.Logger.error("[ChangeMapService] " + e.getMessage());
         }
         if (player.zone != null && player.zone.map.mapId == 126) {
             player.zone.sendBigBoss(player);
@@ -682,6 +684,7 @@ public class ChangeMapService {
                 msg.cleanup();
             }
         } catch (Exception e) {
+            utils.Logger.error("[ChangeMapService] " + e.getMessage());
         } finally {
             if (msg != null) {
                 msg.cleanup();
@@ -724,6 +727,7 @@ public class ChangeMapService {
                 }
             }
         } catch (Exception e) {
+            utils.Logger.error("[ChangeMapService] " + e.getMessage());
         } finally {
             if (msg != null) {
                 msg.cleanup();
@@ -799,6 +803,7 @@ public class ChangeMapService {
                 }
             }
         } catch (Exception e) {
+            utils.Logger.error("[ChangeMapService] " + e.getMessage());
         } finally {
             if (msg != null) {
                 msg.cleanup();
@@ -824,6 +829,7 @@ public class ChangeMapService {
                     break;
             }
         } catch (Exception e) {
+            utils.Logger.error("[ChangeMapService] " + e.getMessage());
         } finally {
             if (msg != null) {
                 msg.cleanup();
@@ -937,6 +943,7 @@ public class ChangeMapService {
             msg.writer().writeByte(type);
             player.sendMessage(msg);
         } catch (Exception e) {
+            utils.Logger.error("[ChangeMapService] " + e.getMessage());
         } finally {
             if (msg != null) {
                 msg.cleanup();
@@ -1427,6 +1434,7 @@ public class ChangeMapService {
                 zoneJoin = map.zones.get(zoneId);
             }
         } catch (Exception e) {
+            utils.Logger.error("[ChangeMapService] " + e.getMessage());
         }
         return zoneJoin;
     }

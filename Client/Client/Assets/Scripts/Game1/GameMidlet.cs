@@ -38,8 +38,6 @@ namespace Game1
     		instance = this;
     		MotherCanvas.instance = new MotherCanvas();
     		Session_ME.gI().setHandler(Controller.gI());
-    		Session_ME2.gI().setHandler(Controller.gI());
-    		Session_ME2.isMainSession = false;
     		instance = this;
     		gameCanvas = new GameCanvas();
     		gameCanvas.start();

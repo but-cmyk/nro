@@ -124,7 +124,8 @@ public class MajinBuuService {
                     }
                 }
             } catch (Exception ignored) {
-            }
+            utils.Logger.error("[MajinBuuService] " + ignored.getMessage());
+        }
         }
 
     }

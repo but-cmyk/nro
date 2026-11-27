@@ -104,7 +104,8 @@ public class FriendAndEnemyService {
                     f.leg = pl.getLeg();
                     f.bag = (byte) pl.getFlagBag();
                 } catch (Exception e) {
-                }
+            utils.Logger.error("[FriendAndEnemyService] " + e.getMessage());
+        }
                 f.online = true;
             } else {
                 f.online = false;
@@ -123,7 +124,8 @@ public class FriendAndEnemyService {
                     e.leg = pl.getLeg();
                     e.bag = (byte) pl.getFlagBag();
                 } catch (Exception ex) {
-                }
+            utils.Logger.error("[FriendAndEnemyService] " + ex.getMessage());
+        }
                 e.online = true;
             } else {
                 e.online = false;
@@ -219,7 +221,8 @@ public class FriendAndEnemyService {
                     player.sendMessage(msg);
                     msg.cleanup();
                 } catch (Exception e) {
-                }
+            utils.Logger.error("[FriendAndEnemyService] " + e.getMessage());
+        }
                 player.friends.remove(i);
                 break;
             }
@@ -249,7 +252,8 @@ public class FriendAndEnemyService {
                     Service.gI().sendThongBao(player, "Người chơi hiện đang offline!");
                 }
             } catch (Exception e) {
-            }
+            utils.Logger.error("[FriendAndEnemyService] " + e.getMessage());
+        }
         } else {
             Service.gI().sendThongBao(player, "Bạn đang chat quá nhanh, vui lòng thử lại sau!");
         }

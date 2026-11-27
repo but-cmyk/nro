@@ -619,7 +619,7 @@ public class Mob {
                 msg.writer().writeInt((int) itemMap.playerId); // id nhan vat
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            utils.Logger.logException(Mob.class, e, "Mob exception");
         }
         return itemReward;
     }

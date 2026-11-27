@@ -42,17 +42,17 @@ public class Osin extends Npc {
 
                     if (this.mapId == 52) {
                         if (TimeUtil.isMabu14HOpen()) {
-                          //  System.out.println("Opening Mabu at 14h");
+                          //  utils.Logger.log(String.valueOf("Opening Mabu at 14h") + "\n");
                             this.createOtherMenu(player, ConstNpc.MENU_OPEN_MMB,
                                     "Mabư đã thoát khỏi vỏ bọc\nmau đi cùng ta ngăn chặn hắn lại\ntrước khi hắn tàn phá trái đất này",
                                     "OK", "Từ chối");
                         } else if (TimeUtil.isMabuOpen()) {
-                          //  System.out.println("Opening Mabu at another time");
+                          //  utils.Logger.log(String.valueOf("Opening Mabu at another time") + "\n");
                             this.createOtherMenu(player, ConstNpc.MENU_OPEN_MMB,
                                     "Bây giờ tôi sẽ bí mật...\nđuổi theo 2 tên đồ tể...\nQuý vị nào muốn đi theo thì xin mời !",
                                     "OK", "Từ chối");
                         } else {
-                           // System.out.println("Mabu is not open yet, opening at " + MajinBuuService.HOUR_OPEN_MAP_MABU + "h");
+                           // utils.Logger.log(String.valueOf("Mabu is not open yet, opening at " + MajinBuuService.HOUR_OPEN_MAP_MABU + "h") + "\n");
                             this.createOtherMenu(player, ConstNpc.MENU_NOT_OPEN_MMB,
                                     "Vào lúc " + MajinBuuService.HOUR_OPEN_MAP_MABU + "h (Trưa) và 19h (Tối) tôi sẽ bí mật...\nđuổi theo 2 tên đồ tể...\nQuý vị nào muốn đi theo thì xin mời !",
                                     "OK", "Từ chối");

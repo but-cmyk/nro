@@ -257,7 +257,7 @@ public class CADICH extends Boss {
                     }
                 }
             } catch (Exception ex) {
-                ex.printStackTrace();
+                utils.Logger.logException(CADICH.class, ex, "CADICH exception");
             }
         }
     }

@@ -211,7 +211,7 @@ public void attack() {
         }
         
     } catch (Exception ex) {
-        ex.printStackTrace();
+        utils.Logger.logException(NinjaAoTim.class, ex, "NinjaAoTim exception");
     }
 }
 

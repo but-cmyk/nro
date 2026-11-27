@@ -164,7 +164,7 @@
 //                    checkPlayerDie(pl);
 //                }
 //            } catch (Exception ex) {
-////                ex.printStackTrace();
+////                utils.Logger.logException(SuperXaydaGod.class, ex, "SuperXaydaGod exception");
 //            }
 //        }
 //    }

@@ -27,8 +27,8 @@ namespace Game1
     
     	public myReader(string filename)
     	{
-    		TextAsset textAsset = (TextAsset)Resources.Load(filename, typeof(TextAsset));
-    		buffer = mSystem.convertToSbyte(textAsset.bytes);
+    		byte[] bytes = AssetLoader.LoadBytes(filename);
+    		buffer = mSystem.convertToSbyte(bytes);
     	}
     
     	public sbyte readSByte()

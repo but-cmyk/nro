@@ -74,6 +74,10 @@ public final class Manager {
     public static boolean DAO_AUTO_UPDATER = false;
     public static long timeRealTop = 0;
     public static boolean DEBUG = true;
+    public static boolean TLS_ENABLED = false;
+    public static int TLS_PORT = 14446;
+    public static String TLS_CERT = "certs/fullchain.pem";
+    public static String TLS_KEY = "certs/privkey.pem";
 
     public static MapTemplate[] MAP_TEMPLATES;
     public static final List<models.map.Map> MAPS = new ArrayList<>();
@@ -286,7 +290,9 @@ public static final String queryTopWhis = "SELECT id, CAST(JSON_UNQUOTE(JSON_EXT
 
     public void loadProperties() throws IOException {
         Properties properties = new Properties();
-        properties.load(new FileInputStream("data/config/alyra.properties"));
+        try (FileInputStream fis = new FileInputStream("data/config/alyra.properties")) {
+            properties.load(fis);
+        }
         Object value;
         if ((value = properties.get("server.sv")) != null) {
             SERVER = Byte.parseByte(String.valueOf(value));
@@ -333,6 +339,31 @@ public static final String queryTopWhis = "SELECT id, CAST(JSON_UNQUOTE(JSON_EXT
         }
         if ((value = properties.get("server.daoautoupdater")) != null) {
             DAO_AUTO_UPDATER = String.valueOf(value).equalsIgnoreCase("true");
+        }
+
+        String envTlsEnabled = System.getenv("SERVER_TLS_ENABLED");
+        if (envTlsEnabled != null && !envTlsEnabled.trim().isEmpty()) {
+            TLS_ENABLED = Boolean.parseBoolean(envTlsEnabled.trim());
+        } else if ((value = properties.get("server.tls.enabled")) != null) {
+            TLS_ENABLED = Boolean.parseBoolean(String.valueOf(value).trim());
+        }
+        String envTlsPort = System.getenv("SERVER_TLS_PORT");
+        if (envTlsPort != null && !envTlsPort.trim().isEmpty()) {
+            TLS_PORT = Integer.parseInt(envTlsPort.trim());
+        } else if ((value = properties.get("server.tls.port")) != null) {
+            TLS_PORT = Integer.parseInt(String.valueOf(value).trim());
+        }
+        String envTlsCert = System.getenv("SERVER_TLS_CERT");
+        if (envTlsCert != null && !envTlsCert.trim().isEmpty()) {
+            TLS_CERT = envTlsCert.trim();
+        } else if ((value = properties.get("server.tls.cert")) != null) {
+            TLS_CERT = String.valueOf(value).trim();
+        }
+        String envTlsKey = System.getenv("SERVER_TLS_KEY");
+        if (envTlsKey != null && !envTlsKey.trim().isEmpty()) {
+            TLS_KEY = envTlsKey.trim();
+        } else if ((value = properties.get("server.tls.key")) != null) {
+            TLS_KEY = String.valueOf(value).trim();
         }
 
         // Cấu hình Cloud-Native Telemetry Logger (Zero-Disk laptop footprint)
@@ -470,7 +501,7 @@ public static final String queryTopWhis = "SELECT id, CAST(JSON_UNQUOTE(JSON_EXT
             }
         } catch (Exception e) {
             Logger.error("Lỗi trong Manager.realTop với query: " + query);
-            e.printStackTrace(); // <<-- THÊM DÒNG NÀY
+            utils.Logger.logException(Manager.class, e, "Manager exception"); // <<-- THÊM DÒNG NÀY
 
         }
         return tops;

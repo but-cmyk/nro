@@ -183,7 +183,7 @@ public class Zone {
                                 item.update();
                             } else {
                                 items.remove(i);
-                                System.err.println("Remove item " + i);
+                                utils.Logger.error(String.valueOf("Remove item " + i));
                             }
                         }
                     } catch (Exception e) {
@@ -747,7 +747,7 @@ msg.writer().writeByte(plInfo.idMark != null ? plInfo.idMark.getIdSpaceShip() : 
             plReceive.sendMessage(msg);
             msg.cleanup();
         } catch (Exception e) {
-            e.printStackTrace();
+            utils.Logger.logException(Zone.class, e, "Zone exception");
         }
         Service.gI().sendFlagPlayerToMe(plReceive, plInfo);
         try {

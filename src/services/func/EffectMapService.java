@@ -50,6 +50,7 @@ public class EffectMapService {
             msg.writer().writeShort(delay);
             Service.gI().sendMessAllPlayerInMap(zone, msg);
         } catch (Exception e) {
+            utils.Logger.error("[EffectMapService] " + e.getMessage());
         } finally {
             if (msg != null) {
                 msg.cleanup();
@@ -69,6 +70,7 @@ public class EffectMapService {
             msg.writer().writeShort(delay);
             Service.gI().sendMessAllPlayerInMap(player, msg);
         } catch (Exception e) {
+            utils.Logger.error("[EffectMapService] " + e.getMessage());
         } finally {
             if (msg != null) {
                 msg.cleanup();

@@ -388,7 +388,7 @@ public class EffectSkillService {
                         }
                     }
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    utils.Logger.logException(EffectSkillService.class, e, "EffectSkillService exception");
                 }
             }
             for (Mob mobMap : player.newSkill.mobsTaget) {

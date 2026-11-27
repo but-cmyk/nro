@@ -67,7 +67,7 @@ public class SuperBu extends Boss {
                     }
                 }
             } catch (Exception ex) {
-                ex.printStackTrace();
+                utils.Logger.logException(SuperBu.class, ex, "SuperBu exception");
             }
         }
     }

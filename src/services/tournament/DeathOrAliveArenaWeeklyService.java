@@ -189,6 +189,7 @@ public class DeathOrAliveArenaWeeklyService {
         try {
             TopService.gI().run();
         } catch (Exception ignored) {
+            utils.Logger.error("[DeathOrAliveArenaWeeklyService] " + ignored.getMessage());
         }
 
         // 5. Cập nhật dữ liệu và lưu ra file JSON

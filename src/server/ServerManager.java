@@ -42,8 +42,10 @@ public class ServerManager {
 
     public static String timeStart;
 
-    // Quản lý kết nối IP thread-safe
+    // Quản lý kết nối IP thread-safe + Burst Limiter (chống flood kết nối mới/giây)
     public static final Map<String, Integer> CLIENTS = new ConcurrentHashMap<>();
+    private static final Map<String, long[]> IP_CONNECT_BURST = new ConcurrentHashMap<>();
+    private static final int MAX_CONN_PER_SEC_PER_IP = 15;
 
     public static String NAME = "Vũ trụ 1";
     public static String IP = "0.0.0.0";
@@ -52,6 +54,7 @@ public class ServerManager {
     private static volatile ServerManager instance;
     public static volatile boolean isRunning;
     public static volatile boolean isReloading = false;
+    public static volatile boolean isOverloaded = false;
 
     // Thread Pool quản lý
     private ExecutorService executorService;
@@ -77,7 +80,8 @@ public class ServerManager {
     }
 
     public void execute(Runnable task) {
-        if (task == null) return;
+        if (task == null)
+            return;
         if (this.executorService != null && !this.executorService.isShutdown()) {
             this.executorService.submit(task);
         } else {
@@ -100,7 +104,6 @@ public class ServerManager {
     public static void main(String[] args) {
         timeStart = TimeUtil.getTimeNow("dd/MM/yyyy HH:mm:ss");
         ServerManager.gI().run();
-        utils.Logger.log(utils.Logger.GREEN, "[LiveOps] Web Dashboard running on http://localhost:14446/dashboard");
     }
 
     public void run() {
@@ -109,8 +112,9 @@ public class ServerManager {
         DataGame.init();
         ItemData.init();
 
-        // Migrate passwords to BCrypt (chạy ngầm, không block tiến trình khởi động Server)
-        new Thread(this::migratePasswordsToBCrypt, "BCrypt-Migration-Thread").start();
+        // Migrate passwords to BCrypt (chạy ngầm, không block tiến trình khởi động
+        // Server)
+        Thread.ofVirtual().name("BCrypt-Migration-Thread").start(this::migratePasswordsToBCrypt);
 
         isRunning = true;
 
@@ -122,7 +126,6 @@ public class ServerManager {
         executorService.submit(() -> DeathOrAliveArenaManager.gI().run());
         executorService.submit(() -> WorldMartialArtsTournamentManager.gI().run());
         executorService.submit(() -> AutoBtri.gI().run());
-        services.admin.AdminApiService.gI().start();
 
         // 3. Load Boss và Map
         Logger.log("Đang tải dữ liệu Boss và Map...");
@@ -133,7 +136,7 @@ public class ServerManager {
         models.tournament.whis_arena.WhisArenaBotManager.gI().initLobbyBotsOnStartup();
         ServerManager.isReloading = false;
 
-        new Thread(TopService.gI(), "Top Service Thread").start();
+        Thread.ofVirtual().name("Top-Service-Thread").start(TopService.gI());
 
         // Bot Manager and Namec bot fleet disabled
 
@@ -190,7 +193,7 @@ public class ServerManager {
 
             } catch (Exception e) {
                 Logger.error("Auto-save error: " + e.getMessage());
-                e.printStackTrace();
+                utils.Logger.logException(ServerManager.class, e, "ServerManager exception");
             }
         }, 60, 60, TimeUnit.SECONDS);
     }
@@ -224,7 +227,8 @@ public class ServerManager {
                             if (player.idMark != null) {
                                 player.idMark.setLastTimeNotifyDailyMobRuby(System.currentTimeMillis());
                             }
-                            services.Service.gI().sendThongBao(player, "Hôm nay bạn có thể nhận 30 Hồng ngọc khi tiêu diệt quái!");
+                            services.Service.gI().sendThongBao(player,
+                                    "Hôm nay bạn có thể nhận 30 Hồng ngọc khi tiêu diệt quái!");
                         }
                     }
                 }
@@ -241,13 +245,17 @@ public class ServerManager {
         int maxRetries = 3;
         for (int attempt = 1; attempt <= maxRetries; attempt++) {
             try {
-                NettyServer.gI().start(PORT);
+                NettyServer.gI().start(PORT, Manager.TLS_ENABLED, Manager.TLS_PORT, Manager.TLS_CERT, Manager.TLS_KEY);
                 return;
             } catch (Exception e) {
-                Logger.error("Lỗi khi khởi chạy Netty Server (lần " + attempt + "/" + maxRetries + "): " + e.getMessage());
+                Logger.error(
+                        "Lỗi khi khởi chạy Netty Server (lần " + attempt + "/" + maxRetries + "): " + e.getMessage());
                 if (attempt < maxRetries) {
                     Logger.warning(">> Đang tự động giải phóng port " + PORT + " và thử khởi động lại sau 1.5 giây...");
                     freePort(PORT);
+                    if (Manager.TLS_ENABLED && Manager.TLS_PORT > 0 && Manager.TLS_PORT != PORT) {
+                        freePort(Manager.TLS_PORT);
+                    }
                     try {
                         Thread.sleep(1500);
                     } catch (InterruptedException ignored) {
@@ -281,9 +289,12 @@ public class ServerManager {
                             try {
                                 long pid = Long.parseLong(pidStr);
                                 if (pid > 0 && pid != currentPid) {
-                                    Logger.warning(">> [PortRecovery] Phát hiện tiến trình PID " + pid + " đang chiếm giữ port " + port + ". Đang tiến hành giải phóng...");
-                                    new ProcessBuilder("taskkill", "/F", "/PID", String.valueOf(pid)).start().waitFor(3, TimeUnit.SECONDS);
-                                    Logger.success(">> [PortRecovery] Đã gửi lệnh giải phóng PID " + pid + " thành công!");
+                                    Logger.warning(">> [PortRecovery] Phát hiện tiến trình PID " + pid
+                                            + " đang chiếm giữ port " + port + ". Đang tiến hành giải phóng...");
+                                    new ProcessBuilder("taskkill", "/F", "/PID", String.valueOf(pid)).start().waitFor(3,
+                                            TimeUnit.SECONDS);
+                                    Logger.success(
+                                            ">> [PortRecovery] Đã gửi lệnh giải phóng PID " + pid + " thành công!");
                                 }
                             } catch (NumberFormatException ignored) {
                             }
@@ -293,7 +304,8 @@ public class ServerManager {
                 proc.waitFor(2, TimeUnit.SECONDS);
             } else {
                 Logger.warning(">> [PortRecovery] Đang giải phóng port " + port + " trên môi trường Unix/Linux...");
-                new ProcessBuilder("sh", "-c", "fuser -k -n tcp " + port + " || lsof -ti :" + port + " | xargs kill -9").start().waitFor(3, TimeUnit.SECONDS);
+                new ProcessBuilder("sh", "-c", "fuser -k -n tcp " + port + " || lsof -ti :" + port + " | xargs kill -9")
+                        .start().waitFor(3, TimeUnit.SECONDS);
             }
         } catch (Exception ex) {
             Logger.error(">> [PortRecovery] Lỗi khi giải phóng port " + port + ": " + ex.getMessage());
@@ -304,7 +316,29 @@ public class ServerManager {
         if (ipAddress == null) {
             return true;
         }
-        final boolean[] accepted = {false};
+        // Chống bão kết nối mới (Connection Burst Flood) theo cửa sổ 1 giây cho IP ngoài
+        if (!"127.0.0.1".equals(ipAddress) && !"0:0:0:0:0:0:0:1".equals(ipAddress)) {
+            long nowSec = System.currentTimeMillis() / 1000L;
+            if (IP_CONNECT_BURST.size() > 2000) {
+                IP_CONNECT_BURST.entrySet().removeIf(e -> nowSec - e.getValue()[0] > 5);
+            }
+            final boolean[] burstOk = { false };
+            IP_CONNECT_BURST.compute(ipAddress, (ip, state) -> {
+                if (state == null || state[0] != nowSec) {
+                    burstOk[0] = true;
+                    return new long[] { nowSec, 1L };
+                }
+                if (state[1] < MAX_CONN_PER_SEC_PER_IP) {
+                    state[1]++;
+                    burstOk[0] = true;
+                }
+                return state;
+            });
+            if (!burstOk[0]) {
+                return false;
+            }
+        }
+        final boolean[] accepted = { false };
         CLIENTS.compute(ipAddress, (ip, currentConnections) -> {
             int count = currentConnections == null ? 0 : currentConnections;
             if (count < Manager.MAX_PER_IP) {
@@ -361,8 +395,6 @@ public class ServerManager {
             Logger.error("Error closing NettyServer: " + e.getMessage());
         }
 
-
-
         try {
             Logger.log("Saving consign shop...");
             ConsignShopManager.gI().save();
@@ -387,62 +419,63 @@ public class ServerManager {
         System.exit(0);
     }
 
-    private void cleanupResources() {
-        Logger.log("Cleaning up server resources...");
-        try {
-            if (isRunning) {
-                isRunning = false;
-                Logger.log("Saving all online players before shutdown (Parallel Flush)...");
-                List<Player> players = new ArrayList<>(Client.gI().getPlayers());
-                List<Player> validPlayers = new ArrayList<>();
-                for (Player pl : players) {
-                    if (pl != null && pl.isPl()) {
-                        try {
-                            if (pl.zone != null && pl.zone.map != null) {
-                                pl.mapIdBeforeLogout = pl.zone.map.mapId;
-                            }
-                            validPlayers.add(pl);
-                        } catch (Exception ignored) {
-                        }
-                    }
-                }
+    private final java.util.concurrent.atomic.AtomicBoolean shutdownStarted = new java.util.concurrent.atomic.AtomicBoolean(
+            false);
 
-                if (!validPlayers.isEmpty()) {
-                    CountDownLatch latch = new CountDownLatch(validPlayers.size());
-                    AtomicInteger savedCount = new AtomicInteger(0);
-                    for (Player pl : validPlayers) {
-                        Thread.ofVirtual().name("shutdown-save-" + pl.id).start(() -> {
-                            try {
-                                PlayerDAO.updatePlayer(pl);
-                                savedCount.incrementAndGet();
-                            } catch (Exception ex) {
-                                Logger.error("Error saving player on shutdown: " + (pl != null ? pl.name : "unknown"));
-                            } finally {
-                                latch.countDown();
-                            }
-                        });
-                    }
+    private void cleanupResources() {
+        if (!shutdownStarted.compareAndSet(false, true)) {
+            return;
+        }
+        Logger.log("Cleaning up server resources (Graceful Shutdown)...");
+        try {
+            isRunning = false;
+            try {
+                NettyServer.gI().close();
+            } catch (Exception e) {
+                Logger.error("Error closing NettyServer on shutdown: " + e.getMessage());
+            }
+            try {
+                GameLoopManager.gI().stop();
+            } catch (Exception e) {
+                Logger.error("Error stopping GameLoopManager on shutdown: " + e.getMessage());
+            }
+
+            Logger.log("Saving all online players before shutdown (Parallel Flush)...");
+            List<Player> players = new ArrayList<>(Client.gI().getPlayers());
+            List<Player> validPlayers = new ArrayList<>();
+            for (Player pl : players) {
+                if (pl != null && pl.isPl()) {
                     try {
-                        if (!latch.await(30, TimeUnit.SECONDS)) {
-                            Logger.warning("Shutdown save timeout: " + (validPlayers.size() - savedCount.get()) + " players could not finish saving in 30s!");
-                        } else {
-                            Logger.success("Shutdown save completed: " + savedCount.get() + "/" + validPlayers.size() + " players saved successfully.");
+                        if (pl.zone != null && pl.zone.map != null) {
+                            pl.mapIdBeforeLogout = pl.zone.map.mapId;
                         }
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
+                        validPlayers.add(pl);
+                    } catch (Exception ignored) {
                     }
-                }
-                try {
-                    ConsignShopManager.gI().save();
-                    ClanService.gI().close();
-                } catch (Exception ignored) {
                 }
             }
+
+            if (!validPlayers.isEmpty()) {
+                flushPlayersInParallel(validPlayers, "shutdown-save-", "Shutdown save");
+            }
+
+            try {
+                ConsignShopManager.gI().save();
+                EventDAO.save();
+                ClanService.gI().close();
+            } catch (Exception e) {
+                Logger.error("Error saving global state on shutdown: " + e.getMessage());
+            }
+
             if (executorService != null && !executorService.isShutdown()) {
                 executorService.shutdown();
             }
             if (scheduledExecutorService != null && !scheduledExecutorService.isShutdown()) {
                 scheduledExecutorService.shutdown();
+            }
+            try {
+                AlyraManager.close();
+            } catch (Exception ignored) {
             }
             CLIENTS.clear();
         } catch (Exception e) {
@@ -472,6 +505,44 @@ public class ServerManager {
         server.command.CommandRegistry.dispatch(line);
     }
 
+    private void flushPlayersInParallel(List<Player> validPlayers, String threadPrefix, String label) {
+        CountDownLatch latch = new CountDownLatch(validPlayers.size());
+        AtomicInteger savedCount = new AtomicInteger(0);
+        // Điều tiết tối đa 20 flush đồng thời khớp với HikariCP MAX_CONN=25 tránh tranh chấp connection
+        Semaphore dbFlushPermits = new Semaphore(20);
+        for (Player pl : validPlayers) {
+            Thread.ofVirtual().name(threadPrefix + pl.id).start(() -> {
+                boolean acquired = false;
+                try {
+                    dbFlushPermits.acquire();
+                    acquired = true;
+                    PlayerDAO.updatePlayer(pl);
+                    savedCount.incrementAndGet();
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                } catch (Exception exx) {
+                    Logger.error("Error saving player: " + (pl != null ? pl.name : "unknown"));
+                } finally {
+                    if (acquired) {
+                        dbFlushPermits.release();
+                    }
+                    latch.countDown();
+                }
+            });
+        }
+        try {
+            if (!latch.await(30, TimeUnit.SECONDS)) {
+                Logger.warning(label + " timeout: " + (validPlayers.size() - savedCount.get())
+                        + " players did not complete in 30s!");
+            } else {
+                Logger.success(label + " completed: " + savedCount.get() + "/" + validPlayers.size()
+                        + " players saved.");
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+    }
+
     public void saveAllPlayersData() {
         try {
             Logger.log("Starting player data auto-save (Parallel Flush)...");
@@ -484,29 +555,7 @@ public class ServerManager {
             }
 
             if (!validPlayers.isEmpty()) {
-                CountDownLatch latch = new CountDownLatch(validPlayers.size());
-                AtomicInteger savedCount = new AtomicInteger(0);
-                for (Player pl : validPlayers) {
-                    Thread.ofVirtual().name("autosave-" + pl.id).start(() -> {
-                        try {
-                            PlayerDAO.updatePlayer(pl);
-                            savedCount.incrementAndGet();
-                        } catch (Exception exx) {
-                            Logger.error("Error saving player: " + (pl != null ? pl.name : "unknown"));
-                        } finally {
-                            latch.countDown();
-                        }
-                    });
-                }
-                try {
-                    if (!latch.await(30, TimeUnit.SECONDS)) {
-                        Logger.warning("Auto-save timeout: " + (validPlayers.size() - savedCount.get()) + " players did not complete in 30s!");
-                    } else {
-                        Logger.success("Auto-save completed: " + savedCount.get() + "/" + validPlayers.size() + " players saved.");
-                    }
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
+                flushPlayersInParallel(validPlayers, "autosave-", "Auto-save");
             } else {
                 Logger.log("No players online to save.");
             }
@@ -525,14 +574,16 @@ public class ServerManager {
             while (rs.next()) {
                 int id = rs.getInt("id");
                 String password = rs.getString("password");
-                if (password != null && !password.startsWith("$2a$") && !password.startsWith("$2b$") && !password.startsWith("$2y$")) {
+                if (password != null && !password.startsWith("$2a$") && !password.startsWith("$2b$")
+                        && !password.startsWith("$2y$")) {
                     toUpdate.put(id, utils.PasswordUtils.hashPassword(password));
                 }
             }
             rs.dispose();
             rs = null;
             for (java.util.Map.Entry<Integer, String> entry : toUpdate.entrySet()) {
-                AlyraManager.executeUpdate("UPDATE account SET password = ? WHERE id = ?", entry.getValue(), entry.getKey());
+                AlyraManager.executeUpdate("UPDATE account SET password = ? WHERE id = ?", entry.getValue(),
+                        entry.getKey());
                 count++;
             }
             if (count > 0) {

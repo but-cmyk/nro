@@ -1,6 +1,9 @@
 package network.session;
 
-import java.net.Socket;
+import consts.SocketType;
+import interfaces.IKeySessionHandler;
+import interfaces.ISession;
+import network.io.Message;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -18,7 +21,16 @@ import services.Service;
 import utils.Logger;
 import utils.TimeUtil;
 
-public class MySession extends Session {
+public class MySession implements ISession {
+
+    private static final AtomicInteger ID_GENERATOR = new AtomicInteger(1);
+    private volatile byte[] KEYS = "NguyenDucVuEntertainment".getBytes();
+    private volatile boolean sentKey;
+    private volatile boolean connected = true;
+    private SocketType socketType = SocketType.SERVER;
+    private IKeySessionHandler keyHandler;
+    private String ip;
+    public int id;
 
     private static final Map<String, AntiLogin> ANTILOGIN = new ConcurrentHashMap<>();
     private static final Map<String, Object> ACCOUNT_LOCKS = new ConcurrentHashMap<>();
@@ -66,25 +78,104 @@ public class MySession extends Session {
     public boolean finishUpdate;
 
     public MySession() {
-        super();
+        this.id = ID_GENERATOR.getAndIncrement();
     }
 
     public MySession(String ip) {
-        super(ip);
+        this();
+        this.ip = ip;
         this.ipAddress = ip;
     }
 
-    public MySession(Socket socket) {
-        super(socket);
-        if (socket != null && socket.getInetAddress() != null) {
-            this.ipAddress = socket.getInetAddress().getHostAddress();
-        }
+    @Override
+    public ISession setKeyHandler(IKeySessionHandler handler) {
+        this.keyHandler = handler;
+        return this;
+    }
+
+    @Override
+    public String getIP() {
+        return this.ip;
+    }
+
+    public void setIP(String ip) {
+        this.ip = ip;
+    }
+
+    @Override
+    public long getID() {
+        return this.id;
+    }
+
+    @Override
+    public boolean isConnected() {
+        return this.connected;
+    }
+
+    public void setConnected(boolean connected) {
+        this.connected = connected;
+    }
+
+    @Override
+    public void sendMessage(Message msg) {
+    }
+
+    @Override
+    public void doSendMessage(Message msg) throws Exception {
+    }
+
+    @Override
+    public void disconnect() {
+        this.connected = false;
+        this.sentKey = false;
+        this.dispose();
+    }
+
+    @Override
+    public void dispose() {
+        SessionManager.gI().removeSession(this);
+        this.ip = null;
     }
 
     @Override
     public void sendKey() throws Exception {
-        super.sendKey();
-        this.startSend();
+        if (this.keyHandler == null) {
+            throw new Exception("Key handler has not been initialized!");
+        }
+        this.keyHandler.sendKey(this);
+    }
+
+    @Override
+    public void setKey(Message message) throws Exception {
+        if (this.keyHandler == null) {
+            throw new Exception("Key handler has not been initialized!");
+        }
+        this.keyHandler.setKey(this, message);
+    }
+
+    @Override
+    public void setKey(byte[] key) {
+        this.KEYS = key;
+    }
+
+    @Override
+    public byte[] getKey() {
+        return this.KEYS;
+    }
+
+    @Override
+    public boolean sentKey() {
+        return this.sentKey;
+    }
+
+    @Override
+    public void setSentKey(boolean sent) {
+        this.sentKey = sent;
+    }
+
+    @Override
+    public SocketType getSocketType() {
+        return this.socketType;
     }
 
     public void login(String username, String password) {
@@ -113,6 +204,11 @@ public class MySession extends Session {
         }
         if (Maintenance.isRunning) {
             Service.gI().sendThongBaoOK(this, "Server đang trong thời gian bảo trì, vui lòng quay lại sau");
+            return;
+        }
+
+        if (!this.isAdmin && server.ServerManager.isOverloaded) {
+            Service.gI().sendThongBaoOK(this, "Máy chủ đang quá tải tài nguyên, vui lòng thử lại sau giây lát!");
             return;
         }
 

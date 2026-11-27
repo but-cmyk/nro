@@ -109,6 +109,7 @@ public class RadarService {
             pl.sendMessage(m);
             m.cleanup();
         } catch (Exception e) {
+            utils.Logger.error("[RadarService] " + e.getMessage());
         }
     }
 
@@ -122,6 +123,7 @@ public class RadarService {
             pl.sendMessage(message);
             message.cleanup();
         } catch (Exception e) {
+            utils.Logger.error("[RadarService] " + e.getMessage());
         }
     }
 
@@ -135,6 +137,7 @@ public class RadarService {
             pl.sendMessage(message);
             message.cleanup();
         } catch (Exception e) {
+            utils.Logger.error("[RadarService] " + e.getMessage());
         }
     }
 
@@ -149,6 +152,7 @@ public class RadarService {
             pl.sendMessage(message);
             message.cleanup();
         } catch (Exception e) {
+            utils.Logger.error("[RadarService] " + e.getMessage());
         }
     }
 
@@ -162,6 +166,7 @@ public class RadarService {
             Service.gI().sendMessAllPlayerInMap(pl, message);
             message.cleanup();
         } catch (Exception e) {
+            utils.Logger.error("[RadarService] " + e.getMessage());
         }
     }
 

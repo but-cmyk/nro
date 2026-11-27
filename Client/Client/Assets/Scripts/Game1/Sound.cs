@@ -37,6 +37,10 @@ namespace Game1
 
         public static GameObject[] player;
 
+        private static string[] soundPaths;
+
+        private static AudioSource sharedSfxSource;
+
         public static sbyte MLogin;
 
         public static sbyte MBClick = 1;
@@ -153,13 +157,45 @@ namespace Game1
             {
                 init();
                 l1 = musicID.Length;
-                player = new GameObject[musicID.Length + sID.Length];
-                music = new AudioClip[musicID.Length + sID.Length];
-                for (int i = 0; i < player.Length; i++)
+                int total = musicID.Length + sID.Length;
+                player = new GameObject[total];
+                music = new AudioClip[total];
+                soundPaths = new string[total];
+                for (int i = 0; i < total; i++)
                 {
-                    getAssetSoundFile((i >= l1) ? ("/sound/" + (i - l1)) : ("/music/" + i), i);
+                    soundPaths[i] = Main.res + ((i >= l1) ? ("/sound/" + (i - l1)) : ("/music/" + i));
                 }
             }
+        }
+
+        private static AudioClip ensureClipLoaded(int pos)
+        {
+            if (music == null || pos < 0 || pos >= music.Length)
+            {
+                return null;
+            }
+            if (music[pos] == null && soundPaths != null && pos < soundPaths.Length && soundPaths[pos] != null)
+            {
+                music[pos] = (AudioClip)Resources.Load(soundPaths[pos], typeof(AudioClip));
+            }
+            return music[pos];
+        }
+
+        private static AudioSource getSharedSfxSource()
+        {
+            if (sharedSfxSource == null)
+            {
+                GameObject go = GameObject.Find("Audio Player 1");
+                if (go != null)
+                {
+                    sharedSfxSource = go.GetComponent<AudioSource>();
+                    if (sharedSfxSource == null)
+                    {
+                        sharedSfxSource = go.AddComponent<AudioSource>();
+                    }
+                }
+            }
+            return sharedSfxSource;
         }
 
         public static void playSound(int id, float volume)
@@ -262,10 +298,14 @@ namespace Game1
             }
             if (GameCanvas.isPlaySound && !(SoundRun == null))
             {
-                SoundRun.GetComponent<AudioSource>().loop = true;
-                SoundRun.GetComponent<AudioSource>().clip = music[id];
-                SoundRun.GetComponent<AudioSource>().volume = volume;
-                SoundRun.GetComponent<AudioSource>().Play();
+                AudioClip clip = ensureClipLoaded(id);
+                if (clip != null)
+                {
+                    SoundRun.GetComponent<AudioSource>().loop = true;
+                    SoundRun.GetComponent<AudioSource>().clip = clip;
+                    SoundRun.GetComponent<AudioSource>().volume = volume;
+                    SoundRun.GetComponent<AudioSource>().Play();
+                }
             }
         }
 
@@ -298,10 +338,14 @@ namespace Game1
             }
             if (GameCanvas.isPlaySound && !(SoundBGLoop == null))
             {
-                SoundWater.GetComponent<AudioSource>().loop = isLoop;
-                SoundWater.GetComponent<AudioSource>().clip = music[id];
-                SoundWater.GetComponent<AudioSource>().volume = volume;
-                SoundWater.GetComponent<AudioSource>().Play();
+                AudioClip clip = ensureClipLoaded(id);
+                if (clip != null)
+                {
+                    SoundWater.GetComponent<AudioSource>().loop = isLoop;
+                    SoundWater.GetComponent<AudioSource>().clip = clip;
+                    SoundWater.GetComponent<AudioSource>().volume = volume;
+                    SoundWater.GetComponent<AudioSource>().Play();
+                }
             }
         }
 
@@ -334,12 +378,13 @@ namespace Game1
             {
                 SoundMn.gI().loadSound(TileMap.mapID);
             }
-            if (SoundWater != null && music != null && music.Length > SoundMn.RAIN && music[SoundMn.RAIN] != null)
+            if (SoundWater != null)
             {
-                if (!SoundWater.isPlaying || SoundWater.clip != music[SoundMn.RAIN])
+                AudioClip rainClip = ensureClipLoaded(SoundMn.RAIN);
+                if (rainClip != null && (!SoundWater.isPlaying || SoundWater.clip != rainClip))
                 {
                     SoundWater.loop = true;
-                    SoundWater.clip = music[SoundMn.RAIN];
+                    SoundWater.clip = rainClip;
                     SoundWater.volume = volume;
                     SoundWater.Play();
                 }
@@ -387,10 +432,14 @@ namespace Game1
                 }
                 else if (!(SoundBGLoop == null) && !isPlayingSoundBG(id))
                 {
-                    SoundBGLoop.GetComponent<AudioSource>().loop = true;
-                    SoundBGLoop.GetComponent<AudioSource>().clip = music[id];
-                    SoundBGLoop.GetComponent<AudioSource>().volume = volume;
-                    SoundBGLoop.GetComponent<AudioSource>().Play();
+                    AudioClip clip = ensureClipLoaded(id);
+                    if (clip != null)
+                    {
+                        SoundBGLoop.GetComponent<AudioSource>().loop = true;
+                        SoundBGLoop.GetComponent<AudioSource>().clip = clip;
+                        SoundBGLoop.GetComponent<AudioSource>().volume = volume;
+                        SoundBGLoop.GetComponent<AudioSource>().Play();
+                    }
                 }
             }
         }
@@ -450,13 +499,19 @@ namespace Game1
 
         private static void __load(string filename, int pos)
         {
-            music[pos] = (AudioClip)Resources.Load(filename, typeof(AudioClip));
-            if (music[pos] == null)
+            if (soundPaths != null && pos >= 0 && pos < soundPaths.Length)
             {
-                Debug.LogWarning("[ASSET] Sound asset not found: " + filename);
+                soundPaths[pos] = filename;
             }
-            GameObject.Find("Audio Player 1").AddComponent<AudioSource>();
-            player[pos] = GameObject.Find("Audio Player 1");
+            if (music != null && pos >= 0 && pos < music.Length)
+            {
+                music[pos] = (AudioClip)Resources.Load(filename, typeof(AudioClip));
+                if (music[pos] == null)
+                {
+                    Debug.LogWarning("[ASSET] Sound asset not found: " + filename);
+                }
+            }
+            getSharedSfxSource();
         }
 
         public static void start(float volume, int pos)
@@ -502,9 +557,11 @@ namespace Game1
 
         public static void __start(float volume, int pos)
         {
-            if (!(player[pos] == null))
+            AudioClip clip = ensureClipLoaded(pos);
+            AudioSource src = getSharedSfxSource();
+            if (clip != null && src != null)
             {
-                player[pos].GetComponent<AudioSource>().PlayOneShot(music[pos], volume);
+                src.PlayOneShot(clip, volume);
             }
         }
 

@@ -22,7 +22,7 @@ public class OtherBossManager extends BossManager {
                 try {
                     boss.update();
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    utils.Logger.logException(OtherBossManager.class, e, "OtherBossManager exception");
                     try {
                         removeBoss(boss);
                     } catch (Exception ex) {

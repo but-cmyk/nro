@@ -107,12 +107,12 @@ public class MabuEgg {
                         ChangeMapService.gI().changeMapInYard(p, mapId, -1, Util.nextInt(300, 500));
                     }
                 } catch (Exception ex) {
-                    ex.printStackTrace();
+                    utils.Logger.logException(MabuEgg.class, ex, "MabuEgg exception");
                 }
             }, 4000);
         } catch (Exception e) {
             this.isOpening = false;
-            e.printStackTrace();
+            utils.Logger.logException(MabuEgg.class, e, "MabuEgg exception");
         }
     }
 

@@ -167,7 +167,7 @@ public class Mabu extends Boss {
                     }
                 }
             } catch (Exception ex) {
-                ex.printStackTrace();
+                utils.Logger.logException(Mabu.class, ex, "Mabu exception");
             }
         }
     }

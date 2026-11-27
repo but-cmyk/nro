@@ -59,7 +59,7 @@ public class ThienXinHangClone extends The23rdMartialArtCongress {
                 this.leaveMap();
             }
         } catch (Exception ex) {
-            ex.printStackTrace();
+            utils.Logger.logException(ThienXinHangClone.class, ex, "ThienXinHangClone exception");
         }
     }
 
@@ -101,7 +101,7 @@ public class ThienXinHangClone extends The23rdMartialArtCongress {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            utils.Logger.logException(ThienXinHangClone.class, e, "ThienXinHangClone exception");
         }
     }
 }

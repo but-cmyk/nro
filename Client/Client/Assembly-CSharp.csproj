@@ -59,261 +59,305 @@
     <Analyzer Include="C:\Program Files\Unity\Hub\Editor\2022.3.61f1\Editor\Data\Tools\Unity.SourceGenerators\Unity.Properties.SourceGenerator.dll" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Assets\Scripts\Game1\InputDlg.cs" />
-    <Compile Include="Assets\Scripts\Game1\mLine.cs" />
-    <Compile Include="Assets\Scripts\Game1\IChatable.cs" />
-    <Compile Include="Assets\Scripts\Game1\CharChild.cs" />
-    <Compile Include="Assets\Scripts\Game1\ChatPopup.cs" />
-    <Compile Include="Assets\Scripts\Game1\TaskTemplate.cs" />
-    <Compile Include="Assets\Scripts\Game1\IActionListener.cs" />
-    <Compile Include="Assets\Scripts\Game1\ServerListScreen.cs" />
-    <Compile Include="Assets\Scripts\Game1\StaticObj.cs" />
-    <Compile Include="Assets\Scripts\Game1\UI\Panels\CombineSubPanel.cs" />
-    <Compile Include="Assets\Scripts\Game1\Image.cs" />
-    <Compile Include="Assets\Scripts\Game1\ActionUpdate.cs" />
-    <Compile Include="Assets\Scripts\Game1\EffectChar.cs" />
-    <Compile Include="Assets\Scripts\Game1\Timer.cs" />
-    <Compile Include="Assets\Scripts\Game1\God\Client\ClientManager.cs" />
-    <Compile Include="Assets\Scripts\Game1\Constants\PanelConstants.cs" />
-    <Compile Include="Assets\Scripts\Game1\IPaint.cs" />
-    <Compile Include="Assets\Scripts\Game1\T3.cs" />
-    <Compile Include="Assets\Scripts\Game1\Assets\src\g\PetFollow.cs" />
-    <Compile Include="Assets\Scripts\Game1\MoneyCharge.cs" />
-    <Compile Include="Assets\Scripts\Game1\ScaleGUI.cs" />
-    <Compile Include="Assets\Scripts\Game1\Systems\Inventory\InventorySystem.cs" />
-    <Compile Include="Assets\Scripts\Game1\Controller.cs" />
-    <Compile Include="Assets\Scripts\Game1\EffectCharPaint.cs" />
-    <Compile Include="Assets\Scripts\Game1\SkillPaint.cs" />
-    <Compile Include="Assets\Scripts\Game1\Systems\Movement\CharacterMovement.cs" />
-    <Compile Include="Assets\Scripts\Game1\TabClanIcon.cs" />
-    <Compile Include="Assets\Scripts\Game1\IKbAction.cs" />
-    <Compile Include="Assets\Scripts\Game1\MobTemplate.cs" />
-    <Compile Include="Assets\Scripts\UnityLogger.cs" />
-    <Compile Include="Assets\Scripts\Game1\Assets\src\e\SmallSave.cs" />
-    <Compile Include="Assets\Scripts\Game1\GameCanvas.cs" />
-    <Compile Include="Assets\Scripts\Game1\Constants\NetworkOpcodes.cs" />
-    <Compile Include="Assets\Scripts\Game1\Archivement.cs" />
-    <Compile Include="Assets\Scripts\Game1\mGraphics.cs" />
-    <Compile Include="Assets\Scripts\Game1\MobCapcha.cs" />
-    <Compile Include="Assets\Scripts\Game1\ItemTime.cs" />
-    <Compile Include="Assets\Scripts\Game1\NClass.cs" />
-    <Compile Include="Assets\Scripts\Game1\Paint.cs" />
-    <Compile Include="Assets\Scripts\Game1\God\Player\AutoControlPanel.cs" />
-    <Compile Include="Assets\Scripts\Game1\ActionPaint.cs" />
-    <Compile Include="Assets\Scripts\Game1\God\Player\TypePoint.cs" />
-    <Compile Include="Assets\Scripts\Game1\Assets\src\g\GameInfo.cs" />
-    <Compile Include="Assets\Scripts\Game1\ipKeyboard.cs" />
-    <Compile Include="Assets\Scripts\Game1\Effect.cs" />
-    <Compile Include="Assets\Scripts\Game1\SplashScr.cs" />
-    <Compile Include="Assets\Scripts\Game1\SoundMn.cs" />
-    <Compile Include="Assets\Scripts\Game1\Char.cs" />
-    <Compile Include="Assets\Scripts\Game1\God\Skill\nSkill.cs" />
-    <Compile Include="Assets\Scripts\Game1\Sprite.cs" />
-    <Compile Include="Assets\Scripts\Game1\God\Mob\Mobs.cs" />
-    <Compile Include="Assets\Scripts\Game1\Mob.cs" />
-    <Compile Include="Assets\Scripts\Game1\MyKeyMap.cs" />
-    <Compile Include="Assets\Scripts\Game1\Skill.cs" />
-    <Compile Include="Assets\Scripts\Game1\MyRandom.cs" />
-    <Compile Include="Assets\Scripts\Game1\EffectFeet.cs" />
-    <Compile Include="Assets\Scripts\Game1\PopUpYesNo.cs" />
-    <Compile Include="Assets\Scripts\Game1\Task.cs" />
-    <Compile Include="Assets\Scripts\Game1\InfoPhuBan.cs" />
-    <Compile Include="Assets\Scripts\Game1\EffectData.cs" />
-    <Compile Include="Assets\Scripts\Game1\ItemObject.cs" />
-    <Compile Include="Assets\Scripts\Game1\Member.cs" />
-    <Compile Include="Assets\Scripts\Game1\ChatBox.cs" />
-    <Compile Include="Assets\Scripts\Game1\Message.cs" />
-    <Compile Include="Assets\Scripts\Game1\MovePoint.cs" />
+    <Compile Include="Assets\Scripts\Game1\Arrowpaint.cs" />
+    <Compile Include="Assets\Scripts\Game1\KeyConstant.cs" />
     <Compile Include="Assets\Scripts\Game1\GamePad.cs" />
+    <Compile Include="Assets\Scripts\Game1\BackgroudEffect.cs" />
+    <Compile Include="Assets\Scripts\Game1\Network\Handlers\CombatPacketHandler.cs" />
     <Compile Include="Assets\Scripts\Game1\Network\Handlers\TaskNpcPacketHandler.cs" />
+    <Compile Include="Assets\Scripts\Game1\UI\Panel\Panel.Part4.cs" />
+    <Compile Include="Assets\Scripts\Game1\DefaultItemOptions.cs" />
+    <Compile Include="Assets\Scripts\Game1\PlayerData.cs" />
+    <Compile Include="Assets\Scripts\Game1\Assets\src\g\ImageSource.cs" />
+    <Compile Include="Assets\Scripts\Game1\Entities\Char\Char.Part1.cs" />
     <Compile Include="Assets\Scripts\Game1\ServerEffect.cs" />
     <Compile Include="Assets\Scripts\Game1\Point.cs" />
+    <Compile Include="Assets\Scripts\Game1\Screens\GameScr\GameScr.Part2.cs" />
+    <Compile Include="Assets\Scripts\Game1\InputDlg.cs" />
     <Compile Include="Assets\Scripts\Game1\EffectPaint.cs" />
-    <Compile Include="Assets\Scripts\Game1\BaseCommand.cs" />
-    <Compile Include="Assets\Scripts\Game1\Network\Handlers\ClanPacketHandler.cs" />
-    <Compile Include="Assets\Scripts\Game1\BgItemMn.cs" />
-    <Compile Include="Assets\Scripts\Game1\UI\IUIWindow.cs" />
-    <Compile Include="Assets\Scripts\Game1\Waypoint.cs" />
-    <Compile Include="Assets\Scripts\Game1\Frame.cs" />
-    <Compile Include="Assets\Scripts\Game1\GameScr.cs" />
-    <Compile Include="Assets\Scripts\Game1\God\Item\Items.cs" />
-    <Compile Include="Assets\Scripts\Game1\ImgByName.cs" />
-    <Compile Include="Assets\Scripts\Game1\Clan.cs" />
-    <Compile Include="Assets\Scripts\Game1\LoginScr.cs" />
-    <Compile Include="Assets\Scripts\Game1\FireWorkEff.cs" />
-    <Compile Include="Assets\Scripts\Game1\NpcTemplate.cs" />
-    <Compile Include="Assets\Scripts\Game1\DartInfo.cs" />
-    <Compile Include="Assets\Scripts\Game1\EffectInfoPaint.cs" />
-    <Compile Include="Assets\Scripts\Game1\Rms.cs" />
-    <Compile Include="Assets\Scripts\Game1\ItemTemplates.cs" />
-    <Compile Include="Assets\Scripts\Game1\ScreenPointer.cs" />
-    <Compile Include="Assets\Scripts\Game1\ServerScr.cs" />
-    <Compile Include="Assets\Scripts\Game1\MotherCanvas.cs" />
-    <Compile Include="Assets\Scripts\Game1\Layer.cs" />
-    <Compile Include="Assets\Scripts\Game1\myWriter.cs" />
-    <Compile Include="Assets\Scripts\Game1\FrameImage.cs" />
-    <Compile Include="Assets\Scripts\Game1\BachTuoc.cs" />
-    <Compile Include="Assets\Scripts\Game1\ClanManager.cs" />
-    <Compile Include="Assets\Scripts\Game1\NewPanel.cs" />
-    <Compile Include="Assets\Scripts\Game1\ChooseCharScr.cs" />
-    <Compile Include="Assets\Scripts\Game1\DataInputStream.cs" />
-    <Compile Include="Assets\Scripts\Game1\PlayerDart.cs" />
-    <Compile Include="Assets\Scripts\Game1\EPosition.cs" />
-    <Compile Include="Assets\Scripts\Game1\PopUp.cs" />
-    <Compile Include="Assets\Scripts\Game1\ClanImage.cs" />
-    <Compile Include="Assets\Scripts\Game1\InputStream.cs" />
-    <Compile Include="Assets\Scripts\Game1\PKFlag.cs" />
-    <Compile Include="Assets\Scripts\Game1\EffecMn.cs" />
-    <Compile Include="Assets\Scripts\Game1\Network\IPacketHandler.cs" />
-    <Compile Include="Assets\Scripts\Game1\Teleport.cs" />
-    <Compile Include="Assets\Scripts\Game1\DataOutputStream.cs" />
-    <Compile Include="Assets\Scripts\Game1\MapTemplate.cs" />
-    <Compile Include="Assets\Scripts\Game1\UI\UIWindowManager.cs" />
-    <Compile Include="Assets\Scripts\Game1\MagicTree.cs" />
-    <Compile Include="Assets\Scripts\Game1\ListNew.cs" />
-    <Compile Include="Assets\Scripts\Game1\ImageInfo.cs" />
-    <Compile Include="Assets\Scripts\Game1\ItemOptionTemplate.cs" />
-    <Compile Include="Assets\Scripts\Game1\SkillInfoPaint.cs" />
-    <Compile Include="Assets\Scripts\Game1\GameMidlet.cs" />
-    <Compile Include="Assets\Scripts\Game1\MainImage.cs" />
-    <Compile Include="Assets\Scripts\Game1\Part.cs" />
-    <Compile Include="Assets\Scripts\Game1\ItemTemplate.cs" />
-    <Compile Include="Assets\Scripts\Game1\TransportScr.cs" />
-    <Compile Include="Assets\Scripts\Game1\MyVector.cs" />
-    <Compile Include="Assets\Scripts\Game1\Item.cs" />
-    <Compile Include="Assets\Scripts\Game1\InfoMe.cs" />
-    <Compile Include="Assets\Scripts\Game1\Service.cs" />
-    <Compile Include="Assets\Scripts\Game1\Cout.cs" />
-    <Compile Include="Assets\Scripts\Game1\KeyConstant.cs" />
-    <Compile Include="Assets\Scripts\Game1\Network\Handlers\CombatPacketHandler.cs" />
-    <Compile Include="Assets\Scripts\Game1\PlayerData.cs" />
     <Compile Include="Assets\Scripts\Game1\PartImage.cs" />
-    <Compile Include="Assets\Scripts\Game1\Effect2.cs" />
-    <Compile Include="Assets\Scripts\Game1\IMessageHandler.cs" />
-    <Compile Include="Assets\Scripts\Game1\TopInfo.cs" />
-    <Compile Include="Assets\Scripts\Game1\FireWorkMn.cs" />
-    <Compile Include="Assets\Scripts\Game1\BallInfo.cs" />
-    <Compile Include="Assets\Scripts\Game1\God\Boss\BossData.cs" />
-    <Compile Include="Assets\Scripts\Game1\ClanMessage.cs" />
-    <Compile Include="Assets\Scripts\Game1\BgItem.cs" />
-    <Compile Include="Assets\Scripts\Game1\InfoItem.cs" />
-    <Compile Include="Assets\Scripts\Game1\Res.cs" />
-    <Compile Include="Assets\Scripts\Game1\SmallImage.cs" />
-    <Compile Include="Assets\Scripts\Game1\Scroll.cs" />
-    <Compile Include="Assets\Scripts\Game1\Firework.cs" />
-    <Compile Include="Assets\Scripts\Game1\ItemOption.cs" />
-    <Compile Include="Assets\Scripts\Game1\God\Client\AutoSettingManager.cs" />
-    <Compile Include="Assets\Scripts\Game1\Session_ME2.cs" />
-    <Compile Include="Assets\Scripts\Game1\UI\Panels\ChestSubPanel.cs" />
-    <Compile Include="Assets\Scripts\Game1\mFont.cs" />
-    <Compile Include="Assets\Scripts\Game1\NewBoss.cs" />
-    <Compile Include="Assets\Scripts\Game1\EffectTemplate.cs" />
-    <Compile Include="Assets\Scripts\Game1\PlayerInfo.cs" />
-    <Compile Include="Assets\Scripts\Game1\SkillTemplate.cs" />
-    <Compile Include="Assets\Scripts\Game1\Menu.cs" />
-    <Compile Include="Assets\Scripts\Game1\God\Player\NPoint.cs" />
-    <Compile Include="Assets\Scripts\Game1\TouchScreenKeyboardType.cs" />
-    <Compile Include="Assets\Scripts\Game1\Info.cs" />
-    <Compile Include="Assets\Scripts\Game1\Sound.cs" />
-    <Compile Include="Assets\Scripts\Game1\ScrollResult.cs" />
-    <Compile Include="Assets\Scripts\Game1\ClanObject.cs" />
-    <Compile Include="Assets\Scripts\Game1\iOSPlugins.cs" />
-    <Compile Include="Assets\Scripts\Game1\TextInfo.cs" />
-    <Compile Include="Assets\Scripts\Game1\MsgDlg.cs" />
-    <Compile Include="Assets\Scripts\Game1\Math.cs" />
-    <Compile Include="Assets\Scripts\Game1\Key.cs" />
-    <Compile Include="Assets\Scripts\Game1\InfoDlg.cs" />
-    <Compile Include="Assets\Scripts\Game1\Dialog.cs" />
-    <Compile Include="Assets\Scripts\Game1\Skills.cs" />
-    <Compile Include="Assets\Scripts\Game1\Assets\src\e\ChatVip.cs" />
-    <Compile Include="Assets\Scripts\Game1\BigBoss2.cs" />
-    <Compile Include="Assets\Scripts\Game1\ChatTextField.cs" />
-    <Compile Include="Assets\Scripts\Game1\Network\Handlers\PlayerStatsPacketHandler.cs" />
-    <Compile Include="Assets\Scripts\Game1\ISession.cs" />
-    <Compile Include="Assets\Scripts\Game1\UI\Panels\ISubPanel.cs" />
-    <Compile Include="Assets\Scripts\Game1\TouchScreenKeyboard.cs" />
-    <Compile Include="Assets\Scripts\Game1\SMS.cs" />
-    <Compile Include="Assets\Scripts\Game1\Network\PacketDispatcher.cs" />
-    <Compile Include="Assets\Scripts\Game1\Cmd.cs" />
-    <Compile Include="Assets\Scripts\Game1\Assets\src\g\ClientInput.cs" />
-    <Compile Include="Assets\Scripts\Game1\God\Player\Revive.cs" />
-    <Compile Include="Assets\Scripts\Game1\Friend.cs" />
-    <Compile Include="Assets\Scripts\Game1\Effect_End.cs" />
-    <Compile Include="Assets\Scripts\Game1\Assets\src\e\Small.cs" />
-    <Compile Include="Assets\Scripts\Game1\iPhoneGeneration.cs" />
-    <Compile Include="Assets\Scripts\Game1\Line.cs" />
-    <Compile Include="Assets\Scripts\Game1\Command.cs" />
-    <Compile Include="Assets\Scripts\Game1\Network\Handlers\ItemPacketHandler.cs" />
-    <Compile Include="Assets\Scripts\Game1\mSystem.cs" />
-    <Compile Include="Assets\Scripts\Game1\ArrayCast.cs" />
-    <Compile Include="Assets\Scripts\Game1\Assets\src\f\Controller2.cs" />
-    <Compile Include="Assets\Scripts\Game1\mScreen.cs" />
-    <Compile Include="Assets\Scripts\Game1\Arrowpaint.cs" />
-    <Compile Include="Assets\Scripts\Game1\God\Item\ItemGroup.cs" />
-    <Compile Include="Assets\Scripts\Game1\BackgroudEffect.cs" />
-    <Compile Include="Assets\Scripts\Game1\DefaultItemOptions.cs" />
-    <Compile Include="Assets\Scripts\Game1\Assets\src\g\ImageSource.cs" />
+    <Compile Include="Assets\Scripts\Game1\Screens\GameScr\GameScr.Part1.cs" />
     <Compile Include="Assets\Scripts\Game1\Systems\Combat\CharacterCombat.cs" />
+    <Compile Include="Assets\Scripts\Game1\Screens\GameScr\GameScr.Part6.cs" />
+    <Compile Include="Assets\Scripts\Game1\mLine.cs" />
+    <Compile Include="Assets\Scripts\Game1\Effect2.cs" />
+    <Compile Include="Assets\Scripts\Game1\BaseCommand.cs" />
     <Compile Include="Assets\Scripts\Game1\Position.cs" />
     <Compile Include="Assets\Scripts\Game1\iPhoneSettings.cs" />
     <Compile Include="Assets\Scripts\Game1\Net.cs" />
     <Compile Include="Assets\Scripts\Game1\Constants\GameEnums.cs" />
+    <Compile Include="Assets\Scripts\Game1\IChatable.cs" />
+    <Compile Include="Assets\Scripts\Game1\Network\Handlers\ClanPacketHandler.cs" />
     <Compile Include="Assets\Scripts\Game1\Hint.cs" />
+    <Compile Include="Assets\Scripts\Game1\CharChild.cs" />
+    <Compile Include="Assets\Scripts\Game1\IMessageHandler.cs" />
     <Compile Include="Assets\Scripts\Game1\SmallDart.cs" />
+    <Compile Include="Assets\Scripts\Game1\TopInfo.cs" />
+    <Compile Include="Assets\Scripts\Game1\BgItemMn.cs" />
+    <Compile Include="Assets\Scripts\Game1\FireWorkMn.cs" />
     <Compile Include="Assets\Scripts\Game1\God\Mob\MobController.cs" />
+    <Compile Include="Assets\Scripts\Game1\Waypoint.cs" />
+    <Compile Include="Assets\Scripts\Game1\UI\IUIWindow.cs" />
     <Compile Include="Assets\Scripts\Game1\Assets\src\g\Mabu.cs" />
+    <Compile Include="Assets\Scripts\Game1\TaskTemplate.cs" />
+    <Compile Include="Assets\Scripts\Game1\BallInfo.cs" />
+    <Compile Include="Assets\Scripts\Game1\God\Boss\BossData.cs" />
+    <Compile Include="Assets\Scripts\Game1\Frame.cs" />
+    <Compile Include="Assets\Scripts\Game1\ClanMessage.cs" />
+    <Compile Include="Assets\Scripts\Game1\GameScr.cs" />
+    <Compile Include="Assets\Scripts\Game1\ChatPopup.cs" />
+    <Compile Include="Assets\Scripts\Game1\BgItem.cs" />
+    <Compile Include="Assets\Scripts\Game1\InfoItem.cs" />
     <Compile Include="Assets\Scripts\Game1\RadarScr.cs" />
+    <Compile Include="Assets\Scripts\Game1\God\Item\Items.cs" />
+    <Compile Include="Assets\Scripts\Game1\Entities\Char\Char.Part7.cs" />
+    <Compile Include="Assets\Scripts\Game1\ImgByName.cs" />
+    <Compile Include="Assets\Scripts\Game1\Clan.cs" />
+    <Compile Include="Assets\Scripts\Game1\UI\Panels\Panel.Shop.cs" />
     <Compile Include="Assets\Scripts\Game1\Arrow.cs" />
+    <Compile Include="Assets\Scripts\Game1\Res.cs" />
+    <Compile Include="Assets\Scripts\Game1\UI\Panels\Panel.Chest.cs" />
+    <Compile Include="Assets\Scripts\Game1\IActionListener.cs" />
+    <Compile Include="Assets\Scripts\Game1\ServerListScreen.cs" />
+    <Compile Include="Assets\Scripts\Game1\LoginScr.cs" />
+    <Compile Include="Assets\Scripts\Game1\Network\Services\Service.Part1.cs" />
+    <Compile Include="Assets\Scripts\Game1\StaticObj.cs" />
+    <Compile Include="Assets\Scripts\Game1\FireWorkEff.cs" />
+    <Compile Include="Assets\Scripts\Game1\Network\Services\Service.Part2.cs" />
+    <Compile Include="Assets\Scripts\Game1\SmallImage.cs" />
     <Compile Include="Assets\Scripts\Game1\Assets\src\g\BigBoss.cs" />
+    <Compile Include="Assets\Scripts\Game1\NpcTemplate.cs" />
     <Compile Include="Assets\Scripts\Game1\MyAudioClip.cs" />
+    <Compile Include="Assets\Scripts\Game1\UI\Panel\Panel.Part1.cs" />
+    <Compile Include="Assets\Scripts\Game1\Scroll.cs" />
     <Compile Include="Assets\Scripts\Game1\HTTPHandler.cs" />
-    <Compile Include="Assets\Scripts\Game1\God\Map\MapController.cs" />
-    <Compile Include="Assets\Scripts\Game1\God\Player\PetService.cs" />
+    <Compile Include="Assets\Scripts\Game1\DartInfo.cs" />
+    <Compile Include="Assets\Scripts\Game1\EffectInfoPaint.cs" />
     <Compile Include="Assets\Scripts\Game1\TField.cs" />
+    <Compile Include="Assets\Scripts\Game1\Firework.cs" />
+    <Compile Include="Assets\Scripts\Game1\ItemOption.cs" />
+    <Compile Include="Assets\Scripts\Game1\God\Client\AutoSettingManager.cs" />
+    <Compile Include="Assets\Scripts\Game1\UI\Panel\Panel.Part3.cs" />
+    <Compile Include="Assets\Scripts\Game1\UI\Panels\CombineSubPanel.cs" />
+    <Compile Include="Assets\Scripts\Game1\Screens\GameScr\GameScr.Part5.cs" />
+    <Compile Include="Assets\Scripts\Game1\Entities\Char\Char.Part6.cs" />
+    <Compile Include="Assets\Scripts\Game1\Image.cs" />
+    <Compile Include="Assets\Scripts\Game1\God\Map\MapController.cs" />
+    <Compile Include="Assets\Scripts\Game1\ItemTemplates.cs" />
+    <Compile Include="Assets\Scripts\Game1\Rms.cs" />
+    <Compile Include="Assets\Scripts\Game1\ActionUpdate.cs" />
+    <Compile Include="Assets\Scripts\Game1\EffectChar.cs" />
+    <Compile Include="Assets\Scripts\Game1\Timer.cs" />
+    <Compile Include="Assets\Scripts\Game1\Screens\GameScr\GameScr.Part3.cs" />
+    <Compile Include="Assets\Scripts\Game1\God\Player\PetService.cs" />
+    <Compile Include="Assets\Scripts\Game1\UI\Panels\ChestSubPanel.cs" />
     <Compile Include="Assets\Scripts\Game1\Constants\GameKeys.cs" />
+    <Compile Include="Assets\Scripts\Game1\Entities\Char\Char.Part3.cs" />
+    <Compile Include="Assets\Scripts\Game1\God\Client\ClientManager.cs" />
+    <Compile Include="Assets\Scripts\Game1\UI\Panels\Panel.Clan.cs" />
+    <Compile Include="Assets\Scripts\Game1\Constants\PanelConstants.cs" />
+    <Compile Include="Assets\Scripts\Game1\IPaint.cs" />
+    <Compile Include="Assets\Scripts\Game1\mFont.cs" />
+    <Compile Include="Assets\Scripts\Game1\Screens\GameScr\GameScr.Part7.cs" />
+    <Compile Include="Assets\Scripts\Game1\T3.cs" />
+    <Compile Include="Assets\Scripts\Game1\UI\Panel\Panel.Part10.cs" />
     <Compile Include="Assets\Scripts\Game1\UI\Panels\ShopSubPanel.cs" />
+    <Compile Include="Assets\Scripts\Game1\ScreenPointer.cs" />
+    <Compile Include="Assets\Scripts\Game1\MoneyCharge.cs" />
     <Compile Include="Assets\Scripts\Game1\Session_ME.cs" />
+    <Compile Include="Assets\Scripts\Game1\NewBoss.cs" />
+    <Compile Include="Assets\Scripts\Game1\Assets\src\g\PetFollow.cs" />
+    <Compile Include="Assets\Scripts\Game1\EffectTemplate.cs" />
+    <Compile Include="Assets\Scripts\Game1\PlayerInfo.cs" />
     <Compile Include="Assets\Scripts\Game1\T2.cs" />
     <Compile Include="Assets\Scripts\Game1\ActionChat.cs" />
+    <Compile Include="Assets\Scripts\Game1\ScaleGUI.cs" />
+    <Compile Include="Assets\Scripts\Game1\Systems\Inventory\InventorySystem.cs" />
+    <Compile Include="Assets\Scripts\Game1\ServerScr.cs" />
+    <Compile Include="Assets\Scripts\Game1\Controller.cs" />
+    <Compile Include="Assets\Scripts\Game1\UI\Panels\Panel.Inventory.cs" />
+    <Compile Include="Assets\Scripts\Game1\EffectCharPaint.cs" />
     <Compile Include="Assets\Scripts\Game1\Network\Handlers\TradePacketHandler.cs" />
+    <Compile Include="Assets\Scripts\Game1\SkillPaint.cs" />
+    <Compile Include="Assets\Scripts\Game1\SkillTemplate.cs" />
+    <Compile Include="Assets\Scripts\Game1\Systems\Movement\CharacterMovement.cs" />
     <Compile Include="Assets\Scripts\Game1\Npc.cs" />
+    <Compile Include="Assets\Scripts\Game1\Menu.cs" />
+    <Compile Include="Assets\Scripts\Game1\MotherCanvas.cs" />
+    <Compile Include="Assets\Scripts\Game1\Network\Controllers\Controller.SubCommand.cs" />
+    <Compile Include="Assets\Scripts\Game1\TabClanIcon.cs" />
+    <Compile Include="Assets\Scripts\Game1\Layer.cs" />
+    <Compile Include="Assets\Scripts\Game1\myWriter.cs" />
+    <Compile Include="Assets\Scripts\Game1\God\Player\NPoint.cs" />
+    <Compile Include="Assets\Scripts\Game1\IKbAction.cs" />
+    <Compile Include="Assets\Scripts\Game1\MobTemplate.cs" />
+    <Compile Include="Assets\Scripts\Game1\FrameImage.cs" />
     <Compile Include="Assets\Scripts\Game1\T1.cs" />
+    <Compile Include="Assets\Scripts\UnityLogger.cs" />
+    <Compile Include="Assets\Scripts\Game1\BachTuoc.cs" />
+    <Compile Include="Assets\Scripts\Game1\ClanManager.cs" />
+    <Compile Include="Assets\Scripts\Game1\TouchScreenKeyboardType.cs" />
+    <Compile Include="Assets\Scripts\Game1\Info.cs" />
+    <Compile Include="Assets\Scripts\Game1\Assets\src\e\SmallSave.cs" />
+    <Compile Include="Assets\Scripts\Game1\Entities\Effects\Effect_End.Part1.cs" />
+    <Compile Include="Assets\Scripts\Game1\NewPanel.cs" />
+    <Compile Include="Assets\Scripts\Game1\GameCanvas.cs" />
+    <Compile Include="Assets\Scripts\Game1\Sound.cs" />
+    <Compile Include="Assets\Scripts\Game1\Constants\NetworkOpcodes.cs" />
+    <Compile Include="Assets\Scripts\Game1\Archivement.cs" />
+    <Compile Include="Assets\Scripts\Game1\mGraphics.cs" />
+    <Compile Include="Assets\Scripts\Game1\ChooseCharScr.cs" />
+    <Compile Include="Assets\Scripts\Game1\ScrollResult.cs" />
+    <Compile Include="Assets\Scripts\Game1\ClanObject.cs" />
+    <Compile Include="Assets\Scripts\Game1\MobCapcha.cs" />
+    <Compile Include="Assets\Scripts\Game1\DataInputStream.cs" />
+    <Compile Include="Assets\Scripts\Game1\iOSPlugins.cs" />
     <Compile Include="Assets\Scripts\Game1\UI\Panels\ClanSubPanel.cs" />
     <Compile Include="Assets\Scripts\Game1\IMapObject.cs" />
+    <Compile Include="Assets\Scripts\Game1\PlayerDart.cs" />
+    <Compile Include="Assets\Scripts\Game1\ItemTime.cs" />
+    <Compile Include="Assets\Scripts\Game1\EPosition.cs" />
     <Compile Include="Assets\Scripts\Game1\TileMap.cs" />
+    <Compile Include="Assets\Scripts\Game1\NClass.cs" />
+    <Compile Include="Assets\Scripts\Game1\UI\Panel\Panel.Part7.cs" />
+    <Compile Include="Assets\Scripts\Game1\Paint.cs" />
+    <Compile Include="Assets\Scripts\Game1\PopUp.cs" />
+    <Compile Include="Assets\Scripts\Game1\Screens\GameCanvas\GameCanvas.Part2.cs" />
+    <Compile Include="Assets\Scripts\Game1\ClanImage.cs" />
     <Compile Include="Assets\Scripts\Game1\Network\Handlers\AuthPacketHandler.cs" />
-    <Compile Include="Assets\Scripts\Game1\TaskOrder.cs" />
     <Compile Include="Assets\Scripts\Game1\Panel.cs" />
+    <Compile Include="Assets\Scripts\Game1\TaskOrder.cs" />
+    <Compile Include="Assets\Scripts\Game1\God\Player\AutoControlPanel.cs" />
+    <Compile Include="Assets\Scripts\Game1\TextInfo.cs" />
+    <Compile Include="Assets\Scripts\Game1\ActionPaint.cs" />
+    <Compile Include="Assets\Scripts\Game1\MsgDlg.cs" />
+    <Compile Include="Assets\Scripts\Game1\InputStream.cs" />
     <Compile Include="Assets\Scripts\Game1\SkillOption.cs" />
+    <Compile Include="Assets\Scripts\Game1\ipKeyboard.cs" />
+    <Compile Include="Assets\Scripts\Game1\God\Player\TypePoint.cs" />
+    <Compile Include="Assets\Scripts\Game1\PKFlag.cs" />
+    <Compile Include="Assets\Scripts\Game1\Key.cs" />
+    <Compile Include="Assets\Scripts\Game1\Math.cs" />
     <Compile Include="Assets\Scripts\Game1\Info_RadaScr.cs" />
+    <Compile Include="Assets\Scripts\Game1\EffecMn.cs" />
+    <Compile Include="Assets\Scripts\Game1\InfoDlg.cs" />
     <Compile Include="Assets\Scripts\Game1\UI\Panels\InventorySubPanel.cs" />
+    <Compile Include="Assets\Scripts\Game1\Assets\src\g\GameInfo.cs" />
+    <Compile Include="Assets\Scripts\Game1\Network\Controllers\Controller.MapAndLogin.cs" />
     <Compile Include="Assets\Scripts\Game1\God\Player\PlayerInfo.cs" />
+    <Compile Include="Assets\Scripts\Game1\Network\Controllers\Controller.Data.cs" />
+    <Compile Include="Assets\Scripts\Game1\Dialog.cs" />
+    <Compile Include="Assets\Scripts\Game1\UI\Panel\Panel.Part2.cs" />
+    <Compile Include="Assets\Scripts\Game1\Network\IPacketHandler.cs" />
+    <Compile Include="Assets\Scripts\Game1\Teleport.cs" />
+    <Compile Include="Assets\Scripts\Game1\SplashScr.cs" />
+    <Compile Include="Assets\Scripts\Game1\DataOutputStream.cs" />
+    <Compile Include="Assets\Scripts\Game1\Assets\src\e\ChatVip.cs" />
     <Compile Include="Assets\Scripts\Game1\SkillOptionTemplate.cs" />
-    <Compile Include="Assets\Scripts\Game1\MyStream.cs" />
+    <Compile Include="Assets\Scripts\Game1\SoundMn.cs" />
+    <Compile Include="Assets\Scripts\Game1\Effect.cs" />
+    <Compile Include="Assets\Scripts\Game1\Skills.cs" />
+    <Compile Include="Assets\Scripts\Game1\BigBoss2.cs" />
+    <Compile Include="Assets\Scripts\Game1\Screens\GameCanvas\GameCanvas.Part1.cs" />
+    <Compile Include="Assets\Scripts\Game1\AssetLoader.cs" />
+    <Compile Include="Assets\Scripts\Game1\ChatTextField.cs" />
+    <Compile Include="Assets\Scripts\Game1\Char.cs" />
+    <Compile Include="Assets\Scripts\Game1\Network\Handlers\PlayerStatsPacketHandler.cs" />
+    <Compile Include="Assets\Scripts\Game1\ISession.cs" />
+    <Compile Include="Assets\Scripts\Game1\UI\Panels\ISubPanel.cs" />
+    <Compile Include="Assets\Scripts\Game1\Entities\Mob\Mob.Part1.cs" />
+    <Compile Include="Assets\Scripts\Game1\Screens\GameCanvas\GameCanvas.Part3.cs" />
+    <Compile Include="Assets\Scripts\Game1\God\Skill\nSkill.cs" />
+    <Compile Include="Assets\Scripts\Game1\TouchScreenKeyboard.cs" />
+    <Compile Include="Assets\Scripts\Game1\SMS.cs" />
     <Compile Include="Assets\Scripts\Game1\Main.cs" />
+    <Compile Include="Assets\Scripts\Game1\MyStream.cs" />
+    <Compile Include="Assets\Scripts\Game1\Sprite.cs" />
+    <Compile Include="Assets\Scripts\Game1\MapTemplate.cs" />
     <Compile Include="Assets\Scripts\Game1\Assets\src\g\RegisterScreen.cs" />
+    <Compile Include="Assets\Scripts\Game1\Cmd.cs" />
+    <Compile Include="Assets\Scripts\Game1\Network\PacketDispatcher.cs" />
+    <Compile Include="Assets\Scripts\Game1\God\Mob\Mobs.cs" />
+    <Compile Include="Assets\Scripts\Game1\UI\UIWindowManager.cs" />
+    <Compile Include="Assets\Scripts\Game1\Mob.cs" />
+    <Compile Include="Assets\Scripts\Game1\Assets\src\g\ClientInput.cs" />
+    <Compile Include="Assets\Scripts\Game1\MagicTree.cs" />
+    <Compile Include="Assets\Scripts\Game1\God\Player\Revive.cs" />
+    <Compile Include="Assets\Scripts\Game1\Friend.cs" />
+    <Compile Include="Assets\Scripts\Game1\MyKeyMap.cs" />
     <Compile Include="Assets\Scripts\Game1\EffectPanel.cs" />
     <Compile Include="Assets\Scripts\Game1\mResources.cs" />
+    <Compile Include="Assets\Scripts\Game1\ListNew.cs" />
+    <Compile Include="Assets\Scripts\Game1\Network\Controllers\Controller.PacketsA.cs" />
     <Compile Include="Assets\Scripts\Game1\EffectManager.cs" />
+    <Compile Include="Assets\Scripts\Game1\Effect_End.cs" />
     <Compile Include="Assets\Scripts\Game1\NinjaUtil.cs" />
+    <Compile Include="Assets\Scripts\Game1\UI\Panels\Panel.Combine.cs" />
     <Compile Include="Assets\Scripts\Game1\God\Player\ListChars.cs" />
+    <Compile Include="Assets\Scripts\Game1\Entities\Char\Char.Part2.cs" />
+    <Compile Include="Assets\Scripts\Game1\Char.Render.cs" />
+    <Compile Include="Assets\Scripts\Game1\Assets\src\e\Small.cs" />
+    <Compile Include="Assets\Scripts\Game1\MyRandom.cs" />
+    <Compile Include="Assets\Scripts\Game1\Skill.cs" />
     <Compile Include="Assets\Scripts\Game1\MonsterDart.cs" />
+    <Compile Include="Assets\Scripts\Game1\iPhoneGeneration.cs" />
+    <Compile Include="Assets\Scripts\Game1\UI\Panel\Panel.Part8.cs" />
+    <Compile Include="Assets\Scripts\Game1\Line.cs" />
+    <Compile Include="Assets\Scripts\Game1\ImageInfo.cs" />
+    <Compile Include="Assets\Scripts\Game1\ItemOptionTemplate.cs" />
+    <Compile Include="Assets\Scripts\Game1\Command.cs" />
+    <Compile Include="Assets\Scripts\Game1\SkillInfoPaint.cs" />
+    <Compile Include="Assets\Scripts\Game1\EffectFeet.cs" />
+    <Compile Include="Assets\Scripts\Game1\Entities\Char\Char.Part4.cs" />
     <Compile Include="Assets\Scripts\Game1\myReader.cs" />
+    <Compile Include="Assets\Scripts\Game1\Network\Handlers\ItemPacketHandler.cs" />
+    <Compile Include="Assets\Scripts\Game1\UI\Panel\Panel.Part9.cs" />
+    <Compile Include="Assets\Scripts\Game1\Network\Controllers\Controller.PacketsB.cs" />
     <Compile Include="Assets\Scripts\Game1\God\Utils\Utils.cs" />
+    <Compile Include="Assets\Scripts\Game1\Entities\Char\Char.Part5.cs" />
     <Compile Include="Assets\Scripts\Game1\CreateCharScr.cs" />
+    <Compile Include="Assets\Scripts\Game1\mSystem.cs" />
+    <Compile Include="Assets\Scripts\Game1\Screens\GameScr\GameScr.Part4.cs" />
+    <Compile Include="Assets\Scripts\Game1\ArrayCast.cs" />
+    <Compile Include="Assets\Scripts\Game1\PopUpYesNo.cs" />
+    <Compile Include="Assets\Scripts\Game1\UI\Panel\Panel.Part5.cs" />
     <Compile Include="Assets\Scripts\Game1\ItemMap.cs" />
+    <Compile Include="Assets\Scripts\Game1\Entities\Char\Char.Part8.cs" />
+    <Compile Include="Assets\Scripts\Game1\Task.cs" />
     <Compile Include="Assets\Scripts\Game1\Network\Handlers\MapMovementPacketHandler.cs" />
     <Compile Include="Assets\Scripts\Game1\CrackBallScr.cs" />
+    <Compile Include="Assets\Scripts\Game1\InfoPhuBan.cs" />
+    <Compile Include="Assets\Scripts\Game1\UI\Panel\Panel.Part6.cs" />
+    <Compile Include="Assets\Scripts\Game1\EffectData.cs" />
+    <Compile Include="Assets\Scripts\Game1\GameMidlet.cs" />
+    <Compile Include="Assets\Scripts\Game1\ItemObject.cs" />
+    <Compile Include="Assets\Scripts\Game1\MainImage.cs" />
+    <Compile Include="Assets\Scripts\Game1\Part.cs" />
     <Compile Include="Assets\Scripts\Game1\MyHashTable.cs" />
+    <Compile Include="Assets\Scripts\Game1\Assets\src\f\Controller2.cs" />
+    <Compile Include="Assets\Scripts\Game1\Member.cs" />
+    <Compile Include="Assets\Scripts\Game1\ItemTemplate.cs" />
+    <Compile Include="Assets\Scripts\Game1\TransportScr.cs" />
+    <Compile Include="Assets\Scripts\Game1\Item.cs" />
+    <Compile Include="Assets\Scripts\Game1\MyVector.cs" />
+    <Compile Include="Assets\Scripts\Game1\ChatBox.cs" />
     <Compile Include="Assets\Scripts\Game1\God\Boss\Boss.cs" />
+    <Compile Include="Assets\Scripts\Game1\InfoMe.cs" />
+    <Compile Include="Assets\Scripts\Game1\Message.cs" />
+    <Compile Include="Assets\Scripts\Game1\Service.cs" />
+    <Compile Include="Assets\Scripts\Game1\Cout.cs" />
+    <Compile Include="Assets\Scripts\Game1\Network\Controllers\Controller.PacketsC.cs" />
+    <Compile Include="Assets\Scripts\Game1\Network\Controllers\Controller.PacketsD.cs" />
+    <Compile Include="Assets\Scripts\Game1\MovePoint.cs" />
+    <Compile Include="Assets\Scripts\Game1\God\Item\ItemGroup.cs" />
+    <Compile Include="Assets\Scripts\Game1\mScreen.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Assets\link.xml" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="UnityEngine">
       <HintPath>C:\Program Files\Unity\Hub\Editor\2022.3.61f1\Editor\Data\Managed\UnityEngine\UnityEngine.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="UnityEngine.AIModule">
-      <HintPath>C:\Program Files\Unity\Hub\Editor\2022.3.61f1\Editor\Data\Managed\UnityEngine\UnityEngine.AIModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine.ARModule">
@@ -328,20 +372,12 @@
       <HintPath>C:\Program Files\Unity\Hub\Editor\2022.3.61f1\Editor\Data\Managed\UnityEngine\UnityEngine.AndroidJNIModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="UnityEngine.AnimationModule">
-      <HintPath>C:\Program Files\Unity\Hub\Editor\2022.3.61f1\Editor\Data\Managed\UnityEngine\UnityEngine.AnimationModule.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
     <Reference Include="UnityEngine.AssetBundleModule">
       <HintPath>C:\Program Files\Unity\Hub\Editor\2022.3.61f1\Editor\Data\Managed\UnityEngine\UnityEngine.AssetBundleModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine.AudioModule">
       <HintPath>C:\Program Files\Unity\Hub\Editor\2022.3.61f1\Editor\Data\Managed\UnityEngine\UnityEngine.AudioModule.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="UnityEngine.ClothModule">
-      <HintPath>C:\Program Files\Unity\Hub\Editor\2022.3.61f1\Editor\Data\Managed\UnityEngine\UnityEngine.ClothModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine.ClusterInputModule">
@@ -366,10 +402,6 @@
     </Reference>
     <Reference Include="UnityEngine.DSPGraphModule">
       <HintPath>C:\Program Files\Unity\Hub\Editor\2022.3.61f1\Editor\Data\Managed\UnityEngine\UnityEngine.DSPGraphModule.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="UnityEngine.DirectorModule">
-      <HintPath>C:\Program Files\Unity\Hub\Editor\2022.3.61f1\Editor\Data\Managed\UnityEngine\UnityEngine.DirectorModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine.GIModule">
@@ -412,20 +444,8 @@
       <HintPath>C:\Program Files\Unity\Hub\Editor\2022.3.61f1\Editor\Data\Managed\UnityEngine\UnityEngine.LocalizationModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="UnityEngine.ParticleSystemModule">
-      <HintPath>C:\Program Files\Unity\Hub\Editor\2022.3.61f1\Editor\Data\Managed\UnityEngine\UnityEngine.ParticleSystemModule.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
     <Reference Include="UnityEngine.PerformanceReportingModule">
       <HintPath>C:\Program Files\Unity\Hub\Editor\2022.3.61f1\Editor\Data\Managed\UnityEngine\UnityEngine.PerformanceReportingModule.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="UnityEngine.PhysicsModule">
-      <HintPath>C:\Program Files\Unity\Hub\Editor\2022.3.61f1\Editor\Data\Managed\UnityEngine\UnityEngine.PhysicsModule.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="UnityEngine.Physics2DModule">
-      <HintPath>C:\Program Files\Unity\Hub\Editor\2022.3.61f1\Editor\Data\Managed\UnityEngine\UnityEngine.Physics2DModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine.ProfilerModule">
@@ -464,20 +484,8 @@
       <HintPath>C:\Program Files\Unity\Hub\Editor\2022.3.61f1\Editor\Data\Managed\UnityEngine\UnityEngine.SubstanceModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="UnityEngine.SubsystemsModule">
-      <HintPath>C:\Program Files\Unity\Hub\Editor\2022.3.61f1\Editor\Data\Managed\UnityEngine\UnityEngine.SubsystemsModule.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
     <Reference Include="UnityEngine.TLSModule">
       <HintPath>C:\Program Files\Unity\Hub\Editor\2022.3.61f1\Editor\Data\Managed\UnityEngine\UnityEngine.TLSModule.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="UnityEngine.TerrainModule">
-      <HintPath>C:\Program Files\Unity\Hub\Editor\2022.3.61f1\Editor\Data\Managed\UnityEngine\UnityEngine.TerrainModule.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="UnityEngine.TerrainPhysicsModule">
-      <HintPath>C:\Program Files\Unity\Hub\Editor\2022.3.61f1\Editor\Data\Managed\UnityEngine\UnityEngine.TerrainPhysicsModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine.TextCoreFontEngineModule">
@@ -492,24 +500,12 @@
       <HintPath>C:\Program Files\Unity\Hub\Editor\2022.3.61f1\Editor\Data\Managed\UnityEngine\UnityEngine.TextRenderingModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="UnityEngine.TilemapModule">
-      <HintPath>C:\Program Files\Unity\Hub\Editor\2022.3.61f1\Editor\Data\Managed\UnityEngine\UnityEngine.TilemapModule.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
     <Reference Include="UnityEngine.UIModule">
       <HintPath>C:\Program Files\Unity\Hub\Editor\2022.3.61f1\Editor\Data\Managed\UnityEngine\UnityEngine.UIModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine.UIElementsModule">
       <HintPath>C:\Program Files\Unity\Hub\Editor\2022.3.61f1\Editor\Data\Managed\UnityEngine\UnityEngine.UIElementsModule.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="UnityEngine.UmbraModule">
-      <HintPath>C:\Program Files\Unity\Hub\Editor\2022.3.61f1\Editor\Data\Managed\UnityEngine\UnityEngine.UmbraModule.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="UnityEngine.UnityAnalyticsModule">
-      <HintPath>C:\Program Files\Unity\Hub\Editor\2022.3.61f1\Editor\Data\Managed\UnityEngine\UnityEngine.UnityAnalyticsModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine.UnityAnalyticsCommonModule">
@@ -552,28 +548,8 @@
       <HintPath>C:\Program Files\Unity\Hub\Editor\2022.3.61f1\Editor\Data\Managed\UnityEngine\UnityEngine.VFXModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="UnityEngine.VRModule">
-      <HintPath>C:\Program Files\Unity\Hub\Editor\2022.3.61f1\Editor\Data\Managed\UnityEngine\UnityEngine.VRModule.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="UnityEngine.VehiclesModule">
-      <HintPath>C:\Program Files\Unity\Hub\Editor\2022.3.61f1\Editor\Data\Managed\UnityEngine\UnityEngine.VehiclesModule.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="UnityEngine.VideoModule">
-      <HintPath>C:\Program Files\Unity\Hub\Editor\2022.3.61f1\Editor\Data\Managed\UnityEngine\UnityEngine.VideoModule.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
     <Reference Include="UnityEngine.VirtualTexturingModule">
       <HintPath>C:\Program Files\Unity\Hub\Editor\2022.3.61f1\Editor\Data\Managed\UnityEngine\UnityEngine.VirtualTexturingModule.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="UnityEngine.WindModule">
-      <HintPath>C:\Program Files\Unity\Hub\Editor\2022.3.61f1\Editor\Data\Managed\UnityEngine\UnityEngine.WindModule.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="UnityEngine.XRModule">
-      <HintPath>C:\Program Files\Unity\Hub\Editor\2022.3.61f1\Editor\Data\Managed\UnityEngine\UnityEngine.XRModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEditor">
@@ -638,10 +614,6 @@
     </Reference>
     <Reference Include="UnityEditor.UnityConnectModule">
       <HintPath>C:\Program Files\Unity\Hub\Editor\2022.3.61f1\Editor\Data\Managed\UnityEngine\UnityEditor.UnityConnectModule.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="Unity.VisualScripting.Antlr3.Runtime">
-      <HintPath>Library\PackageCache\com.unity.visualscripting@1.9.6\Runtime\VisualScripting.Flow\Dependencies\NCalc\Unity.VisualScripting.Antlr3.Runtime.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEditor.iOS.Extensions.Xcode">
@@ -1164,48 +1136,8 @@
       <HintPath>C:\Program Files\Unity\Hub\Editor\2022.3.61f1\Editor\Data\UnityReferenceAssemblies\unity-4.8-api\Facades\System.Xml.XPath.XDocument.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="Unity.VisualScripting.SettingsProvider.Editor">
-      <HintPath>Library\ScriptAssemblies\Unity.VisualScripting.SettingsProvider.Editor.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="Unity.VisualScripting.State.Editor">
-      <HintPath>Library\ScriptAssemblies\Unity.VisualScripting.State.Editor.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="Unity.VisualScripting.Shared.Editor">
-      <HintPath>Library\ScriptAssemblies\Unity.VisualScripting.Shared.Editor.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
     <Reference Include="Unity.VisualStudio.Editor">
       <HintPath>Library\ScriptAssemblies\Unity.VisualStudio.Editor.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="UnityEditor.UI">
-      <HintPath>Library\ScriptAssemblies\UnityEditor.UI.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="Unity.VisualScripting.Core">
-      <HintPath>Library\ScriptAssemblies\Unity.VisualScripting.Core.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="UnityEngine.UI">
-      <HintPath>Library\ScriptAssemblies\UnityEngine.UI.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="Unity.VisualScripting.Core.Editor">
-      <HintPath>Library\ScriptAssemblies\Unity.VisualScripting.Core.Editor.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="Unity.VisualScripting.State">
-      <HintPath>Library\ScriptAssemblies\Unity.VisualScripting.State.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="Unity.VisualScripting.Flow">
-      <HintPath>Library\ScriptAssemblies\Unity.VisualScripting.Flow.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="Unity.VisualScripting.Flow.Editor">
-      <HintPath>Library\ScriptAssemblies\Unity.VisualScripting.Flow.Editor.dll</HintPath>
       <Private>False</Private>
     </Reference>
   </ItemGroup>

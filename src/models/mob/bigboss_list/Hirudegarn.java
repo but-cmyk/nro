@@ -381,7 +381,7 @@ public class Hirudegarn extends BigBoss {
     private void logError(Exception e) {
         if (errors < MAX_ERROR_LOGS) {
             errors++;
-            e.printStackTrace();
+            utils.Logger.logException(Hirudegarn.class, e, "Hirudegarn exception");
         }
     }
 }

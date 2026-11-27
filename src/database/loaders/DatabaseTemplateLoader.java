@@ -172,7 +172,8 @@ while (rs.next()) {
                     clan.bdkb_level = rs.getInt("bdkb_level");
                     clan.bdkb_time = rs.getLong("bdkb_time");
                 } catch (Exception ignored) {
-                }
+            utils.Logger.error("[DatabaseTemplateLoader] " + ignored.getMessage());
+        }
                 dataArray = (JSONArray) JSONValue.parse(rs.getString("members"));
                 for (int i = 0; i < dataArray.size(); i++) {
                     dataObject = (JSONObject) JSONValue.parse(String.valueOf(dataArray.get(i)));
@@ -251,7 +252,8 @@ while (rs.next()) {
                         dataArray = ja;
                     }
                 } catch (Exception ignored) {
-                }
+            utils.Logger.error("[DatabaseTemplateLoader] " + ignored.getMessage());
+        }
                 if (dataArray == null) {
                     try {
                         Object parsed = JSONValue.parse(skillsRaw);
@@ -259,7 +261,8 @@ while (rs.next()) {
                             dataArray = ja;
                         }
                     } catch (Exception ignored) {
-                    }
+            utils.Logger.error("[DatabaseTemplateLoader] " + ignored.getMessage());
+        }
                 }
                 if (dataArray == null) {
                     dataArray = new JSONArray();

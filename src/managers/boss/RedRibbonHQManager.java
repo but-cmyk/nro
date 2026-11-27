@@ -22,7 +22,7 @@ public class RedRibbonHQManager extends BossManager {
                 try {
                     boss.update();
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    utils.Logger.logException(RedRibbonHQManager.class, e, "RedRibbonHQManager exception");
                     try {
                         removeBoss(boss);
                     } catch (Exception ex) {

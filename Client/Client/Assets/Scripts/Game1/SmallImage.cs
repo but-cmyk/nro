@@ -339,7 +339,7 @@ namespace Game1
     	{
     		if (imgNew == null) return;
     		int num = 0;
-    		if (GameCanvas.gameTick % 1000 != 0)
+    		if (GameCanvas.gameTick % 300 != 0)
     		{
     			return;
     		}
@@ -352,10 +352,11 @@ namespace Game1
     				smallCount++;
     			}
     		}
-    		if (num > 400 || (num > 150 && GameCanvas.lowGraphic))
+    		int maxLimit = GameCanvas.lowGraphic ? 120 : 250;
+    		if (num > maxLimit)
     		{
     			int cleaned = 0;
-    			for (int j = 0; j < imgNew.Length; j++)
+    			for (int j = 0; j < imgNew.Length && cleaned < 16; j++)
     			{
     				if (imgNew[j] != null && (Char.myCharz() == null || !Char.myCharz().isCharBodyImageID(imgNew[j].id)))
     				{
@@ -366,10 +367,6 @@ namespace Game1
     						cleaned++;
     					}
     				}
-    			}
-    			if (cleaned > 100)
-    			{
-    				UnityEngine.Resources.UnloadUnusedAssets();
     			}
     		}
     	}

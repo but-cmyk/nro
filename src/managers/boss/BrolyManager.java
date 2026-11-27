@@ -35,7 +35,7 @@ public class BrolyManager extends BossManager {
         if (!running) {
             running = true;
             spawnBroly();
-            System.out.println("Broly đã bắt đầu.");
+            utils.Logger.log(String.valueOf("Broly đã bắt đầu.") + "\n");
         }
     }
 
@@ -43,17 +43,17 @@ public class BrolyManager extends BossManager {
         if (running) {
             running = false;
             despawnBroly();
-            System.out.println("Broly đã dừng.");
+            utils.Logger.log(String.valueOf("Broly đã dừng.") + "\n");
         }
     }
 
 
     private void spawnBroly() {
-        System.out.println("Broly đã spawn (fake).");
+        utils.Logger.log(String.valueOf("Broly đã spawn (fake).") + "\n");
     }
 
 
     private void despawnBroly() {
-        System.out.println("Broly đã despawn (fake).");
+        utils.Logger.log(String.valueOf("Broly đã despawn (fake).") + "\n");
     }
 }

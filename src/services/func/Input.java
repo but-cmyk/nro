@@ -465,7 +465,7 @@ public class Input {
                             }
                         }
                     } catch (Exception e) {
-                        e.printStackTrace();
+                        utils.Logger.logException(Input.class, e, "Input exception");
                         Service.gI().sendThongBao(player, "Đã đéo có gì xảy ra");
                     }
                     break;
@@ -835,6 +835,7 @@ public class Input {
                     break;
             }
         } catch (Exception e) {
+            utils.Logger.error("[Input] " + e.getMessage());
         }
     }
 
@@ -851,6 +852,7 @@ public class Input {
             }
             pl.sendMessage(msg);
         } catch (Exception e) {
+            utils.Logger.error("[Input] " + e.getMessage());
         } finally {
             if (msg != null) {
                 msg.cleanup();

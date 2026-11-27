@@ -58,7 +58,7 @@ public class WhisArenaPvPMatch implements Runnable {
 
             Thread.ofVirtual().name("WhisArenaPvPMatch-" + p1.id + "-" + p2.id).start(this);
         } catch (Exception e) {
-            e.printStackTrace();
+            utils.Logger.logException(WhisArenaPvPMatch.class, e, "WhisArenaPvPMatch exception");
             dispose();
         }
     }
@@ -112,7 +112,7 @@ public class WhisArenaPvPMatch implements Runnable {
             PlayerService.gI().changeAndSendTypePK(p1, ConstPlayer.NON_PK);
             PlayerService.gI().changeAndSendTypePK(p2, ConstPlayer.NON_PK);
         } catch (Exception e) {
-            e.printStackTrace();
+            utils.Logger.logException(WhisArenaPvPMatch.class, e, "WhisArenaPvPMatch exception");
             dispose();
             return;
         }
@@ -122,7 +122,7 @@ public class WhisArenaPvPMatch implements Runnable {
             try {
                 update();
             } catch (Exception e) {
-                e.printStackTrace();
+                utils.Logger.logException(WhisArenaPvPMatch.class, e, "WhisArenaPvPMatch exception");
             }
             long elapsed = System.currentTimeMillis() - startTick;
             Functions.sleep(Math.max(1000 - elapsed, 10));
@@ -309,7 +309,7 @@ public class WhisArenaPvPMatch implements Runnable {
             }
             WhisArenaBotManager.gI().sortBots();
         } catch (Exception e) {
-            e.printStackTrace();
+            utils.Logger.logException(WhisArenaPvPMatch.class, e, "WhisArenaPvPMatch exception");
         } finally {
             dispose();
         }
@@ -337,7 +337,7 @@ public class WhisArenaPvPMatch implements Runnable {
                 zone.rankName2 = null;
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            utils.Logger.logException(WhisArenaPvPMatch.class, e, "WhisArenaPvPMatch exception");
         }
     }
 

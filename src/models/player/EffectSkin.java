@@ -124,7 +124,7 @@ public class EffectSkin {
                     }
                 }
             } catch (Exception e) {
-                e.printStackTrace();
+                utils.Logger.logException(EffectSkin.class, e, "EffectSkin exception");
             }
             for (int i = 0; i < cts.length; i++) {
                 if (cts[i] != 0) {
@@ -203,7 +203,7 @@ public class EffectSkin {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            utils.Logger.logException(EffectSkin.class, e, "EffectSkin exception");
         }
     }
 
@@ -234,7 +234,7 @@ public class EffectSkin {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            utils.Logger.logException(EffectSkin.class, e, "EffectSkin exception");
         }
     }
 
@@ -255,7 +255,7 @@ public class EffectSkin {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            utils.Logger.logException(EffectSkin.class, e, "EffectSkin exception");
         }
     }
 
@@ -281,7 +281,7 @@ public class EffectSkin {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            utils.Logger.logException(EffectSkin.class, e, "EffectSkin exception");
         }
     }
 
@@ -294,7 +294,7 @@ public class EffectSkin {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            utils.Logger.logException(EffectSkin.class, e, "EffectSkin exception");
         }
     }
 
@@ -315,7 +315,7 @@ public class EffectSkin {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            utils.Logger.logException(EffectSkin.class, e, "EffectSkin exception");
         }
     }
 
@@ -338,7 +338,7 @@ public class EffectSkin {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            utils.Logger.logException(EffectSkin.class, e, "EffectSkin exception");
         }
     }
     
@@ -360,7 +360,7 @@ public class EffectSkin {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            utils.Logger.logException(EffectSkin.class, e, "EffectSkin exception");
         }
     }
 
@@ -398,7 +398,7 @@ public class EffectSkin {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            utils.Logger.logException(EffectSkin.class, e, "EffectSkin exception");
         }
     }
 

@@ -64,9 +64,6 @@ public class Command {
             models.tournament.whis_arena.WhisArenaService.gI().addDemoRewards(player);
             Service.gI().sendThongBao(player, "Đã nạp 15 phần thưởng Võ Đài demo (như ảnh)! Hãy gặp Whis tại Kaio để nhận.");
         });
-          adminCommands.put("adm", player -> {
-            Service.gI().sendThongBao(player, "Bảng quản trị Live Ops Web Dashboard: http://localhost:14446/dashboard");
-        });
         adminCommands.put("toplag", player -> {
             String report = server.network.PacketProfiler.gI().getTopLagReport();
             NpcService.gI().createMenuConMeo(player, consts.ConstNpc.IGNORE_MENU, -1, report, "Đóng");

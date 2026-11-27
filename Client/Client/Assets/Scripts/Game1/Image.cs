@@ -11,7 +11,9 @@ namespace Game1
     	private const int MAXTIME = 500;
     
     	public Texture2D texture;
-    
+
+    	public bool isOwnedTexture;
+
     	public static Image imgTemp;
     
     	public static string filenametemp;
@@ -37,6 +39,30 @@ namespace Game1
     	public static int status;
     
     	public Color colorBlend = Color.black;
+
+    	/// <summary>
+    	/// Giải phóng bản sao pixel trên System RAM sau khi đã upload texture lên GPU (dành cho ảnh nền tĩnh không gọi GetPixels).
+    	/// </summary>
+    	public void markUnreadable()
+    	{
+    		if (texture != null && texture.isReadable)
+    		{
+    			texture.Apply(false, true);
+    		}
+    	}
+
+    	public void releaseTexture()
+    	{
+    		if (texture != null)
+    		{
+    			if (isOwnedTexture)
+    			{
+    				UnityEngine.Object.Destroy(texture);
+    			}
+    			texture = null;
+    			isOwnedTexture = false;
+    		}
+    	}
     
     	public static Image createEmptyImage()
     	{
@@ -311,31 +337,31 @@ namespace Game1
     
     	public static byte[] loadData(string filename)
     	{
-    		TextAsset textAsset = (TextAsset)Resources.Load(filename, typeof(TextAsset));
-    		if (textAsset == null || textAsset.bytes == null || textAsset.bytes.Length == 0)
+    		byte[] bytes = AssetLoader.LoadBytes(filename);
+    		if (bytes == null || bytes.Length == 0)
     		{
     			throw new Exception("NULL POINTER EXCEPTION AT Image __createImage " + filename);
     		}
-    		sbyte[] array = ArrayCast.cast(textAsset.bytes);
-    		Debug.LogError("CHIEU DAI MANG BYTE IMAGE CREAT = " + array.Length);
-    		return textAsset.bytes;
+    		return bytes;
     	}
-    
+
     	private static Image __createImage(string filename)
     	{
     		Image image = new Image();
-    		Texture2D texture2D = Resources.Load(filename) as Texture2D;
+    		bool isOwned;
+    		Texture2D texture2D = AssetLoader.LoadTexture2D(filename, out isOwned);
     		if (texture2D == null)
     		{
     			throw new Exception("NULL POINTER EXCEPTION AT Image __createImage " + filename);
     		}
     		image.texture = texture2D;
+    		image.isOwnedTexture = isOwned;
     		image.w = image.texture.width;
     		image.h = image.texture.height;
     		setTextureQuality(image);
     		return image;
     	}
-    
+
     	private static Image __createImage(byte[] imageData)
     	{
     		if (imageData == null || imageData.Length == 0)
@@ -346,7 +372,8 @@ namespace Game1
     		Image image = new Image();
     		try
     		{
-    			image.texture = new Texture2D(1, 1);
+    			image.texture = new Texture2D(1, 1, TextureFormat.RGBA32, false);
+    			image.isOwnedTexture = true;
     			image.texture.LoadImage(imageData);
     			image.w = image.texture.width;
     			image.h = image.texture.height;
@@ -373,11 +400,11 @@ namespace Game1
     		if (y + h > src.texture.height) h = src.texture.height - y;
     		if (w <= 0 || h <= 0)
     		{
-    			image.texture = new Texture2D(1, 1);
+    			image.texture = new Texture2D(1, 1, TextureFormat.RGBA32, false);
     			return image;
     		}
 
-    		image.texture = new Texture2D(w, h);
+    		image.texture = new Texture2D(w, h, TextureFormat.RGBA32, false);
     		Color[] srcPixels = src.texture.GetPixels(x, y, w, h);
     		if (transform == 2)
     		{
@@ -403,7 +430,7 @@ namespace Game1
     	private static Image __createEmptyImage()
     	{
     		Image image = new Image();
-    		image.texture = new Texture2D(1, 1);
+    		image.texture = new Texture2D(1, 1, TextureFormat.RGBA32, false);
     		return image;
     	}
     

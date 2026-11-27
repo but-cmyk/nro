@@ -163,7 +163,7 @@ public class Cadic extends Boss {
                     checkPlayerDie(pl);
                 }
             } catch (Exception ex) {
-                ex.printStackTrace();
+                utils.Logger.logException(Cadic.class, ex, "Cadic exception");
             }
         }
     }
@@ -254,12 +254,12 @@ public class Cadic extends Boss {
     @Override
     public synchronized long injured(Player plAtt, long damage, boolean piercing, boolean isMobAttack) {
         if (!this.isDie()) {
-            if (!piercing && Util.isTrue(this.nPoint.tlNeDon, 1)) {
+            if (!piercing && Util.isTrue(this.nPoint.tlNeDon, 100)) {
                 this.chat("Xí hụt");
                 return 0;
             }
 
-            if (plAtt.isPl() && Util.isTrue(1, 5)) {
+            if (plAtt != null && plAtt.isPl() && Util.isTrue(1, 5)) {
                 plAtt.fightMabu.changePoint((byte) 1);
             }
 

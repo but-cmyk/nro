@@ -37,9 +37,11 @@ public class PetService {
                         Service.gI().chatJustForMe(p, p.pet, "Xin hãy thu nhận làm đệ tử");
                     }
                 } catch (Exception e) {
-                }
+            utils.Logger.error("[PetService] " + e.getMessage());
+        }
             }, 1000);
         } catch (Exception e) {
+            utils.Logger.error("[PetService] " + e.getMessage());
         }
     }
 
@@ -56,9 +58,11 @@ public class PetService {
                         Service.gI().chatJustForMe(p, p.pet, "Xin hãy thu nhận làm đệ tử");
                     }
                 } catch (Exception e) {
-                }
+            utils.Logger.error("[PetService] " + e.getMessage());
+        }
             }, 1000);
         } catch (Exception e) {
+            utils.Logger.error("[PetService] " + e.getMessage());
         }
     }
 
@@ -75,9 +79,11 @@ public class PetService {
                         Service.gI().chatJustForMe(p, p.pet, "Oa oa oa...");
                     }
                 } catch (Exception e) {
-                }
+            utils.Logger.error("[PetService] " + e.getMessage());
+        }
             }, 1000);
         } catch (Exception e) {
+            utils.Logger.error("[PetService] " + e.getMessage());
         }
     }
 
@@ -94,9 +100,11 @@ public class PetService {
                         Service.gI().chatJustForMe(p, p.pet, "Oa oa oa...");
                     }
                 } catch (Exception e) {
-                }
+            utils.Logger.error("[PetService] " + e.getMessage());
+        }
             }, 1000);
         } catch (Exception e) {
+            utils.Logger.error("[PetService] " + e.getMessage());
         }
     }
 
@@ -201,10 +209,11 @@ public class PetService {
                         Service.gI().chatJustForMe(p, p.pet, "Cảm ơn sư phụ đã đặt cho con tên " + name);
                     }
                 } catch (Exception e) {
-                }
+            utils.Logger.error("[PetService] " + e.getMessage());
+        }
             }, 1000);
         } catch (Exception ex) {
-
+            utils.Logger.error("[PetService] " + ex.getMessage());
         }
     }
 
